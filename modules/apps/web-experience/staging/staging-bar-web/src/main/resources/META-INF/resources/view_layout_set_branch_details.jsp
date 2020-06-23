@@ -51,7 +51,7 @@ String stagingURL = (String)request.getAttribute(StagingProcessesWebKeys.STAGING
 					</portlet:actionURL>
 
 					<li>
-						<a class="<%= selected ? "disabled" : StringPool.BLANK %>" href="<%= selected ? "javascript:;" : "javascript:submitForm(document.hrefFm, '" + HtmlUtil.escapeJS(curLayoutSetBranchURL) + "');" %>">
+						<a class='<%= selected ? "disabled" : StringPool.BLANK %>' href='<%= selected ? "javascript:;" : "javascript:submitForm(document.hrefFm, '" + HtmlUtil.escapeJS(curLayoutSetBranchURL) + "');" %>'>
 							<liferay-ui:message key="<%= HtmlUtil.escape(layoutSetBranchDisplayContext.getLayoutSetBranchDisplayName(curLayoutSetBranch)) %>" localizeKey="<%= false %>" />
 						</a>
 					</li>

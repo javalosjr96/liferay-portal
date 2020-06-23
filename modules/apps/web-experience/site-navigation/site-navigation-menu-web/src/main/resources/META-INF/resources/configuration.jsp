@@ -50,7 +50,7 @@ String rootLayoutType = siteNavigationMenuDisplayContext.getRootLayoutType();
 									<aui:option label="select" value="select" />
 								</aui:select>
 
-								<div class="<%= (rootLayoutType.equals("parent-at-level") || rootLayoutType.equals("relative-parent-up-by")) ? "" : "hide" %>" id="<portlet:namespace />rootLayoutLevel">
+								<div class='<%= (rootLayoutType.equals("parent-at-level") || rootLayoutType.equals("relative-parent-up-by")) ? "" : "hide" %>' id="<portlet:namespace />rootLayoutLevel">
 									<aui:select name="preferences--rootLayoutLevel--">
 
 										<%
@@ -66,7 +66,7 @@ String rootLayoutType = siteNavigationMenuDisplayContext.getRootLayoutType();
 									</aui:select>
 								</div>
 
-								<div class="<%= rootLayoutType.equals("select") ? "" : "hide" %>" id="<portlet:namespace />rootLayoutUuid">
+								<div class='<%= rootLayoutType.equals("select") ? "" : "hide" %>' id="<portlet:namespace />rootLayoutUuid">
 									<aui:select label="" name="preferences--rootLayoutUuid--">
 										<aui:option value="" />
 

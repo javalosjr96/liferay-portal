@@ -106,7 +106,7 @@
 
 							<c:if test="<%= oAuthApplication.getLogoId() != 0 %>">
 								<aui:col width="<%= 50 %>">
-									<img src="<%= HtmlUtil.escape(themeDisplay.getPathImage() + "/logo?img_id=" + oAuthApplication.getLogoId() + "&t=" + WebServerServletTokenUtil.getToken(oAuthApplication.getLogoId())) %>" />
+									<img src='<%= HtmlUtil.escape(themeDisplay.getPathImage() + "/logo?img_id=" + oAuthApplication.getLogoId() + "&t=" + WebServerServletTokenUtil.getToken(oAuthApplication.getLogoId())) %>' />
 								</aui:col>
 							</c:if>
 						</aui:row>

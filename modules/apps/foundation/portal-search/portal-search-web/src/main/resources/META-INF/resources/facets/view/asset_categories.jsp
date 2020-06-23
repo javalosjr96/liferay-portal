@@ -38,9 +38,9 @@ boolean showAssetCount = dataJSONObject.getBoolean("showAssetCount", true);
 		<div class="asset-tags <%= cssClass %>" data-facetFieldName="<%= HtmlUtil.escapeAttribute(facet.getFieldId()) %>" id="<%= randomNamespace %>facet">
 			<aui:input autocomplete="off" name="<%= HtmlUtil.escapeAttribute(facet.getFieldId()) %>" type="hidden" value="<%= fieldParam %>" />
 
-			<ul class="<%= (showAssetCount && displayStyle.equals("cloud")) ? "tag-cloud" : "tag-list" %> list-unstyled">
+			<ul class='<%= (showAssetCount && displayStyle.equals("cloud")) ? "tag-cloud" : "tag-list" %> list-unstyled'>
 				<li class="default facet-value">
-					<a class="<%= Validator.isNull(fieldParam) ? "text-primary" : "text-default" %>" data-value="" href="javascript:;"><liferay-ui:message key="<%= HtmlUtil.escape(facetConfiguration.getLabel()) %>" /></a>
+					<a class='<%= Validator.isNull(fieldParam) ? "text-primary" : "text-default" %>' data-value="" href="javascript:;"><liferay-ui:message key="<%= HtmlUtil.escape(facetConfiguration.getLabel()) %>" /></a>
 				</li>
 
 				<%
@@ -105,7 +105,7 @@ boolean showAssetCount = dataJSONObject.getBoolean("showAssetCount", true);
 				%>
 
 						<li class="facet-value tag-popularity-<%= popularity %>">
-							<a class="<%= fieldParam.equals(termCollector.getTerm()) ? "text-primary" : "text-default" %>" data-value="<%= HtmlUtil.escapeAttribute(String.valueOf(assetCategoryId)) %>" href="javascript:;">
+							<a class='<%= fieldParam.equals(termCollector.getTerm()) ? "text-primary" : "text-default" %>' data-value="<%= HtmlUtil.escapeAttribute(String.valueOf(assetCategoryId)) %>" href="javascript:;">
 								<%= HtmlUtil.escape(curAssetCategory.getTitle(locale)) %>
 
 								<c:if test="<%= showAssetCount %>">

@@ -109,9 +109,9 @@ public class GitHubCommunicatorUtil {
 
 		gitHubRepository.setCommits(commits);
 		gitHubRepository.setOpenIssues(openIssues);
-		gitHubRepository.setRepositoryCreateDate(repositoryCreateDate);
 		gitHubRepository.setStars(stars);
 		gitHubRepository.setUrl(url);
+		gitHubRepository.setRepositoryCreateDate(repositoryCreateDate);
 
 		return gitHubRepository;
 	}
@@ -178,9 +178,9 @@ public class GitHubCommunicatorUtil {
 			gitHubContributor =
 				GitHubContributorLocalServiceUtil.createGitHubContributor(0);
 
+			gitHubContributor.setName(contributorName);
 			gitHubContributor.setAvatarURL(avatarURL);
 			gitHubContributor.setContributions(contributions);
-			gitHubContributor.setName(contributorName);
 			gitHubContributor.setProfileURL(profileURL);
 
 			gitHubContributors.add(gitHubContributor);

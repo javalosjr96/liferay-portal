@@ -61,7 +61,7 @@ String redirect = ParamUtil.getString(request, "redirect");
 				Map<String, PortletURL> addPortletURLs = AssetUtil.getAddPortletURLs(liferayPortletRequest, liferayPortletResponse, groupId, assetPublisherDisplayContext.getClassNameIds(), assetPublisherDisplayContext.getClassTypeIds(), assetPublisherDisplayContext.getAllAssetCategoryIds(), assetPublisherDisplayContext.getAllAssetTagNames(), redirectURL.toString());
 			%>
 
-				<div class="asset-entry-type <%= (groupId == scopeGroupId) ? StringPool.BLANK : "hide" %>" id="<%= liferayPortletResponse.getNamespace() + groupId %>">
+				<div class='asset-entry-type <%= (groupId == scopeGroupId) ? StringPool.BLANK : "hide" %>' id="<%= liferayPortletResponse.getNamespace() + groupId %>">
 					<aui:select cssClass="asset-entry-type-select" label="asset-entry-type" name="selectAssetEntryType">
 
 						<%

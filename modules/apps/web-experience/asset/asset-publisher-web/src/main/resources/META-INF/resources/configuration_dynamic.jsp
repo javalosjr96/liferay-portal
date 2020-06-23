@@ -74,7 +74,7 @@ String selectStyle = (String)request.getAttribute("configuration.jsp-selectStyle
 								<aui:option label="any" selected="<%= assetPublisherDisplayContext.isAnyAssetType() %>" value="<%= true %>" />
 								<aui:option label='<%= LanguageUtil.get(request, "select-more-than-one") + StringPool.TRIPLE_PERIOD %>' selected="<%= !assetPublisherDisplayContext.isAnyAssetType() && (classNameIds.length > 1) %>" value="<%= false %>" />
 
-								<optgroup label="<liferay-ui:message key="asset-type" />">
+								<optgroup label='<liferay-ui:message key="asset-type" />'>
 
 									<%
 									for (long classNameId : availableClassNameIdsSet) {
@@ -100,7 +100,7 @@ String selectStyle = (String)request.getAttribute("configuration.jsp-selectStyle
 							typesRightList = ListUtil.sort(typesRightList, new KeyValuePairComparator(false, true));
 							%>
 
-							<div class="<%= assetPublisherDisplayContext.isAnyAssetType() ? "hide" : "" %>" id="<portlet:namespace />classNamesBoxes">
+							<div class='<%= assetPublisherDisplayContext.isAnyAssetType() ? "hide" : "" %>' id="<portlet:namespace />classNamesBoxes">
 								<liferay-ui:input-move-boxes
 									leftBoxName="currentClassNameIds"
 									leftList="<%= typesLeftList %>"
@@ -226,7 +226,7 @@ String selectStyle = (String)request.getAttribute("configuration.jsp-selectStyle
 										</div>
 									</c:if>
 
-									<div class="<%= (assetSelectedClassTypeIds.length > 1) ? StringPool.BLANK : "hide" %>" id="<portlet:namespace /><%= className %>Boxes">
+									<div class='<%= (assetSelectedClassTypeIds.length > 1) ? StringPool.BLANK : "hide" %>' id="<portlet:namespace /><%= className %>Boxes">
 										<liferay-ui:input-move-boxes
 											leftBoxName='<%= className + "currentClassTypeIds" %>'
 											leftList="<%= subtypesLeftList %>"
@@ -244,7 +244,7 @@ String selectStyle = (String)request.getAttribute("configuration.jsp-selectStyle
 							%>
 
 							<c:if test="<%= assetPublisherDisplayContext.isShowSubtypeFieldsFilter() %>">
-								<div class="asset-subtypefield-selected <%= Validator.isNull(assetPublisherDisplayContext.getDDMStructureFieldName()) ? "hide" : StringPool.BLANK %>">
+								<div class='asset-subtypefield-selected <%= Validator.isNull(assetPublisherDisplayContext.getDDMStructureFieldName()) ? "hide" : StringPool.BLANK %>'>
 									<aui:input name="preferences--ddmStructureFieldName--" type="hidden" value="<%= assetPublisherDisplayContext.getDDMStructureFieldName() %>" />
 
 									<aui:input name="preferences--ddmStructureFieldValue--" type="hidden" value="<%= assetPublisherDisplayContext.getDDMStructureFieldValue() %>" />
@@ -467,7 +467,7 @@ String selectStyle = (String)request.getAttribute("configuration.jsp-selectStyle
 										if (!assetVocabularies.isEmpty()) {
 									%>
 
-											<optgroup label="<liferay-ui:message key="vocabularies" />">
+											<optgroup label='<liferay-ui:message key="vocabularies" />'>
 
 												<%
 												for (AssetVocabulary assetVocabulary : assetVocabularies) {
@@ -493,7 +493,7 @@ String selectStyle = (String)request.getAttribute("configuration.jsp-selectStyle
 									if (!assetVocabularies.isEmpty()) {
 									%>
 
-										<optgroup label="<liferay-ui:message key="vocabularies" /> (<liferay-ui:message key="global" />)">
+										<optgroup label='<liferay-ui:message key="vocabularies" /> (<liferay-ui:message key="global" />)'>
 
 											<%
 											for (AssetVocabulary assetVocabulary : assetVocabularies) {

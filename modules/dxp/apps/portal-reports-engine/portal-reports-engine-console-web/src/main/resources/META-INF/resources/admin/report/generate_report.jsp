@@ -133,7 +133,7 @@ renderResponse.setTitle(LanguageUtil.get(request, "new-report-entry"));
 
 								<aui:col width="<%= 80 %>">
 									<span class="field field-text">
-										<input class="form-control" name="<portlet:namespace /><%= "parameterValue" + HtmlUtil.escapeAttribute(key) %>" type="text" value="<%= HtmlUtil.escapeAttribute(value) %>" />
+										<input class="form-control" name='<portlet:namespace /><%= "parameterValue" + HtmlUtil.escapeAttribute(key) %>' type="text" value="<%= HtmlUtil.escapeAttribute(value) %>" />
 									</span>
 								</aui:col>
 							</c:otherwise>

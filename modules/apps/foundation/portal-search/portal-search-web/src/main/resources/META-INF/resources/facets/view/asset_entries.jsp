@@ -46,7 +46,7 @@ if (dataJSONObject.has("values")) {
 
 			<ul class="asset-type list-unstyled">
 				<li class="default facet-value">
-					<a class="<%= Validator.isNull(fieldParam) ? "text-primary" : "text-default" %>" data-value="" href="javascript:;"><liferay-ui:message key="<%= HtmlUtil.escape(facetConfiguration.getLabel()) %>" /></a>
+					<a class='<%= Validator.isNull(fieldParam) ? "text-primary" : "text-default" %>' data-value="" href="javascript:;"><liferay-ui:message key="<%= HtmlUtil.escape(facetConfiguration.getLabel()) %>" /></a>
 				</li>
 
 				<%
@@ -77,7 +77,7 @@ if (dataJSONObject.has("values")) {
 				%>
 
 					<li class="facet-value">
-						<a class="<%= fieldParam.equals(termCollector.getTerm()) ? "text-primary" : "text-default" %>" data-value="<%= HtmlUtil.escapeAttribute(assetType) %>" href="javascript:;">
+						<a class='<%= fieldParam.equals(termCollector.getTerm()) ? "text-primary" : "text-default" %>' data-value="<%= HtmlUtil.escapeAttribute(assetType) %>" href="javascript:;">
 							<%= assetRendererFactory.getTypeName(locale) %>
 
 							<c:if test="<%= showAssetCount %>">

@@ -503,9 +503,9 @@ public class SPIDefinitionLocalServiceImpl
 		SPIDefinition spiDefinition = spiDefinitionPersistence.findByPrimaryKey(
 			spiDefinitionId);
 
-		spiDefinition.setModifiedDate(serviceContext.getModifiedDate(null));
 		spiDefinition.setUserId(user.getUserId());
 		spiDefinition.setUserName(user.getFullName());
+		spiDefinition.setModifiedDate(serviceContext.getModifiedDate(null));
 		spiDefinition.setTypeSettings(typeSettings);
 
 		return spiDefinitionPersistence.update(spiDefinition);

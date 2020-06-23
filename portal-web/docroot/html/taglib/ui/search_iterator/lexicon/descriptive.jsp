@@ -110,7 +110,7 @@ for (ResultRowSplitterEntry resultRowSplitterEntry : resultRowSplitterEntries) {
 					request.setAttribute(WebKeys.SEARCH_CONTAINER_RESULT_ROW_ENTRY, entry);
 				%>
 
-					<div class="<%= entry.getCssClass() %> <%= (entry.getColspan() > 1) ? "list-group-item-content" : "list-group-item-field" %>">
+					<div class='<%= entry.getCssClass() %> <%= (entry.getColspan() > 1) ? "list-group-item-content" : "list-group-item-field" %>'>
 
 						<%
 						entry.print(pageContext.getOut(), request, response);

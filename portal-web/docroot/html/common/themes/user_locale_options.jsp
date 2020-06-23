@@ -23,7 +23,7 @@ Locale userLocale = user.getLocale();
 %>
 
 <c:if test="<%= !locale.equals(user.getLocale()) %>">
-	<button aria-label="<%= LanguageUtil.get(request, "close") %>" class="close" id="ignoreUserLocaleOptions" type="button">&times;</button>
+	<button aria-label='<%= LanguageUtil.get(request, "close") %>' class="close" id="ignoreUserLocaleOptions" type="button">&times;</button>
 
 	<%= LanguageUtil.format(userLocale, "this-page-is-displayed-in-x", locale.getDisplayName(userLocale)) %>
 

@@ -68,7 +68,7 @@ String registrationLayoutURL = GetterUtil.getString(request.getAttribute(LCSClie
 			</strong>
 		</div>
 
-		<div class="alert alert-danger lcs-alert <%= ready ? "hide" : StringPool.BLANK %>" id="<portlet:namespace />lcsGatewayUnavailable">
+		<div class='alert alert-danger lcs-alert <%= ready ? "hide" : StringPool.BLANK %>' id="<portlet:namespace />lcsGatewayUnavailable">
 			<liferay-ui:message key="unable-to-access-liferay-connected-services-gateway" />
 		</div>
 

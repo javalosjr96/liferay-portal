@@ -38,7 +38,7 @@ if (!TrashUtil.isInTrash(className, classPK)) {
 }
 %>
 
-<div class="taglib-flags" title="<liferay-ui:message key='<%= !TrashUtil.isInTrash(className, classPK) ? message : "flags-are-disabled-because-this-entry-is-in-the-recycle-bin" %>' />">
+<div class="taglib-flags" title='<liferay-ui:message key='<%= !TrashUtil.isInTrash(className, classPK) ? message : "flags-are-disabled-because-this-entry-is-in-the-recycle-bin" %>' />'>
 	<liferay-ui:icon
 		cssClass="<%= cssClass %>"
 		iconCssClass="icon-flag"

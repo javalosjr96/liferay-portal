@@ -84,7 +84,7 @@ renderResponse.setTitle(LanguageUtil.format(request, "move-x", category.getTitle
 				for (AssetVocabulary curVocabulary : vocabularies) {
 				%>
 
-					<div class="asset-category-selector <%= (curVocabulary.getVocabularyId() == vocabularyId) ? StringPool.BLANK : "hide" %>" id="<portlet:namespace />assetCategoriesSelector<%= curVocabulary.getVocabularyId() %>"></div>
+					<div class='asset-category-selector <%= (curVocabulary.getVocabularyId() == vocabularyId) ? StringPool.BLANK : "hide" %>' id="<portlet:namespace />assetCategoriesSelector<%= curVocabulary.getVocabularyId() %>"></div>
 
 					<aui:script use="liferay-asset-categories-selector">
 						new Liferay.AssetCategoriesSelector(

@@ -27,7 +27,7 @@ String[] imageExtensions = PrefsPropsUtil.getStringArray(PropsKeys.JOURNAL_IMAGE
 	>
 		<label class="btn btn-default" for="<portlet:namespace />inputFile"><liferay-ui:message key="select-file" /></label>
 
-		<input accept="<%= ArrayUtil.isEmpty(imageExtensions) ? "*" : StringUtil.merge(imageExtensions) %>" class="hide" id="<portlet:namespace />inputFile" type="file" />
+		<input accept='<%= ArrayUtil.isEmpty(imageExtensions) ? "*" : StringUtil.merge(imageExtensions) %>' class="hide" id="<portlet:namespace />inputFile" type="file" />
 	</liferay-util:buffer>
 
 	<div class="drop-enabled drop-zone upload-view">

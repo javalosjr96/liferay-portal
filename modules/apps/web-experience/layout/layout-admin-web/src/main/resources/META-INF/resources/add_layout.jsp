@@ -160,7 +160,7 @@ renderResponse.setTitle(LanguageUtil.get(request, "add-new-page"));
 					<aui:option data="<%= data %>" label="copy-of-a-page" value="copy" />
 				</c:if>
 
-				<optgroup label="<liferay-ui:message key="templates" />">
+				<optgroup label='<liferay-ui:message key="templates" />'>
 
 					<%
 					for (LayoutPrototype layoutPrototype : layoutPrototypes) {

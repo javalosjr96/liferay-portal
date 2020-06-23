@@ -159,7 +159,7 @@ if (ListUtil.isEmpty(folders) && ListUtil.isEmpty(fileEntries) && ListUtil.isEmp
 					%>
 
 					<c:if test="<%= Validator.isNotNull(thumbnailSrc) %>">
-						<img alt="<liferay-ui:message escapeAttribute="<%= true %>" key="thumbnail" />" class="crop-img img-rounded" src="<%= DLUtil.getThumbnailSrc(fileEntry, fileVersion, themeDisplay) %>" />
+						<img alt='<liferay-ui:message escapeAttribute="<%= true %>" key="thumbnail" />' class="crop-img img-rounded" src="<%= DLUtil.getThumbnailSrc(fileEntry, fileVersion, themeDisplay) %>" />
 					</c:if>
 
 					<div class="btn-group">

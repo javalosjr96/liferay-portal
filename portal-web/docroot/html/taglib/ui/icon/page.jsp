@@ -56,7 +56,7 @@ boolean urlIsNotNull = Validator.isNotNull(url);
 			<span class="taglib-text-icon"><liferay-ui:message key="<%= message %>" localizeKey="<%= localizeMessage %>" /></span>
 		</c:when>
 		<c:otherwise>
-			<span class="taglib-text <%= label ? StringPool.BLANK : "sr-only" %>"><liferay-ui:message key="<%= message %>" localizeKey="<%= localizeMessage %>" /></span>
+			<span class='taglib-text <%= label ? StringPool.BLANK : "sr-only" %>'><liferay-ui:message key="<%= message %>" localizeKey="<%= localizeMessage %>" /></span>
 		</c:otherwise>
 	</c:choose>
 </liferay-util:buffer>

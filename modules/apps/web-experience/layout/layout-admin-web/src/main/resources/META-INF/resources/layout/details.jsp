@@ -148,11 +148,11 @@ StringBuilder friendlyURLBase = new StringBuilder();
 
 	<aui:input helpMessage='<%= LanguageUtil.format(request, "if-enabled-this-page-will-inherit-changes-made-to-the-x-page-template", HtmlUtil.escape(layoutPrototype.getName(user.getLocale())), false) %>' label="inherit-changes" name="layoutPrototypeLinkEnabled" type="toggle-switch" value="<%= selLayout.isLayoutPrototypeLinkEnabled() %>" />
 
-	<div class="alert alert-warning layout-prototype-info-message <%= selLayout.isLayoutPrototypeLinkActive() ? StringPool.BLANK : "hide" %>">
+	<div class='alert alert-warning layout-prototype-info-message <%= selLayout.isLayoutPrototypeLinkActive() ? StringPool.BLANK : "hide" %>'>
 		<liferay-ui:message arguments='<%= new String[] {LanguageUtil.get(request, "inherit-changes"), "General"} %>' key="some-page-settings-are-unavailable-because-x-is-enabled" translateArguments="<%= false %>" />
 	</div>
 
-	<div class="<%= selLayout.isLayoutPrototypeLinkEnabled() ? StringPool.BLANK : "hide" %>" id="<portlet:namespace />layoutPrototypeMergeAlert">
+	<div class='<%= selLayout.isLayoutPrototypeLinkEnabled() ? StringPool.BLANK : "hide" %>' id="<portlet:namespace />layoutPrototypeMergeAlert">
 
 		<%
 		request.setAttribute("edit_layout_prototype.jsp-layoutPrototype", layoutPrototype);
@@ -164,7 +164,7 @@ StringBuilder friendlyURLBase = new StringBuilder();
 	</div>
 </c:if>
 
-<div class="<%= selLayout.isLayoutPrototypeLinkActive() ? "hide" : StringPool.BLANK %>" id="<portlet:namespace />typeOptions">
+<div class='<%= selLayout.isLayoutPrototypeLinkActive() ? "hide" : StringPool.BLANK %>' id="<portlet:namespace />typeOptions">
 	<aui:select name="type">
 
 		<%

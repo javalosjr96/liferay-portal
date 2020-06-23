@@ -234,7 +234,7 @@ String socialBookmarksDisplayPosition = blogsPortletInstanceConfiguration.social
 				</aui:container>
 			</c:if>
 
-			<div class="<%= colCssClass %> <%= viewSingleEntry ? "border-top" : StringPool.BLANK %> entry-footer">
+			<div class='<%= colCssClass %> <%= viewSingleEntry ? "border-top" : StringPool.BLANK %> entry-footer'>
 				<c:if test="<%= viewSingleEntry %>">
 					<div class="entry-author">
 						<liferay-ui:user-display

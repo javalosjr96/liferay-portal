@@ -43,7 +43,7 @@ SearchContext searchContext = SearchContextFactory.getInstance(request);
 
 			<ul class="folders list-unstyled">
 				<li class="default facet-value">
-					<a class="<%= Validator.isNull(fieldParam) ? "text-primary" : "text-default" %>" data-value="" href="javascript:;"><liferay-ui:message key="<%= HtmlUtil.escape(facetConfiguration.getLabel()) %>" /></a>
+					<a class='<%= Validator.isNull(fieldParam) ? "text-primary" : "text-default" %>' data-value="" href="javascript:;"><liferay-ui:message key="<%= HtmlUtil.escape(facetConfiguration.getLabel()) %>" /></a>
 				</li>
 
 				<%
@@ -77,7 +77,7 @@ SearchContext searchContext = SearchContextFactory.getInstance(request);
 				%>
 
 					<li class="facet-value">
-						<a class="<%= (folderId == curFolderId) ? "text-primary" : "text-default" %>" data-value="<%= curFolderId %>" href="javascript:;">
+						<a class='<%= (folderId == curFolderId) ? "text-primary" : "text-default" %>' data-value="<%= curFolderId %>" href="javascript:;">
 							<%= HtmlUtil.escape(title.getValue()) %>
 
 							<c:if test="<%= showAssetCount %>">

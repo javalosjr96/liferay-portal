@@ -90,7 +90,7 @@ if (backgroundTaskId > 0) {
 			</h6>
 
 			<h5>
-				<span id="<%= liferayPortletResponse.getNamespace() + "backgroundTaskName" + String.valueOf(backgroundTask.getBackgroundTaskId()) %>">
+				<span id='<%= liferayPortletResponse.getNamespace() + "backgroundTaskName" + String.valueOf(backgroundTask.getBackgroundTaskId()) %>'>
 					<%= HtmlUtil.escape(backgroundTaskName) %>
 				</span>
 

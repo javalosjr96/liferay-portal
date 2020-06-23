@@ -293,7 +293,7 @@ public class AssetEntrySetIndexer extends BaseIndexer {
 		document.addKeyword(
 			"parentAssetEntrySetId", assetEntrySet.getParentAssetEntrySetId());
 		document.addKeyword(
-			"privateAssetEntrySet", assetEntrySet.getPrivateAssetEntrySet());
+			"privateAssetEntrySet", assetEntrySet.isPrivateAssetEntrySet());
 		document.addKeyword(
 			"sharedTo", getSharedTo(assetEntrySet.getAssetEntrySetId()));
 		document.addNumber("stickyTime", assetEntrySet.getStickyTime());

@@ -68,7 +68,7 @@ boolean changeStructure = GetterUtil.getBoolean(request.getAttribute("edit_artic
 		</p>
 
 		<p class="text-default">
-			<span class="<%= Validator.isNull(layoutBreadcrumb) ? "hide" : StringPool.BLANK %>" id="<portlet:namespace />displayPageItemRemove" role="button">
+			<span class='<%= Validator.isNull(layoutBreadcrumb) ? "hide" : StringPool.BLANK %>' id="<portlet:namespace />displayPageItemRemove" role="button">
 				<aui:icon cssClass="icon-monospaced" image="times" markupView="lexicon" />
 			</span>
 			<span id="<portlet:namespace />displayPageNameInput">

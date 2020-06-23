@@ -161,7 +161,7 @@ if (portletTitleBasedNavigation) {
 
 					<aui:input name="coverImageCaption" type="hidden" />
 
-					<div class="cover-image-caption <%= (coverImageFileEntryId == 0) ? "invisible" : "" %>">
+					<div class='cover-image-caption <%= (coverImageFileEntryId == 0) ? "invisible" : "" %>'>
 						<small>
 							<liferay-ui:input-editor
 								contents="<%= coverImageCaption %>"

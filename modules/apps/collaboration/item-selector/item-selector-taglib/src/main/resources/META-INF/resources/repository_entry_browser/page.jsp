@@ -47,7 +47,7 @@ if (Validator.isNotNull(keywords)) {
 %>
 
 <liferay-util:html-top>
-	<link href="<%= ServletContextUtil.getContextPath() + "/repository_entry_browser/css/main.css" %>" rel="stylesheet" type="text/css" />
+	<link href='<%= ServletContextUtil.getContextPath() + "/repository_entry_browser/css/main.css" %>' rel="stylesheet" type="text/css" />
 </liferay-util:html-top>
 
 <c:if test="<%= !showSearchInfo %>">
@@ -184,7 +184,7 @@ if (Validator.isNotNull(keywords)) {
 		>
 			<label class="btn btn-default" for="<%= randomNamespace %>InputFile"><liferay-ui:message key="select-file" /></label>
 
-			<input accept="<%= ListUtil.isEmpty(extensions) ? "*" : StringUtil.merge(extensions) %>" class="hide" id="<%= randomNamespace %>InputFile" type="file" />
+			<input accept='<%= ListUtil.isEmpty(extensions) ? "*" : StringUtil.merge(extensions) %>' class="hide" id="<%= randomNamespace %>InputFile" type="file" />
 		</liferay-util:buffer>
 
 		<div class="drop-enabled drop-zone no-border">

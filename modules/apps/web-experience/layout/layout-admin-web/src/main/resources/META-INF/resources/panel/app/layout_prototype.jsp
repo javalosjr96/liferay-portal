@@ -23,7 +23,7 @@ LayoutsPrototypeTreeDisplayContext layoutsTreeDisplayContext = new LayoutsProtot
 <div class="layout-prototype-tree lfr-tree">
 	<div class="tree-container tree-pages">
 		<li class="tree-node">
-			<div class="tree-node-content <%= layoutsTreeDisplayContext.isLayoutSelected() ? "tree-node-selected" : StringPool.BLANK %>">
+			<div class='tree-node-content <%= layoutsTreeDisplayContext.isLayoutSelected() ? "tree-node-selected" : StringPool.BLANK %>'>
 				<span class="tree-label">
 					<aui:a cssClass="layout-tree" href="<%= layoutsTreeDisplayContext.getLayoutURL() %>" label="<%= layoutsTreeDisplayContext.getLayoutName() %>" />
 

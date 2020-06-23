@@ -28,7 +28,7 @@
 				<aui:input disabled="<%= disableInputs %>" name="<%= PortletDataHandlerKeys.PORTLET_DATA %>" type="hidden" value="<%= MapUtil.getBoolean(parameterMap, PortletDataHandlerKeys.PORTLET_DATA, true) %>" />
 				<aui:input disabled="<%= disableInputs %>" name="<%= PortletDataHandlerKeys.PORTLET_DATA_CONTROL_DEFAULT %>" type="hidden" value="<%= MapUtil.getBoolean(parameterMap, PortletDataHandlerKeys.PORTLET_DATA_CONTROL_DEFAULT, true) %>" />
 
-				<ul class="<%= disableInputs ? "" : "hide" %>" id="<portlet:namespace />selectContents">
+				<ul class='<%= disableInputs ? "" : "hide" %>' id="<portlet:namespace />selectContents">
 					<li>
 						<div id="<portlet:namespace />range">
 							<ul class="list-unstyled">
@@ -58,7 +58,7 @@
 												<aui:input checked="<%= selectedRange.equals(ExportImportDateUtil.RANGE_LAST) %>" disabled="<%= disableInputs %>" id="rangeLast" label='<%= LanguageUtil.get(request, "last") + StringPool.TRIPLE_PERIOD %>' name="range" type="radio" value="<%= ExportImportDateUtil.RANGE_LAST %>" />
 											</div>
 
-											<div class="flex-item-center range-options <%= disableInputs ? "hide" : StringPool.BLANK %>">
+											<div class='flex-item-center range-options <%= disableInputs ? "hide" : StringPool.BLANK %>'>
 												<liferay-ui:icon
 													icon="reload"
 													markupView="lexicon"

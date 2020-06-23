@@ -26,14 +26,14 @@ String value = (String)request.getAttribute("liferay-frontend:management-bar-fil
 <c:if test="<%= managementBarFilterItems.size() > 0 %>">
 	<c:choose>
 		<c:when test='<%= Validator.isNotNull(label) && label.equals("order-by") %>'>
-			<li class="dropdown <%= disabled ? "disabled" : StringPool.BLANK %> management-bar-item-xs-inline-block">
+			<li class='dropdown <%= disabled ? "disabled" : StringPool.BLANK %> management-bar-item-xs-inline-block'>
 		</c:when>
 		<c:otherwise>
-			<li class="dropdown <%= disabled ? "disabled" : StringPool.BLANK %>">
+			<li class='dropdown <%= disabled ? "disabled" : StringPool.BLANK %>'>
 		</c:otherwise>
 	</c:choose>
 
-	<a aria-expanded="true" class="dropdown-toggle" data-qa-id="filter<%= Validator.isNotNull(label) ? label : StringPool.BLANK %>" data-toggle="<%= disabled ? StringPool.BLANK : "dropdown" %>" href="javascript:;">
+	<a aria-expanded="true" class="dropdown-toggle" data-qa-id="filter<%= Validator.isNotNull(label) ? label : StringPool.BLANK %>" data-toggle='<%= disabled ? StringPool.BLANK : "dropdown" %>' href="javascript:;">
 		<span class="management-bar-item-title">
 			<c:if test="<%= Validator.isNotNull(label) %>">
 				<liferay-ui:message key="<%= label %>" />:
@@ -51,7 +51,7 @@ String value = (String)request.getAttribute("liferay-frontend:management-bar-fil
 		for (ManagementBarFilterItem managementBarFilterItem : managementBarFilterItems) {
 		%>
 
-			<li class="<%= managementBarFilterItem.isActive() ? "active" : StringPool.BLANK %>">
+			<li class='<%= managementBarFilterItem.isActive() ? "active" : StringPool.BLANK %>'>
 				<aui:a href="<%= managementBarFilterItem.getUrl() %>" id="<%= Validator.isNotNull(managementBarFilterItem.getId()) ? managementBarFilterItem.getId() : StringPool.BLANK %>" label="<%= managementBarFilterItem.getLabel() %>" />
 			</li>
 

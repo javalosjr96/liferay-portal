@@ -63,7 +63,7 @@ MBThread thread = (MBThread)request.getAttribute("edit_message.jsp-thread");
 				<h4 title="<%= HtmlUtil.escape(message.getSubject()) %>">
 					<c:choose>
 						<c:when test="<%= showPermanentLink %>">
-							<a href="#<portlet:namespace />message_<%= message.getMessageId() %>" title="<liferay-ui:message key="permanent-link-to-this-item" />">
+							<a href="#<portlet:namespace />message_<%= message.getMessageId() %>" title='<liferay-ui:message key="permanent-link-to-this-item" />'>
 								<%= HtmlUtil.escape(message.getSubject()) %>
 							</a>
 						</c:when>
@@ -403,7 +403,7 @@ MBThread thread = (MBThread)request.getAttribute("edit_message.jsp-thread");
 					%>
 
 							<p>
-								<img alt="<liferay-ui:message escapeAttribute="<%= true %>" key="attachment" />" class="crop-img" src="<%= PortletFileRepositoryUtil.getPortletFileEntryURL(themeDisplay, fileEntry, StringPool.BLANK) %>" />
+								<img alt='<liferay-ui:message escapeAttribute="<%= true %>" key="attachment" />' class="crop-img" src="<%= PortletFileRepositoryUtil.getPortletFileEntryURL(themeDisplay, fileEntry, StringPool.BLANK) %>" />
 							</p>
 
 					<%

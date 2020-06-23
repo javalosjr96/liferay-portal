@@ -34,7 +34,7 @@ String refererPortletName = ParamUtil.getString(request, "refererPortletName");
 </div>
 
 <div class="col-md-3">
-	<div id="<%= refererPortletName + "customDDMTemplateContainer" %>">
+	<div id='<%= refererPortletName + "customDDMTemplateContainer" %>'>
 		<div class="template-preview-content">
 			<c:choose>
 				<c:when test="<%= journalContentDisplayContext.isDefaultTemplate() %>">

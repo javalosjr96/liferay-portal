@@ -75,7 +75,7 @@ renderResponse.setTitle((category == null) ? LanguageUtil.get(request, "new-cate
 					<aui:button onClick='<%= renderResponse.getNamespace() + "removeCategory(this);" %>' value="remove" />
 				</div>
 
-				<div class="<%= (category.getParentCategoryId() == ShoppingCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) ? "hide" : "" %>" id="<portlet:namespace />mergeParentCheckboxDiv">
+				<div class='<%= (category.getParentCategoryId() == ShoppingCategoryConstants.DEFAULT_PARENT_CATEGORY_ID) ? "hide" : "" %>' id="<portlet:namespace />mergeParentCheckboxDiv">
 					<aui:input name="mergeWithParentCategory" type="checkbox" />
 				</div>
 			</c:if>

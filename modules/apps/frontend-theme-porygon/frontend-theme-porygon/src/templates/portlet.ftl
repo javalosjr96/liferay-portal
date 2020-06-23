@@ -54,7 +54,7 @@
 		</#if>
 
 		<#if portlet_display.isShowBackIcon()>
-			<a class="icon-monospaced portlet-icon-back text-default" href="${portlet_back_url}" title="<@liferay.language key="return-to-full-page" />">
+			<a class="icon-monospaced portlet-icon-back text-default" href="${portlet_back_url}" title='<@liferay.language key="return-to-full-page" />'>
 				<span class="icon-angle-left"></span>
 			</a>
 		</#if>

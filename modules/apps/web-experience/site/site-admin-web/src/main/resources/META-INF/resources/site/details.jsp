@@ -215,7 +215,7 @@ else if (group != null) {
 		<aui:button cssClass="modify-link" id="selectParentSiteLink" value="select" />
 	</div>
 
-	<div class="<%= parentGroups.isEmpty() ? "membership-restriction-container hide" : "membership-restriction-container" %>" id="<portlet:namespace />membershipRestrictionContainer">
+	<div class='<%= parentGroups.isEmpty() ? "membership-restriction-container hide" : "membership-restriction-container" %>' id="<portlet:namespace />membershipRestrictionContainer">
 
 		<%
 		boolean membershipRestriction = false;

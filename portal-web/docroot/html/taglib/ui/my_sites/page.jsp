@@ -113,7 +113,7 @@ List<Group> mySiteGroups = user.getMySiteGroups(classNames, max);
 							}
 							%>
 
-							<li class="<%= (selectedSite && layout.isPublicLayout()) ? "active" : "public-site" %> <%= itemCssClass %>">
+							<li class='<%= (selectedSite && layout.isPublicLayout()) ? "active" : "public-site" %> <%= itemCssClass %>'>
 								<a href="<%= HtmlUtil.escape(siteGroup.getDisplayURL(themeDisplay, false)) %>" onclick="Liferay.Util.forcePost(this); return false;" role="menuitem">
 
 									<%
@@ -154,7 +154,7 @@ List<Group> mySiteGroups = user.getMySiteGroups(classNames, max);
 							}
 							%>
 
-							<li class="<%= (selectedSite && layout.isPrivateLayout()) ? "active" : "private-site" %> <%= itemCssClass %>">
+							<li class='<%= (selectedSite && layout.isPrivateLayout()) ? "active" : "private-site" %> <%= itemCssClass %>'>
 								<a href="<%= HtmlUtil.escape(siteGroup.getDisplayURL(themeDisplay, true)) %>" onclick="Liferay.Util.forcePost(this); return false;" role="menuitem">
 
 									<%
@@ -220,7 +220,7 @@ List<Group> mySiteGroups = user.getMySiteGroups(classNames, max);
 						}
 						%>
 
-						<li class="<%= selectedSite ? "active" : StringPool.BLANK %>">
+						<li class='<%= selectedSite ? "active" : StringPool.BLANK %>'>
 							<c:choose>
 								<c:when test="<%= mySiteGroup.isControlPanel() %>">
 									<h3>

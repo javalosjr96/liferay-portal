@@ -193,7 +193,7 @@ BackgroundTask lastCompletedInitialPublicationBackgroundTask = BackgroundTaskMan
 						}
 						%>
 
-						<div class="<%= showRemoteOptions ? StringPool.BLANK : "hide" %>" id="<portlet:namespace />remoteStagingOptions">
+						<div class='<%= showRemoteOptions ? StringPool.BLANK : "hide" %>' id="<portlet:namespace />remoteStagingOptions">
 							<%@ include file="/error_auth_exception.jspf" %>
 
 							<%@ include file="/error_remote_export_exception.jspf" %>
@@ -220,13 +220,13 @@ BackgroundTask lastCompletedInitialPublicationBackgroundTask = BackgroundTaskMan
 									boolean overrideRemoteSiteURL = GetterUtil.getBoolean(liveGroupTypeSettings.getProperty("setRemoteSiteURL"));
 									%>
 
-									<span class="flex-item-center staging-configuration-control-label <%= secureConnection ? "staging-configuration-control-label-bold" : StringPool.BLANK %>">
+									<span class='flex-item-center staging-configuration-control-label <%= secureConnection ? "staging-configuration-control-label-bold" : StringPool.BLANK %>'>
 										<liferay-ui:message key="use-a-secure-network-connection" />
 									</span>
 									<span class="staging-configuration-control-toggle">
 										<aui:input label="<%= StringPool.BLANK %>" name="secureConnection" type="toggle-switch" value="<%= secureConnection %>" />
 									</span>
-									<span class="flex-item-center staging-configuration-control-label <%= overrideRemoteSiteURL ? "staging-configuration-control-label-bold" : StringPool.BLANK %>">
+									<span class='flex-item-center staging-configuration-control-label <%= overrideRemoteSiteURL ? "staging-configuration-control-label-bold" : StringPool.BLANK %>'>
 										<liferay-ui:message key="manually-define-remote-site-url" />
 									</span>
 									<span class="staging-configuration-control-toggle">
@@ -234,13 +234,13 @@ BackgroundTask lastCompletedInitialPublicationBackgroundTask = BackgroundTaskMan
 									</span>
 								</div>
 
-								<div class="<%= overrideRemoteSiteURL ? StringPool.BLANK : "hide" %>" id="<portlet:namespace />remoteSiteURLContainer">
+								<div class='<%= overrideRemoteSiteURL ? StringPool.BLANK : "hide" %>' id="<portlet:namespace />remoteSiteURLContainer">
 									<aui:input helpMessage="remote-site-url-help-message" label="remote-site-url" name="remoteSiteURL" size="20" type="text" value='<%= liveGroupTypeSettings.getProperty("remoteSiteURL") %>' />
 								</div>
 							</aui:fieldset>
 						</div>
 
-						<div class="<%= (liveGroup.isStaged() || (stagingType != StagingConstants.TYPE_NOT_STAGED)) ? StringPool.BLANK : "hide" %>" id="<portlet:namespace />stagedPortlets">
+						<div class='<%= (liveGroup.isStaged() || (stagingType != StagingConstants.TYPE_NOT_STAGED)) ? StringPool.BLANK : "hide" %>' id="<portlet:namespace />stagedPortlets">
 							<c:if test="<%= !liveGroup.isCompany() && !liveGroupRemoteStaging %>">
 								<aui:fieldset collapsible="<%= true %>" label="page-versioning">
 									<p class="staging-configuration-help-label">
@@ -254,7 +254,7 @@ BackgroundTask lastCompletedInitialPublicationBackgroundTask = BackgroundTaskMan
 										%>
 
 										<li class="flex-container list-group-item">
-											<span class="flex-item-center staging-configuration-control-label <%= branchingPublic ? "staging-configuration-control-label-bold" : StringPool.BLANK %>">
+											<span class='flex-item-center staging-configuration-control-label <%= branchingPublic ? "staging-configuration-control-label-bold" : StringPool.BLANK %>'>
 												<liferay-ui:message key="enabled-on-public-pages" />
 											</span>
 											<span class="staging-configuration-control-toggle">
@@ -267,7 +267,7 @@ BackgroundTask lastCompletedInitialPublicationBackgroundTask = BackgroundTaskMan
 										%>
 
 										<li class="flex-container list-group-item">
-											<span class="flex-item-center staging-configuration-control-label <%= branchingPrivate ? "staging-configuration-control-label-bold" : StringPool.BLANK %>">
+											<span class='flex-item-center staging-configuration-control-label <%= branchingPrivate ? "staging-configuration-control-label-bold" : StringPool.BLANK %>'>
 												<liferay-ui:message key="enabled-on-private-pages" />
 											</span>
 											<span class="staging-configuration-control-toggle">
@@ -324,7 +324,7 @@ BackgroundTask lastCompletedInitialPublicationBackgroundTask = BackgroundTaskMan
 									%>
 
 										<li class="flex-container list-group-item">
-											<span class="flex-item-center staging-configuration-control-label <%= staged ? "staging-configuration-control-label-bold" : StringPool.BLANK %>">
+											<span class='flex-item-center staging-configuration-control-label <%= staged ? "staging-configuration-control-label-bold" : StringPool.BLANK %>'>
 												<liferay-ui:message key="<%= PortalUtil.getPortletTitle(curPortlet, application, locale) %>" />
 											</span>
 											<span class="staging-configuration-control-toggle">

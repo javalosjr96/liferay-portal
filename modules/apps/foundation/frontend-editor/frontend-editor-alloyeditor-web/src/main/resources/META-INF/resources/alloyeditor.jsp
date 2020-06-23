@@ -65,7 +65,7 @@ if (editorOptions != null) {
 	<liferay-util:html-top
 		outputKey="js_editor_alloyeditor_skip_editor_loading"
 	>
-		<link data-senna-track="temporary" href="<%= PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR) + "/alloyeditor/assets/alloy-editor-atlas.css") %>" rel="stylesheet" type="text/css" />
+		<link data-senna-track="temporary" href='<%= PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR) + "/alloyeditor/assets/alloy-editor-atlas.css") %>' rel="stylesheet" type="text/css" />
 
 		<%
 		long javaScriptLastModified = PortalWebResourcesUtil.getLastModified(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR);
@@ -75,11 +75,11 @@ if (editorOptions != null) {
 			window.ALLOYEDITOR_BASEPATH = '<%= PortalUtil.getPathProxy() + application.getContextPath() %>/alloyeditor/';
 		</script>
 
-		<script data-senna-track="temporary" src="<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_CKEDITOR) + "/ckeditor/ckeditor.js", javaScriptLastModified)) %>" type="text/javascript"></script>
+		<script data-senna-track="temporary" src='<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_CKEDITOR) + "/ckeditor/ckeditor.js", javaScriptLastModified)) %>' type="text/javascript"></script>
 
-		<script data-senna-track="temporary" src="<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR) + "/alloyeditor/alloy-editor-no-ckeditor-min.js", javaScriptLastModified)) %>" type="text/javascript"></script>
+		<script data-senna-track="temporary" src='<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR) + "/alloyeditor/alloy-editor-no-ckeditor-min.js", javaScriptLastModified)) %>' type="text/javascript"></script>
 
-		<script data-senna-track="temporary" id="<%= namespace %>createReactClassScript" src="<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR) + "/js/create-react-class/create-react-class.min.js", javaScriptLastModified)) %>" type="text/javascript"></script>
+		<script data-senna-track="temporary" id="<%= namespace %>createReactClassScript" src='<%= HtmlUtil.escapeAttribute(PortalUtil.getStaticResourceURL(request, themeDisplay.getCDNHost() + PortalWebResourcesUtil.getContextPath(PortalWebResourceConstants.RESOURCE_TYPE_EDITOR_ALLOYEDITOR) + "/js/create-react-class/create-react-class.min.js", javaScriptLastModified)) %>' type="text/javascript"></script>
 
 		<liferay-util:dynamic-include key='<%= "com.liferay.frontend.editor.alloyeditor.web#" + editorName + "#additionalResources" %>' />
 
@@ -138,15 +138,15 @@ if (editorOptions != null) {
 			</div>
 
 			<div class="alloy-editor-switch hide">
-				<button class="btn btn-default btn-xs hide lfr-portal-tooltip" data-title="<%= LanguageUtil.get(resourceBundle, "fullscreen") %>" id="<%= HtmlUtil.escapeAttribute(name) %>Fullscreen" type="button">
+				<button class="btn btn-default btn-xs hide lfr-portal-tooltip" data-title='<%= LanguageUtil.get(resourceBundle, "fullscreen") %>' id="<%= HtmlUtil.escapeAttribute(name) %>Fullscreen" type="button">
 					<aui:icon cssClass="icon-monospaced" image="expand" markupView="lexicon" />
 				</button>
 
-				<button class="btn btn-default btn-xs hide lfr-portal-tooltip" data-title="<%= LanguageUtil.get(resourceBundle, "switch-theme") %>" id="<%= HtmlUtil.escapeAttribute(name) %>SwitchTheme" type="button">
+				<button class="btn btn-default btn-xs hide lfr-portal-tooltip" data-title='<%= LanguageUtil.get(resourceBundle, "switch-theme") %>' id="<%= HtmlUtil.escapeAttribute(name) %>SwitchTheme" type="button">
 					<aui:icon cssClass="icon-monospaced" image="moon" markupView="lexicon" />
 				</button>
 
-				<button class="btn btn-default btn-xs editor-view lfr-portal-tooltip" data-title="<%= LanguageUtil.get(resourceBundle, "code-view") %>" id="<%= HtmlUtil.escapeAttribute(name) %>Switch" type="button">
+				<button class="btn btn-default btn-xs editor-view lfr-portal-tooltip" data-title='<%= LanguageUtil.get(resourceBundle, "code-view") %>' id="<%= HtmlUtil.escapeAttribute(name) %>Switch" type="button">
 					<aui:icon cssClass="icon-monospaced" image="code" markupView="lexicon" />
 				</button>
 			</div>

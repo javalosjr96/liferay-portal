@@ -55,7 +55,7 @@ String redirect = ParamUtil.getString(request, "redirect");
 				<aui:fieldset collapsed="<%= true %>" collapsible="<%= true %>" label="advanced-options">
 					<aui:input name="preferences--showThumbnail--" type="toggle-switch" value="<%= youTubeDisplayContext.isShowThumbnail() %>" />
 
-					<div class="<%= youTubeDisplayContext.isShowThumbnail() ? "hide" : StringPool.BLANK %>" id="<portlet:namespace />videoPreferences">
+					<div class='<%= youTubeDisplayContext.isShowThumbnail() ? "hide" : StringPool.BLANK %>' id="<portlet:namespace />videoPreferences">
 						<aui:input inlineField="<%= true %>" label="auto-play" name="preferences--autoplay--" type="toggle-switch" value="<%= youTubeDisplayContext.isAutoPlay() %>" />
 
 						<aui:input inlineField="<%= true %>" name="preferences--loop--" type="toggle-switch" value="<%= youTubeDisplayContext.isLoop() %>" />

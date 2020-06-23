@@ -37,7 +37,7 @@
 
 				<ul class="list-unstyled users">
 					<li class="default facet-value">
-						<a class="<%= Validator.isNull(fieldParam) ? "text-primary" : "text-default" %>" data-value="" href="javascript:;"><liferay-ui:message key="<%= HtmlUtil.escape(facetConfiguration.getLabel()) %>" /></a>
+						<a class='<%= Validator.isNull(fieldParam) ? "text-primary" : "text-default" %>' data-value="" href="javascript:;"><liferay-ui:message key="<%= HtmlUtil.escape(facetConfiguration.getLabel()) %>" /></a>
 					</li>
 
 					<%
@@ -54,7 +54,7 @@
 					%>
 
 						<li class="facet-value">
-							<a class="<%= userName.equals(curUserName) ? "text-primary" : "text-default" %>" data-value="<%= HtmlUtil.escapeAttribute(curUserName) %>" href="javascript:;">
+							<a class='<%= userName.equals(curUserName) ? "text-primary" : "text-default" %>' data-value="<%= HtmlUtil.escapeAttribute(curUserName) %>" href="javascript:;">
 								<%= HtmlUtil.escape(curUserName) %>
 
 								<c:if test="<%= showAssetCount %>">

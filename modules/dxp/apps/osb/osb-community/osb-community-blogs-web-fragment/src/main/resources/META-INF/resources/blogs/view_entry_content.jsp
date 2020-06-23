@@ -187,7 +187,7 @@ String socialBookmarksDisplayPosition = blogsPortletInstanceConfiguration.social
 				</aui:container>
 			</c:if>
 
-			<div class="<%= viewSingleEntry ? "border-top" : StringPool.BLANK %> entry-footer">
+			<div class='<%= viewSingleEntry ? "border-top" : StringPool.BLANK %> entry-footer'>
 				<div class="container">
 					<div class="entry-social">
 						<c:if test="<%= !viewSingleEntry && blogsPortletInstanceConfiguration.enableComments() %>">

@@ -4,7 +4,7 @@
 	<div class="container">
 		<div class="navbar">
 			<div class="navbar-logo">
-				<a class="navbar-logo-link" href="${site_default_url}" title="<@liferay.language_format arguments=" ${site_name} " key="go-to-x" />">
+				<a class="navbar-logo-link" href="${site_default_url}" title='<@liferay.language_format arguments=" ${site_name} " key="go-to-x" />'>
 					<img alt="${logo_description}" class="navbar-logo-image" src="${images_folder}/logo.svg" />
 				</a>
 			</div>
@@ -17,7 +17,7 @@
 					/>
 				</a>
 
-				<ul aria-label="<@liferay.language key="site-pages" />" class="navbar-list" role="menubar">
+				<ul aria-label='<@liferay.language key="site-pages" />' class="navbar-list" role="menubar">
 					<#list nav_items as nav_item>
 						<#assign navbar_link_class = "navbar-link" />
 

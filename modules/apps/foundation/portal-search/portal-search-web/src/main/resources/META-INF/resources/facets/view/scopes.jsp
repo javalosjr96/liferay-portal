@@ -42,7 +42,7 @@ ScopeSearchFacetDisplayContext scopeSearchFacetDisplayContext = new ScopeSearchF
 
 					<ul class="list-unstyled scopes">
 						<li class="default facet-value">
-							<a class="<%= scopeSearchFacetDisplayContext.isNothingSelected() ? "text-primary" : "text-default" %>" data-value="0" href="javascript:;"><liferay-ui:message key="<%= HtmlUtil.escape(facetConfiguration.getLabel()) %>" /></a>
+							<a class='<%= scopeSearchFacetDisplayContext.isNothingSelected() ? "text-primary" : "text-default" %>' data-value="0" href="javascript:;"><liferay-ui:message key="<%= HtmlUtil.escape(facetConfiguration.getLabel()) %>" /></a>
 						</li>
 
 						<%
@@ -52,7 +52,7 @@ ScopeSearchFacetDisplayContext scopeSearchFacetDisplayContext = new ScopeSearchF
 						%>
 
 							<li class="facet-value">
-								<a class="<%= scopeSearchFacetTermDisplayContext.isSelected() ? "text-primary" : "text-default" %>" data-value="<%= scopeSearchFacetTermDisplayContext.getGroupId() %>" href="javascript:;">
+								<a class='<%= scopeSearchFacetTermDisplayContext.isSelected() ? "text-primary" : "text-default" %>' data-value="<%= scopeSearchFacetTermDisplayContext.getGroupId() %>" href="javascript:;">
 									<%= HtmlUtil.escape(scopeSearchFacetTermDisplayContext.getDescriptiveName()) %>
 
 									<c:if test="<%= scopeSearchFacetTermDisplayContext.isShowCount() %>">

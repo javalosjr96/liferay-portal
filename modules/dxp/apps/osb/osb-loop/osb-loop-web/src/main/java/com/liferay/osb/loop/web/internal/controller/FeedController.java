@@ -705,7 +705,7 @@ public class FeedController extends LoopAlloyControllerImpl {
 		assetEntrySet = AssetEntrySetUtil.updateAssetEntrySet(
 			request, themeDisplay, assetEntrySet.getAssetEntrySetId(),
 			payloadJSONObject.toString(),
-			assetEntrySet.getPrivateAssetEntrySet(), stickyTime, title, type,
+			assetEntrySet.isPrivateAssetEntrySet(), stickyTime, title, type,
 			assetEntrySet.getStatus());
 
 		_addLoopUserNotificationSubscription(assetEntrySet);

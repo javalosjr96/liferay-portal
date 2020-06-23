@@ -416,7 +416,7 @@ boolean minQuantityMultiple = PrefsPropsUtil.getBoolean(company.getCompanyId(), 
 	if (shoppingGroupServiceOverriddenConfiguration.usePayPal()) {
 	%>
 
-		<img alt="<liferay-ui:message escapeAttribute="<%= true %>" key="paypal" />" src="<%= themeDisplay.getPathThemeImages() %>/shopping/cc_paypal.png" />
+		<img alt='<liferay-ui:message escapeAttribute="<%= true %>" key="paypal" />' src="<%= themeDisplay.getPathThemeImages() %>/shopping/cc_paypal.png" />
 
 		<br /><br />
 

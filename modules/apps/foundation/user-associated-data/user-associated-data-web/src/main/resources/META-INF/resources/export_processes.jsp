@@ -36,7 +36,7 @@ UADExportProcessDisplayContext uadExportProcessDisplayContext = new UADExportPro
 					<liferay-ui:message key="<%= UADLanguageUtil.getApplicationName(UADExportProcessUtil.getApplicationKey(backgroundTask), locale) %>" />
 				</h5>
 
-				<span class="<%= "text-" + UADExportProcessUtil.getStatusStyle(backgroundTask.getStatus()) %>">
+				<span class='<%= "text-" + UADExportProcessUtil.getStatusStyle(backgroundTask.getStatus()) %>'>
 					<liferay-ui:message key="<%= backgroundTask.getStatusLabel() %>" />
 				</span>
 			</div>

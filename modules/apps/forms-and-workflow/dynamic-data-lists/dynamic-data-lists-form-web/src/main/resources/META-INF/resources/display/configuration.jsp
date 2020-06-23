@@ -42,10 +42,10 @@ DDLRecordSet selRecordSet = DDLRecordSetServiceUtil.fetchRecordSet(recordSetId);
 	<div class="portlet-configuration-body-content">
 		<div class="container-fluid-1280">
 			<div class="alert alert-info">
-				<span class="displaying-help-message-holder <%= (selRecordSet == null) ? StringPool.BLANK : "hide" %>">
+				<span class='displaying-help-message-holder <%= (selRecordSet == null) ? StringPool.BLANK : "hide" %>'>
 					<liferay-ui:message key="please-select-a-form-from-the-list-below" />
 				</span>
-				<span class="displaying-record-set-id-holder <%= (selRecordSet == null) ? "hide" : StringPool.BLANK %>">
+				<span class='displaying-record-set-id-holder <%= (selRecordSet == null) ? "hide" : StringPool.BLANK %>'>
 					<liferay-ui:message key="displaying-form" />: <span class="displaying-record-set-id"><%= (selRecordSet != null) ? HtmlUtil.escape(selRecordSet.getName(locale)) : StringPool.BLANK %></span>
 				</span>
 			</div>

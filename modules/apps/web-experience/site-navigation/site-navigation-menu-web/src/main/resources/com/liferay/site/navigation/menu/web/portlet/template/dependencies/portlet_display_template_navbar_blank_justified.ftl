@@ -12,7 +12,7 @@
 	/>
 
 	<div class="navbar" id="${navbarId}">
-		<ul aria-label="<@liferay.language key="site-pages" />" class="nav nav-justified navbar-blank navbar-site" role="menubar">
+		<ul aria-label='<@liferay.language key="site-pages" />' class="nav nav-justified navbar-blank navbar-site" role="menubar">
 			<h1 class="hide-accessible"><@liferay.language key="navigation" /></h1>
 
 			<#assign navItems = entries />

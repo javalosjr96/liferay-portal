@@ -169,10 +169,10 @@ if (ratingsEntry != null) {
 									}
 									%>
 
-									<span class="glyphicon glyphicon-thumbs-up rating-element rating-thumb-up rating-<%= thumbUp ? "on" : "off" %>" title="<%= thumbsTitle %>"><%= positiveVotes %></span>
+									<span class='glyphicon glyphicon-thumbs-up rating-element rating-thumb-up rating-<%= thumbUp ? "on" : "off" %>' title="<%= thumbsTitle %>"><%= positiveVotes %></span>
 
 									<c:if test="<%= type.equals(RatingsType.THUMBS.getValue()) %>">
-										<span class="glyphicon glyphicon-thumbs-down rating-element rating-thumb-down rating-<%= thumbDown ? "on" : "off" %>" title="<%= thumbsTitle %>"><%= negativeVotes %></span>
+										<span class='glyphicon glyphicon-thumbs-down rating-element rating-thumb-down rating-<%= thumbDown ? "on" : "off" %>' title="<%= thumbsTitle %>"><%= negativeVotes %></span>
 									</c:if>
 								</c:when>
 								<c:otherwise>
@@ -188,10 +188,10 @@ if (ratingsEntry != null) {
 									}
 									%>
 
-									<a class="glyphicon glyphicon-thumbs-up rating-element rating-thumb-up rating-<%= thumbUp ? "on" : "off" %>" href="javascript:;" title="<liferay-ui:message key="<%= positiveRatingMessage %>" />"><%= positiveVotes %></a>
+									<a class='glyphicon glyphicon-thumbs-up rating-element rating-thumb-up rating-<%= thumbUp ? "on" : "off" %>' href="javascript:;" title='<liferay-ui:message key="<%= positiveRatingMessage %>" />'><%= positiveVotes %></a>
 
 									<c:if test="<%= type.equals(RatingsType.THUMBS.getValue()) %>">
-										<a class="glyphicon glyphicon-thumbs-down rating-element rating-thumb-down rating-<%= thumbDown ? "on" : "off" %>" href="javascript:;" title="<liferay-ui:message key='<%= thumbDown ? "you-have-rated-this-as-bad" : "rate-this-as-bad" %>' />"><%= negativeVotes %></a>
+										<a class='glyphicon glyphicon-thumbs-down rating-element rating-thumb-down rating-<%= thumbDown ? "on" : "off" %>' href="javascript:;" title='<liferay-ui:message key='<%= thumbDown ? "you-have-rated-this-as-bad" : "rate-this-as-bad" %>' />'><%= negativeVotes %></a>
 									</c:if>
 
 									<div class="rating-input-container">

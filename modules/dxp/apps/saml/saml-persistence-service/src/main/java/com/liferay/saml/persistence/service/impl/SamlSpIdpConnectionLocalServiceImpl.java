@@ -187,8 +187,8 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		}
 
 		if (Validator.isNotNull(metadataXml)) {
-			samlSpIdpConnection.setMetadataUpdatedDate(new Date());
 			samlSpIdpConnection.setMetadataXml(metadataXml);
+			samlSpIdpConnection.setMetadataUpdatedDate(new Date());
 
 			samlSpIdpConnectionPersistence.update(samlSpIdpConnection);
 		}
@@ -234,7 +234,7 @@ public class SamlSpIdpConnectionLocalServiceImpl
 		samlSpIdpConnection.setExpandoBridgeAttributes(serviceContext);
 		samlSpIdpConnection.setForceAuthn(forceAuthn);
 		samlSpIdpConnection.setLdapImportEnabled(ldapImportEnabled);
-		samlSpIdpConnection.setMetadataUpdatedDate(now);
+		samlSpIdpConnection.setMetadataXml(metadataXml);
 
 		if ((metadataXmlInputStream == null) &&
 			Validator.isNotNull(metadataUrl)) {
@@ -264,7 +264,7 @@ public class SamlSpIdpConnectionLocalServiceImpl
 
 		if (Validator.isNotNull(metadataXml)) {
 			samlSpIdpConnection.setMetadataUpdatedDate(now);
-			samlSpIdpConnection.setMetadataXml(metadataXml);
+			samlSpIdpConnection.setMetadataUpdatedDate(now);
 		}
 
 		samlSpIdpConnection.setName(name);

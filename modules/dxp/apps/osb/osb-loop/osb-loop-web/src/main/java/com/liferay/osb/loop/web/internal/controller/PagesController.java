@@ -222,7 +222,7 @@ public class PagesController extends LoopAlloyControllerImpl {
 
 		assetEntrySet = AssetEntrySetUtil.updateAssetEntrySet(
 			request, themeDisplay, assetEntrySet.getAssetEntrySetId(), payload,
-			assetEntrySet.getPrivateAssetEntrySet(), 0, title,
+			assetEntrySet.isPrivateAssetEntrySet(), 0, title,
 			assetEntrySet.getType(), assetEntrySet.getStatus());
 
 		JSONObject newAssetEntrySetCompositeJSONObject =

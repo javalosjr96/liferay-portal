@@ -39,8 +39,8 @@ public class MeetupGroupLocalServiceImpl
 
 		MeetupGroup meetupGroup = meetupGroupPersistence.create(meetupGroupId);
 
-		meetupGroup.setCompanyId(serviceContext.getCompanyId());
 		meetupGroup.setGroupId(serviceContext.getScopeGroupId());
+		meetupGroup.setCompanyId(serviceContext.getCompanyId());
 		meetupGroup.setCreateDate(serviceContext.getCreateDate(now));
 		meetupGroup.setModifiedDate(serviceContext.getModifiedDate(now));
 		meetupGroup.setName(name);

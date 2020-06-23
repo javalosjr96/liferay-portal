@@ -1344,7 +1344,7 @@ public class LoopUserNotificationEventUtil {
 			AssetEntrySetLocalServiceUtil.getAssetEntrySet(
 				loopUserNotificationEvent.getGroupClassPK());
 
-		return assetEntrySet.getPrivateAssetEntrySet();
+		return assetEntrySet.isPrivateAssetEntrySet();
 	}
 
 	protected static boolean isSharedWithUser(

@@ -60,6 +60,6 @@ else if (displayStyle.equals("vertical")) {
 </liferay-util:html-bottom>
 
 <div id="<%= randomNamespace %>fbRoot">
-	<div class="fb-like" data-action="like" data-height="<%= (facebookDisplayStyle.equals("standard") || facebookDisplayStyle.equals("button_count")) ? 20 : StringPool.BLANK %>" data-href="<%= url %>" data-layout="<%= facebookDisplayStyle %>" data-show-faces="true" data-size="small">
+	<div class="fb-like" data-action="like" data-height='<%= (facebookDisplayStyle.equals("standard") || facebookDisplayStyle.equals("button_count")) ? 20 : StringPool.BLANK %>' data-href="<%= url %>" data-layout="<%= facebookDisplayStyle %>" data-show-faces="true" data-size="small">
 	</div>
 </div>

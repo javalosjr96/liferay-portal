@@ -35,7 +35,7 @@
 
 				<aui:input name="preferences--enableHighlighting--" type="checkbox" value="<%= journalContentSearchPortletInstanceConfiguration.enableHighlighting() %>" />
 
-				<div class="<%= !journalContentSearchPortletInstanceConfiguration.showListed() ? StringPool.BLANK : " hide" %>" id="<portlet:namespace />webContentDisplay">
+				<div class='<%= !journalContentSearchPortletInstanceConfiguration.showListed() ? StringPool.BLANK : " hide" %>' id="<portlet:namespace />webContentDisplay">
 					<aui:input cssClass="lfr-input-text-container" name="preferences--targetPortletId--" value="<%= journalContentSearchPortletInstanceConfiguration.targetPortletId() %>" />
 				</div>
 			</aui:fieldset>

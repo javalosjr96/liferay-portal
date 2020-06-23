@@ -62,7 +62,7 @@ LayoutsTreeDisplayContext layoutsTreeDisplayContext = new LayoutsTreeDisplayCont
 			</c:if>
 
 			<c:if test="<%= layoutsTreeDisplayContext.isShowPublicLayoutsTree() %>">
-				<div class="layout-set-tab <%= layoutsTreeDisplayContext.isPrivateLayout() ? StringPool.BLANK : "selected-layout-set" %>">
+				<div class='layout-set-tab <%= layoutsTreeDisplayContext.isPrivateLayout() ? StringPool.BLANK : "selected-layout-set" %>'>
 
 					<%
 					data.put("qa-id", "goToPublicPages");
@@ -134,7 +134,7 @@ LayoutsTreeDisplayContext layoutsTreeDisplayContext = new LayoutsTreeDisplayCont
 			</c:if>
 
 			<c:if test="<%= layoutsTreeDisplayContext.isShowPrivateLayoutsTree() %>">
-				<div class="layout-set-tab <%= layoutsTreeDisplayContext.isPrivateLayout() ? "selected-layout-set" : StringPool.BLANK %>">
+				<div class='layout-set-tab <%= layoutsTreeDisplayContext.isPrivateLayout() ? "selected-layout-set" : StringPool.BLANK %>'>
 
 					<%
 					data.put("qa-id", "goToPrivatePages");
@@ -289,7 +289,7 @@ LayoutsTreeDisplayContext layoutsTreeDisplayContext = new LayoutsTreeDisplayCont
 
 	<c:if test="<%= layoutsTreeDisplayContext.isShowStagingProcessMessage() %>">
 		<div class="alert alert-default alert-dismissible" data-dismiss="alert" role="alert">
-			<button aria-label="<%= LanguageUtil.get(request, "close") %>" class="close" type="button">
+			<button aria-label='<%= LanguageUtil.get(request, "close") %>' class="close" type="button">
 				<aui:icon image="times" markupView="lexicon" />
 
 				<span class="sr-only"><liferay-ui:message key="close" /></span>

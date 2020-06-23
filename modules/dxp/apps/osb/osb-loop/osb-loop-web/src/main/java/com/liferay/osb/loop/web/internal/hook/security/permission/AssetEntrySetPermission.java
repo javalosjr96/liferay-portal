@@ -64,7 +64,7 @@ public class AssetEntrySetPermission implements BaseModelPermissionChecker {
 		AssetEntrySet assetEntrySet =
 			_assetEntrySetLocalService.getAssetEntrySet(primaryKey);
 
-		if (assetEntrySet.getPrivateAssetEntrySet() &&
+		if (assetEntrySet.isPrivateAssetEntrySet() &&
 			!hasSharingPermission(
 				permissionChecker.getUserId(),
 				assetEntrySet.getAssetEntrySetId())) {

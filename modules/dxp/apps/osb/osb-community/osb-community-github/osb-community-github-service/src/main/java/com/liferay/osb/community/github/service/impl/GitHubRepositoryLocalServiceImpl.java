@@ -154,9 +154,9 @@ public class GitHubRepositoryLocalServiceImpl
 		gitHubRepository.setName(name);
 		gitHubRepository.setCommits(commits);
 		gitHubRepository.setOpenIssues(openIssues);
-		gitHubRepository.setRepositoryCreateDate(repositoryCreateDate);
 		gitHubRepository.setStars(stars);
 		gitHubRepository.setUrl(url);
+		gitHubRepository.setRepositoryCreateDate(repositoryCreateDate);
 
 		return gitHubRepositoryPersistence.update(gitHubRepository);
 	}
