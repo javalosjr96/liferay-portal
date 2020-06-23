@@ -25,7 +25,7 @@ String displayStyle = journalDisplayContext.getDisplayStyle();
 %>
 
 <liferay-ui:search-container
-	emptyResultsMessage="no-web-content-was-foundd"
+	emptyResultsMessage="no-web-content-was-found"
 	id='<%= ParamUtil.getString(request, "searchContainerId") %>'
 	searchContainer="<%= articleSearchContainer %>"
 >
