@@ -68,12 +68,10 @@ public class KBArticleStagedModelDataHandlerTest
 		KBArticle exportedKBArticle = (KBArticle)readExportedStagedModel(
 			kbArticle);
 
-		long actualClassNameId = ReflectionTestUtil.getFieldValue(
-			exportedKBArticle, "_classNameId");
-
-		long expectedClassNameID = 0;
-
-		Assert.assertEquals(expectedClassNameID, actualClassNameId);
+		Assert.assertEquals(
+			0L,
+			(long)ReflectionTestUtil.getFieldValue(
+				exportedKBArticle, "_classNameId"));
 	}
 
 	@Test
