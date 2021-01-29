@@ -36,6 +36,8 @@ import com.liferay.portal.kernel.model.LayoutSetPrototype;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.model.Theme;
+import com.liferay.portal.kernel.model.ThemeSetting;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
@@ -63,6 +65,7 @@ import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.model.impl.ThemeSettingImpl;
 import com.liferay.portal.servlet.filters.cache.CacheUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -564,6 +567,44 @@ public class LayoutSetPrototypePropagationTest
 			userGroup.getGroupId(), true);
 
 		SitesUtil.resetPrototype(layoutSet);
+	}
+
+	@Test
+	public void testThemeSettingsWithLinkEnabled() throws Exception {
+		LayoutSet prototypeLayoutSet =
+			_layoutSetPrototypeGroup.getPrivateLayoutSet();
+
+		Theme prototypeTheme = prototypeLayoutSet.getTheme();
+
+		Map<String, ThemeSetting> prototypeThemeSettings =
+			prototypeTheme.getConfigurableSettings();
+
+		UnicodeProperties settingsUnicodeProperties =
+			prototypeLayoutSet.getSettingsProperties();
+
+		for (String propertyKey : prototypeThemeSettings.keySet()) {
+			settingsUnicodeProperties.setProperty(
+				ThemeSettingImpl.namespaceProperty("regular", propertyKey),
+				RandomTestUtil.randomString());
+		}
+
+		prototypeLayoutSet.setSettingsProperties(settingsUnicodeProperties);
+
+		LayoutSetLocalServiceUtil.updateLayoutSet(prototypeLayoutSet);
+
+		propagateChanges(group);
+
+		LayoutSet targetLayoutSet = group.getPrivateLayoutSet();
+
+		for (String propertyKey : prototypeThemeSettings.keySet()) {
+			String prototypeValue = prototypeLayoutSet.getThemeSetting(
+				propertyKey, "regular");
+
+			String targetValue = targetLayoutSet.getThemeSetting(
+				propertyKey, "regular");
+
+			Assert.assertEquals(prototypeValue, targetValue);
+		}
 	}
 
 	@Override
