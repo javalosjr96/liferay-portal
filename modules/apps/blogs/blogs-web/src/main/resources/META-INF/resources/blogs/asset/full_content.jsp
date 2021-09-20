@@ -24,31 +24,40 @@ BlogsEntry entry = (BlogsEntry)request.getAttribute(WebKeys.BLOGS_ENTRY);
 String entryTitle = BlogsEntryUtil.getDisplayTitle(resourceBundle, entry);
 %>
 
-<div class="widget-mode-simple" data-analytics-asset-id="<%= String.valueOf(entry.getEntryId()) %>" data-analytics-asset-title="<%= HtmlUtil.escapeAttribute(entryTitle) %>" data-analytics-asset-type="blog">
-	<div class="widget-mode-simple-entry">
-		<div class="widget-content" id="<portlet:namespace /><%= entry.getEntryId() %>">
+<div class="portlet-blogs">
+	<div class="widget-mode-simple" data-analytics-asset-id="<%= String.valueOf(entry.getEntryId()) %>" data-analytics-asset-title="<%= HtmlUtil.escapeAttribute(entryTitle) %>" data-analytics-asset-type="blog">
+		<div class="widget-mode-simple-entry">
+			<div class="widget-content" id="<portlet:namespace /><%= entry.getEntryId() %>">
 
-			<%
-			String coverImageURL = entry.getCoverImageURL(themeDisplay);
-			%>
+				<%
+				String subtitle = entry.getSubtitle();
+				%>
 
-			<c:if test="<%= Validator.isNotNull(coverImageURL) %>">
-				<div class="aspect-ratio aspect-ratio-8-to-3 aspect-ratio-bg-cover cover-image" style="background-image: url(<%= coverImageURL %>);"></div>
-			</c:if>
+				<c:if test="<%= Validator.isNotNull(subtitle) %>">
+					<h4 class="sub-title"><%= HtmlUtil.escape(subtitle) %></h4>
+				</c:if>
 
-			<%= entry.getContent() %>
-		</div>
+				<%
+				String coverImageURL = entry.getCoverImageURL(themeDisplay);
+				%>
 
-		<liferay-expando:custom-attributes-available
-			className="<%= BlogsEntry.class.getName() %>"
-		>
-			<liferay-expando:custom-attribute-list
+				<c:if test="<%= Validator.isNotNull(coverImageURL) %>">
+					<div class="aspect-ratio aspect-ratio-8-to-3 aspect-ratio-bg-cover cover-image" style="background-image: url(<%= coverImageURL %>);"></div>
+				</c:if>
+				<%= entry.getContent() %>
+			</div>
+
+			<liferay-expando:custom-attributes-available
 				className="<%= BlogsEntry.class.getName() %>"
-				classPK="<%= (entry != null) ? entry.getEntryId() : 0 %>"
-				editable="<%= false %>"
-				label="<%= true %>"
-			/>
-		</liferay-expando:custom-attributes-available>
+			>
+				<liferay-expando:custom-attribute-list
+					className="<%= BlogsEntry.class.getName() %>"
+					classPK="<%= (entry != null) ? entry.getEntryId() : 0 %>"
+					editable="<%= false %>"
+					label="<%= true %>"
+				/>
+			</liferay-expando:custom-attributes-available>
+		</div>
 	</div>
 </div>
 
