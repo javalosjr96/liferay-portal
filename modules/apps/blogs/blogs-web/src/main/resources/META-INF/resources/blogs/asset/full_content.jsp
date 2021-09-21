@@ -28,6 +28,7 @@ String entryTitle = BlogsEntryUtil.getDisplayTitle(resourceBundle, entry);
 	<div class="widget-mode-simple-entry">
 		<div class="widget-content" id="<portlet:namespace /><%= entry.getEntryId() %>">
 
+
 			<%
 			String coverImageURL = entry.getCoverImageURL(themeDisplay);
 			%>
