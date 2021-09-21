@@ -30,14 +30,6 @@ String entryTitle = BlogsEntryUtil.getDisplayTitle(resourceBundle, entry);
 			<div class="widget-content" id="<portlet:namespace /><%= entry.getEntryId() %>">
 
 				<%
-				String subtitle = entry.getSubtitle();
-				%>
-
-				<c:if test="<%= Validator.isNotNull(subtitle) %>">
-					<h4 class="sub-title"><%= HtmlUtil.escape(subtitle) %></h4>
-				</c:if>
-
-				<%
 				String coverImageURL = entry.getCoverImageURL(themeDisplay);
 				%>
 
