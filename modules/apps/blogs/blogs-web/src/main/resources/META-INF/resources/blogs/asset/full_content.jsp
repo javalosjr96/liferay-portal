@@ -22,11 +22,16 @@
 BlogsEntry entry = (BlogsEntry)request.getAttribute(WebKeys.BLOGS_ENTRY);
 
 String entryTitle = BlogsEntryUtil.getDisplayTitle(resourceBundle, entry);
+String entrySubtitle = entry.getSubtitle();
 %>
-
+<div class="portlet-blogs">
 <div class="widget-mode-simple" data-analytics-asset-id="<%= String.valueOf(entry.getEntryId()) %>" data-analytics-asset-title="<%= HtmlUtil.escapeAttribute(entryTitle) %>" data-analytics-asset-type="blog">
 	<div class="widget-mode-simple-entry">
 		<div class="widget-content" id="<portlet:namespace /><%= entry.getEntryId() %>">
+
+			<h4 class="sub-title">
+				<%=entrySubtitle%>
+			</h4>
 
 			<%
 			String coverImageURL = entry.getCoverImageURL(themeDisplay);
@@ -50,6 +55,7 @@ String entryTitle = BlogsEntryUtil.getDisplayTitle(resourceBundle, entry);
 			/>
 		</liferay-expando:custom-attributes-available>
 	</div>
+</div>
 </div>
 
 <liferay-util:dynamic-include key="com.liferay.blogs.web#/blogs/asset/full_content.jsp#post" />
