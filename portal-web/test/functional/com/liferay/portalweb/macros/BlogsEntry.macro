@@ -1251,8 +1251,8 @@ definition {
 		var key_entrySubtitle = "${entrySubtitle}";
 
 		AssertTextEquals(
-        	locator1 = "Sharing#BLOGS_SUBTITLE",
-        	value1 = "${entrySubtitle}");
+			locator1 = "Sharing#BLOGS_SUBTITLE",
+			value1 = "${entrySubtitle}");
 
 		AssertTextEquals(
 			locator1 = "Sharing#BLOGS_CONTENT",
