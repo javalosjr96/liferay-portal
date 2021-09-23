@@ -13,7 +13,7 @@
 	<!--BLOGS-->
 <tr>
 	<td>BLOGS_SUBTITLE</td>
-	<td>//h4[contains(.,'${key_entrySubtitle}')]</td>
+	<td>//h4[@class='sub-title']</td>
 	<td></td>
 </tr>
 <tr>

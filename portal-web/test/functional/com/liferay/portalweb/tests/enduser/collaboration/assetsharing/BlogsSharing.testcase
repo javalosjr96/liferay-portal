@@ -358,6 +358,6 @@ definition {
 		User.loginUserPG(
 			password = "test",
 			userEmailAddress = "test@liferay.com");
-}
+	}
 
 }
