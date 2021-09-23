@@ -24,7 +24,7 @@ definition {
 
 		JSONBlog.addEntry(
 			entryContent = "Blogs Entry Content",
-			entrySubtitle = "",
+			entrySubtitle = "Blogs Entry Subtitle",
 			entryTitle = "Blogs Entry Title");
 
 		BlogsNavigator.openBlogsAdmin(siteURLKey = "guest");
@@ -102,6 +102,12 @@ definition {
 			contentSharingPermission = "commenting",
 			contentTitle = "Blogs Entry Title",
 			ownerName = "Test Test");
+
+		User.logoutPG();
+
+		User.loginUserPG(
+			password = "test",
+			userEmailAddress = "test@liferay.com");
 	}
 
 	@description = "This case ensures that sharing permissions can be updated through Shared by Me."
@@ -147,8 +153,14 @@ definition {
 		BlogsEntry.viewSharedAsset(
 			contentSharingPermission = "View",
 			entryContent = "Blogs Entry Content",
-			entrySubtitle = "Blogs Entry Subtitle Edit",
+			entrySubtitle = "Blogs Entry Subtitle",
 			entryTitle = "Blogs Entry Title");
+
+		User.logoutPG();
+
+		User.loginUserPG(
+			password = "test",
+			userEmailAddress = "test@liferay.com");
 	}
 
 	@description = "This test ensures a user can only comment on a blog entry once it is shared with him."
@@ -183,10 +195,16 @@ definition {
 		BlogsEntry.viewSharedAsset(
 			contentSharingPermission = "Comment",
 			entryContent = "Blogs Entry Content",
-			entrySubtitle = "Blogs Entry Subtitle Edit",
+			entrySubtitle = "Blogs Entry Subtitle",
 			entryTitle = "Blogs Entry Title");
 
 		Comments.addPG(entryComment = "test");
+
+		User.logoutPG();
+
+		User.loginUserPG(
+			password = "test",
+			userEmailAddress = "test@liferay.com");
 	}
 
 	@description = "This test ensures a user can update a blog entry once it is shared with him."
@@ -223,7 +241,7 @@ definition {
 		BlogsEntry.editEntryContent(
 			entryContent = "Blogs Entry Content",
 			entryContentEdit = "Blogs Entry Content Edit",
-			entrySubtitle = "",
+			entrySubtitle = "Blogs Entry Subtitle",
 			entrySubtitleEdit = "Blogs Entry Subtitle Edit",
 			entryTitle = "Blogs Entry Title",
 			entryTitleEdit = "Blogs Entry Title Edit");
@@ -234,6 +252,12 @@ definition {
 			entryContent = "Blogs Entry Content Edit",
 			entrySubtitle = "Blogs Entry Subtitle Edit",
 			entryTitle = "Blogs Entry Title Edit");
+
+		User.logoutPG();
+
+		User.loginUserPG(
+			password = "test",
+			userEmailAddress = "test@liferay.com");
 	}
 
 	@description = "This test ensures that when a blog entry that was shared is deleted, it cannot be accessed."
@@ -270,6 +294,12 @@ definition {
 		AssertTextEquals(
 			locator1 = "Sharing#NOTIFICATIONS_DELETE_ENTRY_CONTENT",
 			value1 = "Notification for Sharing was deleted.");
+
+		User.logoutPG();
+
+		User.loginUserPG(
+			password = "test",
+			userEmailAddress = "test@liferay.com");
 	}
 
 	@description = "This case ensures that the latest sharing permissions set for a user persists across all notification entries."
@@ -320,8 +350,14 @@ definition {
 		BlogsEntry.viewSharedAsset(
 			contentSharingPermission = "View",
 			entryContent = "Blogs Entry Content",
-			entrySubtitle = "Blogs Entry Subtitle Edit",
+			entrySubtitle = "Blogs Entry Subtitle",
 			entryTitle = "Blogs Entry Title");
-	}
+
+		User.logoutPG();
+
+		User.loginUserPG(
+			password = "test",
+			userEmailAddress = "test@liferay.com");
+}
 
 }
