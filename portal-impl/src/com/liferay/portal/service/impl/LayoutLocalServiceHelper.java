@@ -358,7 +358,8 @@ public class LayoutLocalServiceHelper implements IdentifiableOSGiService {
 			Layout layout = layoutPersistence.findByPrimaryKey(
 				layoutFriendlyURL.getPlid());
 
-			if (layout.getLayoutId() != layoutId || !languageId.equals(layoutFriendlyURL.getLanguageId())) {
+			if (layout.getLayoutId() != layoutId ||
+				!layoutFriendlyURL.getLanguageId().equals(languageId)) {
 				LayoutFriendlyURLException layoutFriendlyURLException =
 					new LayoutFriendlyURLException(
 						LayoutFriendlyURLException.DUPLICATE);
