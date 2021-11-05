@@ -129,7 +129,8 @@ public class LayoutLocalServiceHelper implements IdentifiableOSGiService {
 
 			if (Validator.isNotNull(friendlyURL)) {
 				friendlyURL = getFriendlyURL(
-					groupId, privateLayout, layoutId, name, friendlyURL, locale.getLanguage());
+					groupId, privateLayout, layoutId, name, friendlyURL,
+					locale.getLanguage());
 
 				newFriendlyURLMap.put(locale, friendlyURL);
 			}
@@ -358,8 +359,9 @@ public class LayoutLocalServiceHelper implements IdentifiableOSGiService {
 			Layout layout = layoutPersistence.findByPrimaryKey(
 				layoutFriendlyURL.getPlid());
 
-			if (layout.getLayoutId() != layoutId ||
-				!layoutFriendlyURL.getLanguageId().equals(languageId)) {
+			if ((layout.getLayoutId() != layoutId) ||
+				!languageId.equals(layoutFriendlyURL.getLanguageId())) {
+
 				LayoutFriendlyURLException layoutFriendlyURLException =
 					new LayoutFriendlyURLException(
 						LayoutFriendlyURLException.DUPLICATE);
@@ -495,10 +497,11 @@ public class LayoutLocalServiceHelper implements IdentifiableOSGiService {
 		for (Map.Entry<Locale, String> entry : friendlyURLMap.entrySet()) {
 			try {
 				String friendlyURL = entry.getValue();
-				String languageId = entry.getKey().toString();
+				Locale locale = entry.getKey();
 
 				validateFriendlyURL(
-					groupId, privateLayout, layoutId, friendlyURL, languageId);
+					groupId, privateLayout, layoutId, friendlyURL,
+					locale.toString());
 			}
 			catch (LayoutFriendlyURLException layoutFriendlyURLException) {
 				Locale locale = entry.getKey();
