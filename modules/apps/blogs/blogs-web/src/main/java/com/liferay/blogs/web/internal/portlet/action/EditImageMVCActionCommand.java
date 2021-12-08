@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -73,6 +74,11 @@ public class EditImageMVCActionCommand extends BaseMVCActionCommand {
 		Folder folder = _blogsEntryLocalService.addAttachmentsFolder(
 			themeDisplay.getUserId(), themeDisplay.getScopeGroupId());
 
+		PermissionChecker permissionChecker =
+			themeDisplay.getPermissionChecker();
+
+		long scopeGroupId = themeDisplay.getScopeGroupId();
+
 		for (long deleteFileEntryId : deleteFileEntryIds) {
 			FileEntry fileEntry = _portletFileRepository.getPortletFileEntry(
 				deleteFileEntryId);
@@ -83,8 +89,11 @@ public class EditImageMVCActionCommand extends BaseMVCActionCommand {
 
 			if ((fileEntry.getUserId() == themeDisplay.getUserId()) ||
 				_portletResourcePermission.contains(
-					themeDisplay.getPermissionChecker(),
-					themeDisplay.getScopeGroup(), ActionKeys.UPDATE)) {
+					permissionChecker, themeDisplay.getScopeGroup(),
+					ActionKeys.UPDATE) ||
+				permissionChecker.isGroupAdmin(scopeGroupId) ||
+				permissionChecker.isGroupOwner(scopeGroupId) ||
+				permissionChecker.isOmniadmin()) {
 
 				_portletFileRepository.deletePortletFileEntry(
 					deleteFileEntryId);

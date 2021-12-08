@@ -20,6 +20,7 @@ import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuil
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -53,10 +54,17 @@ public class BlogsEntryImageActionDropdownItemsProvider {
 	}
 
 	public List<DropdownItem> getActionDropdownItems() {
+		PermissionChecker permissionChecker =
+			_themeDisplay.getPermissionChecker();
+		long scopeGroupId = _themeDisplay.getScopeGroupId();
+
 		if ((_fileEntry.getUserId() != _themeDisplay.getUserId()) &&
 			!BlogsPermission.contains(
 				_themeDisplay.getPermissionChecker(),
-				_themeDisplay.getScopeGroupId(), ActionKeys.UPDATE)) {
+				_themeDisplay.getScopeGroupId(), ActionKeys.UPDATE) &&
+			!permissionChecker.isGroupAdmin(scopeGroupId) &&
+			!permissionChecker.isGroupOwner(scopeGroupId) &&
+			!permissionChecker.isOmniadmin()) {
 
 			return null;
 		}
