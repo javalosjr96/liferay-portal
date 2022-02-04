@@ -413,15 +413,29 @@
 	</sql>
 	<sql id="com.liferay.journal.service.persistence.JournalFolderFinder.countA_ByG_U_F">
 		<![CDATA[
-			SELECT
-				COUNT(DISTINCT JournalArticle.articleId) AS COUNT_VALUE
-			FROM
-				JournalArticle
-			WHERE
-				(JournalArticle.groupId = ?) AND
-				(JournalArticle.classNameId = 0) AND
-				([$OWNER_USER_ID$] [$OWNER_USER_ID_AND_OR_CONNECTOR$] ([$STATUS$]))
-				[$ARTICLE_FOLDER_ID$]
+			 SELECT
+			COUNT(DISTINCT JournalArticle.articleId) AS COUNT_VALUE
+			 FROM
+				(
+					SELECT
+					   JournalArticle.groupId AS groupId, JournalArticle.articleId AS articleId, MAX(JournalArticle.version) AS version
+					FROM
+					   JournalArticle
+					WHERE
+						(JournalArticle.groupId = ?) AND
+						(JournalArticle.classNameId = 0)
+						[$ARTICLE_FOLDER_ID$]
+					GROUP BY
+						JournalArticle.groupId, JournalArticle.folderId, JournalArticle.articleId
+				) TEMP_TABLE
+
+		  INNER JOIN
+			 JournalArticle ON
+				(TEMP_TABLE.groupId = JournalArticle.groupId) AND
+				(TEMP_TABLE.articleId = JournalArticle.articleId) AND
+				(TEMP_TABLE.version = JournalArticle.version)
+		  WHERE
+		[$OWNER_USER_ID$] [$OWNER_USER_ID_AND_OR_CONNECTOR$] ([$STATUS$])
 		]]>
 	</sql>
 	<sql id="com.liferay.journal.service.persistence.JournalFolderFinder.countF_ByG_F">
@@ -463,32 +477,40 @@
 	</sql>
 	<sql id="com.liferay.journal.service.persistence.JournalFolderFinder.findA_ByG_U_F_L">
 		<![CDATA[
-			SELECT
-				JournalArticle.folderId AS modelFolderId, JournalArticle.articleId AS articleId, JournalArticleLocalization.title AS title, JournalArticle.version AS version, 0 AS modelFolder, JournalArticle.displayDate AS displayDate, JournalArticle.modifiedDate AS modifiedDate
-			FROM
+	  SELECT
+		  TEMP_TABLE_2.folderId AS modelFolderId, TEMP_TABLE_2.articleId AS articleId, title, TEMP_TABLE_2.version AS version, 0 AS modelFolder, TEMP_TABLE_2.displayDate AS displayDate, TEMP_TABLE_2.modifiedDate AS modifiedDate
+	  FROM
+			(
+			 SELECT
+			 JournalArticle.*
+			 FROM
 				(
 					SELECT
-						JournalArticle.groupId AS groupId, JournalArticle.articleId AS articleId, MAX(JournalArticle.version) AS version
+					   JournalArticle.groupId AS groupId, JournalArticle.articleId AS articleId, MAX(JournalArticle.version) AS version
 					FROM
-						JournalArticle
+					   JournalArticle
 					WHERE
 						(JournalArticle.groupId = ?) AND
-						(JournalArticle.classNameId = 0) AND
-						([$OWNER_USER_ID$] [$OWNER_USER_ID_AND_OR_CONNECTOR$] ([$STATUS$]))
-						[$ARTICLE_FOLDER_ID$]
+						(JournalArticle.classNameId = 0)
+					   [$ARTICLE_FOLDER_ID$]
 					GROUP BY
 						JournalArticle.groupId, JournalArticle.folderId, JournalArticle.articleId
-				) TEMP_TABLE
-			INNER JOIN
-				JournalArticle ON
-					(TEMP_TABLE.groupId = JournalArticle.groupId) AND
-					(TEMP_TABLE.articleId = JournalArticle.articleId) AND
-					(TEMP_TABLE.version = JournalArticle.version)
-			LEFT JOIN
-				JournalArticleLocalization ON
-					(JournalArticle.id_ = JournalArticleLocalization.articlePK) AND
-					(JournalArticleLocalization.languageId = ?)
-		]]>
+				) TEMP_TABLE_1
+
+		  INNER JOIN
+			 JournalArticle ON
+				(TEMP_TABLE_1.groupId = JournalArticle.groupId) AND
+				(TEMP_TABLE_1.articleId = JournalArticle.articleId) AND
+				(TEMP_TABLE_1.version = JournalArticle.version)
+		  WHERE
+		  [$OWNER_USER_ID$] [$OWNER_USER_ID_AND_OR_CONNECTOR$] ([$STATUS$])
+			) TEMP_TABLE_2
+
+	  LEFT JOIN
+		 JournalArticleLocalization ON
+			(TEMP_TABLE_2.id_ = JournalArticleLocalization.articlePK) AND
+			(JournalArticleLocalization.languageId = ?)
+]]>
 	</sql>
 	<sql id="com.liferay.journal.service.persistence.JournalFolderFinder.findF_ByNoAssets">
 		<![CDATA[

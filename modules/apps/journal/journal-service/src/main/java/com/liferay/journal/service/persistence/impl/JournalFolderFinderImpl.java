@@ -181,11 +181,11 @@ public class JournalFolderFinderImpl
 				queryPos.add(WorkflowConstants.STATUS_IN_TRASH);
 			}
 
-			queryPos.add(queryDefinition.getStatus());
-
 			if (folderId >= 0) {
 				queryPos.add(folderId);
 			}
+
+			queryPos.add(queryDefinition.getStatus());
 
 			int count = 0;
 
@@ -350,11 +350,11 @@ public class JournalFolderFinderImpl
 				queryPos.add(WorkflowConstants.STATUS_IN_TRASH);
 			}
 
-			queryPos.add(queryDefinition.getStatus());
-
 			if (folderId >= 0) {
 				queryPos.add(folderId);
 			}
+
+			queryPos.add(queryDefinition.getStatus());
 
 			queryPos.add(LocaleUtil.toLanguageId(locale));
 
