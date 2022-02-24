@@ -38,9 +38,18 @@ import com.liferay.portal.upgrade.PortalUpgradeProcess;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.verify.VerifyException;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import java.sql.Connection;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Brian Wing Shun Chan
@@ -48,6 +57,54 @@ import java.util.List;
  * @author Raymond Augé
  */
 public class StartupHelperUtil {
+
+	public static void checkFileStore() {
+		if (_log.isInfoEnabled()) {
+			if (StringUtil.equals(
+					PropsValues.DL_STORE_IMPL,
+					"com.liferay.portal.store.file.system." +
+						"AdvancedFileSystemStore")) {
+
+				_log.info("Advance File System Store is enabled");
+
+				Path osgiConfigPath = Paths.get(
+					PropsValues.LIFERAY_HOME,
+					"osgi/configs/" +
+						_CONFIGURATION_PID_ADVANCED_FILE_SYSTEM_STORE_CONFIG);
+
+				File osgiConfig = osgiConfigPath.toFile();
+
+				try {
+					BufferedReader bufferedReader = new BufferedReader(
+						new FileReader(osgiConfig));
+					Map<String, String> properties = new HashMap<>();
+					String property;
+
+					while ((property = bufferedReader.readLine()) != null) {
+						String[] entry = property.split("=");
+
+						String name = entry[0].trim();
+						String value = entry[1].trim();
+
+						if (!name.isEmpty() && !value.isEmpty()) {
+							properties.put(name, value);
+						}
+					}
+
+					_log.info(
+						"Root Directory is set to: " +
+							properties.get("rootDir"));
+				}
+				catch (Exception exception) {
+					_log.info("The required configuration file is not valid");
+					System.exit(1);
+				}
+			}
+		}
+		else {
+			_log.info("File store set to default");
+		}
+	}
 
 	public static void initResourceActions() {
 		ResourceActionLocalServiceUtil.checkResourceActions();
@@ -214,6 +271,11 @@ public class StartupHelperUtil {
 			throw new RuntimeException(msg);
 		}
 	}
+
+	private static final String
+		_CONFIGURATION_PID_ADVANCED_FILE_SYSTEM_STORE_CONFIG =
+			"com.liferay.portal.store.file.system.configuration." +
+				"AdvancedFileSystemStoreConfiguration.config";
 
 	private static final String[] _UPGRADE_PROCESS_CLASS_NAMES = {
 		"com.liferay.portal.upgrade.UpgradeProcess_7_0_0",
