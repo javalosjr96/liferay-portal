@@ -147,9 +147,7 @@ deploySidecar {
 
 		project.copy {
 			fileMode = 0777
-
 			include "elasticsearch-${sidecarElasticsearchServerVersion}/**"
-
 			into buildDir
 			from tarTree(elasticsearchDistributionFile)
 		}
