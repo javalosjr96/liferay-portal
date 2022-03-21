@@ -30,6 +30,9 @@ import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
 /**
  * @author Eudaldo Alonso
  */
@@ -55,7 +58,7 @@ public class ImageTypeContentUpgradeProcess extends UpgradeProcess {
 		throws Exception {
 
 		try (LoggingTimer loggingTimer = new LoggingTimer()) {
-			processConcurrently(
+			try (PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
 					"select JournalArticleImage.articleImageId, ",
 					"JournalArticleImage.groupId, ",
@@ -65,64 +68,61 @@ public class ImageTypeContentUpgradeProcess extends UpgradeProcess {
 					"(JournalArticle.groupId = JournalArticleImage.groupId ",
 					"and JournalArticle.articleId = ",
 					"JournalArticleImage.articleId and JournalArticle.version ",
-					"= JournalArticleImage.version)"),
-				resultSet -> new Object[] {
-					resultSet.getLong(1), resultSet.getLong(2),
-					resultSet.getLong(3), resultSet.getLong(4),
-					resultSet.getLong(5)
-				},
-				values -> {
-					long articleImageId = (Long)values[0];
-					long groupId = (Long)values[1];
-					long companyId = (Long)values[2];
-					long resourcePrimKey = (Long)values[3];
+					"= JournalArticleImage.version)"))) {
+				try (ResultSet resultSet = preparedStatement.executeQuery()) {
+					System.out.println("JournalArticleImage Entries: "+ resultSet.getFetchSize());
+					while (resultSet.next()) {
+						long articleImageId =  resultSet.getLong("articleImageId");
+						long groupId = resultSet.getLong("groupId");
+						long companyId =  resultSet.getLong("companyId");
+						long resourcePrimKey =  resultSet.getLong("resourcePrimKey");
+						long userId = PortalUtil.getValidUserId(
+							companyId,  resultSet.getLong("userId"));
+						long folderId =
+							_journalArticleImageUpgradeHelper.getFolderId(
+								userId, groupId, resourcePrimKey);
 
-					long userId = PortalUtil.getValidUserId(
-						companyId, (Long)values[4]);
+						String fileName = String.valueOf(articleImageId);
 
-					long folderId =
-						_journalArticleImageUpgradeHelper.getFolderId(
-							userId, groupId, resourcePrimKey);
+						FileEntry fileEntry =
+							_portletFileRepository.fetchPortletFileEntry(
+								groupId, folderId, fileName);
 
-					String fileName = String.valueOf(articleImageId);
-
-					FileEntry fileEntry =
-						_portletFileRepository.fetchPortletFileEntry(
-							groupId, folderId, fileName);
-
-					if (fileEntry != null) {
-						return;
-					}
-
-					try {
-						Image image = _imageLocalService.getImage(
-							articleImageId);
-
-						if (image == null) {
+						if (fileEntry != null) {
 							return;
 						}
 
-						String mimeType = MimeTypesUtil.getContentType(
-							fileName + StringPool.PERIOD + image.getType());
+						try {
+							Image image = _imageLocalService.getImage(
+								articleImageId);
 
-						_portletFileRepository.addPortletFileEntry(
-							groupId, userId, JournalArticle.class.getName(),
-							resourcePrimKey, JournalConstants.SERVICE_NAME,
-							folderId, image.getTextObj(), fileName, mimeType,
-							false);
+							if (image == null) {
+								return;
+							}
 
-						_imageLocalService.deleteImage(image.getImageId());
-					}
-					catch (Exception exception) {
-						_log.error(
-							"Unable to add the journal article image " +
+							String mimeType = MimeTypesUtil.getContentType(
+								fileName + StringPool.PERIOD + image.getType());
+
+							_portletFileRepository.addPortletFileEntry(
+								groupId, userId, JournalArticle.class.getName(),
+								resourcePrimKey, JournalConstants.SERVICE_NAME,
+								folderId, image.getTextObj(), fileName, mimeType,
+								false);
+
+							_imageLocalService.deleteImage(image.getImageId());
+						}
+
+						catch (Exception exception) {
+							_log.error(
+								"Unable to add the journal article image " +
 								fileName + " into the file repository",
-							exception);
+								exception);
 
-						throw exception;
+							throw exception;
+						}
 					}
-				},
-				"Unable to copy journal article images to the file repository");
+				}
+			}
 		}
 	}
 
