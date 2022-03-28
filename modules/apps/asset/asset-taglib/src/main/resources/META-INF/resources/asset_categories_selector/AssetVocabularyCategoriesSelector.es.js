@@ -44,36 +44,12 @@ function AssetVocabulariesCategoriesSelector({
 
 	const [invalidItems, setInvalidItems] = useState([]);
 
-	const {refetch, resource} = useResource({
-		fetchOptions: {
-			'body': new URLSearchParams({
-				cmd: JSON.stringify({
-					'/assetcategory/search': {
-						'-obc': null,
-						'end': 20,
-						groupIds,
-						'name': `%${inputValue.toLowerCase()}%`,
-						'start': 0,
-						'vocabularyIds': sourceItemsVocabularyIds,
-					},
-				}),
-				p_auth: Liferay.authToken,
-			}),
-			'credentials': 'include',
-			'method': 'POST',
-			'x-csrf-token': Liferay.authToken,
-		},
-		link: `${window.location.origin}${themeDisplay.getPathContext()}
-				/api/jsonws/invoke`,
-	});
-
 	const previousInputValue = usePrevious(inputValue);
 
 	useEffect(() => {
 		if (inputValue && inputValue !== previousInputValue) {
-			refetch();
 		}
-	}, [inputValue, previousInputValue, refetch]);
+	}, [inputValue, previousInputValue]);
 
 	const getUnique = (array, property) => {
 		return array
@@ -103,9 +79,7 @@ function AssetVocabulariesCategoriesSelector({
 
 		addedItems.map((item) => {
 			if (
-				resource.find(
-					(sourceItem) => sourceItem.titleCurrentValue === item.label
-				)
+				false
 			) {
 				validAddedItems.push(item);
 			}
@@ -214,20 +188,6 @@ function AssetVocabulariesCategoriesSelector({
 							items={selectedItems}
 							onChange={setInputValue}
 							onItemsChange={handleItemsChange}
-							sourceItems={
-								resource
-									? itemLabelFilter(
-											resource.map((category) => {
-												return {
-													label:
-														category.titleCurrentValue,
-													value: category.categoryId,
-												};
-											}),
-											inputValue
-									  )
-									: []
-							}
 						/>
 
 						{invalidItems && invalidItems.length > 0 && (
