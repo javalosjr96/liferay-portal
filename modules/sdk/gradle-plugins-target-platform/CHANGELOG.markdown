@@ -179,7 +179,7 @@ dependencies (78d2606f6b)
 - [LPS-105380] Rename exception variables (b3173da81b)
 
 ### Dependencies
-- [LPS-107155] Update the json dependency to version 20180813.
+- [LPS-107155] Update the json dependency to version 20220320.
 - [LPS-107155] Update the fastjson dependency to version 1.2.62.
 - [LPS-107155] Update the commons-io dependency to version 2.6.
 - [LPS-107155] Update the dom4j dependency to version 2.1.1.
