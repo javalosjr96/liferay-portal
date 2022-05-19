@@ -564,7 +564,7 @@ public abstract class BaseJSONParser<T> {
 		}
 		while (_isLastCharDigit() || _isLastCharDecimalSeparator() ||
 			   _isLastCharNegative() || _isLastCharPositive() ||
-		       _isLastCharScientificNotation());
+				_isLastCharScientificNotation());
 
 		return _getCapturedSubstring();
 	}
