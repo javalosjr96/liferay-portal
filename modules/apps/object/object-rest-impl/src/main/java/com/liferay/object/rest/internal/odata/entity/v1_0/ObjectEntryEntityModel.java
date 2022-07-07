@@ -60,9 +60,9 @@ public class ObjectEntryEntityModel implements EntityModel {
 				locale -> Field.getSortableFieldName(Field.MODIFIED_DATE),
 				locale -> Field.MODIFIED_DATE)
 		).put(
-			"id",
+			"externalReferenceCode",
 			new IdEntityField(
-				"id",
+				"externalReferenceCode",
 				locale -> Field.getSortableFieldName(Field.ENTRY_CLASS_PK),
 				String::valueOf)
 		).put(
