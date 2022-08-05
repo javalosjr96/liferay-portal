@@ -715,7 +715,7 @@ export const getSectionQuery = `
 					id
 					numberOfMessageBoardSections
 					parentMessageBoardSectionId
-					subscribed
+					subscribed	
 					title
 				}
 			}
@@ -953,6 +953,7 @@ export const getSubscriptionsQuery = `
 						}
 						subscribed
 						viewCount
+						showAsQuestion
 					}
 				}
 			}
