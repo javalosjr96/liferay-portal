@@ -7,7 +7,7 @@ dependencies {
 	testIntegrationCompile group: "org.apache.poi", name: "poi", version: "5.2.2"
 	testIntegrationCompile group: "org.apache.poi", name: "poi-ooxml", version: "5.2.2"
 	testIntegrationCompile group: "org.apache.poi", name: "poi-ooxml-schemas", version: "4.1.2"
-	testIntegrationCompile group: "org.apache.xmlbeans", name: "xmlbeans", version: "3.1.0"
+	testIntegrationCompile group: "org.apache.xmlbeans", name: "xmlbeans", version: "5.0.3"
 	testIntegrationCompile group: "org.osgi", name: "osgi.core", version: "6.0.0"
 	testIntegrationCompile project(":apps:batch-engine:batch-engine-api")
 	testIntegrationCompile project(":apps:blogs:blogs-api")
