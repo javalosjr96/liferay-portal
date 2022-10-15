@@ -2,6 +2,7 @@ Bundle-Name: Liferay Batch Engine Service
 Bundle-SymbolicName: com.liferay.batch.engine.service
 Bundle-Version: 4.0.57
 Import-Package:\
+	!org.apache.maven.*,\
 	!com.graphbuilder.*,\
 	\
 	!org.apache.tools.ant.*,\
@@ -25,11 +26,10 @@ Import-Package:\
 	\
 	org.etsi.*;resolution:=optional,\
 	\
-	org.openxmlformats.schemas.*;resolution:=optional,\
-	\
 	org.tukaani.*;resolution:=optional,\
 	\
 	*
 Liferay-Require-SchemaVersion: 4.6.2
 Liferay-Service: true
 -dsannotations-options: inherit
+-fixupmessages: "^Classes found in the wrong directory: \\\\{META-INF/versions/9/";is:=warning

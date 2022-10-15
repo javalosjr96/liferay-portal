@@ -3,7 +3,6 @@ Bundle-SymbolicName: com.liferay.shared.dependencies.poi
 Bundle-Version: 1.0.0
 Import-Package:\
 	!org.apache.xmlbeans.*,\
-	!org.apache.commons.collections4.*,\
 	!com.zaxxer.sparsebits,\
 	!com.github.javaparser.*,\
 	!com.github.luben.zstd.*,\
