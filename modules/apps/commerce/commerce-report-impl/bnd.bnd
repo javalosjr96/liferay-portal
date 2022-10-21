@@ -63,6 +63,12 @@ Import-Package:\
 	!org.apache.xml.resolver.*,\
 	!org.apache.xmlbeans.*,\
 	!org.apache.xpath.*,\
+	!org.apache.batik.parser.*,\
+    !org.apache.batik.svggen.*,\
+    !org.apache.maven.*,\
+    !org.w3c.dom.svg.*,\
+    !com.github.javaparser.*,\
+    !de.rototor.pdfbox.graphics2d.*,\
 	\
 	!org.dom4j.*,\
 	\
