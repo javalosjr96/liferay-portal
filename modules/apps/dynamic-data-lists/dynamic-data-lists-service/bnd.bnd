@@ -2,9 +2,18 @@ Bundle-Name: Liferay Dynamic Data Lists Service
 Bundle-SymbolicName: com.liferay.dynamic.data.lists.service
 Bundle-Version: 5.0.39
 Import-Package:\
+	!com.github.javaparser.*,\
+	\
 	!com.graphbuilder.*,\
 	\
+	!de.rototor.pdfbox.graphics2d.*,\
+	\
+	!org.apache.batik.parser.*,\
+	!org.apache.batik.svggen.*,\
+	!org.apache.maven.*,\
 	!org.apache.tools.ant.*,\
+	\
+	!org.w3c.dom.svg.*,\
 	\
 	com.github.*;resolution:=optional,\
 	\
@@ -34,4 +43,4 @@ Import-Package:\
 Liferay-Require-SchemaVersion: 2.3.0
 Liferay-Service: true
 -dsannotations-options: inherit
--includeresource: @poi-[0-9.]*.jar
+-includeresource: @poi-[0-9.]*.LIFERAY-PATCHED-[0-9.]*.jar
