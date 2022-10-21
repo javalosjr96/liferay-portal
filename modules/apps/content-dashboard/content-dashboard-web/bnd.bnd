@@ -2,9 +2,18 @@ Bundle-Name: Liferay Content Dashboard Web
 Bundle-SymbolicName: com.liferay.content.dashboard.web
 Bundle-Version: 2.0.77
 Import-Package:\
+	!com.github.javaparser.*,\
+	\
 	!com.graphbuilder.*,\
 	\
+	!de.rototor.pdfbox.graphics2d.*,\
+	\
+	!org.apache.batik.parser.*,\
+	!org.apache.batik.svggen.*,\
+	!org.apache.maven.*,\
 	!org.apache.tools.ant.*,\
+	\
+	!org.w3c.dom.svg.*,\
 	\
 	com.microsoft.schemas.office.powerpoint.*;resolution:=optional,\
 	com.microsoft.schemas.office.word.*;resolution:=optional,\

@@ -11,11 +11,15 @@ Import-Package:\
 	\
 	!com.fasterxml.jackson.*,\
 	\
+	!com.github.javaparser.*,\
+	\
 	!com.keypoint.*,\
 	\
 	!com.lowagie.toolbox.*,\
 	\
 	!com.thoughtworks.*,\
+	\
+	!de.rototor.pdfbox.graphics2d.*,\
 	\
 	!groovyjarjarasm.asm.tree.analysis.*,\
 	\
@@ -37,8 +41,12 @@ Import-Package:\
 	\
 	!mondrian.*,\
 	\
+	!net.sf.saxon.*,\
+	\
 	!net.sourceforge.barbecue.*,\
 	\
+	!org.apache.batik.parser.*,\
+	!org.apache.batik.svggen.*,\
 	!org.apache.bcel.*,\
 	!org.apache.bsf.*,\
 	!org.apache.commons.cli.*,\
@@ -46,6 +54,7 @@ Import-Package:\
 	!org.apache.commons.jci.*,\
 	!org.apache.ivy.*,\
 	!org.apache.log.*,\
+	!org.apache.maven.*,\
 	!org.apache.oro.*,\
 	!org.apache.poi.hdgf.*,\
 	!org.apache.poi.hpbf.*,\
