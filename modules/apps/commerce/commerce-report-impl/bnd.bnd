@@ -90,28 +90,31 @@ Import-Package:\
 	\
 	!sun.*,\
 	\
-	com.github.*;resolution:=optional,\
+	!com.github.*;resolution:=optional,\
 	\
-	com.microsoft.schemas.office.powerpoint.*;resolution:=optional,\
-	com.microsoft.schemas.office.word.*;resolution:=optional,\
+	!com.microsoft.schemas.office.powerpoint.*;resolution:=optional,\
+	!com.microsoft.schemas.office.word.*;resolution:=optional,\
 	\
-	com.sun.*;resolution:=optional,\
+	!com.sun.*;resolution:=optional,\
 	\
-	net.sf.*;resolution:=optional,\
+	!net.sf.*;resolution:=optional,\
 	\
-	org.apache.batik.*;resolution:=optional,\
-	org.apache.commons.math3.*;resolution:=optional,\
-	org.apache.jcp.*;resolution:=optional,\
+	!org.apache.batik.*;resolution:=optional,\
+	!org.apache.commons.math3.*;resolution:=optional,\
+	!org.apache.jcp.*;resolution:=optional,\
 	\
-	org.bouncycastle.*;resolution:=optional,\
+	!org.bouncycastle.*;resolution:=optional,\
 	\
-	org.brotli.*;resolution:=optional,\
+	!org.brotli.*;resolution:=optional,\
 	\
-	org.etsi.*;resolution:=optional,\
+	!org.etsi.*;resolution:=optional,\
 	\
-	org.openxmlformats.schemas.*;resolution:=optional,\
+	!org.openxmlformats.schemas.*;resolution:=optional,\
 	\
-	org.tukaani.*;resolution:=optional,\
+	!org.tukaani.*;resolution:=optional,\
+	\
+	!de.rototor.pdfbox.*;resolution:=optional,\
 	\
 	*
 Liferay-Enterprise-App: product.id=9a473157-06a6-44b6-b017-a360ffaf5f38
+-fixupmessages "Classes found in the wrong directory"; restrict:=error; is:=warning
