@@ -18,6 +18,12 @@ Import-Package:\
 	!org.apache.commons.math3.*,\
 	!org.apache.jcp.*,\
 	!org.apache.tools.ant.*,\
+	!org.apache.batik.parser.*,\
+    !org.apache.batik.svggen.*,\
+    !org.apache.maven.*,\
+    !org.w3c.dom.svg.*,\
+    !com.github.javaparser.*,\
+    !de.rototor.pdfbox.graphics2d.*,\
 	\
 	!org.bouncycastle.*,\
 	\
