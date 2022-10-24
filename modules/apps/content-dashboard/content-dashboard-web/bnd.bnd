@@ -5,6 +5,12 @@ Import-Package:\
 	!com.graphbuilder.*,\
 	\
 	!org.apache.tools.ant.*,\
+	!org.apache.batik.parser.*,\
+    !org.apache.batik.svggen.*,\
+    !org.apache.maven.*,\
+    !org.w3c.dom.svg.*,\
+    !com.github.javaparser.*,\
+    !de.rototor.pdfbox.graphics2d.*,\
 	\
 	com.microsoft.schemas.office.powerpoint.*;resolution:=optional,\
 	com.microsoft.schemas.office.word.*;resolution:=optional,\

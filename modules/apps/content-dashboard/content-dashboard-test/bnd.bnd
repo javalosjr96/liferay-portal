@@ -18,6 +18,12 @@ Import-Package:\
 	!org.apache.commons.math3.*,\
 	!org.apache.jcp.*,\
 	!org.apache.tools.ant.*,\
+	!org.apache.batik.parser.*,\
+    !org.apache.batik.svggen.*,\
+    !org.apache.maven.*,\
+    !org.w3c.dom.svg.*,\
+    !com.github.javaparser.*,\
+    !de.rototor.pdfbox.graphics2d.*,\
 	\
 	!org.bouncycastle.*,\
 	\
@@ -34,7 +40,7 @@ Import-Package:\
 	commons-collections4-[0-9.]*.jar;lib:=true,\
 	commons-compress-[0-9.]*.jar;lib:=true,\
 	commons-math3-[0-9.]*.jar;lib:=true,\
-	poi-[0-9.]*.jar;lib:=true,\
-	poi-ooxml-[0-9.]*.jar;lib:=true,\
-	poi-ooxml-schemas-[0-9.]*.jar;lib:=true,\
-	xmlbeans-[0-9.]*.jar;lib:=true
+	poi-[0-9.]*.LIFERAY-PATCHED-[0-9.]*.jar;lib:=true,\
+	poi-ooxml-[0-9.]*.LIFERAY-PATCHED-[0-9.]*.jar;lib:=true,\
+	poi-ooxml-lite-[0-9.]*.LIFERAY-PATCHED-[0-9.]*.jar;lib:=true,\
+	xmlbeans-[0-9.]*.LIFERAY-PATCHED-[0-9.]*.jar;lib:=true
