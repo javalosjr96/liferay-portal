@@ -2,10 +2,12 @@ Bundle-Name: Liferay Document Library Opener OneDrive Web
 Bundle-SymbolicName: com.liferay.document.library.opener.onedrive.web
 Bundle-Version: 3.0.32
 Import-Package:\
+	!de.rototor.pdfbox.graphics2d.*,\
 	!android.os,\
 	\
 	!android.util,\
 	\
+	!com.github.javaparser.*,\
 	!com.github.luben.*,\
 	\
 	!com.google.common.util.concurrent.*,\
@@ -25,6 +27,8 @@ Import-Package:\
 	\
 	!net.sf.saxon.*,\
 	\
+	!org.apache.batik.dom.*,\
+	!com.sun.org.apache.xml.internal.resolver.*,\
 	!org.apache.batik.anim.dom.*,\
 	!org.apache.batik.bridge.*,\
 	!org.apache.batik.ext.awt.*,\
@@ -36,6 +40,10 @@ Import-Package:\
 	!org.apache.poi.hsmf.*,\
 	!org.apache.poi.hwpf.extractor.*,\
 	!org.apache.tools.ant.*,\
+	!org.apache.batik.parser.*,\
+	!org.apache.batik.svggen.*,\
+	!org.apache.maven.*,\
+	!org.w3c.dom.svg.*,\
 	\
 	!org.bouncycastle.*,\
 	\
