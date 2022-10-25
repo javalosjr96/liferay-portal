@@ -7,7 +7,7 @@ dependencies {
 	testIntegrationCompile group: "com.liferay", name: "poi", version: "5.2.2.LIFERAY-PATCHED-1"
 	testIntegrationCompile group: "com.liferay", name: "poi-ooxml", version: "5.2.2.LIFERAY-PATCHED-1"
 	testIntegrationCompile group: "com.liferay", name: "poi-ooxml-lite", version: "5.2.2.LIFERAY-PATCHED-1"
-	testIntegrationCompile group: "org.apache.xmlbeans", name: "xmlbeans", version: "3.1.0"
+	testIntegrationCompile group: "com.liferay", name: "xmlbeans", version: "5.0.3-LIFERAY-PATCHED-1"
 	testIntegrationCompile group: "org.osgi", name: "osgi.core", version: "6.0.0"
 	testIntegrationCompile project(":apps:batch-engine:batch-engine-api")
 	testIntegrationCompile project(":apps:blogs:blogs-api")

@@ -8,7 +8,7 @@ dependencies {
 	compileInclude group: "com.liferay", name: "poi", version: "5.2.2.LIFERAY-PATCHED-1"
 	compileInclude group: "com.liferay", name: "poi-ooxml", version: "5.2.2.LIFERAY-PATCHED-1"
 	compileInclude group: "com.liferay", name: "poi-ooxml-lite", version: "5.2.2.LIFERAY-PATCHED-1"
-	compileInclude group: "org.apache.xmlbeans", name: "xmlbeans", version: "3.1.0"
+	compileInclude group: "com.liferay", name: "xmlbeans", version: "5.0.3-LIFERAY-PATCHED-1"
 
 	compileOnly group: "com.fasterxml.jackson.core", name: "jackson-annotations", version: "2.13.2"
 	compileOnly group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.13.2"
