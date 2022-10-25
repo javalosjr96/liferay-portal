@@ -19,7 +19,7 @@ dependencies {
 	compileInclude group: "org.apache.commons", name: "commons-math3", version: "3.6.1"
 	compileInclude group: "org.apache.james", name: "apache-mime4j-core", version: "0.8.3"
 	compileInclude group: "org.apache.james", name: "apache-mime4j-dom", version: "0.8.3"
-	compileInclude group: "org.apache.poi", name: "poi-scratchpad", version: "5.2.2"
+	compileInclude group: "com.liferay", name: "poi-scratchpad", version: "5.2.2.LIFERAY-PATCHED-1"
 	compileInclude group: "org.apache.tika", name: "tika-core", version: "1.28.5"
 	compileInclude group: "org.apache.tika", name: "tika-parsers", version: "1.28.5"
 	compileInclude group: "org.ccil.cowan.tagsoup", name: "tagsoup", version: "1.2.1"
