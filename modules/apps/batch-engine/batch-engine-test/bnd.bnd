@@ -39,7 +39,7 @@ Import-Package:\
 -includeresource:\
 	commons-collections4-[0-9.]*.jar;lib:=true,\
 	commons-compress-[0-9.]*.jar;lib:=true,\
-	poi-[0-9.]*.jar;lib:=true,\
-	poi-ooxml-[0-9.]*.jar;lib:=true,\
-	poi-ooxml-schemas-[0-9.]*.jar;lib:=true,\
-	xmlbeans-[0-9.]*.jar;lib:=true
+	poi-[0-9.]*.LIFERAY-PATCHED-[0-9.]*.jar;lib:=true,\
+	poi-ooxml-[0-9.]*.LIFERAY-PATCHED-[0-9.]*.jar;lib:=true,\
+	poi-ooxml-lite-[0-9.]*.LIFERAY-PATCHED-[0-9.]*.jar;lib:=true,\
+	xmlbeans-[0-9.]*.LIFERAY-PATCHED-[0-9.]*.jar;lib:=true
