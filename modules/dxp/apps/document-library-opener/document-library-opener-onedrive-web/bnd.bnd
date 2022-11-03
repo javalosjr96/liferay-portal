@@ -19,6 +19,8 @@ Import-Package:\
 	!com.sun.javadoc.*,\
 	!com.sun.tools.javadoc.*,\
 	\
+	!de.rototor.pdfbox.graphics2d,\
+	\
 	!javax.annotation.meta.*,\
 	\
 	!junit.framework,\

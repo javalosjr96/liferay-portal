@@ -9,8 +9,12 @@ Import-Package:\
 	\
 	!com.graphbuilder.*,\
 	\
+	!de.rototor.pdfbox.graphics2d,\
+	\
 	!org.apache.tapestry5.json.*,\
 	!org.apache.tools.ant.*,\
+	\
+	!org.w3c.dom.svg,\
 	\
 	com.github.*;resolution:=optional,\
 	\

@@ -17,6 +17,8 @@ Import-Package:\
 	\
 	!com.thoughtworks.*,\
 	\
+	!de.rototor.pdfbox.graphics2d,\
+	\
 	!groovyjarjarasm.asm.tree.analysis.*,\
 	\
 	!javax.accessibility.*,\
