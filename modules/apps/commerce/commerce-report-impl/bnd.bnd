@@ -114,3 +114,4 @@ Import-Package:\
 	org.tukaani.*;resolution:=optional,\
 	\
 	*
+-fixupmessages: Classes found in the wrong directory: ...;is:=ignore

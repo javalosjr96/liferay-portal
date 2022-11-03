@@ -35,3 +35,4 @@ Liferay-Require-SchemaVersion: 2.3.0
 Liferay-Service: true
 -dsannotations-options: inherit
 -includeresource: @poi-[0-9.]*.jar
+-fixupmessages: Classes found in the wrong directory: ...;is:=ignore

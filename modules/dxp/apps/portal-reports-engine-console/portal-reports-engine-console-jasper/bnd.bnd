@@ -115,3 +115,4 @@ Import-Package:\
 	\
 	*
 Liferay-Releng-Module-Group-Title: Liferay JasperReports
+-fixupmessages: Classes found in the wrong directory: ...;is:=ignore
