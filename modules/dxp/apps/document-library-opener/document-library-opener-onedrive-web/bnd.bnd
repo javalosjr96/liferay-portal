@@ -6,6 +6,7 @@ Import-Package:\
 	\
 	!android.util,\
 	\
+	!com.github.javaparser.*,\
 	!com.github.luben.*,\
 	\
 	!com.google.common.util.concurrent.*,\
@@ -17,7 +18,10 @@ Import-Package:\
 	!com.microsoft.schemas.office.word.*,\
 	\
 	!com.sun.javadoc.*,\
+	!com.sun.org.apache.xml.internal.resolver.*,\
 	!com.sun.tools.javadoc.*,\
+	\
+	!de.rototor.pdfbox.graphics2d.*,\
 	\
 	!javax.annotation.meta.*,\
 	\
@@ -27,12 +31,16 @@ Import-Package:\
 	\
 	!org.apache.batik.anim.dom.*,\
 	!org.apache.batik.bridge.*,\
+	!org.apache.batik.dom.*,\
 	!org.apache.batik.ext.awt.*,\
 	!org.apache.batik.gvt.*,\
+	!org.apache.batik.parser.*,\
+	!org.apache.batik.svggen.*,\
 	!org.apache.batik.util.*,\
 	!org.apache.commons.math3.*,\
 	!org.apache.http.*,\
 	!org.apache.jcp.xml.dsig.internal.dom.*,\
+	!org.apache.maven.*,\
 	!org.apache.poi.hsmf.*,\
 	!org.apache.poi.hwpf.extractor.*,\
 	!org.apache.tools.ant.*,\
@@ -53,6 +61,8 @@ Import-Package:\
 	\
 	!org.openxmlformats.schemas.officeDocument.x2006.*,\
 	!org.openxmlformats.schemas.schemaLibrary.x2006.*,\
+	\
+	!org.w3c.dom.svg.*,\
 	\
 	org.brotli.*;resolution:=optional,\
 	\

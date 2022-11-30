@@ -5,12 +5,21 @@ Export-Package: com.liferay.dynamic.data.mapping.service.http
 Import-Package:\
 	!com.fasterxml.jackson.*,\
 	\
+	!com.github.javaparser.*,\
+	\
 	!com.google.gson.*,\
 	\
 	!com.graphbuilder.*,\
 	\
+	!de.rototor.pdfbox.graphics2d.*,\
+	\
+	!org.apache.batik.parser.*,\
+	!org.apache.batik.svggen.*,\
+	!org.apache.maven.*,\
 	!org.apache.tapestry5.json.*,\
 	!org.apache.tools.ant.*,\
+	\
+	!org.w3c.dom.svg.*,\
 	\
 	com.github.*;resolution:=optional,\
 	\
