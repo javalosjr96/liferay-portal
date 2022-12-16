@@ -14,6 +14,8 @@
 
 package com.liferay.portal.verify;
 
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
 
@@ -36,6 +38,7 @@ public class VerifyProcessSuite extends VerifyProcess {
 		}
 		else {
 			verify(new VerifyGroup());
+			verify(new VerifyLayout());
 
 			verify(new VerifyResourcePermissions());
 		}

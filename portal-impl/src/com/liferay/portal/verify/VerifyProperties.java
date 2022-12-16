@@ -57,8 +57,6 @@ public class VerifyProperties {
 
 			System.exit(1);
 		}
-
-		verifyLayoutFriendlyURL();
 	}
 
 	protected static InputStream getPropertiesResourceAsStream(
@@ -86,19 +84,6 @@ public class VerifyProperties {
 		}
 	}
 
-	protected static String getReservedFriendlyURLS() {
-		String reservedFriendlyURLS = StringBundler.concat(
-			"\"/", PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[0], "\"");
-
-		for (int i = 1; i < PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS.length;
-			 i++) {
-
-			reservedFriendlyURLS += StringBundler.concat(
-				",\"/", PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i], "\"");
-		}
-
-		return reservedFriendlyURLS;
-	}
 
 	protected static Properties loadPortalProperties() {
 		Properties properties = new Properties();
@@ -132,44 +117,6 @@ public class VerifyProperties {
 		return properties;
 	}
 
-	protected static void verifyLayoutFriendlyURL() {
-		try {
-			Connection connection = DataAccess.getConnection();
-
-			PreparedStatement preparedStatement1 = connection.prepareStatement(
-				"Select groupId from Group_");
-
-			ResultSet resultSet1 = preparedStatement1.executeQuery();
-
-			String reservedURLS = getReservedFriendlyURLS();
-
-			while (resultSet1.next()) {
-				long groupId = resultSet1.getLong("groupId");
-
-				PreparedStatement preparedStatement2 =
-					connection.prepareStatement(
-						StringBundler.concat(
-							"Select * from Layout where groupId = ? and ",
-							"friendlyURL in (", reservedURLS, ")"));
-
-				preparedStatement2.setLong(1, groupId);
-
-				ResultSet resultSet2 = preparedStatement2.executeQuery();
-
-				while (resultSet2.next()) {
-					String invalidURL = resultSet2.getString("friendlyURL");
-
-					_log.error(
-						StringBundler.concat(
-							"Reserved layout URL detected \"", invalidURL,
-							"\" Please update Layout URL after upgrade"));
-				}
-			}
-		}
-		catch (SQLException sqlException) {
-			throw new RuntimeException(sqlException);
-		}
-	}
 
 	protected static void verifyMigratedPortalProperty(
 			Properties portalProperties, String oldKey, String newKey,
