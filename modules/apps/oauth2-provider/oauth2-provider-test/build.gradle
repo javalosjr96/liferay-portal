@@ -1,6 +1,6 @@
 dependencies {
-	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
-	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "64.0.2"
+	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "92.1.0"
 	compileOnly group: "javax.ws.rs", name: "javax.ws.rs-api", version: "2.1"
 	compileOnly group: "org.apache.cxf", name: "cxf-core", version: "3.4.4"
 	compileOnly group: "org.apache.cxf", name: "cxf-rt-rs-json-basic", version: "3.4.4"
