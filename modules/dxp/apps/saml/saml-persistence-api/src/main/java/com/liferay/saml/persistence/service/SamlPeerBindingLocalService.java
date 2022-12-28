@@ -208,8 +208,7 @@ public interface SamlPeerBindingLocalService
 	public SamlPeerBinding fetchByC_D_SNIF_SNINQ_SNIV_SPEI_First(
 		long companyId, boolean deleted, String samlNameIdFormat,
 		String samlNameIdNameQualifier, String samlNameIdValue,
-		String samlPeerEntityId,
-		OrderByComparator<SamlPeerBinding> orderByComparator);
+		String samlPeerEntityId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public SamlPeerBinding fetchSamlPeerBinding(long samlPeerBindingId);
@@ -223,12 +222,6 @@ public interface SamlPeerBindingLocalService
 		long companyId, boolean deleted, String samlNameIdFormat,
 		String samlNameIdNameQualifier, String samlNameIdValue,
 		String samlPeerEntityId);
-
-	public List<SamlPeerBinding> findByC_D_SNIF_SNINQ_SNIV_SPEI(
-		long companyId, boolean deleted, String samlNameIdFormat,
-		String samlNameIdNameQualifier, String samlNameIdValue,
-		String samlPeerEntityId, int start, int end,
-		OrderByComparator<SamlPeerBinding> orderByComparator);
 
 	public List<SamlPeerBinding> findByC_U_D_SNIF_SNINQ_SPEI(
 		long companyId, long userId, boolean deleted, String samlNameIdFormat,
