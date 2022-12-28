@@ -1,7 +1,7 @@
 apply plugin: "com.liferay.lang.merger"
 
 dependencies {
-	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "92.1.0"
 }
 
 mergeLang {

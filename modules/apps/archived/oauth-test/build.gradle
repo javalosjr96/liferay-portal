@@ -1,5 +1,5 @@
 dependencies {
-	testCompile group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
+	testCompile group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "92.1.0"
 	testCompile project(":apps:archived:oauth-api")
 	testCompile project(":core:petra:petra-lang")
 	testCompile project(":core:petra:petra-sql-dsl-api")

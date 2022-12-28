@@ -1,5 +1,5 @@
 dependencies {
-	testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
+	testIntegrationCompile group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "64.0.2"
 	testIntegrationCompile project(":apps:subscription:subscription-api")
 	testIntegrationCompile project(":apps:subscription:subscription-service")
 	testIntegrationCompile project(":test:arquillian-extension-junit-bridge")
