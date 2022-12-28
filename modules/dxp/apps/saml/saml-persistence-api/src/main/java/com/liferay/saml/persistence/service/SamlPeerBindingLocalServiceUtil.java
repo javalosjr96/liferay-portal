@@ -226,12 +226,11 @@ public class SamlPeerBindingLocalServiceUtil {
 	public static SamlPeerBinding fetchByC_D_SNIF_SNINQ_SNIV_SPEI_First(
 		long companyId, boolean deleted, String samlNameIdFormat,
 		String samlNameIdNameQualifier, String samlNameIdValue,
-		String samlPeerEntityId,
-		OrderByComparator<SamlPeerBinding> orderByComparator) {
+		String samlPeerEntityId) {
 
 		return getService().fetchByC_D_SNIF_SNINQ_SNIV_SPEI_First(
 			companyId, deleted, samlNameIdFormat, samlNameIdNameQualifier,
-			samlNameIdValue, samlPeerEntityId, orderByComparator);
+			samlNameIdValue, samlPeerEntityId);
 	}
 
 	public static SamlPeerBinding fetchSamlPeerBinding(long samlPeerBindingId) {
@@ -255,17 +254,6 @@ public class SamlPeerBindingLocalServiceUtil {
 		return getService().findByC_D_SNIF_SNINQ_SNIV_SPEI(
 			companyId, deleted, samlNameIdFormat, samlNameIdNameQualifier,
 			samlNameIdValue, samlPeerEntityId);
-	}
-
-	public static List<SamlPeerBinding> findByC_D_SNIF_SNINQ_SNIV_SPEI(
-		long companyId, boolean deleted, String samlNameIdFormat,
-		String samlNameIdNameQualifier, String samlNameIdValue,
-		String samlPeerEntityId, int start, int end,
-		OrderByComparator<SamlPeerBinding> orderByComparator) {
-
-		return getService().findByC_D_SNIF_SNINQ_SNIV_SPEI(
-			companyId, deleted, samlNameIdFormat, samlNameIdNameQualifier,
-			samlNameIdValue, samlPeerEntityId, start, end, orderByComparator);
 	}
 
 	public static List<SamlPeerBinding> findByC_U_D_SNIF_SNINQ_SPEI(

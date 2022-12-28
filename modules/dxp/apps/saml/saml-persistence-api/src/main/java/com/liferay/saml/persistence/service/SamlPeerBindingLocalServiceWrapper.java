@@ -256,15 +256,12 @@ public class SamlPeerBindingLocalServiceWrapper
 		fetchByC_D_SNIF_SNINQ_SNIV_SPEI_First(
 			long companyId, boolean deleted, String samlNameIdFormat,
 			String samlNameIdNameQualifier, String samlNameIdValue,
-			String samlPeerEntityId,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.saml.persistence.model.SamlPeerBinding>
-					orderByComparator) {
+			String samlPeerEntityId) {
 
 		return _samlPeerBindingLocalService.
 			fetchByC_D_SNIF_SNINQ_SNIV_SPEI_First(
 				companyId, deleted, samlNameIdFormat, samlNameIdNameQualifier,
-				samlNameIdValue, samlPeerEntityId, orderByComparator);
+				samlNameIdValue, samlPeerEntityId);
 	}
 
 	@Override
@@ -297,21 +294,6 @@ public class SamlPeerBindingLocalServiceWrapper
 		return _samlPeerBindingLocalService.findByC_D_SNIF_SNINQ_SNIV_SPEI(
 			companyId, deleted, samlNameIdFormat, samlNameIdNameQualifier,
 			samlNameIdValue, samlPeerEntityId);
-	}
-
-	@Override
-	public java.util.List<com.liferay.saml.persistence.model.SamlPeerBinding>
-		findByC_D_SNIF_SNINQ_SNIV_SPEI(
-			long companyId, boolean deleted, String samlNameIdFormat,
-			String samlNameIdNameQualifier, String samlNameIdValue,
-			String samlPeerEntityId, int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator
-				<com.liferay.saml.persistence.model.SamlPeerBinding>
-					orderByComparator) {
-
-		return _samlPeerBindingLocalService.findByC_D_SNIF_SNINQ_SNIV_SPEI(
-			companyId, deleted, samlNameIdFormat, samlNameIdNameQualifier,
-			samlNameIdValue, samlPeerEntityId, start, end, orderByComparator);
 	}
 
 	@Override
