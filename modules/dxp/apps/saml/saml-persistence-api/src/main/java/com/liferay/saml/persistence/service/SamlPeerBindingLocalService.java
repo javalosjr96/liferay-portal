@@ -230,6 +230,10 @@ public interface SamlPeerBindingLocalService
 		String samlPeerEntityId, int start, int end,
 		OrderByComparator<SamlPeerBinding> orderByComparator);
 
+	public List<SamlPeerBinding> findByC_U_D_SNIF_SNINQ_SPEI(
+		long companyId, long userId, boolean deleted, String samlNameIdFormat,
+		String samlNameIdNameQualifier, String samlPeerEntityId);
+
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public ActionableDynamicQuery getActionableDynamicQuery();
 

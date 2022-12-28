@@ -315,6 +315,18 @@ public class SamlPeerBindingLocalServiceWrapper
 	}
 
 	@Override
+	public java.util.List<com.liferay.saml.persistence.model.SamlPeerBinding>
+		findByC_U_D_SNIF_SNINQ_SPEI(
+			long companyId, long userId, boolean deleted,
+			String samlNameIdFormat, String samlNameIdNameQualifier,
+			String samlPeerEntityId) {
+
+		return _samlPeerBindingLocalService.findByC_U_D_SNIF_SNINQ_SPEI(
+			companyId, userId, deleted, samlNameIdFormat,
+			samlNameIdNameQualifier, samlPeerEntityId);
+	}
+
+	@Override
 	public com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
