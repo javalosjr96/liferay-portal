@@ -129,6 +129,12 @@
 			<finder-column name="deleted" />
 			<finder-column name="samlNameIdValue" />
 		</finder>
+		<finder name="C_U_D_SPEI" return-type="Collection">
+			<finder-column name="companyId" />
+			<finder-column name="userId" />
+			<finder-column name="deleted" />
+			<finder-column name="samlPeerEntityId" />
+		</finder>
 		<finder name="C_U_D_SNIF_SNINQ_SPEI" return-type="Collection">
 			<finder-column name="companyId" />
 			<finder-column name="userId" />
