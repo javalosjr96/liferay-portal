@@ -268,6 +268,15 @@ public class SamlPeerBindingLocalServiceUtil {
 			samlNameIdValue, samlPeerEntityId, start, end, orderByComparator);
 	}
 
+	public static List<SamlPeerBinding> findByC_U_D_SNIF_SNINQ_SPEI(
+		long companyId, long userId, boolean deleted, String samlNameIdFormat,
+		String samlNameIdNameQualifier, String samlPeerEntityId) {
+
+		return getService().findByC_U_D_SNIF_SNINQ_SPEI(
+			companyId, userId, deleted, samlNameIdFormat,
+			samlNameIdNameQualifier, samlPeerEntityId);
+	}
+
 	public static com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery
 		getActionableDynamicQuery() {
 
