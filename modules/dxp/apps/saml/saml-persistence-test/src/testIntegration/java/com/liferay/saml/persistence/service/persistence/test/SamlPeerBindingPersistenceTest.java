@@ -205,20 +205,6 @@ public class SamlPeerBindingPersistenceTest {
 	}
 
 	@Test
-	public void testCountByC_D_SNIF_SNINQ_SNIV_SPEI() throws Exception {
-		_persistence.countByC_D_SNIF_SNINQ_SNIV_SPEI(
-			RandomTestUtil.nextLong(), RandomTestUtil.randomBoolean(), "", "",
-			"", "");
-
-		_persistence.countByC_D_SNIF_SNINQ_SNIV_SPEI(
-			0L, RandomTestUtil.randomBoolean(), "null", "null", "null", "null");
-
-		_persistence.countByC_D_SNIF_SNINQ_SNIV_SPEI(
-			0L, RandomTestUtil.randomBoolean(), (String)null, (String)null,
-			(String)null, (String)null);
-	}
-
-	@Test
 	public void testFindByPrimaryKeyExisting() throws Exception {
 		SamlPeerBinding newSamlPeerBinding = addSamlPeerBinding();
 
