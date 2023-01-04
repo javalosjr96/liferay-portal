@@ -17,6 +17,7 @@ package com.liferay.portal.verify;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.util.PropsValues;
 
 import java.sql.PreparedStatement;
@@ -28,23 +29,39 @@ import java.sql.SQLException;
  */
 public class VerifyLayout extends VerifyProcess {
 
-	protected static String getReservedLayoutFriendlyURLS() {
-		String reservedLayoutFriendlyURLS = StringBundler.concat(
-			"\"/", PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[0], "\"");
-
-		for (int i = 1; i < PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS.length;
-			 i++) {
-
-			reservedLayoutFriendlyURLS += StringBundler.concat(
-				",\"/", PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i], "\"");
-		}
-
-		return reservedLayoutFriendlyURLS;
-	}
-
 	@Override
 	protected void doVerify() throws Exception {
 		verifyLayoutFriendlyURL();
+	}
+
+	protected String getReservedLayoutFriendlyURLS() {
+		String reservedLayoutFriendlyURLS = "";
+		String wildCard = "";
+
+		for (int i = 0; i < PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS.length;
+			 i++) {
+
+			wildCard = PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i];
+
+			if (PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i].contains("*")) {
+				wildCard = StringUtil.replace(wildCard, '*', '%');
+			}
+
+			if (PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i].contains("_")) {
+				wildCard = StringUtil.replace(wildCard, '_', "_");
+			}
+
+			if (reservedLayoutFriendlyURLS.isEmpty()) {
+				reservedLayoutFriendlyURLS += StringBundler.concat(
+					"LIKE \'/", wildCard, "\' ");
+			}
+			else {
+				reservedLayoutFriendlyURLS += StringBundler.concat(
+					"OR friendlyURL LIKE \'/", wildCard, "\' ");
+			}
+		}
+
+		return reservedLayoutFriendlyURLS;
 	}
 
 	protected void verifyLayoutFriendlyURL() {
@@ -52,9 +69,8 @@ public class VerifyLayout extends VerifyProcess {
 			String reservedURLS = getReservedLayoutFriendlyURLS();
 
 			PreparedStatement preparedStatement = connection.prepareStatement(
-				StringBundler.concat(
-					"Select friendlyURL, plid from Layout where friendlyURL in",
-					"(", reservedURLS, ")"));
+				"Select friendlyURL, plid from Layout where friendlyURL " +
+					reservedURLS);
 
 			ResultSet resultSet = preparedStatement.executeQuery();
 
