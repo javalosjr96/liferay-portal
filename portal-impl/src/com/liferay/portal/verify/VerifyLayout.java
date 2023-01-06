@@ -15,11 +15,15 @@
 package com.liferay.portal.verify;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.dao.db.DB;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.util.PropsValues;
 
+import java.io.IOException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -66,11 +70,20 @@ public class VerifyLayout extends VerifyProcess {
 
 	protected void verifyLayoutFriendlyURL() {
 		try {
+
 			String reservedURLS = getReservedLayoutFriendlyURLS();
 
-			PreparedStatement preparedStatement = connection.prepareStatement(
-				"Select friendlyURL, plid from Layout where friendlyURL " +
-					reservedURLS);
+			String sql ="Select * from Layout l where friendlyURL LIKE \'/!_vti!_%\' ESCAPE \'!\'";
+
+			DB db = DBManagerUtil.getDB();
+
+			sql = db.buildSQL(sql);
+			sql = PortalUtil.transformSQL(sql);
+
+			System.out.println("Quick Test for Transform");
+			System.out.println(sql);
+
+			PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
 			ResultSet resultSet = preparedStatement.executeQuery();
 
@@ -87,6 +100,9 @@ public class VerifyLayout extends VerifyProcess {
 		}
 		catch (SQLException sqlException) {
 			throw new RuntimeException(sqlException);
+		}
+		catch (IOException e) {
+			throw new RuntimeException(e);
 		}
 	}
 
