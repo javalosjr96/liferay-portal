@@ -17,6 +17,7 @@ package com.liferay.portal.verify;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -25,6 +26,7 @@ import com.liferay.portal.util.PropsValues;
 
 import java.io.IOException;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -39,7 +41,7 @@ public class VerifyLayout extends VerifyProcess {
 		verifyLayoutFriendlyURL();
 	}
 
-	protected String getReservedLayoutFriendlyURLS() {
+	protected static String getReservedLayoutFriendlyURLS() {
 		String reservedLayoutFriendlyURLS = "";
 		String wildCard = "";
 
@@ -71,8 +73,10 @@ public class VerifyLayout extends VerifyProcess {
 		return reservedLayoutFriendlyURLS;
 	}
 
-	protected void verifyLayoutFriendlyURL() {
+	public static void verifyLayoutFriendlyURL() {
 		try {
+			Connection connection = DataAccess.getConnection();
+
 			String sql =
 				"Select * from Layout where friendlyURL " +
 					getReservedLayoutFriendlyURLS();

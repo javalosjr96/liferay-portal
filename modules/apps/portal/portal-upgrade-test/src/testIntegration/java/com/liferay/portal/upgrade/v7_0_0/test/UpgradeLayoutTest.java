@@ -15,11 +15,17 @@
 package com.liferay.portal.upgrade.v7_0_0.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.layout.test.util.LayoutTestUtil;
+import com.liferay.portal.kernel.concurrent.test.TestUtil;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.upgrade.v7_0_0.UpgradeLayout;
 
+import com.liferay.portal.verify.VerifyLayout;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -41,6 +47,15 @@ public class UpgradeLayoutTest {
 		UpgradeProcess upgradeProcess = new UpgradeLayout();
 
 		upgradeProcess.upgrade();
+	}
+
+	@Test
+	public void testLayoutURLs() throws Exception {
+		Layout Layout1 = LayoutTestUtil.addTypeLinkToURLLayout(TestPropsValues.getGroupId(),"/a");
+		Layout Layout2 = LayoutTestUtil.addTypeLinkToURLLayout(TestPropsValues.getGroupId(),"/widget12345");
+		Layout Layout3 = LayoutTestUtil.addTypeLinkToURLLayout(TestPropsValues.getGroupId(),"/_vti_12345");
+
+		VerifyLayout.verifyLayoutFriendlyURL();
 	}
 
 }
