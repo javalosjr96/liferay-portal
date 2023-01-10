@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.util.PropsValues;
 
 import java.io.IOException;
+
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -52,7 +53,7 @@ public class VerifyLayout extends VerifyProcess {
 			}
 
 			if (PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i].contains("_")) {
-				wildCard = StringUtil.replace(wildCard, '_', "_");
+				wildCard = StringUtil.replace(wildCard, '_', "!_");
 			}
 
 			if (reservedLayoutFriendlyURLS.isEmpty()) {
@@ -65,25 +66,24 @@ public class VerifyLayout extends VerifyProcess {
 			}
 		}
 
+		reservedLayoutFriendlyURLS += "ESCAPE \'!\'";
+
 		return reservedLayoutFriendlyURLS;
 	}
 
 	protected void verifyLayoutFriendlyURL() {
 		try {
-
-			String reservedURLS = getReservedLayoutFriendlyURLS();
-
-			String sql ="Select * from Layout l where friendlyURL LIKE \'/!_vti!_%\' ESCAPE \'!\'";
+			String sql =
+				"Select * from Layout where friendlyURL " +
+					getReservedLayoutFriendlyURLS();
 
 			DB db = DBManagerUtil.getDB();
 
 			sql = db.buildSQL(sql);
 			sql = PortalUtil.transformSQL(sql);
 
-			System.out.println("Quick Test for Transform");
-			System.out.println(sql);
-
-			PreparedStatement preparedStatement = connection.prepareStatement(sql);
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				sql);
 
 			ResultSet resultSet = preparedStatement.executeQuery();
 
@@ -101,8 +101,8 @@ public class VerifyLayout extends VerifyProcess {
 		catch (SQLException sqlException) {
 			throw new RuntimeException(sqlException);
 		}
-		catch (IOException e) {
-			throw new RuntimeException(e);
+		catch (IOException ioException) {
+			throw new RuntimeException(ioException);
 		}
 	}
 
