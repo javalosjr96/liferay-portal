@@ -46,6 +46,8 @@ const REGEX = /^(-?(?:[\d]*\.?[\d]+))(px|em|vh|vw|rem|%)$/;
 const UNITS = ['px', '%', 'em', 'rem', 'vw', 'vh', CUSTOM];
 
 const getInitialValue = (value) => {
+	value = value.toString();
+
 	if (!value) {
 		return {unit: UNITS[0], value: ''};
 	}
@@ -235,6 +237,8 @@ export function LengthInput({
 		if (!value) {
 			return;
 		}
+
+		value = value.toString();
 
 		const [, , unit] = value.toLowerCase().match(REGEX) || [];
 
