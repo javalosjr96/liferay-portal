@@ -15,6 +15,7 @@
 package com.liferay.portal.verify;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -45,12 +46,12 @@ public class VerifyLayout extends VerifyProcess {
 
 			wildCard = PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i];
 
-			if (PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i].contains("*")) {
-				wildCard = StringUtil.replace(wildCard, '*', '%');
+			if (PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i].contains(StringPool.STAR)) {
+				wildCard = StringUtil.replace(wildCard, StringPool.STAR, StringPool.PERCENT);
 			}
 
 			if (PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i].contains("_")) {
-				wildCard = StringUtil.replace(wildCard, '_', "!_");
+				wildCard = StringUtil.replace(wildCard, StringPool.UNDERLINE, "!_");
 			}
 
 			if (reservedLayoutFriendlyURLS.isEmpty()) {
