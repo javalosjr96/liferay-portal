@@ -23,11 +23,8 @@ import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.util.PropsValues;
 
-import java.io.IOException;
-
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 
 /**
  * @author Jorge Avalos
@@ -71,38 +68,28 @@ public class VerifyLayout extends VerifyProcess {
 		return reservedLayoutFriendlyURLS;
 	}
 
-	protected void verifyLayoutFriendlyURL() {
-		try {
-			String sql =
-				"Select * from Layout where friendlyURL " +
-					getReservedLayoutFriendlyURLS();
+	protected void verifyLayoutFriendlyURL() throws Exception {
+		String sql =
+			"Select * from Layout where friendlyURL " +
+				getReservedLayoutFriendlyURLS();
 
-			DB db = DBManagerUtil.getDB();
+		DB db = DBManagerUtil.getDB();
 
-			sql = db.buildSQL(sql);
-			sql = PortalUtil.transformSQL(sql);
+		sql = db.buildSQL(sql);
+		sql = PortalUtil.transformSQL(sql);
 
-			PreparedStatement preparedStatement = connection.prepareStatement(
-				sql);
+		PreparedStatement preparedStatement = connection.prepareStatement(sql);
 
-			ResultSet resultSet = preparedStatement.executeQuery();
+		ResultSet resultSet = preparedStatement.executeQuery();
 
-			while (resultSet.next()) {
-				String invalidURL = resultSet.getString("friendlyURL");
-				long plid = resultSet.getLong("plid");
+		while (resultSet.next()) {
+			String invalidURL = resultSet.getString("friendlyURL");
+			long plid = resultSet.getLong("plid");
 
-				_log.error(
-					StringBundler.concat(
-						"Reserved layout URL detected \"", invalidURL,
-						"\" Please update Layout plid:", plid,
-						" after upgrade"));
-			}
-		}
-		catch (SQLException sqlException) {
-			throw new RuntimeException(sqlException);
-		}
-		catch (IOException ioException) {
-			throw new RuntimeException(ioException);
+			_log.error(
+				StringBundler.concat(
+					"Reserved layout URL detected \"", invalidURL,
+					"\" Please update Layout plid:", plid, " after upgrade"));
 		}
 	}
 
