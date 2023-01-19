@@ -74,9 +74,6 @@ public class VerifyLayout extends VerifyProcess {
 			"Select * from Layout where friendlyURL " +
 				getReservedLayoutFriendlyURLS();
 
-		DB db = DBManagerUtil.getDB();
-
-		sql = db.buildSQL(sql);
 		sql = PortalUtil.transformSQL(sql);
 
 		PreparedStatement preparedStatement = connection.prepareStatement(sql);
