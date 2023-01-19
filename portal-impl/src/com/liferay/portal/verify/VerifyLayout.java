@@ -75,14 +75,14 @@ public class VerifyLayout extends VerifyProcess {
 	protected void verifyLayoutFriendlyURL() throws Exception {
 		PreparedStatement preparedStatement = connection.prepareStatement(
 			SQLTransformer.transform(
-				"select * from Layout where friendlyURL " +
+				"select plid, friendlyURL from Layout where friendlyURL " +
 					getReservedLayoutFriendlyURLS()));
 
 		ResultSet resultSet = preparedStatement.executeQuery();
 
 		while (resultSet.next()) {
-			String invalidURL = resultSet.getString("friendlyURL");
-			long plid = resultSet.getLong("plid");
+			long plid = resultSet.getLong(1);
+			String invalidURL = resultSet.getString(2);
 
 			_log.error(
 				StringBundler.concat(
