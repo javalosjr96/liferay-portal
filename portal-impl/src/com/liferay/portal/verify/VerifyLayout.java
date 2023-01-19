@@ -56,11 +56,11 @@ public class VerifyLayout extends VerifyProcess {
 
 			if (reservedLayoutFriendlyURLS.isEmpty()) {
 				reservedLayoutFriendlyURLS += StringBundler.concat(
-					"LIKE \'/", wildCard, "\' ");
+					"LIKE '/", wildCard, "' ");
 			}
 			else {
 				reservedLayoutFriendlyURLS += StringBundler.concat(
-					"OR friendlyURL LIKE \'/", wildCard, "\' ");
+					"OR friendlyURL LIKE '/", wildCard, "'");
 			}
 		}
 
