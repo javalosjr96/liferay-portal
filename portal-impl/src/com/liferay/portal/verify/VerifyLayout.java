@@ -14,13 +14,12 @@
 
 package com.liferay.portal.verify;
 
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.dao.orm.common.SQLTransformer;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.util.PropsValues;
 
@@ -39,28 +38,32 @@ public class VerifyLayout extends VerifyProcess {
 
 	protected String getReservedLayoutFriendlyURLS() {
 		String reservedLayoutFriendlyURLS = "";
-		String wildCard = "";
+		String likeClause;
 
 		for (int i = 0; i < PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS.length;
 			 i++) {
 
-			wildCard = PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i];
+			likeClause = PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i];
 
-			if (PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i].contains(StringPool.STAR)) {
-				wildCard = StringUtil.replace(wildCard, StringPool.STAR, StringPool.PERCENT);
+			if (PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i].contains(
+					StringPool.STAR)) {
+
+				likeClause = StringUtil.replace(
+					likeClause, CharPool.STAR, CharPool.PERCENT);
 			}
 
 			if (PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS[i].contains("_")) {
-				wildCard = StringUtil.replace(wildCard, StringPool.UNDERLINE, "!_");
+				likeClause = StringUtil.replace(
+					likeClause, CharPool.UNDERLINE, "!_");
 			}
 
 			if (reservedLayoutFriendlyURLS.isEmpty()) {
 				reservedLayoutFriendlyURLS += StringBundler.concat(
-					"LIKE '/", wildCard, "' ");
+					"LIKE '/", likeClause, "' ");
 			}
 			else {
 				reservedLayoutFriendlyURLS += StringBundler.concat(
-					"OR friendlyURL LIKE '/", wildCard, "'");
+					"OR friendlyURL LIKE '/", likeClause, "'");
 			}
 		}
 
@@ -70,13 +73,10 @@ public class VerifyLayout extends VerifyProcess {
 	}
 
 	protected void verifyLayoutFriendlyURL() throws Exception {
-		String sql =
-			"Select * from Layout where friendlyURL " +
-				getReservedLayoutFriendlyURLS();
-
-		sql = PortalUtil.transformSQL(sql);
-
-		PreparedStatement preparedStatement = connection.prepareStatement(sql);
+		PreparedStatement preparedStatement = connection.prepareStatement(
+			SQLTransformer.transform(
+				"select * from Layout where friendlyURL " +
+					getReservedLayoutFriendlyURLS()));
 
 		ResultSet resultSet = preparedStatement.executeQuery();
 
