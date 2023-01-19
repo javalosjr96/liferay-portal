@@ -89,7 +89,8 @@ public class VerifyLayout extends VerifyProcess {
 			_log.error(
 				StringBundler.concat(
 					"Reserved layout URL detected \"", invalidURL,
-					"\" Please update Layout plid:", plid, " after upgrade"));
+					"\" Please update the friendly URL for the layout with ",
+					"plid ", plid));
 		}
 	}
 
