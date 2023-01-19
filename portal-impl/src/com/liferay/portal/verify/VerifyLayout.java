@@ -73,22 +73,22 @@ public class VerifyLayout extends VerifyProcess {
 	}
 
 	protected void verifyLayoutFriendlyURL() throws Exception {
-		PreparedStatement preparedStatement = connection.prepareStatement(
-			SQLTransformer.transform(
-				"select plid, friendlyURL from Layout where friendlyURL " +
-					getReservedLayoutFriendlyURLS()));
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				SQLTransformer.transform(
+					"select plid, friendlyURL from Layout where friendlyURL " +
+						getReservedLayoutFriendlyURLS()));
+			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-		ResultSet resultSet = preparedStatement.executeQuery();
+			while (resultSet.next()) {
+				long plid = resultSet.getLong(1);
+				String friendlyURL = resultSet.getString(2);
 
-		while (resultSet.next()) {
-			long plid = resultSet.getLong(1);
-			String invalidURL = resultSet.getString(2);
-
-			_log.error(
-				StringBundler.concat(
-					"Reserved layout URL detected \"", invalidURL,
-					"\" Please update the friendly URL for the layout with ",
-					"plid ", plid));
+				_log.error(
+					StringBundler.concat(
+						"Reserved layout URL detected \"", friendlyURL,
+						"\" Please update the friendly URL for the layout ",
+						"with plid ", plid));
+			}
 		}
 	}
 
