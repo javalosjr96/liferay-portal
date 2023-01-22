@@ -72,6 +72,10 @@ public class VerifyLayout extends VerifyProcess {
 	}
 
 	private void _verifyLayoutFriendlyURL() throws Exception {
+		if (PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS.length == 0) {
+			return;
+		}
+
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select plid, friendlyURL from Layout where friendlyURL " +
 					_getReservedLayoutFriendlyURLS());
