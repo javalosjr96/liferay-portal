@@ -17,7 +17,6 @@ package com.liferay.portal.verify;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.dao.orm.common.SQLTransformer;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -74,9 +73,8 @@ public class VerifyLayout extends VerifyProcess {
 
 	protected void verifyLayoutFriendlyURL() throws Exception {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				SQLTransformer.transform(
-					"select plid, friendlyURL from Layout where friendlyURL " +
-						getReservedLayoutFriendlyURLS()));
+			"select plid, friendlyURL from Layout where friendlyURL " +
+					getReservedLayoutFriendlyURLS());
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			while (resultSet.next()) {
