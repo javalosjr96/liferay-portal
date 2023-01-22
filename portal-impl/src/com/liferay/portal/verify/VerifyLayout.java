@@ -32,10 +32,10 @@ public class VerifyLayout extends VerifyProcess {
 
 	@Override
 	protected void doVerify() throws Exception {
-		verifyLayoutFriendlyURL();
+		_verifyLayoutFriendlyURL();
 	}
 
-	protected String getReservedLayoutFriendlyURLS() {
+	private String _getReservedLayoutFriendlyURLS() {
 		String reservedLayoutFriendlyURLS = "";
 		String likeClause;
 
@@ -71,10 +71,10 @@ public class VerifyLayout extends VerifyProcess {
 		return reservedLayoutFriendlyURLS;
 	}
 
-	protected void verifyLayoutFriendlyURL() throws Exception {
+	private void _verifyLayoutFriendlyURL() throws Exception {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-			"select plid, friendlyURL from Layout where friendlyURL " +
-					getReservedLayoutFriendlyURLS());
+				"select plid, friendlyURL from Layout where friendlyURL " +
+					_getReservedLayoutFriendlyURLS());
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			while (resultSet.next()) {
