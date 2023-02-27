@@ -76,7 +76,7 @@ import org.portletbridge.portlet.PortletBridgeServlet;
 		"javax.portlet.init-param.idParamKey=id",
 		"javax.portlet.init-param.jsRegex=open\\('([^']*)'|open\\(\"([^\\\"]*)\"",
 		"javax.portlet.init-param.mementoSessionKey=mementoSessionKey",
-		"javax.portlet.init-param.parserClassName=org.cyberneko.html.parsers.SAXParser",
+		"javax.portlet.init-param.parserClassName=net.sourceforge.htmlunit.cyberneko.parsers.SAXParser",
 		"javax.portlet.init-param.servletName=pbhs",
 		"javax.portlet.init-param.stylesheetUrl=classpath:/org/portletbridge/xsl/default.xsl",
 		"javax.portlet.name=" + WebProxyPortletKeys.WEB_PROXY,
