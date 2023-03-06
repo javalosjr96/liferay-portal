@@ -19,7 +19,11 @@ import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.upgrade.PortalUpgradeProcess;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
+
+import java.sql.Connection;
+import java.sql.SQLException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,8 +45,10 @@ public class UpgradeStepRegistry implements UpgradeStepRegistrator.Registry {
 		return _releaseCreationUpgradeSteps;
 	}
 
-	public List<UpgradeInfo> getUpgradeInfos() {
-		if (_initialization) {
+	public List<UpgradeInfo> getUpgradeInfos() throws SQLException {
+		if (_initialization &&
+			PortalUpgradeProcess.isInLatestSchemaVersion(_connection)) {
+
 			if (_upgradeInfos.isEmpty()) {
 				return Arrays.asList(
 					new UpgradeInfo(
@@ -155,6 +161,8 @@ public class UpgradeStepRegistry implements UpgradeStepRegistrator.Registry {
 
 		return finalSchemaVersion.toString();
 	}
+
+	private static Connection _connection;
 
 	private final int _buildNumber;
 	private boolean _initialization;
