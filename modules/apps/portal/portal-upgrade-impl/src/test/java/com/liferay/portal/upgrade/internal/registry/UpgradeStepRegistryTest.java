@@ -101,6 +101,7 @@ public class UpgradeStepRegistryTest {
 	@Test
 	public void testCreateUpgradeInfosWithPostUpgradeSteps()
 		throws SQLException {
+
 		_registerAndCheckPreAndPostUpgradeSteps(
 			new UpgradeStep[0],
 			new UpgradeStep[] {new TestUpgradeStep(), new TestUpgradeStep()});
@@ -109,6 +110,7 @@ public class UpgradeStepRegistryTest {
 	@Test
 	public void testCreateUpgradeInfosWithPreAndPostUpgradeSteps()
 		throws SQLException {
+
 		_registerAndCheckPreAndPostUpgradeSteps(
 			new UpgradeStep[] {new TestUpgradeStep()},
 			new UpgradeStep[] {new TestUpgradeStep()});
@@ -117,6 +119,7 @@ public class UpgradeStepRegistryTest {
 	@Test
 	public void testCreateUpgradeInfosWithPreUpgradeSteps()
 		throws SQLException {
+
 		_registerAndCheckPreAndPostUpgradeSteps(
 			new UpgradeStep[] {new TestUpgradeStep(), new TestUpgradeStep()},
 			new UpgradeStep[0]);
