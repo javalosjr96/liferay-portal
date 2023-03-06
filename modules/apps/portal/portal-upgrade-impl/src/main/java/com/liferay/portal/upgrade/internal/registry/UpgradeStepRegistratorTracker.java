@@ -35,6 +35,8 @@ import com.liferay.portal.util.PropsValues;
 
 import java.io.OutputStream;
 
+import java.sql.SQLException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -177,8 +179,14 @@ public class UpgradeStepRegistratorTracker {
 					bundleSymbolicName, releaseUpgradeSteps);
 			}
 
-			List<UpgradeInfo> upgradeInfos =
-				upgradeStepRegistry.getUpgradeInfos();
+			List<UpgradeInfo> upgradeInfos = null;
+
+			try {
+				upgradeInfos = upgradeStepRegistry.getUpgradeInfos();
+			}
+			catch (SQLException sqlException) {
+				throw new RuntimeException(sqlException);
+			}
 
 			if (PropsValues.UPGRADE_DATABASE_AUTO_RUN ||
 				(_releaseLocalService.fetchRelease(bundleSymbolicName) ==
