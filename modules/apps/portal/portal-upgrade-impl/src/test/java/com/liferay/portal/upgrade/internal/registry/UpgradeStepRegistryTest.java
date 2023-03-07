@@ -20,7 +20,6 @@ import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
-import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -107,21 +106,21 @@ public class UpgradeStepRegistryTest {
 	@Test
 	public void testCreateUpgradeInfosWithPreAndPostUpgradeSteps()
 		throws Exception {
+
 		_registerAndCheckPreAndPostUpgradeSteps(
 			new UpgradeStep[] {new TestUpgradeStep()},
 			new UpgradeStep[] {new TestUpgradeStep()});
 	}
 
 	@Test
-	public void testCreateUpgradeInfosWithPreUpgradeSteps()
-		throws Exception {
+	public void testCreateUpgradeInfosWithPreUpgradeSteps() throws Exception {
 		_registerAndCheckPreAndPostUpgradeSteps(
 			new UpgradeStep[] {new TestUpgradeStep(), new TestUpgradeStep()},
 			new UpgradeStep[0]);
 	}
 
 	private void _registerAndCheckPreAndPostUpgradeSteps(
-		UpgradeStep[] preUpgradeSteps, UpgradeStep[] postUpgradeSteps)
+			UpgradeStep[] preUpgradeSteps, UpgradeStep[] postUpgradeSteps)
 		throws Exception {
 
 		UpgradeProcess upgradeProcess = new UpgradeProcess() {
