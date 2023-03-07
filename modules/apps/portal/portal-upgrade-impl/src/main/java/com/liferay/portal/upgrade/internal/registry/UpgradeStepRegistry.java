@@ -14,6 +14,7 @@
 
 package com.liferay.portal.upgrade.internal.registry;
 
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
@@ -46,25 +47,24 @@ public class UpgradeStepRegistry implements UpgradeStepRegistrator.Registry {
 	}
 
 	public List<UpgradeInfo> getUpgradeInfos() throws SQLException {
-		if (_initialization &&
-			PortalUpgradeProcess.isInLatestSchemaVersion(_connection)) {
-
-			if (_upgradeInfos.isEmpty()) {
-				return Arrays.asList(
-					new UpgradeInfo(
-						"0.0.0", "1.0.0", _buildNumber,
-						new DummyUpgradeStep()));
+		try (Connection connection = DataAccess.getConnection()) {
+			if (_initialization &&
+				PortalUpgradeProcess.isInLatestSchemaVersion(connection)) {
+				if (_upgradeInfos.isEmpty()) {
+					return Arrays.asList(
+						new UpgradeInfo(
+							"0.0.0", "1.0.0", _buildNumber,
+							new DummyUpgradeStep()));
+				}
+				return ListUtil.concat(
+					Arrays.asList(
+						new UpgradeInfo(
+							"0.0.0", _getFinalSchemaVersion(_upgradeInfos),
+							_buildNumber, new DummyUpgradeStep())),
+					_upgradeInfos);
 			}
-
-			return ListUtil.concat(
-				Arrays.asList(
-					new UpgradeInfo(
-						"0.0.0", _getFinalSchemaVersion(_upgradeInfos),
-						_buildNumber, new DummyUpgradeStep())),
-				_upgradeInfos);
+			return _upgradeInfos;
 		}
-
-		return _upgradeInfos;
 	}
 
 	@Override
@@ -161,8 +161,6 @@ public class UpgradeStepRegistry implements UpgradeStepRegistrator.Registry {
 
 		return finalSchemaVersion.toString();
 	}
-
-	private static Connection _connection;
 
 	private final int _buildNumber;
 	private boolean _initialization;
