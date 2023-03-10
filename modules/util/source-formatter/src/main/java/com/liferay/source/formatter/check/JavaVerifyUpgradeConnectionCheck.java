@@ -34,7 +34,8 @@ public class JavaVerifyUpgradeConnectionCheck extends BaseFileCheck {
 			fileName.endsWith("DBUpgrader.java") ||
 			fileName.endsWith("Test.java") ||
 			fileName.endsWith("UpgradeTableListener.java") ||
-			content.contains("Callable<Void>")) {
+			content.contains("Callable<Void>") ||
+			!content.contains(" extends ")) {
 
 			return content;
 		}
