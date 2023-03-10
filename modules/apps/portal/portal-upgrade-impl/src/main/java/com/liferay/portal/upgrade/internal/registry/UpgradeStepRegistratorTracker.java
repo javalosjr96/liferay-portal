@@ -20,7 +20,6 @@ import com.liferay.portal.kernel.configuration.Configuration;
 import com.liferay.portal.kernel.configuration.ConfigurationFactoryUtil;
 import com.liferay.portal.kernel.dao.db.DBContext;
 import com.liferay.portal.kernel.dao.db.DBProcessContext;
-import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Release;
@@ -29,7 +28,6 @@ import com.liferay.portal.kernel.upgrade.UpgradeException;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
-import com.liferay.portal.upgrade.PortalUpgradeProcess;
 import com.liferay.portal.upgrade.internal.executor.UpgradeExecutor;
 import com.liferay.portal.upgrade.log.UpgradeLogContext;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -37,8 +35,6 @@ import com.liferay.portal.util.PropsValues;
 
 import java.io.OutputStream;
 
-import java.sql.Connection;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -181,16 +177,13 @@ public class UpgradeStepRegistratorTracker {
 					bundleSymbolicName, releaseUpgradeSteps);
 			}
 
-			List<UpgradeInfo> upgradeInfos = null;
+			List<UpgradeInfo> upgradeInfos;
 
-			try(Connection connection = DataAccess.getConnection()) {
-				if (PortalUpgradeProcess.isInLatestSchemaVersion(connection)) {
-					upgradeInfos =
-						upgradeStepRegistry.getUpgradeInfos();
-				}
+			try {
+				upgradeInfos = upgradeStepRegistry.getUpgradeInfos();
 			}
-			catch (SQLException e) {
-				throw new RuntimeException(e);
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
 			}
 
 			if (PropsValues.UPGRADE_DATABASE_AUTO_RUN ||

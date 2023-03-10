@@ -14,11 +14,13 @@
 
 package com.liferay.portal.upgrade.internal.registry;
 
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.upgrade.PortalUpgradeProcess;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
 import java.util.ArrayList;
@@ -41,8 +43,11 @@ public class UpgradeStepRegistry implements UpgradeStepRegistrator.Registry {
 		return _releaseCreationUpgradeSteps;
 	}
 
-	public List<UpgradeInfo> getUpgradeInfos() {
-		if (_initialization) {
+	public List<UpgradeInfo> getUpgradeInfos() throws Exception {
+		if (_initialization &&
+			PortalUpgradeProcess.isInLatestSchemaVersion(
+				DataAccess.getConnection())) {
+
 			if (_upgradeInfos.isEmpty()) {
 				return Arrays.asList(
 					new UpgradeInfo(
