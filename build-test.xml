@@ -633,7 +633,7 @@ jdbc.counter.password=${database.password}
 // HikariCP
 
 jdbc.default.connectionTimeout=600000
-jdbc.default.maximumPoolSize=2
+jdbc.default.maximumPoolSize=3
 jdbc.default.minimumIdle=0
 
 jdbc.counter.maximumPoolSize=5
