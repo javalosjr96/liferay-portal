@@ -633,7 +633,8 @@ jdbc.counter.password=${database.password}
 // HikariCP
 
 jdbc.default.connectionTimeout=600000
-jdbc.default.maximumPoolSize=100
+// Test Two
+jdbc.default.maximumPoolSize=1
 jdbc.default.minimumIdle=0
 
 jdbc.counter.maximumPoolSize=5
@@ -11203,9 +11204,9 @@ login.secure.forgot.password=false</echo>
 				<echo append="true" file="portal-impl/src/portal-ext.properties">
 
 					// HikariCP
-
+					// Test Two
 					jdbc.default.connectionTimeout=600000
-					jdbc.default.maximumPoolSize=100
+					jdbc.default.maximumPoolSize=1
 					jdbc.default.minimumIdle=0
 
 					jdbc.counter.maximumPoolSize=5
