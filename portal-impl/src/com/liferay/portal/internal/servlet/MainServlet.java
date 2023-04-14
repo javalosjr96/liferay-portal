@@ -101,6 +101,7 @@ import com.liferay.portlet.PortletBagFactory;
 import com.liferay.portlet.PortletFilterFactory;
 import com.liferay.portlet.PortletURLListenerFactory;
 import com.liferay.social.kernel.util.SocialConfigurationUtil;
+import com.liferay.util.dao.orm.CustomSQLUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -390,7 +391,9 @@ public class MainServlet extends HttpServlet {
 			_log.error(exception);
 		}
 
-		if (PropsValues.UPGRADE_DATABASE_AUTO_RUN) {
+		if (PropsValues.UPGRADE_DATABASE_AUTO_RUN &&
+			!CustomSQLUtil.isVendorHSQL()) {
+
 			DBUpgrader.upgradeModules();
 
 			StartupHelperUtil.setUpgrading(false);
