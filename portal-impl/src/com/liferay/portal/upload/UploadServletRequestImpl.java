@@ -283,6 +283,10 @@ public class UploadServletRequestImpl
 
 		File file = liferayFileItem.getStoreLocation();
 
+		if (file == null) {
+			file = FileUtil.createTempFile();
+		}
+
 		if (liferayFileItem.isInMemory() && forceCreate) {
 			try {
 				FileUtil.write(file, liferayFileItem.getInputStream());

@@ -236,6 +236,10 @@ public class JSONWebServiceActionParameters {
 
 					File file = fileItem.getStoreLocation();
 
+					if (file == null) {
+						file = FileUtil.createTempFile();
+					}
+
 					if (fileItem.isInMemory()) {
 						try {
 							FileUtil.write(file, fileItem.getInputStream());
