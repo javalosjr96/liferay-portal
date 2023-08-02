@@ -16,6 +16,8 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.verify.VerifyProcess;
@@ -76,10 +78,14 @@ public class VerifyProcessTrackerOSGiCommandsTest {
 	@Ignore
 	@Test
 	public void testRegisterFailedVerifyProcess() {
-		_forceFailure = true;
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+			_CLASS_NAME, LoggerTestUtil.OFF)) {
+			_forceFailure = true;
 
-		try (SafeCloseable safeCloseable = _registerVerifyProcess(true, true)) {
-			_assertVerify(true);
+			try (SafeCloseable safeCloseable = _registerVerifyProcess(
+				true, true)) {
+				_assertVerify(true);
+			}
 		}
 	}
 
@@ -317,6 +323,9 @@ public class VerifyProcessTrackerOSGiCommandsTest {
 	}
 
 	private static BundleContext _bundleContext;
+
+	private static final String _CLASS_NAME ="com.liferay.portal.verify.extender.internal.osgi.commands.VerifyProcessTrackerOSGiCommands";
+
 	private static String _symbolicName;
 	private static boolean _upgrading;
 

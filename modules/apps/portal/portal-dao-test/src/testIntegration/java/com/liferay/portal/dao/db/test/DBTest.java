@@ -17,6 +17,8 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.sql.Connection;
@@ -454,7 +456,8 @@ public class DBTest {
 
 	@Test
 	public void testRenameTablesRollback() throws Exception {
-		try {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+			_CLASS_NAME, LoggerTestUtil.OFF)) {
 			_db.renameTables(
 				_connection,
 				new ObjectValuePair<>(_TABLE_NAME_1, _TABLE_NAME_3),
@@ -638,6 +641,8 @@ public class DBTest {
 		"typeDate", "typeDouble", "typeInteger", "typeLong", "typeSBlob",
 		"typeString", "typeText", "typeVarchar"
 	};
+
+	private static final String _CLASS_NAME ="com.liferay.portal.dao.db.BaseDB";
 
 	private static final String _TABLE_NAME_1 = "DBTest1";
 

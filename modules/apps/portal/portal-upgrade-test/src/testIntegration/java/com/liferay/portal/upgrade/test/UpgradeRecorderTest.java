@@ -17,6 +17,8 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.version.Version;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.tools.DBUpgrader;
@@ -150,18 +152,21 @@ public class UpgradeRecorderTest {
 	@Ignore
 	@Test
 	public void testWarning() throws Exception {
-		StartupHelperUtil.setUpgrading(true);
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+			_CLASS_NAME, LoggerTestUtil.OFF)) {
+			StartupHelperUtil.setUpgrading(true);
 
-		WarningUpgradeProcess warningUpgradeProcess =
-			new WarningUpgradeProcess();
+			WarningUpgradeProcess warningUpgradeProcess =
+				new WarningUpgradeProcess();
 
-		warningUpgradeProcess.doUpgrade();
+			warningUpgradeProcess.doUpgrade();
 
-		StartupHelperUtil.setUpgrading(false);
+			StartupHelperUtil.setUpgrading(false);
 
-		Assert.assertEquals("warning", _getResult());
+			Assert.assertEquals("warning", _getResult());
 
-		Assert.assertEquals("no upgrade", _getType());
+			Assert.assertEquals("no upgrade", _getType());
+		}
 	}
 
 	private String _getResult() {
@@ -247,6 +252,9 @@ public class UpgradeRecorderTest {
 	}
 
 	private static StopWatch _originalStopWatch;
+
+	private static final String _CLASS_NAME ="com.liferay.portal.upgrade.test.UpgradeRecorderTest";
+
 
 	@Inject(
 		filter = "component.name=com.liferay.portal.upgrade.internal.recorder.UpgradeRecorder",

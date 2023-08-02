@@ -18,6 +18,8 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.util.PropsValues;
@@ -44,7 +46,6 @@ import org.junit.runner.RunWith;
 /**
  * @author Alberto Chaparro
  */
-@Ignore
 @RunWith(Arquillian.class)
 public class VerifyLayoutTest extends BaseVerifyProcessTestCase {
 
@@ -116,111 +117,126 @@ public class VerifyLayoutTest extends BaseVerifyProcessTestCase {
 	@Test
 	public void testVerifyLayoutsWithoutReservedLayoutFriendlyURL()
 		throws Exception {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+			_CLASS_NAME, LoggerTestUtil.OFF)) {
+			super.testVerify();
 
-		super.testVerify();
-
-		Assert.assertEquals(
-			_errorMessages.toString(), 0, _errorMessages.size());
+			Assert.assertEquals(
+				_errorMessages.toString(), 0, _errorMessages.size());
+		}
 	}
 
 	@Test
 	public void testVerifyLayoutsWithReservedLayoutFriendlyURLs()
 		throws Exception {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+			_CLASS_NAME, LoggerTestUtil.OFF)) {
 
-		_updateFriendlyURL(
-			_layout1.getPlid(), StringPool.FORWARD_SLASH + _keyword1);
-		_updateFriendlyURL(
-			_layout2.getPlid(), StringPool.FORWARD_SLASH + _keyword2);
+			_updateFriendlyURL(
+				_layout1.getPlid(), StringPool.FORWARD_SLASH + _keyword1);
+			_updateFriendlyURL(
+				_layout2.getPlid(), StringPool.FORWARD_SLASH + _keyword2);
 
-		super.testVerify();
+			super.testVerify();
 
-		Assert.assertEquals(
-			_errorMessages.toString(), 2, _errorMessages.size());
+			Assert.assertEquals(
+				_errorMessages.toString(), 2, _errorMessages.size());
 
-		String errorMessage1 = _errorMessages.get(0);
+			String errorMessage1 = _errorMessages.get(0);
 
-		String errorMessage2 = _errorMessages.get(1);
+			String errorMessage2 = _errorMessages.get(1);
 
-		Assert.assertTrue(errorMessage1.contains(_keyword1));
+			Assert.assertTrue(errorMessage1.contains(_keyword1));
 
-		Assert.assertTrue(errorMessage2.contains(_keyword2));
+			Assert.assertTrue(errorMessage2.contains(_keyword2));
+		}
 	}
 
 	@Test
 	public void testVerifyLayoutsWithUnderscoreReservedLayoutFriendlyURL()
 		throws Exception {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+			_CLASS_NAME, LoggerTestUtil.OFF)) {
 
-		for (String keyword : PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS) {
-			if (keyword.contains(StringPool.UNDERLINE)) {
-				if (keyword.contains(StringPool.STAR)) {
-					_keyword1 = StringUtil.replace(keyword, '*', "12345");
-				}
-				else {
-					_keyword1 = keyword;
-				}
+			for (String keyword : PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS) {
+				if (keyword.contains(StringPool.UNDERLINE)) {
+					if (keyword.contains(StringPool.STAR)) {
+						_keyword1 = StringUtil.replace(keyword, '*', "12345");
+					}
+					else {
+						_keyword1 = keyword;
+					}
 
-				break;
+					break;
+				}
 			}
+
+			_updateFriendlyURL(
+				_layout1.getPlid(), StringPool.FORWARD_SLASH + _keyword1);
+			_updateFriendlyURL(
+				_layout2.getPlid(),
+				StringPool.FORWARD_SLASH +
+				StringUtil.replace(_keyword1, '_', "a"));
+
+			super.testVerify();
+
+			Assert.assertEquals(
+				_errorMessages.toString(), 1, _errorMessages.size());
+
+			String errorMessage = _errorMessages.get(0);
+
+			Assert.assertTrue(errorMessage.contains(_keyword1));
 		}
-
-		_updateFriendlyURL(
-			_layout1.getPlid(), StringPool.FORWARD_SLASH + _keyword1);
-		_updateFriendlyURL(
-			_layout2.getPlid(),
-			StringPool.FORWARD_SLASH + StringUtil.replace(_keyword1, '_', "a"));
-
-		super.testVerify();
-
-		Assert.assertEquals(
-			_errorMessages.toString(), 1, _errorMessages.size());
-
-		String errorMessage = _errorMessages.get(0);
-
-		Assert.assertTrue(errorMessage.contains(_keyword1));
 	}
 
 	@Test
 	public void testVerifyLayoutWithAsteriskReservedLayoutFriendlyURL()
 		throws Exception {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+			_CLASS_NAME, LoggerTestUtil.OFF)) {
+			for (String keyword : PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS) {
+				if (keyword.contains(StringPool.STAR) &&
+					!keyword.contains(StringPool.UNDERLINE)) {
 
-		for (String keyword : PropsValues.LAYOUT_FRIENDLY_URL_KEYWORDS) {
-			if (keyword.contains(StringPool.STAR) &&
-				!keyword.contains(StringPool.UNDERLINE)) {
+					_keyword1 = StringUtil.replace(keyword, '*', "12345");
 
-				_keyword1 = StringUtil.replace(keyword, '*', "12345");
+					break;
+				}
 
-				break;
 			}
+
+			_updateFriendlyURL(
+				_layout1.getPlid(), StringPool.FORWARD_SLASH + _keyword1);
+
+			super.testVerify();
+
+			Assert.assertEquals(
+				_errorMessages.toString(), 1, _errorMessages.size());
+
+			String errorMessage = _errorMessages.get(0);
+
+			Assert.assertTrue(errorMessage.contains(_keyword1));
 		}
-
-		_updateFriendlyURL(
-			_layout1.getPlid(), StringPool.FORWARD_SLASH + _keyword1);
-
-		super.testVerify();
-
-		Assert.assertEquals(
-			_errorMessages.toString(), 1, _errorMessages.size());
-
-		String errorMessage = _errorMessages.get(0);
-
-		Assert.assertTrue(errorMessage.contains(_keyword1));
 	}
 
 	@Test
 	public void testVerifyLayoutWithReservedLayoutFriendlyURL()
 		throws Exception {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+			_CLASS_NAME, LoggerTestUtil.OFF)) {
 
-		_updateFriendlyURL(
-			_layout1.getPlid(), StringPool.FORWARD_SLASH + _keyword1);
+			_updateFriendlyURL(
+				_layout1.getPlid(), StringPool.FORWARD_SLASH + _keyword1);
 
-		super.testVerify();
+			super.testVerify();
 
-		Assert.assertEquals(
-			_errorMessages.toString(), 1, _errorMessages.size());
+			Assert.assertEquals(
+				_errorMessages.toString(), 1, _errorMessages.size());
 
-		String errorMessage = _errorMessages.get(0);
+			String errorMessage = _errorMessages.get(0);
 
-		Assert.assertTrue(errorMessage.contains(_keyword1));
+			Assert.assertTrue(errorMessage.contains(_keyword1));
+		}
 	}
 
 	@Override
@@ -246,6 +262,7 @@ public class VerifyLayoutTest extends BaseVerifyProcessTestCase {
 
 	private static final String _FRIENDLY_URL_2 = "/friendlyURL2";
 
+	private static final String _CLASS_NAME ="com.liferay.portal.verify.VerifyLayout";
 	private static Connection _connection;
 	private static List<String> _errorMessages;
 	private static String _keyword1;

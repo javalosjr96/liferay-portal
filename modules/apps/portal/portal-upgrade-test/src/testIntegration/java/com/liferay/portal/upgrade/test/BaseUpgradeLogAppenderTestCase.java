@@ -27,6 +27,8 @@ import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.version.Version;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.tools.DBUpgrader;
@@ -328,28 +330,32 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 	@Ignore
 	@Test
 	public void testLogEvents() throws Exception {
-		_appender.start();
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+			_CLASS_NAME, LoggerTestUtil.OFF)) {
+			_appender.start();
 
-		Log log = LogFactoryUtil.getLog(BaseUpgradeLogAppenderTestCase.class);
+			Log log =
+				LogFactoryUtil.getLog(BaseUpgradeLogAppenderTestCase.class);
 
-		log.warn("Warning");
-		log.warn("Warning");
+			log.warn("Warning");
+			log.warn("Warning");
 
-		log = LogFactoryUtil.getLog(UpgradeProcess.class);
+			log = LogFactoryUtil.getLog(UpgradeProcess.class);
 
-		log.info(
-			"Completed upgrade process com.liferay.portal.UpgradeTest in " +
+			log.info(
+				"Completed upgrade process com.liferay.portal.UpgradeTest in " +
 				"20401 ms");
 
-		_appender.stop();
+			_appender.stop();
 
-		_assertLogContextContains(
-			"upgrade.report.longest.upgrade.processes",
-			"com.liferay.portal.UpgradeTest:20401 ms");
-		_assertLogContextContains("upgrade.report.warnings", "2:Warning");
-		_assertReport("2 occurrences of the following event: Warning");
-		_assertReport(
-			"com.liferay.portal.UpgradeTest took 20401 ms to complete");
+			_assertLogContextContains(
+				"upgrade.report.longest.upgrade.processes",
+				"com.liferay.portal.UpgradeTest:20401 ms");
+			_assertLogContextContains("upgrade.report.warnings", "2:Warning");
+			_assertReport("2 occurrences of the following event: Warning");
+			_assertReport(
+				"com.liferay.portal.UpgradeTest took 20401 ms to complete");
+		}
 	}
 
 	@Test
@@ -613,6 +619,7 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 
 	private static DB _db;
 	private static Appender _logContextAppender;
+	private static final String _CLASS_NAME ="com.liferay.portal.upgrade.test.BaseUpgradeLogAppenderTestCase";
 	private static final Pattern _logContextTablesInitialFinalRowsPattern =
 		Pattern.compile("(\\w+_?):(\\d+|-):(\\d+|-)");
 	private static boolean _originalUpgradeClient;
