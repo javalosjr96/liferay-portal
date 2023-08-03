@@ -327,7 +327,6 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 				longestUpgradeProcessesValue.indexOf(fasterUpgradeProcessName));
 	}
 
-	@Ignore
 	@Test
 	public void testLogEvents() throws Exception {
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(

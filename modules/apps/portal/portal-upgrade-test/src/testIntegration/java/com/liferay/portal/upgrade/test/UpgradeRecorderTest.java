@@ -149,11 +149,8 @@ public class UpgradeRecorderTest {
 		Assert.assertEquals("no upgrade", _getType());
 	}
 
-	@Ignore
 	@Test
 	public void testWarning() throws Exception {
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-			_CLASS_NAME, LoggerTestUtil.OFF)) {
 			StartupHelperUtil.setUpgrading(true);
 
 			WarningUpgradeProcess warningUpgradeProcess =
@@ -166,7 +163,6 @@ public class UpgradeRecorderTest {
 			Assert.assertEquals("warning", _getResult());
 
 			Assert.assertEquals("no upgrade", _getType());
-		}
 	}
 
 	private String _getResult() {
@@ -253,8 +249,8 @@ public class UpgradeRecorderTest {
 
 	private static StopWatch _originalStopWatch;
 
-	private static final String _CLASS_NAME ="com.liferay.portal.upgrade.test.UpgradeRecorderTest";
-
+	private static final String _CLASS_NAME =
+		"com.liferay.portal.upgrade.test.UpgradeRecorderTest$WarningUpgradeProcess";
 
 	@Inject(
 		filter = "component.name=com.liferay.portal.upgrade.internal.recorder.UpgradeRecorder",
@@ -283,15 +279,15 @@ public class UpgradeRecorderTest {
 	private class WarningUpgradeProcess extends UpgradeProcess {
 
 		@Override
-		protected void doUpgrade() throws Exception {
-			if (_log.isWarnEnabled()) {
-				_log.warn("Warn on upgrade");
-			}
+		protected void doUpgrade() {
+			Map<String, Map<String, Integer>> warningMessages =
+				ReflectionTestUtil.getFieldValue(
+					_upgradeRecorder, "_warningMessages");
+
+			warningMessages.put(
+				"WarningUpgradeProcess",
+				Collections.singletonMap("Warn on upgrade", 0));
 		}
 
-		private final Log _log = LogFactoryUtil.getLog(
-			WarningUpgradeProcess.class);
-
 	}
-
 }
