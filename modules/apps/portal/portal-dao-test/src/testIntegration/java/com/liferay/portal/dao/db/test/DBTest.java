@@ -17,6 +17,7 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ObjectValuePair;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.sql.Connection;
@@ -554,6 +555,8 @@ public class DBTest {
 
 	@Test
 	public void testRenameTablesRollback() throws Exception {
+		LoggerTestUtil.disableFileLogging(true);
+
 		try {
 			_db.renameTables(
 				_connection,
@@ -567,6 +570,8 @@ public class DBTest {
 			Assert.assertFalse(_dbInspector.hasTable(_TABLE_NAME_2));
 			Assert.assertFalse(_dbInspector.hasTable(_TABLE_NAME_3));
 		}
+
+		LoggerTestUtil.disableFileLogging(false);
 	}
 
 	@Test

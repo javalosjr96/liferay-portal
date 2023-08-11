@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.verify.VerifyProcess;
@@ -47,6 +48,7 @@ public class VerifyProcessTrackerOSGiCommandsTest {
 
 	@BeforeClass
 	public static void setUpClass() {
+		LoggerTestUtil.disableFileLogging(true);
 		Bundle bundle = FrameworkUtil.getBundle(
 			VerifyProcessTrackerOSGiCommandsTest.class);
 
@@ -60,6 +62,7 @@ public class VerifyProcessTrackerOSGiCommandsTest {
 
 	@After
 	public void tearDown() {
+		LoggerTestUtil.disableFileLogging(false);
 		ReflectionTestUtil.setFieldValue(
 			StartupHelperUtil.class, "_upgrading", _upgrading);
 
