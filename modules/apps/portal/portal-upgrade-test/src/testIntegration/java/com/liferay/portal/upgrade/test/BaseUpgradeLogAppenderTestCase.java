@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.version.Version;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.tools.DBUpgrader;
@@ -52,7 +53,6 @@ import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -325,9 +325,9 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 				longestUpgradeProcessesValue.indexOf(fasterUpgradeProcessName));
 	}
 
-	@Ignore
 	@Test
 	public void testLogEvents() throws Exception {
+		LoggerTestUtil.disableFileLogging(true);
 		_appender.start();
 
 		Log log = LogFactoryUtil.getLog(BaseUpgradeLogAppenderTestCase.class);
@@ -342,7 +342,7 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 				"20401 ms");
 
 		_appender.stop();
-
+		LoggerTestUtil.disableFileLogging(false);
 		_assertLogContextContains(
 			"upgrade.report.longest.upgrade.processes",
 			"com.liferay.portal.UpgradeTest:20401 ms");
