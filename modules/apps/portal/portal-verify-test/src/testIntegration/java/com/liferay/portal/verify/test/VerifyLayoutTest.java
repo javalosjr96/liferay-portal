@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.util.PropsValues;
@@ -55,6 +56,8 @@ public class VerifyLayoutTest extends BaseVerifyProcessTestCase {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
+		LoggerTestUtil.disableFileLogging(true);
+
 		_verifyLayoutLog = ReflectionTestUtil.getFieldValue(
 			VerifyLayout.class, "_log");
 
@@ -107,6 +110,8 @@ public class VerifyLayoutTest extends BaseVerifyProcessTestCase {
 
 	@After
 	public void tearDown() throws Exception {
+		LoggerTestUtil.disableFileLogging(false);
+
 		_errorMessages = new ArrayList<>();
 
 		_updateFriendlyURL(_layout1.getPlid(), _FRIENDLY_URL_1);
