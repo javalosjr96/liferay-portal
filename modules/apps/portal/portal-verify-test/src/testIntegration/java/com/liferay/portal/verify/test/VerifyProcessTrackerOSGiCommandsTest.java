@@ -76,7 +76,6 @@ public class VerifyProcessTrackerOSGiCommandsTest {
 		_verifyProcessRun = false;
 	}
 
-	@Ignore
 	@Test
 	public void testRegisterFailedVerifyProcess() {
 		_forceFailure = true;
