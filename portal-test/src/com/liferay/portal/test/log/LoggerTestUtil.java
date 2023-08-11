@@ -14,12 +14,15 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.log4j.Log4JUtil;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.logging.Handler;
 import java.util.logging.Level;
 import java.util.logging.LogRecord;
 import java.util.logging.Logger;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Appender;
 import org.apache.logging.log4j.core.LogEvent;
 import org.apache.logging.log4j.core.appender.AbstractAppender;
 import org.apache.logging.log4j.core.config.LoggerConfig;
@@ -104,6 +107,37 @@ public class LoggerTestUtil {
 
 		return log4JLogCapture;
 	}
+
+	public static void disableFileLogging(boolean disable) {
+		if (disable) {
+			Map<String, Appender> map = _rootLogger.getAppenders();
+			Appender xmlAppender = null;
+
+			for (final Map.Entry<String, Appender> entry : map.entrySet()) {
+				if (entry.getKey(
+					).equals(
+						"XML_FILE"
+					) ||
+					entry.getKey(
+					).equals(
+						"TEXT_FILE"
+					)) {
+
+					xmlAppender = entry.getValue();
+
+					_rootLogger.removeAppender(xmlAppender);
+
+					xmlAppender.stop();
+				}
+			}
+		}
+		else {
+			Log4JUtil.configureLog4J(LoggerTestUtil.class.getClassLoader());
+		}
+	}
+
+	private static final org.apache.logging.log4j.core.Logger _rootLogger =
+		(org.apache.logging.log4j.core.Logger)LogManager.getRootLogger();
 
 	static {
 
