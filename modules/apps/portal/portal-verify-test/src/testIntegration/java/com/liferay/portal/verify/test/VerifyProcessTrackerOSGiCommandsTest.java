@@ -25,7 +25,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -49,6 +48,7 @@ public class VerifyProcessTrackerOSGiCommandsTest {
 	@BeforeClass
 	public static void setUpClass() {
 		LoggerTestUtil.disableFileLogging(true);
+
 		Bundle bundle = FrameworkUtil.getBundle(
 			VerifyProcessTrackerOSGiCommandsTest.class);
 
@@ -63,6 +63,7 @@ public class VerifyProcessTrackerOSGiCommandsTest {
 	@After
 	public void tearDown() {
 		LoggerTestUtil.disableFileLogging(false);
+
 		ReflectionTestUtil.setFieldValue(
 			StartupHelperUtil.class, "_upgrading", _upgrading);
 
