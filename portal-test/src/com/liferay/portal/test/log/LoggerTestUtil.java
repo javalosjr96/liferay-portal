@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.log4j.Log4JUtil;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -111,7 +112,8 @@ public class LoggerTestUtil {
 	public static void disableFileLogging(boolean disable) {
 		if (disable) {
 			Map<String, Appender> map = _rootLogger.getAppenders();
-			Appender xmlAppender = null;
+
+			Appender fileAppender = null;
 
 			for (final Map.Entry<String, Appender> entry : map.entrySet()) {
 				if (entry.getKey(
@@ -123,21 +125,31 @@ public class LoggerTestUtil {
 						"TEXT_FILE"
 					)) {
 
-					xmlAppender = entry.getValue();
+					fileAppender = entry.getValue();
 
-					_rootLogger.removeAppender(xmlAppender);
+					_removedAppenders.add(fileAppender);
 
-					xmlAppender.stop();
+					_rootLogger.removeAppender(fileAppender);
+
+					fileAppender.stop();
 				}
 			}
 		}
 		else {
-			Log4JUtil.configureLog4J(InitUtil.class.getClassLoader());
+			if(!_removedAppenders.isEmpty()){
+				for(Appender appender : _removedAppenders ){
+					appender.start();
+					_rootLogger.addAppender(appender);
+				}
+
+			}
 		}
 	}
 
 	private static final org.apache.logging.log4j.core.Logger _rootLogger =
 		(org.apache.logging.log4j.core.Logger)LogManager.getRootLogger();
+
+	private static List<Appender> _removedAppenders;
 
 	static {
 
