@@ -32,6 +32,7 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.tools.DBUpgrader;
 import com.liferay.portal.upgrade.PortalUpgradeProcess;
+import com.liferay.portal.util.InitUtil;
 import com.liferay.portal.util.PropsValues;
 
 import java.io.File;
@@ -327,7 +328,8 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 
 	@Test
 	public void testLogEvents() throws Exception {
-		LoggerTestUtil.disableFileLogging(true);
+		LoggerTestUtil.disableFileLogging(true, null);
+
 		_appender.start();
 
 		Log log = LogFactoryUtil.getLog(BaseUpgradeLogAppenderTestCase.class);
@@ -342,7 +344,9 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 				"20401 ms");
 
 		_appender.stop();
-		LoggerTestUtil.disableFileLogging(false);
+
+		LoggerTestUtil.disableFileLogging(false,InitUtil.class.getClassLoader());
+
 		_assertLogContextContains(
 			"upgrade.report.longest.upgrade.processes",
 			"com.liferay.portal.UpgradeTest:20401 ms");

@@ -13,7 +13,7 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.log4j.Log4JUtil;
 
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -109,7 +109,7 @@ public class LoggerTestUtil {
 		return log4JLogCapture;
 	}
 
-	public static void disableFileLogging(boolean disable) {
+	public static void disableFileLogging(boolean disable, ClassLoader classLoader) {
 		if (disable) {
 			Map<String, Appender> map = _rootLogger.getAppenders();
 
@@ -127,8 +127,6 @@ public class LoggerTestUtil {
 
 					fileAppender = entry.getValue();
 
-					_removedAppenders.add(fileAppender);
-
 					_rootLogger.removeAppender(fileAppender);
 
 					fileAppender.stop();
@@ -136,20 +134,13 @@ public class LoggerTestUtil {
 			}
 		}
 		else {
-			if(!_removedAppenders.isEmpty()){
-				for(Appender appender : _removedAppenders ){
-					appender.start();
-					_rootLogger.addAppender(appender);
-				}
-
-			}
+			Log4JUtil.configureLog4J(classLoader);
 		}
 	}
 
 	private static final org.apache.logging.log4j.core.Logger _rootLogger =
 		(org.apache.logging.log4j.core.Logger)LogManager.getRootLogger();
 
-	private static List<Appender> _removedAppenders;
 
 	static {
 
