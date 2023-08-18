@@ -26,7 +26,6 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -75,17 +74,16 @@ public class VerifyProcessTrackerOSGiCommandsTest {
 		_verifyProcessRun = false;
 	}
 
-	@Ignore
 	@Test
 	public void testRegisterFailedVerifyProcess() {
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-			_CLASS_NAME_VERIFY_PROCESS_TRACKER,
-			LoggerTestUtil.OFF)) {
+				_CLASS_NAME_VERIFY_PROCESS_TRACKER, LoggerTestUtil.OFF)) {
 
 			_forceFailure = true;
 
 			try (SafeCloseable safeCloseable = _registerVerifyProcess(
-				true, true)) {
+					true, true)) {
+
 				_assertVerify(true);
 			}
 		}
@@ -324,6 +322,10 @@ public class VerifyProcessTrackerOSGiCommandsTest {
 			StartupHelperUtil.class, "_upgrading", false);
 	}
 
+	private static final String _CLASS_NAME_VERIFY_PROCESS_TRACKER =
+		"com.liferay.portal.verify.extender.internal.osgi.commands." +
+			"VerifyProcessTrackerOSGiCommands";
+
 	private static BundleContext _bundleContext;
 	private static String _symbolicName;
 	private static boolean _upgrading;
@@ -332,7 +334,6 @@ public class VerifyProcessTrackerOSGiCommandsTest {
 	private CounterLocalService _counterLocalService;
 
 	private boolean _forceFailure;
-	private static String _CLASS_NAME_VERIFY_PROCESS_TRACKER="com.liferay.portal.verify.extender.internal.osgi.commands.VerifyProcessTrackerOSGiCommands";
 
 	@Inject
 	private ReleaseLocalService _releaseLocalService;
