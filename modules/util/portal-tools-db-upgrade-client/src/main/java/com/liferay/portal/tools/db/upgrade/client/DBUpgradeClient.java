@@ -182,12 +182,14 @@ public class DBUpgradeClient {
 		commands.add("-cp");
 		commands.add(_getBootstrapClassPath());
 
-		String jvmOptsCommands = _jvmOpts.concat(
-			" -Dexternal-properties=portal-upgrade.properties " +
-				"-Dserver.detector.server.id=" +
-					_appServer.getServerDetectorServerId() +
-						" -Dliferay.shielded.container.lib.portal.dir=" +
-							_appServer.getPortalShieldedContainerLibDir());
+		String jvmOptsCommands =
+			_jvmOpts.concat(
+				" -Dexternal-properties=portal-upgrade.properties " +
+					"-Dserver.detector.server.id=" +
+						_appServer.getServerDetectorServerId() +
+							" -Dliferay.shielded.container.lib.portal.dir=\"" +
+								_appServer.getPortalShieldedContainerLibDir()) +
+									"\"";
 
 		System.out.println("JVM arguments: " + jvmOptsCommands);
 
@@ -385,7 +387,10 @@ public class DBUpgradeClient {
 
 		_appendClassPath(sb, _appServer.getExtraLibDirs());
 
-		return sb.toString();
+		return sb.toString(
+		).replaceAll(
+			"\\s", "%20"
+		);
 	}
 
 	private GogoShellClient _initGogoShellClient() throws IOException {

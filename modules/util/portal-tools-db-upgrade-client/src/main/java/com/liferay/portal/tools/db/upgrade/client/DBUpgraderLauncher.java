@@ -28,7 +28,7 @@ public class DBUpgraderLauncher {
 		String classPath = (String)objectInputStream.readObject();
 
 		ClassLoader classLoader = new URLClassLoader(
-			_getClassPathURLs(classPath));
+			_getClassPathURLs(classPath.replaceAll("%20", " ")));
 
 		Class<?> clazz = classLoader.loadClass(
 			"com.liferay.portal.tools.DBUpgrader");
