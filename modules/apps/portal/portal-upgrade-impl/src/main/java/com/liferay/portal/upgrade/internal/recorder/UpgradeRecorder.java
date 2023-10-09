@@ -143,6 +143,10 @@ public class UpgradeRecorder {
 				if (_result.equals("success")) {
 					_log.info("No pending upgrades to run");
 				}
+				else if (_result.equals("warning")) {
+					_log.info(
+						"No pending upgrades to run, but check log for errors");
+				}
 				else {
 					_log.info(
 						"Upgrade process failed or upgrade dependencies are " +
@@ -150,6 +154,12 @@ public class UpgradeRecorder {
 				}
 			}
 			else {
+				if (_result.equals("warning")) {
+					_log.info(
+						"Minor errors occurred during upgrade, please check " +
+							"the upgrade log");
+				}
+
 				_log.info(
 					StringBundler.concat(
 						StringUtil.toUpperCase(_type.substring(0, 1)),
@@ -177,14 +187,14 @@ public class UpgradeRecorder {
 	}
 
 	private String _calculateResult() {
-		if (!_errorMessages.isEmpty()) {
-			return "failure";
-		}
-
 		try {
 			ReleaseManager releaseManager = _serviceTracker.getService();
 
 			if (!releaseManager.isUpgraded()) {
+				if (!_errorMessages.isEmpty()) {
+					return "failure";
+				}
+
 				return "unresolved";
 			}
 		}
@@ -197,7 +207,7 @@ public class UpgradeRecorder {
 			return "failure";
 		}
 
-		if (!_warningMessages.isEmpty()) {
+		if (!_warningMessages.isEmpty() || !_errorMessages.isEmpty()) {
 			return "warning";
 		}
 
