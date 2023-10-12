@@ -97,9 +97,15 @@ public abstract class BaseDBProcess implements DBProcess {
 		DB db = DBManagerUtil.getDB();
 
 		if (connection == null) {
+			System.out.println();
+			System.out.println("171695: The connection was null");
+			System.out.println();
 			db.runSQL(template);
 		}
 		else {
+			System.out.println();
+			System.out.println("171695: The connection was not null");
+			System.out.println();
 			db.runSQL(connection, template);
 		}
 	}
