@@ -7,10 +7,13 @@ package com.liferay.portal.kernel.upgrade;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.db.DBInspector;
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.util.LoggingTimer;
 
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
+import java.sql.Statement;
 
 /**
  * @author Preston Crary
@@ -108,7 +111,13 @@ public class CTModelUpgradeProcess extends UpgradeProcess {
 
 		sb.append(", ctCollectionId)");
 
-		runSQL(connection,sb.toString());
+		try (Connection connection = DataAccess.getConnection();
+			 Statement statement = connection.createStatement()) {
+			ResultSet resultSet = statement.executeQuery(sb.toString());
+			resultSet.close();
+		}
+
+
 	}
 
 	private final String[] _tableNames;
