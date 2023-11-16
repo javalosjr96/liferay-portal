@@ -120,16 +120,23 @@ public class ReleaseManagerImpl implements ReleaseManager {
 	}
 
 	@Override
-	public boolean isUpgraded() throws Exception {
+	public String isUpgraded() throws Exception {
 		try (Connection connection = DataAccess.getConnection()) {
-			if (!PortalUpgradeProcess.isInLatestSchemaVersion(connection) ||
-				_isPendingModuleUpgrades()) {
+			if (!PortalUpgradeProcess.isInLatestSchemaVersion(connection)) {
 
-				return false;
+				return "Failed";
+			}
+
+			if(_isPendingModuleUpgrades()){
+				return "Failed";
 			}
 		}
 
-		return _hasUnsatisfiedUpgradeComponents();
+		if (_hasUnsatisfiedUpgradeComponents()) {
+			return "Unresolved";
+		}
+
+		return "Success";
 	}
 
 	@Activate

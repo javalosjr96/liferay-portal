@@ -140,7 +140,7 @@ public class UpgradeRecorder {
 
 		if (_log.isInfoEnabled()) {
 			if (_type.equals("no upgrade")) {
-				if (_result.equals("success")) {
+				if (_result.equals("Success")) {
 					_log.info("No pending upgrades to run");
 				}
 				else {
@@ -153,8 +153,14 @@ public class UpgradeRecorder {
 				_log.info(
 					StringBundler.concat(
 						StringUtil.toUpperCase(_type.substring(0, 1)),
-						_type.substring(1), " upgrade finished with result ",
+						_type.substring(1), " upgrade finished with result: ",
 						_result));
+
+
+			}
+
+			if (!_errorMessages.isEmpty()) {
+				_log.info("Errors occurred during upgrade, check logs");
 			}
 		}
 
@@ -177,16 +183,12 @@ public class UpgradeRecorder {
 	}
 
 	private String _calculateResult() {
-		if (!_errorMessages.isEmpty()) {
-			return "failure";
-		}
+		String result;
 
 		try {
 			ReleaseManager releaseManager = _serviceTracker.getService();
 
-			if (!releaseManager.isUpgraded()) {
-				return "unresolved";
-			}
+			result = releaseManager.isUpgraded();
 		}
 		catch (Exception exception) {
 			_log.error(
@@ -194,14 +196,10 @@ public class UpgradeRecorder {
 					"Unable to check the upgrade result due to ",
 					exception.getMessage(), ". Please check manually."));
 
-			return "failure";
+			return "Failure";
 		}
 
-		if (!_warningMessages.isEmpty()) {
-			return "warning";
-		}
-
-		return "success";
+		return result;
 	}
 
 	private String _calculateType() {
