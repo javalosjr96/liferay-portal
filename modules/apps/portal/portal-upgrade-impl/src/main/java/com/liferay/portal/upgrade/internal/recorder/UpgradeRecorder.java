@@ -7,6 +7,7 @@ package com.liferay.portal.upgrade.internal.recorder;
 
 import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upgrade.ReleaseManager;
@@ -93,6 +94,10 @@ public class UpgradeRecorder {
 		occurrences++;
 
 		messages.put(message, occurrences);
+
+		if (message.contains(_VERIFY_EXCEPTION)) {
+			_verifyProcessStatus = false;
+		}
 	}
 
 	public void recordUpgradeProcessMessage(String loggerName, String message) {
@@ -155,8 +160,6 @@ public class UpgradeRecorder {
 						StringUtil.toUpperCase(_type.substring(0, 1)),
 						_type.substring(1), " upgrade finished with result: ",
 						_result));
-
-
 			}
 
 			if (!_errorMessages.isEmpty()) {
@@ -196,6 +199,10 @@ public class UpgradeRecorder {
 					"Unable to check the upgrade result due to ",
 					exception.getMessage(), ". Please check manually."));
 
+			return "Failure";
+		}
+
+		if (!_verifyReleaseStates() || !_verifyProcessStatus) {
 			return "Failure";
 		}
 
@@ -294,10 +301,31 @@ public class UpgradeRecorder {
 		}
 	}
 
+	private boolean _verifyReleaseStates() {
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				"select 1 from Release_ where state_ = 1 OR state_ = 2")) {
+
+			ResultSet resultSet = preparedStatement.executeQuery();
+
+			if (resultSet.next()) {
+				return false;
+			}
+		}
+		catch (Exception exception) {
+			_log.error("Unable to verify Release state", exception);
+		}
+
+		return true;
+	}
+
 	private static final String[] _FILTERED_CLASS_NAMES = {
 		"com.liferay.portal.search.elasticsearch7.internal.sidecar." +
 			"SidecarManager"
 	};
+
+	private static final String _VERIFY_EXCEPTION =
+		"com.liferay.portal.verify.VerifyException";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		UpgradeRecorder.class);
@@ -327,6 +355,7 @@ public class UpgradeRecorder {
 	}
 
 	private ServiceTracker<ReleaseManager, ReleaseManager> _serviceTracker;
+	private boolean _verifyProcessStatus = true;
 
 	private class SchemaVersions {
 

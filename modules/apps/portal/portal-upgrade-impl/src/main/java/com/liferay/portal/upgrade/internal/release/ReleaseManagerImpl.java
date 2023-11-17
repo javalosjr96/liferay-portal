@@ -122,12 +122,9 @@ public class ReleaseManagerImpl implements ReleaseManager {
 	@Override
 	public String isUpgraded() throws Exception {
 		try (Connection connection = DataAccess.getConnection()) {
-			if (!PortalUpgradeProcess.isInLatestSchemaVersion(connection)) {
+			if (!PortalUpgradeProcess.isInLatestSchemaVersion(connection) ||
+				_isPendingModuleUpgrades()) {
 
-				return "Failed";
-			}
-
-			if(_isPendingModuleUpgrades()){
 				return "Failed";
 			}
 		}
