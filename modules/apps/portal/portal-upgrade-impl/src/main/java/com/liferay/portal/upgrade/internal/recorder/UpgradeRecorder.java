@@ -29,6 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import javax.sql.DataSource;
 
+import com.liferay.portal.verify.VerifyException;
 import org.apache.logging.log4j.ThreadContext;
 
 import org.osgi.framework.BundleContext;
@@ -95,7 +96,7 @@ public class UpgradeRecorder {
 
 		messages.put(message, occurrences);
 
-		if (message.contains(_VERIFY_EXCEPTION)) {
+		if (message.contains(VerifyException.class.getName())) {
 			_verifyProcessStatus = false;
 		}
 	}
@@ -202,7 +203,7 @@ public class UpgradeRecorder {
 			return "Failure";
 		}
 
-		if (!_verifyReleaseStates() || !_verifyProcessStatus) {
+		if (!_verifyProcessStatus) {
 			return "Failure";
 		}
 
