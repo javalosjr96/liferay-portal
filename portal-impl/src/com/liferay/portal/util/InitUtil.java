@@ -154,6 +154,9 @@ public class InitUtil {
 
 		// Log sanitizer
 
+		Log4JUtil.setLevel(
+			"com.zaxxer.hikari", "ALL", true);
+
 		SanitizerLogWrapper.init();
 
 		// Configuration factory
