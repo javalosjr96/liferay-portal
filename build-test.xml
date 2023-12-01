@@ -671,7 +671,7 @@ jdbc.default.password=${database.password}
 
 // HikariCP
 
-jdbc.default.connectionTimeout=600000
+jdbc.default.connectionTimeout=900000
 jdbc.default.maximumPoolSize=30
 jdbc.default.minimumIdle=10]]></echo>
 
@@ -11902,7 +11902,7 @@ jdbc.default.password=${database.password}
 
 // HikariCP
 
-jdbc.default.connectionTimeout=600000
+jdbc.default.connectionTimeout=900000
 jdbc.default.maximumPoolSize=${database.max.pool.size}
 jdbc.default.minimumIdle=10
 
