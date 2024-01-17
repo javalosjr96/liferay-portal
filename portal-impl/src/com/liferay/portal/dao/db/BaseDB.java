@@ -15,6 +15,7 @@ import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.kernel.configuration.Filter;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.db.Index;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
@@ -1260,6 +1261,8 @@ public abstract class BaseDB implements DB {
 
 		DatabaseMetaData databaseMetaData = connection.getMetaData();
 
+		DB db = DBManagerUtil.getDB();
+
 		DBInspector dbInspector = new DBInspector(connection);
 
 		String catalog = dbInspector.getCatalog();
@@ -1286,9 +1289,8 @@ public abstract class BaseDB implements DB {
 				normalizedTableName = dbInspector.normalizeName(
 					tableResultSet.getString("TABLE_NAME"), databaseMetaData);
 
-				try (ResultSet indexResultSet = databaseMetaData.getIndexInfo(
-						catalog, schema, normalizedTableName, onlyUnique,
-						false)) {
+				try (ResultSet indexResultSet = db.getIndexResultSet(
+						connection, normalizedTableName)) {
 
 					boolean unique = false;
 
