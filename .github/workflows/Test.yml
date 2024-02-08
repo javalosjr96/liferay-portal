@@ -10,6 +10,8 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1 
+          repository: javalosjr96/liferay-portal
+          ref: master
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Create empty commit 
         run: |
