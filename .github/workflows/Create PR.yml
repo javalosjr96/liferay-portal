@@ -1,0 +1,21 @@
+name: Scheduled Single-Line Change
+
+on:
+   workflow_dispatch:
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Modify README
+        run: sed -i 's/This is the original text/New text added on schedule/' README.markdown
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v3
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          target: master  
+          title: "Scheduled Single-Line Change"
+          body: "This PR has a single line change automatically added at midnight (UTC)."
+          branch: scheduled-change
+          labels: automated, single-change
