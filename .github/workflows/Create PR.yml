@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: List directory contents
         run: |
-          ls -la $(pwd
+          ls -la $(pwd)
 
 
       - name: Modify README
