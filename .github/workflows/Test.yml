@@ -7,7 +7,12 @@ jobs:
   create-pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1 
+          repository: https://github.com/liferay/liferay-portal.git
+          ref: master
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Create empty commit 
         run: |
           git config user.name 'GitHub Actions'
@@ -17,6 +22,7 @@ jobs:
         uses: peter-evans/create-pull-request@v3
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          pull: ${{ github.workspace }}
           target: master 
           title: "Scheduled Single-Line Change"
           body: "This PR has a single line change automatically added at midnight (UTC)."
