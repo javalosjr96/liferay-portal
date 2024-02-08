@@ -10,6 +10,12 @@ jobs:
       - uses: actions/checkout@v3
       - name: Modify README
         run: sed -i 's/This is the original text/New text added on schedule/' README.markdown
+      - name: Commit changes
+        run: |
+          git config user.name 'GitHub Actions'
+          git config user.email 'actions@github.com'
+          git add README.markdown
+          git commit -m "Adding scheduled single-line change"
       - name: Create Pull Request
         uses: peter-evans/create-pull-request@v3
         with:
