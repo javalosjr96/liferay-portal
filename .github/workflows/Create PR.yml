@@ -15,6 +15,9 @@ jobs:
 
       - name: Modify README
         run: sed -i 's/This is the original text/New text added on schedule/' README.markdown
+      - name: Check Status
+        run: |
+             git status -uno
       - name: Commit changes
         run: |
           git config user.name 'GitHub Actions'
