@@ -7,12 +7,9 @@ jobs:
   create-pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 1 
-          repository: javalosjr96/liferay-portal
-          ref: master
-          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Pull from Liferay
+        run: | 
+          git clone --bare https://github.com/liferay/liferay-portal.git
       - name: Create empty commit 
         run: |
           git config user.name 'GitHub Actions'
