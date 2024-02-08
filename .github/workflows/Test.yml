@@ -20,7 +20,6 @@ jobs:
         uses: peter-evans/create-pull-request@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          pull: ${{ github.workspace }}
           target: master 
           title: "Scheduled Single-Line Change"
           body: "This PR has a single line change automatically added at midnight (UTC)."
