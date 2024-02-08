@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1 
-          repository: https://github.com/liferay/liferay-portal.git
+          repository: liferay/liferay-portal
           ref: master
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Create empty commit 
