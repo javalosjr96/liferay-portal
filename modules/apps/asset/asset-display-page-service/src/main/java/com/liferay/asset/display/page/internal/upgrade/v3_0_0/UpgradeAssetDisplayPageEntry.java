@@ -45,11 +45,11 @@ public class UpgradeAssetDisplayPageEntry
 
 		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				StringBundler.concat(
-					"select distinct groupId, companyId, userId, userName, ",
-					"fileEntryId from DLFileEntry where fileEntryId not in ",
-					"(select classPK from AssetDisplayPageEntry where ",
-					"classNameId in (", dlFileEntryClassNameId, ", ",
-					fileEntryClassNameId, "))"));
+					"select groupId, companyId, userId, userName, ",
+					"fileEntryId, ctCollectionId from DLFileEntry where ",
+					"fileEntryId not in (select classPK from  ",
+					"AssetDisplayPageEntry where classNameId in (",
+					dlFileEntryClassNameId, ", ", fileEntryClassNameId, "))"));
 			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
@@ -57,8 +57,9 @@ public class UpgradeAssetDisplayPageEntry
 						"insert into AssetDisplayPageEntry (uuid_, ",
 						"assetDisplayPageEntryId, groupId, companyId, userId, ",
 						"userName, createDate, modifiedDate, classNameId, ",
-						"classPK, layoutPageTemplateEntryId, type_, plid) ",
-						"values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"))) {
+						"classPK, layoutPageTemplateEntryId, type_, plid, ",
+						"ctCollectionId) values(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ",
+						"?, ?, ?, ?)"))) {
 
 			try (ResultSet resultSet = preparedStatement1.executeQuery()) {
 				while (resultSet.next()) {
@@ -81,6 +82,8 @@ public class UpgradeAssetDisplayPageEntry
 					preparedStatement2.setLong(
 						12, AssetDisplayPageConstants.TYPE_NONE);
 					preparedStatement2.setLong(13, 0);
+					preparedStatement2.setLong(
+						14, resultSet.getLong("ctCollectionId"));
 
 					preparedStatement2.addBatch();
 				}
