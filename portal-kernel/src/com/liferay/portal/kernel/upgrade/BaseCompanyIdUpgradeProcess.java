@@ -97,11 +97,28 @@ public abstract class BaseCompanyIdUpgradeProcess extends UpgradeProcess {
 				return String.valueOf(companyIds.get(0));
 			}
 
-			return StringBundler.concat(
-				"select max(companyId) from ", foreignTableName, " where ",
-				foreignTableName, ".", foreignColumnName, " > 0 and ",
-				foreignTableName, ".", foreignColumnName, " = ", _tableName,
-				".", _columnName);
+			companyIds.clear();
+
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(
+						StringBundler.concat(
+							"select max(companyId) from ", foreignTableName,
+							" where ", foreignTableName, ".", foreignColumnName,
+							" > 0 and ", foreignTableName, ".",
+							foreignColumnName, " = ", _tableName, ".",
+							_columnName));
+				ResultSet resultSet = preparedStatement.executeQuery()) {
+
+				while (resultSet.next()) {
+					companyIds.add(resultSet.getLong("max"));
+				}
+			}
+
+			if (companyIds.isEmpty()) {
+				throw new SQLException("No valid companies found");
+			}
+
+			return String.valueOf(companyIds.get(0));
 		}
 
 		protected String getUpdateSQL(
