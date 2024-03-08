@@ -66,7 +66,7 @@ public class DBResourceUtil {
 		}
 
 		try {
-			return URLUtil.toString(resource);
+			return StringUtil.read(resource.openStream());
 		}
 		catch (IOException ioException) {
 			_log.error(
