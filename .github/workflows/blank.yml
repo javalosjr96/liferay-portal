@@ -17,17 +17,11 @@ jobs:
         run: |
              git status -uno
       - name: Commit changes
+
         run: |
-          git config user.name 'GitHub Actions'
-          git config user.email 'actions@github.com'
+          git config user.name 'Jorge Avalos'
+          git config user.email 'jorge.avalos@liferay.com'
           git add diff.txt
-          git commit -m "Adding scheduled single-line change"
-      - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v3
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          target: master  
-          title: "Scheduled Single-Line Change"
-          body: "This PR has a single line change automatically added at midnight (UTC)."
-          branch: scheduled-change
-          labels: automated, single-change
+          git commit -m "Single Line Change"
+          git switch -c upgrade-suite-test
+          git push origin upgrade-suite-test --force
