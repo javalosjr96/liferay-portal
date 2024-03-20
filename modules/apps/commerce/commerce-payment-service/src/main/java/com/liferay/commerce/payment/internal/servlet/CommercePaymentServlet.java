@@ -215,11 +215,11 @@ public class CommercePaymentServlet extends HttpServlet {
 				entryId);
 
 		if (commercePaymentEntry == null) {
-			_nextUrl = ParamUtil.getString(httpServletRequest, "nextStep");
+			_redirect = ParamUtil.getString(httpServletRequest, "nextStep");
 
-			URL nextURL = new URL(_nextUrl);
+			URL url = new URL(_redirect);
 
-			if (!Objects.equals(portalURL.getHost(), nextURL.getHost())) {
+			if (!Objects.equals(portalURL.getHost(), url.getHost())) {
 				throw new ServletException();
 			}
 
@@ -250,12 +250,12 @@ public class CommercePaymentServlet extends HttpServlet {
 				_getApplicationContextURL(
 					commercePaymentEntry.getCommercePaymentEntryId(),
 					commercePaymentIntegration.getKey(), httpServletRequest,
-					"&orderType=normal", _nextUrl));
+					"&orderType=normal", _redirect));
 			commercePaymentEntry.setCancelURL(
 				_getApplicationContextURL(
 					commercePaymentEntry.getCommercePaymentEntryId(),
 					commercePaymentIntegration.getKey(), httpServletRequest,
-					"&cancel=true", _nextUrl));
+					"&cancel=true", _redirect));
 
 			commercePaymentEntry =
 				_commercePaymentEntryLocalService.updateCommercePaymentEntry(
@@ -278,7 +278,7 @@ public class CommercePaymentServlet extends HttpServlet {
 						CommerceOrderPaymentConstants.STATUS_CANCELLED,
 						StringPool.BLANK, StringPool.BLANK);
 
-					httpServletResponse.sendRedirect(_nextUrl);
+					httpServletResponse.sendRedirect(_redirect);
 
 					return;
 				}
@@ -310,7 +310,7 @@ public class CommercePaymentServlet extends HttpServlet {
 		int paymentStatus = commercePaymentEntry.getPaymentStatus();
 
 		if (CommercePaymentEntryConstants.STATUS_FAILED == paymentStatus) {
-			httpServletResponse.sendRedirect(_nextUrl);
+			httpServletResponse.sendRedirect(_redirect);
 
 			return;
 		}
@@ -331,12 +331,20 @@ public class CommercePaymentServlet extends HttpServlet {
 
 					commercePaymentEntry = _commercePaymentGateway.authorize(
 						httpServletRequest, commercePaymentEntry);
+
+					if (CommercePaymentEntryConstants.STATUS_FAILED ==
+							commercePaymentEntry.getPaymentStatus()) {
+
+						httpServletResponse.sendRedirect(_redirect);
+
+						return;
+					}
 				}
 				else {
 					_commercePaymentGateway.capture(
 						httpServletRequest, commercePaymentEntry);
 
-					httpServletResponse.sendRedirect(_nextUrl);
+					httpServletResponse.sendRedirect(_redirect);
 
 					return;
 				}
@@ -395,7 +403,7 @@ public class CommercePaymentServlet extends HttpServlet {
 			}
 		}
 
-		httpServletResponse.sendRedirect(_nextUrl);
+		httpServletResponse.sendRedirect(_redirect);
 	}
 
 	private void _managePaymentMethod(
@@ -404,11 +412,11 @@ public class CommercePaymentServlet extends HttpServlet {
 			CommerceOrder commerceOrder, URL portalURL)
 		throws Exception {
 
-		_nextUrl = ParamUtil.getString(httpServletRequest, "nextStep");
+		_redirect = ParamUtil.getString(httpServletRequest, "nextStep");
 
-		URL nextURL = new URL(_nextUrl);
+		URL url = new URL(_redirect);
 
-		if (!Objects.equals(portalURL.getHost(), nextURL.getHost())) {
+		if (!Objects.equals(portalURL.getHost(), url.getHost())) {
 			throw new ServletException();
 		}
 
@@ -418,7 +426,7 @@ public class CommercePaymentServlet extends HttpServlet {
 			_commercePaymentEngine.completePayment(
 				_commerceOrderId, null, httpServletRequest);
 
-			httpServletResponse.sendRedirect(_nextUrl);
+			httpServletResponse.sendRedirect(_redirect);
 
 			return;
 		}
@@ -467,7 +475,7 @@ public class CommercePaymentServlet extends HttpServlet {
 			_commercePaymentEngine.completePayment(
 				_commerceOrderId, null, httpServletRequest);
 
-			httpServletResponse.sendRedirect(_nextUrl);
+			httpServletResponse.sendRedirect(_redirect);
 		}
 
 		if (commercePaymentResult.isSuccess() &&
@@ -487,13 +495,13 @@ public class CommercePaymentServlet extends HttpServlet {
 					httpServletRequest);
 			}
 
-			httpServletResponse.sendRedirect(_nextUrl);
+			httpServletResponse.sendRedirect(_redirect);
 		}
 
 		if (!commercePaymentResult.isSuccess() &&
 			!httpServletResponse.isCommitted()) {
 
-			httpServletResponse.sendRedirect(_nextUrl);
+			httpServletResponse.sendRedirect(_redirect);
 		}
 	}
 
@@ -508,11 +516,11 @@ public class CommercePaymentServlet extends HttpServlet {
 			!_commercePaymentHelper.isDeliveryOnlySubscription(commerceOrder)) {
 
 			return _commerceSubscriptionEngine.processRecurringPayment(
-				_commerceOrderId, _nextUrl, httpServletRequest);
+				_commerceOrderId, _redirect, httpServletRequest);
 		}
 
 		return _commercePaymentEngine.processPayment(
-			_commerceOrderId, _nextUrl, httpServletRequest);
+			_commerceOrderId, _redirect, httpServletRequest);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -557,10 +565,10 @@ public class CommercePaymentServlet extends HttpServlet {
 	@Reference
 	private Language _language;
 
-	private String _nextUrl;
-
 	@Reference
 	private Portal _portal;
+
+	private String _redirect;
 
 	@Reference
 	private UserLocalService _userLocalService;

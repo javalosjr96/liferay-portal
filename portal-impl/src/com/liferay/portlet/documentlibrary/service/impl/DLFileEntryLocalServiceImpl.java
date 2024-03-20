@@ -377,7 +377,7 @@ public class DLFileEntryLocalServiceImpl
 
 		long userId = _getActiveCompanyAdminUserId(companyId);
 
-		if (FeatureFlagManagerUtil.isEnabled("LPD-10701")) {
+		if (FeatureFlagManagerUtil.isEnabled(companyId, "LPD-10701")) {
 			_checkFileEntriesByDisplayDate(companyId, date, userId);
 		}
 
@@ -1992,7 +1992,9 @@ public class DLFileEntryLocalServiceImpl
 
 		int oldStatus = dlFileVersion.getStatus();
 
-		if (FeatureFlagManagerUtil.isEnabled("LPD-10701")) {
+		if (FeatureFlagManagerUtil.isEnabled(
+				dlFileVersion.getCompanyId(), "LPD-10701")) {
+
 			Date date = new Date();
 
 			if ((status == WorkflowConstants.STATUS_APPROVED) &&
@@ -2060,6 +2062,15 @@ public class DLFileEntryLocalServiceImpl
 				}
 
 				dlFileEntry.setVersion(newVersion);
+				dlFileEntry.setDisplayDate(dlFileVersion.getDisplayDate());
+
+				dlFileEntry = dlFileEntryPersistence.update(dlFileEntry);
+			}
+			else if (!Objects.equals(
+						dlFileEntry.getDisplayDate(),
+						dlFileVersion.getDisplayDate())) {
+
+				dlFileEntry.setDisplayDate(dlFileVersion.getDisplayDate());
 
 				dlFileEntry = dlFileEntryPersistence.update(dlFileEntry);
 			}
@@ -2325,8 +2336,9 @@ public class DLFileEntryLocalServiceImpl
 		if (_log.isDebugEnabled()) {
 			_log.debug(
 				StringBundler.concat(
-					"Publishing file entries with display date less than ",
-					displayDate, " for company ", companyId));
+					"Publishing file entries with display date between ",
+					_dates.get(companyId), " and ", displayDate,
+					" for company ", companyId));
 		}
 
 		_publishFileEntriesByCompanyId(
@@ -3495,6 +3507,11 @@ public class DLFileEntryLocalServiceImpl
 			).where(
 				DLFileEntryTable.INSTANCE.companyId.eq(
 					companyId
+				).and(
+					DLFileEntryTable.INSTANCE.displayDate.isNotNull()
+				).and(
+					DLFileEntryTable.INSTANCE.displayDate.gte(
+						_dates.get(companyId))
 				).and(
 					DLFileEntryTable.INSTANCE.displayDate.lte(displayDate)
 				)

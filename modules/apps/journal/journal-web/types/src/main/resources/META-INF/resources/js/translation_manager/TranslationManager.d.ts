@@ -5,24 +5,11 @@
 
 /// <reference types="react" />
 
-import {Locale} from 'frontend-js-components-web';
-declare type Field = Record<Liferay.Language.Locale, string>;
-interface Props {
-	defaultLanguageId: Liferay.Language.Locale;
-	fields: Record<string, Field>;
-	locales: Locale[];
-	selectedLanguageId: Liferay.Language.Locale;
-}
+import {TranslationManagerProps} from './Types';
 export default function TranslationManager({
-	defaultLanguageId,
+	defaultLanguageId: initialDefaultLanguageId,
 	fields: initialFields,
 	locales,
+	namespace,
 	selectedLanguageId: initialSelectedLanguageId,
-}: Props): JSX.Element;
-export declare function fieldToTranslations(
-	fields: Record<string, Field>
-): {
-	fieldName: string;
-	languages: Liferay.Language.Locale[];
-}[];
-export {};
+}: TranslationManagerProps): JSX.Element;

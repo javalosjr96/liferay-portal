@@ -584,6 +584,7 @@ public class ObjectEntryLocalServiceImpl
 		}
 	}
 
+	@Override
 	public ObjectEntry fetchManyToOneObjectEntry(
 			long groupId, long objectRelationshipId, long primaryKey)
 		throws PortalException {
@@ -771,6 +772,8 @@ public class ObjectEntryLocalServiceImpl
 		DSLQuery dslQuery = _getManyToManyObjectEntriesGroupByStep(
 			DSLQueryFactoryUtil.selectDistinct(ObjectEntryTable.INSTANCE),
 			groupId, objectRelationshipId, primaryKey, related, reverse, search
+		).orderBy(
+			ObjectEntryTable.INSTANCE.objectEntryId.ascending()
 		).limit(
 			start, end
 		);
@@ -896,6 +899,7 @@ public class ObjectEntryLocalServiceImpl
 			externalReferenceCode, groupId, companyId);
 	}
 
+	@Override
 	public List<ObjectEntry> getOneToManyObjectEntries(
 			long groupId, long objectRelationshipId, long primaryKey,
 			boolean related, String search, int start, int end)
@@ -904,6 +908,8 @@ public class ObjectEntryLocalServiceImpl
 		DSLQuery dslQuery = _getOneToManyObjectEntriesGroupByStep(
 			DSLQueryFactoryUtil.selectDistinct(ObjectEntryTable.INSTANCE),
 			groupId, objectRelationshipId, primaryKey, related, search
+		).orderBy(
+			ObjectEntryTable.INSTANCE.objectEntryId.ascending()
 		).limit(
 			start, end
 		);
@@ -934,6 +940,7 @@ public class ObjectEntryLocalServiceImpl
 		return objectEntryPersistence.dslQueryCount(dslQuery);
 	}
 
+	@Override
 	public Map<String, Object> getSystemModelAttributes(
 			ObjectDefinition objectDefinition, long primaryKey)
 		throws PortalException {

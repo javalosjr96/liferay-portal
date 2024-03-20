@@ -15,12 +15,14 @@ import {InputLocalized} from 'frontend-js-components-web';
 import React, {useMemo} from 'react';
 
 import {NAME_OUTPUT_OBJECT_FIELD_EXTERNAL_REFERENCE_CODE} from '../../utils/constants';
+import {DisabledGroovyScriptAlert} from '../DisabledGroovyScriptAlert';
 import {TabProps} from './useObjectValidationForm';
 
 export interface BasicInfoProps extends TabProps {
 	componentLabel: string;
 	creationLanguageId: Liferay.Language.Locale;
 	customObjectFields: ObjectField[];
+	disabledGroovyValidation: boolean;
 }
 
 const outputValidationTypeArray = [
@@ -46,6 +48,7 @@ export function BasicInfo({
 	creationLanguageId,
 	customObjectFields,
 	disabled,
+	disabledGroovyValidation,
 	errors,
 	selectedPartialValidationField,
 	setValues,
@@ -66,6 +69,8 @@ export function BasicInfo({
 
 	return (
 		<>
+			{disabledGroovyValidation && <DisabledGroovyScriptAlert />}
+
 			<Card title={componentLabel}>
 				<InputLocalized
 					disabled={disabled}
@@ -85,7 +90,7 @@ export function BasicInfo({
 
 				{values.engine !== 'compositeKey' && (
 					<Toggle
-						disabled={disabled}
+						disabled={disabled || disabledGroovyValidation}
 						label={Liferay.Language.get('active-validation')}
 						onToggle={(active) => setValues({active})}
 						toggled={values.active}

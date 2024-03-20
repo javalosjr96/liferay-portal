@@ -295,7 +295,7 @@ const searchInput = document.getElementById('searchInput');
 const siteSearchWrapper = document.getElementById('siteSearchWrapper');
 
 window.addEventListener('keyup', (event) => {
-	if (event.code === 'Escape') {
+	if (event.code === 'Escape' || event.key === 'Escape') {
 		if (!siteSearchWrapper.classList.contains('search-open')) {
 			return;
 		}
@@ -304,7 +304,7 @@ window.addEventListener('keyup', (event) => {
 		siteSearchWrapper.classList.remove('search-open');
 	}
 
-	if (event.code === 'Slash') {
+	if (event.code === 'Slash' || event.key === '/') {
 		searchInput.focus();
 
 		if (siteSearchWrapper.classList.contains('search-open')) {

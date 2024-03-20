@@ -69,8 +69,47 @@ public class GitHubEventHandlerFactory extends BaseEventHandlerFactory {
 							eventHandlerContext, messageJSONObject);
 					}
 					else if (body.startsWith("ci:test")) {
-						return new TestGitHubCommentEventHandler(
-							eventHandlerContext, messageJSONObject);
+						JSONObject repositoryJSONObject =
+							messageJSONObject.getJSONObject("repository");
+
+						String repositoryName = repositoryJSONObject.getString(
+							"name");
+
+						if (repositoryName.startsWith("com-liferay-")) {
+							return new SubrepositoryTestGitHubCommentEventHandler(
+								eventHandlerContext, messageJSONObject);
+						}
+						else if (repositoryName.equals(
+									"liferay-fix-pack-builder-ee")) {
+
+							return new FixpackTestGitHubCommentEventHandler(
+								eventHandlerContext, messageJSONObject);
+						}
+						else if (repositoryName.equals("liferay-jenkins-ee")) {
+							return new JenkinsTestGitHubCommentEventHandler(
+								eventHandlerContext, messageJSONObject);
+						}
+						else if (repositoryName.equals("liferay-plugins") ||
+								 repositoryName.equals("liferay-plugins-ee")) {
+
+							return new PluginsTestGitHubCommentEventHandler(
+								eventHandlerContext, messageJSONObject);
+						}
+						else if (repositoryName.equals("liferay-portal") ||
+								 repositoryName.equals("liferay-portal-ee")) {
+
+							return new PortalTestGitHubCommentEventHandler(
+								eventHandlerContext, messageJSONObject);
+						}
+						else if (repositoryName.equals(
+									"liferay-qa-websites-ee")) {
+
+							return new QAWebsitesTestGitHubCommentEventHandler(
+								eventHandlerContext, messageJSONObject);
+						}
+
+						throw new IllegalArgumentException(
+							"Invalid repository " + repositoryName);
 					}
 
 					throw new IllegalArgumentException(
@@ -82,8 +121,45 @@ public class GitHubEventHandlerFactory extends BaseEventHandlerFactory {
 					messageJSONObject.optJSONObject("pull_request");
 
 				if (pullRequestJSONObject != null) {
-					return new OpenGitHubPullRequestEventHandler(
-						eventHandlerContext, messageJSONObject);
+					JSONObject repositoryJSONObject =
+						messageJSONObject.getJSONObject("repository");
+
+					String repositoryName = repositoryJSONObject.getString(
+						"name");
+
+					if (repositoryName.startsWith("com-liferay")) {
+						return new SubrepositoryOpenGitHubPullRequestEventHandler(
+							eventHandlerContext, messageJSONObject);
+					}
+					else if (repositoryName.equals(
+								"liferay-fix-pack-builder-ee")) {
+
+						return new FixpackOpenGitHubPullRequestEventHandler(
+							eventHandlerContext, messageJSONObject);
+					}
+					else if (repositoryName.equals("liferay-jenkins-ee")) {
+						return new JenkinsOpenGitHubPullRequestEventHandler(
+							eventHandlerContext, messageJSONObject);
+					}
+					else if (repositoryName.equals("liferay-plugins") ||
+							 repositoryName.equals("liferay-plugins-ee")) {
+
+						return new PluginsOpenGitHubPullRequestEventHandler(
+							eventHandlerContext, messageJSONObject);
+					}
+					else if (repositoryName.equals("liferay-portal") ||
+							 repositoryName.equals("liferay-portal-ee")) {
+
+						return new PortalOpenGitHubPullRequestEventHandler(
+							eventHandlerContext, messageJSONObject);
+					}
+					else if (repositoryName.equals("liferay-qa-websites-ee")) {
+						return new QAWebsitesOpenGitHubPullRequestEventHandler(
+							eventHandlerContext, messageJSONObject);
+					}
+
+					throw new IllegalArgumentException(
+						"Invalid repository " + repositoryName);
 				}
 			}
 			else if (action.equals("synchronize")) {

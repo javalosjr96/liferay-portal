@@ -78,7 +78,7 @@ const SuitesCasesTable: React.FC<SuiteCasesTableProps> = ({
 	return (
 		<ListView
 			forceRefetch={suiteCaseActions.formModal.forceRefetch}
-			managementToolbarProps={{visible: false}}
+			managementToolbarProps={{applyFilters: true, visible: false}}
 			resource={
 				isSmartSuite
 					? testrayCaseImpl.resource

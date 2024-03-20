@@ -464,15 +464,10 @@ const filterSchema = {
 	},
 	builds: {
 		fields: [
-			overrides(baseFilters.priority, {
-				disabled: true,
-				type: 'select',
-			}),
 			overrides(baseFilters.productVersion, {
 				name: 'productVersionToBuilds/id',
 				type: 'select',
 			}),
-			overrides(baseFilters.caseType, {disabled: true, type: 'select'}),
 			{
 				label: i18n.translate('build-name'),
 				name: 'name',
@@ -502,7 +497,6 @@ const filterSchema = {
 				],
 				type: 'checkbox',
 			},
-			overrides(baseFilters.team, {disabled: true}),
 		] as RendererFields[],
 		name: 'builds',
 	},
@@ -770,15 +764,21 @@ const filterSchema = {
 				],
 				type: 'checkbox',
 			},
-			overrides(baseFilters.team, {
-				disabled: true,
+			overrides(baseFilters.issues, {
+				name:
+					'subtaskToSubtasksCasesResults/caseResultToSubtasksCasesResults/caseResultToCaseResultsIssues/issueToCaseResultsIssues/name',
+				operator: 'contains',
 			}),
-			{
-				disabled: true,
-				label: i18n.translate('component'),
-				name: 'commponent',
-				type: 'text',
-			},
+			overrides(baseFilters.team, {
+				name:
+					'subtaskToSubtasksCasesResults/caseResultToSubtasksCasesResults/componentToCaseResult/r_teamToComponents_c_teamId',
+				type: 'multiselect',
+			}),
+			overrides(baseFilters.component, {
+				name:
+					'subtaskToSubtasksCasesResults/caseResultToSubtasksCasesResults/r_componentToCaseResult_c_componentId',
+				type: 'multiselect',
+			}),
 		] as RendererFields[],
 		name: 'subtasks',
 	},
@@ -821,7 +821,19 @@ const filterSchema = {
 			overrides(baseFilters.routine, {
 				label: i18n.translate('routine-name'),
 				name: 'buildToTasks/r_routineToBuilds_c_routineId',
-				resource: '/routines?fields=id,name&sort=name:asc&pageSize=100',
+				resource:
+					'/routines?fields=id,name,routineToProjects.name&nestedFields=routineToProjects&sort=name:asc&pageSize=100',
+				transformData(item) {
+					const transformRoutineData = (routine: TestrayRoutine) => ({
+						label: `${routine.routineToProjects?.name} / ${routine.name}`,
+						value: routine.id,
+					});
+
+					return dataToOptions(
+						transformData<TestrayRoutine>(item),
+						transformRoutineData
+					);
+				},
 				type: 'multiselect',
 			}),
 			{

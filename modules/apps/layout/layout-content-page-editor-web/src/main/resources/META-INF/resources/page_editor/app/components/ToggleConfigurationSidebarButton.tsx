@@ -6,33 +6,34 @@
 import {ClayButtonWithIcon} from '@clayui/button';
 import React from 'react';
 
-import {useDispatch, useSelector} from '../contexts/StoreContext';
-import selectItemConfigurationOpen from '../selectors/selectItemConfigurationOpen';
+import {useDispatch} from '../contexts/StoreContext';
 import switchSidebarPanel from '../thunks/switchSidebarPanel';
 
 export default function ToggleConfigurationSidebarButton() {
-	const itemConfigurationOpen = useSelector(selectItemConfigurationOpen);
 	const dispatch = useDispatch();
-
-	const title = itemConfigurationOpen
-		? Liferay.Language.get('close-configuration-panel')
-		: Liferay.Language.get('open-configuration-panel');
 
 	return (
 		<ClayButtonWithIcon
-			aria-label={title}
+			aria-label={Liferay.Language.get('open-configuration-panel')}
 			borderless
 			displayType="secondary"
-			onClick={() =>
+			id="page-editor__toolbar__configuration-button"
+			onClick={() => {
 				dispatch(
 					switchSidebarPanel({
-						itemConfigurationOpen: !itemConfigurationOpen,
+						itemConfigurationOpen: true,
 					})
-				)
-			}
+				);
+
+				const configurationSidebar = document.querySelector(
+					'.page-editor__item-configuration-sidebar'
+				) as HTMLElement;
+
+				configurationSidebar?.focus();
+			}}
 			size="sm"
 			symbol="cog"
-			title={title}
+			title={Liferay.Language.get('open-configuration-panel')}
 		/>
 	);
 }

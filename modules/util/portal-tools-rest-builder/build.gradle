@@ -13,10 +13,10 @@ buildPluginDescriptor {
 dependencies {
 	api group: "com.liferay", name: "org.freemarker", transitive: false, version: "2.3.32.LIFERAY-PATCHED-1"
 	api group: "com.puppycrawl.tools", name: "checkstyle", version: "8.29"
-	api group: "commons-io", name: "commons-io", version: "2.11.0"
+	api group: "commons-io", name: "commons-io", version: "2.15.1"
 
 	compileInclude group: "com.beust", name: "jcommander", version: "1.48"
-	compileInclude group: "org.yaml", name: "snakeyaml", version: "2.0"
+	compileInclude group: "org.yaml", name: "snakeyaml", version: "2.2"
 	compileInclude project(":apps:portal-vulcan:portal-vulcan-api")
 
 	compileOnly group: "com.liferay", name: "com.liferay.petra.io", version: "5.0.5"

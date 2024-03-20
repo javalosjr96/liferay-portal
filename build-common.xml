@@ -1989,8 +1989,10 @@ rerun your task.
 					<propertyref name="baseline.jar.report.level" />
 					<propertyref name="baseline.jar.report.only.dirty.packages" />
 					<propertyref name="build.binaries.cache.dir" />
+					<propertyref if:set="build.java.override.version" name="build.java.override.version" unless:blank="${build.java.override.version}" />
 					<propertyref name="compile.jsp.include" />
 					<propertyref name="git.working.branch.name" />
+					<propertyref if:set="gradle.update.file.versions.excludes" name="gradle.update.file.versions.excludes" unless:blank="${gradle.update.file.versions.excludes}" />
 					<propertyref name="jacoco.agent.configuration" />
 					<propertyref name="jacoco.agent.jar" />
 					<propertyref name="jira.project.keys" />
@@ -2071,6 +2073,25 @@ rerun your task.
 				<entry key="systemProp.repository.private.url" value="${build.repository.private.proxied.url}" />
 				<entry key="systemProp.repository.private.username" value="${build.repository.private.username}" />
 			</propertyfile>
+
+			<if>
+				<available file="${project.dir}/portal-impl/src/portal.properties" />
+				<then>
+					<loadfile
+						property="portal.properties.content"
+						srcfile="${project.dir}/portal-impl/src/portal.properties"
+					/>
+
+					<if>
+						<contains string="${portal.properties.content}" substring="module.framework.portal.war.dir" />
+						<then>
+							<propertyfile file="${gradle.properties.file}">
+								<entry key="portal.war.auto.deploy.enabled" value="true" />
+							</propertyfile>
+						</then>
+					</if>
+				</then>
+			</if>
 
 			<replaceregexp
 				file="${gradle.properties.file}"

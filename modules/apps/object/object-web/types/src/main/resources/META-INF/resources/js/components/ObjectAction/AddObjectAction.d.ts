@@ -7,6 +7,7 @@
 
 import {SidebarCategory} from '@liferay/object-js-components-web';
 interface AddObjectActionProps {
+	allowScriptContentBeExecutedOrIncluded: boolean;
 	apiURL: string;
 	objectActionCodeEditorElements: SidebarCategory[];
 	objectActionExecutors: ObjectActionTriggerExecutorItem[];
@@ -18,6 +19,7 @@ interface AddObjectActionProps {
 	validateExpressionURL: string;
 }
 export default function AddObjectAction({
+	allowScriptContentBeExecutedOrIncluded,
 	apiURL,
 	objectActionCodeEditorElements,
 	objectActionExecutors,

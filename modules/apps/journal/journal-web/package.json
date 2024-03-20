@@ -23,6 +23,7 @@
 		"prop-types": "15.7.2",
 		"react": "16.12.0"
 	},
+	"main": "js/index.js",
 	"name": "journal-web",
 	"scripts": {
 		"build": "liferay-npm-scripts build",
@@ -30,5 +31,5 @@
 		"format": "liferay-npm-scripts fix",
 		"test": "liferay-npm-scripts test"
 	},
-	"version": "5.0.163"
+	"version": "5.0.164"
 }

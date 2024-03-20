@@ -12,7 +12,7 @@ tasks.eclipse {
 
 dependencies {
 	api fileTree(dir: gradle.gradleHomeDir, include: "lib/**/*.jar")
-	api group: "com.liferay", name: "com.liferay.gradle.util", version: "1.0.48"
+	api group: "com.liferay", name: "com.liferay.gradle.util", version: "1.0.49"
 	api group: "org.apache.maven", name: "maven-artifact", version: "3.6.3"
 }
 
@@ -23,7 +23,7 @@ jar {
 }
 
 jarOverwrite {
-	baseName = "org-gradle-resources-http"
+	archiveBaseName = "org-gradle-resources-http"
 	duplicatesStrategy = "exclude"
 	from sourceSets.main.output
 

@@ -381,23 +381,20 @@ public class ProjectController extends BaseFaroController {
 		if (forceUpdate) {
 			faroProject.setModifiedTime(now);
 
-			if (Validator.isNotNull(faroProject.getCorpProjectUuid())) {
-				FaroSubscriptionDisplay faroSubscriptionDisplay =
-					new FaroSubscriptionDisplay(
-						getOSBAccountEntry(faroProject.getCorpProjectUuid()));
+			FaroSubscriptionDisplay faroSubscriptionDisplay =
+				new FaroSubscriptionDisplay(getOSBAccountEntry(faroProject));
 
-				if (_isSubscriptionPlanChanged(
-						faroProject, faroSubscriptionDisplay.getName())) {
+			if (_isSubscriptionPlanChanged(
+					faroProject, faroSubscriptionDisplay.getName())) {
 
-					faroProject.setSubscriptionModifiedTime(now);
-				}
-
-				faroSubscriptionDisplay.setCounts(
-					faroProject, cerebroEngineClient, contactsEngineClient);
-
-				faroProject.setSubscription(
-					JSONUtil.writeValueAsString(faroSubscriptionDisplay));
+				faroProject.setSubscriptionModifiedTime(now);
 			}
+
+			faroSubscriptionDisplay.setCounts(
+				faroProject, cerebroEngineClient, contactsEngineClient);
+
+			faroProject.setSubscription(
+				JSONUtil.writeValueAsString(faroSubscriptionDisplay));
 
 			faroProject = _faroProjectLocalService.updateFaroProject(
 				faroProject);
@@ -669,8 +666,37 @@ public class ProjectController extends BaseFaroController {
 		};
 	}
 
+	protected OSBAccountEntry getOSBAccountEntry(FaroProject faroProject)
+		throws Exception {
+
+		if (Validator.isNull(faroProject.getCorpProjectUuid())) {
+			return new OSBAccountEntry() {
+				{
+					OSBOfferingEntry osbOfferingEntry = new OSBOfferingEntry();
+
+					osbOfferingEntry.setProductEntryId(
+						ProductConstants.BASIC_PRODUCT_ENTRY_ID);
+
+					osbOfferingEntry.setQuantity(1);
+					osbOfferingEntry.setStartDate(
+						new Date(faroProject.getCreateTime()));
+
+					setOfferingEntries(
+						Collections.singletonList(osbOfferingEntry));
+				}
+			};
+		}
+
+		return _provisioningClient.getOSBAccountEntry(
+			faroProject.getCorpProjectUuid());
+	}
+
 	protected OSBAccountEntry getOSBAccountEntry(String corpProjectUuid)
 		throws Exception {
+
+		if (Validator.isNull(corpProjectUuid)) {
+			return createOSBAccountEntry(true);
+		}
 
 		return _provisioningClient.getOSBAccountEntry(corpProjectUuid);
 	}

@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
@@ -76,6 +77,19 @@ public class ResourceActionLocalServiceTest {
 		}
 
 		_resourceActionLocalService.checkResourceActions(_NAME, actionIds);
+	}
+
+	@Test
+	public void testAddResourceAction() {
+		String actionId = RandomTestUtil.randomString();
+
+		Assert.assertNull(
+			_resourceActionLocalService.fetchResourceAction(_NAME, actionId));
+
+		_resourceActionLocalService.addResourceAction(_NAME, actionId, 0L);
+
+		Assert.assertNotNull(
+			_resourceActionLocalService.fetchResourceAction(_NAME, actionId));
 	}
 
 	@Test

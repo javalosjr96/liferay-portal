@@ -34,10 +34,12 @@ function ObjectFieldActiveDataRenderer({itemData}: {itemData: ItemData}) {
 const language = Liferay.ThemeDisplay.getBCP47LanguageId();
 
 interface ValidationsProps extends IFDSTableProps {
+	allowScriptContentBeExecutedOrIncluded: boolean;
 	objectValidationRuleEngines: LabelKeyObject[];
 }
 
 export default function Validations({
+	allowScriptContentBeExecutedOrIncluded,
 	apiURL,
 	creationMenu,
 	formName,
@@ -171,6 +173,9 @@ export default function Validations({
 
 			{showAddObjectRelationshipModal && (
 				<ModalAddObjectValidation
+					allowScriptContentBeExecutedOrIncluded={
+						allowScriptContentBeExecutedOrIncluded
+					}
 					apiURL={apiURL as string}
 					objectValidationRuleEngines={
 						objectValidationRuleEnginesItems

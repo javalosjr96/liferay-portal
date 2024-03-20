@@ -5,6 +5,8 @@
 
 import {Page} from '@playwright/test';
 
+import {liferayConfig} from '../liferay.config';
+
 export class FeatureFlagApiHelper {
 	readonly page: Page;
 
@@ -13,7 +15,7 @@ export class FeatureFlagApiHelper {
 	}
 
 	async updateFeatureFlag(key: string, enabled: boolean) {
-		await this.page.goto('/');
+		await this.page.goto(liferayConfig.environment.baseUrl);
 		await this.page.evaluate(
 			({enabled, key}) =>
 				Liferay.Util.fetch(

@@ -5,6 +5,8 @@
 
 import {FrameLocator, Locator, Page, expect} from '@playwright/test';
 
+import {liferayConfig} from '../../liferay.config';
+
 export class CommerceLayoutsPage {
 	readonly addPageButton: Locator;
 	readonly addPageModalSubmitButton: Locator;
@@ -91,7 +93,9 @@ export class CommerceLayoutsPage {
 		});
 		this.optionsButton = page.getByLabel('Options', {exact: true});
 		this.page = page;
-		this.pagesMenuItem = page.getByTestId('app').filter({hasText: 'Pages'});
+		this.pagesMenuItem = page
+			.getByTestId('app')
+			.filter({hasNotText: 'Locked', hasText: 'Pages'});
 		this.pageTemplatesMenuItem = page
 			.getByTestId('app')
 			.filter({hasText: 'Page Templates'});
@@ -199,7 +203,7 @@ export class CommerceLayoutsPage {
 	}
 
 	async goto() {
-		await this.page.goto('/');
+		await this.page.goto(liferayConfig.environment.baseUrl);
 	}
 
 	async goToDisplayPageTemplates(navigation: boolean = false) {

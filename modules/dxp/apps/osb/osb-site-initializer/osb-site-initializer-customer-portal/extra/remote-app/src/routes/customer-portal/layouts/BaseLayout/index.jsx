@@ -6,9 +6,13 @@
 import {useEffect, useRef, useState} from 'react';
 import {Outlet, useLocation, useParams} from 'react-router-dom';
 import ProjectBreadcrumb from '../../components/ProjectBreadcrumb/ProjectBreadcrumb';
+import ProjectErrorMessage from '../../components/ProjectErrorMessage';
 import SideMenu from '../../containers/SideMenu';
+import {useCustomerPortal} from '../../context';
 
 const Layout = () => {
+	const [{userProjectAccess}] = useCustomerPortal();
+
 	const [hasSideMenu, setHasSideMenu] = useState(true);
 
 	const {accountKey} = useParams();
@@ -26,6 +30,12 @@ const Layout = () => {
 			window.location.reload();
 		}
 	}, [accountKey]);
+
+	if (userProjectAccess) {
+		if (userProjectAccess.denyAccess || !userProjectAccess.hasProjectAccess) {
+			return <ProjectErrorMessage />;
+		}
+	}
 
 	return (
 		<div className="d-flex position-relative w-100">

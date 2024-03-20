@@ -9,6 +9,16 @@
 					"title": "Invitation Email Body",
 					"type": "object"
 				},
+				"invitationEmailSenderEmailAddress": {
+					"description": "Define a specific email address for the sender of user invitation emails. If empty, the inviter's email address is used.",
+					"title": "Invitation Email Sender Email Address",
+					"type": "string"
+				},
+				"invitationEmailSenderName": {
+					"description": "Define a specific name for the sender of user invitation emails. If empty, the inviter's name is used.",
+					"title": "Invitation Email Sender Name",
+					"type": "string"
+				},
 				"invitationEmailSubject": {
 					"description": "Provide a localized template for the subject of user invitation emails.",
 					"properties": {
@@ -549,7 +559,7 @@
 					"title": "Publications View Changes"
 				},
 				"productionOnlyApplication": {
-					"default": "com_liferay_dispatch_web_internal_portlet_DispatchPortlet, com_liferay_my_account_web_portlet_MyAccountPortlet, com_liferay_notification_web_internal_portlet_NotificationTemplatesPortlet, com_liferay_oauth_client_admin_web_internal_portlet_OAuthClientAdminPortlet, com_liferay_oauth2_provider_web_internal_portlet_OAuth2AdminPortlet, com_liferay_object_web_internal_object_definitions_portlet_ObjectDefinitionsPortlet, com_liferay_object_web_internal_list_type_portlet_portlet_ListTypeDefinitionsPortlet, com_liferay_password_policies_admin_web_portlet_PasswordPoliciesAdminPortlet, com_liferay_portal_language_override_web_internal_portlet_PLOPortlet, com_liferay_search_experiences_web_internal_blueprint_admin_portlet_SXPBlueprintAdminPortlet",
+					"default": "com_liferay_dispatch_web_internal_portlet_DispatchPortlet, com_liferay_my_account_web_portlet_MyAccountPortlet, com_liferay_notification_web_internal_portlet_NotificationTemplatesPortlet, com_liferay_oauth_client_admin_web_internal_portlet_OAuthClientAdminPortlet, com_liferay_oauth2_provider_web_internal_portlet_OAuth2AdminPortlet, com_liferay_object_web_internal_object_definitions_portlet_ObjectDefinitionsPortlet, com_liferay_object_web_internal_list_type_portlet_portlet_ListTypeDefinitionsPortlet, com_liferay_password_policies_admin_web_portlet_PasswordPoliciesAdminPortlet, com_liferay_portal_language_override_web_internal_portlet_PLOPortlet, com_liferay_portal_search_tuning_rankings_web_internal_portlet_ResultRankingsPortlet, com_liferay_portal_search_tuning_synonyms_web_internal_portlet_SynonymsPortlet, com_liferay_search_experiences_web_internal_blueprint_admin_portlet_SXPBlueprintAdminPortlet",
 					"description": "These applications do not participate in a publication. Any data saved will be saved directly into production.",
 					"items": {
 						"type": "string"
@@ -678,6 +688,11 @@
 		},
 		{
 			"properties": {
+				"enabled": {
+					"default": true,
+					"title": "Enabled",
+					"type": "boolean"
+				},
 				"key": {
 					"title": "Key",
 					"type": "string"
@@ -1253,6 +1268,23 @@
 		},
 		{
 			"properties": {
+				"cacheTextExtraction": {
+					"default": true,
+					"title": "Cache Text Extraction",
+					"type": "boolean"
+				},
+				"pid": {
+					"const": "com.liferay.document.library.internal.configuration.DLIndexerConfiguration",
+					"title": "Indexer"
+				}
+			},
+			"required": [
+				"pid"
+			],
+			"title": "Indexer"
+		},
+		{
+			"properties": {
 				"clientId": {
 					"description": "Set the OAuth 2 client id for the OneDrive API. Go to {0} to create it.",
 					"title": "Client ID",
@@ -1532,21 +1564,17 @@
 		},
 		{
 			"properties": {
-				"friendlyURLSeparators": {
+				"friendlyURLSeparatorsJSON": {
 					"default": "{}",
-					"description": "Friendly URL Separators Description",
-					"title": "Friendly URL Separators Name",
 					"type": "string"
 				},
 				"pid": {
-					"const": "com.liferay.friendly.url.configuration.FriendlyURLSeparatorCompanyConfiguration",
-					"title": "Friendly URL Separator Configuration"
+					"const": "com.liferay.friendly.url.configuration.FriendlyURLSeparatorCompanyConfiguration"
 				}
 			},
 			"required": [
 				"pid"
-			],
-			"title": "Friendly URL Separator Configuration"
+			]
 		},
 		{
 			"properties": {
@@ -3092,6 +3120,12 @@
 					"description": "Enable to always show the Personal Menu in the Control Menu. This guarantees users can always access the Personal Menu even if a theme does not provide it.",
 					"title": "Show in Control Menu",
 					"type": "boolean"
+				},
+				"showNotificationBadgeInPersonalMenu": {
+					"default": true,
+					"description": "Enable to show the notification badge in the Personal Menu.",
+					"title": "Show Notification Badge in Personal Menu",
+					"type": "boolean"
 				}
 			},
 			"required": [
@@ -3495,6 +3529,14 @@
 		},
 		{
 			"properties": {
+				"companySitemapGroupIds": {
+					"default": "",
+					"items": {
+						"type": "string"
+					},
+					"title": "Sites Included in the XML Sitemap",
+					"type": "array"
+				},
 				"includeCategories": {
 					"default": true,
 					"title": "Include Category URLs in the XML Sitemap",
@@ -3798,6 +3840,7 @@
 				"com.liferay.document.library.asset.auto.tagger.microsoft.cognitive.services.internal.configuration.MSCognitiveServicesAssetAutoTagProviderCompanyConfiguration",
 				"com.liferay.document.library.asset.auto.tagger.tensorflow.internal.configuration.TensorFlowImageAssetAutoTagProviderCompanyConfiguration",
 				"com.liferay.document.library.google.drive.configuration.DLGoogleDriveCompanyConfiguration",
+				"com.liferay.document.library.internal.configuration.DLIndexerConfiguration",
 				"com.liferay.document.library.opener.onedrive.web.internal.configuration.DLOneDriveCompanyConfiguration",
 				"com.liferay.document.library.web.internal.configuration.CacheControlConfiguration",
 				"com.liferay.exportimport.configuration.ExportImportServiceConfiguration",

@@ -45,7 +45,7 @@ String target = ParamUtil.getString(request, "target", groupItemSelectorCriterio
 		>
 
 			<%
-			List<Group> childGroups = GroupServiceUtil.getGroups(group.getCompanyId(), group.getGroupId(), true);
+			Group finalGroup = group;
 
 			Map<String, Object> data = HashMapBuilder.<String, Object>put(
 				"groupdescriptivename", group.getDescriptiveName(locale)
@@ -60,12 +60,27 @@ String target = ParamUtil.getString(request, "target", groupItemSelectorCriterio
 			).put(
 				"grouptype", LanguageUtil.get(resourceBundle, group.getTypeLabel())
 			).put(
+				"hasvirtualhost",
+				() -> {
+					if (!finalGroup.isDepot()) {
+						LayoutSet layoutSet = finalGroup.getPublicLayoutSet();
+
+						if ((layoutSet != null) && MapUtil.isNotEmpty(layoutSet.getVirtualHostnames())) {
+							return true;
+						}
+					}
+
+					return false;
+				}
+			).put(
 				"url", groupURLProvider.getGroupURL(group, liferayPortletRequest)
 			).put(
 				"uuid", group.getUuid()
 			).build();
 
 			String childGroupsHREF = null;
+
+			List<Group> childGroups = GroupServiceUtil.getGroups(group.getCompanyId(), group.getGroupId(), true);
 
 			if (!childGroups.isEmpty()) {
 				childGroupsHREF = PortletURLBuilder.create(

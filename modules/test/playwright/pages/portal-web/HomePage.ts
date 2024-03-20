@@ -4,6 +4,8 @@
  */
 
 import {Locator, Page} from '@playwright/test';
+
+import {liferayConfig} from '../../liferay.config';
 export class HomePage {
 	readonly page: Page;
 
@@ -18,7 +20,7 @@ export class HomePage {
 	}
 
 	async goto() {
-		await this.page.goto('/');
+		await this.page.goto(liferayConfig.environment.baseUrl);
 	}
 
 	async openApplicationMenu() {

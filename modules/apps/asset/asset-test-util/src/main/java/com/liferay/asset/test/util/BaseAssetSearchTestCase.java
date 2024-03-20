@@ -22,7 +22,6 @@ import com.liferay.portal.kernel.search.Hits;
 import com.liferay.portal.kernel.search.SearchContext;
 import com.liferay.portal.kernel.security.RandomUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
@@ -52,8 +51,6 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import org.apache.commons.lang.ArrayUtils;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -1290,44 +1287,6 @@ public abstract class BaseAssetSearchTestCase {
 		}
 	}
 
-	protected void testOrderByCreateDate(
-			AssetEntryQuery assetEntryQuery, String orderByType,
-			String[] titles, String[] orderedTitles)
-		throws Exception {
-
-		SearchContext searchContext = SearchContextTestUtil.getSearchContext();
-
-		searchContext.setGroupIds(assetEntryQuery.getGroupIds());
-
-		for (String title : titles) {
-			ServiceContext serviceContext =
-				ServiceContextTestUtil.getServiceContext(_group1.getGroupId());
-
-			serviceContext.setCreateDate(new Date());
-
-			ServiceContextThreadLocal.pushServiceContext(serviceContext);
-
-			try {
-				addBaseModel(
-					getParentBaseModel(_group1, serviceContext), title,
-					serviceContext);
-			}
-			finally {
-				ServiceContextThreadLocal.popServiceContext();
-			}
-		}
-
-		assetEntryQuery.setOrderByCol1("createDate");
-		assetEntryQuery.setOrderByType1(orderByType);
-
-		List<AssetEntry> assetEntries = search(assetEntryQuery, searchContext);
-
-		Assert.assertEquals(
-			ArrayUtils.toString(orderedTitles),
-			ArrayUtils.toString(
-				getTitles(assetEntries, LocaleUtil.getDefault())));
-	}
-
 	protected void testOrderByExpirationDate(
 			AssetEntryQuery assetEntryQuery, String orderByType,
 			Date[] expirationDates)
@@ -1359,12 +1318,9 @@ public abstract class BaseAssetSearchTestCase {
 
 		List<AssetEntry> assetEntries = search(assetEntryQuery, searchContext);
 
-		Assert.assertEquals(
-			ArrayUtils.toString(format(expirationDates, dateFormat)),
-			ArrayUtils.toString(
-				format(
-					getExpirationDates(assetEntries, orderByType),
-					dateFormat)));
+		Assert.assertArrayEquals(
+			format(expirationDates, dateFormat),
+			format(getExpirationDates(assetEntries, orderByType), dateFormat));
 	}
 
 	protected void testOrderByTitle(
@@ -1396,9 +1352,9 @@ public abstract class BaseAssetSearchTestCase {
 			List<AssetEntry> assetEntries = search(
 				assetEntryQuery, searchContext);
 
-			Assert.assertEquals(
-				ArrayUtils.toString(getOrderedTitles(orderedTitleMaps, locale)),
-				ArrayUtils.toString(getTitles(assetEntries, locale)));
+			Assert.assertArrayEquals(
+				getOrderedTitles(orderedTitleMaps, locale),
+				getTitles(assetEntries, locale));
 		}
 	}
 

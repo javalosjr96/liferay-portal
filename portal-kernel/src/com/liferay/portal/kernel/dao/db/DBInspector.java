@@ -442,10 +442,9 @@ public class DBInspector {
 		"(^\\w+)", Pattern.CASE_INSENSITIVE);
 	private static final Set<String> _controlTableNames = new HashSet<>(
 		Arrays.asList(
-			"company", "counter", "release_", "servicecomponent",
-			"virtualhost"));
+			"company", "release_", "servicecomponent", "virtualhost"));
 	private static final Set<String> _partitionedControlTableNames =
-		new HashSet<>(Arrays.asList("classname_", "resourceaction"));
+		new HashSet<>(Arrays.asList("classname_", "counter", "resourceaction"));
 
 	private final Connection _connection;
 

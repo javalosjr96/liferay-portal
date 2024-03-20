@@ -9,6 +9,7 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.list.type.entry.util.ListTypeEntryUtil;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.field.builder.DateObjectFieldBuilder;
+import com.liferay.object.field.builder.LongIntegerObjectFieldBuilder;
 import com.liferay.object.field.builder.PicklistObjectFieldBuilder;
 import com.liferay.object.field.builder.TextObjectFieldBuilder;
 import com.liferay.object.field.util.ObjectFieldUtil;
@@ -121,6 +122,7 @@ public class SalesforceObjectEntryManagerImplTest
 	}
 
 	@Before
+	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 
@@ -164,6 +166,20 @@ public class SalesforceObjectEntryManagerImplTest
 				LocalizedMapUtil.getLocalizedMap("Due Date")
 			).name(
 				"dueDate"
+			).objectDefinitionId(
+				_objectDefinition.getObjectDefinitionId()
+			).build());
+
+		ObjectFieldUtil.addCustomObjectField(
+			new LongIntegerObjectFieldBuilder(
+			).externalReferenceCode(
+				"Object_Definition_id__c"
+			).userId(
+				adminUser.getUserId()
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap("Object Definition ID")
+			).name(
+				"objectDefinitionId"
 			).objectDefinitionId(
 				_objectDefinition.getObjectDefinitionId()
 			).build());
@@ -457,6 +473,9 @@ public class SalesforceObjectEntryManagerImplTest
 					).put(
 						"dueDate",
 						(date != null) ? _simpleDateFormat.format(date) : null
+					).put(
+						"objectDefinitionId",
+						_objectDefinition.getObjectDefinitionId()
 					).put(
 						"title", title
 					).build();

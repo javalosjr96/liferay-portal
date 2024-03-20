@@ -27,11 +27,10 @@ import com.liferay.gradle.plugins.workspace.internal.client.extension.NodeBuildC
 import com.liferay.gradle.plugins.workspace.internal.client.extension.ThemeCSSTypeConfigurer;
 import com.liferay.gradle.plugins.workspace.internal.util.GradleUtil;
 import com.liferay.gradle.plugins.workspace.internal.util.StringUtil;
+import com.liferay.gradle.plugins.workspace.internal.util.copy.HashifyAction;
 import com.liferay.gradle.plugins.workspace.task.CreateClientExtensionConfigTask;
 import com.liferay.gradle.util.ArrayUtil;
 import com.liferay.gradle.util.Validator;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 
 import groovy.lang.Closure;
 
@@ -534,6 +533,7 @@ public class ClientExtensionProjectConfigurator
 						JsonNode fromJsonNode = copyJsonNode.get("from");
 						JsonNode fromTaskJsonNode = copyJsonNode.get(
 							"fromTask");
+						JsonNode hashifyJsonNode = copyJsonNode.get("hashify");
 						JsonNode includeJsonNode = copyJsonNode.get("include");
 						JsonNode intoJsonNode = copyJsonNode.get("into");
 
@@ -553,6 +553,15 @@ public class ClientExtensionProjectConfigurator
 						assembleClientExtensionCopy.from(
 							(fromPath != null) ? fromPath : ".",
 							copySpec -> {
+								if (hashifyJsonNode != null) {
+									copySpec.eachFile(
+										new HashifyAction(
+											hashifyJsonNode.asText()));
+								}
+
+								copySpec.exclude(
+									"**/" + CLIENT_EXTENSION_BUILD_DIR);
+
 								if (includeJsonNode instanceof ArrayNode) {
 									ArrayNode arrayNode =
 										(ArrayNode)includeJsonNode;
@@ -570,9 +579,6 @@ public class ClientExtensionProjectConfigurator
 										copySpec.include("**/*");
 									}
 								}
-
-								copySpec.exclude(
-									"**/" + CLIENT_EXTENSION_BUILD_DIR);
 
 								if (intoJsonNode != null) {
 									copySpec.into(intoJsonNode.asText());
@@ -758,7 +764,7 @@ public class ClientExtensionProjectConfigurator
 						public void execute(
 							Task validateClientExtensionIdsTask1) {
 
-							StringBundler sb = new StringBundler();
+							StringBuilder sb = new StringBuilder();
 
 							File rootDir = project.getRootDir();
 
@@ -785,10 +791,10 @@ public class ClientExtensionProjectConfigurator
 											rootDirPath.relativize(
 												projectDir.toPath()));
 
-										sb.append(StringPool.NEW_LINE);
+										sb.append(StringUtil.COMMA_AND_SPACE);
 									}
 
-									sb.append(StringPool.NEW_LINE);
+									sb.append(StringUtil.COMMA_AND_SPACE);
 								}
 							}
 
@@ -944,7 +950,7 @@ public class ClientExtensionProjectConfigurator
 
 						if (logger.isInfoEnabled()) {
 							logger.info(
-								StringBundler.concat(
+								StringUtil.concat(
 									"Injecting Liferay routes configuration ",
 									"paths as environment variables into the ",
 									"process invoked by the task ",
@@ -1029,7 +1035,7 @@ public class ClientExtensionProjectConfigurator
 		}
 
 		throw new GradleException(
-			StringBundler.concat(
+			StringUtil.concat(
 				"Client extension ", id, " with type ", type,
 				" is of unkown classification"));
 	}
@@ -1077,7 +1083,7 @@ public class ClientExtensionProjectConfigurator
 		}
 		catch (IOException ioException) {
 			throw new GradleException(
-				StringBundler.concat("Unable to parse ", file.getName(), "."),
+				String.format("Unable to parse %s.", file.getName()),
 				ioException);
 		}
 	}
@@ -1220,8 +1226,7 @@ public class ClientExtensionProjectConfigurator
 					"property %s. Valid values are: %s.",
 				clientExtension.id, StringUtil.quote(typeSettingsValue),
 				StringUtil.quote(typeSettingsKey),
-				com.liferay.petra.string.StringUtil.merge(
-					validValues, StringPool.COMMA_AND_SPACE)));
+				StringUtil.join(StringUtil.COMMA_AND_SPACE, validValues)));
 	}
 
 	private static final String _CLIENT_EXTENSION_YAML =

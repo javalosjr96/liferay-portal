@@ -61,7 +61,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.time.StopWatch;
 
 import org.opensearch.client.opensearch._types.OpenSearchException;
@@ -411,9 +410,9 @@ public class OpenSearchIndexSearcher extends BaseIndexSearcher {
 		else if (!ArrayUtil.isEmpty(searchContext.getSorts())) {
 			if (start > 0) {
 				searchSearchRequest.setSorts(
-					(Sort[])ArrayUtils.add(
-						searchContext.getSorts(), 0,
-						new Sort("_index", false)));
+					ArrayUtil.append(
+						new Sort[] {new Sort("index", false)},
+						searchContext.getSorts()));
 			}
 			else {
 				searchSearchRequest.setSorts(searchContext.getSorts());

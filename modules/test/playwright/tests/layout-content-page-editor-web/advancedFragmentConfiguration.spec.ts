@@ -1,0 +1,200 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+import {expect, mergeTests} from '@playwright/test';
+
+import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
+import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
+import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
+import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
+import {loginTest} from '../../fixtures/loginTest';
+import getRandomString from '../../utils/getRandomString';
+import {fragmentsPagesTest} from '../fragment-web/fixtures/fragmentPagesTest';
+import {pageEditorPagesTest} from './fixtures/pageEditorPagesTest';
+import getFragmentDefinition from './utils/getFragmentDefinition';
+import getPageDefinition from './utils/getPageDefinition';
+import getWidgetDefinition from './utils/getWidgetDefinition';
+
+export const test = mergeTests(
+	apiHelpersTest,
+	applicationsMenuPageTest,
+	featureFlagsTest({
+		'LPS-178052': true,
+	}),
+	fragmentsPagesTest,
+	loginTest(),
+	isolatedSiteTest,
+	pageEditorPagesTest
+);
+
+test('checks that the fragment is hidden from Site Search Results', async ({
+	apiHelpers,
+	page,
+	pageEditorPage,
+	site,
+}) => {
+	const layouts = {fragment: null, searchBar: null};
+
+	// Create a page with the Search Bar widget
+
+	const widgetLayoutId = getRandomString();
+
+	const widgetDefinition = getWidgetDefinition({
+		id: getRandomString(),
+		widgetName:
+			'com_liferay_portal_search_web_search_bar_portlet_SearchBarPortlet',
+	});
+
+	layouts.searchBar = await apiHelpers.headlessDelivery.createSitePage(
+		site.id,
+		widgetLayoutId,
+		getPageDefinition([widgetDefinition])
+	);
+
+	// Create a page with a fragment and publish it
+
+	const headingId = getRandomString();
+
+	const headingFragmentDefinition = getFragmentDefinition(
+		headingId,
+		'BASIC_COMPONENT-heading'
+	);
+
+	layouts.fragment = await apiHelpers.headlessDelivery.createSitePage(
+		site.id,
+		getRandomString(),
+		getPageDefinition([headingFragmentDefinition])
+	);
+
+	await pageEditorPage.goToEditMode(layouts.fragment, site.friendlyUrlPath);
+
+	await pageEditorPage.selectFragment(headingId);
+
+	await pageEditorPage.publishPage();
+
+	// Go to the Search Bar page and search for the fragment text
+
+	await page.goto(
+		`/web${site.friendlyUrlPath}${layouts.searchBar.friendlyUrlPath}`
+	);
+
+	const searchBar = page.getByPlaceholder('Search...');
+
+	await searchBar.click();
+	await searchBar.fill('Heading');
+
+	await page.waitForTimeout(3000);
+
+	// Check that there are results
+
+	const searchResults = await page.getByText('Suggestions');
+
+	await expect(searchResults).toBeVisible();
+
+	// Go back to the fragment page and hide the fragment from the search results
+
+	await pageEditorPage.goToEditMode(layouts.fragment, site.friendlyUrlPath);
+
+	await pageEditorPage.selectFragment(headingId);
+
+	await pageEditorPage.goToConfigurationTab('Advanced');
+
+	const hideFromSiteSearchResultsInput = await page.getByLabel(
+		'Hide from Site Search Results'
+	);
+
+	await hideFromSiteSearchResultsInput.check();
+
+	await expect(hideFromSiteSearchResultsInput).toBeChecked();
+
+	await pageEditorPage.publishPage();
+
+	// Go to the Search Bar page and search for the fragment text
+
+	await page.goto(
+		`/web${site.friendlyUrlPath}${layouts.searchBar.friendlyUrlPath}`
+	);
+
+	await searchBar.click();
+	await searchBar.fill('Heading');
+
+	await page.waitForTimeout(3000);
+
+	// Check that there are no results
+
+	await expect(searchResults).not.toBeVisible();
+});
+
+test('checks that the advanced configuration of a fragment appears in its corresponding tab', async ({
+	apiHelpers,
+	fragmentEditorPage,
+	fragmentsPage,
+	page,
+	pageEditorPage,
+	site,
+}) => {
+
+	// Go to fragment editor
+
+	await fragmentsPage.goto(site.friendlyUrlPath);
+
+	// Add a new fragment set and a fragment inside it
+
+	const setName = getRandomString();
+	await fragmentsPage.createFragmentSet(setName);
+
+	await fragmentsPage.createFragment(setName, 'My Fragment');
+
+	// Add a configuration for the fragment
+
+	await fragmentEditorPage.addConfiguration(
+		JSON.stringify({
+			fieldSets: [
+				{
+					configurationRole: 'advanced',
+					fields: [
+						{
+							dataType: 'string',
+							defaultValue: '1',
+							label: 'Advanced Config Field',
+							name: 'advancedConfigField',
+							type: 'select',
+							typeOptions: {
+								validValues: [{label: '1', value: '1'}],
+							},
+						},
+					],
+					label: 'Advanced Config Fieldset',
+				},
+			],
+		})
+	);
+
+	// Create a content page with the fragment previously created
+
+	const fragmentDefinition = getFragmentDefinition(
+		getRandomString(),
+		'my-fragment',
+		{
+			advancedConfigField: '1',
+		}
+	);
+
+	await pageEditorPage.createPageWithFragmentAndGoToEditMode({
+		apiHelpers,
+		fragment: fragmentDefinition,
+		site,
+	});
+
+	await page.getByTitle('Browser').click();
+
+	await page.getByLabel('Select My Fragment').click();
+
+	await pageEditorPage.goToConfigurationTab('Advanced');
+
+	await expect(
+		page.getByLabel('Advanced Config Field', {exact: true})
+	).toBeVisible();
+});

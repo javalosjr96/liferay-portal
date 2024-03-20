@@ -92,6 +92,14 @@ public class LayoutPageTemplateCollectionServiceUtil {
 
 	public static List<LayoutPageTemplateCollection>
 		getLayoutPageTemplateCollections(
+			long groupId, long layoutPageTemplateCollectionId) {
+
+		return getService().getLayoutPageTemplateCollections(
+			groupId, layoutPageTemplateCollectionId);
+	}
+
+	public static List<LayoutPageTemplateCollection>
+		getLayoutPageTemplateCollections(
 			long groupId, String name, int type, int start, int end,
 			OrderByComparator<LayoutPageTemplateCollection> orderByComparator) {
 
@@ -120,6 +128,16 @@ public class LayoutPageTemplateCollectionServiceUtil {
 	 */
 	public static String getOSGiServiceIdentifier() {
 		return getService().getOSGiServiceIdentifier();
+	}
+
+	public static LayoutPageTemplateCollection moveLayoutPageTemplateCollection(
+			long layoutPageTemplateCollectionId,
+			long targetLayoutPageTemplateCollectionId)
+		throws PortalException {
+
+		return getService().moveLayoutPageTemplateCollection(
+			layoutPageTemplateCollectionId,
+			targetLayoutPageTemplateCollectionId);
 	}
 
 	public static LayoutPageTemplateCollection

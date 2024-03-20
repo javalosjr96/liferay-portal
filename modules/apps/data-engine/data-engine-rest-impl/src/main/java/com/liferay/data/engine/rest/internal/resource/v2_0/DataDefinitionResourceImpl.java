@@ -73,6 +73,7 @@ import com.liferay.dynamic.data.mapping.util.comparator.StructureModifiedDateCom
 import com.liferay.dynamic.data.mapping.util.comparator.StructureNameComparator;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidationException;
 import com.liferay.dynamic.data.mapping.validator.DDMFormValidator;
+import com.liferay.frontend.js.loader.modules.extender.esm.ESImportUtil;
 import com.liferay.frontend.js.loader.modules.extender.npm.NPMResolver;
 import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.petra.string.StringBundler;
@@ -92,6 +93,7 @@ import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.servlet.taglib.aui.ESImport;
 import com.liferay.portal.kernel.util.AggregateResourceBundle;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -107,6 +109,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.url.builder.AbsolutePortalURLBuilderFactory;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.portal.vulcan.permission.Permission;
@@ -261,8 +264,8 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 		return DataDefinitionUtil.toDataDefinition(
 			_ddmFormFieldTypeServicesRegistry,
 			_ddmStructureLocalService.getStructure(dataDefinitionId),
-			_ddmStructureLayoutLocalService, contextHttpServletRequest,
-			_spiDDMFormRuleConverter);
+			_ddmStructureLayoutLocalService, _ddmStructureLocalService,
+			contextHttpServletRequest, _spiDDMFormRuleConverter);
 	}
 
 	@Override
@@ -343,8 +346,8 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 
 		return DataDefinitionUtil.toDataDefinition(
 			_ddmFormFieldTypeServicesRegistry, ddmStructure,
-			_ddmStructureLayoutLocalService, contextHttpServletRequest,
-			_spiDDMFormRuleConverter);
+			_ddmStructureLayoutLocalService, _ddmStructureLocalService,
+			contextHttpServletRequest, _spiDDMFormRuleConverter);
 	}
 
 	@Override
@@ -403,8 +406,8 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 				_ddmFormFieldTypeServicesRegistry,
 				_ddmStructureLocalService.getStructure(
 					GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK))),
-				_ddmStructureLayoutLocalService, contextHttpServletRequest,
-				_spiDDMFormRuleConverter));
+				_ddmStructureLayoutLocalService, _ddmStructureLocalService,
+				contextHttpServletRequest, _spiDDMFormRuleConverter));
 	}
 
 	@Override
@@ -424,8 +427,8 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 		DataDefinition dataDefinition = DataDefinitionUtil.toDataDefinition(
 			_ddmFormFieldTypeServicesRegistry,
 			_ddmStructureLocalService.getStructure(dataDefinitionId),
-			_ddmStructureLayoutLocalService, contextHttpServletRequest,
-			_spiDDMFormRuleConverter);
+			_ddmStructureLayoutLocalService, _ddmStructureLocalService,
+			contextHttpServletRequest, _spiDDMFormRuleConverter);
 
 		_uniquifyDataDefinitionFields(dataDefinition);
 
@@ -513,8 +516,8 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 				DataDefinitionUtil.toDataDefinition(
 					_ddmFormFieldTypeServicesRegistry,
 					_ddmStructureLocalService.getStructure(classPK),
-					_ddmStructureLayoutLocalService, contextHttpServletRequest,
-					_spiDDMFormRuleConverter);
+					_ddmStructureLayoutLocalService, _ddmStructureLocalService,
+					contextHttpServletRequest, _spiDDMFormRuleConverter);
 
 			putDataDefinition(
 				existingDataDefinition.getId(), existingDataDefinition);
@@ -889,8 +892,8 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 			DataDefinitionUtil.toDataDefinition(
 				_ddmFormFieldTypeServicesRegistry,
 				_ddmStructureLocalService.getStructure(dataDefinitionId),
-				_ddmStructureLayoutLocalService, contextHttpServletRequest,
-				_spiDDMFormRuleConverter);
+				_ddmStructureLayoutLocalService, _ddmStructureLocalService,
+				contextHttpServletRequest, _spiDDMFormRuleConverter);
 
 		DDMForm existingDDMForm = DataDefinitionDDMFormUtil.toDDMForm(
 			existingDataDefinition, _ddmFormFieldTypeServicesRegistry);
@@ -969,8 +972,8 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 			DataDefinition dataDefinition = DataDefinitionUtil.toDataDefinition(
 				_ddmFormFieldTypeServicesRegistry,
 				_ddmStructureLocalService.getDDMStructure(entry.getKey()),
-				_ddmStructureLayoutLocalService, contextHttpServletRequest,
-				_spiDDMFormRuleConverter);
+				_ddmStructureLayoutLocalService, _ddmStructureLocalService,
+				contextHttpServletRequest, _spiDDMFormRuleConverter);
 
 			DDMStructureLayout ddmStructureLayout =
 				_ddmStructureLayoutLocalService.fetchDDMStructureLayout(
@@ -1194,8 +1197,8 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 
 		dataDefinition = DataDefinitionUtil.toDataDefinition(
 			_ddmFormFieldTypeServicesRegistry, ddmStructure,
-			_ddmStructureLayoutLocalService, contextHttpServletRequest,
-			_spiDDMFormRuleConverter);
+			_ddmStructureLayoutLocalService, _ddmStructureLocalService,
+			contextHttpServletRequest, _spiDDMFormRuleConverter);
 
 		if (copyPermissions) {
 			_resourceLocalService.copyModelResources(
@@ -1387,6 +1390,20 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 	}
 
 	private String _resolveModuleName(DDMFormFieldType ddmFormFieldType) {
+		String esModule = ddmFormFieldType.getESModule();
+
+		if (Validator.isNotNull(esModule) &&
+			Validator.isNotNull(contextHttpServletRequest)) {
+
+			ESImport esImport = ESImportUtil.getESImport(
+				_absolutePortalURLBuilderFactory.getAbsolutePortalURLBuilder(
+					contextHttpServletRequest),
+				esModule);
+
+			return StringBundler.concat(
+				"{", esImport.getSymbol(), "} from ", esImport.getModule());
+		}
+
 		if (Validator.isNull(ddmFormFieldType.getModuleName())) {
 			return StringPool.BLANK;
 		}
@@ -1484,8 +1501,8 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 
 		return DataDefinitionUtil.toDataDefinition(
 			_ddmFormFieldTypeServicesRegistry, ddmStructure,
-			_ddmStructureLayoutLocalService, contextHttpServletRequest,
-			_spiDDMFormRuleConverter);
+			_ddmStructureLayoutLocalService, _ddmStructureLocalService,
+			contextHttpServletRequest, _spiDDMFormRuleConverter);
 	}
 
 	private DataDefinitionValidationException
@@ -1796,8 +1813,8 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 					dataDefinition.getDescription()),
 				ddmFormSerializerSerializeResponse.getContent(),
 				new ServiceContext()),
-			_ddmStructureLayoutLocalService, contextHttpServletRequest,
-			_spiDDMFormRuleConverter);
+			_ddmStructureLayoutLocalService, _ddmStructureLocalService,
+			contextHttpServletRequest, _spiDDMFormRuleConverter);
 	}
 
 	private void _updateDataLayout(DataLayout dataLayout) {
@@ -1870,6 +1887,9 @@ public class DataDefinitionResourceImpl extends BaseDataDefinitionResourceImpl {
 
 	private static final EntityModel _entityModel =
 		new DataDefinitionEntityModel();
+
+	@Reference
+	private AbsolutePortalURLBuilderFactory _absolutePortalURLBuilderFactory;
 
 	@Reference
 	private DataLayoutResource.Factory _dataLayoutResourceFactory;

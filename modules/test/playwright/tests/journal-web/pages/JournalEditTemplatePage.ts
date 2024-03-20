@@ -5,30 +5,35 @@
 
 import {Locator, Page} from '@playwright/test';
 
-import {JournalPage} from './JournalPage';
+import {JournalTemplatesPage} from './JournalTemplatesPage';
 
 export class JournalEditTemplatePage {
 	readonly page: Page;
 
+	readonly basicInformation: Locator;
 	readonly elementsButton: Locator;
-	readonly journalPage: JournalPage;
-	readonly saveButton: Locator;
+	readonly journalTemplatesPage: JournalTemplatesPage;
 
 	constructor(page: Page) {
 		this.page = page;
 
+		this.basicInformation = page.getByRole('link', {
+			name: 'Basic Information',
+		});
 		this.elementsButton = page.getByTitle('Elements', {exact: true});
-		this.journalPage = new JournalPage(page);
-		this.saveButton = page.getByRole('button', {exact: true, name: 'Save'});
+		this.journalTemplatesPage = new JournalTemplatesPage(page);
 	}
 
-	async goto() {
-		await this.journalPage.goToCreateNewTemplate();
+	async goto(siteUrl?: Site['friendlyUrlPath']) {
+		await this.journalTemplatesPage.goto(siteUrl);
+		await this.journalTemplatesPage.goToCreateNewTemplate();
 
 		// Do it twice so we decrease flakiness
 
-		await this.journalPage.goto();
-		await this.journalPage.goToCreateNewTemplate();
+		await this.journalTemplatesPage.goto(siteUrl);
+		await this.journalTemplatesPage.goToCreateNewTemplate();
+
+		await this.basicInformation.waitFor();
 	}
 
 	async gotoElements() {

@@ -5,11 +5,6 @@
 
 module.exports = {
 	build: {
-		bundler: {
-			exclude: {
-				lodash: false,
-			},
-			ignore: ['**/designer/js/legacy/*.js'],
-		},
+		main: 'src/main/resources/META-INF/resources/designer/js/index.js',
 	},
 };

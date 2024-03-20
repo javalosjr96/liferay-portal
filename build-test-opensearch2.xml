@@ -99,6 +99,16 @@ plugins.security.disabled: true</echo>
 					<arg value="-c" />
 					<arg value="printf '%s\n' y y N | ./install_demo_configuration.sh" />
 				</exec>
+
+				<exec dir="${opensearch.dir}/config" executable="/bin/bash" osfamily="unix">
+					<arg value="-c" />
+					<arg value="openssl pkcs12 -certpbe PBE-SHA1-3DES -keypbe PBE-SHA1-3DES -macalg sha1 -export -in esnode.pem -inkey esnode-key.pem -out esnode.p12 -passout pass:liferay" />
+				</exec>
+
+				<exec dir="${opensearch.dir}/config" executable="cmd" osfamily="windows" spawn="true">
+					<arg value="/c" />
+					<arg value="openssl pkcs12 -certpbe PBE-SHA1-3DES -keypbe PBE-SHA1-3DES -macalg sha1 -export -in esnode.pem -inkey esnode-key.pem -out esnode.p12 -passout pass:liferay" />
+				</exec>
 			</then>
 		</if>
 
@@ -174,12 +184,31 @@ plugins.security.disabled: true</echo>
 		</for>
 
 		<echo file="${liferay.home}/osgi/configs/com.liferay.portal.bundle.blacklist.internal.configuration.BundleBlacklistConfiguration.config">blacklistBundleSymbolicNames=[\
+"com.liferay.portal.search.elasticsearch.cross.cluster.replication.impl",\
+"com.liferay.portal.search.elasticsearch.monitoring.web",\
 "com.liferay.portal.search.elasticsearch7.api",\
-"com.liferay.portal.search.elasticsearch7.impl"\
+"com.liferay.portal.search.elasticsearch7.impl",\
+"com.liferay.portal.search.learning.to.rank.api",\
+"com.liferay.portal.search.learning.to.rank.impl"\
 ]</echo>
 
 		<echo file="${liferay.home}/osgi/configs/com.liferay.portal.search.opensearch2.configuration.OpenSearchConnectionConfiguration-REMOTE.config">active="true"
 connectionId="REMOTE"</echo>
+
+		<if>
+			<istrue value="${opensearch.security.enabled}" />
+			<then>
+				<echo append="true" file="${liferay.home}/osgi/configs/com.liferay.portal.search.opensearch2.configuration.OpenSearchConnectionConfiguration-REMOTE.config">
+authenticationEnabled="true"
+httpSSLEnabled="true"
+networkHostAddresses=["https://localhost:9200"]
+password="admin"
+truststorePassword="liferay"
+truststorePath="${opensearch.dir}/config/esnode.p12"
+truststoreType="pkcs12"
+username="admin"</echo>
+			</then>
+		</if>
 
 		<echo file="${liferay.home}/osgi/configs/com.liferay.portal.search.opensearch2.configuration.OpenSearchConfiguration.config">remoteClusterConnectionId="REMOTE"</echo>
 

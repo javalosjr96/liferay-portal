@@ -5,23 +5,39 @@
 
 package com.liferay.site.initializer.extender.internal;
 
+import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
+import com.liferay.headless.delivery.dto.v1_0.PageDefinition;
+import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
+import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
+import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutConstants;
+import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.kernel.service.LayoutLocalService;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReader;
 import com.liferay.portal.kernel.zip.ZipWriter;
 import com.liferay.portal.kernel.zip.ZipWriterFactory;
+import com.liferay.portal.vulcan.dto.converter.DTOConverter;
+import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
+import com.liferay.portal.vulcan.dto.converter.DefaultDTOConverterContext;
 import com.liferay.site.exception.SerializationException;
 import com.liferay.site.initializer.SiteInitializerSerializer;
 import com.liferay.style.book.model.StyleBookEntry;
@@ -29,8 +45,10 @@ import com.liferay.style.book.service.StyleBookEntryLocalService;
 import com.liferay.style.book.util.comparator.StyleBookEntryNameComparator;
 
 import java.io.File;
+import java.io.InputStream;
 
 import java.util.List;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -51,8 +69,12 @@ public class SiteInitializerSerializerImpl
 		try {
 			ZipWriter zipWriter = _zipWriterFactory.getZipWriter();
 
+			_serializeDocuments(
+				groupId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+				"documents/group", zipWriter);
 			_serializeDDMStructures(groupId, zipWriter);
 			_serializeDDMTemplates(groupId, zipWriter);
+			_serializeLayouts(groupId, "layouts", zipWriter);
 			_serializeStyleBookEntries(groupId, zipWriter);
 
 			return zipWriter.getFile();
@@ -60,6 +82,13 @@ public class SiteInitializerSerializerImpl
 		catch (Exception exception) {
 			throw new SerializationException(exception);
 		}
+	}
+
+	private void _addZipEntry(
+			String fileName, InputStream inputStream, ZipWriter zipWriter)
+		throws Exception {
+
+		zipWriter.addEntry("site-initializer/" + fileName, inputStream);
 	}
 
 	private void _addZipEntry(
@@ -121,9 +150,10 @@ public class SiteInitializerSerializerImpl
 	private void _serializeDDMStructures(long groupId, ZipWriter zipWriter)
 		throws Exception {
 
-		for (DDMStructure ddmStructure :
-				_ddmStructureLocalService.getStructures(groupId)) {
+		List<DDMStructure> ddmStructures =
+			_ddmStructureLocalService.getStructures(groupId);
 
+		for (DDMStructure ddmStructure : ddmStructures) {
 			_serializeDDMStructure(ddmStructure, zipWriter);
 		}
 	}
@@ -154,11 +184,158 @@ public class SiteInitializerSerializerImpl
 	private void _serializeDDMTemplates(long groupId, ZipWriter zipWriter)
 		throws Exception {
 
-		for (DDMTemplate ddmTemplate :
-				_ddmTemplateLocalService.getTemplatesByGroupId(groupId)) {
+		List<DDMTemplate> ddmTemplates =
+			_ddmTemplateLocalService.getTemplatesByGroupId(groupId);
 
+		for (DDMTemplate ddmTemplate : ddmTemplates) {
 			_serializeDDMTemplate(ddmTemplate, zipWriter);
 		}
+	}
+
+	private void _serializeDocuments(
+			long groupId, Long parentFolderId, String zipDirName,
+			ZipWriter zipWriter)
+		throws Exception {
+
+		List<FileEntry> fileEntries = _dlAppService.getFileEntries(
+			groupId, parentFolderId);
+
+		for (FileEntry fileEntry : fileEntries) {
+			_addZipEntry(
+				_normalize(zipDirName + "/" + fileEntry.getFileName()),
+				fileEntry.getContentStream(), zipWriter);
+		}
+
+		List<Folder> folders = _dlAppService.getFolders(
+			groupId, parentFolderId);
+
+		for (Folder folder : folders) {
+			_serializeDocuments(
+				groupId, folder.getFolderId(),
+				zipDirName + "/" + folder.getName(), zipWriter);
+		}
+	}
+
+	private void _serializeLayout(
+			Layout layout, String zipDirName, ZipWriter zipWriter)
+		throws Exception {
+
+		_addZipEntry(
+			zipDirName + "/page.json",
+			JSONUtil.put(
+				"friendlyURL", layout.getFriendlyURL()
+			).put(
+				"hidden", layout.isHidden()
+			).put(
+				"name_i18n",
+				JSONUtil.put("en_US", layout.getName(LocaleUtil.US))
+			).put(
+				"priority", layout.getPriority()
+			).put(
+				"private", layout.isPrivateLayout()
+			).put(
+				"system", layout.isSystem()
+			).put(
+				"type", layout.getType()
+			).put(
+				"typeSettings",
+				() -> {
+					if (Validator.isNull(layout.getTypeSettings())) {
+						return null;
+					}
+
+					String[] parts = StringUtil.split(
+						layout.getTypeSettings(), CharPool.EQUAL);
+
+					JSONObject jsonObject = JSONUtil.put("key", parts[0]);
+
+					if (Objects.equals(
+							layout.getType(),
+							LayoutConstants.TYPE_LINK_TO_LAYOUT)) {
+
+						Layout linkToLayout = _layoutLocalService.getLayout(
+							layout.getGroupId(), layout.isPrivateLayout(),
+							GetterUtil.getLong(parts[1].replace("\n", "")));
+
+						jsonObject.put(
+							"value",
+							"[$LAYOUT_ID:" +
+								linkToLayout.getName(LocaleUtil.US) + "$]");
+					}
+					else if (Objects.equals(
+								layout.getType(), LayoutConstants.TYPE_URL)) {
+
+						jsonObject.put("value", parts[1].replace("\n", ""));
+					}
+
+					return JSONUtil.put(jsonObject);
+				}
+			),
+			zipWriter);
+
+		if (!Objects.equals(layout.getType(), LayoutConstants.TYPE_CONTENT)) {
+			return;
+		}
+
+		LayoutPageTemplateStructure layoutPageTemplateStructure =
+			_layoutPageTemplateStructureLocalService.
+				fetchLayoutPageTemplateStructure(
+					layout.getGroupId(), layout.getPlid());
+
+		PageDefinition pageDefinition = _pageDefinitionDTOConverter.toDTO(
+			new DefaultDTOConverterContext(
+				true, null, _dtoConverterRegistry, null, layout.getPlid(), null,
+				null, null) {
+
+				{
+					setAttribute("embeddedPageDefinition", Boolean.TRUE);
+					setAttribute("groupId", layout.getGroupId());
+					setAttribute("layout", layout);
+				}
+			},
+			LayoutStructure.of(
+				layoutPageTemplateStructure.
+					getDefaultSegmentsExperienceData()));
+
+		_addZipEntry(
+			zipDirName + "/page-definition.json",
+			JSONUtil.put(
+				"pageElement", pageDefinition.getPageElement()
+			).put(
+				"settings", pageDefinition.getSettings()
+			),
+			zipWriter);
+	}
+
+	private void _serializeLayouts(
+			long groupId, boolean privateLayout, long layoutId,
+			String zipDirName, ZipWriter zipWriter)
+		throws Exception {
+
+		List<Layout> layouts = _layoutLocalService.getLayouts(
+			groupId, privateLayout, layoutId);
+
+		for (Layout layout : layouts) {
+			zipDirName +=
+				CharPool.SLASH + _normalize(layout.getName(LocaleUtil.US));
+
+			_serializeLayout(layout, zipDirName, zipWriter);
+			_serializeLayouts(
+				groupId, layout.isPrivateLayout(), layout.getLayoutId(),
+				zipDirName, zipWriter);
+		}
+	}
+
+	private void _serializeLayouts(
+			long groupId, String zipDirName, ZipWriter zipWriter)
+		throws Exception {
+
+		_serializeLayouts(
+			groupId, false, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID,
+			zipDirName, zipWriter);
+		_serializeLayouts(
+			groupId, true, LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, zipDirName,
+			zipWriter);
 	}
 
 	private void _serializeStyleBookEntries(long groupId, ZipWriter zipWriter)
@@ -182,7 +359,26 @@ public class SiteInitializerSerializerImpl
 	private DDMTemplateLocalService _ddmTemplateLocalService;
 
 	@Reference
+	private DLAppService _dlAppService;
+
+	@Reference
+	private DTOConverterRegistry _dtoConverterRegistry;
+
+	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private LayoutLocalService _layoutLocalService;
+
+	@Reference
+	private LayoutPageTemplateStructureLocalService
+		_layoutPageTemplateStructureLocalService;
+
+	@Reference(
+		target = "(component.name=com.liferay.headless.delivery.internal.dto.v1_0.converter.PageDefinitionDTOConverter)"
+	)
+	private DTOConverter<LayoutStructure, PageDefinition>
+		_pageDefinitionDTOConverter;
 
 	@Reference
 	private SAXReader _saxReader;

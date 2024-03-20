@@ -188,7 +188,6 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.xml.QName;
 import com.liferay.portal.language.LanguageResources;
-import com.liferay.portal.model.impl.CookieRemotePreference;
 import com.liferay.portal.model.impl.LayoutTypeImpl;
 import com.liferay.portal.security.jaas.JAASHelper;
 import com.liferay.portal.security.sso.SSOUtil;
@@ -267,7 +266,6 @@ import javax.portlet.WindowState;
 import javax.servlet.RequestDispatcher;
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
-import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletRequestWrapper;
 import javax.servlet.http.HttpServletResponse;
@@ -2463,30 +2461,8 @@ public class PortalImpl implements Portal {
 
 	@Override
 	public String getLayoutActualURL(Layout layout, String mainPath) {
-		Layout browsableLayout = getBrowsableLayout(layout);
-
-		String groupIdString = String.valueOf(browsableLayout.getGroupId());
-
-		Map<String, String> variables = HashMapBuilder.put(
-			"liferay:groupId", groupIdString
-		).put(
-			"liferay:layoutId", String.valueOf(browsableLayout.getLayoutId())
-		).put(
-			"liferay:mainPath", mainPath
-		).put(
-			"liferay:plid", String.valueOf(browsableLayout.getPlid())
-		).put(
-			"liferay:privateLayout",
-			String.valueOf(browsableLayout.isPrivateLayout())
-		).build();
-
-		String pvlsgid = "0";
-
-		if (browsableLayout instanceof VirtualLayout) {
-			pvlsgid = groupIdString;
-		}
-
-		variables.put("liferay:pvlsgid", pvlsgid);
+		Map<String, String> variables = _getVariables(
+			LayoutLocalServiceUtil.getBrowsableLayout(layout), mainPath);
 
 		variables.putAll(layout.getTypeSettingsProperties());
 
@@ -5139,21 +5115,6 @@ public class PortalImpl implements Portal {
 			httpServletRequest.setAttribute(WebKeys.USER, user);
 		}
 
-		Cookie[] cookies = httpServletRequest.getCookies();
-
-		if (cookies != null) {
-			for (Cookie cookie : cookies) {
-				String cookieName = cookie.getName();
-
-				if (cookieName.startsWith(
-						CookiesConstants.NAME_REMOTE_PREFERENCE_PREFIX)) {
-
-					user.addRemotePreference(
-						new CookieRemotePreference(cookie));
-				}
-			}
-		}
-
 		return user;
 	}
 
@@ -6809,40 +6770,6 @@ public class PortalImpl implements Portal {
 		return locale;
 	}
 
-	protected Layout getBrowsableLayout(Layout layout) {
-		LayoutTypeController layoutTypeController =
-			LayoutTypeControllerTracker.getLayoutTypeController(
-				layout.getType());
-
-		if (layoutTypeController.isBrowsable()) {
-			return layout;
-		}
-
-		Layout browsableChildLayout = null;
-
-		List<Layout> childLayouts = layout.getAllChildren();
-
-		for (Layout childLayout : childLayouts) {
-			LayoutTypeController childLayoutTypeController =
-				LayoutTypeControllerTracker.getLayoutTypeController(
-					childLayout.getType());
-
-			if (childLayoutTypeController.isBrowsable()) {
-				browsableChildLayout = childLayout;
-
-				break;
-			}
-		}
-
-		if (browsableChildLayout != null) {
-			return browsableChildLayout;
-		}
-
-		return LayoutLocalServiceUtil.fetchLayout(
-			LayoutLocalServiceUtil.getDefaultPlid(
-				layout.getGroupId(), layout.isPrivateLayout()));
-	}
-
 	protected String getCanonicalDomain(
 		TreeMap<String, String> virtualHostnames, String portalDomain,
 		String defaultVirtualHostname) {
@@ -8071,6 +7998,37 @@ public class PortalImpl implements Portal {
 		}
 
 		return group;
+	}
+
+	private Map<String, String> _getVariables(Layout layout, String mainPath) {
+		if (layout == null) {
+			return HashMapBuilder.put(
+				"liferay:pvlsgid", "0"
+			).build();
+		}
+
+		String groupIdString = String.valueOf(layout.getGroupId());
+
+		return HashMapBuilder.put(
+			"liferay:groupId", groupIdString
+		).put(
+			"liferay:layoutId", String.valueOf(layout.getLayoutId())
+		).put(
+			"liferay:mainPath", mainPath
+		).put(
+			"liferay:plid", String.valueOf(layout.getPlid())
+		).put(
+			"liferay:privateLayout", String.valueOf(layout.isPrivateLayout())
+		).put(
+			"liferay:pvlsgid",
+			() -> {
+				if (layout instanceof VirtualLayout) {
+					return groupIdString;
+				}
+
+				return "0";
+			}
+		).build();
 	}
 
 	private String _getVirtualHostname(

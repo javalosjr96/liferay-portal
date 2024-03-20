@@ -5,8 +5,8 @@
 
 import {FrameLocator, Locator, Page, expect} from '@playwright/test';
 
-import {ProductMenuPage} from '../../../pages/product-navigation-product-menu/ProductMenuPage';
 import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
+import {PORTLET_URLS} from '../../../utils/portletUrls';
 
 export class JournalPage {
 	readonly page: Page;
@@ -14,8 +14,6 @@ export class JournalPage {
 	readonly createBasicWebContentLink: Locator;
 	readonly newButton: Locator;
 	readonly permissionsFrameLocator: FrameLocator;
-	readonly productMenuPage: ProductMenuPage;
-	readonly templatesLink: Locator;
 
 	constructor(page: Page) {
 		this.page = page;
@@ -27,30 +25,29 @@ export class JournalPage {
 		this.permissionsFrameLocator = page.frameLocator(
 			'iframe[title="Permissions"]'
 		);
-		this.productMenuPage = new ProductMenuPage(page);
-		this.templatesLink = page.getByRole('link', {name: 'Templates'});
 	}
 
-	async goto() {
-		await this.productMenuPage.goToJournalMenuItem();
+	async goto(siteUrl?: Site['friendlyUrlPath']) {
+		await this.page.goto(
+			`/group${siteUrl || '/guest'}${PORTLET_URLS.journal}`
+		);
 	}
 
-	async goToCreateNewBasicArticle() {
+	async goToCreateArticle(structureName?: string) {
+		const target = structureName
+			? this.page.getByRole('menuitem', {
+					name: structureName,
+			  })
+			: this.createBasicWebContentLink;
+
 		await clickAndExpectToBeVisible({
 			autoClick: true,
-			target: this.createBasicWebContentLink,
+			target,
 			trigger: this.newButton,
 		});
 	}
 
-	async goToCreateNewTemplate() {
-		await this.goToTemplates();
-		await this.newButton.click();
-	}
-
 	async goToJournalArticleAction(action: string, title: string) {
-		await this.goto();
-
 		await this.page.getByLabel(`Actions for ${title}`).waitFor();
 
 		await clickAndExpectToBeVisible({
@@ -65,33 +62,38 @@ export class JournalPage {
 		});
 	}
 
-	async goToTemplates() {
-		await this.templatesLink.click();
-	}
-
 	async assertJournalArticlePermissions(
 		title: string,
-		permissionLocators: string[]
+		permissions: {enabled: boolean; locator: string}[]
 	) {
 		await this.goToJournalArticleAction('Permissions', title);
 
+		await this.assertPermissions(permissions);
+	}
+
+	async assertPermissions(
+		permissions: {enabled: boolean; locator: string}[]
+	) {
 		await this.permissionsFrameLocator
-			.locator(permissionLocators[0])
+			.locator(permissions[0].locator)
 			.waitFor();
 
-		for (const permissionsLocator of permissionLocators) {
-			await expect(
-				this.permissionsFrameLocator.locator(permissionsLocator)
-			).toBeChecked();
+		for (const permission of permissions) {
+			const permissionCheckbox = this.permissionsFrameLocator.locator(
+				permission.locator
+			);
+
+			if (permission.enabled) {
+				await expect(permissionCheckbox).toBeChecked();
+			}
+			else {
+				await expect(permissionCheckbox).not.toBeChecked();
+			}
 		}
 
 		await this.permissionsFrameLocator
 			.getByRole('button', {name: 'Cancel'})
 			.click();
-	}
-
-	async deleteJournalArticle(title: string) {
-		await this.goToJournalArticleAction('Delete', title);
 	}
 
 	async setJournalArticlePermissions(
@@ -110,23 +112,23 @@ export class JournalPage {
 			trigger: this.page.getByTitle('Actions', {exact: true}),
 		});
 
+		await this.setPermissions(permissionLocators);
+	}
+
+	async setPermissions(permissionLocators: string[]) {
 		await this.permissionsFrameLocator
 			.locator(permissionLocators[0])
-			.waitFor();
+			.check({trial: true});
 
 		for (const permissionsLocator of permissionLocators) {
 			await this.permissionsFrameLocator
 				.locator(permissionsLocator)
-				.check();
+				.check({timeout: 2000});
 		}
 
 		await this.permissionsFrameLocator
 			.getByRole('button', {name: 'Save'})
 			.click();
-
-		for (const permissionsLocator of permissionLocators) {
-			await this.permissionsFrameLocator.locator(permissionsLocator);
-		}
 
 		await this.permissionsFrameLocator
 			.getByRole('button', {name: 'Cancel'})

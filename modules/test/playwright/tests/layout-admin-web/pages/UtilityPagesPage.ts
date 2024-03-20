@@ -8,17 +8,19 @@
 import {Page} from '@playwright/test';
 
 import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
-import {StaticPagesPage} from '../../layout-admin-web/pages/StaticPagesPage';
+import {PORTLET_URLS} from '../../../utils/portletUrls';
 
 export class UtilityPagesPage {
 	readonly page: Page;
 
-	readonly staticPagesPage: StaticPagesPage;
-
 	constructor(page: Page) {
 		this.page = page;
+	}
 
-		this.staticPagesPage = new StaticPagesPage(page);
+	async goto(siteUrl?: Site['friendlyUrlPath']) {
+		await this.page.goto(
+			`/group${siteUrl || '/guest'}${PORTLET_URLS.utilityPages}`
+		);
 	}
 
 	async clickOnAction(action: string, title: string) {
@@ -34,17 +36,11 @@ export class UtilityPagesPage {
 		});
 	}
 
-	async goto() {
-		await this.staticPagesPage.goToUtilityPages();
-	}
-
-	async goToEdit(title: string) {
-		await this.goto();
-
-		await this.page.getByTitle(title).waitFor();
+	async goToEdit(pageTitle: string) {
+		await this.page.getByLabel(pageTitle).waitFor();
 
 		const href = await this.page
-			.locator('div.card-row', {has: this.page.getByTitle(title)})
+			.locator('div.card-row', {has: this.page.getByLabel(pageTitle)})
 			.getByRole('link')
 			.getAttribute('href');
 

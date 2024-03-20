@@ -233,9 +233,7 @@ public class ContentPageEditorDisplayContext {
 			WebKeys.THEME_DISPLAY);
 	}
 
-	public Map<String, Object> getEditorContext(String npmResolvedPackageName)
-		throws Exception {
-
+	public Map<String, Object> getEditorContext() throws Exception {
 		return HashMapBuilder.<String, Object>put(
 			"config",
 			HashMapBuilder.<String, Object>put(
@@ -383,13 +381,12 @@ public class ContentPageEditorDisplayContext {
 				() -> {
 					Group group = themeDisplay.getScopeGroup();
 
-					LayoutSet layoutSet = _layoutSetLocalService.fetchLayoutSet(
-						themeDisplay.getSiteGroupId(),
-						group.isLayoutSetPrototype());
-
 					FrontendTokenDefinition frontendTokenDefinition =
 						_frontendTokenDefinitionRegistry.
-							getFrontendTokenDefinition(layoutSet.getThemeId());
+							getFrontendTokenDefinition(
+								_layoutSetLocalService.fetchLayoutSet(
+									themeDisplay.getSiteGroupId(),
+									group.isLayoutSetPrototype()));
 
 					if (frontendTokenDefinition == null) {
 						return _jsonFactory.createJSONObject();
@@ -613,9 +610,6 @@ public class ContentPageEditorDisplayContext {
 
 					return false;
 				}
-			).put(
-				"pluginsRootPath",
-				npmResolvedPackageName + "/page_editor/plugins"
 			).put(
 				"portletNamespace", getPortletNamespace()
 			).put(

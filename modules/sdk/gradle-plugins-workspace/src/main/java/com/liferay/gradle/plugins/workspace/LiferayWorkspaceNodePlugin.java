@@ -7,7 +7,8 @@ package com.liferay.gradle.plugins.workspace;
 
 import aQute.bnd.version.Version;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.liferay.gradle.plugins.node.NodeExtension;
 import com.liferay.gradle.plugins.node.NodePlugin;
@@ -17,6 +18,8 @@ import com.liferay.gradle.plugins.workspace.internal.util.StringUtil;
 import com.liferay.gradle.util.Validator;
 
 import java.io.File;
+
+import java.time.temporal.ChronoUnit;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -47,9 +50,27 @@ public class LiferayWorkspaceNodePlugin implements Plugin<Project> {
 	}
 
 	private LiferayWorkspaceNodePlugin() {
+		int maxAge = 7;
+
+		String refreshNodeReleases = System.getProperty(
+			"liferay.workspace.refresh.node.releases");
+
+		if (refreshNodeReleases != null) {
+			maxAge = 0;
+		}
+
+		File nodeCacheDir = new File(
+			System.getProperty("user.home"), ".liferay/node");
+
+		File indexJsonFile = new File(nodeCacheDir, "index.json");
+
 		_nodeInfos = ResourceUtil.readJson(
 			NodeInfos.class,
-			ResourceUtil.getURLResolver(_NODE_CACHE_DIR, _PRODUCT_NODE_URL),
+			ResourceUtil.getLocalFileResolver(
+				indexJsonFile, maxAge, ChronoUnit.DAYS),
+			ResourceUtil.getURLResolver(
+				nodeCacheDir, "https://nodejs.org/dist/index.json"),
+			ResourceUtil.getLocalFileResolver(indexJsonFile),
 			ResourceUtil.getClassLoaderResolver("/.node_info.json"));
 	}
 
@@ -132,16 +153,9 @@ public class LiferayWorkspaceNodePlugin implements Plugin<Project> {
 		return nodeInfoOptional;
 	}
 
-	private static final String _DEFAULT_NODE_CACHE_DIR_NAME = ".liferay/node";
-
-	private static final File _NODE_CACHE_DIR = new File(
-		System.getProperty("user.home"), _DEFAULT_NODE_CACHE_DIR_NAME);
-
-	private static final String _PRODUCT_NODE_URL =
-		"https://nodejs.org/dist/index.json";
-
 	private final NodeInfos _nodeInfos;
 
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	private static class NodeInfo {
 
 		public String getLts() {
@@ -156,13 +170,13 @@ public class LiferayWorkspaceNodePlugin implements Plugin<Project> {
 			return _npmVersion;
 		}
 
-		@SerializedName("lts")
+		@JsonProperty("lts")
 		private String _lts;
 
-		@SerializedName("version")
+		@JsonProperty("version")
 		private String _nodeVersion;
 
-		@SerializedName("npm")
+		@JsonProperty("npm")
 		private String _npmVersion;
 
 	}

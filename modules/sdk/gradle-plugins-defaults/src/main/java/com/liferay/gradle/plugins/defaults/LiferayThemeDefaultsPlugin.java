@@ -35,10 +35,12 @@ import org.gradle.api.Project;
 import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.DependencySet;
+import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.FileTree;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.JavaPlugin;
+import org.gradle.api.provider.Property;
 import org.gradle.api.publish.PublicationContainer;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenPublication;
@@ -107,7 +109,7 @@ public class LiferayThemeDefaultsPlugin implements Plugin<Project> {
 			resourcesImporterExpandedArchivesDir, resourcesImporterArchivesDir,
 			"lar");
 
-		_configureDeployDir(project);
+		_configureDeployDir(project, portalRootDir);
 		_configureProject(project);
 		_configureTasksPackageRunBuild(
 			project, zipResourcesImporterArchivesTask);
@@ -345,13 +347,19 @@ public class LiferayThemeDefaultsPlugin implements Plugin<Project> {
 		Zip zip = GradleUtil.addTask(project, taskName, Zip.class);
 
 		zip.from(dir);
-		zip.setArchiveName(dir.getName() + "." + extension);
-		zip.setDestinationDir(destinationDir);
 
 		zip.setDescription(
 			"Assembles " + project.relativePath(zip.getArchivePath()) +
 				" with the contents of the " + project.relativePath(dir) +
 					" directory.");
+
+		Property<String> property = zip.getArchiveFileName();
+
+		property.set(dir.getName() + "." + extension);
+
+		DirectoryProperty directoryProperty = zip.getDestinationDirectory();
+
+		directoryProperty.set(destinationDir);
 
 		return zip;
 	}
@@ -368,37 +376,38 @@ public class LiferayThemeDefaultsPlugin implements Plugin<Project> {
 		GradleUtil.applyPlugin(project, MavenPublishPlugin.class);
 	}
 
-	private void _configureDeployDir(Project project) {
+	private void _configureDeployDir(
+		final Project project, final File portalRootDir) {
+
 		final LiferayExtension liferayExtension = GradleUtil.getExtension(
 			project, LiferayExtension.class);
 
-		boolean requiredForStartup = _getPluginPackageProperty(
-			project, "required-for-startup");
+		liferayExtension.setDeployDir(
+			new Callable<File>() {
 
-		if (requiredForStartup) {
-			liferayExtension.setDeployDir(
-				new Callable<File>() {
+				@Override
+				public File call() throws Exception {
+					if ((portalRootDir != null) &&
+						project.hasProperty("portal.war.auto.deploy.enabled")) {
 
-					@Override
-					public File call() throws Exception {
+						return new File(
+							liferayExtension.getLiferayHome(),
+							"osgi/portal-war");
+					}
+
+					boolean requiredForStartup = _getPluginPackageProperty(
+						project, "required-for-startup");
+
+					if (requiredForStartup) {
 						return new File(
 							liferayExtension.getLiferayHome(), "osgi/war");
 					}
 
-				});
-		}
-		else {
-			liferayExtension.setDeployDir(
-				new Callable<File>() {
+					return new File(
+						liferayExtension.getLiferayHome(), "deploy");
+				}
 
-					@Override
-					public File call() throws Exception {
-						return new File(
-							liferayExtension.getLiferayHome(), "deploy");
-					}
-
-				});
-		}
+			});
 	}
 
 	private void _configureExtensionPublishing(final Project project) {

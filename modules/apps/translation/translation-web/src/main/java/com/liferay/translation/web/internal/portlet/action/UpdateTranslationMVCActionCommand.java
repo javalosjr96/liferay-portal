@@ -39,6 +39,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 import com.liferay.translation.constants.TranslationPortletKeys;
 import com.liferay.translation.service.TranslationEntryService;
@@ -106,6 +107,9 @@ public class UpdateTranslationMVCActionCommand extends BaseMVCActionCommand {
 
 			long modifiedDateTime = ParamUtil.getLong(
 				actionRequest, "modifiedDateTime");
+			int workflowAction = ParamUtil.getInteger(
+				actionRequest, "workflowAction",
+				WorkflowConstants.ACTION_PUBLISH);
 
 			InfoItemIdentifier infoItemIdentifier =
 				infoItemReference.getInfoItemIdentifier();
@@ -119,7 +123,8 @@ public class UpdateTranslationMVCActionCommand extends BaseMVCActionCommand {
 				_getInfoItemFieldValues(className, infoItem);
 
 			if (FeatureFlagManagerUtil.isEnabled("LPD-11253") &&
-				(modifiedDateTime > 0)) {
+				(modifiedDateTime > 0) &&
+				(workflowAction == WorkflowConstants.ACTION_PUBLISH)) {
 
 				Object infoItemFieldValue = _getInfoItemFieldValue(
 					"modifiedDate", sourceInfoItemFieldValues);
@@ -300,6 +305,10 @@ public class UpdateTranslationMVCActionCommand extends BaseMVCActionCommand {
 			).setParameter(
 				"backURLTitle",
 				ParamUtil.getString(actionRequest, "backURLTitle")
+			).setParameter(
+				"sourceLanguageId", _getSourceLanguageId(actionRequest)
+			).setParameter(
+				"targetLanguageId", _getTargetLanguageId(actionRequest)
 			);
 
 		Map<String, String[]> infoFieldParameterValues =

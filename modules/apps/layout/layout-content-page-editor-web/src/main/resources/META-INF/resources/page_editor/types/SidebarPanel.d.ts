@@ -7,7 +7,7 @@ export type SidebarPanel = {
 	icon: string;
 	isLink: boolean;
 	label: string;
-	pluginEntryPoint?: string;
+	pluginClass?: string;
 	sidebarPanelId: string;
 	url?: string | null;
 };

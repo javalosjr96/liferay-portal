@@ -802,7 +802,7 @@ export const sitePagesListColumns = {
 		cellRendererProps: {
 			nameKey: 'assetTitle',
 			renderSecondaryInfo: ({assetId}) => (
-				<TextTruncate title={assetId} />
+				<TextTruncate title={decodeURIComponent(assetId)} />
 			),
 			routeFn: ({data: {assetId, assetTitle}}) =>
 				setUriQueryValues(
@@ -810,9 +810,9 @@ export const sitePagesListColumns = {
 					toRoute(route, {
 						channelId,
 						groupId,
-						touchpoint: encodeURIComponent(assetId),
+						touchpoint: assetId,
 						...(assetTitle && {
-							title: encodeURIComponent(assetTitle)
+							title: assetTitle
 						})
 					})
 				)

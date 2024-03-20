@@ -8,13 +8,13 @@ import {
 	withSelectionProvider
 } from 'shared/context/selection';
 import {Columns, IPagination} from 'shared/types';
-import {DocumentNode} from 'graphql';
+import {DocumentNode} from 'apollo-boost';
 import {noop} from 'lodash';
 import {OrderedMap} from 'immutable';
 import {OrderParams} from 'shared/util/records';
 import {QueryHookOptions, useQuery} from '@apollo/react-hooks';
 import {safeResultToProps} from 'shared/util/mappers';
-import {useStatefulPagination} from 'shared/hooks';
+import {useStatefulPagination} from 'shared/hooks/useStatefulPagination';
 
 interface ISearchableTableModalGraphQLProps extends IPagination {
 	className: string;

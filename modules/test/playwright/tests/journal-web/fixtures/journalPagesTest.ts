@@ -5,17 +5,27 @@
 
 import {test} from '@playwright/test';
 
+import {FriendlyUrlInstanceSettingsPage} from '../../../pages/friendly-url-web/FriendlyUrlInstanceSettingsPage';
+import {DisplayPageTemplatesPage} from '../../../pages/layout-page-template-admin-web/DisplayPageTemplatesPage';
 import {JournalEditArticlePage} from '../pages/JournalEditArticlePage';
 import {JournalEditArticleTranslationsPage} from '../pages/JournalEditArticleTranslationsPage';
 import {JournalEditTemplatePage} from '../pages/JournalEditTemplatePage';
 import {JournalPage} from '../pages/JournalPage';
 
 const journalPagesTest = test.extend<{
+	displayPageTemplatesPage: DisplayPageTemplatesPage;
+	friendlyUrlInstanceSettingsPage: FriendlyUrlInstanceSettingsPage;
 	journalEditArticlePage: JournalEditArticlePage;
 	journalEditArticleTranslationsPage: JournalEditArticleTranslationsPage;
 	journalEditTemplatePage: JournalEditTemplatePage;
 	journalPage: JournalPage;
 }>({
+	displayPageTemplatesPage: async ({page}, use) => {
+		await use(new DisplayPageTemplatesPage(page));
+	},
+	friendlyUrlInstanceSettingsPage: async ({page}, use) => {
+		await use(new FriendlyUrlInstanceSettingsPage(page));
+	},
 	journalEditArticlePage: async ({page}, use) => {
 		await use(new JournalEditArticlePage(page));
 	},

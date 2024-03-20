@@ -77,6 +77,12 @@ public interface PropsKeys {
 	public static final String ADMIN_EMAIL_USER_ADDED_SUBJECT =
 		"admin.email.user.added.subject";
 
+	public static final String ADMIN_EMAIL_USER_CREATION_ATTEMPT_BODY =
+		"admin.email.user.creation.attempt.body";
+
+	public static final String ADMIN_EMAIL_USER_CREATION_ATTEMPT_SUBJECT =
+		"admin.email.user.creation.attempt.subject";
+
 	public static final String ADMIN_EMAIL_VERIFICATION_BODY =
 		"admin.email.verification.body";
 

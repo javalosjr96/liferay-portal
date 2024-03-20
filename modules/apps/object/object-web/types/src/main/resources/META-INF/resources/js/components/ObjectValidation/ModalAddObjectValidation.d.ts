@@ -6,11 +6,13 @@
 /// <reference types="react" />
 
 interface ModalAddObjectValidationProps {
+	allowScriptContentBeExecutedOrIncluded: boolean;
 	apiURL: string;
 	objectValidationRuleEngines: LabelValueObject[];
 	setShowAddObjectRelationshipModal: (value: boolean) => void;
 }
 export declare function ModalAddObjectValidation({
+	allowScriptContentBeExecutedOrIncluded,
 	apiURL,
 	objectValidationRuleEngines,
 	setShowAddObjectRelationshipModal,

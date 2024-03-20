@@ -3,158 +3,59 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {Locale, TranslationAdminSelector} from 'frontend-js-components-web';
-import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import classNames from 'classnames';
+import {TranslationAdminSelector} from 'frontend-js-components-web';
+import React from 'react';
 
-type Field = Record<Liferay.Language.Locale, string>;
-
-type Fields = Record<string, Field> | null;
-
-interface Props {
-	defaultLanguageId: Liferay.Language.Locale;
-	fields: Record<string, Field>;
-	locales: Locale[];
-	selectedLanguageId: Liferay.Language.Locale;
-}
+import {TranslationManagerProps} from './Types';
+import useTranslationProgress from './useTranslationProgress';
 
 export default function TranslationManager({
-	defaultLanguageId,
+	defaultLanguageId: initialDefaultLanguageId,
 	fields: initialFields,
 	locales,
+	namespace,
 	selectedLanguageId: initialSelectedLanguageId,
-}: Props) {
-	const [fields, setFields] = useState<Fields>(null);
-	const [selectedLanguageId, setSelectedLanguageId] = useState<
-		Liferay.Language.Locale
-	>(initialSelectedLanguageId);
-	const [translations, setTranslations] = useState(
-		fieldToTranslations(initialFields)
-	);
+}: TranslationManagerProps) {
+	const {
+		defaultLanguageId,
+		selectedLanguageId,
+		translationProgress,
+		updateTranslations,
+	} = useTranslationProgress({
+		defaultLanguageId: initialDefaultLanguageId,
+		fields: initialFields,
+		locales,
+		namespace,
+		selectedLanguageId: initialSelectedLanguageId,
+	});
 
-	const updateTranslations = (fields: Fields) => {
-		if (!fields) {
-			return;
-		}
-
-		const newTranslations = Object.keys(fields).map((fieldName) => {
-			const languages = Array.from(
-				document.querySelectorAll<HTMLInputElement>(
-					`[type="hidden"][data-field-name="${fieldName}"]`
-				)
-			)
-				.filter((input) => input.value)
-				.map(
-					(input) =>
-						input.dataset.languageid as Liferay.Language.Locale
-				);
-
-			return {
-				fieldName,
-				languages,
-			};
-		});
-
-		setTranslations(newTranslations);
-	};
-
-	const updateTranslationStatus = useCallback(
-		() => updateTranslations(fields),
-		[fields]
-	);
-
-	const getLocalizableFields = useCallback(() => {
-		const ddmFields = Array.from(
-			document.querySelectorAll<HTMLInputElement>(
-				`[data-ddm-localizable-field-id]`
-			)
-		)
-			.map(
-				(field) =>
-					`${field.dataset.fieldName}${field.dataset.ddmLocalizableFieldId}`
-			)
-			.reduce((acc, name) => ({...acc, [name]: {}}), {});
-
-		const fields = {...initialFields, ...ddmFields};
-
-		setFields(fields);
-
-		updateTranslations(fields);
-	}, [initialFields]);
-
-	useEffect(() => {
-		if (fields) {
-			Liferay.on(
-				'inputLocalized:updateTranslationStatus',
-				updateTranslationStatus
-			);
-		}
-
-		return () => {
-			Liferay.detach(
-				'inputLocalized:updateTranslationStatus',
-				updateTranslationStatus
-			);
-		};
-	}, [fields, updateTranslationStatus]);
-
-	useEffect(() => {
+	const handleSelectedLanguageIdChange = (
+		languageId: Liferay.Language.Locale
+	) => {
 		Liferay.fire('inputLocalized:localeChanged', {
 			item: document.querySelector(
-				`[data-languageid="${selectedLanguageId}"][data-value="${selectedLanguageId}"]`
+				`[data-languageid="${languageId}"][data-value="${languageId}"]`
 			),
 		});
-	}, [selectedLanguageId]);
-
-	const translatedItems = useMemo(
-		() =>
-			locales.reduce((acc, locale) => {
-				const translatedItems = translations.filter(({languages}) =>
-					languages.includes(locale.id)
-				).length;
-
-				return {
-					...acc,
-					...(translatedItems && {[locale.id]: translatedItems}),
-				};
-			}, {}),
-		[translations, locales]
-	);
+	};
 
 	return (
-		<TranslationAdminSelector
-			activeLanguageIds={locales.map(({id}) => id)}
-			availableLocales={locales}
-			defaultLanguageId={defaultLanguageId}
-			displayType="HORIZONTAL"
-			onSelectedLanguageIdChange={setSelectedLanguageId}
-			onSelectorActiveChange={getLocalizableFields}
-			selectedLanguageId={selectedLanguageId}
-			translationProgress={
-				Object.keys(translatedItems).length
-					? {
-							totalItems: Object.keys(fields || initialFields)
-								.length,
-							translatedItems,
-					  }
-					: null
-			}
-		/>
+		<div
+			className={classNames({
+				'translation-manager': Liferay.FeatureFlags['LPD-11253'],
+			})}
+		>
+			<TranslationAdminSelector
+				activeLanguageIds={locales.map(({id}) => id)}
+				availableLocales={locales}
+				defaultLanguageId={defaultLanguageId}
+				displayType="HORIZONTAL"
+				onSelectedLanguageIdChange={handleSelectedLanguageIdChange}
+				onSelectorActiveChange={updateTranslations}
+				selectedLanguageId={selectedLanguageId}
+				translationProgress={translationProgress}
+			/>
+		</div>
 	);
-}
-
-export function fieldToTranslations(fields: Record<string, Field>) {
-	const translations = [];
-
-	for (const fieldName in fields) {
-		const languages = fields[fieldName]
-			? (Object.keys(fields[fieldName]) as Liferay.Language.Locale[])
-			: [];
-
-		translations.push({
-			fieldName,
-			languages,
-		});
-	}
-
-	return translations;
 }

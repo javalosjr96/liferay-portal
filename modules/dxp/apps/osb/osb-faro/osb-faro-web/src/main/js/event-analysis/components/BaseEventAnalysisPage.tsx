@@ -5,10 +5,8 @@ import EventAnalysisToolbar from '../components/EventAnalysisToolbar';
 import Form from 'shared/components/form';
 import NavigationWarning from 'shared/components/NavigationWarning';
 import React, {useContext, useMemo, useState} from 'react';
-import withCurrentUser from 'shared/hoc/WithCurrentUser';
 import {addAlert} from 'shared/actions/alerts';
 import {Alert, RangeSelectors} from 'shared/types';
-import {ApolloError} from 'apollo-client';
 import {AttributesContext} from '../components/event-analysis-editor/context/attributes';
 import {
 	Breakdowns,
@@ -26,26 +24,17 @@ import {
 	UpdateEventAnalysisMutation
 } from 'event-analysis/queries/EventAnalysisQuery';
 import {getSafeRangeSelectors} from 'shared/util/util';
-import {GraphQLError} from 'graphql';
 import {hasChanges} from 'shared/util/react';
 import {omit} from 'lodash';
 import {Routes, toRoute} from 'shared/util/router';
+import {useCurrentUser} from 'shared/hooks/useCurrentUser';
 import {useHistory, useParams} from 'react-router-dom';
 import {useMutation} from '@apollo/react-hooks';
-import {User} from 'shared/util/records';
 import {WithRangeKeyProps} from 'shared/hoc/WithRangeKey';
 
 enum MessageKeys {
 	NameCannotBeBlank = 'name-cannot-be-blank',
 	NameIsAlreadyUsed = 'name-is-already-used'
-}
-
-interface Error extends ApolloError {
-	graphQLErrors: ReadonlyArray<
-		GraphQLError & {
-			messageKey: keyof MessageKeys;
-		}
-	>;
 }
 
 const ERRORS = {
@@ -77,7 +66,6 @@ interface IBaseEventAnalysisPageProps
 		React.HTMLAttributes<HTMLElement> {
 	breakdowns?: Breakdowns;
 	compareToPrevious?: boolean;
-	currentUser: User;
 	event?: Event;
 	filters?: Filters;
 	name?: string;
@@ -87,7 +75,6 @@ const BaseEventAnalysisPage: React.FC<IBaseEventAnalysisPageProps> = ({
 	addAlert,
 	close,
 	compareToPrevious: initialCompareToPrevious = false,
-	currentUser,
 	event: initialEvent = null,
 	name: initialName = '',
 	open,
@@ -105,6 +92,8 @@ const BaseEventAnalysisPage: React.FC<IBaseEventAnalysisPageProps> = ({
 	);
 	const [submitted, setSubmitted] = useState<boolean>(false);
 	const [type, setType] = useState<CalculationTypes>(CalculationTypes.Total);
+
+	const currentUser = useCurrentUser();
 
 	const {
 		breakdownOrder,
@@ -174,22 +163,28 @@ const BaseEventAnalysisPage: React.FC<IBaseEventAnalysisPageProps> = ({
 					)
 				});
 			})
-			.catch(({graphQLErrors}: Error) => {
-				setSubmitting(false);
-				setSubmitted(false);
+			.catch(
+				({
+					graphQLErrors
+				}: {
+					graphQLErrors: {messageKey: keyof MessageKeys}[];
+				}) => {
+					setSubmitting(false);
+					setSubmitted(false);
 
-				close();
+					close();
 
-				const {alertType, message} = ERRORS[
-					graphQLErrors[0].messageKey
-				];
+					const {alertType, message} = ERRORS[
+						graphQLErrors[0].messageKey
+					];
 
-				addAlert({
-					alertType,
-					message,
-					timeout: false
-				});
-			});
+					addAlert({
+						alertType,
+						message,
+						timeout: false
+					});
+				}
+			);
 	};
 
 	const compareToPreviousChanged: boolean =
@@ -322,8 +317,4 @@ const BaseEventAnalysisPage: React.FC<IBaseEventAnalysisPageProps> = ({
 	);
 };
 
-export default compose<any>(
-	connector,
-	withCurrentUser,
-	withRangeKey
-)(BaseEventAnalysisPage);
+export default compose<any>(connector, withRangeKey)(BaseEventAnalysisPage);

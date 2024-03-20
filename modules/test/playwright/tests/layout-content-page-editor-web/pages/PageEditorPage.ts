@@ -7,10 +7,14 @@
 
 import {Locator, Page} from '@playwright/test';
 
-type Viewport = 'Desktop' | 'Landscape Phone' | 'Portrait Phone' | 'Tablet';
+import {liferayConfig} from '../../../liferay.config';
+import getRandomString from '../../../utils/getRandomString';
+import getPageDefinition from '../utils/getPageDefinition';
 
 export class PageEditorPage {
 	readonly page: Page;
+
+	readonly publishButton: Locator;
 	readonly redoButton: Locator;
 	readonly undoButton: Locator;
 	readonly undoHistory: Locator;
@@ -18,6 +22,7 @@ export class PageEditorPage {
 	constructor(page: Page) {
 		this.page = page;
 
+		this.publishButton = page.getByText('Publish');
 		this.redoButton = page.getByTitle('Redo');
 		this.undoButton = page.getByTitle('Undo');
 		this.undoHistory = page.locator('.page-editor__undo-history');
@@ -49,23 +54,93 @@ export class PageEditorPage {
 		await field.blur();
 	}
 
+	async changeFragmentSpacing(
+		fragmentId: string,
+		spacingType: SpacingType,
+		value: string,
+		unit?: StyleUnit
+	) {
+		await this.openSpacingSelector(fragmentId, spacingType);
+
+		if (unit) {
+			await this.page
+				.locator('.page-editor__spacing-selector__dropdown')
+				.getByRole('button', {name: 'Select a unit'})
+				.click();
+
+			await this.page.getByRole('menuitem', {name: unit}).click();
+
+			const input = await this.page.getByRole('spinbutton', {
+				name: spacingType,
+			});
+
+			await input.fill(value);
+			await input.blur();
+			await input.waitFor({state: 'hidden'});
+		}
+		else {
+			const selector = this.page.getByLabel(
+				`Set ${spacingType} to ${value}`
+			);
+
+			await selector.click();
+			await selector.waitFor({state: 'hidden'});
+		}
+	}
+
+	async createPageWithFragmentAndGoToEditMode({apiHelpers, fragment, site}) {
+		await this.page.goto(liferayConfig.environment.baseUrl);
+
+		// Create a page with a fragment
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage(
+			site.id,
+			getRandomString(),
+			getPageDefinition([fragment])
+		);
+
+		// Go to edit mode of page
+
+		await this.goToEditMode(layout, site.friendlyUrlPath);
+	}
+
 	async deleteFragment(fragmentId: string) {
 		await this.selectFragment(fragmentId);
 		await this.page.keyboard.press('Backspace');
 	}
 
-	async goToConfigurationTab(tab: ConfigurationTab) {
-		await this.page.getByRole('tab', {name: tab}).click();
+	async getFragmentStyle(
+		fragmentId: string,
+		style: string,
+		isDesktop = true
+	) {
+		const topper = isDesktop
+			? this.page.locator(
+					`.lfr-layout-structure-item-topper-${fragmentId}`
+			  )
+			: this.page
+					.frameLocator('.page-editor__global-context-iframe')
+					.locator(`.lfr-layout-structure-item-topper-${fragmentId}`);
+
+		const styles = await topper.evaluate((element) =>
+			window.getComputedStyle(element)
+		);
+
+		return styles[style];
 	}
 
-	async goToEditMode(site: Site, layout: Layout) {
+	async goToConfigurationTab(tab: ConfigurationTab) {
+		await this.page.getByRole('tab', {exact: true, name: tab}).click();
+	}
+
+	async goToEditMode(layout: Layout, siteUrl?: Site['friendlyUrlPath']) {
 		await this.page.goto(
-			`/web${site.friendlyUrlPath}${layout.friendlyUrlPath}?p_l_mode=edit`
+			`/web${siteUrl || '/guest'}${layout.friendlyUrlPath}?p_l_mode=edit`
 		);
 	}
 
 	async goToSidebarTab(tab: SidebarTab) {
-		await this.page.getByTitle(tab).click();
+		await this.page.getByRole('tab', {exact: true, name: tab}).click();
 	}
 
 	async isActive(fragmentId: string, isDesktop = true) {
@@ -82,6 +157,32 @@ export class PageEditorPage {
 		);
 	}
 
+	async openSpacingSelector(fragmentId: string, spacingType: SpacingType) {
+		await this.selectFragment(fragmentId);
+		await this.goToConfigurationTab('Styles');
+
+		await this.page.getByLabel(spacingType, {exact: true}).click();
+	}
+
+	async publishPage() {
+		await this.publishButton.click();
+
+		await this.page
+			.getByText('Success:The page was published successfully.')
+			.waitFor();
+	}
+
+	async resetSpacing(fragmentId: string, spacingType: SpacingType) {
+		await this.openSpacingSelector(fragmentId, spacingType);
+
+		const resetButton = this.page.getByLabel('Reset to Initial Value');
+
+		if (await resetButton.isVisible()) {
+			await resetButton.click();
+			await resetButton.waitFor({state: 'hidden'});
+		}
+	}
+
 	async selectFragment(fragmentId: string, isDesktop = true) {
 		if (await this.isActive(fragmentId, isDesktop)) {
 			return;
@@ -91,7 +192,7 @@ export class PageEditorPage {
 	}
 
 	async switchViewport(viewport: Viewport) {
-		await this.page.getByLabel(viewport).click();
+		await this.page.getByLabel(viewport, {exact: true}).click();
 	}
 
 	getFragment(fragmentId: string, isDesktop = true) {

@@ -20,6 +20,10 @@ import {
 	filterSchema as filterSchemas,
 } from '../schema/filter';
 
+type CustomFilterFieldsProps = {
+	[key: string]: string;
+};
+
 type Options = {
 	label: string;
 	value: string;
@@ -33,7 +37,7 @@ type Params = {
 	[key: string]: string | number | boolean;
 };
 
-const useQueryParams = () => {
+const useQueryParams = (customFilterFields?: CustomFilterFieldsProps) => {
 	const location = useLocation();
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
@@ -73,16 +77,24 @@ const useQueryParams = () => {
 		for (const field of resourceFields) {
 			const resource =
 				typeof field.resource === 'function'
-					? field.resource(parameters)
+					? field.resource({...parameters, ...customFilterFields})
 					: (field.resource as string);
 
 			const filter = SearchBuilder.in('id', serializedFilter[field.name]);
 
-			const resourceFilter = resource.includes('filter=')
-				? resource.replace(/(filter=.*?)(&|$)/, `$1 and ${filter}$2`)
-				: `${resource}${
-						resource.includes('?') ? '&' : '?'
-				  }filter=${filter}`;
+			let resourceFilter = resource;
+
+			if (resource.includes('filter=')) {
+				resourceFilter = resource.replace(
+					/(filter=.*?)(&|$)/,
+					`$1 and ${filter}$2`
+				);
+			}
+			else {
+				resourceFilter = `${resource}${
+					resource.includes('?') ? '&' : '?'
+				}filter=${filter}`;
+			}
 
 			const response = await fetcher(resourceFilter);
 
@@ -161,7 +173,13 @@ const useQueryParams = () => {
 		});
 
 		setFilterWithOptions(updatedFilterOptions);
-	}, [serializedFilter, filteredFields, routeParams, filterKeys]);
+	}, [
+		customFilterFields,
+		filteredFields,
+		filterKeys,
+		routeParams,
+		serializedFilter,
+	]);
 
 	const updateUrlParams = (param: Params) => {
 		const existingParams = new URLSearchParams(location.search);

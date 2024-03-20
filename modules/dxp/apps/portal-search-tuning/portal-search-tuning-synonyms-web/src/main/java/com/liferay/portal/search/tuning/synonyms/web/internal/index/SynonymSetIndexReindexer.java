@@ -15,6 +15,8 @@ import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.search.background.task.ReindexStatusMessageSenderUtil;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.search.capabilities.SearchCapabilities;
+import com.liferay.portal.search.document.DocumentBuilderFactory;
+import com.liferay.portal.search.engine.adapter.SearchEngineAdapter;
 import com.liferay.portal.search.index.SyncReindexManager;
 import com.liferay.portal.search.spi.reindexer.IndexReindexer;
 import com.liferay.portal.search.tuning.synonyms.index.name.SynonymSetIndexName;
@@ -24,6 +26,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -64,9 +67,9 @@ public class SynonymSetIndexReindexer implements IndexReindexer {
 			}
 
 			try {
-				synonymSetIndexCreator.deleteIfExists(synonymSetIndexName);
+				_synonymSetIndexCreator.deleteIfExists(synonymSetIndexName);
 
-				synonymSetIndexCreator.create(synonymSetIndexName);
+				_synonymSetIndexCreator.create(synonymSetIndexName);
 			}
 			catch (RuntimeException runtimeException) {
 				_log.error(
@@ -85,7 +88,7 @@ public class SynonymSetIndexReindexer implements IndexReindexer {
 		int sendStatusInterval = Math.max(100, classPKs.size() / 20);
 
 		for (int i = 0; i < classPKs.size(); i++) {
-			synonymSetIndexWriter.create(
+			_synonymSetIndexWriter.create(
 				synonymSetIndexName, _buildSynonymSet(classPKs.get(i)));
 
 			if ((i % sendStatusInterval) == 0) {
@@ -105,6 +108,14 @@ public class SynonymSetIndexReindexer implements IndexReindexer {
 		}
 	}
 
+	@Activate
+	protected void activate() {
+		_synonymSetIndexCreator = new SynonymSetIndexCreator(
+			_searchEngineAdapter);
+		_synonymSetIndexWriter = new SynonymSetIndexWriter(
+			_documentBuilderFactory, _searchEngineAdapter);
+	}
+
 	@Reference
 	protected ClassNameLocalService classNameLocalService;
 
@@ -115,13 +126,7 @@ public class SynonymSetIndexReindexer implements IndexReindexer {
 	protected SearchCapabilities searchCapabilities;
 
 	@Reference
-	protected SynonymSetIndexCreator synonymSetIndexCreator;
-
-	@Reference
 	protected SynonymSetIndexNameBuilder synonymSetIndexNameBuilder;
-
-	@Reference
-	protected SynonymSetIndexWriter synonymSetIndexWriter;
 
 	private SynonymSet _buildSynonymSet(long classPK) {
 		JSONObject jsonObject = jsonStorageEntryLocalService.getJSONObject(
@@ -156,5 +161,14 @@ public class SynonymSetIndexReindexer implements IndexReindexer {
 		_syncReindexManagerSnapshot = new Snapshot<>(
 			SynonymSetIndexReindexer.class, SyncReindexManager.class, null,
 			true);
+
+	@Reference
+	private DocumentBuilderFactory _documentBuilderFactory;
+
+	@Reference
+	private SearchEngineAdapter _searchEngineAdapter;
+
+	private SynonymSetIndexCreator _synonymSetIndexCreator;
+	private SynonymSetIndexWriter _synonymSetIndexWriter;
 
 }

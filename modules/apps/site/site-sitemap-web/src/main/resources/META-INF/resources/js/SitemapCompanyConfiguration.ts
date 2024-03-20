@@ -14,6 +14,7 @@ interface Props {
 type SelectedItem = {
 	groupdescriptivename: string;
 	groupid: string;
+	hasvirtualhost: string;
 };
 
 export default function ({
@@ -54,6 +55,7 @@ export default function ({
 					const {
 						groupdescriptivename: entityName,
 						groupid: entityId,
+						hasvirtualhost: hasVirtualHost,
 					} = selectedItem;
 					const rowColumns = [];
 
@@ -71,17 +73,45 @@ export default function ({
 						'times-circle'
 					);
 
+					let siteName;
+
+					if (hasVirtualHost === 'true') {
+						const warningIcon = Liferay.Util.getLexiconIconTpl(
+							'warning-full',
+							'text-warning'
+						);
+
+						const warningTitle = Liferay.Language.get(
+							'this-site-is-not-included-in-the-companys-xml-sitemap-because-it-already-has-a-virtual-host'
+						);
+
+						siteName = `<span class="text-truncate">
+							${entityName}
+							<span
+								class="c-ml-2 d-inline lfr-portal-tooltip"
+								title="${warningTitle}"
+							>
+								${warningIcon}
+							</span>
+						</span>`;
+					}
+					else {
+						siteName = `<span class="text-truncate">${entityName}</span>`;
+					}
+
 					const removeButton = `<button
-					aria-label="${title}"
-					class="btn btn-monospaced btn-sm lfr-portal-tooltip remove-button" 
-					data-rowid="${entityId}" 
-					type="button" 
-					title="${title}">
-					<span class="inline-item">${removeIcon}</span>
+						aria-label="${title}"
+						class="btn btn-monospaced btn-outline-borderless btn-outline-secondary
+							btn-sm lfr-portal-tooltip remove-button text-secondary" 
+						data-rowid="${entityId}" 
+						type="button" 
+						title="${title}"
+					>
+						<span class="inline-item">${removeIcon}</span>
 					</button>`;
 
 					rowColumns.push(sitesIcon);
-					rowColumns.push(entityName);
+					rowColumns.push(siteName);
 					rowColumns.push(removeButton);
 
 					searchContainer.addRow(rowColumns, entityId);

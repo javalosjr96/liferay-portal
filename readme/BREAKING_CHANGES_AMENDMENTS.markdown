@@ -248,20 +248,6 @@ This class has been deprecated since 7.1.x, its only usage in rules_user_custom_
 ```
 ----
 
-# f46f1e49076f31484ad6cceede099bb16c9ef911
-Incorrect format on breaking change
-
-Correct message should be:
-```
-# breaking
-## What portal-kernel/src/com/liferay/portal/kernel/dao/orm/IndexableActionableDynamicQuery.java
-setIndexWriterHelper() method is being removed.
-## Why
-This setter was added for the class UserIndexer (see 73427a8). UserIndexer has been deprecated and removed from the portal though.
-----
-```
-----
-
 # 76c2d3b68c19a1b33f18e9221d83f34310daed45
 
 Typo in file path.
@@ -283,10 +269,17 @@ WebDAV (or Digest Auth more generally) now requires each user to generate a sepa
 
 On the message of the commit 51895916ce756437c2ae1c11a734c9e640abbb05 the file path is not the complete path:
 
-so the correct message on **What** section should be
+Correct message should be:
+```
+LPS-200359 Allow configure No Cache for documents and make it the default option
 
-modules/apps/document-library/document-library-web/src/main/java/com/liferay/document/library/web/internal/configuration/CacheControlConfiguration.java
-
+# breaking
+## What modules/apps/document-library/document-library-web/src/main/java/com/liferay/document/library/web/internal/configuration/CacheControlConfiguration.java
+Default cacheControl configuration values were changed 
+## Why
+Add a new option to configure portal to do not cache documents and make it the default option (in order to improve security)
+----
+```
 ----
 
 # a35946f28515783df6d3de0a45ff8c9631dc416a
@@ -379,5 +372,26 @@ Added new validation for aggregation and formula object field types, preventing 
 ## Why
 Because these object fields types have their values obtained by runtime calculation, we do not have proper support for them in Elasticsearch.
 Preventing the indexed attribute from being true avoids misinterpretation.
+----
+```
+----
+
+# 64fbb2481d5a6af40fb4882fc53bacb78384069e
+
+The breaking change message should not contain tab
+
+Correct message should be:
+```
+LPS-194004 generalize JSOnClickConfig to be passed as the default argument in the dynamically loaded JS module
+
+# breaking
+
+## What modules/apps/product-navigation/product-navigation-personal-menu-api/src/main/java/com/liferay/product/navigation/personal/menu/PersonalMenuEntry.java
+
+In modules/apps/product-navigation/product-navigation-personal-menu-api/src/main/java/com/liferay/product/navigation/personal/menu/PersonalMenuEntry.java the behavior of getJSOnClickConfigJSONObject has been changed so that it requires providing a Javascript function to getOnClickJSModuleURL that will be called with the value returned by getJSOnClickConfigJSONObject as it's parameter.
+
+## Why
+
+This makes getJSOnClickConfigJSONObject generic so that it can be used for any type of on click interaction, not just for opening a selection modal.
 ----
 ```

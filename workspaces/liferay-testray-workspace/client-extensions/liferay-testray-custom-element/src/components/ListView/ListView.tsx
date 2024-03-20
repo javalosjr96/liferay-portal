@@ -23,6 +23,7 @@ import ListViewContextProvider, {
 	ListViewContext,
 	ListViewContextProviderProps,
 	ListViewTypes,
+	Sort,
 } from '../../context/ListViewContext';
 import SearchBuilder from '../../core/SearchBuilder';
 import {useFetch} from '../../hooks/useFetch';
@@ -49,6 +50,7 @@ export type ListViewProps<T = any> = {
 	children?: (response: APIResponse, options: ChildrenOptions) => ReactNode;
 	forceRefetch?: number;
 	managementToolbarProps?: {
+		customFilterFields?: {[key: string]: string};
 		visible?: boolean;
 	} & Omit<
 		ManagementToolbarProps,
@@ -91,6 +93,7 @@ const ListView: React.FC<ListViewProps> = ({
 	children,
 	forceRefetch,
 	managementToolbarProps: {
+		customFilterFields,
 		visible: managementToolbarVisible = true,
 		...managementToolbarProps
 	} = {},
@@ -142,6 +145,21 @@ const ListView: React.FC<ListViewProps> = ({
 		[filters.filter, variables?.filter, filterSchema]
 	);
 
+	const buildSort = (sort: Sort | Sort[]) => {
+		if (Array.isArray(sort)) {
+			return sort
+				.reduce(
+					(prevSort, newSort) =>
+						prevSort +
+						`${newSort.key}:${newSort.direction.toLowerCase()},`,
+					''
+				)
+				.slice(0, -1);
+		}
+
+		return sort.key ? `${sort.key}:${sort.direction.toLowerCase()}` : '';
+	};
+
 	const getURLSearchParams = useCallback(
 		() => ({
 			filter: onApplyFilterMemo
@@ -150,7 +168,7 @@ const ListView: React.FC<ListViewProps> = ({
 			forceRefetch,
 			page: listViewContext.page,
 			pageSize: listViewContext.pageSize,
-			sort: sort.key ? `${sort.key}:${sort.direction.toLowerCase()}` : '',
+			sort: buildSort(sort),
 		}),
 		[
 			onApplyFilterMemo,
@@ -158,8 +176,7 @@ const ListView: React.FC<ListViewProps> = ({
 			forceRefetch,
 			listViewContext.page,
 			listViewContext.pageSize,
-			sort.key,
-			sort.direction,
+			sort,
 		]
 	);
 
@@ -230,7 +247,14 @@ const ListView: React.FC<ListViewProps> = ({
 		if (shouldCurrentPageBeChanged) {
 			dispatch({payload: page - 1, type: ListViewTypes.SET_PAGE});
 		}
-	}, [dispatch, itemsMemoized.length, lastPage, loading, page]);
+	}, [
+		customFilterFields,
+		dispatch,
+		itemsMemoized.length,
+		lastPage,
+		loading,
+		page,
+	]);
 
 	const listViewContextString = JSON.stringify(listViewContext);
 
@@ -241,6 +265,13 @@ const ListView: React.FC<ListViewProps> = ({
 	}, [listViewContextString]);
 
 	useEffect(() => {
+		if (customFilterFields) {
+			dispatch({
+				payload: {customFilterFields},
+				type: ListViewTypes.SET_CUSTOM_FILTER_FIELDS,
+			});
+		}
+
 		if (tableProps.rowSelectable) {
 			dispatch({
 				payload: itemsMemoized.every((item) =>
@@ -250,6 +281,7 @@ const ListView: React.FC<ListViewProps> = ({
 			});
 		}
 	}, [
+		customFilterFields,
 		dispatch,
 		itemsMemoized,
 		onSelectRowNormalizer,
@@ -296,6 +328,7 @@ const ListView: React.FC<ListViewProps> = ({
 				<ManagementToolbar
 					{...managementToolbarProps}
 					actions={actions}
+					customFilterFields={customFilterFields}
 					tableProps={tableProps}
 					totalItems={itemsMemoized.length}
 				/>

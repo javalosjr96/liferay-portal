@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 
 import java.util.ArrayList;
 import java.util.Date;
@@ -36,11 +37,12 @@ public class FaroSubscriptionDisplay {
 		Date lastAnniversaryDate = DateUtils.setYears(
 			createDate, DateUtil.getYear(new Date()));
 
-		if (DateUtil.compareTo(new Date(), lastAnniversaryDate) > 0) {
-			return lastAnniversaryDate;
+		if (DateUtil.compareTo(new Date(), lastAnniversaryDate) <= 0) {
+			lastAnniversaryDate = DateUtils.setYears(
+				createDate, DateUtil.getYear(new Date()) - 1);
 		}
 
-		return DateUtils.setYears(createDate, DateUtil.getYear(new Date()) - 1);
+		return new Date(lastAnniversaryDate.getTime() / Time.DAY * Time.DAY);
 	}
 
 	public FaroSubscriptionDisplay() {
@@ -156,19 +158,17 @@ public class FaroSubscriptionDisplay {
 			return;
 		}
 
-		Date subscriptionModifiedDate = new Date(
-			faroProject.getSubscriptionModifiedTime());
-
-		if ((_startDate == null) ||
-			(DateUtil.compareTo(subscriptionModifiedDate, _startDate) > 0)) {
-
-			_startDate = subscriptionModifiedDate;
-		}
-
 		if (_isBasicSubscription(faroProject.getSubscription())) {
-			_lastAnniversaryDate = _startDate;
+			if (_startDate == null) {
+				_startDate = new Date(faroProject.getCreateTime());
+			}
+
+			_lastAnniversaryDate = new Date(
+				_startDate.getTime() / Time.DAY * Time.DAY);
 		}
 		else {
+			_startDate = new Date(faroProject.getSubscriptionModifiedTime());
+
 			_lastAnniversaryDate = getLastAnniversaryDate(_startDate);
 		}
 

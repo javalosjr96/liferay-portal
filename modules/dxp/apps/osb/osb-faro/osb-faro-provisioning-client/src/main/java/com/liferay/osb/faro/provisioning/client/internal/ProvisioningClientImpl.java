@@ -27,7 +27,6 @@ import com.liferay.portal.kernel.util.Validator;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 import org.osgi.service.component.annotations.Component;
@@ -217,7 +216,6 @@ public class ProvisioningClientImpl implements ProvisioningClient {
 				}
 
 				osbOfferingEntry.setQuantity(1);
-				osbOfferingEntry.setStartDate(new Date());
 				osbOfferingEntry.setStatus(
 					ProductConstants.OSB_OFFERING_ENTRY_STATUS_ACTIVE);
 
@@ -251,14 +249,12 @@ public class ProvisioningClientImpl implements ProvisioningClient {
 					}
 
 					contactsOSBOfferingEntry.setQuantity(1);
-					contactsOSBOfferingEntry.setStartDate(new Date());
 					contactsOSBOfferingEntry.setStatus(
 						ProductConstants.OSB_OFFERING_ENTRY_STATUS_ACTIVE);
 
 					osbOfferingEntries.add(contactsOSBOfferingEntry);
 
 					trackedPagesOSBOfferingEntry.setQuantity(1);
-					trackedPagesOSBOfferingEntry.setStartDate(new Date());
 					trackedPagesOSBOfferingEntry.setStatus(
 						ProductConstants.OSB_OFFERING_ENTRY_STATUS_ACTIVE);
 

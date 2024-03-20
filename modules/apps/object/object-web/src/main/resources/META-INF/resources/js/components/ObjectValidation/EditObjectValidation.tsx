@@ -27,6 +27,7 @@ import {
 } from './useObjectValidationForm';
 
 interface EditObjectValidationProps {
+	allowScriptContentBeExecutedOrIncluded: boolean;
 	baseResourceURL: string;
 	creationLanguageId: Liferay.Language.Locale;
 	learnResources: ILearnResourceContext;
@@ -73,6 +74,7 @@ const initialValues: ObjectValidation = {
 };
 
 export default function EditObjectValidation({
+	allowScriptContentBeExecutedOrIncluded,
 	baseResourceURL,
 	creationLanguageId,
 	learnResources,
@@ -155,6 +157,10 @@ export default function EditObjectValidation({
 	}
 
 	const disabled = readOnly || !!values?.system;
+	const disabledGroovyValidation =
+		Liferay.FeatureFlags['LPD-11179'] &&
+		!allowScriptContentBeExecutedOrIncluded &&
+		values.engine === 'groovy';
 
 	useEffect(() => {
 		if (Object.keys(errors).length) {
@@ -254,6 +260,9 @@ export default function EditObjectValidation({
 								creationLanguageId={creationLanguageId}
 								customObjectFields={customObjectFields ?? []}
 								disabled={disabled}
+								disabledGroovyValidation={
+									disabledGroovyValidation
+								}
 								errors={
 									Object.keys(errors).length !== 0
 										? errors

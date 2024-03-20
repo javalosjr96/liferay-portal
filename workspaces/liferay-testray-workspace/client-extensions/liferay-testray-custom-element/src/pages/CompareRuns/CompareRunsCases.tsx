@@ -155,6 +155,7 @@ const CompareRunsCases = () => {
 						pageSize: 100,
 					}}
 					managementToolbarProps={{
+						applyFilters: true,
 						display: {columns: false},
 						filterSchema: 'compareRunsCases',
 					}}

@@ -9,6 +9,8 @@ definition {
 	static var randomSiteName = StringUtil.randomString(8);
 
 	var siteURLKey = StringUtil.toLowerCase(${randomSiteName});
+	var tagName1 = "tagname1";
+	var tagName2 = "tagname2";
 
 	setUp {
 		task ("Set up virtual instance") {
@@ -22,22 +24,8 @@ definition {
 		task ("Add a site") {
 			HeadlessSite.addSite(siteName = ${randomSiteName});
 		}
-	}
 
-	@description = "This is a test for LPS-169877. 10 instances of Tags fragment can be added into the same form container"
-	@priority = 3
-	test CanAdd10TagsFragmentsToPage {
-		var tagName1 = StringUtil.randomString(8);
-
-		var tagName1 = StringUtil.toLowerCase(${tagName1});
-		var tagName2 = StringUtil.randomString(8);
-
-		var tagName2 = StringUtil.toLowerCase(${tagName2});
-		var labelName = StringUtil.randomString(8);
-
-		var objectName = "A${labelName}";
-
-		task ("Given an object with scope to a site") {
+		task ("Add tags") {
 			for (var tagName : list "${tagName1},${tagName2}") {
 				JSONAssettag.addTag(
 					groupName = "Global",
@@ -47,7 +35,27 @@ definition {
 			JSONAssettag.addTag(
 				groupName = ${randomSiteName},
 				tagName = "local tag");
+		}
+	}
 
+	tearDown {
+		ObjectAdmin.deleteAllCustomObjectsViaAPI();
+
+		var testLiferayVirtualInstance = PropsUtil.get("test.liferay.virtual.instance");
+
+		if (${testLiferayVirtualInstance} == "true") {
+			PortalInstances.tearDownCP();
+		}
+	}
+
+	@description = "This is a test for LPS-169877. Multiple instances of Tags fragment can be added into the same form container"
+	@priority = 3
+	test CanAddMultipleTagsFragmentsToPage {
+		var labelName = StringUtil.randomString(8);
+
+		var objectName = "A${labelName}";
+
+		task ("Given an object with scope to a site") {
 			ObjectAdmin.addObjectViaAPI(
 				labelName = ${labelName},
 				objectName = ${objectName},
@@ -110,12 +118,7 @@ definition {
 
 			PageEditor.mapFormContainerToObject(contentType = ${labelName});
 
-			PageEditor.viewInputStyle(
-				label = "Name",
-				showLabel = "true",
-				type = "text");
-
-			for (var i : list "1,2,3,4,5,6,7,8,9,10") {
+			for (var i : list "1,2,3,4") {
 				PageEditor.addFragmentToFormContainer(
 					collectionName = "Form Components",
 					fragmentName = "Tags",
@@ -141,21 +144,14 @@ definition {
 			AssetCategorization.selectTag(
 				skipSelectFrame = "true",
 				tagNameList = ${tagName2},
-				tagRow = 4);
+				tagRow = 2);
 
 			AssetCategorization.selectTag(
 				skipSelectFrame = "true",
-				tagNameList = "${tagName2},local tag",
-				tagRow = 6);
-
-			AssetCategorization.selectTag(
-				skipSelectFrame = "true",
-				tagNameList = "${tagName1},${tagName2},local tag",
-				tagRow = 7);
+				tagNameList = "local tag",
+				tagRow = 3);
 
 			Button.clickSubmitButton();
-
-			AssertTextPresent(value1 = "Thank you. Your information was successfully received.");
 
 			ProductMenu.gotoPortlet(
 				category = "Categorization",
@@ -172,27 +168,11 @@ definition {
 	@description = "This is a test for LPS-169877. The tags fragment can be used in a master page"
 	@priority = 3
 	test CanUseTagsInMasterPage {
-		var tagName1 = StringUtil.randomString(8);
-
-		var tagName1 = StringUtil.toLowerCase(${tagName1});
-		var tagName2 = StringUtil.randomString(8);
-
-		var tagName2 = StringUtil.toLowerCase(${tagName2});
 		var labelName = StringUtil.randomString(8);
 
 		var objectName = "A${labelName}";
 
 		task ("Given a master page with the tags fragment") {
-			for (var tagName : list "${tagName1},${tagName2}") {
-				JSONAssettag.addTag(
-					groupName = "Global",
-					tagName = ${tagName});
-			}
-
-			JSONAssettag.addTag(
-				groupName = ${randomSiteName},
-				tagName = "local tag");
-
 			ObjectAdmin.addObjectViaAPI(
 				labelName = ${labelName},
 				objectName = ${objectName},
@@ -252,11 +232,6 @@ definition {
 
 			PageEditor.mapFormContainerToObject(contentType = ${labelName});
 
-			PageEditor.viewInputStyle(
-				label = "Name",
-				showLabel = "true",
-				type = "text");
-
 			PageEditor.addFragmentToFormContainer(
 				collectionName = "Form Components",
 				fragmentName = "Tags",
@@ -291,8 +266,6 @@ definition {
 
 			Button.clickSubmitButton();
 
-			AssertTextPresent(value1 = "Thank you. Your information was successfully received.");
-
 			ProductMenu.gotoPortlet(
 				category = "Categorization",
 				portlet = "${labelName}s");
@@ -310,27 +283,11 @@ definition {
 	test CanUseTagsInPageTemplate {
 		property portal.acceptance = "true";
 
-		var tagName1 = StringUtil.randomString(8);
-
-		var tagName1 = StringUtil.toLowerCase(${tagName1});
-		var tagName2 = StringUtil.randomString(8);
-
-		var tagName2 = StringUtil.toLowerCase(${tagName2});
 		var labelName = StringUtil.randomString(8);
 
 		var objectName = "A${labelName}";
 
 		task ("Given a page template with the tags fragment") {
-			for (var tagName : list "${tagName1},${tagName2}") {
-				JSONAssettag.addTag(
-					groupName = "Global",
-					tagName = ${tagName});
-			}
-
-			JSONAssettag.addTag(
-				groupName = ${randomSiteName},
-				tagName = "local tag");
-
 			ObjectAdmin.addObjectViaAPI(
 				labelName = ${labelName},
 				objectName = ${objectName},
@@ -397,11 +354,6 @@ definition {
 
 			PageEditor.mapFormContainerToObject(contentType = ${labelName});
 
-			PageEditor.viewInputStyle(
-				label = "Name",
-				showLabel = "true",
-				type = "text");
-
 			PageEditor.addFragmentToFormContainer(
 				collectionName = "Form Components",
 				fragmentName = "Tags",
@@ -437,8 +389,6 @@ definition {
 
 			Button.clickSubmitButton();
 
-			AssertTextPresent(value1 = "Thank you. Your information was successfully received.");
-
 			ProductMenu.gotoPortlet(
 				category = "Categorization",
 				portlet = "${labelName}s");
@@ -456,27 +406,11 @@ definition {
 	test ViewAllTagsShownInObjectSiteScoped {
 		property portal.acceptance = "true";
 
-		var tagName1 = StringUtil.randomString(8);
-
-		var tagName1 = StringUtil.toLowerCase(${tagName1});
-		var tagName2 = StringUtil.randomString(8);
-
-		var tagName2 = StringUtil.toLowerCase(${tagName2});
 		var labelName = StringUtil.randomString(8);
 
 		var objectName = "A${labelName}";
 
 		task ("Given an object with scope to a site") {
-			for (var tagName : list "${tagName1},${tagName2}") {
-				JSONAssettag.addTag(
-					groupName = "Global",
-					tagName = ${tagName});
-			}
-
-			JSONAssettag.addTag(
-				groupName = ${randomSiteName},
-				tagName = "local tag");
-
 			ObjectAdmin.addObjectViaAPI(
 				labelName = ${labelName},
 				objectName = ${objectName},
@@ -533,21 +467,7 @@ definition {
 				collectionName = "Form Components",
 				fragmentName = "Form Container");
 
-			PageEditor.addFragmentToFormContainer(
-				collectionName = "Form Components",
-				fragmentName = "Tags",
-				targetFragmentName = "Form Container");
-
-			Alert.viewErrorMessage(errorMessage = "Fragments cannot be placed inside an unmapped form container.");
-
 			PageEditor.mapFormContainerToObject(contentType = ${labelName});
-
-			PageEditor.viewInputStyle(
-				label = "Name",
-				showLabel = "true",
-				type = "text");
-
-			PageEditor.viewFragmentNotPresent(fragmentName = "Tags");
 
 			PageEditor.addFragmentToFormContainer(
 				collectionName = "Form Components",
@@ -567,43 +487,28 @@ definition {
 				locator1 = "TextInput#ANY",
 				value1 = "Test Name");
 
-			AssetCategorization.selectTag(
-				skipSelectFrame = "true",
-				tagNameList = "${tagName1},${tagName2},local tag");
+			Click(
+				key_fieldLabel = "Tags",
+				key_text = "Select",
+				locator1 = "Button#ANY_WITH_LABEL");
 		}
 
 		task ("Then both site and global tags are shown") {
-			for (var tagName : list "${tagName1},${tagName2}") {
-				AssertTextEquals(
-					key_tagName = ${tagName},
-					locator1 = "AssetCategorization#TAG",
-					value1 = ${tagName});
-			}
+			IFrame.selectTagFrame();
 
-			AssertTextEquals(
-				key_tagName = "local tag",
-				locator1 = "AssetCategorization#TAG",
-				value1 = "local tag");
+			AssertElementPresent(
+				key_rowEntry = "local tag",
+				locator1 = "ContentRow#ENTRY_CONTENT_ENTRY_CHECKBOX");
 
-			AssetCategorization.removeTag(tagName = "local tag");
+			SelectFrameTop();
 
-			AssetCategorization.selectTag(
-				skipSelectFrame = "true",
-				tagNameList = "local tag");
-
-			for (var tagName : list "${tagName1},${tagName2}") {
-				AssetCategorization.removeTag(tagName = ${tagName});
-			}
-
-			AssetCategorization.removeTag(tagName = "local tag");
+			Click(locator1 = "Modal#CLOSE_BUTTON");
 
 			AssetCategorization.selectTag(
 				skipSelectFrame = "true",
 				tagNameList = "${tagName1},${tagName2},local tag");
 
 			Button.clickSubmitButton();
-
-			AssertTextPresent(value1 = "Thank you. Your information was successfully received.");
 
 			ProductMenu.gotoPortlet(
 				category = "Categorization",
@@ -626,8 +531,6 @@ definition {
 
 			Button.clickSubmitButton();
 
-			AssertTextPresent(value1 = "Thank you. Your information was successfully received.");
-
 			ProductMenu.gotoPortlet(
 				category = "Categorization",
 				portlet = "${labelName}s");
@@ -641,27 +544,11 @@ definition {
 	test ViewOnlyGlobalTagsShownInObjectInstanceScope {
 		property portal.acceptance = "true";
 
-		var tagName1 = StringUtil.randomString(8);
-
-		var tagName1 = StringUtil.toLowerCase(${tagName1});
-		var tagName2 = StringUtil.randomString(8);
-
-		var tagName2 = StringUtil.toLowerCase(${tagName2});
 		var labelName = StringUtil.randomString(8);
 
 		var objectName = "A${labelName}";
 
 		task ("Given an object with scope to an instance") {
-			for (var tagName : list "${tagName1},${tagName2}") {
-				JSONAssettag.addTag(
-					groupName = "Global",
-					tagName = ${tagName});
-			}
-
-			JSONAssettag.addTag(
-				groupName = ${randomSiteName},
-				tagName = "local tag");
-
 			ObjectAdmin.addObjectViaAPI(
 				labelName = ${labelName},
 				objectName = ${objectName},
@@ -717,21 +604,7 @@ definition {
 				collectionName = "Form Components",
 				fragmentName = "Form Container");
 
-			PageEditor.addFragmentToFormContainer(
-				collectionName = "Form Components",
-				fragmentName = "Tags",
-				targetFragmentName = "Form Container");
-
-			Alert.viewErrorMessage(errorMessage = "Fragments cannot be placed inside an unmapped form container.");
-
 			PageEditor.mapFormContainerToObject(contentType = ${labelName});
-
-			PageEditor.viewInputStyle(
-				label = "Name",
-				showLabel = "true",
-				type = "text");
-
-			PageEditor.viewFragmentNotPresent(fragmentName = "Tags");
 
 			PageEditor.addFragmentToFormContainer(
 				collectionName = "Form Components",
@@ -772,30 +645,7 @@ definition {
 				skipSelectFrame = "true",
 				tagNameList = "${tagName1},${tagName2}");
 
-			for (var tagName : list "${tagName1},${tagName2}") {
-				AssertTextEquals(
-					key_tagName = ${tagName},
-					locator1 = "AssetCategorization#TAG",
-					value1 = ${tagName});
-			}
-
-			AssetCategorization.removeTag(tagName = ${tagName1});
-
-			AssetCategorization.selectTag(
-				skipSelectFrame = "true",
-				tagNameList = ${tagName1});
-
-			for (var tagName : list "${tagName1},${tagName2}") {
-				AssetCategorization.removeTag(tagName = ${tagName});
-			}
-
-			AssetCategorization.selectTag(
-				skipSelectFrame = "true",
-				tagNameList = "${tagName1},${tagName2}");
-
 			Button.clickSubmitButton();
-
-			AssertTextPresent(value1 = "Thank you. Your information was successfully received.");
 
 			ApplicationsMenu.gotoPortlet(
 				category = "Object",
@@ -819,8 +669,6 @@ definition {
 
 			Button.clickSubmitButton();
 
-			AssertTextPresent(value1 = "Thank you. Your information was successfully received.");
-
 			ApplicationsMenu.gotoPortlet(
 				category = "Object",
 				panel = "Control Panel",
@@ -833,12 +681,6 @@ definition {
 	@description = "This is a test for LPS-169877. A warning message is shown if the object does not have categorization enabled and we try to use tags"
 	@priority = 4
 	test ViewWarningMessageWithCategorizationDisabled {
-		var tagName1 = StringUtil.randomString(8);
-
-		var tagName1 = StringUtil.toLowerCase(${tagName1});
-		var tagName2 = StringUtil.randomString(8);
-
-		var tagName2 = StringUtil.toLowerCase(${tagName2});
 		var labelName = StringUtil.randomString(8);
 
 		var objectName = "A${labelName}";

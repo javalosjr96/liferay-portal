@@ -222,6 +222,7 @@ public class DefaultObjectEntryManagerImplTest
 	}
 
 	@Before
+	@Override
 	public void setUp() throws Exception {
 		super.setUp();
 
@@ -1749,6 +1750,8 @@ public class DefaultObjectEntryManagerImplTest
 							_objectRelationshipFieldName,
 							parentObjectEntry1.getId()
 						).put(
+							"longIntegerObjectFieldName", 21394167160L
+						).put(
 							"picklistObjectFieldName", picklistObjectFieldValue1
 						).put(
 							"textObjectFieldName", "aaa"
@@ -1887,6 +1890,13 @@ public class DefaultObjectEntryManagerImplTest
 
 		// Equals expression
 
+		testGetObjectEntries(
+			HashMapBuilder.put(
+				"filter",
+				buildEqualsExpressionFilterString(
+					"longIntegerObjectFieldName", 21394167160L)
+			).build(),
+			childObjectEntry1);
 		testGetObjectEntries(
 			HashMapBuilder.put(
 				"filter",

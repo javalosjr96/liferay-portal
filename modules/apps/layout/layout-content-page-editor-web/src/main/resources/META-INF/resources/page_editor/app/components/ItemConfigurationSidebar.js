@@ -26,10 +26,14 @@ export default function ItemConfigurationSidebar() {
 	return (
 		<ReactPortal className="cadmin">
 			<div
+				aria-label={Liferay.Language.get('configuration-panel')}
 				className={classNames(
 					'flex-column page-editor__item-configuration-sidebar',
 					{
-						[`page-editor__item-configuration-sidebar--open`]: itemConfigurationOpen,
+						'page-editor__item-configuration-sidebar--open': itemConfigurationOpen,
+						'page-editor__old-sidebar': !Liferay.FeatureFlags[
+							'LPD-10988'
+						],
 					}
 				)}
 				tabIndex={activeItemId ? null : 0}
@@ -47,6 +51,12 @@ export default function ItemConfigurationSidebar() {
 										itemConfigurationOpen: false,
 									})
 								);
+
+								document
+									.getElementById(
+										'page-editor__toolbar__configuration-button'
+									)
+									?.focus();
 							}}
 							size="sm"
 							symbol="times"

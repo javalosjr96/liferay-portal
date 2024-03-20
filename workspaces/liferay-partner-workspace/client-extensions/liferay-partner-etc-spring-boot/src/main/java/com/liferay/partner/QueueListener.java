@@ -13,6 +13,8 @@ import com.rabbitmq.client.Channel;
 
 import java.net.URI;
 
+import java.time.Duration;
+
 import java.util.Locale;
 import java.util.function.Function;
 
@@ -20,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import org.springframework.amqp.core.ExchangeTypes;
@@ -33,11 +36,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.messaging.handler.annotation.Header;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriBuilder;
+
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 
 /**
  * @author Jair Medeiros
@@ -140,7 +147,7 @@ public class QueueListener {
 			channel.basicAck(deliveryTag, false);
 		}
 		catch (Exception exception1) {
-			_log.error(exception1);
+			_log.error(exception1.getMessage(), exception1);
 
 			try {
 				channel.basicReject(deliveryTag, false);
@@ -278,19 +285,27 @@ public class QueueListener {
 	}
 
 	private JSONObject _get(Function<UriBuilder, URI> uriFunction) {
-		return new JSONObject(
-			_getWebClient(
-			).get(
-			).uri(
-				uriBuilder -> uriFunction.apply(uriBuilder)
-			).accept(
-				MediaType.APPLICATION_JSON
-			).header(
-				HttpHeaders.AUTHORIZATION, _getAuthorization()
-			).retrieve(
-			).bodyToMono(
-				String.class
-			).block());
+		String response = _getWebClient(
+		).get(
+		).uri(
+			uriBuilder -> uriFunction.apply(uriBuilder)
+		).accept(
+			MediaType.APPLICATION_JSON
+		).header(
+			HttpHeaders.AUTHORIZATION, _getAuthorization()
+		).retrieve(
+		).bodyToMono(
+			String.class
+		).block();
+
+		try {
+			return new JSONObject(response);
+		}
+		catch (JSONException jsonException) {
+			_log.error("Unable to create JSON object for: " + response);
+
+			throw jsonException;
+		}
 	}
 
 	private long _getAccountRoleId(
@@ -357,45 +372,6 @@ public class QueueListener {
 		return "";
 	}
 
-	private String _getPartnerLevelExternalReferenceCode(
-		JSONObject proxyAccountJSONObject) {
-
-		if (!proxyAccountJSONObject.has("partnerLevelType")) {
-			return "";
-		}
-
-		JSONObject partnerLevelsJSONObject = _get(
-			uriBuilder -> uriBuilder.path(
-				"/o/c/partnerlevels/"
-			).queryParam(
-				"pageSize", "-1"
-			).build());
-
-		JSONObject proxyPartnerLevelTypeJSONObject =
-			proxyAccountJSONObject.getJSONObject("partnerLevelType");
-
-		JSONArray partnerLevelsJSONArray = partnerLevelsJSONObject.getJSONArray(
-			"items");
-
-		for (int i = 0; i < partnerLevelsJSONArray.length(); i++) {
-			JSONObject partnerLevelJSONObject =
-				partnerLevelsJSONArray.getJSONObject(i);
-
-			JSONObject partnerLevelTypeJSONObject =
-				partnerLevelJSONObject.getJSONObject("partnerLevelType");
-
-			if (StringUtil.equalsIgnoreCase(
-					partnerLevelTypeJSONObject.getString("key"),
-					proxyPartnerLevelTypeJSONObject.getString("key"))) {
-
-				return partnerLevelJSONObject.getString(
-					"externalReferenceCode");
-			}
-		}
-
-		return "";
-	}
-
 	private long _getRegionOrganizationId(String regionName) {
 		JSONObject globalOrganizationJSONObject = _get(
 			uriBuilder -> uriBuilder.path(
@@ -431,6 +407,8 @@ public class QueueListener {
 		JSONObject regularRolesResponseJSONObject = _get(
 			uriBuilder -> uriBuilder.path(
 				"/o/headless-admin-user/v1.0/roles"
+			).queryParam(
+				"filter", "name eq '" + name + "'"
 			).queryParam(
 				"pageSize", "-1"
 			).build());
@@ -477,6 +455,25 @@ public class QueueListener {
 
 	private WebClient _getWebClient() {
 		return WebClient.builder(
+		).clientConnector(
+			new ReactorClientHttpConnector(
+				HttpClient.create(
+					ConnectionProvider.builder(
+						"fixed"
+					).evictInBackground(
+						Duration.ofSeconds(120)
+					).maxConnections(
+						500
+					).maxIdleTime(
+						Duration.ofSeconds(20)
+					).maxLifeTime(
+						Duration.ofSeconds(60)
+					).pendingAcquireTimeout(
+						Duration.ofSeconds(60)
+					).build()
+				).followRedirect(
+					true
+				))
 		).baseUrl(
 			_lxcDXPServerProtocol + "://" + _lxcDXPMainDomain
 		).exchangeStrategies(
@@ -484,7 +481,7 @@ public class QueueListener {
 			).codecs(
 				clientCodecConfigurer -> clientCodecConfigurer.defaultCodecs(
 				).maxInMemorySize(
-					5 * 1024 * 1024
+					16 * 1024 * 1024
 				)
 			).build()
 		).build();
@@ -606,6 +603,20 @@ public class QueueListener {
 		String accountExternalReferenceCode, String accountName,
 		String contactEmailAddress) {
 
+		JSONObject jsonObject = _get(
+			uriBuilder -> uriBuilder.path(
+				StringBundler.concat(
+					"/o/headless-admin-user/v1.0/accounts",
+					"/by-external-reference-code/",
+					accountExternalReferenceCode,
+					"/user-accounts/by-email-address/", contactEmailAddress,
+					"/account-roles")
+			).build());
+
+		if (jsonObject.getLong("totalCount") > 0) {
+			return;
+		}
+
 		if (_log.isInfoEnabled()) {
 			_log.info(
 				StringBundler.concat(
@@ -707,15 +718,6 @@ public class QueueListener {
 
 		if (!countryISOCode.equals("")) {
 			accountJSONObject.put("partnerCountry", countryISOCode);
-		}
-
-		String partnerLevelExternalReferenceCode =
-			_getPartnerLevelExternalReferenceCode(proxyAccountJSONObject);
-
-		if (!partnerLevelExternalReferenceCode.equals("")) {
-			accountJSONObject.put(
-				"r_prtLvlToAcc_c_partnerLevelERC",
-				partnerLevelExternalReferenceCode);
 		}
 
 		JSONObject updatedAccountJSONObject = _put(

@@ -23,9 +23,10 @@ if (addPortletBreadcrumbEntries) {
 }
 
 boolean portletTitleBasedNavigation = GetterUtil.getBoolean(portletConfig.getInitParameter("portlet-title-based-navigation"));
+boolean showBackIcon = Validator.isNotNull(dlViewFileEntryDisplayContext.getRedirect());
 
 if (portletTitleBasedNavigation) {
-	portletDisplay.setShowBackIcon(true);
+	portletDisplay.setShowBackIcon(showBackIcon);
 	portletDisplay.setURLBack(dlViewFileEntryDisplayContext.getRedirect());
 
 	renderResponse.setTitle(fileVersion.getTitle());
@@ -84,15 +85,17 @@ if (portletTitleBasedNavigation) {
 			<div class="file-entry-actions management-bar management-bar-light navbar navbar-expand-md">
 				<ul class="navbar-nav navbar-nav-expand">
 					<li class="nav-item nav-item-expand">
-						<clay:link
-							aria-label='<%= LanguageUtil.get(request, "back") %>'
-							borderless="<%= true %>"
-							displayType="secondary"
-							href="<%= dlViewFileEntryDisplayContext.getRedirect() %>"
-							icon="angle-left"
-							monospaced="<%= true %>"
-							type="button"
-						/>
+						<c:if test="<%= showBackIcon %>">
+							<clay:link
+								aria-label='<%= LanguageUtil.get(request, "back") %>'
+								borderless="<%= true %>"
+								displayType="secondary"
+								href="<%= dlViewFileEntryDisplayContext.getRedirect() %>"
+								icon="angle-left"
+								monospaced="<%= true %>"
+								type="button"
+							/>
+						</c:if>
 
 						<h3 class="mb-1 text-secondary"><%= HtmlUtil.escape(dlViewFileEntryDisplayContext.getDocumentTitle()) %></h3>
 					</li>
@@ -239,4 +242,4 @@ FolderItemSelectorURLProvider folderItemSelectorURLProvider = new FolderItemSele
 
 <liferay-util:dynamic-include key="com.liferay.document.library.web#/document_library/view_file_entry.jsp#post" />
 
-<%@ include file="/document_library/friendly_url_changed_message.jspf" %>
+<%@ include file="/document_library/session_messages.jspf" %>

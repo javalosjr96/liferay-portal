@@ -7,13 +7,19 @@ package com.liferay.layout.page.template.admin.web.internal.servlet.taglib.util;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItem;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
+import com.liferay.item.selector.ItemSelector;
+import com.liferay.item.selector.criteria.UUIDItemSelectorReturnType;
+import com.liferay.layout.page.template.admin.web.internal.constants.LayoutPageTemplateAdminWebKeys;
 import com.liferay.layout.page.template.admin.web.internal.security.permission.resource.LayoutPageTemplateCollectionPermission;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateCollectionTypeConstants;
+import com.liferay.layout.page.template.item.selector.criterion.LayoutPageTemplateCollectionTreeNodeItemSelectorCriterion;
 import com.liferay.layout.page.template.model.LayoutPageTemplateCollection;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
+import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.portlet.url.builder.ResourceURLBuilder;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -35,15 +41,16 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 
 		_httpServletRequest = httpServletRequest;
 		_renderResponse = renderResponse;
+
+		_itemSelector = (ItemSelector)httpServletRequest.getAttribute(
+			LayoutPageTemplateAdminWebKeys.ITEM_SELECTOR);
+		_themeDisplay = (ThemeDisplay)httpServletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
 	}
 
 	public List<DropdownItem> getActionDropdownItems(
 		LayoutPageTemplateCollection layoutPageTemplateCollection,
 		String tabs1) {
-
-		ThemeDisplay themeDisplay =
-			(ThemeDisplay)_httpServletRequest.getAttribute(
-				WebKeys.THEME_DISPLAY);
 
 		return DropdownItemListBuilder.addGroup(
 			dropdownGroupItem -> {
@@ -54,14 +61,13 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 								LayoutPageTemplateCollectionTypeConstants.
 									BASIC) &&
 							LayoutPageTemplateCollectionPermission.contains(
-								themeDisplay.getPermissionChecker(),
+								_themeDisplay.getPermissionChecker(),
 								layoutPageTemplateCollection,
 								ActionKeys.UPDATE),
 						dropdownItem -> {
 							dropdownItem.setHref(
 								_getEditLayoutPageTemplateCollectionURL(
-									layoutPageTemplateCollection, tabs1,
-									themeDisplay));
+									layoutPageTemplateCollection, tabs1));
 							dropdownItem.setIcon("pencil");
 							dropdownItem.setLabel(
 								LanguageUtil.get(_httpServletRequest, "edit"));
@@ -78,7 +84,7 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 								LayoutPageTemplateCollectionTypeConstants.
 									DISPLAY_PAGE) &&
 							LayoutPageTemplateCollectionPermission.contains(
-								themeDisplay.getPermissionChecker(),
+								_themeDisplay.getPermissionChecker(),
 								layoutPageTemplateCollection,
 								ActionKeys.UPDATE),
 						dropdownItem -> {
@@ -87,7 +93,6 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 							dropdownItem.putData(
 								"dialogTitle",
 								_getRenameDialogTitle(
-									_httpServletRequest,
 									layoutPageTemplateCollection));
 							dropdownItem.putData(
 								"layoutPageTemplateCollectionDescription",
@@ -103,6 +108,51 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 							dropdownItem.setLabel(
 								LanguageUtil.get(_httpServletRequest, "edit"));
 						}
+					).add(
+						() ->
+							(layoutPageTemplateCollection.getType() ==
+								LayoutPageTemplateCollectionTypeConstants.
+									DISPLAY_PAGE) &&
+							LayoutPageTemplateCollectionPermission.contains(
+								_themeDisplay.getPermissionChecker(),
+								layoutPageTemplateCollection,
+								ActionKeys.UPDATE),
+						dropdownItem -> {
+							dropdownItem.setHref(
+								_getExportLayoutPageTemplateCollectionURL(
+									layoutPageTemplateCollection));
+							dropdownItem.setIcon("export");
+							dropdownItem.setLabel(
+								LanguageUtil.get(
+									_httpServletRequest, "export"));
+						}
+					).add(
+						() ->
+							(layoutPageTemplateCollection.getType() ==
+								LayoutPageTemplateCollectionTypeConstants.
+									DISPLAY_PAGE) &&
+							LayoutPageTemplateCollectionPermission.contains(
+								_themeDisplay.getPermissionChecker(),
+								layoutPageTemplateCollection,
+								ActionKeys.UPDATE),
+						dropdownItem -> {
+							dropdownItem.putData(
+								"action", "moveLayoutPageTemplateCollection");
+							dropdownItem.putData(
+								"itemSelectorURL",
+								_getItemSelectorURL(
+									layoutPageTemplateCollection));
+							dropdownItem.putData(
+								"layoutPageTemplateCollectionName",
+								layoutPageTemplateCollection.getName());
+							dropdownItem.putData(
+								"moveLayoutPageTemplateCollectionURL",
+								_getMoveLayoutPageTemplateCollectionURL(
+									layoutPageTemplateCollection));
+							dropdownItem.setIcon("move-folder");
+							dropdownItem.setLabel(
+								LanguageUtil.get(_httpServletRequest, "move"));
+						}
 					).build());
 				dropdownGroupItem.setSeparator(true);
 			}
@@ -111,7 +161,7 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 				dropdownGroupItem.setDropdownItems(
 					DropdownItemListBuilder.add(
 						() -> LayoutPageTemplateCollectionPermission.contains(
-							themeDisplay.getPermissionChecker(),
+							_themeDisplay.getPermissionChecker(),
 							layoutPageTemplateCollection,
 							ActionKeys.PERMISSIONS),
 						dropdownItem -> {
@@ -135,7 +185,7 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 				dropdownGroupItem.setDropdownItems(
 					DropdownItemListBuilder.add(
 						() -> LayoutPageTemplateCollectionPermission.contains(
-							themeDisplay.getPermissionChecker(),
+							_themeDisplay.getPermissionChecker(),
 							layoutPageTemplateCollection, ActionKeys.DELETE),
 						dropdownItem -> {
 							dropdownItem.putData(
@@ -147,7 +197,6 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 							dropdownItem.putData(
 								"dialogTitle",
 								_getDeleteDialogTitle(
-									_httpServletRequest,
 									layoutPageTemplateCollection));
 							dropdownItem.setIcon("trash");
 							dropdownItem.setLabel(
@@ -161,16 +210,15 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 	}
 
 	private String _getDeleteDialogTitle(
-		HttpServletRequest httpServletRequest,
 		LayoutPageTemplateCollection layoutPageTemplateCollection) {
 
 		if (layoutPageTemplateCollection.getType() ==
 				LayoutPageTemplateCollectionTypeConstants.BASIC) {
 
-			return LanguageUtil.get(httpServletRequest, "page-template-set");
+			return LanguageUtil.get(_httpServletRequest, "page-template-set");
 		}
 
-		return LanguageUtil.get(httpServletRequest, "folder");
+		return LanguageUtil.get(_httpServletRequest, "folder");
 	}
 
 	private String _getDeleteLayoutPageTemplateCollectionURL(
@@ -198,17 +246,67 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 	}
 
 	private String _getEditLayoutPageTemplateCollectionURL(
-		LayoutPageTemplateCollection layoutPageTemplateCollection, String tabs1,
-		ThemeDisplay themeDisplay) {
+		LayoutPageTemplateCollection layoutPageTemplateCollection,
+		String tabs1) {
 
 		return PortletURLBuilder.createRenderURL(
 			_renderResponse
 		).setMVCRenderCommandName(
 			"/layout_page_template_admin/edit_layout_page_template_collection"
 		).setRedirect(
-			themeDisplay.getURLCurrent()
+			_themeDisplay.getURLCurrent()
 		).setTabs1(
 			tabs1
+		).setParameter(
+			"layoutPageTemplateCollectionId",
+			layoutPageTemplateCollection.getLayoutPageTemplateCollectionId()
+		).buildString();
+	}
+
+	private String _getExportLayoutPageTemplateCollectionURL(
+		LayoutPageTemplateCollection layoutPageTemplateCollection) {
+
+		return ResourceURLBuilder.createResourceURL(
+			_renderResponse
+		).setParameter(
+			"layoutPageTemplateCollectionId",
+			layoutPageTemplateCollection.getLayoutPageTemplateCollectionId()
+		).setResourceID(
+			"/layout_page_template_admin/export_layout_page_template_collection"
+		).buildString();
+	}
+
+	private String _getItemSelectorURL(
+		LayoutPageTemplateCollection layoutPageTemplateCollection) {
+
+		LayoutPageTemplateCollectionTreeNodeItemSelectorCriterion
+			layoutPageTemplateCollectionTreeNodeItemSelectorCriterion =
+				new LayoutPageTemplateCollectionTreeNodeItemSelectorCriterion();
+
+		layoutPageTemplateCollectionTreeNodeItemSelectorCriterion.
+			setDesiredItemSelectorReturnTypes(new UUIDItemSelectorReturnType());
+		layoutPageTemplateCollectionTreeNodeItemSelectorCriterion.
+			setLayoutPageTemplateCollectionId(
+				layoutPageTemplateCollection.
+					getLayoutPageTemplateCollectionId());
+
+		return PortletURLBuilder.create(
+			_itemSelector.getItemSelectorURL(
+				RequestBackedPortletURLFactoryUtil.create(_httpServletRequest),
+				"selectFolder",
+				layoutPageTemplateCollectionTreeNodeItemSelectorCriterion)
+		).buildString();
+	}
+
+	private String _getMoveLayoutPageTemplateCollectionURL(
+		LayoutPageTemplateCollection layoutPageTemplateCollection) {
+
+		return PortletURLBuilder.createActionURL(
+			_renderResponse
+		).setActionName(
+			"/layout_page_template_admin/move_layout_page_template_collection"
+		).setRedirect(
+			_themeDisplay.getURLCurrent()
 		).setParameter(
 			"layoutPageTemplateCollectionId",
 			layoutPageTemplateCollection.getLayoutPageTemplateCollectionId()
@@ -229,17 +327,16 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 	}
 
 	private String _getRenameDialogTitle(
-		HttpServletRequest httpServletRequest,
 		LayoutPageTemplateCollection layoutPageTemplateCollection) {
 
 		if (layoutPageTemplateCollection.getType() ==
 				LayoutPageTemplateCollectionTypeConstants.BASIC) {
 
 			return LanguageUtil.get(
-				httpServletRequest, "rename-page-template-set");
+				_httpServletRequest, "rename-page-template-set");
 		}
 
-		return LanguageUtil.get(httpServletRequest, "edit-folder");
+		return LanguageUtil.get(_httpServletRequest, "edit-folder");
 	}
 
 	private String _getUpdateLayoutPageTemplateCollectionURL(
@@ -263,6 +360,8 @@ public class LayoutPageTemplateCollectionActionDropdownItem {
 	}
 
 	private final HttpServletRequest _httpServletRequest;
+	private final ItemSelector _itemSelector;
 	private final RenderResponse _renderResponse;
+	private final ThemeDisplay _themeDisplay;
 
 }

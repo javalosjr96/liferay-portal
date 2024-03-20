@@ -59,9 +59,7 @@ public class ExportTranslationMVCRenderCommand implements MVCRenderCommand {
 					_infoItemServiceRegistry, renderRequest,
 					_segmentsExperienceLocalService);
 
-			List<Object> models = _getModels(
-				translationRequestHelper.getModelClassName(),
-				translationRequestHelper.getModelClassPKs());
+			List<Object> models = _getModels(translationRequestHelper);
 
 			renderRequest.setAttribute(
 				ExportTranslationDisplayContext.class.getName(),
@@ -85,13 +83,17 @@ public class ExportTranslationMVCRenderCommand implements MVCRenderCommand {
 		}
 	}
 
-	private List<Object> _getModels(String className, long[] classPKs)
+	private List<Object> _getModels(
+			TranslationRequestHelper translationRequestHelper)
 		throws PortalException {
 
 		InfoItemObjectProvider<Object> infoItemObjectProvider =
 			_infoItemServiceRegistry.getFirstInfoItemService(
-				InfoItemObjectProvider.class, className,
+				InfoItemObjectProvider.class,
+				translationRequestHelper.getModelClassName(),
 				ClassPKInfoItemIdentifier.INFO_ITEM_SERVICE_FILTER);
+
+		long[] classPKs = translationRequestHelper.getModelClassPKs();
 
 		List<Object> models = new ArrayList<>(classPKs.length);
 

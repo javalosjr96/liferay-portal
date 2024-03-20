@@ -303,6 +303,18 @@ describe('SpacingBox', () => {
 	});
 
 	describe('Reset button inside SpacingBox', () => {
+		it('does not show reset button if no value is selected', () => {
+			render(<SpacingBoxTest />);
+
+			const button = screen.getByLabelText('margin-top');
+
+			userEvent.click(button);
+
+			expect(
+				screen.queryByTitle('reset-to-initial-value')
+			).not.toBeInTheDocument();
+		});
+
 		it('reset value when pressing the button', () => {
 			const onChange = jest.fn();
 
@@ -323,7 +335,7 @@ describe('SpacingBox', () => {
 			);
 		});
 
-		it('renders correct label if we are in different viewport', () => {
+		it('renders correct label if we are in Tablet viewport', () => {
 			const onChange = jest.fn();
 
 			render(
@@ -341,6 +353,48 @@ describe('SpacingBox', () => {
 
 			expect(
 				screen.getByTitle('reset-to-desktop-value')
+			).toBeInTheDocument();
+		});
+
+		it('renders correct label if we are in Landscape viewport', () => {
+			const onChange = jest.fn();
+
+			render(
+				<SpacingBoxTest
+					getState={() => ({
+						selectedViewportSize: VIEWPORT_SIZES.landscapeMobile,
+					})}
+					itemConfig={{marginTop: '2px'}}
+					onChange={onChange}
+					value={{marginTop: '10'}}
+				/>
+			);
+
+			userEvent.click(screen.getByLabelText('margin-top'));
+
+			expect(
+				screen.getByTitle('reset-to-tablet-value')
+			).toBeInTheDocument();
+		});
+
+		it('renders correct label if we are in Portrait viewport', () => {
+			const onChange = jest.fn();
+
+			render(
+				<SpacingBoxTest
+					getState={() => ({
+						selectedViewportSize: VIEWPORT_SIZES.portraitMobile,
+					})}
+					itemConfig={{marginTop: '2px'}}
+					onChange={onChange}
+					value={{marginTop: '10'}}
+				/>
+			);
+
+			userEvent.click(screen.getByLabelText('margin-top'));
+
+			expect(
+				screen.getByTitle('reset-to-landscapeMobile-value')
 			).toBeInTheDocument();
 		});
 	});

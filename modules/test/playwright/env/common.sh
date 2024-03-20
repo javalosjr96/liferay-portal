@@ -16,7 +16,7 @@ function combine_properties_files {
 
 		while IFS='=' read -r property_name property_value || [ -n "${property_name}" ]
 		do
-			if [[ ${property_name} =~ ^\ *# || -z "${property_name}" ]]
+			if [[ ${property_name} =~ ^\ *# ]] || [[ ${property_name} =~ ^\ *\/\/ ]] || [[ -z "${property_name}" ]]
 			then
 				continue
 			fi
@@ -46,6 +46,28 @@ function combine_properties_files {
 	echo ""
 
 	cat ${1}
+}
+
+function default_set_up {
+	update_portal_ext_properties
+
+	start_app_server
+
+	deploy_parent_project_osgi_modules
+
+	deploy_project_osgi_modules
+
+	deploy_parent_project_deploy_folder
+
+	deploy_project_deploy_folder
+
+	deploy_parent_project_client_extensions
+
+	deploy_project_client_extensions
+}
+
+function default_tear_down {
+	stop_app_server
 }
 
 function deploy_client_extensions {
@@ -280,6 +302,12 @@ function reverse {
 	done
 }
 
+function start_analytics_cloud {
+	cd ${_PORTAL_PROJECT_DIR}
+
+	ant -f build-test-analytics-cloud.xml start-analytics-cloud
+}
+
 function start_app_server {
 	cd $(get_tomcat_dir)/bin
 
@@ -291,6 +319,12 @@ function start_app_server {
 	done
 
 	echo "${LIFERAY_PORTAL_URL} is now available."
+}
+
+function stop_analytics_cloud {
+	cd ${_PORTAL_PROJECT_DIR}
+
+	ant -f build-test-analytics-cloud.xml stop-analytics-cloud
 }
 
 function stop_app_server {

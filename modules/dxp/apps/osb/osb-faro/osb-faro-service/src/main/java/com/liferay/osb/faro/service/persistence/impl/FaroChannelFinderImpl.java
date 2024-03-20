@@ -9,6 +9,7 @@ import com.liferay.osb.faro.model.FaroChannel;
 import com.liferay.osb.faro.model.impl.FaroChannelImpl;
 import com.liferay.osb.faro.service.persistence.FaroChannelFinder;
 import com.liferay.osb.faro.util.FaroPermissionChecker;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.dao.orm.custom.sql.CustomSQL;
 import com.liferay.portal.kernel.dao.orm.QueryPos;
@@ -53,8 +54,8 @@ public class FaroChannelFinderImpl
 
 			String[] keywordsArray = _customSQL.keywords(query);
 
-			sql = _customSQL.replaceKeywords(
-				sql, "LOWER(OSBFaro_FaroChannel.name)", StringPool.LIKE, true,
+			sql = _replaceKeywords(
+				"LOWER(OSBFaro_FaroChannel.name)", true, sql, StringPool.LIKE,
 				keywordsArray);
 
 			sql = _customSQL.replaceAndOperator(sql, Validator.isNull(query));
@@ -115,8 +116,8 @@ public class FaroChannelFinderImpl
 
 			String[] keywordsArray = _customSQL.keywords(query);
 
-			sql = _customSQL.replaceKeywords(
-				sql, "LOWER(OSBFaro_FaroChannel.name)", StringPool.LIKE, true,
+			sql = _replaceKeywords(
+				"LOWER(OSBFaro_FaroChannel.name)", true, sql, StringPool.LIKE,
 				keywordsArray);
 
 			sql = StringUtil.replace(
@@ -165,6 +166,54 @@ public class FaroChannelFinderImpl
 		}
 
 		return ORDER_BY_CLAUSE + orderByComparator.getOrderBy();
+	}
+
+	private String _replaceKeywords(
+		String field, boolean last, String sql, String operator,
+		String[] values) {
+
+		if ((values != null) && (values.length <= 1)) {
+			return sql;
+		}
+
+		StringBundler oldSQLSB = new StringBundler(7);
+
+		oldSQLSB.append(StringPool.OPEN_PARENTHESIS);
+		oldSQLSB.append(field);
+		oldSQLSB.append(" ");
+		oldSQLSB.append(operator);
+		oldSQLSB.append(" ? [$AND_OR_NULL_CHECK$])");
+
+		if (!last) {
+			oldSQLSB.append(" [$AND_OR_CONNECTOR$]");
+		}
+
+		StringBundler newSQLSB = new StringBundler((values.length * 6) + 2);
+
+		newSQLSB.append(StringPool.OPEN_PARENTHESIS);
+
+		int i;
+
+		for (i = 0; i < values.length; i++) {
+			if (i > 0) {
+				newSQLSB.append(" AND ");
+			}
+
+			newSQLSB.append(StringPool.OPEN_PARENTHESIS);
+			newSQLSB.append(field);
+			newSQLSB.append(" ");
+			newSQLSB.append(operator);
+			newSQLSB.append(" ? [$AND_OR_NULL_CHECK$])");
+		}
+
+		newSQLSB.append(StringPool.CLOSE_PARENTHESIS);
+
+		if (!last) {
+			oldSQLSB.append(" [$AND_OR_CONNECTOR$]");
+		}
+
+		return StringUtil.replace(
+			sql, oldSQLSB.toString(), newSQLSB.toString());
 	}
 
 	private static final String _PERMISSION_CHECK_JOIN_SQL =

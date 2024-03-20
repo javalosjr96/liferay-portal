@@ -6,13 +6,48 @@
 		grid-template-columns: repeat(3, minmax(0, 1fr));
 	}
 
-	.adt-solutions-search-results .solutions-search-results-card:hover {
-		color: var(--black);
+	.banner__product-tag {
+		background-color: #e6ebf5;
+		color: #1c3667;
+		font-size: 0.8125rem;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		width: fit-content;
 	}
 
-	.adt-solutions-search-results .card-image-title-container .image-container {
-		height: 3rem;
-		min-width: 3rem;
+	.developer-name-text {
+		font-size: 16px;
+		font-weight: 400;
+		line-height: 24px;
+		letter-spacing: 0;
+		text-align: left;
+	}
+
+	.image-container {
+		min-height: 200px;
+		min-width: 293px;
+		overflow: hidden;
+	}
+
+	.product-name {
+		text-overflow: ellipsis;
+		overflow: hidden;
+		white-space: nowrap;
+	}
+
+	.solution-search-image {
+		min-height: 200px;
+		min-width: 293px;
+		object-fit: contain;
+	}
+
+	.solution-search-results-card {
+		border-radius: 10px;
+		border: 1px solid #E7EFFF;
+		height: 462px;
+		overflow: hidden;
+		width: 293px;
 	}
 
 	.adt-solutions-search-results .labels .category-names {
@@ -36,28 +71,29 @@
 		width: 0;
 	}
 
+	.solution-search-results-card .card-image-title-container .developer-name {
+		color: #545d69;
+	}
+
 	.adt-solutions-search-results .labels .category-label {
 		background-color: #ebeef2;
 		color: #545D69;
 		font-size: smaller;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 	}
 
 	.adt-solutions-search-results .labels .category-label-remainder:hover .category-names {
 		display: block;
 	}
 
-	.solution-search-results-card .card-image-title-container .developer-name {
-		color: #545d69;
+	.adt-solutions-search-results .solutions-search-results-card:hover {
+		color: var(--black);
 	}
 
 	.productSpec {
 		color: #545d69;
-	}
-
-	.adt-solutions-search-results .solution-search-results-card .solution-search-image {
-		height: 180px;
-		object-fit: cover;
-		width: 100%;
 	}
 
 	@media screen and (max-width: 599px) {
@@ -75,14 +111,12 @@
 	}
 </style>
 
-<#assign categoryName = "Solution" />
-
 <#if searchContainer?has_content>
 	<div class="color-neutral-3 d-md-block d-none pb-4">
 		<strong class="color-black">
 			${searchContainer.getTotal()}
 		</strong>
-		${categoryName}s Available
+		Solutions Available
 	</div>
 </#if>
 
@@ -105,11 +139,29 @@
 						portalURL = portalUtil.getLayoutURL(themeDisplay)
 						productId = entry.getClassPK() + 1
 						product = restClient.get("/headless-commerce-delivery-catalog/v1.0/channels/"+ channelId +"/products/"+ productId +"?accountId=-1&images.accountId=-1&nestedFields=productSpecifications,categories,images")
-						productCustomFields = product.customFields![]
-						productCategories=product.categories![]
 						productImage = (product.images![])?filter(item -> item.tags?seq_contains("app icon"))![]
+						remainingCategoriesText = []
+						catalogName = product.catalogName
 						productSpecifications = product.productSpecifications![]
 					/>
+
+					<#if product.categories?has_content>
+						<#assign
+							productCategories = product.categories?filter(productCategory -> productCategory.vocabulary=="marketplace-solution-category")![]
+							categoriesListSize = productCategories?size-1
+						/>
+					</#if>
+
+					<#if productCategories?has_content>
+						<#assign
+							principalCategory = productCategories[0]
+							remainingCategories = productCategories?filter(category -> category.name != principalCategory.name)
+						/>
+
+						<#list remainingCategories as category>
+							<#assign remainingCategoriesText = remainingCategoriesText + [category.name] />
+						</#list>
+					</#if>
 
 					<#if product.name?has_content>
 						<#assign productName = product.name />
@@ -149,63 +201,43 @@
 						<#assign productURL = "" />
 					</#if>
 
-					<a class="solution-search-results-card bg-white border-radius-medium d-flex flex-column mb-0 rounded text-dark text-decoration-none" href=${productURL}>
-						<div class="align-items-center d-flex image-container justify-content-center mb-3">
+					<a class="solution-search-results-card bg-white d-flex flex-column mb-0 text-dark text-decoration-none" href=${productURL}>
+						<div class="align-items-center d-flex image-container mb-3">
 							<img
 								alt="${productName}"
-								class="solution-search-image rounded"
+								class="solution-search-image"
 								src=${productThumbnail1}
 							/>
 						</div>
 
-						<div class="align-items-center card-image-title-container d-flex">
-							<div class="pl-2">
-								<#if productCustomFields?has_content>
-									<#assign solutionCustomFields = productCustomFields?filter(customField -> customField.name == 'Developer Name') />
+						<div class="d-flex flex-column font-size-paragraph-small h-100 justify-content-between p-4">
+							<div class="card-image-title-container d-flex flex-column">
+								<div>
+									<#if catalogName?has_content>
+										<span class="developer-name-text">
+											${catalogName}
+										</span>
+									</#if>
 
-									<#list solutionCustomFields as customFieldItem>
-										<div class="developer-name font-size-paragraph-small">
-											${customFieldItem.customValue.data}
-										</div>
-									</#list>
-								</#if>
+									<div class="font-weight-semi-bold h2 mt-1 product-name" title="${productName}">
+										${productName}
+									</div>
+								</div>
 
-								<div class="font-weight-semi-bold h2 mt-1">
-									${productName}
+								<div class="font-weight-normal mb-2">
+									${productDescription}
 								</div>
 							</div>
-						</div>
 
-						<div class="d-flex flex-column font-size-paragraph-small h-100 justify-content-between p-2">
-							<div class="font-weight-normal mb-2">
-								${productDescription}
-							</div>
-
-							<#if productCategories?has_content>
-								<#assign solutionCategories = productCategories?filter(category -> category.vocabulary == 'marketplace solution category') />
-
-								<div class="align-items-center d-flex labels">
-									<#list solutionCategories as category>
-										<div class="border-radius-small category-label font-size-paragraph-small font-weight-semi-bold px-1 rounded">
-											${category.name}
-										</div>
-										<#break>
-									</#list>
-
-									<#assign productCategoriesItems = solutionCategories?map(category -> category.name) />
-
-									<#if (productCategoriesItems?size > 1)>
-										<div class="category-label-remainder pl-2 position-relative text-primary">
-											+${productCategoriesItems?size - 1}
-											<div class="category-names font-size-paragraph-base p-4 position-absolute rounded text-white">
-												<#list productCategoriesItems as category>
-													<#if category_index != 0>
-														${category}
-														<#sep>,</#sep>
-													</#if>
-												</#list>
-											</div>
-										</div>
+							<#if principalCategory?has_content>
+								<div>
+									<span class="banner__product-tag rounded py-1 px-2 mr-2" title="${principalCategory.name}">
+										${principalCategory.name}
+									</span>
+									<#if categoriesListSize?has_content && remainingCategoriesText?has_content>
+										<span class="banner__product-tag rounded py-1 px-2" title="${remainingCategoriesText?join('\n')}">
+											+ ${categoriesListSize}
+										</span>
 									</#if>
 								</div>
 							</#if>

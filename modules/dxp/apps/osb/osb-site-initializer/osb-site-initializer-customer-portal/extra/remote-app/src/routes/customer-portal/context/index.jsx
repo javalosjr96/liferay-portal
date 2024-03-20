@@ -3,11 +3,17 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {createContext, useContext, useEffect, useReducer} from 'react';
+import {
+	createContext,
+	useContext,
+	useEffect,
+	useReducer
+} from 'react';
 import {useAppPropertiesContext} from '../../../common/contexts/AppPropertiesContext';
 import {Liferay} from '../../../common/services/liferay';
 import {
 	getAccountByExternalReferenceCode,
+	getAccountByExternalReferenceCodeOrganizations,
 	getAccountSubscriptionGroups,
 	getKoroneikiAccounts,
 	getStructuredContentFolders,
@@ -32,6 +38,7 @@ const AppContextProvider = ({children}) => {
 		structuredContents: undefined,
 		subscriptionGroups: undefined,
 		userAccount: undefined,
+		userProjectAccess: undefined
 	});
 
 	const pageRoutes = routerPath();
@@ -42,11 +49,11 @@ const AppContextProvider = ({children}) => {
 				query: getUserAccount,
 				variables: {
 					id: Liferay.ThemeDisplay.getUserId(),
-				},
+				}
 			});
 
 			if (data) {
-				const isAccountAdministrator = !!data.userAccount?.accountBriefs
+				const isAccountAdministrator = Boolean(data.userAccount?.accountBriefs
 					?.find(
 						({externalReferenceCode}) =>
 							externalReferenceCode ===
@@ -54,27 +61,19 @@ const AppContextProvider = ({children}) => {
 					)
 					?.roleBriefs?.find(
 						({name}) => name === ROLE_TYPES.admin.key
-					);
+					));
 
-				const isAccountProvisioning = !!data.userAccount?.accountBriefs
+				const isAccountProvisioning = Boolean(data.userAccount?.accountBriefs
 					?.find(
 						({externalReferenceCode}) =>
 							externalReferenceCode ===
 							projectExternalReferenceCode
 					)
-					?.roleBriefs?.find(({name}) => name === 'Provisioning');
+					?.roleBriefs?.find(({name}) => name === 'Provisioning'));
 
-				const isOmniAdmin = !!data.userAccount?.roleBriefs?.find(
+				const isOmniAdmin = Boolean(data.userAccount?.roleBriefs?.find(
 					({name}) => name === 'Administrator'
-				);
-
-				const isPartner = data.userAccount?.organizationBriefs?.filter(
-					({name}) => (
-						name !== 'Account Access EU' &&
-						name !== 'Account Access US' && 
-						name !== 'Liferay Staff' && 
-						name !== 'Systems - Provisioning')
-				).length > 0;
+				));
 
 				const isStaff = data.userAccount?.organizationBriefs?.some(
 					(organization) => organization.name === 'Liferay Staff'
@@ -84,7 +83,6 @@ const AppContextProvider = ({children}) => {
 					...data.userAccount,
 					isAccountAdmin: isAccountAdministrator,
 					isOmniAdmin,
-					isPartner,
 					isProvisioning: isAccountProvisioning,
 					isStaff
 				};
@@ -97,6 +95,69 @@ const AppContextProvider = ({children}) => {
 				return userAccount;
 			}
 		};
+
+		const getUserProjectAccess = async (userAccount, projectExternalReferenceCode) => {
+			let userProjectAccess = Boolean(userAccount.organizationBriefs);
+			let denyAccess = false;
+
+			const organizationBriefs = userAccount.organizationBriefs;
+
+			if (organizationBriefs) {
+				try {
+					const {data: dataAccountOrg} = await client.query({
+						query: getAccountByExternalReferenceCodeOrganizations,
+						variables: {
+							externalReferenceCode: projectExternalReferenceCode
+						}
+					});
+
+					if (dataAccountOrg) {
+						const accountOrganizations = dataAccountOrg.accountByExternalReferenceCodeOrganizations?.items;
+
+						const filteredOrganizationBriefs = organizationBriefs.filter(
+							(organizationBrief) => (
+								accountOrganizations.some(
+									(accountOrganization) => accountOrganization.name === organizationBrief.name
+								)
+							)
+						);
+
+						userProjectAccess = filteredOrganizationBriefs.length > 0;
+					}
+				}
+				catch (error) {
+					const message = error.message;
+
+					if (!message.includes('(/accountByExternalReferenceCodeOrganizations) : null')) {
+						console.error(error);
+					}
+
+					denyAccess = true;
+				}
+			}
+
+			const accountAccess = Boolean(userAccount.accountBriefs?.find(
+				(accountBrief) =>
+					accountBrief.externalReferenceCode ===
+					projectExternalReferenceCode
+			));
+
+			if (accountAccess) {
+				userProjectAccess = accountAccess;
+			}
+
+			const currentUserProjectAccess = {
+				hasProjectAccess: userAccount.isOmniAdmin || userProjectAccess,
+				denyAccess
+			};
+
+			dispatch({
+				payload: currentUserProjectAccess,
+				type: actionTypes.UPDATE_USER_PROJECT_ACCESS
+			});
+
+			return currentUserProjectAccess;
+		}
 
 		const getProject = async (externalReferenceCode, accountBrief) => {
 			const {data: projects} = await client.query({
@@ -179,44 +240,48 @@ const AppContextProvider = ({children}) => {
 			const user = await getUser(projectExternalReferenceCode);
 
 			if (user) {
-				const isValid = await isValidPage(
-					client,
+				const userProjectAccess = await getUserProjectAccess(
 					user,
-					projectExternalReferenceCode,
-					ROUTE_TYPES.project
+					projectExternalReferenceCode
 				);
-
-				if (isValid) {
-					let accountBrief = user.accountBriefs?.find(
-						(accountBrief) =>
-							accountBrief.externalReferenceCode ===
-							projectExternalReferenceCode
+	
+				if (userProjectAccess.hasProjectAccess) {
+					const isValid = await isValidPage(
+						client,
+						user,
+						projectExternalReferenceCode,
+						ROUTE_TYPES.project
 					);
 
-					const apiPermission = 
-						user.isOmniAdmin || user.isPartner || user.isStaff;
+					if (isValid) {
+						let accountBrief = user.accountBriefs?.find(
+							(accountBrief) =>
+								accountBrief.externalReferenceCode ===
+								projectExternalReferenceCode
+						);
 
-					if (!accountBrief && apiPermission) {
-						const {data: dataAccount} = await client.query({
-							query: getAccountByExternalReferenceCode,
-							variables: {
-								externalReferenceCode: projectExternalReferenceCode,
+						if (!accountBrief && !userProjectAccess.denyAccess) {
+							const {data: dataAccount} = await client.query({
+								query: getAccountByExternalReferenceCode,
+								variables: {
+									externalReferenceCode: projectExternalReferenceCode,
+								}
+							});
+
+							if (dataAccount) {
+								accountBrief =
+									dataAccount?.accountByExternalReferenceCode;
 							}
-						});
-
-						if (dataAccount) {
-							accountBrief =
-								dataAccount?.accountByExternalReferenceCode;
 						}
-					}
 
-					if (accountBrief) {
-						getProject(projectExternalReferenceCode, accountBrief);
-						getSubscriptionGroups(projectExternalReferenceCode);
-					}
+						if (accountBrief) {
+							getProject(projectExternalReferenceCode, accountBrief);
+							getSubscriptionGroups(projectExternalReferenceCode);
+						}
 
-					getStructuredContents();
-					getSessionId();
+						getStructuredContents();
+						getSessionId();
+					}
 				}
 			}
 		};

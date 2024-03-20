@@ -5,10 +5,11 @@
 
 import {SidebarCategory} from '@liferay/object-js-components-web';
 import React from 'react';
-import {ActionError} from '../..';
+import {ActionError} from '../../ObjectActionContainer';
 import {WarningStates} from '../ActionBuilder';
 interface ActionContainerProps {
 	currentObjectDefinitionFields: ObjectField[];
+	disableGroovyAction: boolean;
 	errors: ActionError;
 	newObjectActionExecutors: ObjectActionTriggerExecutorItem[];
 	objectActionCodeEditorElements: SidebarCategory[];
@@ -26,6 +27,7 @@ interface ActionContainerProps {
 }
 export declare function ActionContainer({
 	currentObjectDefinitionFields,
+	disableGroovyAction,
 	errors,
 	newObjectActionExecutors,
 	objectActionCodeEditorElements,

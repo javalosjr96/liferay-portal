@@ -35,7 +35,7 @@ const MDFRequestManagerStatus = () => {
 		MDFRequestDTO
 	>(
 		mdfRequestId &&
-			`/o/${LiferayAPIs.OBJECT}/${ResourceName.MDF_REQUEST_DXP}/${mdfRequestId}?nestedFields=mdfReqToActs`
+			`/o/${LiferayAPIs.OBJECT}/${ResourceName.MDF_REQUEST_DXP}/${mdfRequestId}?nestedFields=mdfReqToActs,mdfReqToMDFClms`
 	);
 	const [patchedStatus, setPatchedStatus] = useState<LiferayPicklist>();
 
@@ -63,14 +63,18 @@ const MDFRequestManagerStatus = () => {
 
 		const newRequestStatus = await patchRequestStatus(
 			selectedStatus,
-			mdfRequestId,
-			mdfRequest?.mdfReqToActs
+			mdfRequestId
 		);
 
 		if (newRequestStatus) {
 			setPatchedStatus(newRequestStatus);
 		}
+
 		setIsSubmitting(false);
+
+		if (newRequestStatus?.key === Status.CANCELED.key) {
+			location.reload();
+		}
 
 		return;
 	};

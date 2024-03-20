@@ -20,7 +20,7 @@
 		This paragraph contains a <a href="https://example.com">link</a>.
 	</p>
 
-	<img src="https://images.unsplash.com/photo-1539037116277-4db20889f2d4?fit=crop&w=300" />
+	<img src="/documents/d/guest/satellite-png" width="300" />
 </liferay-util:buffer>
 
 <liferay-editor:editor

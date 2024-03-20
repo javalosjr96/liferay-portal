@@ -11,11 +11,13 @@ import i18n from '../i18n';
 const zodSchema = {
 	accountCreator: z.object({
 		accounts: z.any().array().optional(),
-		agreeToTermsAndConditions: z.boolean(),
+		agreeToTermsAndConditions: z.boolean().optional(),
 		companyName: z
 			.string()
 			.min(1, {message: 'Please enter a company name to continue'}),
-		emailAddress: z.string().email('Please fill in valid email'),
+		emailAddress: z
+			.string()
+			.email(i18n.translate('this-field-is-required')),
 		extension: z.string().optional(),
 		familyName: z
 			.string()
@@ -30,7 +32,7 @@ const zodSchema = {
 		}),
 		phoneNumber: z
 			.string()
-			.min(1, {message: i18n.translate('this-field-is-required')}),
+			.min(1, {message: 'Please enter a phone number to continue.'}),
 	}),
 	becomePublisherForm: z.object({
 		emailAddress: z.string().email('Please fill in valid email'),

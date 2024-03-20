@@ -19,7 +19,7 @@ import {
 } from 'data-engine-js-components-web';
 import {sub} from 'frontend-js-web';
 import moment from 'moment/min/moment-with-locales';
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 
 import './FieldBase.scss';
 
@@ -180,7 +180,7 @@ const Popover = ({tooltip}) => {
 const FIELDSET_REGEX = /Fieldset\d+/g;
 const FIELDSET_REPEAT_INDEX_REGEX = /\$(\d+)(?:#|\$|$)/g;
 
-export function FieldBase({
+export default function FieldBase({
 	accessible = true,
 	children,
 	displayErrors,
@@ -369,6 +369,80 @@ export function FieldBase({
 			Liferay.detach('disableRepeatableButton', disableRepeatableButton);
 		};
 	}, []);
+
+	const markAsTranslated = useCallback(() => {
+		const pagesVisitor = new PagesVisitor(pages);
+
+		dispatch({
+			payload: pagesVisitor.mapFields(
+				(field) => {
+					if (!field.localizedValue) {
+						return;
+					}
+
+					return {
+						...field,
+						localizedValue: {
+							...field.localizedValue,
+							[editingLanguageId]: field.value,
+						},
+						localizedValueEdited: {
+							...field.localizedValueEdited,
+							[editingLanguageId]: true,
+						},
+					};
+				},
+				false,
+				true
+			),
+			type: CORE_EVENT_TYPES.PAGE.UPDATE,
+		});
+	}, [dispatch, editingLanguageId, pages]);
+
+	const resetTranslations = useCallback(
+		({defaultLanguageId}) => {
+			const pagesVisitor = new PagesVisitor(pages);
+
+			dispatch({
+				payload: pagesVisitor.mapFields(
+					(field) => {
+						const defaultValue =
+							field.localizedValue[defaultLanguageId];
+						if (field.localizedValue?.[editingLanguageId]) {
+							delete field.localizedValue[editingLanguageId];
+						}
+						if (field.localizedValueEdited?.[editingLanguageId]) {
+							delete field.localizedValueEdited[
+								editingLanguageId
+							];
+						}
+
+						return {
+							...field,
+							value: defaultValue,
+						};
+					},
+					false,
+					true
+				),
+				type: CORE_EVENT_TYPES.PAGE.UPDATE,
+			});
+		},
+		[dispatch, editingLanguageId, pages]
+	);
+
+	useEffect(() => {
+		Liferay.on('inputLocalized:resetTranslations', resetTranslations);
+		Liferay.on('inputLocalized:markAsTranslated', markAsTranslated);
+
+		return () => {
+			Liferay.detach(
+				'inputLocalized:resetTranslations',
+				resetTranslations
+			);
+			Liferay.detach('inputLocalized:markAsTranslated', markAsTranslated);
+		};
+	}, [resetTranslations, markAsTranslated]);
 
 	return (
 		<ClayForm.Group

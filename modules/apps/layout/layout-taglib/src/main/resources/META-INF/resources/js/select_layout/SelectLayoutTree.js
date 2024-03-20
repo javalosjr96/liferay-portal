@@ -317,7 +317,7 @@ export function SelectLayoutTree({
 										>
 											<ClayIcon
 												className="c-mt-0 text-4"
-												symbol="lock"
+												symbol="password-policies"
 											/>
 										</span>
 									) : null}
@@ -404,7 +404,7 @@ export function SelectLayoutTree({
 													>
 														<ClayIcon
 															className="c-mt-0 text-4"
-															symbol="lock"
+															symbol="password-policies"
 														/>
 													</span>
 												)}
@@ -609,6 +609,7 @@ function findLayouts(
 			[`groupId`]: groupId,
 			[`itemSelectorReturnType`]: itemSelectorReturnType,
 			[`keywords`]: keywords,
+			[`searchOnlyByTitle`]: Liferay.FeatureFlags['LPD-15607'],
 			[`start`]: start,
 		}),
 		method: 'post',

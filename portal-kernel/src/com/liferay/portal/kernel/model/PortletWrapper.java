@@ -300,6 +300,16 @@ public class PortletWrapper
 	}
 
 	/**
+	 * Returns the category names of the portlet.
+	 *
+	 * @return the category names of the portlet
+	 */
+	@Override
+	public java.util.Set<String> getCategoryNames() {
+		return model.getCategoryNames();
+	}
+
+	/**
 	 * Returns <code>true</code> if the portlet is found in a WAR file.
 	 *
 	 * @param portletId the cloned instance portlet ID
@@ -2446,6 +2456,16 @@ public class PortletWrapper
 		java.util.Set<String> autopropagatedParameters) {
 
 		model.setAutopropagatedParameters(autopropagatedParameters);
+	}
+
+	/**
+	 * Sets the category names of the portlet.
+	 *
+	 * @param categoryNames the category names of the portlet
+	 */
+	@Override
+	public void setCategoryNames(java.util.Set<String> categoryNames) {
+		model.setCategoryNames(categoryNames);
 	}
 
 	/**

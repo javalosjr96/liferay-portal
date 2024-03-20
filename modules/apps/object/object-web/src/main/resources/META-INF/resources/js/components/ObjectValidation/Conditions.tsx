@@ -19,12 +19,14 @@ import {
 import React, {useMemo} from 'react';
 
 import {NAME_OUTPUT_OBJECT_FIELD_EXTERNAL_REFERENCE_CODE} from '../../utils/constants';
+import {DisabledGroovyScriptAlert} from '../DisabledGroovyScriptAlert';
 import {ErrorMessage} from './ErrorMessage';
 import {TabProps} from './useObjectValidationForm';
 
 export interface ConditionsProps extends TabProps {
 	creationLanguageId: Liferay.Language.Locale;
 	customObjectFields: ObjectField[];
+	disabledGroovyValidation: boolean;
 	learnResources: ILearnResourceContext;
 	objectValidationRuleElements: SidebarCategory[];
 }
@@ -33,6 +35,7 @@ export function Conditions({
 	creationLanguageId,
 	customObjectFields,
 	disabled,
+	disabledGroovyValidation,
 	errors,
 	learnResources,
 	objectValidationRuleElements,
@@ -78,6 +81,8 @@ export function Conditions({
 
 	return (
 		<>
+			{disabledGroovyValidation && <DisabledGroovyScriptAlert />}
+
 			<ClayAlert
 				className="lfr-objects__side-panel-content-container"
 				displayType="info"
@@ -104,7 +109,7 @@ export function Conditions({
 						setValues({lineCount, script})
 					}
 					placeholder={placeholder}
-					readOnly={disabled}
+					readOnly={disabled || disabledGroovyValidation}
 					sidebarElements={objectValidationRuleElements}
 					value={values.script ?? ''}
 				/>

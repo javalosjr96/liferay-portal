@@ -8,7 +8,6 @@
 <%@ include file="/init.jsp" %>
 
 <%
-boolean branchingEnabled = GetterUtil.getBoolean((String)renderRequest.getAttribute(StagingProcessesWebKeys.BRANCHING_ENABLED));
 LayoutRevision layoutRevision = (LayoutRevision)renderRequest.getAttribute(WebKeys.LAYOUT_REVISION);
 List<LayoutSetBranch> layoutSetBranches = (List<LayoutSetBranch>)renderRequest.getAttribute(StagingProcessesWebKeys.LAYOUT_SET_BRANCHES);
 liveGroup = (Group)renderRequest.getAttribute(StagingProcessesWebKeys.LIVE_GROUP);
@@ -142,7 +141,7 @@ if (liveLayout != null) {
 									<liferay-ui:error exception="<%= Exception.class %>" message="an-unexpected-error-occurred" />
 
 									<c:choose>
-										<c:when test="<%= branchingEnabled %>">
+										<c:when test="<%= GetterUtil.getBoolean((String)renderRequest.getAttribute(StagingProcessesWebKeys.BRANCHING_ENABLED)) %>">
 											<clay:col>
 												<liferay-util:include page="/view_layout_set_branch_details.jsp" servletContext="<%= application %>" />
 											</clay:col>
@@ -251,15 +250,6 @@ if (liveLayout != null) {
 				</c:if>
 			</div>
 		</c:if>
-	</c:if>
-
-	<c:if test="<%= !branchingEnabled %>">
-		<aui:script use="liferay-staging">
-			Liferay.StagingBar.init({
-				namespace: '<portlet:namespace />',
-				portletId: '<%= portletDisplay.getId() %>',
-			});
-		</aui:script>
 	</c:if>
 
 	<aui:script use="aui-base">

@@ -5,8 +5,6 @@
 
 package com.liferay.jethr0.job;
 
-import java.net.URL;
-
 import java.util.Map;
 
 import org.json.JSONObject;
@@ -14,16 +12,7 @@ import org.json.JSONObject;
 /**
  * @author Michael Hashimoto
  */
-public class QAWebsitesPullRequestSFJobEntity extends BaseJobEntity {
-
-	public URL getQAWebsitesPullRequestURL() {
-		return getParameterValueURL("qaWebsitesPullRequestURL");
-	}
-
-	public void setQAWebsitesPullRequestURL(URL qaWebsitesPullRequestURL) {
-		setParameterValueURL(
-			"qaWebsitesPullRequestURL", qaWebsitesPullRequestURL);
-	}
+public class QAWebsitesPullRequestSFJobEntity extends BasePullRequestJobEntity {
 
 	protected QAWebsitesPullRequestSFJobEntity(JSONObject jsonObject) {
 		super(jsonObject);
@@ -35,7 +24,7 @@ public class QAWebsitesPullRequestSFJobEntity extends BaseJobEntity {
 			super.getInitialBuildParameters();
 
 		initialBuildParameters.put(
-			"PULL_REQUEST_URL", String.valueOf(getQAWebsitesPullRequestURL()));
+			"PULL_REQUEST_URL", String.valueOf(getPullRequestURL()));
 
 		return initialBuildParameters;
 	}

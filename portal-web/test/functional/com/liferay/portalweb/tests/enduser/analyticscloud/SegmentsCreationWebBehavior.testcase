@@ -36,12 +36,8 @@ definition {
 	}
 
 	@description = "Feature ID: Legacy | Automation ID: LRAC-9220 | Test Summary: Create a segment with behavior of commenting on a blog"
-	@ignore = "true"
 	@priority = 4
 	test CanCreateWebBehaviorSegmentCommentingBlog {
-
-		// AC Bug ticket: LRAC-14840
-
 		ACUtils.createBlogsAndAddToPage();
 
 		var propertyName = ACDXPSettings.connectDXPtoAnalyticsCloud(siteName = "Site Name");
@@ -52,16 +48,18 @@ definition {
 			userLastName = "ac",
 			userScreenName = "ac");
 
+		JSONUser.setFirstPassword(
+			agreeToTermsAndAnswerReminderQuery = "true",
+			requireReset = "false",
+			userEmailAddress = "ac@liferay.com");
+
 		ACDXPSettings.syncNewContactData();
 
-		User.logoutAndLoginPG(
-			userLoginEmailAddress = "ac@liferay.com",
-			userLoginFullName = "ac ac");
-
-		ACUtils.navigateToSitePage(
+		ACUtils.navigateToSitePageWithUser(
 			actionType = "Comment Blog",
 			commentText = "Blogs Entry Comment",
 			documentTitleList = "Blogs AC Title",
+			emailList = "ac@liferay.com",
 			pageName = "AC Page",
 			siteName = "Site Name");
 
@@ -90,12 +88,13 @@ definition {
 
 		ACUtils.viewGenericText(textValueList = "There are no members found on the selected time period.,Check back later to verify if data has been received from your data sources.,Learn more about individuals.");
 
-		ACUtils.launchDXP(userEmailAddress = "ac@liferay.com");
+		ACUtils.launchDXP();
 
-		ACUtils.navigateToSitePage(
+		ACUtils.navigateToSitePageWithUser(
 			actionType = "Comment Blog",
 			commentText = "Blogs Entry Comment 1",
 			documentTitleList = "Blogs AC Title",
+			emailList = "ac@liferay.com",
 			pageName = "AC Page",
 			siteName = "Site Name");
 
@@ -209,12 +208,9 @@ definition {
 	}
 
 	@description = "Create a segment with behavior of downloading a document"
-	@ignore = "true"
 	@priority = 5
 	test CanCreateWebBehaviorSegmentDownloadingDocument {
 		property test.run.type = "single";
-
-		// AC Bug ticket: LRAC-14840
 
 		ACUtils.createDMAndAddToPage();
 
@@ -226,15 +222,17 @@ definition {
 			userLastName = "ac",
 			userScreenName = "ac");
 
+		JSONUser.setFirstPassword(
+			agreeToTermsAndAnswerReminderQuery = "true",
+			requireReset = "false",
+			userEmailAddress = "ac@liferay.com");
+
 		ACDXPSettings.syncNewContactData();
 
-		User.logoutAndLoginPG(
-			userLoginEmailAddress = "ac@liferay.com",
-			userLoginFullName = "ac ac");
-
-		ACUtils.navigateToSitePage(
+		ACUtils.navigateToSitePageWithUser(
 			actionType = "Download DM",
 			documentTitleList = "DM AC Title",
+			emailList = "ac@liferay.com",
 			pageName = "AC Page",
 			siteName = "Site Name");
 
@@ -264,11 +262,12 @@ definition {
 
 		ACUtils.viewGenericText(textValueList = "There are no members found on the selected time period.,Check back later to verify if data has been received from your data sources.,Learn more about individuals.");
 
-		ACUtils.launchDXP(userEmailAddress = "ac@liferay.com");
+		ACUtils.launchDXP();
 
-		ACUtils.navigateToSitePage(
+		ACUtils.navigateToSitePageWithUser(
 			actionType = "Download DM",
 			documentTitleList = "DM AC Title,DM AC Title,DM AC Title",
+			emailList = "ac@liferay.com",
 			pageName = "AC Page",
 			siteName = "Site Name");
 
@@ -286,12 +285,9 @@ definition {
 	}
 
 	@description = "Feature ID: Legacy | Automation ID: LRAC-9222 | Test Summary: Create a Web Behavior since X days"
-	@ignore = "true"
 	@priority = 4
 	test CanCreateWebBehaviorSegmentSinceXdays {
 		property test.run.type = "single";
-
-		// AC Bug ticket: LRAC-14840
 
 		ACUtils.createWCAndAddToPage();
 
@@ -302,6 +298,11 @@ definition {
 			userFirstName = "ac",
 			userLastName = "ac",
 			userScreenName = "ac");
+
+		JSONUser.setFirstPassword(
+			agreeToTermsAndAnswerReminderQuery = "true",
+			requireReset = "false",
+			userEmailAddress = "ac@liferay.com");
 
 		ACDXPSettings.syncNewContactData();
 
@@ -340,10 +341,12 @@ definition {
 
 		ACUtils.viewGenericText(textValueList = "There are no members found on the selected time period.,Check back later to verify if data has been received from your data sources.,Learn more about individuals.");
 
-		ACUtils.launchDXP(userEmailAddress = "ac@liferay.com");
+		ACUtils.launchDXP();
 
-		ACUtils.navigateToSitePage(
+		ACUtils.navigateToSitePageWithUser(
+			actionType = "View WC",
 			documentTitleList = "1,2,3",
+			emailList = "ac@liferay.com",
 			pageName = "AC Page",
 			siteName = "Site Name");
 

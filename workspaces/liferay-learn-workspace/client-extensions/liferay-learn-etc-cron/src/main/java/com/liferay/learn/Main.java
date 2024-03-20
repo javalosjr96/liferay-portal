@@ -78,6 +78,7 @@ import java.util.TreeSet;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.http.HttpStatus;
@@ -125,13 +126,6 @@ public class Main {
 			liferayDataDefinitionKey = "LEARN-ARTICLE";
 		}
 
-		String liferayLearnResourcesDomain = System.getenv(
-			"LIFERAY_LEARN_ETC_CRON_LIFERAY_LEARN_RESOURCES_DOMAIN");
-
-		if (liferayLearnResourcesDomain == null) {
-			liferayLearnResourcesDomain = "https://resources.learn.liferay.com";
-		}
-
 		String liferaySiteFriendlyUrlPath = System.getenv(
 			"LIFERAY_LEARN_ETC_CRON_LIFERAY_SITE_FRIENDLY_URL_PATH");
 
@@ -145,7 +139,8 @@ public class Main {
 			liferayUrl = "http://localhost:8080";
 		}
 
-		String baseDir = System.getenv("LIFERAY_LEARN_ETC_CRON_ROOT_DIR");
+		String baseDir = System.getenv(
+			"LIFERAY_LEARN_ETC_CRON_GIT_REPOSITORY_DIR");
 
 		if (baseDir == null) {
 			baseDir = "~/liferay-learn";
@@ -155,7 +150,6 @@ public class Main {
 
 		Main main = new Main(
 			lastestHashFileName, liferayDataDefinitionKey,
-			liferayLearnResourcesDomain,
 			System.getenv("LIFERAY_LEARN_ETC_CRON_LIFERAY_OAUTH_CLIENT_ID"),
 			System.getenv("LIFERAY_LEARN_ETC_CRON_LIFERAY_OAUTH_CLIENT_SECRET"),
 			liferaySiteFriendlyUrlPath, new URL(liferayUrl), baseDirFile,
@@ -227,12 +221,11 @@ public class Main {
 
 	public Main(
 			String latestHashFileName, String liferayDataDefinitionKey,
-			String liferayLearnResourcesDomain, String liferayOAuthClientId,
-			String liferayOAuthClientSecret, String liferaySiteFriendlyUrlPath,
-			URL liferayURL, File baseDir, boolean offline)
+			String liferayOAuthClientId, String liferayOAuthClientSecret,
+			String liferaySiteFriendlyUrlPath, URL liferayURL, File baseDir,
+			boolean offline)
 		throws Exception {
 
-		_liferayLearnResourcesDomain = liferayLearnResourcesDomain;
 		_liferayOAuthClientId = liferayOAuthClientId;
 		_liferayOAuthClientSecret = liferayOAuthClientSecret;
 		_liferayURL = liferayURL;
@@ -365,13 +358,24 @@ public class Main {
 						!_diffFileNames.contains(relativeFileName)) {
 
 						System.out.println(
-							"Skipping structured content " +
+							"Skipping structured content (no diffs) " +
 								structuredContent.getFriendlyUrlPath());
 
 						continue;
 					}
 
-					// md5sum check
+					File file = new File(fileName);
+
+					if (StringUtil.equals(
+							DigestUtils.md5Hex(file.toString()),
+							_getMD5Hex(siteStructuredContent))) {
+
+						System.out.println(
+							"Skipping structured content (same md5Hex) " +
+								structuredContent.getFriendlyUrlPath());
+
+						continue;
+					}
 
 					System.out.println(
 						"Updating structured content " +
@@ -662,6 +666,21 @@ public class Main {
 		File htmlFile = new File(htmlFilePath);
 
 		return FileUtils.readFileToString(htmlFile, StandardCharsets.UTF_8);
+	}
+
+	private String _getMD5Hex(StructuredContent structuredContent) {
+		ContentField[] contentFields = structuredContent.getContentFields();
+
+		for (ContentField contentField : contentFields) {
+			if (!StringUtil.equals(contentField.getName(), "md5Hex")) {
+				continue;
+			}
+
+			return contentField.getContentFieldValue(
+			).getData();
+		}
+
+		return StringPool.BLANK;
 	}
 
 	private JSONArray _getNavigationLinksJSONArray(
@@ -1403,14 +1422,12 @@ public class Main {
 							_getBreadcrumbLinksJSONArray(englishFile)));
 				}
 			};
-
 		ContentFieldValue englishContentContentFieldValue =
 			new ContentFieldValue() {
 				{
 					setData(() -> _getHTML(englishFile));
 				}
 			};
-
 		ContentFieldValue englishLandingPageContentFieldValue =
 			new ContentFieldValue() {
 				{
@@ -1419,7 +1436,12 @@ public class Main {
 							_landingPageFiles.contains(englishFile)));
 				}
 			};
-
+		ContentFieldValue englishMD5HexContentFieldValue =
+			new ContentFieldValue() {
+				{
+					setData(() -> DigestUtils.md5Hex(englishFile.toString()));
+				}
+			};
 		ContentFieldValue englishNavigationLinksContentFieldValue =
 			new ContentFieldValue() {
 				{
@@ -1429,14 +1451,12 @@ public class Main {
 								englishFile, englishText)));
 				}
 			};
-
 		ContentFieldValue englishProductContentFieldValue =
 			new ContentFieldValue() {
 				{
 					setData(() -> _getProduct(englishFile));
 				}
 			};
-
 		String englishTitle = _getTitle(englishText);
 
 		File japaneseFile = new File(
@@ -1500,6 +1520,26 @@ public class Main {
 									"ja-JP", englishLandingPageContentFieldValue
 								).build());
 							setName(() -> "landingPage");
+						}
+					},
+					new ContentField() {
+						{
+							setContentFieldValue(
+								() -> englishMD5HexContentFieldValue);
+							setContentFieldValue_i18n(
+								() -> HashMapBuilder.put(
+									"en-US", englishMD5HexContentFieldValue
+								).put(
+									"ja-JP",
+									new ContentFieldValue() {
+										{
+											setData(
+												() -> DigestUtils.md5Hex(
+													japaneseFile.toString()));
+										}
+									}
+								).build());
+							setName(() -> "md5Hex");
 						}
 					},
 					new ContentField() {
@@ -1593,6 +1633,13 @@ public class Main {
 					new ContentField() {
 						{
 							setContentFieldValue(
+								() -> englishMD5HexContentFieldValue);
+							setName(() -> "md5Hex");
+						}
+					},
+					new ContentField() {
+						{
+							setContentFieldValue(
 								() -> englishNavigationLinksContentFieldValue);
 							setName(() -> "navigationLinks");
 						}
@@ -1658,7 +1705,6 @@ public class Main {
 	private final Set<File> _landingPageFiles = new HashSet<>();
 	private final String _lastestHashFileName;
 	private final long _liferayContentStructureId;
-	private final String _liferayLearnResourcesDomain;
 	private final String _liferayOAuthClientId;
 	private final String _liferayOAuthClientSecret;
 	private final long _liferaySiteId;

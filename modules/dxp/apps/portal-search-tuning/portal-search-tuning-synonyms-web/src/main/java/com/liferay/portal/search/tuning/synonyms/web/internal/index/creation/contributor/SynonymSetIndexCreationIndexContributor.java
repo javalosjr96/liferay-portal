@@ -6,21 +6,30 @@
 package com.liferay.portal.search.tuning.synonyms.web.internal.index.creation.contributor;
 
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.search.engine.SearchEngineInformation;
+import com.liferay.portal.search.engine.adapter.SearchEngineAdapter;
 import com.liferay.portal.search.spi.model.index.contributor.IndexContributor;
 import com.liferay.portal.search.tuning.synonyms.index.name.SynonymSetIndexName;
+import com.liferay.portal.search.tuning.synonyms.web.internal.configuration.SynonymsConfiguration;
 import com.liferay.portal.search.tuning.synonyms.web.internal.index.SynonymSetIndexReader;
 import com.liferay.portal.search.tuning.synonyms.web.internal.synchronizer.IndexToFilterSynchronizer;
 
+import java.util.Map;
 import java.util.Objects;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Adam Brandizzi
  */
-@Component(service = IndexContributor.class)
+@Component(
+	configurationPid = "com.liferay.portal.search.tuning.synonyms.web.internal.configuration.SynonymsConfiguration",
+	service = IndexContributor.class
+)
 public class SynonymSetIndexCreationIndexContributor
 	implements IndexContributor {
 
@@ -44,16 +53,36 @@ public class SynonymSetIndexCreationIndexContributor
 			synonymSetIndexName, companyIndexName, false);
 	}
 
+	@Activate
+	protected void activate(Map<String, Object> properties) {
+		_synonymSetIndexReader = new SynonymSetIndexReader(
+			_searchEngineAdapter);
+
+		modified(properties);
+	}
+
+	@Modified
+	protected void modified(Map<String, Object> properties) {
+		SynonymsConfiguration synonymsConfiguration =
+			ConfigurableUtil.createConfigurable(
+				SynonymsConfiguration.class, properties);
+
+		_indexToFilterSynchronizer = new IndexToFilterSynchronizer(
+			synonymsConfiguration.filterNames(), _searchEngineAdapter,
+			_synonymSetIndexReader);
+	}
+
 	protected static final String SYNONYMS_INDEX_NAME_SUFFIX =
 		"search-tuning-synonyms";
 
+	private volatile IndexToFilterSynchronizer _indexToFilterSynchronizer;
+
 	@Reference
-	private IndexToFilterSynchronizer _indexToFilterSynchronizer;
+	private SearchEngineAdapter _searchEngineAdapter;
 
 	@Reference
 	private SearchEngineInformation _searchEngineInformation;
 
-	@Reference
 	private SynonymSetIndexReader _synonymSetIndexReader;
 
 }

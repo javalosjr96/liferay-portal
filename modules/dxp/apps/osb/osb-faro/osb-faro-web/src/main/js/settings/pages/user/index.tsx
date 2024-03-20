@@ -8,10 +8,10 @@ import ClayNavigationBar from '@clayui/navigation-bar';
 import getCN from 'classnames';
 import Loading from 'shared/components/Loading';
 import React, {lazy, Suspense, useState} from 'react';
-import {compose, withCurrentUser} from 'shared/hoc';
+import RouteNotFound from 'shared/components/RouteNotFound';
 import {getMatchedRoute, Routes, toRoute} from 'shared/util/router';
-import {Switch, withRouter} from 'react-router-dom';
-import {User as UserRecord} from 'shared/util/records';
+import {Switch, useParams} from 'react-router-dom';
+import {useCurrentUser} from 'shared/hooks/useCurrentUser';
 import {UserStatuses} from 'shared/util/constants';
 
 const UserList = lazy(
@@ -21,16 +21,9 @@ const UserRequest = lazy(
 	() => import(/* webpackChunkName: "UserRequest" */ './UserRequest')
 );
 
-interface IUserProps extends React.HTMLAttributes<HTMLElement> {
-	currentUser: UserRecord;
-	groupId: string;
-}
-
-export const User: React.FC<IUserProps> = ({
-	className,
-	currentUser,
-	groupId
-}) => {
+export const User = ({className}) => {
+	const {groupId} = useParams();
+	const currentUser = useCurrentUser();
 	const [userRequest, setUserRequest] = useState<number>(0);
 
 	const onSetUserRequest = userRequest => setUserRequest(userRequest);
@@ -64,6 +57,11 @@ export const User: React.FC<IUserProps> = ({
 
 	const matchedRoute = getMatchedRoute(NAV_ITEMS);
 
+	const initialItem =
+		NAV_ITEMS.find(item => item.route === matchedRoute) ?? NAV_ITEMS[0];
+
+	const [activeLabel, setActiveLabel] = useState(initialItem.label);
+
 	return (
 		<BasePage
 			className={getCN('user-list-page-root', className)}
@@ -78,14 +76,17 @@ export const User: React.FC<IUserProps> = ({
 				{currentUser.isAdmin() && (
 					<ClayNavigationBar
 						className='page-subnav mx-4 my-3'
-						triggerLabel={matchedRoute}
+						triggerLabel={activeLabel}
 					>
 						{NAV_ITEMS.map(({label, route}) => (
 							<ClayNavigationBar.Item
 								active={matchedRoute === route}
 								key={route}
 							>
-								<ClayLink href={toRoute(route, {groupId})}>
+								<ClayLink
+									href={toRoute(route, {groupId})}
+									onClick={() => setActiveLabel(label)}
+								>
 									{label}
 								</ClayLink>
 							</ClayNavigationBar.Item>
@@ -108,6 +109,8 @@ export const User: React.FC<IUserProps> = ({
 							exact
 							path={Routes.SETTINGS_USERS_REQUESTS}
 						/>
+
+						<RouteNotFound />
 					</Switch>
 				</Suspense>
 			</Card>
@@ -115,4 +118,4 @@ export const User: React.FC<IUserProps> = ({
 	);
 };
 
-export default compose<any>(withRouter, withCurrentUser)(User);
+export default User;

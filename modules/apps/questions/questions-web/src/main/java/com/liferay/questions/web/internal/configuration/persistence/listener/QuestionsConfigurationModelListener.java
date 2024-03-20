@@ -128,7 +128,7 @@ public class QuestionsConfigurationModelListener
 	private void _enableServiceAccessPolicy(boolean enableAnonymousRead)
 		throws Exception {
 
-		String name = "QUESTIONS_SERVICE_ACCESS_POLICY";
+		String name = "QUESTIONS";
 
 		SAPEntry sapEntry = _sapEntryService.fetchSAPEntry(
 			CompanyThreadLocal.getCompanyId(), name);
@@ -179,7 +179,7 @@ public class QuestionsConfigurationModelListener
 					"getSiteMessageBoardThreadsPage\n"),
 				true, true, name,
 				Collections.singletonMap(
-					LocaleThreadLocal.getDefaultLocale(), name),
+					LocaleThreadLocal.getDefaultLocale(), "Questions"),
 				new ServiceContext());
 		}
 	}

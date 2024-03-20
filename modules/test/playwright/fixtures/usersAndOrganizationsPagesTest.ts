@@ -7,15 +7,25 @@
 
 import {test} from '@playwright/test';
 
+import {EditOrganizationPage} from '../pages/users-admin-web/EditOrganizationPage';
 import {EditUserPage} from '../pages/users-admin-web/EditUserPage';
+import {ServiceAccountsPage} from '../pages/users-admin-web/ServiceAccountsPage';
 import {UsersAndOrganizationsPage} from '../pages/users-admin-web/UsersAndOrganizationsPage';
 
 const usersAndOrganizationsPagesTest = test.extend<{
+	editOrganizationPage: EditOrganizationPage;
 	editUserPage: EditUserPage;
+	serviceAccountsPage: ServiceAccountsPage;
 	usersAndOrganizationsPage: UsersAndOrganizationsPage;
 }>({
+	editOrganizationPage: async ({page}, use) => {
+		await use(new EditOrganizationPage(page));
+	},
 	editUserPage: async ({page}, use) => {
 		await use(new EditUserPage(page));
+	},
+	serviceAccountsPage: async ({page}, use) => {
+		await use(new ServiceAccountsPage(page));
 	},
 	usersAndOrganizationsPage: async ({page}, use) => {
 		await use(new UsersAndOrganizationsPage(page));

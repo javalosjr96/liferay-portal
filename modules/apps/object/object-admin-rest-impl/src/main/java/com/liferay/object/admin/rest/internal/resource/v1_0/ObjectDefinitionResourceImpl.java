@@ -258,10 +258,15 @@ public class ObjectDefinitionResourceImpl
 					transformToList(
 						ArrayUtil.filter(
 							objectDefinition.getObjectFields(),
-							objectField -> !StringUtil.equals(
-								objectField.getBusinessTypeAsString(),
-								ObjectFieldConstants.
-									BUSINESS_TYPE_AGGREGATION)),
+							objectField ->
+								!StringUtil.equals(
+									objectField.getBusinessTypeAsString(),
+									ObjectFieldConstants.
+										BUSINESS_TYPE_AGGREGATION) &&
+								!StringUtil.equals(
+									objectField.getBusinessTypeAsString(),
+									ObjectFieldConstants.
+										BUSINESS_TYPE_RELATIONSHIP)),
 						objectField -> ObjectFieldUtil.toObjectField(
 							GetterUtil.getBoolean(
 								objectDefinition.getEnableLocalization()),
@@ -551,6 +556,19 @@ public class ObjectDefinitionResourceImpl
 			long listTypeDefinitionId = ObjectFieldUtil.getListTypeDefinitionId(
 				serviceBuilderObjectDefinition.getCompanyId(),
 				_listTypeDefinitionLocalService, objectField);
+
+			if (objectField.getBusinessType() ==
+					ObjectField.BusinessType.RELATIONSHIP) {
+
+				com.liferay.object.model.ObjectField existingObjectField =
+					_objectFieldLocalService.fetchObjectField(
+						objectField.getExternalReferenceCode(),
+						objectDefinitionId);
+
+				if (existingObjectField == null) {
+					continue;
+				}
+			}
 
 			_objectFieldLocalService.updateObjectField(
 				objectField.getExternalReferenceCode(),

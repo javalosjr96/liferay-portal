@@ -65,7 +65,7 @@ function refresh_liferay_sample_workspace {
 	mv gradle.properties.tmp gradle.properties
 
 	sed -i 's/name: "biz.aQute.bnd", version: ".*"/name: "biz.aQute.bnd.gradle", version: "5.2.0"/' settings.gradle
-	sed -i 's/name: "com.liferay.gradle.plugins.workspace", version: ".*"/name: "com.liferay.gradle.plugins.workspace", version: "9.1.4"/' settings.gradle
+	sed -i 's/name: "com.liferay.gradle.plugins.workspace", version: ".*"/name: "com.liferay.gradle.plugins.workspace", version: "10.0.1"/' settings.gradle
 
 	echo -en "\ninclude \"poshi\"" >> settings.gradle
 
@@ -73,6 +73,7 @@ function refresh_liferay_sample_workspace {
 
 	cat << EOF > liferay-sample-workspace/.gitignore
 .DS_Store
+/.idea
 /bundles
 /poshi/poshi-ext.properties
 /poshi/test-results

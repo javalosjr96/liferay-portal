@@ -32,6 +32,11 @@ definition {
 					userFirstName = "user${n}",
 					userLastName = "user${n}",
 					userScreenName = "user${n}");
+
+				JSONUser.setFirstPassword(
+					agreeToTermsAndAnswerReminderQuery = "true",
+					requireReset = "false",
+					userEmailAddress = "user${n}@liferay.com");
 			}
 		}
 
@@ -126,17 +131,16 @@ definition {
 	}
 
 	@description = "Feature ID: Legacy | Automation ID: LRAC-8993 | Test Summary: Selecting a Segment in Individuals"
-	@ignore = "true"
 	@priority = 3
 	test AssertIndividualsSegmentSelected {
 		property test.run.type = "single";
-
-		// AC Bug ticket: LRAC-14840
 
 		var emailList = "user1@liferay.com";
 
 		task ("View the page as different users") {
 			ACUtils.navigateToSitePageWithUser(
+				actionType = "View WC",
+				documentTitleList = "View Page 1,View Page 2,View Page 3",
 				emailList = ${emailList},
 				pageName = "AC Page",
 				siteName = "Site Name");

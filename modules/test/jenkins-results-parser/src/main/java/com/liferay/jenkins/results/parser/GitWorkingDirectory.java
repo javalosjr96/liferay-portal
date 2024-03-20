@@ -1379,53 +1379,6 @@ public class GitWorkingDirectory {
 		return _gitRepositoryUsername;
 	}
 
-	public File getJavaFileFromFullClassName(String fullClassName) {
-		if (_javaDirPaths == null) {
-			List<File> javaFiles = JenkinsResultsParserUtil.findFiles(
-				getWorkingDirectory(), ".*\\.java");
-
-			_javaDirPaths = ConcurrentHashMap.newKeySet();
-
-			for (File javaFile : javaFiles) {
-				File parentFile = javaFile.getParentFile();
-
-				_javaDirPaths.add(parentFile.getPath());
-			}
-		}
-
-		String classFileName =
-			fullClassName.replaceAll(".*\\.([^\\.]+)", "$1") + ".java";
-
-		String classPackageName = fullClassName.substring(
-			0, fullClassName.lastIndexOf("."));
-
-		String classPackagePath = classPackageName.replaceAll("\\.", "/");
-
-		for (String javaDirPath : _javaDirPaths) {
-			if (!javaDirPath.contains(classPackagePath)) {
-				continue;
-			}
-
-			File classFile = new File(javaDirPath, classFileName);
-
-			if (!classFile.exists()) {
-				continue;
-			}
-
-			String classFilePath = classFile.getPath();
-
-			if (!classFilePath.contains(
-					classPackagePath + "/" + classFileName)) {
-
-				continue;
-			}
-
-			return classFile;
-		}
-
-		return null;
-	}
-
 	public String getLatestCommitSHA() {
 		List<LocalGitCommit> localGitCommits = log(1);
 
@@ -2328,6 +2281,10 @@ public class GitWorkingDirectory {
 		}
 	}
 
+	public void setCacheBashCommands(boolean cacheBashCommands) {
+		_cacheBashCommands = cacheBashCommands;
+	}
+
 	public void stageFileInCurrentLocalGitBranch(String fileName) {
 		String command = "git stage " + fileName;
 
@@ -2417,11 +2374,23 @@ public class GitWorkingDirectory {
 		_gitRepositoryUsername = loadGitRepositoryUsername();
 	}
 
-	protected GitUtil.ExecutionResult executeBashCommands(
+	protected synchronized GitUtil.ExecutionResult executeBashCommands(
 		int maxRetries, long retryDelay, long timeout, String... commands) {
 
-		return GitUtil.executeBashCommands(
+		String command = String.join(" ", commands);
+
+		if (_cacheBashCommands && _executionResults.containsKey(command)) {
+			System.out.println("Using cached excecution for: " + command);
+
+			return _executionResults.get(command);
+		}
+
+		GitUtil.ExecutionResult executionResult = GitUtil.executeBashCommands(
 			maxRetries, retryDelay, timeout, _workingDirectory, commands);
+
+		_executionResults.put(command, executionResult);
+
+		return executionResult;
 	}
 
 	protected Map<String, String> getLocalGitBranchesShaMap() {
@@ -3072,12 +3041,14 @@ public class GitWorkingDirectory {
 			_getBuildPropertyAsList(
 				"git.working.directory.public.only.repository.names"));
 
+	private boolean _cacheBashCommands;
+	private final Map<String, GitUtil.ExecutionResult> _executionResults =
+		new HashMap<>();
 	private File _gitDirectory;
 	private final Map<String, GitRemote> _gitRemotes =
 		new ConcurrentHashMap<>();
 	private final String _gitRepositoryName;
 	private final String _gitRepositoryUsername;
-	private Set<String> _javaDirPaths;
 	private final String _upstreamBranchName;
 	private File _workingDirectory;
 

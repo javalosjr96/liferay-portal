@@ -59,13 +59,22 @@ journalEditArticleDisplayContext.setViewAttributes();
 					<c:choose>
 						<c:when test='<%= FeatureFlagManagerUtil.isEnabled("LPS-114700") %>'>
 							<div class="autofit-row sidebar-section">
-								<div class="autofit-col translation-manager">
-									<div class="inline-item px-5 py-2">
-										<span aria-hidden="true" class="loading-animation"></span>
-									</div>
+								<div class="<%= FeatureFlagManagerUtil.isEnabled("LPD-11253") ? "autofit-col d-flex flex-row" : "autofit-col translation-manager" %>">
+									<c:choose>
+										<c:when test='<%= FeatureFlagManagerUtil.isEnabled("LPD-11253") %>'>
+											<div class="inline-item px-6 py-2">
+												<span aria-hidden="true" class="loading-animation"></span>
+											</div>
+										</c:when>
+										<c:otherwise>
+											<div class="inline-item px-5 py-2">
+												<span aria-hidden="true" class="loading-animation"></span>
+											</div>
+										</c:otherwise>
+									</c:choose>
 
 									<react:component
-										module="js/translation_manager/TranslationManager"
+										module="{TranslationManager} from journal-web"
 										props='<%=
 											HashMapBuilder.<String, Object>put(
 												"defaultLanguageId", journalEditArticleDisplayContext.getDefaultArticleLanguageId()
@@ -73,6 +82,31 @@ journalEditArticleDisplayContext.setViewAttributes();
 												"fields", journalEditArticleDisplayContext.getFieldMap()
 											).put(
 												"locales", journalEditArticleDisplayContext.getLocales()
+											).put(
+												"namespace", liferayPortletResponse.getNamespace()
+											).put(
+												"selectedLanguageId", journalEditArticleDisplayContext.getSelectedLanguageId()
+											).build()
+										%>'
+									/>
+								</div>
+
+								<div class="c-ml-2">
+									<div class="inline-item my-5 p-5 w-100">
+										<span aria-hidden="true" class="loading-animation"></span>
+									</div>
+
+									<react:component
+										module="js/translation_manager/TranslationOptions"
+										props='<%=
+											HashMapBuilder.<String, Object>put(
+												"defaultLanguageId", journalEditArticleDisplayContext.getDefaultArticleLanguageId()
+											).put(
+												"fields", journalEditArticleDisplayContext.getFieldMap()
+											).put(
+												"locales", journalEditArticleDisplayContext.getLocales()
+											).put(
+												"namespace", liferayPortletResponse.getNamespace()
 											).put(
 												"selectedLanguageId", journalEditArticleDisplayContext.getSelectedLanguageId()
 											).build()
@@ -160,7 +194,7 @@ journalEditArticleDisplayContext.setViewAttributes();
 
 								<c:if test='<%= FeatureFlagManagerUtil.isEnabled("LPD-15596") %>'>
 									<react:component
-										module="js/SaveButtons"
+										module="{SaveButtons} from journal-web"
 										props="<%= journalEditArticleDisplayContext.getSaveButtonsContext() %>"
 									/>
 								</c:if>
@@ -200,7 +234,7 @@ journalEditArticleDisplayContext.setViewAttributes();
 					displayType="secondary"
 					icon="times"
 					monospaced="<%= true %>"
-					propsTransformer="js/CloseConfigurationPanelPropsTransformer"
+					propsTransformer="{CloseConfigurationPanelPropsTransformer} from journal-web"
 					small="<%= true %>"
 					title="close-configuration-panel"
 					type="button"
@@ -330,7 +364,7 @@ journalEditArticleDisplayContext.setViewAttributes();
 <liferay-frontend:component
 	componentId='<%= liferayPortletResponse.getNamespace() + "JournalPortletComponent" %>'
 	context="<%= journalEditArticleDisplayContext.getComponentContext() %>"
-	module="js/JournalPortlet.es"
+	module="{JournalPortlet} from journal-web"
 	servletContext="<%= application %>"
 />
 

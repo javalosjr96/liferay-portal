@@ -5,20 +5,21 @@
 
 import {CustomerGatePage} from './pages/CustomerGatePage/CustomerGatePage';
 import GetAppRouter from './pages/GetApp/GetAppRouter';
+import GetSolutionRouter from './pages/GetSolution/GetSolutionRouter';
 import {NextSteps} from './pages/NextSteps';
 import PublishedAppsDashboardRouter from './pages/PublishedAppsDashboard/PublishedAppsDashboardRouter';
 import PublisherGateRouter from './pages/PublisherGate/PublisheGateRouter';
 import PurchasedAppsDashboardRouter from './pages/PurchasedAppsDashboard/PurchasedAppsDashboardRouter';
-import PurchasedSolutions from './pages/PurchasedSolutions/PurchasedSolutions';
 
 const Routes = {
+	'administrator-dashboard': PublishedAppsDashboardRouter,
 	'customer-gate': CustomerGatePage,
 	'get-app': GetAppRouter,
 	'next-steps': NextSteps,
 	'published-apps': PublishedAppsDashboardRouter,
 	'publisher-gate': PublisherGateRouter,
 	'purchased-apps': PurchasedAppsDashboardRouter,
-	'purchased-solutions': PurchasedSolutions,
+	'purchased-solutions': GetSolutionRouter,
 } as const;
 
 export type RouteType = keyof typeof Routes;

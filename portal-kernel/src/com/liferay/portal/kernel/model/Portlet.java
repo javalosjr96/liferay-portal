@@ -210,6 +210,13 @@ public interface Portlet extends PersistedModel, PortletModel {
 	public java.util.Set<String> getAutopropagatedParameters();
 
 	/**
+	 * Returns the category names of the portlet.
+	 *
+	 * @return the category names of the portlet
+	 */
+	public java.util.Set<String> getCategoryNames();
+
+	/**
 	 * Returns <code>true</code> if the portlet is found in a WAR file.
 	 *
 	 * @param portletId the cloned instance portlet ID
@@ -1677,6 +1684,13 @@ public interface Portlet extends PersistedModel, PortletModel {
 	 */
 	public void setAutopropagatedParameters(
 		java.util.Set<String> autopropagatedParameters);
+
+	/**
+	 * Sets the category names of the portlet.
+	 *
+	 * @param categoryNames the category names of the portlet
+	 */
+	public void setCategoryNames(java.util.Set<String> categoryNames);
 
 	/**
 	 * Sets the configuration action class of the portlet.

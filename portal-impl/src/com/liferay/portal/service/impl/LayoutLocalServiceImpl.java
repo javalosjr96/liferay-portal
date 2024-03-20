@@ -9,6 +9,7 @@ import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
 import com.liferay.exportimport.kernel.staging.MergeLayoutPrototypesThreadLocal;
 import com.liferay.layout.admin.kernel.model.LayoutTypePortletConstants;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.sql.dsl.query.DSLQuery;
@@ -47,6 +48,7 @@ import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.LayoutSetPrototype;
 import com.liferay.portal.kernel.model.LayoutTable;
 import com.liferay.portal.kernel.model.LayoutType;
+import com.liferay.portal.kernel.model.LayoutTypeController;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
 import com.liferay.portal.kernel.model.PortalPreferenceValueTable;
 import com.liferay.portal.kernel.model.PortalPreferences;
@@ -114,6 +116,7 @@ import com.liferay.portal.kernel.util.comparator.LayoutPriorityComparator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowThreadLocal;
 import com.liferay.portal.service.base.LayoutLocalServiceBaseImpl;
+import com.liferay.portal.util.LayoutTypeControllerTracker;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.ratings.kernel.service.RatingsStatsLocalService;
 import com.liferay.sites.kernel.util.Sites;
@@ -704,6 +707,7 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 			description, type, hidden, false, friendlyURL, serviceContext);
 	}
 
+	@Override
 	public Layout copyLayout(
 			long userId, long groupId, boolean privateLayout,
 			Map<Locale, String> nameMap, boolean hidden, boolean system,
@@ -1159,6 +1163,39 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 		}
 
 		return layouts;
+	}
+
+	@Override
+	public Layout getBrowsableLayout(Layout layout) {
+		List<String> types = TransformUtil.transformToList(
+			LayoutTypeControllerTracker.getTypes(),
+			type -> {
+				LayoutTypeController layoutTypeController =
+					LayoutTypeControllerTracker.getLayoutTypeController(type);
+
+				if ((layoutTypeController == null) ||
+					!layoutTypeController.isBrowsable()) {
+
+					return null;
+				}
+
+				return type;
+			});
+
+		if (types.contains(layout.getType())) {
+			return layout;
+		}
+
+		ChildLayout browsableChildLayout = _getBrowsableChildLayout(
+			types, layout.getGroupId(), layout.getLayoutId(),
+			layout.isPrivateLayout());
+
+		if (browsableChildLayout == null) {
+			return fetchDefaultLayout(
+				layout.getGroupId(), layout.isPrivateLayout());
+		}
+
+		return fetchLayout(browsableChildLayout.getPlid());
 	}
 
 	/**
@@ -1763,20 +1800,6 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 			end, orderByComparator);
 	}
 
-	/**
-	 * Returns a range of all the layouts belonging to the group.
-	 *
-	 * @param  groupId the primary key of the group
-	 * @param  userId the primary key of the user
-	 * @param  privateLayout whether the layout is private to the group
-	 * @param  keywords keywords
-	 * @param  types layout types
-	 * @param  start the lower bound of the range of layouts
-	 * @param  end the upper bound of the range of layouts (not inclusive)
-	 * @param  orderByComparator the comparator to order the layouts
-	 * @return the matching layouts, or <code>null</code> if no matches were
-	 *         found
-	 */
 	@Override
 	public List<Layout> getLayouts(
 			long groupId, long userId, boolean privateLayout, String keywords,
@@ -1784,40 +1807,9 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 			OrderByComparator<Layout> orderByComparator)
 		throws PortalException {
 
-		if (Validator.isNull(keywords)) {
-			return getLayouts(
-				groupId, privateLayout, statuses, start, end,
-				orderByComparator);
-		}
-
-		Indexer<Layout> indexer = IndexerRegistryUtil.getIndexer(
-			Layout.class.getName());
-
-		Hits hits = indexer.search(
-			_buildSearchContext(
-				groupId, userId, privateLayout, keywords, types, statuses,
-				start, end, orderByComparator));
-
-		List<Document> documents = hits.toList();
-
-		List<Layout> layouts = new ArrayList<>(documents.size());
-
-		for (Document document : documents) {
-			Layout layout = fetchLayout(
-				GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK)));
-
-			if (layout == null) {
-				indexer.delete(
-					GetterUtil.getLong(document.get(Field.COMPANY_ID)),
-					document.getUID());
-
-				continue;
-			}
-
-			layouts.add(layout);
-		}
-
-		return layouts;
+		return search(
+			groupId, userId, privateLayout, keywords, false, types, statuses,
+			start, end, orderByComparator);
 	}
 
 	/**
@@ -2036,19 +2028,8 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 			String[] types)
 		throws PortalException {
 
-		if (Validator.isNull(keywords)) {
-			return getLayoutsCount(groupId, privateLayout);
-		}
-
-		Indexer<Layout> indexer = IndexerRegistryUtil.getIndexer(
-			Layout.class.getName());
-
-		Hits hits = indexer.search(
-			_buildSearchContext(
-				groupId, userId, privateLayout, keywords, types, new int[0],
-				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null));
-
-		return hits.getLength();
+		return searchCount(
+			groupId, userId, privateLayout, keywords, false, types);
 	}
 
 	@Override
@@ -2488,6 +2469,105 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 
 		return layoutLocalServiceHelper.hasLayoutSetPrototypeLayout(
 			layoutSetPrototype, layoutUuid);
+	}
+
+	@Override
+	public List<Layout> search(
+			long groupId, boolean privateLayout, String keywords,
+			boolean searchOnlyByTitle, String[] types, int start, int end,
+			OrderByComparator<Layout> orderByComparator)
+		throws PortalException {
+
+		return search(
+			groupId, 0, privateLayout, keywords, searchOnlyByTitle, types,
+			start, end, orderByComparator);
+	}
+
+	@Override
+	public List<Layout> search(
+			long groupId, long userId, boolean privateLayout, String keywords,
+			boolean searchOnlyByTitle, String[] types, int start, int end,
+			OrderByComparator<Layout> orderByComparator)
+		throws PortalException {
+
+		return search(
+			groupId, userId, privateLayout, keywords, searchOnlyByTitle, types,
+			new int[0], start, end, orderByComparator);
+	}
+
+	@Override
+	public List<Layout> search(
+			long groupId, long userId, boolean privateLayout, String keywords,
+			boolean searchOnlyByTitle, String[] types, int[] statuses,
+			int start, int end, OrderByComparator<Layout> orderByComparator)
+		throws PortalException {
+
+		if (Validator.isNull(keywords)) {
+			return getLayouts(
+				groupId, privateLayout, statuses, start, end,
+				orderByComparator);
+		}
+
+		Indexer<Layout> indexer = IndexerRegistryUtil.getIndexer(
+			Layout.class.getName());
+
+		Hits hits = indexer.search(
+			_buildSearchContext(
+				groupId, userId, privateLayout, keywords, searchOnlyByTitle,
+				types, statuses, start, end, orderByComparator));
+
+		List<Document> documents = hits.toList();
+
+		List<Layout> layouts = new ArrayList<>(documents.size());
+
+		for (Document document : documents) {
+			Layout layout = fetchLayout(
+				GetterUtil.getLong(document.get(Field.ENTRY_CLASS_PK)));
+
+			if (layout == null) {
+				indexer.delete(
+					GetterUtil.getLong(document.get(Field.COMPANY_ID)),
+					document.getUID());
+
+				continue;
+			}
+
+			layouts.add(layout);
+		}
+
+		return layouts;
+	}
+
+	@Override
+	public int searchCount(
+			Group group, boolean privateLayout, String keywords,
+			boolean searchOnlyByTitle, String[] types)
+		throws PortalException {
+
+		return searchCount(
+			group.getGroupId(), 0, privateLayout, keywords, searchOnlyByTitle,
+			types);
+	}
+
+	@Override
+	public int searchCount(
+			long groupId, long userId, boolean privateLayout, String keywords,
+			boolean searchOnlyByTitle, String[] types)
+		throws PortalException {
+
+		if (Validator.isNull(keywords)) {
+			return getLayoutsCount(groupId, privateLayout);
+		}
+
+		Indexer<Layout> indexer = IndexerRegistryUtil.getIndexer(
+			Layout.class.getName());
+
+		Hits hits = indexer.search(
+			_buildSearchContext(
+				groupId, userId, privateLayout, keywords, searchOnlyByTitle,
+				types, new int[0], QueryUtil.ALL_POS, QueryUtil.ALL_POS, null));
+
+		return hits.getLength();
 	}
 
 	/**
@@ -3693,8 +3773,8 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 
 	private SearchContext _buildSearchContext(
 			long groupId, long userId, Boolean privateLayout, String keywords,
-			String[] types, int[] statuses, int start, int end,
-			OrderByComparator<Layout> orderByComparator)
+			boolean searchOnlyByTitle, String[] types, int[] statuses,
+			int start, int end, OrderByComparator<Layout> orderByComparator)
 		throws PortalException {
 
 		SearchContext searchContext = new SearchContext();
@@ -3706,6 +3786,7 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 		searchContext.setAttribute(Field.TITLE, keywords);
 		searchContext.setAttribute(Field.TYPE, types);
 		searchContext.setAttribute("paginationType", "more");
+		searchContext.setAttribute("searchOnlyByTitle", searchOnlyByTitle);
 
 		if (privateLayout != null) {
 			searchContext.setAttribute(
@@ -3738,6 +3819,17 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 		return searchContext;
 	}
 
+	private SearchContext _buildSearchContext(
+			long groupId, long userId, Boolean privateLayout, String keywords,
+			String[] types, int[] statuses, int start, int end,
+			OrderByComparator<Layout> orderByComparator)
+		throws PortalException {
+
+		return _buildSearchContext(
+			groupId, userId, privateLayout, keywords, false, types, statuses,
+			start, end, orderByComparator);
+	}
+
 	private void _deleteLayouts(
 			long groupId, boolean privateLayout, boolean system,
 			ServiceContext serviceContext)
@@ -3768,6 +3860,29 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 			SecureRandomUtil.nextLong(), SecureRandomUtil.nextLong());
 
 		return StringPool.SLASH + uuid.toString();
+	}
+
+	private ChildLayout _getBrowsableChildLayout(
+		List<String> browsableTypes, long groupId, long parentLayoutId,
+		boolean privateLayout) {
+
+		for (ChildLayout childLayout :
+				_getChildLayouts(groupId, parentLayoutId, privateLayout)) {
+
+			if (browsableTypes.contains(childLayout.getType())) {
+				return childLayout;
+			}
+
+			ChildLayout browsableChildLayout = _getBrowsableChildLayout(
+				browsableTypes, groupId, childLayout.getLayoutId(),
+				privateLayout);
+
+			if (browsableChildLayout != null) {
+				return browsableChildLayout;
+			}
+		}
+
+		return null;
 	}
 
 	private List<Layout> _getChildLayouts(
@@ -3803,6 +3918,37 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 		catch (PortalException portalException) {
 			throw new SystemException(portalException);
 		}
+	}
+
+	private List<ChildLayout> _getChildLayouts(
+		long groupId, long parentLayoutId, boolean privateLayout) {
+
+		List<Object[]> results = dslQuery(
+			DSLQueryFactoryUtil.select(
+				LayoutTable.INSTANCE.plid, LayoutTable.INSTANCE.layoutId,
+				LayoutTable.INSTANCE.type
+			).from(
+				LayoutTable.INSTANCE
+			).where(
+				LayoutTable.INSTANCE.groupId.eq(
+					groupId
+				).and(
+					LayoutTable.INSTANCE.privateLayout.eq(privateLayout)
+				).and(
+					LayoutTable.INSTANCE.parentLayoutId.eq(parentLayoutId)
+				).and(
+					LayoutTable.INSTANCE.system.eq(false)
+				)
+			).orderBy(
+				orderByStep -> orderByStep.orderBy(
+					LayoutTable.INSTANCE, new LayoutPriorityComparator())
+			));
+
+		return TransformUtil.transform(
+			results,
+			values -> new ChildLayout(
+				GetterUtil.getLong(values[1]), GetterUtil.getLong(values[0]),
+				GetterUtil.getString(values[2])));
 	}
 
 	private Map<Locale, String> _getDraftFriendlyURLMap(
@@ -4219,5 +4365,31 @@ public class LayoutLocalServiceImpl extends LayoutLocalServiceBaseImpl {
 
 	@BeanReference(type = WorkflowInstanceLinkLocalService.class)
 	private WorkflowInstanceLinkLocalService _workflowInstanceLinkLocalService;
+
+	private class ChildLayout {
+
+		public ChildLayout(long layoutId, long plid, String type) {
+			_layoutId = layoutId;
+			_plid = plid;
+			_type = type;
+		}
+
+		public long getLayoutId() {
+			return _layoutId;
+		}
+
+		public long getPlid() {
+			return _plid;
+		}
+
+		public String getType() {
+			return _type;
+		}
+
+		private final long _layoutId;
+		private final long _plid;
+		private final String _type;
+
+	}
 
 }

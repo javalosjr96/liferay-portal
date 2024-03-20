@@ -8,25 +8,59 @@
 			<create-analytics-cloud-docker-compose start.analytics.cloud="false" />
 
 			<if>
-				<equals arg1="${analytics.cloud.service.images.available}" arg2="true" />
+				<available file="${project.dir}/dist/liferay-docker-asah.tar" />
 				<then>
-					<for list="${analytics.cloud.service.image.names}" param="analytics.cloud.service.image.name">
+					<execute>
+						docker load --input ${project.dir}/dist/liferay-docker-asah.tar
+					</execute>
+				</then>
+				<else>
+					<pull-docker-image-dependencies
+						analytics.cloud.image.names.excludes="${analytics.cloud.asah.image.names.excludes}"
+						analytics.cloud.repository.dir="${analytics.cloud.asah.dir}"
+					/>
+
+					<execute dir="${analytics.cloud.asah.dir}">
+						./gradlew jar -Dliferay.ci=true
+
+						./gradlew clean assemble -Dliferay.ci=true
+
+						docker compose --file=${analytics.cloud.docker.test.yaml} --project-name=${analytics.cloud.project.name} build
+
+						docker images
+					</execute>
+
+					<for list="${analytics.cloud.asah.image.names}" param="analytics.cloud.asah.image.name">
 						<sequential>
-							<local name="analytics.cloud.service.name" />
-
-							<propertyregex
-								input="@{analytics.cloud.service.image.name}"
-								override="true"
-								property="analytics.cloud.service.name"
-								regexp="([^=]+)=([^=]+)"
-								replace="\1"
-							/>
-
-							<execute dir="${project.dir}">
-								docker load --input dist/liferay-docker-${analytics.cloud.service.name}.tar
-							</execute>
+							<if>
+								<not>
+									<matches pattern=".*com-liferay-osb-.*" string="@{analytics.cloud.asah.image.name}" />
+								</not>
+								<then>
+									<execute dir="${project.dir}">
+										docker pull @{analytics.cloud.asah.image.name}
+									</execute>
+								</then>
+							</if>
 						</sequential>
 					</for>
+
+					<antelope:stringutil property="analytics.cloud.asah.image.names.list" string="${analytics.cloud.asah.image.names}">
+						<antelope:replace regex="," replacement=" " />
+					</antelope:stringutil>
+
+					<execute dir="${project.dir}">
+						docker save --output ${project.dir}/dist/liferay-docker-asah.tar ${analytics.cloud.asah.image.names.list}
+					</execute>
+				</else>
+			</if>
+
+			<if>
+				<available file="${project.dir}/dist/liferay-docker-faro.tar" />
+				<then>
+					<execute>
+						docker load --input ${project.dir}/dist/liferay-docker-faro.tar
+					</execute>
 				</then>
 				<else>
 					<download-gradle-wrapper-binary />
@@ -60,68 +94,8 @@
 
 						docker rm ${analytics.cloud.faro.container.name}
 
-						docker save --output ${project.dir}/dist/liferay-docker-${analytics.cloud.faro.service.name}.tar ${analytics.cloud.faro.image.name}
+						docker save --output ${project.dir}/dist/liferay-docker-faro.tar ${analytics.cloud.faro.image.name}
 					</execute>
-
-					<pull-docker-image-dependencies
-						analytics.cloud.image.names.excludes="${analytics.cloud.asah.image.names.excludes}"
-						analytics.cloud.repository.dir="${analytics.cloud.asah.dir}"
-					/>
-
-					<execute dir="${analytics.cloud.asah.dir}">
-						./gradlew jar -Dliferay.ci=true
-
-						./gradlew clean assemble -Dliferay.ci=true
-
-						docker compose --file=${analytics.cloud.docker.test.yaml} --project-name=${analytics.cloud.project.name} build
-
-						docker images
-					</execute>
-
-					<for list="${analytics.cloud.service.image.names}" param="analytics.cloud.service.image.name">
-						<sequential>
-							<local name="analytics.cloud.image.name" />
-							<local name="analytics.cloud.service.name" />
-
-							<propertyregex
-								input="@{analytics.cloud.service.image.name}"
-								override="true"
-								property="analytics.cloud.image.name"
-								regexp="([^=]+)=([^=]+)"
-								replace="\2"
-							/>
-
-							<propertyregex
-								input="@{analytics.cloud.service.image.name}"
-								override="true"
-								property="analytics.cloud.service.name"
-								regexp="([^=]+)=([^=]+)"
-								replace="\1"
-							/>
-
-							<if>
-								<not>
-									<matches pattern=".*com-liferay-osb-.*" string="${analytics.cloud.image.name}" />
-								</not>
-								<then>
-									<execute dir="${project.dir}">
-										docker pull ${analytics.cloud.image.name}
-									</execute>
-								</then>
-							</if>
-
-							<if>
-								<not>
-									<contains string="${analytics.cloud.service.name}" substring="osbfaro" />
-								</not>
-								<then>
-									<execute dir="${project.dir}">
-										docker save --output ${project.dir}/dist/liferay-docker-${analytics.cloud.service.name}.tar ${analytics.cloud.image.name}
-									</execute>
-								</then>
-							</if>
-						</sequential>
-					</for>
 				</else>
 			</if>
 		</sequential>
@@ -140,6 +114,8 @@
 
 			<mkdir dir="${project.dir}/dist" />
 
+			<get-host-git-dir />
+
 			<beanshell>
 				<![CDATA[
 					import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
@@ -150,35 +126,77 @@
 					import org.yaml.snakeyaml.DumperOptions;
 					import org.yaml.snakeyaml.Yaml;
 
-					public void downloadServiceImages(Map dockerComposeMap) {
-						if (serviceImagesAvailable(dockerComposeMap)) {
+					public void downloadImageTarFile(File imageTarFile) {
+						if (imageTarFile.exists()) {
 							return;
 						}
 
-						String distNode = getDistNode();
 						String distPath = getDistPath();
 
-						if (JenkinsResultsParserUtil.isNullOrEmpty(distNode) || JenkinsResultsParserUtil.isNullOrEmpty(distPath)) {
+						if (JenkinsResultsParserUtil.isNullOrEmpty(distPath)) {
 							return;
 						}
 
-						StringBuilder sb = new StringBuilder();
+						File parentDir = imageTarFile.getParentFile();
 
-						sb.append("time timeout 1200 rsync -qs ");
-						sb.append(distNode);
-						sb.append(":");
-						sb.append(distPath);
-						sb.append("/liferay-docker-*.tar ");
-						sb.append(project.getProperty("project.dir"));
-						sb.append("/dist");
+						parentDir.mkdirs();
 
-						Process process = JenkinsResultsParserUtil.executeBashCommands(false, new File("."), 20 * 60 * 1000, new String[] {sb.toString()});
+						long analyticsCloudRsyncTimeout = Long.valueOf(project.getProperty("analytics.cloud.rsync.timeout"));
 
-						if (process.exitValue() != 0) {
-							return;
+						int retryCount = 0;
+
+						while (true) {
+							String distNode = getDistNode();
+
+							if (JenkinsResultsParserUtil.isNullOrEmpty(distNode)) {
+								return;
+							}
+
+							StringBuilder sb = new StringBuilder();
+
+							sb.append("time timeout ");
+							sb.append(analyticsCloudRsyncTimeout / 1000);
+							sb.append(" rsync -qs ");
+							sb.append(distNode);
+							sb.append(":");
+							sb.append(distPath);
+							sb.append("/");
+							sb.append(imageTarFile.getName());
+							sb.append(" ");
+							sb.append(JenkinsResultsParserUtil.getCanonicalPath(imageTarFile));
+							sb.append(" ");
+
+							try {
+								Process process = JenkinsResultsParserUtil.executeBashCommands(false, new File("."), analyticsCloudRsyncTimeout, new String[] {sb.toString()});
+
+								if (process.exitValue() != 0) {
+									continue;
+								}
+
+								System.out.println(JenkinsResultsParserUtil.readInputStream(process.getInputStream()));
+
+								break;
+							}
+							catch (Exception exception) {
+								continue;
+							}
+							finally {
+								if (retryCount >= 2) {
+									System.out.println("WARNING: Unable to download " + imageTarFile.getName() + " after " + retryCount + " retries");
+								}
+
+								retryCount++;
+							}
+
+							break;
 						}
+					}
 
-						System.out.println(JenkinsResultsParserUtil.readInputStream(process.getInputStream()));
+					public void downloadImageTarFiles() {
+						File distDir = new File(project.getProperty("project.dir") + "/dist");
+
+						downloadImageTarFile(new File(distDir, "liferay-docker-asah.tar"));
+						downloadImageTarFile(new File(distDir, "liferay-docker-faro.tar"));
 					}
 
 					public void dumpYamlMap(Map yamlMap) {
@@ -189,19 +207,7 @@
 						yaml.dump(yamlMap, fileWriter);
 					}
 
-					public String getAnalyticsCloudFaroServiceName(Map dockerComposeMap) {
-						Map servicesMap = dockerComposeMap.get("services");
-
-						for (String serviceName : servicesMap.keySet()) {
-							if (serviceName.contains("osbfaro")) {
-								return serviceName;
-							}
-						}
-
-						return null;
-					}
-
-					public String getAnalyticsCloudServiceImageNames(Map dockerComposeMap) {
+					public String getAnalyticsCloudAsahImageNames(Map dockerComposeMap) {
 						StringBuilder sb = new StringBuilder();
 
 						Map servicesMap = dockerComposeMap.get("services");
@@ -209,14 +215,16 @@
 						for (String serviceName : servicesMap.keySet()) {
 							Map serviceMap = servicesMap.get(serviceName);
 
+							if (serviceName.contains("faro")) {
+								continue;
+							}
+
 							String imageName = serviceMap.get("image");
 
 							if (JenkinsResultsParserUtil.isNullOrEmpty(imageName)) {
 								imageName = "com-liferay-osb-asah-private-" + serviceName;
 							}
 
-							sb.append(serviceName);
-							sb.append("=");
 							sb.append(imageName);
 							sb.append(",");
 						}
@@ -339,8 +347,6 @@
 						ports.add(project.getProperty("analytics.cloud.faro.osgi.console.port") + ":11311");
 
 						osbFaroFrontendServiceMap.put("ports", ports);
-
-						osbFaroFrontendServiceMap.put("tty", "true");
 					}
 
 					public void updateServiceImages(Map dockerComposeMap) {
@@ -361,20 +367,46 @@
 						}
 					}
 
+					public void updateVolumes(Map dockerComposeMap) {
+						String hostGitDir = project.getProperty("host.git.dir");
+
+						if (JenkinsResultsParserUtil.isNullOrEmpty(hostGitDir)) {
+							return;
+						}
+
+						Map servicesMap = dockerComposeMap.get("services");
+
+						for (String serviceName : servicesMap.keySet()) {
+							Map serviceMap = servicesMap.get(serviceName);
+
+							List updatedVolumes = new ArrayList();
+
+							List currentVolumes = serviceMap.get("volumes");
+
+							if (currentVolumes == null) {
+								continue;
+							}
+
+							for (String currentVolume : currentVolumes) {
+								updatedVolumes.add(currentVolume.replaceAll("\\./", hostGitDir + "/com-liferay-osb-asah-private/"));
+							}
+
+							serviceMap.put("volumes", updatedVolumes);
+						}
+					}
+
+					downloadImageTarFiles();
+
 					Map dockerComposeMap = getDockerComposeMap();
 
 					updateDockerNetwork(dockerComposeMap);
 					updateOSBFaroFrontendService(dockerComposeMap);
-
-					downloadServiceImages(dockerComposeMap);
-
 					updateServiceImages(dockerComposeMap);
+					updateVolumes(dockerComposeMap);
 
 					dumpYamlMap(dockerComposeMap);
 
-					project.setProperty("analytics.cloud.faro.service.name", getAnalyticsCloudFaroServiceName(dockerComposeMap));
-					project.setProperty("analytics.cloud.service.image.names", getAnalyticsCloudServiceImageNames(dockerComposeMap));
-					project.setProperty("analytics.cloud.service.images.available", String.valueOf(serviceImagesAvailable(dockerComposeMap)));
+					project.setProperty("analytics.cloud.asah.image.names", getAnalyticsCloudAsahImageNames(dockerComposeMap));
 				]]>
 			</beanshell>
 
@@ -479,6 +511,10 @@ OSB_FARO_FRONTEND_URL=${analytics.cloud.faro.frontend.url}</echo>
 
 	<macrodef name="print-analytics-cloud-logs">
 		<sequential>
+			<execute>
+				docker stats --no-stream
+			</execute>
+
 			<property location="${analytics.cloud.asah.dir}/docker-compose.test.yml" name="analytics.cloud.docker.test.yaml" />
 
 			<local name="container.names" />
@@ -655,12 +691,16 @@ OSB_FARO_FRONTEND_URL=${analytics.cloud.faro.frontend.url}</echo>
 					sleep 30
 				done
 
+				echo "Docker compose is healthy."
+
 				while [[ -z $(docker logs ${analytics.cloud.faro.container.name} | grep "Completed demo data creation") ]]
 				do
-					echo "Waiting for faro to startup."
+					echo "Waiting for Faro demo data to be created."
 
 					sleep 15
 				done
+
+				echo "Faro demo data was created."
 
 				docker logs ${analytics.cloud.faro.container.name}
 
@@ -696,8 +736,6 @@ OSB_FARO_FRONTEND_URL=${analytics.cloud.faro.frontend.url}</echo>
 					</trycatch>
 				</try>
 				<catch>
-					<echo>Failed to create Analytics Cloud demo data.</echo>
-
 					<fail message="${analytics.cloud.error}" />
 				</catch>
 			</trycatch>

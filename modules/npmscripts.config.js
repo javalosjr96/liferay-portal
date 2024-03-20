@@ -461,6 +461,10 @@ module.exports = {
 			'@liferay/template-web': [],
 			'asset-taglib': [],
 			'data-engine-js-components-web': [],
+			'data-engine-taglib': [],
+			'dynamic-data-mapping-form-field-type': [
+				'leaflet/dist/leaflet.css',
+			],
 			'frontend-editor-alloyeditor-web': [],
 			'frontend-editor-ckeditor-web': [],
 			'frontend-js-components-web': [],
@@ -511,6 +515,7 @@ module.exports = {
 			],
 			'item-selector-taglib': [],
 			'item-selector-web': [],
+			'portal-workflow-kaleo-designer-web': [],
 			'social-bookmarks-taglib': [],
 		},
 	},

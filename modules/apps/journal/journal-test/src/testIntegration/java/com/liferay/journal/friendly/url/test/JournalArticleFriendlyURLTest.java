@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -58,6 +59,7 @@ public class JournalArticleFriendlyURLTest {
 		String usTitle = RandomTestUtil.randomString();
 
 		JournalArticle article = _addJournalArticleWithTitleMap(
+			LocaleUtil.US,
 			HashMapBuilder.put(
 				LocaleUtil.US, usTitle
 			).build());
@@ -99,6 +101,7 @@ public class JournalArticleFriendlyURLTest {
 	@Test
 	public void testFriendlyURLAfterUpdate() throws Exception {
 		JournalArticle article = _addJournalArticleWithTitleMap(
+			LocaleUtil.US,
 			_getLocalizedMap(
 				RandomTestUtil.randomString(),
 				new Locale[] {LocaleUtil.FRANCE, LocaleUtil.US}));
@@ -133,19 +136,49 @@ public class JournalArticleFriendlyURLTest {
 	}
 
 	@Test
+	public void testFriendlyURLShouldNotHaveSiteLocaleNotEqualDefaultLocale()
+		throws Exception {
+
+		Locale originalSiteDefaultLocale =
+			LocaleThreadLocal.getSiteDefaultLocale();
+
+		try {
+			LocaleThreadLocal.setSiteDefaultLocale(LocaleUtil.US);
+
+			String title = RandomTestUtil.randomString();
+			Locale[] locales = {LocaleUtil.SPAIN};
+
+			Map<Locale, String> titleMap = _getLocalizedMap(title, locales);
+
+			JournalArticle article = _addJournalArticleWithTitleMap(
+				LocaleUtil.SPAIN, titleMap);
+
+			Map<Locale, String> friendlyURLMap = article.getFriendlyURLMap();
+
+			Assert.assertNull(friendlyURLMap.get(LocaleUtil.getSiteDefault()));
+			Assert.assertEquals(
+				friendlyURLMap.toString(), 1, friendlyURLMap.size());
+		}
+		finally {
+			LocaleThreadLocal.setSiteDefaultLocale(originalSiteDefaultLocale);
+		}
+	}
+
+	@Test
 	public void testUniqueFriendlyURLAfterUpdate() throws Exception {
 		String title1 = RandomTestUtil.randomString();
 		Locale[] locales = {LocaleUtil.FRANCE, LocaleUtil.US};
 
 		Map<Locale, String> titleMap1 = _getLocalizedMap(title1, locales);
 
-		JournalArticle article = _addJournalArticleWithTitleMap(titleMap1);
+		JournalArticle article = _addJournalArticleWithTitleMap(
+			LocaleUtil.US, titleMap1);
 
 		String title2 = RandomTestUtil.randomString();
 
 		Map<Locale, String> titleMap2 = _getLocalizedMap(title2, locales);
 
-		_addJournalArticleWithTitleMap(titleMap2);
+		_addJournalArticleWithTitleMap(LocaleUtil.US, titleMap2);
 
 		JournalArticle updatedArticle = _updateJournalArticleWithTitleMap(
 			article, titleMap2);
@@ -166,6 +199,7 @@ public class JournalArticleFriendlyURLTest {
 		String usTitle = RandomTestUtil.randomString();
 
 		JournalArticle article = _addJournalArticleWithTitleMap(
+			LocaleUtil.US,
 			HashMapBuilder.put(
 				LocaleUtil.FRANCE, frTitle
 			).put(
@@ -189,9 +223,10 @@ public class JournalArticleFriendlyURLTest {
 		Map<Locale, String> titleMap = _getLocalizedMap(
 			title, new Locale[] {LocaleUtil.US});
 
-		_addJournalArticleWithTitleMap(titleMap);
+		_addJournalArticleWithTitleMap(LocaleUtil.US, titleMap);
 
-		JournalArticle article = _addJournalArticleWithTitleMap(titleMap);
+		JournalArticle article = _addJournalArticleWithTitleMap(
+			LocaleUtil.US, titleMap);
 
 		Map<Locale, String> friendlyURLMap = article.getFriendlyURLMap();
 
@@ -207,7 +242,8 @@ public class JournalArticleFriendlyURLTest {
 
 		Map<Locale, String> titleMap = _getLocalizedMap(title, locales);
 
-		JournalArticle article = _addJournalArticleWithTitleMap(titleMap);
+		JournalArticle article = _addJournalArticleWithTitleMap(
+			LocaleUtil.US, titleMap);
 
 		Map<Locale, String> friendlyURLMap = article.getFriendlyURLMap();
 
@@ -226,6 +262,7 @@ public class JournalArticleFriendlyURLTest {
 		String frTitle = RandomTestUtil.randomString();
 
 		_addJournalArticleWithTitleMap(
+			LocaleUtil.US,
 			HashMapBuilder.put(
 				LocaleUtil.FRANCE, frTitle
 			).put(
@@ -233,6 +270,7 @@ public class JournalArticleFriendlyURLTest {
 			).build());
 
 		JournalArticle article = _addJournalArticleWithTitleMap(
+			LocaleUtil.US,
 			HashMapBuilder.put(
 				LocaleUtil.US, frTitle
 			).build());
@@ -253,9 +291,10 @@ public class JournalArticleFriendlyURLTest {
 
 		Map<Locale, String> titleMap = _getLocalizedMap(title, locales);
 
-		_addJournalArticleWithTitleMap(titleMap);
+		_addJournalArticleWithTitleMap(LocaleUtil.US, titleMap);
 
-		JournalArticle article = _addJournalArticleWithTitleMap(titleMap);
+		JournalArticle article = _addJournalArticleWithTitleMap(
+			LocaleUtil.US, titleMap);
 
 		Map<Locale, String> friendlyURLMap = article.getFriendlyURLMap();
 
@@ -268,14 +307,14 @@ public class JournalArticleFriendlyURLTest {
 	}
 
 	private JournalArticle _addJournalArticleWithTitleMap(
-			Map<Locale, String> titleMap)
+			Locale defaultLocale, Map<Locale, String> titleMap)
 		throws Exception {
 
 		return JournalTestUtil.addArticle(
 			_group.getGroupId(),
 			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 			JournalArticleConstants.CLASS_NAME_ID_DEFAULT, titleMap, titleMap,
-			titleMap, LocaleUtil.US, false, true,
+			titleMap, defaultLocale, false, true,
 			ServiceContextTestUtil.getServiceContext(
 				_group.getGroupId(), TestPropsValues.getUserId()));
 	}

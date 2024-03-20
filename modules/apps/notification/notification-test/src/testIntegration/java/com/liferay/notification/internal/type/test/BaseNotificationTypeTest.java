@@ -26,6 +26,7 @@ import com.liferay.object.field.builder.BooleanObjectFieldBuilder;
 import com.liferay.object.field.builder.DateObjectFieldBuilder;
 import com.liferay.object.field.builder.DateTimeObjectFieldBuilder;
 import com.liferay.object.field.builder.IntegerObjectFieldBuilder;
+import com.liferay.object.field.builder.LongIntegerObjectFieldBuilder;
 import com.liferay.object.field.builder.MultiselectPicklistObjectFieldBuilder;
 import com.liferay.object.field.builder.PicklistObjectFieldBuilder;
 import com.liferay.object.field.builder.TextObjectFieldBuilder;
@@ -45,6 +46,7 @@ import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Contact;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ListType;
 import com.liferay.portal.kernel.model.ListTypeConstants;
 import com.liferay.portal.kernel.model.ResourceConstants;
@@ -59,6 +61,7 @@ import com.liferay.portal.kernel.service.ListTypeLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -139,6 +142,8 @@ public class BaseNotificationTypeTest {
 		).put(
 			"integerObjectField", RandomTestUtil.nextInt()
 		).put(
+			"longIntegerObjectField", RandomTestUtil.nextLong()
+		).put(
 			"multiselectPicklistObjectField",
 			Arrays.asList(
 				new ListEntry() {
@@ -164,6 +169,8 @@ public class BaseNotificationTypeTest {
 		).put(
 			"textObjectField", RandomTestUtil.randomString()
 		).build();
+
+		group = GroupTestUtil.addGroup();
 
 		parentObjectEntryValues = LinkedHashMapBuilder.<String, Object>put(
 			"systemObjectField", RandomTestUtil.randomString()
@@ -208,7 +215,7 @@ public class BaseNotificationTypeTest {
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 				ObjectDefinitionTestUtil.getRandomName(), null, null,
 				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
-				true, ObjectDefinitionConstants.SCOPE_COMPANY,
+				true, ObjectDefinitionConstants.SCOPE_SITE,
 				ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
 				Arrays.asList(
 					new AttachmentObjectFieldBuilder(
@@ -275,6 +282,13 @@ public class BaseNotificationTypeTest {
 							RandomTestUtil.randomString())
 					).name(
 						"integerObjectField"
+					).build(),
+					new LongIntegerObjectFieldBuilder(
+					).labelMap(
+						LocalizedMapUtil.getLocalizedMap(
+							RandomTestUtil.randomString())
+					).name(
+						"longIntegerObjectField"
 					).build(),
 					new MultiselectPicklistObjectFieldBuilder(
 					).labelMap(
@@ -519,6 +533,7 @@ public class BaseNotificationTypeTest {
 				getTermName("dateTimeObjectField"),
 				getTermName("emailTextObjectField"),
 				getTermName("integerObjectField"),
+				getTermName("longIntegerObjectField"),
 				getTermName("multiselectPicklistObjectField"),
 				getTermName("picklistObjectField"),
 				getTermName("textObjectField"),
@@ -540,6 +555,7 @@ public class BaseNotificationTypeTest {
 
 	protected static LinkedHashMap<String, Object> childObjectEntryValues;
 	protected static DTOConverterContext dtoConverterContext;
+	protected static Group group;
 
 	@Inject
 	protected static ObjectFieldLocalService objectFieldLocalService;

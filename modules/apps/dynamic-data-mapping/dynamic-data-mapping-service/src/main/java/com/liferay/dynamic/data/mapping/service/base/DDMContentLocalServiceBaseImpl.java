@@ -63,11 +63,8 @@ import org.osgi.service.component.annotations.Reference;
  *
  * @author Brian Wing Shun Chan
  * @see com.liferay.dynamic.data.mapping.service.impl.DDMContentLocalServiceImpl
- * @deprecated As of Cavanaugh (7.4.x), replaced by {@link
- DDMFieldLocalServiceImpl}
  * @generated
  */
-@Deprecated
 public abstract class DDMContentLocalServiceBaseImpl
 	extends BaseLocalServiceImpl
 	implements AopService, DDMContentLocalService, IdentifiableOSGiService {
@@ -594,10 +591,6 @@ public abstract class DDMContentLocalServiceBaseImpl
 	@Reference
 	protected com.liferay.counter.kernel.service.CounterLocalService
 		counterLocalService;
-
-	@Reference
-	protected com.liferay.portal.kernel.service.UserLocalService
-		userLocalService;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMContentLocalServiceBaseImpl.class);

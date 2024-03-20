@@ -130,6 +130,14 @@ public class LayoutPageTemplateCollectionServiceImpl
 
 	@Override
 	public List<LayoutPageTemplateCollection> getLayoutPageTemplateCollections(
+		long groupId, long layoutPageTemplateCollectionId) {
+
+		return layoutPageTemplateCollectionPersistence.filterFindByG_P(
+			groupId, layoutPageTemplateCollectionId);
+	}
+
+	@Override
+	public List<LayoutPageTemplateCollection> getLayoutPageTemplateCollections(
 		long groupId, String name, int type, int start, int end,
 		OrderByComparator<LayoutPageTemplateCollection> orderByComparator) {
 
@@ -151,6 +159,22 @@ public class LayoutPageTemplateCollectionServiceImpl
 		return layoutPageTemplateCollectionPersistence.filterCountByG_LikeN_T(
 			groupId, _customSQL.keywords(name, false, WildcardMode.SURROUND)[0],
 			type);
+	}
+
+	@Override
+	public LayoutPageTemplateCollection moveLayoutPageTemplateCollection(
+			long layoutPageTemplateCollectionId,
+			long targetLayoutPageTemplateCollectionId)
+		throws PortalException {
+
+		_layoutPageTemplateCollectionModelResourcePermission.check(
+			getPermissionChecker(), layoutPageTemplateCollectionId,
+			ActionKeys.UPDATE);
+
+		return layoutPageTemplateCollectionLocalService.
+			moveLayoutPageTemplateCollection(
+				layoutPageTemplateCollectionId,
+				targetLayoutPageTemplateCollectionId);
 	}
 
 	@Override

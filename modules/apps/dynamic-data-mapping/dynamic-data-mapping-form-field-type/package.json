@@ -42,7 +42,7 @@
 			"<rootDir>/jest-setup.config.js"
 		]
 	},
-	"main": "index.js",
+	"main": "index.ts",
 	"name": "dynamic-data-mapping-form-field-type",
 	"private": true,
 	"scripts": {
@@ -51,5 +51,5 @@
 		"format": "liferay-npm-scripts fix",
 		"test": "liferay-npm-scripts test"
 	},
-	"version": "6.0.167"
+	"version": "6.0.168"
 }

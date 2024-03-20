@@ -20,6 +20,7 @@ import LiferayItems from '../../../common/services/liferay/common/interfaces/lif
 import deleteObjectEntry from '../../../common/services/liferay/object/deleteObjectEntry/deleteObjectEntry';
 import {ResourceName} from '../../../common/services/liferay/object/enum/resourceName';
 import {Status} from '../../../common/utils/constants/status';
+import patchRequestStatus from '../../MDFRequestManagerStatus/util/patchRequestStatus';
 
 export default function getMDFListColumns(
 	hasUserAccountSameAccountEntryCurrentMDFRequest: (
@@ -80,6 +81,42 @@ export default function getMDFListColumns(
 									PRMPageRoute.EDIT_MDF_REQUEST
 								}/#/${row[MDFColumnKey.ID]}`
 							),
+					});
+				}
+
+				if (
+					currentValue === PermissionActionType.CANCEL &&
+					row[MDFColumnKey.STATUS] === Status.APPROVED.name
+				) {
+					previousValue.push({
+						icon: 'block',
+						key: Status.CANCELED.key,
+						label: ' Cancel',
+						onClick: () => {
+							Liferay.Util.openConfirmModal({
+								message:
+									'Are you sure you want to cancel the MDF request?',
+								onConfirm: async (isConfirmed: boolean) => {
+									if (isConfirmed) {
+										const newRequestStatus = await patchRequestStatus(
+											Status.CANCELED,
+											String(row[MDFColumnKey.ID])
+										);
+
+										if (newRequestStatus) {
+											Liferay.Util.openToast({
+												message:
+													'MDF Request successfully canceled!',
+												title: 'Success',
+												type: 'success',
+											});
+										}
+
+										mutate(mutated);
+									}
+								},
+							});
+						},
 					});
 				}
 

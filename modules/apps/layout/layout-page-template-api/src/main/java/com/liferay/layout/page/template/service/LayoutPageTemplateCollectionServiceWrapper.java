@@ -104,6 +104,16 @@ public class LayoutPageTemplateCollectionServiceWrapper
 	@Override
 	public java.util.List<LayoutPageTemplateCollection>
 		getLayoutPageTemplateCollections(
+			long groupId, long layoutPageTemplateCollectionId) {
+
+		return _layoutPageTemplateCollectionService.
+			getLayoutPageTemplateCollections(
+				groupId, layoutPageTemplateCollectionId);
+	}
+
+	@Override
+	public java.util.List<LayoutPageTemplateCollection>
+		getLayoutPageTemplateCollections(
 			long groupId, String name, int type, int start, int end,
 			com.liferay.portal.kernel.util.OrderByComparator
 				<LayoutPageTemplateCollection> orderByComparator) {
@@ -135,6 +145,18 @@ public class LayoutPageTemplateCollectionServiceWrapper
 	@Override
 	public String getOSGiServiceIdentifier() {
 		return _layoutPageTemplateCollectionService.getOSGiServiceIdentifier();
+	}
+
+	@Override
+	public LayoutPageTemplateCollection moveLayoutPageTemplateCollection(
+			long layoutPageTemplateCollectionId,
+			long targetLayoutPageTemplateCollectionId)
+		throws com.liferay.portal.kernel.exception.PortalException {
+
+		return _layoutPageTemplateCollectionService.
+			moveLayoutPageTemplateCollection(
+				layoutPageTemplateCollectionId,
+				targetLayoutPageTemplateCollectionId);
 	}
 
 	@Override

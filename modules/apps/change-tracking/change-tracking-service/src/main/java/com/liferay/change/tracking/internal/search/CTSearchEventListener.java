@@ -199,7 +199,7 @@ public class CTSearchEventListener implements CTEventListener {
 			if (entry == null) {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
-						"No CTService found for classNameId " +
+						"No CT service found for class name ID " +
 							ctEntry.getModelClassNameId());
 				}
 			}

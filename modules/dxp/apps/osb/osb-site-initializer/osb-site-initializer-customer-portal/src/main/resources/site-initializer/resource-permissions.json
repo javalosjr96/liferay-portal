@@ -346,5 +346,13 @@
 		"resourceName": "com.liferay.portal.kernel.model.Organization",
 		"roleName": "Organization User",
 		"scope": "3"
+	},
+	{
+		"actionIds": [
+			"VIEW"
+		],
+		"resourceName": "com.liferay.portal.kernel.model.Organization",
+		"roleName": "User",
+		"scope": "1"
 	}
 ]

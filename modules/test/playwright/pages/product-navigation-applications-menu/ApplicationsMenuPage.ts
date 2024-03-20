@@ -8,6 +8,7 @@ import {Locator, Page, expect} from '@playwright/test';
 import {HomePage} from '../portal-web/HomePage';
 
 export class ApplicationsMenuPage {
+	private readonly accountsItem: Locator;
 	private readonly aiCreatorLink: Locator;
 	private readonly announcementsItem: Locator;
 	private readonly apiBuilderMenuItem: Locator;
@@ -22,14 +23,21 @@ export class ApplicationsMenuPage {
 	private readonly gogoShellItem: Locator;
 	private readonly homePage: HomePage;
 	private readonly instanceSettingsMenuItem: Locator;
+	private readonly jobSchedulerMenuItem: Locator;
 	private readonly oAuth2Administration: Locator;
 	private readonly objectsMenuItem: Locator;
 	readonly page: Page;
+	private readonly paymentsMenuItem: Locator;
 	private readonly processBuilderItem: Locator;
 	private readonly productsMenuItem: Locator;
+	private readonly serviceAccountsItem: Locator;
 	private readonly usersAndOrganizationsItem: Locator;
 
 	constructor(page: Page) {
+		this.accountsItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Accounts',
+		});
 		this.announcementsItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Announcements and Alerts',
@@ -71,6 +79,10 @@ export class ApplicationsMenuPage {
 			exact: true,
 			name: 'Instance Settings',
 		});
+		this.jobSchedulerMenuItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Job Scheduler',
+		});
 		this.oAuth2Administration = page.getByRole('menuitem', {
 			exact: true,
 			name: 'OAuth 2 Administration',
@@ -80,6 +92,10 @@ export class ApplicationsMenuPage {
 			name: 'Objects',
 		});
 		this.page = page;
+		this.paymentsMenuItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Payments',
+		});
 		this.processBuilderItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Process Builder',
@@ -91,6 +107,10 @@ export class ApplicationsMenuPage {
 		this.usersAndOrganizationsItem = page.getByRole('menuitem', {
 			exact: true,
 			name: 'Users and Organizations',
+		});
+		this.serviceAccountsItem = page.getByRole('menuitem', {
+			exact: true,
+			name: 'Service Accounts',
 		});
 		this.aiCreatorLink = page.getByRole('link', {
 			exact: true,
@@ -107,6 +127,12 @@ export class ApplicationsMenuPage {
 		await this.homePage.openApplicationMenu();
 
 		await expect(this.applicationsMenuTabButton).toBeVisible();
+	}
+
+	async goToAccounts() {
+		await this.goto();
+		await this.controlPanelButton.click();
+		await this.accountsItem.click();
 	}
 
 	async goToAnnouncements() {
@@ -159,6 +185,11 @@ export class ApplicationsMenuPage {
 		await this.instanceSettingsMenuItem.click();
 	}
 
+	async goToJobScheduler() {
+		await this.goToControlPanel();
+		await this.jobSchedulerMenuItem.click();
+	}
+
 	async goToCommerceChannels() {
 		await this.goToCommercePanel();
 		await this.commerceChannelsMenuItem.click();
@@ -172,6 +203,11 @@ export class ApplicationsMenuPage {
 	async goToCommerceOrders() {
 		await this.goToCommercePanel();
 		await this.commerceOrdersMenuItem.click();
+	}
+
+	async goToPayments() {
+		await this.goToCommercePanel();
+		await this.paymentsMenuItem.click();
 	}
 
 	async goToProducts() {
@@ -197,6 +233,12 @@ export class ApplicationsMenuPage {
 	async goToProcessBuilder() {
 		await this.goToApplicationsMenu();
 		await this.processBuilderItem.click();
+	}
+
+	async goToServiceAccounts() {
+		await this.goto();
+		await this.controlPanelButton.click();
+		await this.serviceAccountsItem.click();
 	}
 
 	async goToUsersAndOrganizations() {

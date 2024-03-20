@@ -5,6 +5,7 @@
 
 import {Locator, Page} from '@playwright/test';
 
+import fillAndClickOutside from '../../../utils/fillAndClickOutside';
 import {JournalPage} from './JournalPage';
 
 export class JournalEditArticlePage {
@@ -26,13 +27,26 @@ export class JournalEditArticlePage {
 		);
 	}
 
-	async goto() {
-		await this.journalPage.goToCreateNewBasicArticle();
+	async goto({
+		siteUrl,
+		structureName,
+	}: {
+		siteUrl?: Site['friendlyUrlPath'];
+		structureName?: string;
+	} = {}) {
+		await this.journalPage.goto(siteUrl);
+		await this.journalPage.goToCreateArticle(structureName);
 
 		// Do it twice so we decrease flakiness
 
-		await this.journalPage.goto();
-		await this.journalPage.goToCreateNewBasicArticle();
+		await this.journalPage.goto(siteUrl);
+		await this.journalPage.goToCreateArticle(structureName);
+
+		await this.propertiesTab.waitFor();
+	}
+
+	async fillTitle(title: string) {
+		await this.titlePlaceholder.fill(title);
 	}
 
 	async editAndPublishExistingBasicArticle(title: string) {
@@ -40,22 +54,22 @@ export class JournalEditArticlePage {
 
 		await this.propertiesTab.waitFor();
 
-		await this.titlePlaceholder.fill(title);
+		await fillAndClickOutside(this.page, this.titlePlaceholder, title);
 
 		await this.publishButton.waitFor();
 
 		await this.publishButton.click();
+
+		await this.page
+			.getByText(`Success:${title} was updated successfully.`)
+			.waitFor();
 	}
 
-	async publishNewBasicArticle(title: string) {
-		await this.goto();
-
-		await this.propertiesTab.waitFor();
-
-		await this.titlePlaceholder.fill(title);
-
-		await this.publishButton.waitFor();
-
-		await this.publishButton.click();
+	async openDMItemSelectorForImages() {
+		await this.page.getByLabel('Image', {exact: true}).click();
+		await this.page
+			.frameLocator('iframe[title="Select Item"]')
+			.getByRole('link', {name: 'Documents and Media'})
+			.click();
 	}
 }

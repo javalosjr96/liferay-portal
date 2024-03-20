@@ -1,6 +1,6 @@
 buildscript {
 	dependencies {
-		classpath group: "com.liferay", name: "com.liferay.gradle.plugins.defaults", version: "latest.release"
+		classpath group: "com.liferay", name: "com.liferay.gradle.plugins.defaults", version: "10.1.88"
 		classpath group: "org.springframework.boot", name: "spring-boot-gradle-plugin", version: "2.7.18"
 	}
 
@@ -21,6 +21,7 @@ apply plugin: "org.springframework.boot"
 
 dependencies {
 	implementation group: "com.liferay", name: "com.liferay.client.extension.util.spring.boot", version: "latest.release"
+	implementation group: "com.liferay", name: "com.liferay.petra.lang", version: "latest.release"
 	implementation group: "com.liferay", name: "com.liferay.petra.string", version: "latest.release"
 	implementation group: "com.liferay", name: "org.apache.commons.logging", version: "1.2.LIFERAY-PATCHED-2"
 	implementation group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "latest.release"

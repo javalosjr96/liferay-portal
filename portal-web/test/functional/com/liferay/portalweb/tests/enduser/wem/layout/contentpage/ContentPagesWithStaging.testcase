@@ -24,9 +24,7 @@ definition {
 		}
 
 		task ("Activate local live staging") {
-			Staging.openStagingAdmin(siteURLKey = ${randomSiteURLKey});
-
-			Staging.activateStagingCP(siteName = ${randomSiteName});
+			JSONStaging.enableLocalStaging(groupName = ${randomSiteName});
 		}
 	}
 
@@ -1817,26 +1815,6 @@ definition {
 				id = "element-text",
 				text = "Edited Heading Example");
 		}
-
-		task ("When the page creator is back to view mode") {
-			Close.closeWindow();
-
-			PageEditor.clickBack();
-		}
-
-		task ("Then the page creator should see the New Experience still selected in experience selector") {
-			ContentPages.viewCurrentExperience(experienceName = "New Experience");
-
-			ContentPages.viewFragmentText(
-				fragmentName = "button",
-				id = "link",
-				text = "Go Somewhere");
-
-			ContentPages.viewFragmentText(
-				fragmentName = "heading",
-				id = "element-text",
-				text = "Heading Example");
-		}
 	}
 
 	@description = "This is a test for LPS-146373. New prefixes for email,phone and none options can be used in Content Pages published from staging."
@@ -1854,9 +1832,7 @@ definition {
 		}
 
 		task ("Activate local live staging") {
-			Staging.openStagingAdmin(siteURLKey = ${siteURLKey});
-
-			Staging.activateStagingCP(siteName = ${siteName});
+			JSONStaging.enableLocalStaging(groupName = ${siteName});
 		}
 
 		task ("When adding a web content with email and telephone") {

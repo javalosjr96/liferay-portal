@@ -98,6 +98,7 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -182,6 +183,7 @@ import org.gradle.api.plugins.quality.Pmd;
 import org.gradle.api.plugins.quality.PmdExtension;
 import org.gradle.api.plugins.quality.PmdPlugin;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.publish.PublicationContainer;
 import org.gradle.api.publish.PublishingExtension;
 import org.gradle.api.publish.maven.MavenArtifact;
@@ -481,6 +483,22 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 				project, generatePomFileForMavenPublicationTask);
 
 			jar.dependsOn(generatePomFileForMavenPublicationTask);
+
+			Task generateJSPJavaTask = GradleUtil.fetchTask(
+				project, JspCPlugin.GENERATE_JSP_JAVA_TASK_NAME);
+
+			if (generateJSPJavaTask != null) {
+				generateJSPJavaTask.mustRunAfter(
+					generatePomFileForMavenPublicationTask);
+			}
+
+			Task javadocTask = GradleUtil.fetchTask(
+				project, JavaPlugin.JAVADOC_TASK_NAME);
+
+			if (javadocTask != null) {
+				javadocTask.mustRunAfter(
+					generatePomFileForMavenPublicationTask);
+			}
 
 			_configureTasksEnabledIfStaleSnapshot(
 				project, testProject,
@@ -1004,8 +1022,13 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 
 						start = artifactJspcURL.indexOf('-', start) + 1;
 
-						String classifier = jarJSPsTask.getClassifier();
-						String extension = jarJSPsTask.getExtension();
+						Provider<String> archiveClassifierProvider =
+							jarJSPsTask.getArchiveClassifier();
+						Provider<String> archiveExtensionProvider =
+							jarJSPsTask.getArchiveExtension();
+
+						String classifier = archiveClassifierProvider.get();
+						String extension = archiveExtensionProvider.get();
 
 						int end =
 							artifactJspcURL.length() - classifier.length() -
@@ -1156,11 +1179,14 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 	private Jar _addTaskJarJavadoc(Project project) {
 		Jar jar = GradleUtil.addTask(project, JAR_JAVADOC_TASK_NAME, Jar.class);
 
-		jar.setClassifier("javadoc");
 		jar.setDescription(
 			"Assembles a jar archive containing the Javadoc files for this " +
 				"project.");
 		jar.setGroup(BasePlugin.BUILD_GROUP);
+
+		Property<String> property = jar.getArchiveClassifier();
+
+		property.set("javadoc");
 
 		Javadoc javadoc = (Javadoc)GradleUtil.getTask(
 			project, JavaPlugin.JAVADOC_TASK_NAME);
@@ -1173,7 +1199,6 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 	private Jar _addTaskJarJSDoc(Project project) {
 		Jar jar = GradleUtil.addTask(project, JAR_JSDOC_TASK_NAME, Jar.class);
 
-		jar.setClassifier("jsdoc");
 		jar.setDescription(
 			"Assembles a jar archive containing the Javascript API " +
 				"documentation files for this project.");
@@ -1181,6 +1206,10 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 		jar.eachFile(new StripPathSegmentsAction(2));
 		jar.setGroup(BasePlugin.BUILD_GROUP);
 		jar.setIncludeEmptyDirs(false);
+
+		Property<String> property = jar.getArchiveClassifier();
+
+		property.set("jsdoc");
 
 		JSDocTask jsDocTask = (JSDocTask)GradleUtil.getTask(
 			project, JSDocPlugin.JSDOC_TASK_NAME);
@@ -1193,13 +1222,16 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 	private Jar _addTaskJarJSP(Project project) {
 		Jar jar = GradleUtil.addTask(project, JAR_JSP_TASK_NAME, Jar.class);
 
-		jar.setClassifier("jspc");
 		jar.setDescription(
 			"Assembles a jar archive containing the compiled JSP classes for " +
 				"this project.");
 		jar.setDuplicatesStrategy(DuplicatesStrategy.INCLUDE);
 		jar.setGroup(BasePlugin.BUILD_GROUP);
 		jar.setIncludeEmptyDirs(false);
+
+		Property<String> property = jar.getArchiveClassifier();
+
+		property.set("jspc");
 
 		JavaCompile javaCompile = (JavaCompile)GradleUtil.getTask(
 			project, JspCPlugin.COMPILE_JSP_TASK_NAME);
@@ -1213,9 +1245,12 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 		Jar jar = _addTaskJarSources(
 			project, JAR_SOURCES_TASK_NAME, testProject);
 
-		jar.setClassifier("sources");
 		jar.setDescription(
 			"Assembles a jar archive containing the main source files.");
+
+		Property<String> property = jar.getArchiveClassifier();
+
+		property.set("sources");
 
 		return jar;
 	}
@@ -1286,11 +1321,14 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 	private Jar _addTaskJarTLDDoc(Project project) {
 		Jar jar = GradleUtil.addTask(project, JAR_TLDDOC_TASK_NAME, Jar.class);
 
-		jar.setClassifier("taglibdoc");
 		jar.setDescription(
 			"Assembles a jar archive containing the Tag Library " +
 				"Documentation files for this project.");
 		jar.setGroup(BasePlugin.BUILD_GROUP);
+
+		Property<String> property = jar.getArchiveClassifier();
+
+		property.set("taglibdoc");
 
 		TLDDocTask tldDocTask = (TLDDocTask)GradleUtil.getTask(
 			project, TLDDocBuilderPlugin.TLDDOC_TASK_NAME);
@@ -1681,7 +1719,7 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 							dependencyNotation + ":" + value);
 					}
 
-					substitution.with(newComponentSelector);
+					substitution.using(newComponentSelector);
 				}
 			}
 
@@ -2433,7 +2471,7 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 						dependencySubstitutions.substitute(
 							dependencySubstitutions.module(oldNotation));
 
-					substitution.with(
+					substitution.using(
 						dependencySubstitutions.module(newNotation));
 				}
 
@@ -2540,7 +2578,7 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 						dependencySubstitutions.substitute(
 							dependencySubstitutions.module(oldNotation));
 
-					substitution.with(
+					substitution.using(
 						dependencySubstitutions.module(newNotation));
 				}
 
@@ -2692,8 +2730,17 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 		JavaPluginConvention javaPluginConvention = GradleUtil.getConvention(
 			project, JavaPluginConvention.class);
 
-		javaPluginConvention.setSourceCompatibility(_JAVA_VERSION);
-		javaPluginConvention.setTargetCompatibility(_JAVA_VERSION);
+		if (project.hasProperty("build.java.override.version")) {
+			String javaVersion = GradleUtil.getProperty(
+				project, "build.java.override.version", (String)null);
+
+			javaPluginConvention.setSourceCompatibility(javaVersion);
+			javaPluginConvention.setTargetCompatibility(javaVersion);
+		}
+		else {
+			javaPluginConvention.setSourceCompatibility(_JAVA_VERSION);
+			javaPluginConvention.setTargetCompatibility(_JAVA_VERSION);
+		}
 
 		File testResultsDir = project.file("test-results/unit");
 
@@ -2958,7 +3005,10 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 
 			SourceDirectorySet javaSourceDirectorySet = sourceSet.getJava();
 
-			javaSourceDirectorySet.setOutputDir(javaClassesDir);
+			DirectoryProperty directoryProperty =
+				javaSourceDirectorySet.getDestinationDirectory();
+
+			directoryProperty.set(javaClassesDir);
 
 			SourceSetOutput sourceSetOutput = sourceSet.getOutput();
 
@@ -4040,7 +4090,9 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 
 		File resultsDir = project.file("test-results/integration");
 
-		test.setBinResultsDir(new File(resultsDir, "binary/testIntegration"));
+		DirectoryProperty directoryProperty = test.getBinaryResultsDirectory();
+
+		directoryProperty.set(new File(resultsDir, "binary/testIntegration"));
 
 		TestTaskReports testTaskReports = test.getReports();
 
@@ -4101,11 +4153,21 @@ public class LiferayOSGiDefaultsPlugin implements Plugin<Project> {
 		Map<String, Object> args = new HashMap<>();
 
 		args.put("dir", dir);
-		args.put(
-			"excludes",
-			Arrays.asList(
-				"**/bin/", "**/build/", "**/classes/", "**/node_modules/",
-				"**/node_modules_cache/", "**/test-classes/", "**/tmp/"));
+
+		List<String> excludes = new ArrayList<>();
+
+		Collections.addAll(
+			excludes, "**/bin/", "**/build/", "**/classes/", "**/node_modules/",
+			"**/node_modules_cache/", "**/test-classes/", "**/tmp/");
+
+		String property = GradleUtil.getProperty(
+			project, "gradle.update.file.versions.excludes", (String)null);
+
+		if (Validator.isNotNull(property)) {
+			Collections.addAll(excludes, property.split(","));
+		}
+
+		args.put("excludes", excludes);
 		args.put(
 			"includes",
 			Arrays.asList("**/*.gradle", "**/sdk/*/README.markdown"));

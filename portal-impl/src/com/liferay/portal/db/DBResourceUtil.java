@@ -8,7 +8,6 @@ package com.liferay.portal.db;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.URLUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,22 +33,16 @@ public class DBResourceUtil {
 		return _getSQLTemplateString(bundle, "tables.sql");
 	}
 
-	public static String getPortalIndexesSQL() throws IOException {
-		return _getPortalResource(
+	public static String getPortalIndexesSQL() {
+		return StringUtil.read(
+			DBResourceUtil.class,
 			"/com/liferay/portal/tools/sql/dependencies/indexes.sql");
 	}
 
-	public static String getPortalTablesSQL() throws IOException {
-		return _getPortalResource(
+	public static String getPortalTablesSQL() {
+		return StringUtil.read(
+			DBResourceUtil.class,
 			"/com/liferay/portal/tools/sql/dependencies/portal-tables.sql");
-	}
-
-	private static String _getPortalResource(String name) throws IOException {
-		try (InputStream inputStream = DBResourceUtil.class.getResourceAsStream(
-				name)) {
-
-			return StringUtil.read(inputStream);
-		}
 	}
 
 	private static String _getSQLTemplateString(
@@ -65,8 +58,8 @@ public class DBResourceUtil {
 			return null;
 		}
 
-		try {
-			return URLUtil.toString(resource);
+		try (InputStream inputStream = resource.openStream()) {
+			return StringUtil.read(inputStream);
 		}
 		catch (IOException ioException) {
 			_log.error(

@@ -6,9 +6,10 @@
 import {SidebarCategory} from '@liferay/object-js-components-web';
 import React from 'react';
 
-import ObjectAction from './index';
+import {ObjectActionContainer} from './ObjectActionContainer';
 
 interface AddObjectActionProps {
+	allowScriptContentBeExecutedOrIncluded: boolean;
 	apiURL: string;
 	objectActionCodeEditorElements: SidebarCategory[];
 	objectActionExecutors: ObjectActionTriggerExecutorItem[];
@@ -21,6 +22,7 @@ interface AddObjectActionProps {
 }
 
 export default function AddObjectAction({
+	allowScriptContentBeExecutedOrIncluded,
 	apiURL,
 	objectActionCodeEditorElements,
 	objectActionExecutors = [],
@@ -32,7 +34,10 @@ export default function AddObjectAction({
 	validateExpressionURL,
 }: AddObjectActionProps) {
 	return (
-		<ObjectAction
+		<ObjectActionContainer
+			allowScriptContentBeExecutedOrIncluded={
+				allowScriptContentBeExecutedOrIncluded
+			}
 			objectAction={{active: true, system: false}}
 			objectActionCodeEditorElements={objectActionCodeEditorElements}
 			objectActionExecutors={objectActionExecutors}
