@@ -2,7 +2,7 @@ name: Create Pull Request and Comment (Force Push)
 
 on:
   push:
-    branches: [ feature ]  # Only trigger on pushes to the "feature" branch
+    branches: [ upgrade-suite-test ]  # Only trigger on pushes to the "feature" branch
 
 jobs:
   create-pull-request:
