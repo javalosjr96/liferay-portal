@@ -13,5 +13,5 @@ jobs:
             --body "A force push was detected. Please review changes carefully."  # Pull request body
             --head ${{ github.ref }}                             # Head branch reference
           env:                                                # Environment variable section (optional)
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+            GITHUB_TOKEN: ${{ secrets.GITHUBPRTOKEN }} 
 
