@@ -20,4 +20,4 @@ jobs:
               head: context.ref,
               base: 'master',
               body: 'test'
-            })
+            });
