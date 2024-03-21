@@ -8,10 +8,7 @@ jobs:
       - uses: actions/checkout@v3  # Checkout the repository code
       - name: Create Pull Request with gh
         run: |  # Multi-line command using run keyword
-          gh pr create                                 # Command to create a pull request
-            --title "Force Pushed Changes (review recommended)"  # Pull request title
-            --body "A force push was detected. Please review changes carefully."  # Pull request body
-            --head ${{ github.ref }}                             # Head branch reference
-          env:                                                # Environment variable section (optional)
+          gh pr create --title "Force Pushed Changes (review recommended)" --body "A force push was detected. Please review changes carefully." --head ${{ github.ref }}                           
+          env:                                                
             GITHUB_TOKEN: ${{ secrets.GITHUBPRTOKEN }} 
 
