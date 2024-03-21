@@ -1,8 +1,7 @@
 name: Create Pull Request and Comment (Force Push)
 
-on:
-  push:
-    branches: [ upgrade-suite-test ]
+on: [push]
+
 
 jobs:
   create-pull-request:
