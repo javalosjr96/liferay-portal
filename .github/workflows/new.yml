@@ -1,7 +1,6 @@
 name: Create Pull Request and Comment (Force Push)
 
 on: [push]
-on: [push]
 
 jobs:
   create-pull-request:
