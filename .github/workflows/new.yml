@@ -1,0 +1,25 @@
+name: Create Pull Request
+
+on:
+  push:
+    branches: [ upgrade-suite-test ]  
+
+jobs:
+  create-pull-request:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3  
+
+      - name: Create Pull Request 
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.issues.createPullRequest({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Upgrade Test Suite Analysis',
+              head: context.ref,
+              base: 'master',
+              body: 'Automated Pull Request for the Upgrade Test Suite Analysis'
+            })
