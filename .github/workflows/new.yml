@@ -7,17 +7,9 @@ jobs:
     name: Create Pull Request and Comment (Force Push)  # Moved inside the job definition
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Create Pull Request
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUBPRTOKEN }}
-          script: |
-            github.issues.createPullRequest({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Test',
-              head: context.ref,
-              base: 'master',
-              body: 'test'
-            });
+      - uses: actions/checkout@v3 # Checkout the repository code
+
+      - name: Create Pull Request with gh
+        run: |
+             gh pr create --title "Force Pushed Changes (review recommended)" --body "A force push was detected. Please review changes carefully." --head ${{ github.ref }}
+
