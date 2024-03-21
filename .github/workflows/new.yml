@@ -1,15 +1,15 @@
 name: Create Pull Request and Comment (Force Push)
-on: [push]  # Trigger workflow on push events
+on: [push]  
 
 jobs:
-  create-pull-request:  # Job name
-    runs-on: ubuntu-latest  # Run the job on Ubuntu virtual machines
+  create-pull-request:  
+    runs-on: ubuntu-latest  
     env:                                                
         GITHUB_TOKEN: ${{ secrets.GITHUBPRTOKEN }} 
     steps:
-      - uses: actions/checkout@v3  # Checkout the repository code
+      - uses: actions/checkout@v3  
       - name: Create Pull Request with gh
-        run: |  # Multi-line command using run keyword
+        run: |  
           gh pr create --title "Force Pushed Changes (review recommended)" --body "A force push was detected. Please review changes carefully." --head ${{ github.ref }}                           
 
 
