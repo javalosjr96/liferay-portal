@@ -1,17 +1,18 @@
 name: Create Pull Request and Comment (Force Push)
 
 on: [push]
+on: [push]
 
 jobs:
   create-pull-request:
-    runs-on: ubuntu-latest  # Workflow runs on Ubuntu virtual machines
+    name: Create Pull Request and Comment (Force Push)  # Moved inside the job definition
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3  # Checkout the repository code
-
-      - name: Create Pull Request  # Use GitHub Script action
+      - uses: actions/checkout@v3
+      - name: Create Pull Request
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}  # Access token with write permissions
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             github.issues.createPullRequest({
               owner: context.repo.owner,
