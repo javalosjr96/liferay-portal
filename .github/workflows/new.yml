@@ -20,6 +20,6 @@ jobs:
               repo: context.repo.repo,
               title: 'Force Pushed Changes (review recommended)',  # Indicate force push
               head: context.ref,
-              base: 'main',  # Replace 'main' with your target branch for merging
+              base: 'master',  # Replace 'main' with your target branch for merging
               body: 'A force push was detected. Please review changes carefully.'
             })
