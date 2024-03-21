@@ -11,7 +11,7 @@ jobs:
       - name: Create Pull Request
         uses: actions/github-script@v6
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUBPRTOKEN }}
           script: |
             github.issues.createPullRequest({
               owner: context.repo.owner,
