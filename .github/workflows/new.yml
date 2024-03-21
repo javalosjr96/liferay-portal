@@ -16,8 +16,8 @@ jobs:
             github.issues.createPullRequest({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'Your pull request title (e.g., Feature from branch feature)',
+              title: 'Test',
               head: context.ref,
-              base: 'main',  # Replace 'main' with your target branch for merging
-              body: 'Your pull request description (e.g., Description of changes made in feature branch)'
+              base: 'master',
+              body: 'test'
             })
