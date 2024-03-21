@@ -2,23 +2,22 @@ name: Create Pull Request and Comment (Force Push)
 
 on: [push]
 
-
 jobs:
   create-pull-request:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest  # Workflow runs on Ubuntu virtual machines
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3  # Checkout the repository code
 
       - name: Create Pull Request  # Use GitHub Script action
         uses: actions/github-script@v6
         with:
-
+          github-token: ${{ secrets.GITHUB_TOKEN }}  # Access token with write permissions
           script: |
             github.issues.createPullRequest({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'Force Pushed Changes (review recommended)',  # Indicate force push
+              title: 'Your pull request title (e.g., Feature from branch feature)',
               head: context.ref,
-              base: 'master',  # Replace 'main' with your target branch for merging
-              body: 'A force push was detected. Please review changes carefully.'
+              base: 'main',  # Replace 'main' with your target branch for merging
+              body: 'Your pull request description (e.g., Description of changes made in feature branch)'
             })
