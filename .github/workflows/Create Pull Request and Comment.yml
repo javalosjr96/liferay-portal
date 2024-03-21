@@ -9,7 +9,7 @@ jobs:
   create-pull-request:  
     runs-on: ubuntu-latest  
     env:                                                
-        GITHUB_TOKEN: ${{ secrets.PAT }} 
+        GITHUB_TOKEN: ${{ secrets.GITHUBPRTOKEN }} 
     steps:
       - uses: actions/checkout@v3  
       - name: Create Pull Request with gh
