@@ -1,16 +1,16 @@
-name: Create Pull Request
+name: Create Pull Request and Comment (Force Push)
 
 on:
   push:
-    branches: [ upgrade-suite-test ]  
+    branches: [ feature ]  # Only trigger on pushes to the "feature" branch
 
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3  
+      - uses: actions/checkout@v3
 
-      - name: Create Pull Request 
+      - name: Create Pull Request  # Use GitHub Script action
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -18,8 +18,8 @@ jobs:
             github.issues.createPullRequest({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              title: 'Upgrade Test Suite Analysis',
+              title: 'Force Pushed Changes (review recommended)',  # Indicate force push
               head: context.ref,
-              base: 'master',
-              body: 'Automated Pull Request for the Upgrade Test Suite Analysis'
+              base: 'main',  # Replace 'main' with your target branch for merging
+              body: 'A force push was detected. Please review changes carefully.'
             })
