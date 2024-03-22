@@ -1,7 +1,7 @@
 name: Scheduled Empty Commit Branch
 on:
    schedule:
-   - cron: '30 5 * * *'
+   - cron: '50 5 * * *'
 
 jobs:
   create-pr:
