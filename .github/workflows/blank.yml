@@ -1,0 +1,20 @@
+name: Scheduled Merge with Master
+on:
+   schedule:
+   - cron: '0 9 * * *'
+   workflow_dispatch:
+
+jobs:
+  create-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Creating Empty PR 
+        run: |
+          git remote add liferay git@github.com:liferay/liferay-portal.git
+          git fetch liferay master
+          git merge liferay/master
+          git config user.name 'Jorge Avalos'
+          git config user.email 'jorge.avalos@liferay.com'
+          git switch -c upgrade-test-suite-workflow
+          git push origin upgrade-test-suite-workflow --force
