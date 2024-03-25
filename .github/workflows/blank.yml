@@ -11,10 +11,9 @@ jobs:
       - uses: actions/checkout@v3
       - name: Merge upgrade-test-suite-workflow with master 
         run: |
-          git remote add liferay https://github.com/liferay/liferay-portal.git
-          git fetch liferay master
-          git merge liferay/master
           git config user.name 'Jorge Avalos'
           git config user.email 'jorge.avalos@liferay.com'
+          git checkout origin/upgrade-test-suite-workflow
           git switch -c upgrade-test-suite-workflow
+          git merge origin/master
           git push origin upgrade-test-suite-workflow --force
