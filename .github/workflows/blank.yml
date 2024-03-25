@@ -13,6 +13,7 @@ jobs:
         run: |
           git config user.name 'Jorge Avalos'
           git config user.email 'jorge.avalos@liferay.com'
+          git fetch origin upgrade-test-suite-workflow
           git checkout origin/upgrade-test-suite-workflow
           git switch -c upgrade-test-suite-workflow
           git merge origin/master
