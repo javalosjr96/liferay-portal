@@ -1,3 +1,23 @@
-.table-cell-expand {
-	min-width: min-content !important;
+.table-cell-item {
+	display: block;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.text-ellipsis-lg {
+	max-width: 170px;
+}
+
+.text-ellipsis-md {
+	max-width: 140px;
+}
+
+.text-ellipsis-sm {
+	max-width: 110px;
+}
+
+@media (min-width: 140px) {
+	.table-cell-item {
+		width: 100%;
+	}
 }

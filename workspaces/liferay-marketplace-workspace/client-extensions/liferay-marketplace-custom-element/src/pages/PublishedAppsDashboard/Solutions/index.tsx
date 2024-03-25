@@ -38,7 +38,7 @@ const Solutions = () => {
 						.build(),
 					'images.accountId': '-1',
 					'nestedFields':
-						'attachments,images,productChannels,productSpecifications',
+						'attachments,images,productChannels,productSpecifications,skus',
 					'page': page.toString(),
 					'skus.accountId': '-1',
 				})
@@ -51,7 +51,7 @@ const Solutions = () => {
 			buttonDisabled={!(catalogId && catalogId > 0)}
 			buttonMessage="New Solution Template"
 			messages={{
-				description: 'Publish and manage your solutions',
+				description: 'Manage and publish solutions on the Marketplace',
 				title: 'Solutions',
 			}}
 		>

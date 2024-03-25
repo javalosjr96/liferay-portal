@@ -7,7 +7,7 @@ import {Header} from '../../components/Header/Header';
 import {Input} from '../../components/Input/Input';
 import {NewAppPageFooterButtons} from '../../components/NewAppPageFooterButtons/NewAppPageFooterButtons';
 import {Section} from '../../components/Section/Section';
-import {getCompanyId} from '../../liferay/constants';
+import {Liferay} from '../../liferay/liferay';
 import {useAppContext} from '../../manage-app-state/AppManageState';
 import {TYPES} from '../../manage-app-state/actionTypes';
 import {
@@ -74,7 +74,7 @@ export function ProvideVersionDetailsPage({
 			},
 			className: 'com.liferay.commerce.product.model.CPInstance',
 			classPK: skuId,
-			companyId: getCompanyId(),
+			companyId: Liferay.ThemeDisplay.getCompanyId(),
 			tableName: 'CUSTOM_FIELDS',
 		});
 	};

@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import {useNavigate} from 'react-router-dom';
+
 import solutionsIcon from '../../../assets/icons/analytics_icon.svg';
 import {DashboardTable} from '../../../components/DashboardTable/DashboardTable';
 import OrderStatus from '../../../components/OrderStatus';
@@ -21,6 +23,8 @@ type PublishedSolutionsTableProps = {
 const PublishedSolutionsTable: React.FC<PublishedSolutionsTableProps> = ({
 	items,
 }) => {
+	const navigate = useNavigate();
+
 	if (!items.length) {
 		return (
 			<DashboardTable
@@ -82,6 +86,7 @@ const PublishedSolutionsTable: React.FC<PublishedSolutionsTableProps> = ({
 					title: 'Status',
 				},
 			]}
+			onClickRow={({id}) => navigate(`/solution/${id}`)}
 			rows={items}
 		/>
 	);

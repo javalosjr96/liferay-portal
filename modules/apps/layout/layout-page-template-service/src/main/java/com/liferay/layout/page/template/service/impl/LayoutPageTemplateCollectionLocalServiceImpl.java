@@ -278,25 +278,25 @@ public class LayoutPageTemplateCollectionLocalServiceImpl
 	@Override
 	public LayoutPageTemplateCollection moveLayoutPageTemplateCollection(
 			long layoutPageTemplateCollectionId,
-			long targetLayoutPageTemplateCollectionId)
+			long parentLayoutPageTemplateCollectionId)
 		throws PortalException {
 
 		LayoutPageTemplateCollection layoutPageTemplateCollection =
 			layoutPageTemplateCollectionLocalService.
 				getLayoutPageTemplateCollection(layoutPageTemplateCollectionId);
 
-		long parentLayoutPageTemplateCollectionId =
-			layoutPageTemplateCollection.
-				getParentLayoutPageTemplateCollectionId();
-
-		if (parentLayoutPageTemplateCollectionId ==
-				targetLayoutPageTemplateCollectionId) {
+		if ((parentLayoutPageTemplateCollectionId ==
+				layoutPageTemplateCollection.
+					getLayoutPageTemplateCollectionId()) ||
+			(parentLayoutPageTemplateCollectionId ==
+				layoutPageTemplateCollection.
+					getParentLayoutPageTemplateCollectionId())) {
 
 			return layoutPageTemplateCollection;
 		}
 
 		layoutPageTemplateCollection.setParentLayoutPageTemplateCollectionId(
-			targetLayoutPageTemplateCollectionId);
+			parentLayoutPageTemplateCollectionId);
 
 		return updateLayoutPageTemplateCollection(layoutPageTemplateCollection);
 	}

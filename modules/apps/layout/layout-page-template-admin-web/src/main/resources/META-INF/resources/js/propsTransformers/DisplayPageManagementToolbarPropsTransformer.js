@@ -4,6 +4,11 @@
  */
 
 import {openCreationModal} from '@liferay/layout-js-components-web';
+import {
+	getCheckedCheckboxes,
+	openSelectionModal,
+	setFormValues,
+} from 'frontend-js-web';
 
 import openDeletePageTemplateModal from '../commands/openDeletePageTemplateModal';
 
@@ -29,6 +34,38 @@ export default function propsTransformer({portletNamespace, ...otherProps}) {
 		}
 	};
 
+	const moveSelectedEntries = (itemData) => {
+		openSelectionModal({
+			height: '70vh',
+			onSelect: (selectedItem) => {
+				const form = document.getElementById(
+					`${portletNamespace}moveEntriesFm`
+				);
+
+				setFormValues(form, {
+					layoutPageTemplateCollectionsIds: getCheckedCheckboxes(
+						document.getElementById(`${portletNamespace}fm`),
+						'',
+						`${portletNamespace}rowIdsLayoutPageTemplateCollection`
+					),
+					layoutPageTemplateEntriesIds: getCheckedCheckboxes(
+						document.getElementById(`${portletNamespace}fm`),
+						'',
+						`${portletNamespace}rowIds`
+					),
+					targetLayoutPageTemplateCollectionId:
+						selectedItem.resourceid,
+				});
+
+				submitForm(form);
+			},
+			selectEventName: 'selectFolder',
+			size: 'md',
+			title: Liferay.Language.get('move-entries'),
+			url: itemData.itemSelectorURL,
+		});
+	};
+
 	return {
 		...otherProps,
 		onActionButtonClick(event, {item}) {
@@ -41,6 +78,9 @@ export default function propsTransformer({portletNamespace, ...otherProps}) {
 			}
 			else if (action === 'exportDisplayPages') {
 				exportDisplayPages(data);
+			}
+			else if (action === 'moveSelectedEntries') {
+				moveSelectedEntries(data);
 			}
 		},
 		onCreationMenuItemClick(event, {item}) {

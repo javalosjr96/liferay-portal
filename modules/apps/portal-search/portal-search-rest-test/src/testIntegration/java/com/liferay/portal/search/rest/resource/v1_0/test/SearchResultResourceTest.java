@@ -391,9 +391,7 @@ public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 		throws Exception {
 
 		return _postSearchPage(
-			null,
-			"groupIds/any(g:g eq " + String.valueOf(testGroup.getGroupId()) +
-				")",
+			null, "groupIds/any(g:g eq " + testGroup.getGroupId() + ")",
 			keywords, null, new SearchRequestBody());
 	}
 
@@ -429,10 +427,8 @@ public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 		};
 
 		return _postSearchPage(
-			null,
-			"groupIds/any(g:g eq " + String.valueOf(testGroup.getGroupId()) +
-				")",
-			null, null, searchRequestBody);
+			null, "groupIds/any(g:g eq " + testGroup.getGroupId() + ")", null,
+			null, searchRequestBody);
 	}
 
 	private SearchPage<SearchResult>
@@ -686,7 +682,8 @@ public class SearchResultResourceTest extends BaseSearchResultResourceTestCase {
 			null, null, _getSearchFacets(jsonObject),
 			JSONUtil.toList(
 				jsonObject.getJSONArray("items"),
-				itemJSONObject -> SearchResult.toDTO(jsonObject.toString())),
+				itemJSONObject -> SearchResult.toDTO(
+					itemJSONObject.toString())),
 			Pagination.of(
 				jsonObject.getInt("page"), jsonObject.getInt("pageSize")),
 			jsonObject.getLong("totalCount"));

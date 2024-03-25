@@ -372,6 +372,8 @@ definition {
 		ACDXPSettings.syncNewContactData();
 
 		ACUtils.navigateToSitePageWithUser(
+			actionType = "View WC",
+			documentTitleList = "1,2,3,4",
 			emailList = ${emailList},
 			pageName = "AC Page",
 			siteName = "Site Name");
@@ -421,6 +423,8 @@ definition {
 			userLoginFullName = "ac ac");
 
 		ACUtils.navigateToSitePage(
+			actionType = "View WC",
+			documentTitleList = "1,2,3,4",
 			pageName = "AC Page",
 			siteName = "Site Name");
 
@@ -474,12 +478,12 @@ definition {
 		}
 
 		task ("Login with new users and go to site page") {
-			for (var name : list ${users}) {
-				ACUtils.navigateToSitePageWithUser(
-					emailList = "${name}@liferay.com",
-					pageName = "AC Page",
-					siteName = "Site Name");
-			}
+			ACUtils.navigateToSitePageWithUser(
+				actionType = "View WC",
+				documentTitleList = "1,2,3,4",
+				emailList = "${users}@liferay.com",
+				pageName = "AC Page",
+				siteName = "Site Name");
 		}
 
 		task ("Close all sections and wait") {
@@ -659,6 +663,8 @@ definition {
 
 		task ("Sign in with the new user to visit the site pages") {
 			ACUtils.navigateToSitePageWithUser(
+				actionType = "View WC",
+				documentTitleList = "1,2,3,4",
 				emailList = ${emailList},
 				pageName = "AC Page",
 				siteName = "Site Name");
@@ -735,6 +741,8 @@ definition {
 
 		task ("Sign in with the new user to visit the site pages") {
 			ACUtils.navigateToSitePageWithUser(
+				actionType = "View WC",
+				documentTitleList = "1,2,3,4",
 				emailList = ${emailList},
 				pageName = "AC Page",
 				siteName = "Site Name");
@@ -882,6 +890,8 @@ definition {
 
 		task ("Login with the users and see page") {
 			ACUtils.navigateToSitePageWithUser(
+				actionType = "View WC",
+				documentTitleList = "1,2,3,4",
 				emailList = ${emailList},
 				pageName = "AC Page",
 				siteName = "Site Name");
@@ -963,6 +973,8 @@ definition {
 
 		task ("Login new user and view page") {
 			ACUtils.navigateToSitePageWithUser(
+				actionType = "View WC",
+				documentTitleList = "1,2,3,4",
 				emailList = ${emailList},
 				pageName = "AC Page",
 				siteName = "Site Name");

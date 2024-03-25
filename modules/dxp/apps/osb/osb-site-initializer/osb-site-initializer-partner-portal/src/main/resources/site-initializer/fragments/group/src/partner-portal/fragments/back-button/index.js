@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 /**
  * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
@@ -11,13 +12,13 @@ if (backButton) {
 	backButton.onclick = () => {
 		const urlParams = new URLSearchParams(window.location.href);
 
-		if (urlParams.has('returnurl')) {
-			const returnUrl = urlParams.get('returnurl');
+		if (urlParams.has('p_l_back_url')) {
+			const backURL = urlParams.get('p_l_back_url');
 
-			location.assign(`${siteURL}${returnUrl}`);
+			location.assign(`${siteURL}${decodeURIComponent(backURL)}`);
 		}
 		else {
-			history.back();
+			location.assign(decodeURIComponent(configuration.backURL));
 		}
 	};
 }

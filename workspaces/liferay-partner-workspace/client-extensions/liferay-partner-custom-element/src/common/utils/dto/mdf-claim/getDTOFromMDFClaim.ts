@@ -28,7 +28,6 @@ export function getDTOFromMDFClaim(
 		r_usrToMDFClms_userId: mdfClaim.id
 			? mdfClaim.r_usrToMDFClms_userId
 			: Number(Liferay.ThemeDisplay.getUserId()),
-		reimbursementInvoice: mdfClaim.reimbursementInvoice?.documentId,
 		submitDate: mdfClaim.submitDate,
 		submitted: mdfClaim.submitted,
 		totalClaimAmount: mdfClaim.totalClaimAmount,

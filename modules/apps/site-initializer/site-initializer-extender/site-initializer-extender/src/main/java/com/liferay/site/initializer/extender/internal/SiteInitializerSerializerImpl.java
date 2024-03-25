@@ -12,6 +12,7 @@ import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
 import com.liferay.headless.delivery.dto.v1_0.PageDefinition;
+import com.liferay.layout.exporter.LayoutsExporter;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.util.structure.LayoutStructure;
@@ -33,6 +34,8 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReader;
+import com.liferay.portal.kernel.zip.ZipReader;
+import com.liferay.portal.kernel.zip.ZipReaderFactory;
 import com.liferay.portal.kernel.zip.ZipWriter;
 import com.liferay.portal.kernel.zip.ZipWriterFactory;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
@@ -74,6 +77,7 @@ public class SiteInitializerSerializerImpl
 				"documents/group", zipWriter);
 			_serializeDDMStructures(groupId, zipWriter);
 			_serializeDDMTemplates(groupId, zipWriter);
+			_serializeLayoutPageTemplates(groupId, zipWriter);
 			_serializeLayouts(groupId, "layouts", zipWriter);
 			_serializeStyleBookEntries(groupId, zipWriter);
 
@@ -307,6 +311,32 @@ public class SiteInitializerSerializerImpl
 			zipWriter);
 	}
 
+	private void _serializeLayoutPageTemplates(
+			long groupId, ZipWriter zipWriter)
+		throws Exception {
+
+		File file = _layoutsExporter.exportLayoutPageTemplateEntries(groupId);
+		ZipReader zipReader = null;
+
+		try {
+			zipReader = _zipReaderFactory.getZipReader(file);
+
+			for (String name : zipReader.getEntries()) {
+				InputStream inputStream = zipReader.getEntryAsInputStream(name);
+
+				_addZipEntry(
+					"layout-page-templates/" + name, inputStream, zipWriter);
+			}
+		}
+		finally {
+			if (zipReader != null) {
+				zipReader.close();
+			}
+
+			file.delete();
+		}
+	}
+
 	private void _serializeLayouts(
 			long groupId, boolean privateLayout, long layoutId,
 			String zipDirName, ZipWriter zipWriter)
@@ -374,6 +404,9 @@ public class SiteInitializerSerializerImpl
 	private LayoutPageTemplateStructureLocalService
 		_layoutPageTemplateStructureLocalService;
 
+	@Reference
+	private LayoutsExporter _layoutsExporter;
+
 	@Reference(
 		target = "(component.name=com.liferay.headless.delivery.internal.dto.v1_0.converter.PageDefinitionDTOConverter)"
 	)
@@ -385,6 +418,9 @@ public class SiteInitializerSerializerImpl
 
 	@Reference
 	private StyleBookEntryLocalService _styleBookEntryLocalService;
+
+	@Reference
+	private ZipReaderFactory _zipReaderFactory;
 
 	@Reference
 	private ZipWriterFactory _zipWriterFactory;

@@ -28,7 +28,6 @@ import {ProductUploadType} from '../../enums/ProductUploadType';
 import {ProductVersionOption} from '../../enums/ProductVersionOption';
 import {ProductVocabulary} from '../../enums/ProductVocabulary';
 import i18n from '../../i18n';
-import {getCompanyId} from '../../liferay/constants';
 import {useAppContext} from '../../manage-app-state/AppManageState';
 import {TYPES} from '../../manage-app-state/actionTypes';
 import {
@@ -48,6 +47,7 @@ import OfferingTypeCheckbox from './components/OfferingTypeCheckbox';
 import {offeringTypesDescription} from './constants/offeringTypesDescriptions';
 
 import './ProvideAppBuildPage.scss';
+import {Liferay} from '../../liferay/liferay';
 import ResourceRequirements from './ResourceRequirements';
 
 type ProvideAppBuildPageProps = {
@@ -412,7 +412,7 @@ export function ProvideAppBuildPage({
 						className:
 							'com.liferay.commerce.product.model.CPAttachmentFileEntry',
 						classPK: buildAppPackageId as number,
-						companyId: getCompanyId(),
+						companyId: Liferay.ThemeDisplay.getCompanyId(),
 						tableName: 'CUSTOM_FIELDS',
 					});
 				}

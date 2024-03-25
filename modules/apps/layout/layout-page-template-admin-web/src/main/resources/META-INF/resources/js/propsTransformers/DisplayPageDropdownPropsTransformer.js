@@ -9,6 +9,8 @@ import {
 	openModal,
 	openSelectionModal,
 	openSimpleInputModal,
+	setFormValues,
+	sub,
 } from 'frontend-js-web';
 
 import openContentTypeModal from '../commands/openContentTypeModal';
@@ -104,6 +106,37 @@ const ACTIONS = {
 		else {
 			send(markAsDefaultDisplayPageURL);
 		}
+	},
+
+	moveDisplayPage(
+		{
+			itemSelectorURL,
+			layoutPageTemplateEntryId,
+			layoutPageTemplateEntryName,
+		},
+		portletNamespace
+	) {
+		openSelectionModal({
+			onSelect: (selectedItem) => {
+				const form = document.getElementById(
+					`${portletNamespace}moveEntriesFm`
+				);
+
+				setFormValues(form, {
+					layoutPageTemplateEntriesIds: layoutPageTemplateEntryId,
+					targetLayoutPageTemplateCollectionId:
+						selectedItem.resourceid,
+				});
+
+				submitForm(form);
+			},
+			selectEventName: 'selectFolder',
+			title: sub(
+				Liferay.Language.get('move-x-to'),
+				`"${layoutPageTemplateEntryName}"`
+			),
+			url: itemSelectorURL,
+		});
 	},
 
 	permissionsDisplayPage({permissionsDisplayPageURL}) {

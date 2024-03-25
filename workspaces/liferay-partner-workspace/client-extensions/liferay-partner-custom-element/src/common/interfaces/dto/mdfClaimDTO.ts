@@ -6,6 +6,7 @@
 import AccountEntry from '../accountEntry';
 import LiferayPicklist from '../liferayPicklist';
 import MDFClaim from '../mdfClaim';
+import MDFClaimDocument from '../mdfClaimDocument';
 import MDFClaimActivityDTO from './mdfClaimActivityDTO';
 
 export default interface MDFClaimDTO extends MDFClaim {
@@ -16,6 +17,7 @@ export default interface MDFClaimDTO extends MDFClaim {
 	externalReferenceCodeSF?: string;
 	mdfClaimStatus: LiferayPicklist;
 	mdfClmToMDFClmActs?: MDFClaimActivityDTO[];
+	mdfClmToMDFClmDocs?: MDFClaimDocument[];
 	mdfRequestExternalReferenceCode?: string;
 	mdfRequestTotalCostOfExpense?: number;
 	partial?: boolean;

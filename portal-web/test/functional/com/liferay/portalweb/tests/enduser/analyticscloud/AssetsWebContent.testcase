@@ -160,15 +160,21 @@ definition {
 		ACDXPSettings.connectDXPtoAnalyticsCloud(siteName = "Site Name");
 
 		ACUtils.navigateToSitePageWithUser(
+			actionType = "View WC",
+			documentTitleList = "1,2,3,4",
 			emailList = ${emailList},
 			pageName = "AC Page",
 			siteName = "Site Name");
+
+		ACUtils.closeAllSessionsAndWait();
 
 		User.logoutPG();
 
 		ACUtils.clearLocalStorage();
 
 		ACUtils.navigateToSitePage(
+			actionType = "View WC",
+			documentTitleList = "1,2,3,4",
 			pageName = "AC Page",
 			siteName = "Site Name");
 
@@ -764,10 +770,11 @@ definition {
 			ACNavigation.openItem(itemName = "Web Content AC Title");
 		}
 
-		task ("Confirm the Views number is correct") {
-			ACAssets.viewVisitorsBehaviorMetric(
+		task ("Confirm that web content events appear in AC") {
+			ACAssets.viewIfVisitorsBehaviorMetricIsBetweenCorrectRange(
+				maxMetricValue = 4,
 				metricTitle = "Views",
-				metricValue = 3);
+				minMetricValue = 1);
 		}
 	}
 

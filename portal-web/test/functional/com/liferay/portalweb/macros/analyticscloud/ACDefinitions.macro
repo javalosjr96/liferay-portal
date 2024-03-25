@@ -1,16 +1,18 @@
 definition {
 
 	@summary = "Default summary"
-	macro addMultipleSearchQuerySuccessfully(query_list = null) {
+	macro addMultipleSearchQuerySuccessfully(queryStringList) {
 		var index = 0;
 
-		for (var x : list ${query_list}) {
-			Click(locator1 = "Icon#PLUS");
+		for (var queryString : list ${queryStringList}) {
+			if (IsElementPresent(locator1 = "Icon#PLUS")) {
+				Click(locator1 = "Icon#PLUS");
+			}
 
 			Type(
 				key_index = ${index},
 				locator1 = "ACDefinitions#SEARCH_QUERY_INPUT_INDEX",
-				value1 = ${x});
+				value1 = ${queryString});
 
 			var index = ${index} + 1;
 		}
