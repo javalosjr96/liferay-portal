@@ -11,7 +11,7 @@ jobs:
       - uses: actions/checkout@v3
       - name: Creating Empty PR 
         run: |
-          git remote add liferay git@github.com:liferay/liferay-portal.git
+          git remote add liferay https://github.com/javalosjr96/liferay-portal.git
           git fetch liferay master
           git merge liferay/master
           git config user.name 'Jorge Avalos'
