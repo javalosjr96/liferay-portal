@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Creating Empty PR 
+      - name: Merge upgrade-test-suite-workflow with master 
         run: |
           git remote add liferay https://github.com/liferay/liferay-portal.git
           git fetch liferay master
