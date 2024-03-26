@@ -16,4 +16,4 @@ jobs:
           git switch -c upgrade-test-suite-branch
           git push origin upgrade-test-suite-branch --force
           git commit -m "Automated Empty PR" --allow-empty
-          git push origin upgrade-suite-test
+          git push origin upgrade-test-suite-branch
