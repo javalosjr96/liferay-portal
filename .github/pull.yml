@@ -1,0 +1,5 @@
+version: "1"
+rules:
+  - base: upgrade-test-suite-master
+    upstream: liferay:master
+    mergeMethod: merge
