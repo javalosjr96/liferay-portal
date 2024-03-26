@@ -1,19 +1,1 @@
-name: Scheduled Empty Commit Branch
-on:
-   schedule:
-   - cron: '0 9 * * *'
-   workflow_dispatch:
 
-jobs:
-  create-pr:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Creating Empty PR 
-        run: |
-          git config user.name 'Jorge Avalos'
-          git config user.email 'jorge.avalos@liferay.com'
-          git switch -c upgrade-test-suite-branch
-          git push origin upgrade-test-suite-branch --force
-          git commit -m "Automated Empty PR" --allow-empty
-          git push origin upgrade-test-suite-branch
