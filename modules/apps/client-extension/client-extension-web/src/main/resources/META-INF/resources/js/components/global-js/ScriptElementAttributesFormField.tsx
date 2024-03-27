@@ -11,48 +11,56 @@ import AttributeFields, {TYPE_BOOLEAN, TYPE_STRING} from './AttributeFields';
 const emptyRow = () => ({id: uuidv4(), name: '', type: TYPE_STRING, value: ''});
 
 const toJSONObjectString = (attributes) => {
+	const validAttributes = attributes.filter(
+		(attribute) => attribute.name.trim().length
+	);
+
+	if (!validAttributes.length) {
+		return '';
+	}
+
 	const attributesObject = {};
 
-	attributes.map((attribute) => {
+	validAttributes.forEach((attribute) => {
 		let value = attribute.value;
 
 		if (attribute.type === 'Boolean') {
 			value = JSON.parse(value);
 		}
 
-		if (attribute.name) {
-			attributesObject[attribute.name] = value;
-		}
+		attributesObject[attribute.name] = value;
 	});
 
 	return JSON.stringify(attributesObject);
 };
 
+const parseAttributes = (attributes: string) => {
+	const scriptElementAttributesJSONObject: {
+		[key: string]: boolean | string;
+	} = JSON.parse(attributes);
+
+	return Object.keys(scriptElementAttributesJSONObject).map((key) => ({
+		id: uuidv4(),
+		name: key,
+		type:
+			typeof scriptElementAttributesJSONObject[key] === 'boolean'
+				? TYPE_BOOLEAN
+				: TYPE_STRING,
+		value: scriptElementAttributesJSONObject[key],
+	}));
+};
+
 interface IProps {
-	attributes?: {
-		name: string;
-		value: boolean | string;
-	}[];
 	portletNamespace: string;
+	scriptElementAttributesJSON?: string;
 }
 
 export default function ScriptElementAttributesFormField({
-	attributes: initialAttributes,
 	portletNamespace,
+	scriptElementAttributesJSON: initialAttributes,
 }: IProps) {
 	const [attributes, setAttributes] = useState(() =>
-		initialAttributes && !!initialAttributes.length
-			? [
-					initialAttributes.map((attribute) => ({
-						...attribute,
-						id: uuidv4(),
-						type:
-							typeof attribute.value === 'boolean'
-								? TYPE_BOOLEAN
-								: TYPE_STRING,
-					})),
-			  ]
-			: [emptyRow()]
+		initialAttributes ? parseAttributes(initialAttributes) : [emptyRow()]
 	);
 
 	const handleAddClick = (index) => {
@@ -72,7 +80,7 @@ export default function ScriptElementAttributesFormField({
 	return (
 		<>
 			<input
-				name={`${portletNamespace}scriptElementAttributes`}
+				name={`${portletNamespace}scriptElementAttributesJSON`}
 				type="hidden"
 				value={toJSONObjectString(attributes)}
 			/>

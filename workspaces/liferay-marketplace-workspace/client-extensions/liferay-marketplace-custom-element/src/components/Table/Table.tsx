@@ -17,6 +17,7 @@ type TableProps<T = any> = {
 	columns: TableColumn<T>[];
 	hasKebabButton?: boolean;
 	hasPagination?: boolean;
+	kebabClassName?: string;
 	onClickRow?: (row: T) => void;
 	paginationProps?: PaginationProps;
 	rows: T[];
@@ -33,7 +34,7 @@ type TableColumn<T = any> = {
 	onClick?: (item: T) => void;
 	render?: (value: any, item: T) => ReactNode | string;
 	styles?: string;
-	title: ReactNode;
+	title?: ReactNode;
 	truncate?: boolean;
 	width?: string;
 };
@@ -55,6 +56,7 @@ const Table: React.FC<TableProps> = ({
 	columns,
 	hasKebabButton,
 	hasPagination,
+	kebabClassName = '',
 	onClickRow,
 	paginationProps,
 	rows,
@@ -73,7 +75,7 @@ const Table: React.FC<TableProps> = ({
 								noWrap={column.noWrap}
 								style={{width: column.width}}
 							>
-								{column.title}
+								{column?.title}
 							</ClayTable.Cell>
 						))}
 
@@ -124,7 +126,7 @@ const Table: React.FC<TableProps> = ({
 
 							{hasKebabButton && (
 								<ClayTable.Cell
-									className="border-0"
+									className={kebabClassName}
 									columnTextAlignment="center"
 								>
 									{Actions && <Actions row={row} />}

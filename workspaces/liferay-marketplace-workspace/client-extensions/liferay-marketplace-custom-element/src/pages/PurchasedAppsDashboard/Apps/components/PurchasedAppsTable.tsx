@@ -3,13 +3,11 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import ClayButton from '@clayui/button';
-import DropDown from '@clayui/drop-down/lib/DropDown';
-import ClayIcon from '@clayui/icon';
+import {ClayButtonWithIcon} from '@clayui/button';
+import ClayDropDown from '@clayui/drop-down';
 import {ClayTooltipProvider} from '@clayui/tooltip';
 import {useNavigate} from 'react-router-dom';
 
-import appsIcon from '../../../../assets/icons/apps_fill_icon.svg';
 import {DashboardEmptyTable} from '../../../../components/DashboardTable/DashboardEmptyTable';
 import OrderStatus, {
 	Statuses as OrderStatuses,
@@ -27,13 +25,15 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 	const navigate = useNavigate();
 	const {properties} = useMarketplaceContext();
 
-	if (!items.length) {
+	if (!items?.length) {
 		return (
 			<DashboardEmptyTable
-				description1="Purchase and install new apps and they will show up here."
-				description2="Click on “Add Apps” to start."
-				icon={appsIcon}
-				title="No Apps Yet"
+				description1={i18n.translate(
+					'purchase-and-install-new-apps-and-they-will-show-up-here'
+				)}
+				description2={i18n.translate('click-on-add-apps-to-start')}
+				icon="grid"
+				title={i18n.translate('no-apps-yet')}
 			/>
 		);
 	}
@@ -56,7 +56,7 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 							</span>
 						</div>
 					),
-					title: 'Name',
+					title: i18n.translate('name'),
 				},
 				{
 					key: 'author',
@@ -80,7 +80,7 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 							</div>
 						);
 					},
-					title: 'Purchased By',
+					title: i18n.translate('purchased-by'),
 				},
 
 				{
@@ -88,7 +88,7 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 					render: (type) => (
 						<span className="dashboard-table-row-type">{type}</span>
 					),
-					title: 'License Type',
+					title: i18n.translate('license-type'),
 				},
 				{
 					key: 'orderTypeExternalReferenceCode',
@@ -102,11 +102,11 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 							</>
 						);
 					},
-					title: 'App Type',
+					title: i18n.translate('app-type'),
 				},
 				{
 					key: 'id',
-					title: 'Order ID',
+					title: i18n.translate('order-id'),
 				},
 				{
 					key: 'orderStatusInfo',
@@ -115,9 +115,10 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 							{orderStatusInfo?.label}
 						</OrderStatus>
 					),
-					title: 'Order Status',
+					title: i18n.translate('order-status'),
 				},
 				{
+					align: 'center',
 					key: 'status',
 					render: (
 						_,
@@ -138,21 +139,23 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 
 						return (
 							<div onClick={(event) => event.stopPropagation()}>
-								<DropDown
+								<ClayDropDown
 									trigger={
-										<ClayButton displayType="secondary">
-											{i18n.translate('manage')}
-											<ClayIcon symbol="caret-bottom" />
-										</ClayButton>
+										<ClayButtonWithIcon
+											aria-label="Kebab Button"
+											displayType={null}
+											symbol="ellipsis-v"
+											title="Kebab Button"
+										/>
 									}
 								>
-									<DropDown.ItemList>
+									<ClayDropDown.ItemList>
 										{orderTypeExternalReferenceCode ===
 											OrderType.DXP &&
 											!isFreeApp && (
 												<>
 													<ClayTooltipProvider>
-														<DropDown.Item
+														<ClayDropDown.Item
 															data-tooltip-align="left"
 															disabled={
 																orderStatusIsNotCompleted
@@ -173,10 +176,10 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 															{i18n.translate(
 																'create-license-key'
 															)}
-														</DropDown.Item>
+														</ClayDropDown.Item>
 													</ClayTooltipProvider>
 
-													<DropDown.Item
+													<ClayDropDown.Item
 														disabled={isFreeApp}
 														onClick={() => {
 															navigate(
@@ -187,13 +190,13 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 														{i18n.translate(
 															'manage-license-keys'
 														)}
-													</DropDown.Item>
+													</ClayDropDown.Item>
 												</>
 											)}
 
 										{orderTypeExternalReferenceCode ===
 											OrderType.CLOUD && (
-											<DropDown.Item
+											<ClayDropDown.Item
 												onClick={() => {
 													window.open(
 														properties.cloudBaseURL
@@ -203,13 +206,13 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 												{i18n.translate(
 													'access-console'
 												)}
-											</DropDown.Item>
+											</ClayDropDown.Item>
 										)}
 
 										{orderTypeExternalReferenceCode ===
 											OrderType.DXP && (
 											<ClayTooltipProvider>
-												<DropDown.Item
+												<ClayDropDown.Item
 													data-tooltip-align="left"
 													disabled={
 														orderStatusIsNotCompleted
@@ -228,15 +231,14 @@ const AppsTable: React.FC<AppsTableProps> = ({items}) => {
 													{i18n.translate(
 														'download-app'
 													)}
-												</DropDown.Item>
+												</ClayDropDown.Item>
 											</ClayTooltipProvider>
 										)}
-									</DropDown.ItemList>
-								</DropDown>
+									</ClayDropDown.ItemList>
+								</ClayDropDown>
 							</div>
 						);
 					},
-					title: 'Installation',
 				},
 			]}
 			onClickRow={({id}) => navigate(`order/${id}`)}

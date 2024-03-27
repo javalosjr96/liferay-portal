@@ -4046,33 +4046,38 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			throw new UserEmailAddressException.MustNotBeNull();
 		}
 
+		String passwordResetURL = null;
+
 		User user = userPersistence.findByC_EA(companyId, emailAddress);
 
 		PasswordPolicy passwordPolicy = user.getPasswordPolicy();
 
-		Date expirationDate = null;
+		if (passwordPolicy.isChangeable()) {
+			Date expirationDate = null;
 
-		if ((passwordPolicy != null) &&
-			(passwordPolicy.getResetTicketMaxAge() > 0)) {
+			if ((passwordPolicy != null) &&
+				(passwordPolicy.getResetTicketMaxAge() > 0)) {
 
-			expirationDate = new Date(
-				System.currentTimeMillis() +
-					(passwordPolicy.getResetTicketMaxAge() * 1000));
+				expirationDate = new Date(
+					System.currentTimeMillis() +
+						(passwordPolicy.getResetTicketMaxAge() * 1000));
+			}
+
+			Ticket ticket = _ticketLocalService.addDistinctTicket(
+				companyId, User.class.getName(), user.getUserId(),
+				TicketConstants.TYPE_PASSWORD, null, expirationDate,
+				serviceContext);
+
+			passwordResetURL = StringBundler.concat(
+				serviceContext.getPortalURL(), serviceContext.getPathMain(),
+				"/portal/update_password?p_l_id=", serviceContext.getPlid(),
+				"&ticketId=", ticket.getTicketId(), "&ticketKey=",
+				ticket.getKey());
+
+			ticket.setKey(PasswordEncryptorUtil.encrypt(ticket.getKey()));
+
+			_ticketLocalService.updateTicket(ticket);
 		}
-
-		Ticket ticket = _ticketLocalService.addDistinctTicket(
-			companyId, User.class.getName(), user.getUserId(),
-			TicketConstants.TYPE_PASSWORD, null, expirationDate,
-			serviceContext);
-
-		String passwordResetURL = StringBundler.concat(
-			serviceContext.getPortalURL(), serviceContext.getPathMain(),
-			"/portal/update_password?p_l_id=", serviceContext.getPlid(),
-			"&ticketId=", ticket.getTicketId(), "&ticketKey=", ticket.getKey());
-
-		ticket.setKey(PasswordEncryptorUtil.encrypt(ticket.getKey()));
-
-		_ticketLocalService.updateTicket(ticket);
 
 		sendPasswordNotification(
 			user, companyId, null, passwordResetURL, fromName, fromAddress,
@@ -6635,10 +6640,16 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 			prefix = "adminEmailPasswordReset";
 			subjectProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_RESET_SUBJECT;
 		}
-		else {
+		else if (PasswordModificationThreadLocal.isPasswordModified()) {
 			bodyProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_CHANGED_BODY;
 			prefix = "adminEmailPasswordChanged";
 			subjectProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_CHANGED_SUBJECT;
+		}
+		else {
+			bodyProperty = PropsKeys.ADMIN_EMAIL_PASSWORD_UNCHANGEABLE_BODY;
+			prefix = "adminEmailPasswordUnchangeable";
+			subjectProperty =
+				PropsKeys.ADMIN_EMAIL_PASSWORD_UNCHANGEABLE_SUBJECT;
 		}
 
 		String localizedBody = body;

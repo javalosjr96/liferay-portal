@@ -49,7 +49,7 @@ interface DashboardTableProps<T> {
 export function DashboardTable<T>({
 	children = () => null,
 	emptyStateMessage,
-	icon,
+	icon = 'grid',
 	items = [],
 	tableHeaders = [],
 }: DashboardTableProps<T>) {

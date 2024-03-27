@@ -2,7 +2,9 @@
 	"dependencies": {
 		"@clayui/alert": "^3.85.0",
 		"@clayui/badge": "^3.100.0",
+		"@clayui/button": "^3.111.0",
 		"@clayui/card": "^3.85.0",
+		"@clayui/charts": "^3.106.1",
 		"@clayui/css": "^3.85.0",
 		"@clayui/drop-down": "^3.87.0",
 		"@clayui/empty-state": "^3.106.1",

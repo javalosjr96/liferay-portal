@@ -3,11 +3,9 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import solutionsIcon from '../../assets/icons/analytics_icon.svg';
-import appsIcon from '../../assets/icons/apps_fill_icon.svg';
-import businessIcon from '../../assets/icons/business_center_icon.svg';
 import {DashboardListItems} from '../../components/DashboardNavigation/DashboardNavigation';
 import {AppProps} from '../../components/DashboardTable/DashboardTable';
+import i18n from '../../i18n';
 import {Liferay} from '../../liferay/liferay';
 
 export type AccountBriefProps = {
@@ -67,26 +65,20 @@ export const customerRoles = ['Account Administrator', 'Account Buyer'];
 
 export const initialDashboardNavigationItems: DashboardListItems[] = [
 	{
-		itemIcon: appsIcon,
-		itemName: 'apps',
-		itemSelected: true,
-		itemTitle: 'Apps',
+		itemTitle: i18n.translate('apps'),
 		items: [] as AppProps[],
 		path: '/',
+		symbol: 'grid',
 	},
 	{
-		itemIcon: solutionsIcon,
-		itemName: 'solutions',
-		itemSelected: false,
-		itemTitle: 'Solutions',
+		itemTitle: i18n.translate('solutions'),
 		path: '/solutions',
+		symbol: 'polls',
 	},
 	{
-		itemIcon: businessIcon,
-		itemName: 'account',
-		itemSelected: false,
-		itemTitle: 'Account',
+		itemTitle: i18n.translate('account'),
 		path: '/accounts',
+		symbol: 'briefcase',
 	},
 ];
 

@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import ClayIcon from '@clayui/icon';
 import {format, isBefore} from 'date-fns';
 import {useMemo, useState} from 'react';
 import {Link, useOutletContext, useParams} from 'react-router-dom';
 import useSWR from 'swr';
 
-import solutionsIcon from '../../../../../assets/icons/bookmarks_icon.svg';
 import {DashboardEmptyTable} from '../../../../../components/DashboardTable/DashboardEmptyTable';
 import StatusCell from '../../../../../components/Table/StatusCell';
 import Table from '../../../../../components/Table/Table';
@@ -16,6 +16,7 @@ import i18n from '../../../../../i18n';
 
 import './Licenses.scss';
 
+import ClayButton from '@clayui/button';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {useModal} from '@clayui/modal';
 import {ClayTooltipProvider} from '@clayui/tooltip';
@@ -87,6 +88,7 @@ const Licenses = () => {
 			}
 		}
 	);
+
 	const rows = licenseKeysResponse?.items ?? [];
 
 	const orderStatusIsNotCompleted =
@@ -107,39 +109,57 @@ const Licenses = () => {
 
 	const buttonsInfo = useMemo(
 		() => ({
-			cancelButton: {
-				className: 'ml-4',
-				displayType: 'unstyled',
-				onClick: licenseKeyModal.onClose,
-				show: true,
-			},
-			customizedButton: {
-				className: 'text-danger border-danger',
-				displayType: 'secondary',
-				onClick: () => {
-					licenseKeyModal.onClose();
+			first: (
+				<ClayButton
+					className="ml-4"
+					displayType="unstyled"
+					onClick={licenseKeyModal.onClose}
+				>
+					{i18n.translate('cancel')}
+				</ClayButton>
+			),
+			last: (
+				<>
+					<ClayButton
+						className="border-danger text-danger"
+						displayType="secondary"
+						onClick={() => {
+							licenseKeyModal.onClose();
 
-					deactivateLicenseModal.onOpenChange(true);
-				},
-				show: true,
-				text: i18n.translate('deactivate'),
-			},
-			nextButton: {
-				appendIcon: 'download',
-				className: 'ml-4 mr-1',
-				disabled: isLicenseExpired(modalData?.expirationDate as string),
-				displayType: 'primary',
-				onClick: () => onDownload(modalData as LicenseKey),
-				show: true,
-				text: i18n.translate('download-key'),
-				tooltip: isLicenseExpired(modalData?.expirationDate as string)
-					? i18n.translate(
-							'this-key-is-expired-and-cannot-be-downloaded'
-					  )
-					: '',
-			},
+							deactivateLicenseModal.onOpenChange(true);
+						}}
+					>
+						{i18n.translate('deactivate')}
+					</ClayButton>
+
+					<ClayButton
+						className="ml-4 mr-1"
+						disabled={isLicenseExpired(
+							modalData?.expirationDate as string
+						)}
+						displayType="primary"
+						onClick={() => {
+							licenseKeyModal.onClose();
+
+							deactivateLicenseModal.onOpenChange(true);
+						}}
+						title={
+							isLicenseExpired(
+								modalData?.expirationDate as string
+							)
+								? i18n.translate(
+										'this-key-is-expired-and-cannot-be-downloaded'
+								  )
+								: ''
+						}
+					>
+						<ClayIcon symbol="download" />
+						{i18n.translate('download-key')}
+					</ClayButton>
+				</>
+			),
 		}),
-		[licenseKeyModal, deactivateLicenseModal, onDownload, modalData]
+		[licenseKeyModal, deactivateLicenseModal, modalData]
 	);
 
 	if (isLoading) {
@@ -210,7 +230,6 @@ const Licenses = () => {
 								/>
 							),
 						},
-
 						{
 							bodyClass: 'border-0 cursor-pointer',
 							key: 'startDate',
@@ -272,6 +291,7 @@ const Licenses = () => {
 					]}
 					hasKebabButton
 					hasPagination
+					kebabClassName="border-0"
 					onClickRow={onViewLicenseKey}
 					paginationProps={{
 						active: page,
@@ -289,7 +309,7 @@ const Licenses = () => {
 					description1={i18n.translate(
 						'create-new-licenses-and-they-will-show-up-here'
 					)}
-					icon={solutionsIcon}
+					icon="bookmarks"
 					title={i18n.translate('no-licenses-yet')}
 				>
 					<ClayTooltipProvider>
@@ -315,9 +335,12 @@ const Licenses = () => {
 
 			{licenseKeyModal.open && (
 				<Modal
-					buttonsInfo={buttonsInfo}
+					first={buttonsInfo.first}
+					last={buttonsInfo.last}
 					observer={licenseKeyModal.observer}
 					size="lg"
+					title=""
+					visible={false}
 				>
 					<LicenceKeyModalContent
 						Header={

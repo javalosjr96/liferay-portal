@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import solutionsIcon from '../../assets/icons/analytics_icon.svg';
-import appsIcon from '../../assets/icons/apps_fill_icon.svg';
 import {DashboardListItems} from '../../components/DashboardNavigation/DashboardNavigation';
 
 export const customerAppPermissionDescriptions: PermissionDescription[] = [
@@ -66,17 +64,15 @@ export const customerDashboardPermissionDescriptions: PermissionDescription[] = 
 
 export const initialDashboardNavigationItems: DashboardListItems[] = [
 	{
-		itemIcon: appsIcon,
-		itemName: 'myApps',
 		itemTitle: 'My Apps',
 		items: [],
 		path: '/',
+		symbol: 'grid',
 	},
 	{
-		itemIcon: solutionsIcon,
-		itemName: 'solutions',
 		itemTitle: 'My Solutions',
 		path: '/solutions',
+		symbol: 'polls',
 	},
 ];
 
