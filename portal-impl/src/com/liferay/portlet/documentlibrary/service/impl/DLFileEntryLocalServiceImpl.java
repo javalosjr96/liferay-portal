@@ -10,6 +10,7 @@ import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.document.library.kernel.exception.DuplicateFileEntryException;
 import com.liferay.document.library.kernel.exception.DuplicateFileEntryExternalReferenceCodeException;
 import com.liferay.document.library.kernel.exception.DuplicateFolderNameException;
+import com.liferay.document.library.kernel.exception.FileEntryExpirationDateException;
 import com.liferay.document.library.kernel.exception.FileExtensionException;
 import com.liferay.document.library.kernel.exception.FileNameException;
 import com.liferay.document.library.kernel.exception.InvalidFileEntryTypeException;
@@ -246,7 +247,8 @@ public class DLFileEntryLocalServiceImpl
 			fileEntryTypeId);
 
 		_validateFile(
-			groupId, folderId, 0, fileEntryTypeId, fileName, extension, title);
+			groupId, folderId, 0, fileEntryTypeId, fileName, extension, title,
+			displayDate, expirationDate);
 
 		long fileEntryId = counterLocalService.increment();
 
@@ -2063,14 +2065,21 @@ public class DLFileEntryLocalServiceImpl
 
 				dlFileEntry.setVersion(newVersion);
 				dlFileEntry.setDisplayDate(dlFileVersion.getDisplayDate());
+				dlFileEntry.setExpirationDate(
+					dlFileVersion.getExpirationDate());
 
 				dlFileEntry = dlFileEntryPersistence.update(dlFileEntry);
 			}
 			else if (!Objects.equals(
 						dlFileEntry.getDisplayDate(),
-						dlFileVersion.getDisplayDate())) {
+						dlFileVersion.getDisplayDate()) ||
+					 !Objects.equals(
+						 dlFileEntry.getExpirationDate(),
+						 dlFileVersion.getExpirationDate())) {
 
 				dlFileEntry.setDisplayDate(dlFileVersion.getDisplayDate());
+				dlFileEntry.setExpirationDate(
+					dlFileVersion.getExpirationDate());
 
 				dlFileEntry = dlFileEntryPersistence.update(dlFileEntry);
 			}
@@ -2835,6 +2844,9 @@ public class DLFileEntryLocalServiceImpl
 			).where(
 				DLFileEntryTable.INSTANCE.companyId.eq(
 					companyId
+				).and(
+					DLFileEntryTable.INSTANCE.expirationDate.gte(
+						_dates.get(companyId))
 				).and(
 					DLFileEntryTable.INSTANCE.expirationDate.lte(expirationDate)
 				)
@@ -3662,7 +3674,7 @@ public class DLFileEntryLocalServiceImpl
 			_validateFile(
 				dlFileEntry.getGroupId(), dlFileEntry.getFolderId(),
 				dlFileEntry.getFileEntryId(), fileEntryTypeId, fileName,
-				extension, title);
+				extension, title, displayDate, expirationDate);
 
 			// File version
 
@@ -3824,7 +3836,8 @@ public class DLFileEntryLocalServiceImpl
 
 	private void _validateFile(
 			long groupId, long folderId, long fileEntryId, long fileEntryTypeId,
-			String fileName, String extension, String title)
+			String fileName, String extension, String title, Date displayDate,
+			Date expirationDate)
 		throws PortalException {
 
 		DLValidatorUtil.validateFileName(fileName);
@@ -3840,6 +3853,22 @@ public class DLFileEntryLocalServiceImpl
 		}
 
 		validateFile(groupId, folderId, fileEntryId, fileName, title);
+
+		if (!ExportImportThreadLocal.isImportInProcess() &&
+			(expirationDate != null) && expirationDate.before(new Date())) {
+
+			throw new FileEntryExpirationDateException(
+				"Expiration date " + expirationDate + " is in the past");
+		}
+
+		if ((displayDate != null) && (expirationDate != null) &&
+			displayDate.after(expirationDate)) {
+
+			throw new FileEntryExpirationDateException(
+				StringBundler.concat(
+					"Expiration date ", expirationDate,
+					" is prior to display date ", displayDate));
+		}
 	}
 
 	private void _validateFileEntryTypeId(

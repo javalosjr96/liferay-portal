@@ -10,6 +10,7 @@ export default defineConfig({
 	build: {
 		outDir: 'build/vite',
 		rollupOptions: {
+			external: [/@clayui\/*/, 'react', 'react-dom'],
 			output: {
 				assetFileNames: 'assets/[name][extname]',
 				chunkFileNames: '[name]-[hash].js',
@@ -18,7 +19,7 @@ export default defineConfig({
 		},
 		target: 'esnext',
 	},
-	plugins: [react()],
+	plugins: [react({jsxRuntime: 'classic'})],
 	server: {
 		origin: 'http://localhost:5173',
 	},

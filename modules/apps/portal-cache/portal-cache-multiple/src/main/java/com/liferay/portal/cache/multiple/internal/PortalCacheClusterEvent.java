@@ -6,35 +6,18 @@
 package com.liferay.portal.cache.multiple.internal;
 
 import com.liferay.petra.string.StringBundler;
-import com.liferay.portal.cache.io.SerializableObjectWrapper;
 import com.liferay.portal.kernel.cache.PortalCache;
-import com.liferay.portal.kernel.io.Deserializer;
-import com.liferay.portal.kernel.io.Serializer;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 
 import java.io.Serializable;
-
-import java.nio.ByteBuffer;
 
 /**
  * @author Shuyang Zhou
  */
-public class PortalCacheClusterEvent implements Serializable {
+public class PortalCacheClusterEvent {
 
 	public PortalCacheClusterEvent(
 		String portalCacheManagerName, String portalCacheName,
 		Serializable elementKey,
-		PortalCacheClusterEventType portalCacheClusterEventType) {
-
-		this(
-			portalCacheManagerName, portalCacheName, elementKey, null,
-			PortalCache.DEFAULT_TIME_TO_LIVE, portalCacheClusterEventType);
-	}
-
-	public PortalCacheClusterEvent(
-		String portalCacheManagerName, String portalCacheName,
-		Serializable elementKey, Serializable elementValue, int timeToLive,
 		PortalCacheClusterEventType portalCacheClusterEventType) {
 
 		if (portalCacheManagerName == null) {
@@ -57,17 +40,10 @@ public class PortalCacheClusterEvent implements Serializable {
 			throw new NullPointerException("Element key is null");
 		}
 
-		if (timeToLive < 0) {
-			throw new IllegalArgumentException("Time to live is negative");
-		}
-
 		_portalCacheManagerName = portalCacheManagerName;
 		_portalCacheName = portalCacheName;
-		_elementKey = new SerializableObjectWrapper(elementKey);
-		_timeToLive = timeToLive;
+		_elementKey = elementKey;
 		_portalCacheClusterEventType = portalCacheClusterEventType;
-
-		setElementValue(elementValue);
 	}
 
 	public long getCompanyId() {
@@ -75,25 +51,11 @@ public class PortalCacheClusterEvent implements Serializable {
 	}
 
 	public Serializable getElementKey() {
-		return SerializableObjectWrapper.unwrap(_elementKey);
+		return _elementKey;
 	}
 
 	public Serializable getElementValue() {
-		if (_elementValueBytes == null) {
-			return null;
-		}
-
-		Deserializer deserializer = new Deserializer(
-			ByteBuffer.wrap(_elementValueBytes));
-
-		try {
-			return deserializer.readObject();
-		}
-		catch (ClassNotFoundException classNotFoundException) {
-			_log.error("Unable to deserialize object", classNotFoundException);
-		}
-
-		return null;
+		return _elementValue;
 	}
 
 	public PortalCacheClusterEventType getEventType() {
@@ -117,17 +79,7 @@ public class PortalCacheClusterEvent implements Serializable {
 	}
 
 	public void setElementValue(Serializable elementValue) {
-		if (elementValue == null) {
-			return;
-		}
-
-		Serializer serializer = new Serializer();
-
-		serializer.writeObject(elementValue);
-
-		ByteBuffer byteBuffer = serializer.toByteBuffer();
-
-		_elementValueBytes = byteBuffer.array();
+		_elementValue = elementValue;
 	}
 
 	public void setTimeToLive(int timeToLive) {
@@ -147,9 +99,9 @@ public class PortalCacheClusterEvent implements Serializable {
 		sb.append(", elementKey=");
 		sb.append(_elementKey);
 
-		if (_elementValueBytes != null) {
-			sb.append(", elementValueBytes.length=");
-			sb.append(_elementValueBytes.length);
+		if (_elementValue != null) {
+			sb.append(", elementValue=");
+			sb.append(_elementValue);
 		}
 
 		sb.append(", timeToLive=");
@@ -165,15 +117,12 @@ public class PortalCacheClusterEvent implements Serializable {
 		return sb.toString();
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(
-		PortalCacheClusterEvent.class);
-
 	private long _companyId = Long.MIN_VALUE;
-	private final SerializableObjectWrapper _elementKey;
-	private byte[] _elementValueBytes;
+	private final Serializable _elementKey;
+	private Serializable _elementValue;
 	private final PortalCacheClusterEventType _portalCacheClusterEventType;
 	private final String _portalCacheManagerName;
 	private final String _portalCacheName;
-	private int _timeToLive;
+	private int _timeToLive = PortalCache.DEFAULT_TIME_TO_LIVE;
 
 }

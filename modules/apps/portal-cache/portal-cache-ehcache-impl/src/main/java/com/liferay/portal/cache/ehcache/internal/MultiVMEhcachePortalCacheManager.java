@@ -16,20 +16,15 @@ import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.ObjectValuePair;
 import com.liferay.portal.kernel.util.Props;
 import com.liferay.portal.kernel.util.PropsKeys;
-import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.HashSet;
 import java.util.Properties;
 import java.util.Set;
 
-import net.sf.ehcache.config.CacheConfiguration;
 import net.sf.ehcache.config.Configuration;
 
 import org.osgi.framework.BundleContext;
@@ -128,17 +123,6 @@ public class MultiVMEhcachePortalCacheManager
 		extends BaseEhcachePortalCacheManagerConfigurator {
 
 		@Override
-		protected boolean isRequireSerialization(
-			CacheConfiguration cacheConfiguration) {
-
-			if (clusterEnabled) {
-				return true;
-			}
-
-			return super.isRequireSerialization(cacheConfiguration);
-		}
-
-		@Override
 		protected void manageConfiguration(
 			Configuration configuration,
 			PortalCacheManagerConfiguration portalCacheManagerConfiguration) {
@@ -147,64 +131,30 @@ public class MultiVMEhcachePortalCacheManager
 				return;
 			}
 
-			Map<String, ObjectValuePair<Properties, Properties>>
-				mergedPropertiesMap = _getMergedPropertiesMap();
+			Set<String> portalCacheNames = new HashSet<>(
+				_replicatorProperties.stringPropertyNames());
 
-			for (Map.Entry<String, ObjectValuePair<Properties, Properties>>
-					entry : mergedPropertiesMap.entrySet()) {
+			portalCacheNames.addAll(
+				portalCacheManagerConfiguration.getPortalCacheNames());
 
-				ObjectValuePair<Properties, Properties> propertiesPair =
-					entry.getValue();
-
-				if (propertiesPair.getValue() != null) {
-					PortalCacheConfiguration portalCacheConfiguration =
-						portalCacheManagerConfiguration.
-							getPortalCacheConfiguration(entry.getKey());
-
-					Set<Properties> portalCacheListenerPropertiesSet =
-						portalCacheConfiguration.
-							getPortalCacheListenerPropertiesSet();
-
-					Iterator<Properties> iterator =
-						portalCacheListenerPropertiesSet.iterator();
-
-					while (iterator.hasNext()) {
-						Properties properties = iterator.next();
-
-						if ((Boolean)properties.get(
-								PortalCacheReplicator.REPLICATOR)) {
-
-							iterator.remove();
-						}
-					}
-
-					portalCacheListenerPropertiesSet.add(
-						propertiesPair.getValue());
-				}
+			for (String portalCacheName : portalCacheNames) {
+				_populateCacheReplicator(
+					portalCacheManagerConfiguration.getPortalCacheConfiguration(
+						portalCacheName),
+					GetterUtil.getString(
+						_replicatorProperties.getProperty(portalCacheName),
+						_defaultReplicatorPropertiesString));
 			}
+
+			_populateCacheReplicator(
+				portalCacheManagerConfiguration.
+					getDefaultPortalCacheConfiguration(),
+				_defaultReplicatorPropertiesString);
 		}
 
-		@Override
-		protected PortalCacheConfiguration parseCacheListenerConfigurations(
-			CacheConfiguration cacheConfiguration, ClassLoader classLoader,
-			boolean usingDefault) {
-
-			PortalCacheConfiguration portalCacheConfiguration =
-				super.parseCacheListenerConfigurations(
-					cacheConfiguration, classLoader, usingDefault);
-
-			if (!clusterEnabled) {
-				return portalCacheConfiguration;
-			}
-
-			String cacheName = cacheConfiguration.getName();
-
-			String replicatorPropertiesString =
-				(String)_replicatorProperties.remove(cacheName);
-
-			if (Validator.isNull(replicatorPropertiesString)) {
-				replicatorPropertiesString = _defaultReplicatorPropertiesString;
-			}
+		private void _populateCacheReplicator(
+			PortalCacheConfiguration portalCacheConfiguration,
+			String replicatorPropertiesString) {
 
 			Properties replicatorProperties = parseProperties(
 				replicatorPropertiesString, StringPool.COMMA);
@@ -215,40 +165,6 @@ public class MultiVMEhcachePortalCacheManager
 				portalCacheConfiguration.getPortalCacheListenerPropertiesSet();
 
 			portalCacheListenerPropertiesSet.add(replicatorProperties);
-
-			return portalCacheConfiguration;
-		}
-
-		private Map<String, ObjectValuePair<Properties, Properties>>
-			_getMergedPropertiesMap() {
-
-			Map<String, ObjectValuePair<Properties, Properties>>
-				mergedPropertiesMap = new HashMap<>();
-
-			for (String portalCacheName :
-					_replicatorProperties.stringPropertyNames()) {
-
-				Properties replicatorProperties = parseProperties(
-					_replicatorProperties.getProperty(portalCacheName),
-					StringPool.COMMA);
-
-				replicatorProperties.put(
-					PortalCacheReplicator.REPLICATOR, true);
-
-				ObjectValuePair<Properties, Properties> objectValuePair =
-					mergedPropertiesMap.get(portalCacheName);
-
-				if (objectValuePair == null) {
-					mergedPropertiesMap.put(
-						portalCacheName,
-						new ObjectValuePair<>(null, replicatorProperties));
-				}
-				else {
-					objectValuePair.setValue(replicatorProperties);
-				}
-			}
-
-			return mergedPropertiesMap;
 		}
 
 	}

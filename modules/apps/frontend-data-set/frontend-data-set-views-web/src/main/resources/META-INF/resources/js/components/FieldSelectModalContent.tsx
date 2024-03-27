@@ -17,11 +17,13 @@ import React, {ComponentProps, useEffect, useState} from 'react';
 import {FDSViewType} from '../FDSViews';
 import {getFields} from '../api';
 import {IField} from '../utils/types';
-import Search from './Search';
+import AutoSearch from './AutoSearch';
 
 interface IFieldTreeItem extends IField {
 	children?: IFieldTreeItem[];
+	initialChildren?: IFieldTreeItem[];
 	query?: string;
+	savedId?: string;
 	selected?: boolean;
 }
 
@@ -52,8 +54,11 @@ const initializeFields = ({
 
 		if (selectedField) {
 			selectedKeys.add(selectedField.name);
+
+			field.savedId = selectedField.id;
 		}
 
+		field.initialChildren = field.children;
 		field.id = field.name;
 	});
 
@@ -183,7 +188,6 @@ const FieldSelectModalContent = ({
 	);
 	const [query, setQuery] = useState<string>('');
 	const [expandedKeys, setExpandedKeys] = useState<Array<React.Key>>([]);
-	const [searchCounter, setSearchCounter] = useState<number>(0);
 
 	useEffect(() => {
 		getFields(fdsView).then((fields) => {
@@ -204,18 +208,17 @@ const FieldSelectModalContent = ({
 	const onSearch = (query: string) => {
 		setQuery(query);
 
-		const {counter, filteredItems, filteredKeys} = applyFilter({
+		const {filteredItems, filteredKeys} = applyFilter({
 			fields: initialFields ?? [],
 			query,
 		});
 
 		setFields(filteredItems);
 		setExpandedKeys(filteredKeys);
-		setSearchCounter(counter);
 	};
 
 	return (
-		<div className="field-select-modal">
+		<>
 			<ClayModal.Header>
 				{sub(
 					Liferay.Language.get('select-x'),
@@ -223,33 +226,33 @@ const FieldSelectModalContent = ({
 				)}
 			</ClayModal.Header>
 
-			<ClayModal.Body className="pt-0 px-0">
+			<ClayModal.Body className="field-select-modal pt-0 px-0">
 				{fields === null ? (
 					<ClayLoadingIndicator />
 				) : (
 					<>
 						<ClayManagementToolbar>
-							<ClayManagementToolbar.Search>
-								<Search onSearch={onSearch} query={query} />
+							<ClayManagementToolbar.Search
+								onSubmit={(event) => event.preventDefault()}
+							>
+								<AutoSearch onSearch={onSearch} query={query} />
 							</ClayManagementToolbar.Search>
 						</ClayManagementToolbar>
 
-						{query && (
+						{selectedKeys.size > 0 && (
 							<ClayResultsBar>
 								<ClayResultsBar.Item expand>
 									<span className="component-text text-truncate-inline">
 										<span className="text-truncate">
-											{sub(
-												searchCounter === 1
-													? Liferay.Language.get(
-															'x-result-for-x'
-													  )
-													: Liferay.Language.get(
-															'x-results-for-x'
-													  ),
-												searchCounter,
-												query
-											)}
+											{selectedKeys.size}
+											&nbsp;
+											{selectedKeys.size === 1
+												? Liferay.Language.get(
+														'item-selected'
+												  )
+												: Liferay.Language.get(
+														'items-selected'
+												  )}
 										</span>
 									</span>
 								</ClayResultsBar.Item>
@@ -259,11 +262,11 @@ const FieldSelectModalContent = ({
 										className="component-link tbar-link"
 										displayType="unstyled"
 										onClick={() => {
-											setQuery('');
-											setFields(initialFields);
+											selectedKeys.clear();
+											onSearch('');
 										}}
 									>
-										{Liferay.Language.get('clear')}
+										{Liferay.Language.get('deselect-all')}
 									</ClayButton>
 								</ClayResultsBar.Item>
 							</ClayResultsBar>
@@ -288,9 +291,22 @@ const FieldSelectModalContent = ({
 								selectionMode={selectionMode}
 								showExpanderOnHover={false}
 							>
-								{({children, label, query}: IFieldTreeItem) => (
+								{({
+									children,
+									initialChildren,
+									label,
+									query,
+								}: IFieldTreeItem) => (
 									<TreeView.Item>
-										<TreeView.ItemStack>
+										<TreeView.ItemStack
+											disabled={
+												initialChildren &&
+												!!initialChildren.length
+													? true
+													: false
+											}
+											expanderDisabled={false}
+										>
 											<ClayCheckbox checked>
 												<span className="font-weight-normal pl-1 text-3">
 													<Highlight
@@ -357,7 +373,7 @@ const FieldSelectModalContent = ({
 					</ClayButton.Group>
 				}
 			/>
-		</div>
+		</>
 	);
 };
 

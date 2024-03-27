@@ -1,0 +1,26 @@
+[
+	{
+		"accountBriefs": [
+			{
+				"externalReferenceCode": "M2H8-ADMIN-ADAM"
+			}
+		],
+		"emailAddress": "m2h8.admin.adam@liferay.com"
+	},
+	{
+		"accountBriefs": [
+			{
+				"externalReferenceCode": "M2H8-CUSTOMER-CARL"
+			}
+		],
+		"emailAddress": "m2h8.customer.carl@liferay.com"
+	},
+	{
+		"accountBriefs": [
+			{
+				"externalReferenceCode": "M2H8-SUPPORT-SAM"
+			}
+		],
+		"emailAddress": "m2h8.support.sam@liferay.com"
+	}
+]

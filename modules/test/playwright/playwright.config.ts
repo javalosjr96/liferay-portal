@@ -21,10 +21,12 @@ import {config as journalWebConfig} from './tests/journal-web/config';
 import {config as knowledgeBaseWebConfig} from './tests/knowledge-base-web/config';
 import {config as layoutAdminWebConfig} from './tests/layout-admin-web/config';
 import {config as layoutContentPageEditorWebConfig} from './tests/layout-content-page-editor-web/config';
+import {config as layoutTaglib} from './tests/layout-taglib/config';
 import {config as lockedItemsConfig} from './tests/locked-items-web/config';
 import {config as objectWebConfig} from './tests/object-web/config';
 import {config as osbFaroWebConfig} from './tests/osb-faro-web/config';
 import {config as portalWebConfig} from './tests/portal-web/config';
+import {config as portalWorkflowKaleoDesignerWebConfig} from './tests/portal-workflow-kaleo-designer-web/config';
 import {config as productNavigationControlMenuWebConfig} from './tests/product-navigation-control-menu-web/config';
 import {config as productNavigationUserPersonalBarWebConfig} from './tests/product-navigation-user-personal-bar-web/config';
 import {config as stableConfig} from './tests/stable/config';
@@ -52,10 +54,12 @@ export default defineConfig({
 		knowledgeBaseWebConfig,
 		layoutAdminWebConfig,
 		layoutContentPageEditorWebConfig,
+		layoutTaglib,
 		lockedItemsConfig,
 		objectWebConfig,
 		osbFaroWebConfig,
 		portalWebConfig,
+		portalWorkflowKaleoDesignerWebConfig,
 		productNavigationControlMenuWebConfig,
 		productNavigationUserPersonalBarWebConfig,
 		stableConfig,

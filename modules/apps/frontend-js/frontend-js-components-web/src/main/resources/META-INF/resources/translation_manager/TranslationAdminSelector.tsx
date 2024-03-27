@@ -83,11 +83,12 @@ const TriggerButton = React.forwardRef(
 			<ClayButton
 				{...props}
 				aria-label={ariaLabelButton}
+				className="btn-block"
 				displayType="secondary"
 				monospaced
 				ref={ref}
 				size={small ? 'sm' : undefined}
-				title={Liferay.Language.get('select-translation-language')}
+				title={Liferay.Language.get('select-a-language')}
 			>
 				<span className="inline-item">
 					<ClayIcon symbol={selectedItem.symbol} />

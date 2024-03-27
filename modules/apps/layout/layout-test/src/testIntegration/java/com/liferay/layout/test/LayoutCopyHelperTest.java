@@ -68,7 +68,9 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.imageio.ImageIO;
@@ -291,23 +293,11 @@ public class LayoutCopyHelperTest {
 				_group.getGroupId(), targetLayout.getPlid());
 
 		long[] firstCopyFragmentEntryLinkIds =
-			TransformUtil.transformToLongArray(
+			_assertFragmentEntryLinksAndGetOriginalFragmentEntryLinkIds(
 				firstCopyFragmentEntryLinks,
-				FragmentEntryLinkModel::getOriginalFragmentEntryLinkId);
-
-		Assert.assertEquals(
-			Arrays.toString(firstCopyFragmentEntryLinkIds), 4,
-			firstCopyFragmentEntryLinkIds.length);
-
-		Assert.assertTrue(
-			ArrayUtil.containsAll(
-				firstCopyFragmentEntryLinkIds,
-				new long[] {
-					fragmentEntryLink1.getFragmentEntryLinkId(),
-					fragmentEntryLink2.getFragmentEntryLinkId(),
-					fragmentEntryLink3.getFragmentEntryLinkId(),
-					fragmentEntryLink4.getFragmentEntryLinkId()
-				}));
+				ListUtil.fromArray(
+					fragmentEntryLink1, fragmentEntryLink2, fragmentEntryLink3,
+					fragmentEntryLink4));
 
 		_fragmentEntryLinkLocalService.updateDeleted(
 			TestPropsValues.getUserId(),
@@ -354,27 +344,17 @@ public class LayoutCopyHelperTest {
 
 		_layoutCopyHelper.copyLayoutContent(sourceLayout, targetLayout);
 
-		List<FragmentEntryLink> secoundCopyFragmentEntryLinks =
+		List<FragmentEntryLink> secondCopyFragmentEntryLinks =
 			_fragmentEntryLinkLocalService.getFragmentEntryLinksByPlid(
 				_group.getGroupId(), targetLayout.getPlid());
 
 		long[] secondCopyFragmentEntryLinkIds =
-			TransformUtil.transformToLongArray(
-				secoundCopyFragmentEntryLinks,
-				FragmentEntryLinkModel::getOriginalFragmentEntryLinkId);
+			_assertFragmentEntryLinksAndGetOriginalFragmentEntryLinkIds(
+				secondCopyFragmentEntryLinks,
+				ListUtil.fromArray(
+					fragmentEntryLink2, fragmentEntryLink3, fragmentEntryLink5,
+					fragmentEntryLink6));
 
-		Assert.assertEquals(
-			Arrays.toString(secondCopyFragmentEntryLinkIds), 4,
-			secondCopyFragmentEntryLinkIds.length);
-		Assert.assertTrue(
-			ArrayUtil.containsAll(
-				secondCopyFragmentEntryLinkIds,
-				new long[] {
-					fragmentEntryLink2.getFragmentEntryLinkId(),
-					fragmentEntryLink3.getFragmentEntryLinkId(),
-					fragmentEntryLink5.getFragmentEntryLinkId(),
-					fragmentEntryLink6.getFragmentEntryLinkId()
-				}));
 		Assert.assertFalse(
 			ArrayUtil.contains(
 				secondCopyFragmentEntryLinkIds,
@@ -385,12 +365,7 @@ public class LayoutCopyHelperTest {
 				fragmentEntryLink4.getFragmentEntryLinkId()));
 
 		Set<Long> updatedFragmentEntryLinkIds = SetUtil.intersect(
-			TransformUtil.transformToLongArray(
-				firstCopyFragmentEntryLinks,
-				FragmentEntryLinkModel::getFragmentEntryLinkId),
-			TransformUtil.transformToLongArray(
-				secoundCopyFragmentEntryLinks,
-				FragmentEntryLinkModel::getFragmentEntryLinkId));
+			firstCopyFragmentEntryLinkIds, secondCopyFragmentEntryLinkIds);
 
 		Assert.assertEquals(
 			updatedFragmentEntryLinkIds.toString(), 2,
@@ -399,7 +374,7 @@ public class LayoutCopyHelperTest {
 		Assert.assertTrue(
 			ArrayUtil.containsAll(
 				TransformUtil.transformToLongArray(
-					secoundCopyFragmentEntryLinks,
+					secondCopyFragmentEntryLinks,
 					FragmentEntryLinkModel::getOriginalFragmentEntryLinkId),
 				new long[] {
 					fragmentEntryLink2.getFragmentEntryLinkId(),
@@ -664,6 +639,69 @@ public class LayoutCopyHelperTest {
 			Boolean.TRUE.toString(),
 			targetUnicodeProperties.getProperty(
 				"lfr-theme:regular:show-header"));
+	}
+
+	private long[] _assertFragmentEntryLinksAndGetOriginalFragmentEntryLinkIds(
+		List<FragmentEntryLink> copiedFragmentEntryLinks,
+		List<FragmentEntryLink> sourceFragmentEntryLinks) {
+
+		Map<Long, FragmentEntryLink> originalFragmentEntryLinkIdMap =
+			new HashMap<Long, FragmentEntryLink>() {
+				{
+					for (FragmentEntryLink fragmentEntryLink :
+							copiedFragmentEntryLinks) {
+
+						put(
+							fragmentEntryLink.getOriginalFragmentEntryLinkId(),
+							fragmentEntryLink);
+					}
+				}
+			};
+
+		long[] originalFragmentEntryLinkIds = ArrayUtil.toLongArray(
+			originalFragmentEntryLinkIdMap.keySet());
+
+		Assert.assertEquals(
+			Arrays.toString(originalFragmentEntryLinkIds),
+			sourceFragmentEntryLinks.size(),
+			originalFragmentEntryLinkIds.length);
+		Assert.assertTrue(
+			ArrayUtil.containsAll(
+				originalFragmentEntryLinkIds,
+				TransformUtil.transformToLongArray(
+					sourceFragmentEntryLinks,
+					fragmentEntryLink ->
+						fragmentEntryLink.getFragmentEntryLinkId())));
+
+		for (FragmentEntryLink sourceFragmentEntryLink :
+				sourceFragmentEntryLinks) {
+
+			FragmentEntryLink copiedFragmentEntryLink =
+				originalFragmentEntryLinkIdMap.get(
+					sourceFragmentEntryLink.getFragmentEntryLinkId());
+
+			Assert.assertNotNull(copiedFragmentEntryLink);
+			Assert.assertEquals(
+				sourceFragmentEntryLink.getConfiguration(),
+				copiedFragmentEntryLink.getConfiguration());
+			Assert.assertEquals(
+				sourceFragmentEntryLink.getCss(),
+				copiedFragmentEntryLink.getCss());
+			Assert.assertEquals(
+				sourceFragmentEntryLink.getEditableValues(),
+				copiedFragmentEntryLink.getEditableValues());
+			Assert.assertEquals(
+				sourceFragmentEntryLink.getHtml(),
+				copiedFragmentEntryLink.getHtml());
+			Assert.assertEquals(
+				sourceFragmentEntryLink.getJs(),
+				copiedFragmentEntryLink.getJs());
+			Assert.assertEquals(
+				sourceFragmentEntryLink.getLastPropagationDate(),
+				copiedFragmentEntryLink.getLastPropagationDate());
+		}
+
+		return originalFragmentEntryLinkIds;
 	}
 
 	@Inject

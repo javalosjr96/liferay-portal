@@ -96,6 +96,20 @@ export class JournalPage {
 			.click();
 	}
 
+	async assertPrivateContentIcon() {
+		await expect(
+			this.page.getByLabel('Not Visible to Guest Users').locator('use')
+		).toBeVisible({timeout: 1000});
+	}
+
+	async changeView(viewName: string) {
+		await this.page
+			.getByLabel('Select View, Currently Selected: ')
+			.waitFor();
+		await this.page.getByLabel('Select View, Currently Selected: ').click();
+		await this.page.getByRole('menuitem', {name: viewName}).click();
+	}
+
 	async setJournalArticlePermissions(
 		articles: Locator[],
 		permissionLocators: string[]

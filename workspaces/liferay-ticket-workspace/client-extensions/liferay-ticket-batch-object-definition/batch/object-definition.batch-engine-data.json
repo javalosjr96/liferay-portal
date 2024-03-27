@@ -130,6 +130,7 @@
 				{
 					"DBType": "String",
 					"businessType": "Picklist",
+					"defaultValue": "unassigned",
 					"externalReferenceCode": "PRIORITY",
 					"indexed": true,
 					"indexedAsKeyword": false,
@@ -149,6 +150,7 @@
 				{
 					"DBType": "String",
 					"businessType": "Picklist",
+					"defaultValue": "eMEA",
 					"externalReferenceCode": "REGION",
 					"indexed": true,
 					"indexedAsKeyword": false,
@@ -243,27 +245,6 @@
 										"objectStateTransitions": [
 											{
 												"key": "closed"
-											},
-											{
-												"key": "escalated"
-											},
-											{
-												"key": "inProgress"
-											},
-											{
-												"key": "inReview"
-											},
-											{
-												"key": "open"
-											},
-											{
-												"key": "queued"
-											},
-											{
-												"key": "verifying"
-											},
-											{
-												"key": "waiting"
 											}
 										]
 									},
@@ -271,28 +252,7 @@
 										"key": "closed",
 										"objectStateTransitions": [
 											{
-												"key": "answered"
-											},
-											{
-												"key": "escalated"
-											},
-											{
-												"key": "inProgress"
-											},
-											{
-												"key": "inReview"
-											},
-											{
 												"key": "open"
-											},
-											{
-												"key": "queued"
-											},
-											{
-												"key": "verifying"
-											},
-											{
-												"key": "waiting"
 											}
 										]
 									},
@@ -333,24 +293,6 @@
 											},
 											{
 												"key": "closed"
-											},
-											{
-												"key": "escalated"
-											},
-											{
-												"key": "inReview"
-											},
-											{
-												"key": "open"
-											},
-											{
-												"key": "queued"
-											},
-											{
-												"key": "verifying"
-											},
-											{
-												"key": "waiting"
 											}
 										]
 									},
@@ -387,28 +329,10 @@
 										"key": "open",
 										"objectStateTransitions": [
 											{
-												"key": "answered"
-											},
-											{
 												"key": "closed"
 											},
 											{
-												"key": "escalated"
-											},
-											{
 												"key": "inProgress"
-											},
-											{
-												"key": "inReview"
-											},
-											{
-												"key": "queued"
-											},
-											{
-												"key": "verifying"
-											},
-											{
-												"key": "waiting"
 											}
 										]
 									},
@@ -511,6 +435,7 @@
 				{
 					"DBType": "String",
 					"businessType": "Picklist",
+					"defaultValue": "other",
 					"externalReferenceCode": "TYPE",
 					"indexed": true,
 					"indexedAsKeyword": false,

@@ -6,6 +6,7 @@
 package com.liferay.commerce.order.web.internal.frontend.data.set.filter;
 
 import com.liferay.commerce.order.web.internal.constants.CommerceOrderFDSNames;
+import com.liferay.commerce.order.web.internal.constants.CommerceReturnFDSNames;
 import com.liferay.frontend.data.set.filter.BaseSelectionFDSFilter;
 import com.liferay.frontend.data.set.filter.FDSFilter;
 
@@ -15,7 +16,10 @@ import org.osgi.service.component.annotations.Component;
  * @author Marco Leo
  */
 @Component(
-	property = "frontend.data.set.name=" + CommerceOrderFDSNames.ALL_ORDERS,
+	property = {
+		"frontend.data.set.name=" + CommerceOrderFDSNames.ALL_ORDERS,
+		"frontend.data.set.name=" + CommerceReturnFDSNames.RETURNS
+	},
 	service = FDSFilter.class
 )
 public class CommerceChannelSelectionFDSFilter extends BaseSelectionFDSFilter {

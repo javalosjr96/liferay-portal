@@ -72,6 +72,21 @@ export default class SearchBuilder {
 		return '';
 	}
 
+	static equal(key: Key, values: Value[]) {
+		if (values) {
+			const operator = `${key} = ({values})`;
+
+			return operator
+				.replace(
+					'{values}',
+					values.map((value) => `'${value}'`).join(',')
+				)
+				.trim();
+		}
+
+		return '';
+	}
+
 	/**
 	 * @description Not equal
 	 * @example addressLocality ne 'London'
@@ -158,7 +173,6 @@ export default class SearchBuilder {
 				if (schema.type === 'date') {
 					value = new Date(value).toISOString();
 				}
-
 				const getOptionalSearchCondition = () => {
 					const formattedKey = key.replace('$', '');
 
@@ -183,16 +197,31 @@ export default class SearchBuilder {
 				searchCondition = getOptionalSearchCondition();
 			}
 			else {
-				searchCondition = Array.isArray(value)
-					? SearchBuilder.in(
+				if (Array.isArray(value)) {
+					if (schema.name.includes('testrayCasePriorities')) {
+						searchCondition = SearchBuilder.equal(
 							key,
 							value.map((_value) =>
 								typeof _value === 'object'
 									? _value.value
 									: _value
 							)
-					  )
-					: SearchBuilder.eq(key, value);
+						);
+					}
+					else {
+						searchCondition = SearchBuilder.in(
+							key,
+							value.map((_value) =>
+								typeof _value === 'object'
+									? _value.value
+									: _value
+							)
+						);
+					}
+				}
+				else {
+					searchCondition = SearchBuilder.eq(key, value);
+				}
 			}
 
 			_filter.push(
@@ -229,6 +258,10 @@ export default class SearchBuilder {
 		return this.setContext(SearchBuilder.eq(key, value));
 	}
 
+	public gt(key: Key, value: Value) {
+		return this.setContext(SearchBuilder.gt(key, value));
+	}
+
 	public in(key: Key, values: Value[]) {
 		return this.setContext(SearchBuilder.in(key, values));
 	}
@@ -251,6 +284,10 @@ export default class SearchBuilder {
 		});
 
 		return this.group('CLOSE');
+	}
+
+	public lt(key: Key, value: Value) {
+		return this.setContext(SearchBuilder.lt(key, value));
 	}
 
 	public ne(key: Key, value: Value) {

@@ -1,0 +1,24 @@
+[
+	{
+		"active": true,
+		"errorMessage": {
+		},
+		"label": {
+			"en_US": "Ticket Creation Notification"
+		},
+		"name": "ticketCreationNotification",
+		"objectActionExecutorKey": "notification",
+		"objectActionTriggerKey": "onAfterAdd",
+		"objectDefinitionId": "[$OBJECT_DEFINITION_ID:J3Y7Ticket$]",
+		"parameters": {
+			"notificationTemplateExternalReferenceCode": "M2H8-NEW-TICKET-USER-TEMPLATE",
+			"objectDefinitionExternalReferenceCode": "J3Y7_TICKET",
+			"type": "user-notification"
+		},
+		"status": {
+			"code": 1,
+			"label": "success",
+			"label_i18n": "Success"
+		}
+	}
+]

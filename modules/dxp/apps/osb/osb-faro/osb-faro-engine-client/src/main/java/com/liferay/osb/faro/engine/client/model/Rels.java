@@ -102,6 +102,8 @@ public interface Rels {
 
 	public static final String FIELDS = "fields";
 
+	public static final String IDENTITIES_COUNT = "identities-count";
+
 	public static final String INDIVIDUAL = "individual";
 
 	public static final String INDIVIDUAL_INDIVIDUAL_SEGMENTS =
@@ -186,8 +188,6 @@ public interface Rels {
 		"preview-disabled-segments";
 
 	public static final String SESSION_VALUES = "session-values";
-
-	public static final String USERS_COUNT = "users-count";
 
 	public static final String WORKSPACE = "workspace";
 

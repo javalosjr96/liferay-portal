@@ -459,9 +459,11 @@ function SearchResults({
 	const [results, setResults] = useState([]);
 	const [loadMore, setLoadMore] = useState(false);
 	const [loading, setLoading] = useState(false);
+	const [loadingMore, setLoadingMore] = useState(false);
 
 	const onFindLayouts = useCallback((layouts, hasMoreElements) => {
 		setLoading(false);
+		setLoadingMore(false);
 
 		setResults((prevResults) => prevResults.concat(layouts));
 
@@ -514,11 +516,23 @@ function SearchResults({
 
 			{loadMore && (
 				<ClayButton
-					className="mb-5"
+					className="load-more-btn mb-5 mt-2"
+					disabled={loadingMore}
 					displayType="secondary"
-					onClick={() => onLoadMore(results.length)}
+					onClick={() => {
+						setLoadingMore(true);
+						onLoadMore(results.length);
+					}}
 				>
-					{Liferay.Language.get('load-more-results')}
+					{loadingMore ? (
+						<ClayLoadingIndicator
+							className="mx-5"
+							displayType="secondary"
+							size="sm"
+						/>
+					) : (
+						Liferay.Language.get('load-more-results')
+					)}
 				</ClayButton>
 			)}
 		</div>
@@ -554,7 +568,7 @@ function SearchResult({filter, layout, multiSelection, onSelect, selection}) {
 	};
 
 	return (
-		<div className="align-items-center d-flex pb-2">
+		<div className="align-items-center d-flex pb-2 search-result">
 			{multiSelection && (
 				<ClayCheckbox
 					checked={selection.has(layout.id)}

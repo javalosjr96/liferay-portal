@@ -12,11 +12,17 @@ import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
 import com.liferay.headless.delivery.dto.v1_0.PageDefinition;
+import com.liferay.journal.constants.JournalFolderConstants;
+import com.liferay.journal.model.JournalArticle;
+import com.liferay.journal.model.JournalFolder;
+import com.liferay.journal.service.JournalArticleLocalService;
+import com.liferay.journal.service.JournalFolderService;
 import com.liferay.layout.exporter.LayoutsExporter;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -79,6 +85,9 @@ public class SiteInitializerSerializerImpl
 			_serializeDDMTemplates(groupId, zipWriter);
 			_serializeLayoutPageTemplates(groupId, zipWriter);
 			_serializeLayouts(groupId, "layouts", zipWriter);
+			_serializeJournalArticles(
+				groupId, JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+				"journal-articles", zipWriter);
 			_serializeStyleBookEntries(groupId, zipWriter);
 
 			return zipWriter.getFile();
@@ -217,6 +226,62 @@ public class SiteInitializerSerializerImpl
 			_serializeDocuments(
 				groupId, folder.getFolderId(),
 				zipDirName + "/" + folder.getName(), zipWriter);
+		}
+	}
+
+	private void _serializeJournalArticles(
+			long groupId, long parentFolderId, String zipDirName,
+			ZipWriter zipWriter)
+		throws Exception {
+
+		List<JournalArticle> journalArticles =
+			_journalArticleLocalService.getArticles(groupId, parentFolderId);
+
+		for (JournalArticle journalArticle : journalArticles) {
+			_addZipEntry(
+				_normalize(
+					StringBundler.concat(
+						zipDirName, "/", journalArticle.getArticleId(),
+						".json")),
+				JSONUtil.put(
+					"ddmStructureKey", journalArticle.getDDMStructureKey()
+				).put(
+					"name", journalArticle.getArticleId()
+				),
+				zipWriter);
+			_addZipEntry(
+				_normalize(
+					StringBundler.concat(
+						zipDirName, "/", journalArticle.getArticleId(),
+						".xml")),
+				journalArticle.getContent(), zipWriter);
+		}
+
+		List<JournalFolder> journalFolders = _journalFolderService.getFolders(
+			groupId, parentFolderId);
+
+		for (JournalFolder journalFolder : journalFolders) {
+			_addZipEntry(
+				_normalize(
+					StringBundler.concat(
+						zipDirName, "/", journalFolder.getName(),
+						"metadata.json")),
+				JSONUtil.put(
+					"description", journalFolder.getDescription()
+				).put(
+					"externalReferenceCode",
+					journalFolder.getExternalReferenceCode()
+				).put(
+					"name", journalFolder.getName()
+				).put(
+					"viewableBy", "Anyone"
+				),
+				zipWriter);
+
+			_serializeJournalArticles(
+				groupId, journalFolder.getFolderId(),
+				StringBundler.concat(zipDirName, "/", journalFolder.getName()),
+				zipWriter);
 		}
 	}
 
@@ -393,6 +458,12 @@ public class SiteInitializerSerializerImpl
 
 	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
+
+	@Reference
+	private JournalArticleLocalService _journalArticleLocalService;
+
+	@Reference
+	private JournalFolderService _journalFolderService;
 
 	@Reference
 	private JSONFactory _jsonFactory;

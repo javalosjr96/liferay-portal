@@ -22,9 +22,14 @@ public interface LayoutUtilityPageEntryViewRenderer {
 
 	public String getType();
 
-	public void renderHTML(
+	public default boolean isEnabled() {
+		return true;
+	}
+
+	public default void renderHTML(
 			HttpServletRequest httpServletRequest,
 			HttpServletResponse httpServletResponse)
-		throws IOException, ServletException;
+		throws IOException, ServletException {
+	}
 
 }

@@ -12,6 +12,7 @@ import com.liferay.document.library.configuration.DLConfiguration;
 import com.liferay.document.library.kernel.exception.DuplicateFileEntryException;
 import com.liferay.document.library.kernel.exception.DuplicateFileEntryExternalReferenceCodeException;
 import com.liferay.document.library.kernel.exception.DuplicateFolderNameException;
+import com.liferay.document.library.kernel.exception.FileEntryExpirationDateException;
 import com.liferay.document.library.kernel.exception.FileExtensionException;
 import com.liferay.document.library.kernel.exception.InvalidFileVersionException;
 import com.liferay.document.library.kernel.exception.NoSuchFolderException;
@@ -82,6 +83,7 @@ import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -121,6 +123,45 @@ public class DLFileEntryLocalServiceTest {
 	@Before
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
+	}
+
+	@Test(expected = FileEntryExpirationDateException.class)
+	public void testAddFileEntryShouldFailIfExpirationDateIsBeforeDisplayDate()
+		throws Exception {
+
+		String content = StringUtil.randomString();
+
+		Date displayDate = new Date(System.currentTimeMillis() + Time.DAY);
+		Date expirationDate = new Date(System.currentTimeMillis() + Time.HOUR);
+
+		DLFileEntryLocalServiceUtil.addFileEntry(
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			"file.txt", ContentTypes.TEXT_PLAIN, "file.txt",
+			StringUtil.randomString(), StringPool.BLANK, StringPool.BLANK, -1,
+			new HashMap<>(), null, new ByteArrayInputStream(content.getBytes()),
+			0, displayDate, expirationDate, null,
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId()));
+	}
+
+	@Test(expected = FileEntryExpirationDateException.class)
+	public void testAddFileEntryShouldFailIfExpirationDateIsBeforeNow()
+		throws Exception {
+
+		String content = StringUtil.randomString();
+
+		Date expirationDate = new Date(System.currentTimeMillis() - Time.DAY);
+
+		DLFileEntryLocalServiceUtil.addFileEntry(
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			"file.txt", ContentTypes.TEXT_PLAIN, "file.txt",
+			StringUtil.randomString(), StringPool.BLANK, StringPool.BLANK, -1,
+			new HashMap<>(), null, new ByteArrayInputStream(content.getBytes()),
+			0, null, expirationDate, null,
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId()));
 	}
 
 	@Test(expected = FileExtensionException.class)
@@ -218,7 +259,8 @@ public class DLFileEntryLocalServiceTest {
 				_group.getGroupId(), TestPropsValues.getUserId());
 
 		Date displayDate = new Date();
-		Date expirationDate = new Date();
+		Date expirationDate = new Date(
+			System.currentTimeMillis() + Time.MINUTE);
 		Date reviewDate = new Date();
 
 		DLFileEntry dlFileEntry = DLFileEntryLocalServiceUtil.addFileEntry(
@@ -358,7 +400,8 @@ public class DLFileEntryLocalServiceTest {
 				_group.getGroupId(), TestPropsValues.getUserId());
 
 		Date displayDate = new Date();
-		Date expirationDate = new Date();
+		Date expirationDate = new Date(
+			System.currentTimeMillis() + Time.MINUTE);
 		Date reviewDate = new Date();
 
 		DLFileEntry dlFileEntry = DLFileEntryLocalServiceUtil.addFileEntry(
@@ -400,7 +443,8 @@ public class DLFileEntryLocalServiceTest {
 				_group.getGroupId(), TestPropsValues.getUserId());
 
 		Date reviewDate = new Date();
-		Date expitationDate = new Date();
+		Date expirationDate = new Date(
+			System.currentTimeMillis() + Time.MINUTE);
 
 		DLFileEntry dlFileEntry = DLFileEntryLocalServiceUtil.addFileEntry(
 			null, TestPropsValues.getUserId(), _group.getGroupId(),
@@ -408,11 +452,11 @@ public class DLFileEntryLocalServiceTest {
 			StringUtil.randomString(), ContentTypes.TEXT_PLAIN,
 			StringUtil.randomString(), StringUtil.randomString(),
 			StringPool.BLANK, StringPool.BLANK, -1, new HashMap<>(), null,
-			new ByteArrayInputStream(new byte[0]), 0, null, expitationDate,
+			new ByteArrayInputStream(new byte[0]), 0, null, expirationDate,
 			reviewDate, serviceContext);
 
 		Assert.assertNull(dlFileEntry.getDisplayDate());
-		Assert.assertEquals(expitationDate, dlFileEntry.getExpirationDate());
+		Assert.assertEquals(expirationDate, dlFileEntry.getExpirationDate());
 		Assert.assertEquals(reviewDate, dlFileEntry.getReviewDate());
 	}
 
@@ -444,7 +488,8 @@ public class DLFileEntryLocalServiceTest {
 			ServiceContextTestUtil.getServiceContext(
 				_group.getGroupId(), TestPropsValues.getUserId());
 
-		Date expirationDate = new Date();
+		Date expirationDate = new Date(
+			System.currentTimeMillis() + Time.MINUTE);
 
 		DLFileEntry dlFileEntry = DLFileEntryLocalServiceUtil.addFileEntry(
 			null, TestPropsValues.getUserId(), _group.getGroupId(),
@@ -1177,7 +1222,8 @@ public class DLFileEntryLocalServiceTest {
 		Assert.assertNull(dlFileVersion.getReviewDate());
 
 		Date displayDate = new Date();
-		Date expirationDate = new Date();
+		Date expirationDate = new Date(
+			System.currentTimeMillis() + Time.MINUTE);
 		Date reviewDate = new Date();
 
 		dlFileEntry = DLFileEntryLocalServiceUtil.updateFileEntry(
@@ -1239,6 +1285,69 @@ public class DLFileEntryLocalServiceTest {
 
 		Assert.assertNotNull(dlFileVersion.getStoreUUID());
 		Assert.assertNotEquals(storeUUID, dlFileVersion.getStoreUUID());
+	}
+
+	@Test(expected = FileEntryExpirationDateException.class)
+	public void testUpdateFileEntryShouldFailIfExpirationDateIsBeforeDisplayDate()
+		throws Exception {
+
+		String content = StringUtil.randomString();
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId());
+
+		DLFileEntry dlFileEntry = DLFileEntryLocalServiceUtil.addFileEntry(
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			"file.txt", ContentTypes.TEXT_PLAIN, "file.txt",
+			StringUtil.randomString(), StringPool.BLANK, StringPool.BLANK, -1,
+			new HashMap<>(), null, new ByteArrayInputStream(content.getBytes()),
+			0, null, null, null, serviceContext);
+
+		Date displayDate = new Date(System.currentTimeMillis() + Time.DAY);
+		Date expirationDate = new Date(System.currentTimeMillis() + Time.HOUR);
+
+		DLFileEntryLocalServiceUtil.updateFileEntry(
+			dlFileEntry.getUserId(), dlFileEntry.getFileEntryId(),
+			dlFileEntry.getFileName(), dlFileEntry.getMimeType(),
+			dlFileEntry.getTitle(), StringUtil.randomString(),
+			dlFileEntry.getTitle(), StringPool.BLANK,
+			DLVersionNumberIncrease.fromMajorVersion(false),
+			dlFileEntry.getFileEntryTypeId(), new HashMap<>(), null,
+			new ByteArrayInputStream(content.getBytes()), 0, displayDate,
+			expirationDate, null, serviceContext);
+	}
+
+	@Test(expected = FileEntryExpirationDateException.class)
+	public void testUpdateFileEntryShouldFailIfExpirationDateIsBeforeNow()
+		throws Exception {
+
+		String content = StringUtil.randomString();
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), TestPropsValues.getUserId());
+
+		DLFileEntry dlFileEntry = DLFileEntryLocalServiceUtil.addFileEntry(
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			"file.txt", ContentTypes.TEXT_PLAIN, "file.txt",
+			StringUtil.randomString(), StringPool.BLANK, StringPool.BLANK, -1,
+			new HashMap<>(), null, new ByteArrayInputStream(content.getBytes()),
+			0, null, null, null, serviceContext);
+
+		Date expirationDate = new Date(System.currentTimeMillis() - Time.DAY);
+
+		DLFileEntryLocalServiceUtil.updateFileEntry(
+			dlFileEntry.getUserId(), dlFileEntry.getFileEntryId(),
+			dlFileEntry.getFileName(), dlFileEntry.getMimeType(),
+			dlFileEntry.getTitle(), StringUtil.randomString(),
+			dlFileEntry.getTitle(), StringPool.BLANK,
+			DLVersionNumberIncrease.fromMajorVersion(false),
+			dlFileEntry.getFileEntryTypeId(), new HashMap<>(), null,
+			new ByteArrayInputStream(content.getBytes()), 0, null,
+			expirationDate, null, serviceContext);
 	}
 
 	@Test(expected = FileExtensionException.class)

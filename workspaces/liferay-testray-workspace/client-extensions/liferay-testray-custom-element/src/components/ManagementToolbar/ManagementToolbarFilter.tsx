@@ -275,15 +275,11 @@ const ManagementToolbarFilter: React.FC<ManagementToolbarFilterProps> = ({
 				displayType="unstyled"
 				onClick={handleExpand}
 			>
-				<span className="navbar-breakpoint-down-d-none">
+				<span>
 					<ClayIcon
 						className="inline-item inline-item-after inline-item-before"
 						symbol="filter"
 					/>
-				</span>
-
-				<span className="navbar-breakpoint-d-none">
-					<ClayIcon symbol="filter" />
 				</span>
 			</ClayButton>
 

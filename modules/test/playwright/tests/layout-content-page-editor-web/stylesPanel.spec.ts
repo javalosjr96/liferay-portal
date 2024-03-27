@@ -80,6 +80,10 @@ test('allows changing and resetting spacing', async ({
 
 	await pageEditorPage.goToEditMode(layout, site.friendlyUrlPath);
 
+	// Check Saved icon is not visible at the beggining
+
+	await expect(page.getByLabel('Saved')).not.toBeVisible();
+
 	// Change Margin Top with custom value and check change is applied
 
 	await pageEditorPage.changeFragmentSpacing(
@@ -102,6 +106,7 @@ test('allows changing and resetting spacing', async ({
 	// Reset to initial value and check change is applied
 
 	await pageEditorPage.resetSpacing(headingId, 'Margin Top');
+
 	expect(await pageEditorPage.getFragmentStyle(headingId, 'marginTop')).toBe(
 		'0px'
 	);

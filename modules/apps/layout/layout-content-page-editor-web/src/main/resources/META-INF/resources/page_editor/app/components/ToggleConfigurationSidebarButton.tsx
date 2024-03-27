@@ -29,7 +29,10 @@ export default function ToggleConfigurationSidebarButton() {
 					'.page-editor__item-configuration-sidebar'
 				) as HTMLElement;
 
-				configurationSidebar?.focus();
+				if (configurationSidebar) {
+					configurationSidebar.style.visibility = 'visible';
+					configurationSidebar.focus();
+				}
 			}}
 			size="sm"
 			symbol="cog"

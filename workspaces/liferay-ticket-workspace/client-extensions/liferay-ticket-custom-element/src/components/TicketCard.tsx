@@ -11,7 +11,7 @@ import ClayPanel from '@clayui/panel';
 import {useDraggable} from '@dnd-kit/core';
 import {CSS} from '@dnd-kit/utilities';
 import classNames from 'classnames';
-import {useState} from 'react';
+import React, {useState} from 'react';
 import {QueryClient, useMutation, useQueryClient} from 'react-query';
 
 import {Liferay} from '../services/liferay';

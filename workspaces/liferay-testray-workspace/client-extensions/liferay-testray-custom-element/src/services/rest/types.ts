@@ -37,6 +37,10 @@ export type ObjectActionsItems = {
 	update?: ActionPermissionProperties;
 };
 
+export type Results<Query = any> = {
+	results: Query[];
+};
+
 export type APIResponse<Query = any> = {
 	actions: ObjectActions;
 	facets: Facets[];
@@ -44,6 +48,7 @@ export type APIResponse<Query = any> = {
 	lastPage: number;
 	page: number;
 	pageSize: number;
+	results?: Results[];
 	totalCount: number;
 };
 
@@ -321,6 +326,7 @@ export type TestraySubTask = {
 	dueStatus: PickList;
 	errors: string;
 	id: number;
+	issues?: TestrayIssue[];
 	mbMessageId: number;
 	mbThreadId: number;
 	mergedToSubtaskId: TestraySubTask;

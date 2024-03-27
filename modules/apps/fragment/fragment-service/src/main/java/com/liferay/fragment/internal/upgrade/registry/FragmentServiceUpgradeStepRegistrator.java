@@ -13,13 +13,13 @@ import com.liferay.fragment.internal.upgrade.v2_0_0.util.FragmentEntryTable;
 import com.liferay.fragment.internal.upgrade.v2_1_0.SchemaUpgradeProcess;
 import com.liferay.fragment.internal.upgrade.v2_4_0.FragmentEntryLinkUpgradeProcess;
 import com.liferay.fragment.internal.upgrade.v2_6_0.util.FragmentEntryVersionTable;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.upgrade.BaseSQLServerDatetimeUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.CTModelUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
 import com.liferay.portal.kernel.upgrade.MVCCVersionUpgradeProcess;
-import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
@@ -185,21 +185,17 @@ public class FragmentServiceUpgradeStepRegistrator
 
 		registry.register(
 			"2.10.1", "2.10.2",
-			new UpgradeProcess() {
-
-				@Override
-				protected void doUpgrade() throws Exception {
-					runSQL(
-						"update FragmentEntryLink set deleted = [$FALSE$] " +
-							"where deleted is null");
-				}
-
-			});
+			UpgradeProcessFactory.runSQL(
+				"update FragmentEntryLink set deleted = [$FALSE$] where " +
+					"deleted is null"));
 
 		registry.register(
 			"2.10.2", "2.10.3",
-			new com.liferay.fragment.internal.upgrade.v2_10_3.
-				FragmentEntryLinkUpgradeProcess());
+			UpgradeProcessFactory.runSQL(
+				StringBundler.concat(
+					"update FragmentEntryLink set originalFragmentEntryLinkId ",
+					"= 0 where originalFragmentEntryLinkId > 0 and plid in ",
+					"(select plid from Layout where classPK > 0)")));
 	}
 
 	@Reference

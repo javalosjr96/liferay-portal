@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {addDays} from 'date-fns';
+import {addDays, eachDayOfInterval, format} from 'date-fns';
 import useSWR from 'swr';
 
 import SearchBuilder from '../../../core/SearchBuilder';
@@ -18,38 +18,47 @@ export const METRIC_PARAMETER = {
 	week: 7,
 };
 
-type useOrderMetricsProps = 'month' | 'q1' | 'q2' | 'q3' | 'q4' | 'week';
+type FilterType = 'month' | 'q1' | 'q2' | 'q3' | 'q4' | 'week';
 
-const useOrderMetrics = (param: useOrderMetricsProps) => {
-	const getOrderMetrics = async () => {
+const useOrderMetrics = (param: FilterType) => {
+	return useSWR('metrics/order', async () => {
 		const currentTime = new Date();
 
 		const beforeLastPeriod = addDays(
 			currentTime,
 			-METRIC_PARAMETER[param as keyof typeof METRIC_PARAMETER] * 2
-		).toISOString();
+		);
 
 		const lastPeriod = addDays(
 			currentTime,
 			-METRIC_PARAMETER[param as keyof typeof METRIC_PARAMETER]
-		).toISOString();
+		);
+
+		beforeLastPeriod.setHours(0, 0, 0);
+		lastPeriod.setHours(23, 59, 59);
 
 		const requestsParams = [
 			new URLSearchParams({
-				fields: 'id,totalAmount',
+				fields: 'id,orderStatus,totalAmount',
 				pageSize: '-1',
+				sort: 'createDate:desc',
 			}),
 			new URLSearchParams({
-				fields: 'id,totalAmount',
-				filter: SearchBuilder.gt('createDate', lastPeriod),
+				fields: 'id',
+				filter: SearchBuilder.gt(
+					'createDate',
+					lastPeriod.toISOString()
+				),
+				pageSize: '1',
 			}),
 			new URLSearchParams({
-				fields: 'id,totalAmount',
+				fields: 'id',
 				filter: new SearchBuilder()
-					.gt('createDate', lastPeriod)
+					.lt('createDate', lastPeriod.toISOString())
 					.and()
-					.lt('createDate', beforeLastPeriod)
+					.gt('createDate', beforeLastPeriod.toISOString())
 					.build(),
+				pageSize: '1',
 			}),
 		];
 
@@ -59,16 +68,98 @@ const useOrderMetrics = (param: useOrderMetricsProps) => {
 			)
 		);
 
+		const paidAppsAmount = response[0].items
+			.filter(({orderStatus}) => orderStatus === 0)
+			.map(({totalAmount}) => totalAmount ?? 0)
+			.reduce((prevTotal, currentTotal) => prevTotal + currentTotal, 0);
+
+		const newOrders = response[1].totalCount - response[2].totalCount;
+
 		return {
 			beforeLastPeriod: response[2].totalCount,
-			growth: (response[1].totalCount - response[2].totalCount) * 100,
+			growth: Number(
+				((newOrders / response[1].totalCount) * 100).toFixed(2)
+			),
 			lastPeriod: response[1].totalCount,
+			paidAmount: paidAppsAmount,
 			param,
 			totalCount: response[0].totalCount,
 		};
-	};
-
-	return useSWR('metrics/order', getOrderMetrics);
+	});
 };
+
+const useOrderChartLineMetrics = () => {
+	return useSWR('metrics/order/chartline', async () => {
+		const currentTime = new Date();
+
+		const beforeLastPeriod = addDays(
+			currentTime,
+			-METRIC_PARAMETER['week'] * 2
+		);
+
+		const lastPeriod = addDays(currentTime, -METRIC_PARAMETER['week']);
+
+		beforeLastPeriod.setHours(0, 0, 0);
+		lastPeriod.setHours(23, 59, 59);
+
+		const requestsParams = [
+			new URLSearchParams({
+				fields: 'id,createDate',
+				filter: SearchBuilder.gt(
+					'createDate',
+					lastPeriod.toISOString()
+				),
+				pageSize: '-1',
+			}),
+			new URLSearchParams({
+				fields: 'id,createDate',
+				filter: new SearchBuilder()
+					.gt('createDate', beforeLastPeriod.toISOString())
+					.and()
+					.lt('createDate', lastPeriod.toISOString())
+					.build(),
+				pageSize: '-1',
+			}),
+		];
+
+		const lastPeriodDays = eachDayOfInterval({
+			end: new Date(),
+			start: lastPeriod,
+		});
+
+		const beforeLastPeriodDays = eachDayOfInterval({
+			end: lastPeriod,
+			start: beforeLastPeriod,
+		});
+
+		const daysInterval = [lastPeriodDays, beforeLastPeriodDays];
+
+		const response = await Promise.all(
+			requestsParams.map((searchParam) =>
+				HeadlessCommerceAdminOrderImpl.getOrders(searchParam)
+			)
+		);
+
+		const metrics = response.map(({items}, index) => {
+			const dates = (daysInterval[index] as unknown) as Date[];
+
+			return {
+				dates: dates.map(
+					(date) =>
+						items.filter(
+							(item) =>
+								date.getDate() ===
+								new Date(item.createDate).getDate()
+						).length
+				),
+				weekDays: dates.map((date) => format(date, 'eeee')),
+			};
+		});
+
+		return {metrics, response};
+	});
+};
+
+export {useOrderChartLineMetrics};
 
 export default useOrderMetrics;

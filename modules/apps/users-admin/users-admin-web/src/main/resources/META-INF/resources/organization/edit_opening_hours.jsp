@@ -19,7 +19,6 @@ if (editContactInformationDisplayContext.getPrimaryKey() > 0) {
 }
 
 PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(request, "opening-hours"), editContactInformationDisplayContext.getRedirect());
-
 PortalUtil.addPortletBreadcrumbEntry(request, editContactInformationDisplayContext.getSheetTitle(), null);
 %>
 

@@ -6,7 +6,6 @@
 package com.liferay.oauth2.provider.internal.upgrade.registry;
 
 import com.liferay.oauth2.provider.internal.upgrade.v2_0_0.OAuth2ApplicationScopeAliasesUpgradeProcess;
-import com.liferay.oauth2.provider.internal.upgrade.v3_0_0.OAuth2ApplicationClientCredentialUserUpgradeProcess;
 import com.liferay.oauth2.provider.internal.upgrade.v3_2_0.OAuth2ApplicationFeatureUpgradeProcess;
 import com.liferay.oauth2.provider.internal.upgrade.v4_1_0.OAuth2ApplicationClientAuthenticationMethodUpgradeProcess;
 import com.liferay.oauth2.provider.internal.upgrade.v4_2_1.OAuth2ScopeGrantRemoveCompanyIdFromObjectsRelatedUpgradeProcess;
@@ -16,7 +15,6 @@ import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.upgrade.BaseExternalReferenceCodeUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.BaseUuidUpgradeProcess;
-import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 
@@ -62,7 +60,9 @@ public class OAuth2ServiceUpgradeStepRegistrator
 			UpgradeProcessFactory.addColumns(
 				"OAuth2Application",
 				"clientCredentialUserName VARCHAR(75) null"),
-			new OAuth2ApplicationClientCredentialUserUpgradeProcess());
+			UpgradeProcessFactory.runSQL(
+				"update OAuth2Application set clientCredentialUserId = " +
+					"userId, clientCredentialUserName = userName"));
 
 		registry.register(
 			"3.0.0", "3.1.0",
@@ -118,20 +118,11 @@ public class OAuth2ServiceUpgradeStepRegistrator
 
 		registry.register(
 			"4.2.2", "4.2.3",
-			new UpgradeProcess() {
-
-				@Override
-				protected void doUpgrade() throws Exception {
-					runSQL(
-						StringBundler.concat(
-							"update OAuth2Application set ",
-							"clientAuthenticationMethod = ",
-							"'client_secret_post' where ",
-							"clientAuthenticationMethod = ",
-							"'client_secret_basic'"));
-				}
-
-			});
+			UpgradeProcessFactory.runSQL(
+				StringBundler.concat(
+					"update OAuth2Application set clientAuthenticationMethod ",
+					"= 'client_secret_post' where clientAuthenticationMethod ",
+					"= 'client_secret_basic'")));
 
 		registry.register(
 			"4.2.3", "4.2.4",
@@ -140,36 +131,20 @@ public class OAuth2ServiceUpgradeStepRegistrator
 
 		registry.register(
 			"4.2.4", "4.2.5",
-			new UpgradeProcess() {
-
-				@Override
-				protected void doUpgrade() throws Exception {
-					runSQL(
-						StringBundler.concat(
-							"update User_ set passwordReset = [$FALSE$] where ",
-							"type_ = ",
-							UserConstants.TYPE_DEFAULT_SERVICE_ACCOUNT,
-							" or type_ = ",
-							UserConstants.TYPE_SERVICE_ACCOUNT));
-				}
-
-			});
+			UpgradeProcessFactory.runSQL(
+				StringBundler.concat(
+					"update User_ set passwordReset = [$FALSE$] where type_ = ",
+					UserConstants.TYPE_DEFAULT_SERVICE_ACCOUNT, " or type_ = ",
+					UserConstants.TYPE_SERVICE_ACCOUNT)));
 
 		registry.register(
 			"4.2.5", "4.2.6",
-			new UpgradeProcess() {
-
-				@Override
-				protected void doUpgrade() throws Exception {
-					runSQL(
-						StringBundler.concat(
-							"update OAuth2ScopeGrant set applicationName = ",
-							"LOWER(applicationName), scopeAliases = ",
-							"LOWER(scopeAliases) where bundleSymbolicName = ",
-							"'com.liferay.object.rest.impl'"));
-				}
-
-			});
+			UpgradeProcessFactory.runSQL(
+				StringBundler.concat(
+					"update OAuth2ScopeGrant set applicationName = ",
+					"LOWER(applicationName), scopeAliases = ",
+					"LOWER(scopeAliases) where bundleSymbolicName = ",
+					"'com.liferay.object.rest.impl'")));
 	}
 
 	@Reference

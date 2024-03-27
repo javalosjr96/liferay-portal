@@ -123,26 +123,6 @@ definition {
 			text = "Enjoy using the best DXP on Earth!");
 	}
 
-	@description = "This is a test for LPS-146373. The page creator could close the left sidebar panel via the times icon."
-	@priority = 4
-	test CloseLeftPageEditorSidebar {
-		task ("Given a page creator accesses to the page editor") {
-			ContentPagesNavigator.openEditContentPage(
-				pageName = "Test Page Name",
-				siteName = ${randomSiteName});
-		}
-
-		task ("When the page creator click the times icon on the Fragments and Widgets panel") {
-			Click(
-				key_text = "times",
-				locator1 = "Icon#ANY");
-		}
-
-		task ("Then the left page editor sidebar is closed") {
-			AssertElementNotPresent(locator1 = "Sidebar#PANEL_OPEN");
-		}
-	}
-
 	@description = "This is a test for LPS-158746. Could add and remove fragment to Favorites session on content page in card view."
 	@priority = 3
 	test CouldAddAndRemoveFragmentInCardView {
@@ -515,66 +495,6 @@ definition {
 		}
 	}
 
-	@description = "This is a test for LPS-170955. View Autosave icon styles are adjusted."
-	@priority = 5
-	test ViewAutosaveIconStyles {
-		property portal.acceptance = "true";
-
-		task ("Given a page designer navigates to the page editor") {
-			ContentPagesNavigator.openEditContentPage(
-				pageName = "Test Page Name",
-				siteName = ${randomSiteName});
-		}
-
-		task ("When the page designer adds a fragment with intercept requests") {
-			var map = MapUtil.newHashMap();
-
-			ExecuteCDPCommand(
-				value1 = "Fetch.enable",
-				value2 = ${map});
-
-			Navigator.gotoNavTab(navTab = "Fragments");
-
-			PageEditor.expandFragmentCollection(collectionName = "Basic Components");
-
-			DragAndDrop.javaScriptDragAndDropToObject(
-				key_collectionName = "Basic Components",
-				key_fragmentName = "Button",
-				locator1 = "PageEditor#FRAGMENTS_AND_WIDGETS_TAB_FRAGMENT",
-				locator2 = "PageEditor#FRAGMENT_DROP_TARGET");
-		}
-
-		task ("Then the page designer see the styles of loading icon") {
-			MouseOver.javaScriptFocus(locator1 = "//span[@aria-label='Saving'][contains(@class,'loading-animation')]");
-
-			AssertVisible(
-				key_content = "Saving",
-				locator1 = "Tooltip#FLOATING_TOOLTIP_CONTENT");
-		}
-
-		task ("When the page designer forwards the request") {
-			var map = MapUtil.newHashMap();
-
-			ExecuteCDPCommand(
-				value1 = "Fetch.disable",
-				value2 = ${map});
-		}
-
-		task ("Then the page designer sees the styles of autosave icon") {
-			PageEditor.waitForAutoSave();
-
-			MouseOver.javaScriptFocus(locator1 = "//*[name()='svg'][contains(@class,'lexicon-icon-check-circle')]");
-
-			AssertVisible(
-				key_content = "Saved",
-				locator1 = "Tooltip#FLOATING_TOOLTIP_CONTENT");
-
-			AssertTextEquals(
-				locator1 = "//div[contains(@class,'status-bar')]//span[contains(@class,'sr-only')]",
-				value1 = "Changes have been saved. Page editor will autosave new changes.");
-		}
-	}
-
 	@description = "This is a test for LPS-136412. View collapse style changes in fragment configuration."
 	@priority = 5
 	test ViewCollapseStyleInFragmentConfiguration {
@@ -895,77 +815,6 @@ definition {
 			PagesAdmin.openPageEllipsisMenu(pageName = "Test Page Name");
 
 			MenuItem.viewOrder(menuItemList = "Edit,Translate,View,Preview Draft,Discard Draft,Orphan Widgets,Convert to Page Template,Make a Copy,Export for Translation,Import Translation,Configure,Permissions,Delete");
-		}
-	}
-
-	@description = "This is a test for LPS-146373. The page creator could find Fragments and Widgets, Browser, Page Design Options, Page Content, and Comments on the left sidebar while fragment configuration on the right sidebar. Both page editor sidebars shouldn't overlay the page content."
-	@priority = 4
-	test ViewPageEditorSidebars {
-		task ("When the page creator accesses to the page editor") {
-			ContentPagesNavigator.openEditContentPage(
-				pageName = "Test Page Name",
-				siteName = ${randomSiteName});
-		}
-
-		task ("Then the page creator sees Fragments and Widgets, Browser, Page Design Options, Page Content, and Comments on the left sidebar while fragment configuration on the right sidebar and both page editor sidebars don't overlay the page content") {
-			for (var tabName : list "Fragments and Widgets,Browser,Page Design Options,Page Content,Comments") {
-				AssertVisible(
-					key_tabName = ${tabName},
-					locator1 = "PageEditor#FRAGMENT_SIDEBAR_TAB_BUTTON");
-			}
-
-			AssertTextEquals.assertPartialTextCaseSensitive(
-				locator1 = "PageEditor#ITEM_CONFIGURATION_SIDEBAR",
-				value1 = "Select a Page Element");
-
-			AssertTextEquals.assertPartialTextCaseSensitive(
-				locator1 = "PageEditor#ITEM_CONFIGURATION_SIDEBAR",
-				value1 = "Select a page element to activate this panel.");
-
-			PageEditor.addFragment(
-				collectionName = "Basic Components",
-				fragmentName = "Heading");
-
-			PageEditor.clickConfigurableField(fragmentName = "Heading");
-
-			for (var tabName : list "General,Styles,Advanced") {
-				AssertVisible(
-					key_tab = ${tabName},
-					locator1 = "NavTab#TAB_LINK");
-			}
-
-			var leftSidebarButtonsWidth = selenium.getElementWidth("PageEditor#FRAGMENT_SIDEBAR_BODY");
-			var leftSidebarPanelWidth = selenium.getElementWidth("Sidebar#PANEL_OPEN");
-			var bodyWidth = selenium.getElementWidth("//body");
-			var rightSidebarWidth = selenium.getElementWidth("PageEditor#ITEM_CONFIGURATION_SIDEBAR");
-			var headingFragmentWidth = selenium.getElementWidth("//div[@data-name='Heading']");
-			var leftSidebarWidth = ${leftSidebarButtonsWidth} + ${leftSidebarPanelWidth};
-
-			var bothSidebarWidth = ${leftSidebarWidth} + ${rightSidebarWidth};
-
-			var difference = ${bodyWidth} - ${bothSidebarWidth};
-
-			StringUtil.assertEquals(${headingFragmentWidth}, ${difference});
-		}
-	}
-
-	@description = "This is a test for LPS-146373. Both page editor sidebars should be closed when the product menu is open."
-	@priority = 4
-	test ViewPageEditorSidebarsClosedWhenProductMenuOpen {
-		task ("Given a page creator accesses to the page editor") {
-			ContentPagesNavigator.openEditContentPage(
-				pageName = "Test Page Name",
-				siteName = ${randomSiteName});
-		}
-
-		task ("When the page creator opens the Product Menu") {
-			ProductMenuHelper.openProductMenu();
-		}
-
-		task ("Then both page editor sidebars are closed") {
-			AssertElementNotPresent(locator1 = "Sidebar#PANEL_OPEN");
-
-			AssertElementNotPresent(locator1 = "PageEditor#ITEM_CONFIGURATION_SIDEBAR_OPEN");
 		}
 	}
 

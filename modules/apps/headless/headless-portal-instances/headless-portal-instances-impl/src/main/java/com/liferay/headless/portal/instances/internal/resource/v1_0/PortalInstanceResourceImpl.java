@@ -16,13 +16,11 @@ import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.EmailAddressValidator;
-import com.liferay.portal.kernel.security.auth.ScreenNameGenerator;
 import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.EmailAddressValidatorFactory;
-import com.liferay.portal.security.auth.ScreenNameGeneratorFactory;
 import com.liferay.portal.util.PropsValues;
 import com.liferay.portal.vulcan.pagination.Page;
 
@@ -102,6 +100,12 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 	public PortalInstance postPortalInstance(PortalInstance portalInstance)
 		throws Exception {
 
+		Admin admin = portalInstance.getAdmin();
+
+		if (admin != null) {
+			_validateAdmin(admin);
+		}
+
 		Long companyId = portalInstance.getCompanyId();
 
 		if (companyId == null) {
@@ -113,11 +117,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			portalInstance.getVirtualHost(), portalInstance.getDomain(), 0,
 			true);
 
-		Admin admin = portalInstance.getAdmin();
-
 		if (admin != null) {
-			_validateAdmin(admin, company.getCompanyId());
-
 			User defaultAdminUser = _userLocalService.getUserByEmailAddress(
 				company.getCompanyId(),
 				PropsValues.DEFAULT_ADMIN_EMAIL_ADDRESS_PREFIX + "@" +
@@ -126,14 +126,6 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			defaultAdminUser.setEmailAddress(admin.getEmailAddress());
 			defaultAdminUser.setFirstName(admin.getGivenName());
 			defaultAdminUser.setLastName(admin.getFamilyName());
-
-			ScreenNameGenerator screenNameGenerator =
-				ScreenNameGeneratorFactory.getInstance();
-
-			defaultAdminUser.setScreenName(
-				screenNameGenerator.generate(
-					company.getCompanyId(), defaultAdminUser.getUserId(),
-					admin.getEmailAddress()));
 
 			_userLocalService.updateUser(defaultAdminUser);
 		}
@@ -185,7 +177,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		};
 	}
 
-	private void _validateAdmin(Admin admin, long companyId) throws Exception {
+	private void _validateAdmin(Admin admin) throws Exception {
 		if (Validator.isNull(admin.getEmailAddress()) ||
 			Validator.isNull(admin.getFamilyName()) ||
 			Validator.isNull(admin.getGivenName())) {
@@ -196,9 +188,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		EmailAddressValidator emailAddressValidator =
 			EmailAddressValidatorFactory.getInstance();
 
-		if (!emailAddressValidator.validate(
-				companyId, admin.getEmailAddress())) {
-
+		if (!emailAddressValidator.validate(0, admin.getEmailAddress())) {
 			throw new UserEmailAddressException.MustValidate(
 				admin.getEmailAddress(), emailAddressValidator);
 		}

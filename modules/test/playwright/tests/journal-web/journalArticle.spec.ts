@@ -91,6 +91,89 @@ const aiCreateImageTest = mergeTests(
 	})
 );
 
+const privateContentIconTest = mergeTests(
+	baseTest,
+	featureFlagsTest({
+		'LPD-10626': true,
+	})
+);
+
+privateContentIconTest(
+	'LPD-15807: Identify at a glance if a Web Content is visible for guests in content management',
+	async ({apiHelpers, journalEditArticlePage, journalPage, site}) => {
+		const contentStructureId = await getBasicWebContentStructureId(
+			apiHelpers
+		);
+
+		const title = getRandomString();
+
+		await addApprovedStructuredContent(
+			apiHelpers,
+			site.id,
+			contentStructureId,
+			title
+		);
+
+		await journalPage.goto(site.friendlyUrlPath);
+
+		await journalPage.assertPrivateContentIcon();
+
+		await journalPage.changeView('table');
+
+		await journalPage.assertPrivateContentIcon();
+
+		await journalPage.changeView('list');
+
+		await journalEditArticlePage.editArticle(title);
+
+		await journalPage.assertPrivateContentIcon();
+	}
+);
+
+privateContentIconTest(
+	'LPD-15807: Identify at a glance if a Web Content is visible for guests in the item selector',
+	async ({apiHelpers, journalEditArticlePage, journalPage, site}) => {
+		const contentStructureId = await getBasicWebContentStructureId(
+			apiHelpers
+		);
+
+		await addApprovedStructuredContent(
+			apiHelpers,
+			site.id,
+			contentStructureId,
+			getRandomString()
+		);
+
+		const title = getRandomString();
+
+		await addApprovedStructuredContent(
+			apiHelpers,
+			site.id,
+			contentStructureId,
+			title
+		);
+
+		await journalPage.goto(site.friendlyUrlPath);
+
+		await journalEditArticlePage.editArticle(title);
+
+		await journalEditArticlePage.openRelatedAsset('Basic Web Content');
+
+		await journalEditArticlePage.assertPrivateContentIconInRelatedAssetPopUp(
+			'Basic Web Content'
+		);
+
+		await journalEditArticlePage.changeViewInRelatedAssetPopUp(
+			'Basic Web Content',
+			'table'
+		);
+
+		await journalEditArticlePage.assertPrivateContentIconInRelatedAssetPopUp(
+			'Basic Web Content'
+		);
+	}
+);
+
 prefixUrlTest(
 	'LPD-6813: Make prefix URLs configurable',
 	async ({
@@ -159,12 +242,12 @@ prefixUrlTest(
 
 translationTest(
 	'LPD-13732: This is a test for reset translations button in web content',
-	async ({journalEditArticlePage, page, site}) => {
-		const title = getRandomString();
+	async ({journalEditArticlePage, journalPage, page, site}) => {
+		await journalPage.goto();
 
 		await journalEditArticlePage.goto({siteUrl: site.friendlyUrlPath});
 
-		await journalEditArticlePage.fillTitle(title);
+		await journalEditArticlePage.fillTitle(getRandomString());
 
 		const translationButton = page.getByRole('combobox', {
 			name: 'Select a language',

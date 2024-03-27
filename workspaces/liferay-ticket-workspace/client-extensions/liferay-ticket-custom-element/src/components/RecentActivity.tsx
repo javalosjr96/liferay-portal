@@ -4,6 +4,7 @@
  */
 
 import RelativeTime from '@yaireo/relative-time';
+import React from 'react';
 
 import {Ticket} from '../types';
 

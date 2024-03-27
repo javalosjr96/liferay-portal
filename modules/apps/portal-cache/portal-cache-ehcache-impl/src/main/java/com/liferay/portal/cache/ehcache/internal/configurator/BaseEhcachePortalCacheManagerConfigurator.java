@@ -66,53 +66,9 @@ public abstract class BaseEhcachePortalCacheManagerConfigurator {
 			configuration, portalCacheManagerConfiguration);
 	}
 
-	@SuppressWarnings("deprecation")
-	protected boolean isRequireSerialization(
-		CacheConfiguration cacheConfiguration) {
-
-		if (cacheConfiguration.isOverflowToDisk() ||
-			cacheConfiguration.isOverflowToOffHeap() ||
-			cacheConfiguration.isDiskPersistent()) {
-
-			return true;
-		}
-
-		PersistenceConfiguration persistenceConfiguration =
-			cacheConfiguration.getPersistenceConfiguration();
-
-		if (persistenceConfiguration != null) {
-			PersistenceConfiguration.Strategy strategy =
-				persistenceConfiguration.getStrategy();
-
-			if (!strategy.equals(PersistenceConfiguration.Strategy.NONE)) {
-				return true;
-			}
-		}
-
-		return false;
-	}
-
 	protected void manageConfiguration(
 		Configuration configuration,
 		PortalCacheManagerConfiguration portalCacheManagerConfiguration) {
-	}
-
-	protected PortalCacheConfiguration parseCacheListenerConfigurations(
-		CacheConfiguration cacheConfiguration, ClassLoader classLoader,
-		boolean usingDefault) {
-
-		Set<Properties> portalCacheListenerPropertiesSet =
-			_parseCacheEventListenerConfigurations(
-				(List<CacheEventListenerFactoryConfiguration>)
-					cacheConfiguration.getCacheEventListenerConfigurations(),
-				classLoader, usingDefault);
-
-		boolean requireSerialization = isRequireSerialization(
-			cacheConfiguration);
-
-		return new EhcachePortalCacheConfiguration(
-			cacheConfiguration.getName(), portalCacheListenerPropertiesSet,
-			requireSerialization);
 	}
 
 	protected Properties parseProperties(
@@ -183,10 +139,35 @@ public abstract class BaseEhcachePortalCacheManagerConfigurator {
 		}
 	}
 
+	@SuppressWarnings("deprecation")
+	private boolean _isRequireSerialization(
+		CacheConfiguration cacheConfiguration) {
+
+		if (cacheConfiguration.isDiskPersistent() ||
+			cacheConfiguration.isOverflowToDisk() ||
+			cacheConfiguration.isOverflowToOffHeap()) {
+
+			return true;
+		}
+
+		PersistenceConfiguration persistenceConfiguration =
+			cacheConfiguration.getPersistenceConfiguration();
+
+		if (persistenceConfiguration != null) {
+			PersistenceConfiguration.Strategy strategy =
+				persistenceConfiguration.getStrategy();
+
+			if (!strategy.equals(PersistenceConfiguration.Strategy.NONE)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private Set<Properties> _parseCacheEventListenerConfigurations(
-		List<CacheEventListenerFactoryConfiguration>
-			cacheEventListenerConfigurations,
-		ClassLoader classLoader, boolean usingDefault) {
+		CacheConfiguration cacheConfiguration, ClassLoader classLoader,
+		boolean usingDefault) {
 
 		if (usingDefault) {
 			return Collections.emptySet();
@@ -194,9 +175,12 @@ public abstract class BaseEhcachePortalCacheManagerConfigurator {
 
 		Set<Properties> portalCacheListenerPropertiesSet = new HashSet<>();
 
-		for (CacheEventListenerFactoryConfiguration
-				cacheEventListenerFactoryConfiguration :
-					cacheEventListenerConfigurations) {
+		for (Object object :
+				cacheConfiguration.getCacheEventListenerConfigurations()) {
+
+			CacheEventListenerFactoryConfiguration
+				cacheEventListenerFactoryConfiguration =
+					(CacheEventListenerFactoryConfiguration)object;
 
 			Properties properties = parseProperties(
 				cacheEventListenerFactoryConfiguration.getProperties(),
@@ -274,8 +258,11 @@ public abstract class BaseEhcachePortalCacheManagerConfigurator {
 			PortalCacheConfiguration.PORTAL_CACHE_NAME_DEFAULT);
 
 		PortalCacheConfiguration defaultPortalCacheConfiguration =
-			parseCacheListenerConfigurations(
-				defaultCacheConfiguration, classLoader, usingDefault);
+			new EhcachePortalCacheConfiguration(
+				defaultCacheConfiguration.getName(),
+				_parseCacheEventListenerConfigurations(
+					defaultCacheConfiguration, classLoader, usingDefault),
+				_isRequireSerialization(defaultCacheConfiguration));
 
 		Set<PortalCacheConfiguration> portalCacheConfigurations =
 			new HashSet<>();
@@ -286,9 +273,14 @@ public abstract class BaseEhcachePortalCacheManagerConfigurator {
 		for (Map.Entry<String, CacheConfiguration> entry :
 				cacheConfigurations.entrySet()) {
 
+			CacheConfiguration cacheConfiguration = entry.getValue();
+
 			portalCacheConfigurations.add(
-				parseCacheListenerConfigurations(
-					entry.getValue(), classLoader, usingDefault));
+				new EhcachePortalCacheConfiguration(
+					cacheConfiguration.getName(),
+					_parseCacheEventListenerConfigurations(
+						cacheConfiguration, classLoader, usingDefault),
+					_isRequireSerialization(cacheConfiguration)));
 		}
 
 		return new PortalCacheManagerConfiguration(

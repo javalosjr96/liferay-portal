@@ -1,0 +1,14 @@
+{
+	"dependencies": {
+		"glob": "9.3.4"
+	},
+	"description": "Liferay Learn Theme Spritemap",
+	"devDependencies": {
+		"@clayui/css": "^3.92.0"
+	},
+	"name": "@liferay/liferay-learn-theme-spritemap",
+	"scripts": {
+		"build": "node ./buildSpritemap.js"
+	},
+	"version": "0.0.0"
+}

@@ -27,29 +27,37 @@ const useAccountsMetrics = (param: UseOrderMetricsProps) => {
 		const beforeLastPeriod = addDays(
 			currentTime,
 			-METRIC_PARAMETER[param as keyof typeof METRIC_PARAMETER] * 2
-		).toISOString();
+		);
 
 		const lastPeriod = addDays(
 			currentTime,
 			-METRIC_PARAMETER[param as keyof typeof METRIC_PARAMETER]
-		).toISOString();
+		);
+
+		beforeLastPeriod.setHours(0, 0, 0);
+		lastPeriod.setHours(23, 59, 59);
 
 		const requestsParams = [
 			new URLSearchParams({
-				fields: 'id,',
-				pageSize: '-1',
+				fields: 'id',
+				pageSize: '1',
 			}),
 			new URLSearchParams({
-				fields: 'id,',
-				filter: SearchBuilder.gt('dateCreated', lastPeriod),
+				fields: 'id',
+				filter: SearchBuilder.gt(
+					'dateCreated',
+					lastPeriod.toISOString()
+				),
+				pageSize: '1',
 			}),
 			new URLSearchParams({
-				fields: 'id,',
+				fields: 'id',
 				filter: new SearchBuilder()
-					.gt('dateCreated', lastPeriod)
+					.lt('dateCreated', lastPeriod.toISOString())
 					.and()
-					.lt('dateCreated', beforeLastPeriod)
+					.gt('dateCreated', beforeLastPeriod.toISOString())
 					.build(),
+				pageSize: '1',
 			}),
 		];
 
@@ -59,9 +67,13 @@ const useAccountsMetrics = (param: UseOrderMetricsProps) => {
 			)
 		);
 
+		const newAccounts = response[1].totalCount - response[2].totalCount;
+
 		return {
 			beforeLastPeriod: response[2].totalCount,
-			growth: (response[1].totalCount - response[2].totalCount) * 100,
+			growth: Number(
+				((newAccounts / response[1].totalCount) * 100).toFixed(2)
+			),
 			lastPeriod: response[1].totalCount,
 			param,
 			totalCount: response[0].totalCount,

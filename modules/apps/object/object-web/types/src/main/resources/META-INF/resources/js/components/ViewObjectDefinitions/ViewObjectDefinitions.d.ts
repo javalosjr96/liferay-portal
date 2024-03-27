@@ -6,16 +6,14 @@
 /// <reference types="react" />
 
 import {IFDSTableProps} from '../../utils/fds';
+import {ModalImportKeys} from '../ModalImport/ModalImport';
 import './ViewObjectDefinitions.scss';
 export interface ModalImportProperties {
 	JSONInputId: string;
 	apiURL: string;
-	importExtendedInfo?: {
-		key: string;
-		value: string;
-	};
+	importExtendedInfo?: KeyValueObject;
 	importURL: string;
-	modalImportKey: string;
+	modalImportKey: ModalImportKeys;
 }
 interface ViewObjectDefinitionsProps extends IFDSTableProps {
 	baseResourceURL: string;
