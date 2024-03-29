@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import ClayButton from '@clayui/button';
 import ClayLink from '@clayui/link';
 import ClayNavigationBar from '@clayui/navigation-bar';
 import {useEffect, useState} from 'react';
@@ -19,6 +18,7 @@ import {ReviewAndSubmitSolutions} from './ReviewAndSubmitSolutions';
 
 import './index.scss';
 import {PRODUCT_CATEGORIES} from '../../../../enums/Product';
+import {getProductCategoriesByVocabularyName} from '../../../../utils/productUtils';
 import SolutionsDetailsHeader from './SolutionDetailsHeader/SolutionDetailsHeader';
 
 export type Solution = {
@@ -31,13 +31,7 @@ export type Solution = {
 	thumbnail: string;
 };
 
-type ProductVocabulary = {
-	productCategory: string[];
-	vocabulary: string;
-};
-
 const NAVIGATION_BAR_OPTIONS = {
-	ADVERTISEMENT: 'Advertisement',
 	DETAILS: 'Details',
 };
 
@@ -68,34 +62,15 @@ const SolutionsDetails = () => {
 		const {attachments, categories, description, images} = selectedSolution;
 
 		const getData = async () => {
-			const productCategories: string[] = [];
-			const productTags: string[] = [];
+			const solutionCategories = getProductCategoriesByVocabularyName(
+				categories,
+				PRODUCT_CATEGORIES.MARKETPLACE_SOLUTION_CATEGORY
+			);
 
-			const productVocabularies = [
-				{
-					productCategory: productCategories,
-					vocabulary:
-						PRODUCT_CATEGORIES.MARKETPLACE_SOLUTION_CATEGORY,
-				},
-				{
-					productCategory: productTags,
-					vocabulary: PRODUCT_CATEGORIES.MARKETPLACE_SOLUTION_TAGS,
-				},
-			];
-
-			const handleCategories = (
-				productVocabularies: ProductVocabulary[]
-			) => {
-				productVocabularies?.map((vocabulary) =>
-					categories.forEach((category: ProductCategories) => {
-						if (category.vocabulary === vocabulary.vocabulary) {
-							vocabulary.productCategory.push(category.name);
-						}
-					})
-				);
-			};
-
-			handleCategories(productVocabularies);
+			const solutionTags = getProductCategoriesByVocabularyName(
+				categories,
+				PRODUCT_CATEGORIES.MARKETPLACE_SOLUTION_TAGS
+			);
 
 			const attachment = attachments?.find(
 				(attachment: ProductAttachment) => {
@@ -109,7 +84,7 @@ const SolutionsDetails = () => {
 
 			const newSolution = {
 				attachmentTitle: attachment?.title['en_US'] as string,
-				categories: productCategories,
+				categories: solutionCategories,
 				description: description['en_US'],
 				name: selectedSolution.name['en_US'],
 				storefront: (selectedSolution.images || []).filter(
@@ -117,7 +92,7 @@ const SolutionsDetails = () => {
 						return image.galleryEnabled;
 					}
 				),
-				tags: productTags,
+				tags: solutionTags,
 				thumbnail,
 			};
 
@@ -147,17 +122,6 @@ const SolutionsDetails = () => {
 						>
 							Details
 						</ClayLink>
-					</ClayNavigationBar.Item>
-					<ClayNavigationBar.Item
-						active={active === NAVIGATION_BAR_OPTIONS.ADVERTISEMENT}
-					>
-						<ClayButton
-							onClick={() =>
-								setActive(NAVIGATION_BAR_OPTIONS.ADVERTISEMENT)
-							}
-						>
-							Advertisement
-						</ClayButton>
 					</ClayNavigationBar.Item>
 				</ClayNavigationBar>
 			</div>

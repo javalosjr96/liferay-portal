@@ -76,6 +76,7 @@ export default {
 	'dashboard': 'Dashboard',
 	'deactivate': 'Deactivate',
 	'decline': 'Decline',
+	'delete': 'Delete',
 	'description': 'Description',
 	'details': 'Details',
 	'discover-and-customize': 'Discover and customize',
@@ -84,6 +85,7 @@ export default {
 	'drag-and-drop-to-upload-or': 'Drag and drop to upload or',
 	'dxp-module-based-apps-are-not-supported-on-liferay-experience-cloud-lxc':
 		'DXP module-based apps are not supported on Liferay SaaS.',
+	'edit': 'Edit',
 	'email': 'Email',
 	'end-user-license-agreement': 'End User License Agreement',
 	'enter-email-address': 'Enter email address',
@@ -287,6 +289,7 @@ export default {
 	'via-liferay-experience-cloud-integration': 'Via Liferay SaaS Integration',
 	'via-liferay-plugin-packages': 'Via Liferay Plugin Packages',
 	'via-zip-upload': 'Via ZIP Upload',
+	'view-details': 'View details',
 	'we-are-happy-to-have-you-interested-in-the-liferay-marketplace-at-the-moment-we-are-working-on-enhancing-the-experience-for-our-customers-in-the-marketplace-and-access-is-invite-only-if-you-are-an-existing-liferay-customer-please-keep-an-eye-out-for-an-announcement-related-to-the-new-marketplace-in-the-coming-months':
 		'We are happy to have you interested in the Liferay Marketplace. At the moment, we are working on enhancing the experience for our customers in the Marketplace and access is invite only. If you are an existing Liferay customer, please keep an eye out for an announcement related to the new Marketplace in the coming months!',
 	'we-are-happy-to-have-you-interested-in-the-liferay-marketplace-at-the-moment-we-are-working-on-enhancing-the-experience-for-our-publishers-in-the-marketplace-if-you-are-an-existing-liferay-developer-or-partner-you-can-choose-to-join-our-pilot-group-of-publishers-to-submit-apps-to-the-marketplace-continue-to-request-a-publisher-account':

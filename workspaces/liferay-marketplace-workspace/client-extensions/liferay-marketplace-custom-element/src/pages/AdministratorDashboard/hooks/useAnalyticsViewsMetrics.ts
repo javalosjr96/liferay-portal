@@ -1,0 +1,79 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+import useSWR from 'swr';
+
+import useMarketplaceSpringBootOAuth2 from '../../../hooks/useMarketplaceSpringBootOAuth2';
+import {colors} from '../mock';
+
+const useAnalyticsViewsMetrics = () => {
+	const marketplaceSpringBootOAuth2 = useMarketplaceSpringBootOAuth2();
+
+	const {data: analyticsViewsResponse = [], ...swr} = useSWR<
+		AnalyticsViews[]
+	>('administrator-dashboard/metrics/analytics', () =>
+		Promise.all([
+			marketplaceSpringBootOAuth2.getAnalyticsPages(
+				new URLSearchParams({
+					sortMetric: 'viewsMetric',
+					sortOrder: 'desc',
+				})
+			),
+			marketplaceSpringBootOAuth2.getAnalyticsPages(
+				new URLSearchParams({
+					keywords: '/p/',
+					sortMetric: 'visitorsMetric',
+					sortOrder: 'desc',
+				})
+			),
+		])
+	);
+
+	const [viewsMetricResult, visitorsMetricResult] = analyticsViewsResponse;
+
+	const viewsMetrics =
+		visitorsMetricResult?.results?.map((item) => ({
+			title: item.title.split('-')[0].trim(),
+			views: item.metrics.viewsMetric.value,
+			visitor: item.metrics.visitorsMetric.value,
+		})) || [];
+
+	viewsMetrics.length = 5;
+
+	return {
+		...swr,
+		data: {
+			colors: {
+				'Total Views': colors.color1,
+				'Unique Visitors': colors.color2,
+			},
+			columns: [
+				['x', ...viewsMetrics?.map((page) => page.title)],
+				['Total Views', ...viewsMetrics?.map((page) => page.views)],
+				[
+					'Unique Visitors',
+					...viewsMetrics?.map((page) => page.visitor),
+				],
+			],
+			viewsMetrics,
+		},
+		visitorsMetric:
+			viewsMetricResult?.results
+				.map(
+					({
+						metrics: {
+							viewsMetric: {value},
+						},
+					}) => value
+				)
+				.reduce(
+					(previousValue, currentValue) =>
+						previousValue + currentValue,
+					0
+				) || 0,
+	};
+};
+
+export default useAnalyticsViewsMetrics;

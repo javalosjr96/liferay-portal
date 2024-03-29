@@ -81,6 +81,16 @@ export default class MarketplaceSpringBootOAuth2 extends OAuth2Client {
 		);
 	}
 
+	async getAnalyticsPages(
+		searchParams: URLSearchParams = new URLSearchParams()
+	): Promise<AnalyticsViews> {
+		const response = await this.oAuth2Client.fetch(
+			`/analytics/pages?${searchParams.toString()}`
+		);
+
+		return response.json() as Promise<AnalyticsViews>;
+	}
+
 	async createLicenseKey(payload: LicenseTypePayload): Promise<LicenseKey> {
 		return (this.oAuth2Client.fetch('/provisioning/license-keys', {
 			body: JSON.stringify(payload),

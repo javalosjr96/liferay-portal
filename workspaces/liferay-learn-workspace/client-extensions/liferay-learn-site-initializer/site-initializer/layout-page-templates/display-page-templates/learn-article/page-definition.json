@@ -1,0 +1,37 @@
+{
+	"pageElement": {
+		"pageElements": [
+			{
+				"definition": {
+					"fragment": {
+						"key": "BASIC_COMPONENT-html"
+					},
+					"fragmentFields": [
+						{
+							"id": "element-html",
+							"value": {
+								"html": {
+									"mapping": {
+										"fieldKey": "_ddmTemplate_LEARN_ARTICLE",
+										"itemReference": {
+											"contextSource": "DisplayPageItem"
+										}
+									}
+								}
+							}
+						}
+					],
+					"indexed": true
+				},
+				"type": "Fragment"
+			}
+		],
+		"type": "Root"
+	},
+	"settings": {
+		"masterPage": {
+			"key": "liferay-learn"
+		}
+	},
+	"version": 1.0
+}

@@ -78,20 +78,19 @@ public class ClientExtensionEntryLocalServiceImpl
 		throws PortalException {
 
 		_validateName(nameMap);
-		_validateTypeSettings(typeSettings, null, type);
+
+		User user = _userLocalService.getUser(userId);
+
+		_validateTypeSettings(user.getCompanyId(), typeSettings, null, type);
 
 		ClientExtensionEntry clientExtensionEntry =
 			clientExtensionEntryPersistence.create(
 				counterLocalService.increment());
 
 		clientExtensionEntry.setExternalReferenceCode(externalReferenceCode);
-
-		User user = _userLocalService.getUser(userId);
-
 		clientExtensionEntry.setCompanyId(user.getCompanyId());
 		clientExtensionEntry.setUserId(user.getUserId());
 		clientExtensionEntry.setUserName(user.getFullName());
-
 		clientExtensionEntry.setDescription(description);
 		clientExtensionEntry.setNameMap(nameMap);
 		clientExtensionEntry.setProperties(properties);
@@ -305,7 +304,8 @@ public class ClientExtensionEntryLocalServiceImpl
 				clientExtensionEntryId);
 
 		_validateTypeSettings(
-			typeSettings, clientExtensionEntry.getTypeSettings(),
+			clientExtensionEntry.getCompanyId(), typeSettings,
+			clientExtensionEntry.getTypeSettings(),
 			clientExtensionEntry.getType());
 
 		clientExtensionEntryLocalService.undeployClientExtensionEntry(
@@ -467,7 +467,8 @@ public class ClientExtensionEntryLocalServiceImpl
 	}
 
 	private void _validateTypeSettings(
-			String newTypeSettings, String oldTypeSettings, String type)
+			long companyId, String newTypeSettings, String oldTypeSettings,
+			String type)
 		throws PortalException {
 
 		UnicodeProperties newTypeSettingsUnicodeProperties =
@@ -488,8 +489,8 @@ public class ClientExtensionEntryLocalServiceImpl
 		}
 
 		_cetFactory.validate(
-			newTypeSettingsUnicodeProperties, oldTypeSettingsUnicodeProperties,
-			type);
+			companyId, newTypeSettingsUnicodeProperties,
+			oldTypeSettingsUnicodeProperties, type);
 	}
 
 	@Reference

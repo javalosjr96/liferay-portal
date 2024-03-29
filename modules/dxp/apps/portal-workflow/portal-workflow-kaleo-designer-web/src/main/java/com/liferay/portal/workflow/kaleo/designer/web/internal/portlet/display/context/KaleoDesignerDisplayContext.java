@@ -38,6 +38,7 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.RequiredWorkflowDefinitionException;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.security.script.management.configuration.helper.ScriptManagementConfigurationHelper;
 import com.liferay.portal.workflow.constants.WorkflowDefinitionConstants;
 import com.liferay.portal.workflow.constants.WorkflowWebKeys;
 import com.liferay.portal.workflow.exception.IncompleteWorkflowInstancesException;
@@ -79,6 +80,7 @@ public class KaleoDesignerDisplayContext {
 		KaleoDefinitionVersionLocalService kaleoDefinitionVersionLocalService,
 		PortletResourcePermission portletResourcePermission,
 		ResourceBundleLoader resourceBundleLoader,
+		ScriptManagementConfigurationHelper scriptManagementConfigurationHelper,
 		UserLocalService userLocalService) {
 
 		_actionExecutorManager = actionExecutorManager;
@@ -86,6 +88,8 @@ public class KaleoDesignerDisplayContext {
 			kaleoDefinitionVersionLocalService;
 		_portletResourcePermission = portletResourcePermission;
 		_resourceBundleLoader = resourceBundleLoader;
+		_scriptManagementConfigurationHelper =
+			scriptManagementConfigurationHelper;
 		_userLocalService = userLocalService;
 
 		_kaleoDesignerRequestHelper = new KaleoDesignerRequestHelper(
@@ -366,6 +370,13 @@ public class KaleoDesignerDisplayContext {
 		return "publish";
 	}
 
+	public String getScriptManagementConfigurationPortletURL()
+		throws PortalException {
+
+		return _scriptManagementConfigurationHelper.
+			getScriptManagementConfigurationPortletURL();
+	}
+
 	public JSONArray getStatusesJSONArray() {
 		return JSONUtil.putAll(
 			JSONUtil.put(
@@ -481,6 +492,11 @@ public class KaleoDesignerDisplayContext {
 		}
 
 		return userName;
+	}
+
+	public boolean isAllowScriptContentBeExecutedOrIncluded() {
+		return _scriptManagementConfigurationHelper.
+			isAllowScriptContentBeExecutedOrIncluded();
 	}
 
 	public boolean isDefinitionInputDisabled(
@@ -727,6 +743,8 @@ public class KaleoDesignerDisplayContext {
 	private KaleoDesignerRequestHelper _kaleoDesignerRequestHelper;
 	private final PortletResourcePermission _portletResourcePermission;
 	private final ResourceBundleLoader _resourceBundleLoader;
+	private final ScriptManagementConfigurationHelper
+		_scriptManagementConfigurationHelper;
 	private final ThemeDisplay _themeDisplay;
 	private final UserLocalService _userLocalService;
 

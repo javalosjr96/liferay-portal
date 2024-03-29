@@ -51,6 +51,16 @@ public class CustomElementCETImpl
 	}
 
 	@Override
+	public String getPanelAppOrder() {
+		return getString("panelAppOrder");
+	}
+
+	@Override
+	public String getPanelCategoryKey() {
+		return getString("panelCategoryKey");
+	}
+
+	@Override
 	public String getPortletCategoryName() {
 		return getString("portletCategoryName");
 	}

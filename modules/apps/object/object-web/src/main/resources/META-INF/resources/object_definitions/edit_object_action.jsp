@@ -19,6 +19,8 @@ ObjectAction objectAction = objectDefinitionsActionsDisplayContext.getObjectActi
 	module="{EditObjectAction} from object-web"
 	props='<%=
 		HashMapBuilder.<String, Object>put(
+			"allowScriptContentBeExecutedOrIncluded", objectDefinitionsActionsDisplayContext.isAllowScriptContentBeExecutedOrIncluded()
+		).put(
 			"isApproved", objectDefinition.isApproved()
 		).put(
 			"objectAction", objectDefinitionsActionsDisplayContext.getObjectActionJSONObject(objectAction)
@@ -34,6 +36,8 @@ ObjectAction objectAction = objectDefinitionsActionsDisplayContext.getObjectActi
 			"objectDefinitionsRelationshipsURL", objectDefinitionsActionsDisplayContext.getObjectDefinitionsRelationshipsURL()
 		).put(
 			"readOnly", !objectDefinitionsActionsDisplayContext.hasUpdateObjectDefinitionPermission()
+		).put(
+			"scriptManagementConfigurationPortletURL", objectDefinitionsActionsDisplayContext.getScriptManagementConfigurationPortletURL()
 		).put(
 			"systemObject", objectDefinition.isSystem()
 		).put(

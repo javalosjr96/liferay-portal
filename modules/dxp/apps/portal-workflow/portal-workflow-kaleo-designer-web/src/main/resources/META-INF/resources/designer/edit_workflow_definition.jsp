@@ -39,6 +39,8 @@ renderResponse.setTitle(LanguageUtil.get(request, titleKey));
 		HashMapBuilder.<String, Object>put(
 			"accountEntryId", ParamUtil.getLong(liferayPortletRequest, "accountEntryId")
 		).put(
+			"allowScriptContentBeExecutedOrIncluded", kaleoDesignerDisplayContext.isAllowScriptContentBeExecutedOrIncluded()
+		).put(
 			"definitionName", (kaleoDefinitionVersion == null) ? null : kaleoDefinitionVersion.getName()
 		).put(
 			"displayNames", LocaleUtil.toDisplayNames(LanguageUtil.getAvailableLocales(), locale)
@@ -50,6 +52,8 @@ renderResponse.setTitle(LanguageUtil.get(request, titleKey));
 			"languageIds", LocaleUtil.toLanguageIds(LanguageUtil.getAvailableLocales())
 		).put(
 			"portletNamespace", PortalUtil.getPortletNamespace(KaleoDesignerPortletKeys.KALEO_DESIGNER)
+		).put(
+			"scriptManagementConfigurationPortletURL", kaleoDesignerDisplayContext.getScriptManagementConfigurationPortletURL()
 		).put(
 			"statuses", kaleoDesignerDisplayContext.getStatusesJSONArray()
 		).put(

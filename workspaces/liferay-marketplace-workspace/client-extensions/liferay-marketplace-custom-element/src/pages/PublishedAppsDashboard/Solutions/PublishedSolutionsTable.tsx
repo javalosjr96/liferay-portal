@@ -4,14 +4,16 @@
  */
 
 import {useNavigate} from 'react-router-dom';
+import {KeyedMutator} from 'swr';
 
-import solutionsIcon from '../../../assets/icons/analytics_icon.svg';
 import {DashboardTable} from '../../../components/DashboardTable/DashboardTable';
 import OrderStatus from '../../../components/OrderStatus';
 import Table from '../../../components/Table/Table';
 import TableKebabButton from '../../../components/Table/TableButtons/TableKebabButton';
+import i18n from '../../../i18n';
+import {Liferay} from '../../../liferay/liferay';
+import HeadlessCommerceAdminCatalogImpl from '../../../services/rest/HeadlessCommerceAdminCatalog';
 import {
-	getProductVersionFromSpecifications,
 	getThumbnailByProductAttachment,
 	showAppImage,
 } from '../../../utils/util';
@@ -19,10 +21,12 @@ import {formatDate} from '../PublishedDashboardPageUtil';
 
 type PublishedSolutionsTableProps = {
 	items: Order[];
+	mutate: KeyedMutator<any>;
 };
 
 const PublishedSolutionsTable: React.FC<PublishedSolutionsTableProps> = ({
 	items,
+	mutate,
 }) => {
 	const navigate = useNavigate();
 
@@ -32,21 +36,40 @@ const PublishedSolutionsTable: React.FC<PublishedSolutionsTableProps> = ({
 				emptyStateMessage={{
 					title: 'No Solutions Yet',
 				}}
-				icon={solutionsIcon}
+				icon="grid"
 			/>
 		);
 	}
+
+	const handleDeleteSolution = async (row: any) => {
+		try {
+			await HeadlessCommerceAdminCatalogImpl.deleteProduct(row.productId);
+
+			mutate(items);
+
+			Liferay.Util.openToast({
+				message: i18n.translate('request-sent-successfully'),
+				type: 'success',
+			});
+		}
+		catch (error) {
+			Liferay.Util.openToast({
+				message: i18n.translate('an-unexpected-error-occurred'),
+				type: 'danger',
+			});
+		}
+	};
 
 	return (
 		<Table
 			Actions={({row}) => (
 				<TableKebabButton
 					items={[
+						{disabled: true, label: i18n.translate('edit')},
 						{
-							label: 'View Details',
-							onClick: () => navigate(`/solution/${row.id}`),
+							label: i18n.translate('delete'),
+							onClick: () => handleDeleteSolution(row),
 						},
-						{disabled: true, label: 'Edit'},
 					]}
 				/>
 			)}
@@ -69,14 +92,6 @@ const PublishedSolutionsTable: React.FC<PublishedSolutionsTableProps> = ({
 						</div>
 					),
 					title: 'Name',
-				},
-				{
-					key: 'version',
-					render: (_, {productSpecifications}) =>
-						getProductVersionFromSpecifications(
-							productSpecifications
-						),
-					title: 'Version',
 				},
 				{
 					key: 'solutionType',

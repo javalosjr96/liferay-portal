@@ -5,6 +5,7 @@
 
 package com.liferay.portal.dao.sql.transformer;
 
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.internal.dao.sql.transformer.SQLFunctionTransformer;
@@ -47,36 +48,34 @@ public abstract class BaseSQLTransformerLogic implements SQLTransformerLogic {
 	}
 
 	protected Function<String, String> getCastClobTextFunction() {
-		Pattern pattern = getCastClobTextPattern();
-
-		return (String sql) -> replaceCastClobText(pattern.matcher(sql));
+		return _getCastFunction(
+			matcher -> replaceCastClobText(matcher), "CAST_CLOB_TEXT",
+			getCastClobTextPattern());
 	}
 
 	protected Pattern getCastClobTextPattern() {
 		return Pattern.compile(
-			"CAST_CLOB_TEXT\\((.+?)\\)", Pattern.CASE_INSENSITIVE);
+			"CAST_CLOB_TEXT\\((.*)\\)", Pattern.CASE_INSENSITIVE);
 	}
 
 	protected Function<String, String> getCastLongFunction() {
-		Pattern pattern = getCastLongPattern();
-
-		return (String sql) -> replaceCastLong(pattern.matcher(sql));
+		return _getCastFunction(
+			matcher -> replaceCastLong(matcher), "CAST_LONG",
+			getCastLongPattern());
 	}
 
 	protected Pattern getCastLongPattern() {
-		return Pattern.compile(
-			"CAST_LONG\\((.+?)\\)", Pattern.CASE_INSENSITIVE);
+		return Pattern.compile("CAST_LONG\\((.*)\\)", Pattern.CASE_INSENSITIVE);
 	}
 
 	protected Function<String, String> getCastTextFunction() {
-		Pattern pattern = getCastTextPattern();
-
-		return (String sql) -> replaceCastText(pattern.matcher(sql));
+		return _getCastFunction(
+			matcher -> replaceCastText(matcher), "CAST_TEXT",
+			getCastTextPattern());
 	}
 
 	protected Pattern getCastTextPattern() {
-		return Pattern.compile(
-			"CAST_TEXT\\((.+?)\\)", Pattern.CASE_INSENSITIVE);
+		return Pattern.compile("CAST_TEXT\\((.*)\\)", Pattern.CASE_INSENSITIVE);
 	}
 
 	protected Function<String, String> getConcatFunction() {
@@ -231,6 +230,56 @@ public abstract class BaseSQLTransformerLogic implements SQLTransformerLogic {
 
 	protected void setFunctions(Function... functions) {
 		_functions = functions;
+	}
+
+	private Function<String, String> _getCastFunction(
+		Function<Matcher, String> castFunction, String castName,
+		Pattern castPattern) {
+
+		return new Function<String, String>() {
+
+			@Override
+			public String apply(String sql) {
+				int start = sql.indexOf(castName + StringPool.OPEN_PARENTHESIS);
+
+				if (start == -1) {
+					return sql;
+				}
+
+				int parenthesisCount = 0;
+
+				for (int i = start + castName.length(); i < sql.length(); i++) {
+					char character = sql.charAt(i);
+
+					if (character == CharPool.OPEN_PARENTHESIS) {
+						parenthesisCount++;
+					}
+					else if (character == CharPool.CLOSE_PARENTHESIS) {
+						parenthesisCount--;
+					}
+
+					if (parenthesisCount == 0) {
+						Matcher matcher = castPattern.matcher(
+							sql.substring(start, i + 1));
+
+						return sql.substring(0, start) +
+							apply(castFunction.apply(matcher)) +
+								apply(_safeSubstring(sql, i + 1));
+					}
+				}
+
+				return sql;
+			}
+
+			private String _safeSubstring(String sql, int index) {
+				if (index >= sql.length()) {
+					return StringPool.BLANK;
+				}
+
+				return sql.substring(index);
+			}
+
+		};
 	}
 
 	private static final String _LOWER_CLOSE = StringPool.CLOSE_PARENTHESIS;

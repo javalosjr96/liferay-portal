@@ -107,6 +107,7 @@ import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -1071,6 +1072,7 @@ public class DefaultObjectEntryManagerImplTest
 		// Account entry restricted scope
 
 		AccountEntry accountEntry1 = _addAccountEntry();
+
 		_user = _addUser();
 
 		_assignAccountEntryRole(accountEntry1, _buyerRole, _user);
@@ -1192,6 +1194,30 @@ public class DefaultObjectEntryManagerImplTest
 			ObjectActionKeys.ADD_OBJECT_ENTRY, _accountManagerRole);
 
 		Assert.assertNotNull(_addObjectEntry(accountEntry1));
+
+		// Regular roles' company scope permissions should not be restricted by
+		// account entry
+
+		_user = _addUser();
+
+		Role role = _addRoleUser(
+			new String[] {ObjectActionKeys.ADD_OBJECT_ENTRY},
+			_objectDefinition3, _user);
+
+		Assert.assertNotNull(_addObjectEntry(accountEntry1));
+
+		_resourcePermissionLocalService.removeResourcePermission(
+			companyId, _objectDefinition3.getResourceName(),
+			ResourceConstants.SCOPE_COMPANY, String.valueOf(companyId),
+			role.getRoleId(), ObjectActionKeys.ADD_OBJECT_ENTRY);
+
+		AssertUtils.assertFailure(
+			PrincipalException.MustHavePermission.class,
+			StringBundler.concat(
+				"User ", _user.getUserId(),
+				" must have ADD_OBJECT_ENTRY permission for ",
+				_objectDefinition3.getResourceName(), StringPool.SPACE),
+			() -> _addObjectEntry(accountEntry1));
 	}
 
 	@Test
@@ -1890,6 +1916,14 @@ public class DefaultObjectEntryManagerImplTest
 
 		// Equals expression
 
+		testGetObjectEntries(
+			HashMapBuilder.put(
+				"filter",
+				buildEqualsExpressionFilterString(
+					_objectRelationshipFieldName,
+					String.valueOf(parentObjectEntry1.getId()))
+			).build(),
+			childObjectEntry1);
 		testGetObjectEntries(
 			HashMapBuilder.put(
 				"filter",
@@ -3713,10 +3747,15 @@ public class DefaultObjectEntryManagerImplTest
 
 		Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
 
+		String name = objectDefinition.getClassName();
+
+		if (ArrayUtil.contains(actionIds, ObjectActionKeys.ADD_OBJECT_ENTRY)) {
+			name = objectDefinition.getResourceName();
+		}
+
 		_resourcePermissionLocalService.setResourcePermissions(
-			companyId, objectDefinition.getClassName(),
-			ResourceConstants.SCOPE_COMPANY, String.valueOf(companyId),
-			role.getRoleId(), actionIds);
+			companyId, name, ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(companyId), role.getRoleId(), actionIds);
 
 		_userLocalService.addRoleUser(role.getRoleId(), user);
 

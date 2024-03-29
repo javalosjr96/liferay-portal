@@ -22,13 +22,13 @@ import javax.portlet.ActionRequest;
 public class AddressContactInfoManager extends BaseContactInfoManager<Address> {
 
 	public AddressContactInfoManager(
-		String className, long classPK, AddressLocalService addressLocalService,
-		AddressService addressService) {
+		AddressLocalService addressLocalService, AddressService addressService,
+		String className, long classPK) {
 
-		_className = className;
-		_classPK = classPK;
 		_addressLocalService = addressLocalService;
 		_addressService = addressService;
+		_className = className;
+		_classPK = classPK;
 	}
 
 	@Override

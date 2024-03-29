@@ -60,6 +60,17 @@
 			"type": "Date"
 		},
 		{
+			"DBType": "Date",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"label": {
+				"en_US": "Date Archived"
+			},
+			"name": "dateArchived",
+			"required": false,
+			"type": "DateTime"
+		},
+		{
 			"DBType": "String",
 			"indexed": true,
 			"indexedAsKeyword": true,

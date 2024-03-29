@@ -37,7 +37,9 @@ import org.gradle.api.logging.Logging;
  */
 public class ResourceUtil {
 
-	public static Resolver getClassLoaderResolver(String resourcePath) {
+	public static Resolver getClassLoaderResolver(
+		Class<?> clazz, String resourcePath) {
+
 		return () -> {
 			if (_logger.isInfoEnabled()) {
 				_logger.info(
@@ -45,9 +47,13 @@ public class ResourceUtil {
 			}
 
 			return Objects.requireNonNull(
-				ResourceUtil.class.getResourceAsStream(resourcePath),
+				clazz.getResourceAsStream(resourcePath),
 				"Unable to get resource from class path: " + resourcePath);
 		};
+	}
+
+	public static Resolver getClassLoaderResolver(String resourcePath) {
+		return getClassLoaderResolver(ResourceUtil.class, resourcePath);
 	}
 
 	public static Resolver getLocalFileResolver(File file) {
@@ -156,6 +162,10 @@ public class ResourceUtil {
 			resolvers);
 	}
 
+	public static String readString(Resolver... resolvers) {
+		return _withInputStream(StringUtil::read, resolvers);
+	}
+
 	@FunctionalInterface
 	public interface Resolver {
 
@@ -181,22 +191,35 @@ public class ResourceUtil {
 	private static <T> T _withInputStream(
 		Transformer<T> transformer, Resolver... resolvers) {
 
-		for (Resolver resolver : resolvers) {
-			try (InputStream inputStream = resolver.resolve()) {
-				if (inputStream != null) {
-					if (_logger.isInfoEnabled()) {
-						_logger.info("Found resource");
-					}
+		InputStream inputStream1 = null;
 
-					return transformer.transform(inputStream);
-				}
+		for (Resolver resolver : resolvers) {
+			try {
+				inputStream1 = resolver.resolve();
 			}
 			catch (Exception exception) {
 				_logger.lifecycle(exception.getMessage());
 			}
+
+			if (inputStream1 != null) {
+				if (_logger.isInfoEnabled()) {
+					_logger.info("Found resource");
+				}
+
+				break;
+			}
 		}
 
-		throw new GradleException("Unable to get resource");
+		if (inputStream1 == null) {
+			throw new GradleException("Unable to get resource");
+		}
+
+		try (InputStream inputStream2 = inputStream1) {
+			return transformer.transform(inputStream2);
+		}
+		catch (Exception exception) {
+			throw new GradleException("Unable to read resource", exception);
+		}
 	}
 
 	private static final Logger _logger = Logging.getLogger(ResourceUtil.class);

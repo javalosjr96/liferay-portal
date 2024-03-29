@@ -27,7 +27,7 @@ import com.liferay.petra.string.StringPool;
 						@DDMFormLayoutColumn(
 							size = 12,
 							value = {
-								"dataType", "name", "fieldReference", "type"
+								"dataType", "fieldReference", "name", "type"
 							}
 						)
 					}
@@ -47,7 +47,7 @@ public interface DDMFormFieldTypeSettings {
 	@DDMFormField(
 		label = "%field-reference",
 		properties = {
-			"normalizeField=true",
+			"normalizeField=true", "preventChangeHandlerOnBlur=true",
 			"tooltip=%field-reference-serves-as-a-frienldy-identifier"
 		}
 	)
@@ -56,8 +56,12 @@ public interface DDMFormFieldTypeSettings {
 	}
 
 	@DDMFormField(
-		label = "%field-name", properties = "normalizeField=true",
-		required = true, visibilityExpression = "FALSE"
+		label = "%field.name",
+		properties = {
+			"normalizeField=true", "preventChangeHandlerOnBlur=true",
+			"tooltip=%modifying-the-field-name-may-result-in-data-loss"
+		},
+		required = true
 	)
 	public String name();
 

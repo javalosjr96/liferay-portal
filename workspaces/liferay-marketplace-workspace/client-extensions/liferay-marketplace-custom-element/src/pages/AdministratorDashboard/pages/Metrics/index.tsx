@@ -11,10 +11,11 @@ import i18n from '../../../../i18n';
 import HeadlessCommerceAdminOrderImpl from '../../../../services/rest/HeadlessCommerceAdminOrder';
 import InfoCard from '../../components/InfoCard';
 import useAccountsMetrics from '../../hooks/useAccountsMetrics';
+import useAnalyticsViewsMetrics from '../../hooks/useAnalyticsViewsMetrics';
 import useOrderMetrics, {
 	useOrderChartLineMetrics,
 } from '../../hooks/useOrderMetrics';
-import {barChart, colors} from '../../mock';
+import {colors} from '../../mock';
 import OrdersTable from './OrdersTab';
 
 const getTotalAmountCurrency = (amount = 0) =>
@@ -25,6 +26,11 @@ const getTotalAmountCurrency = (amount = 0) =>
 
 const Metrics = () => {
 	const {data: accounts} = useAccountsMetrics('week');
+	const {
+		data: analytics,
+		isLoading: analyticsLoading,
+		visitorsMetric,
+	} = useAnalyticsViewsMetrics();
 	const {data: orderChartLine} = useOrderChartLineMetrics();
 	const {data: orderMetrics} = useOrderMetrics('week');
 
@@ -69,11 +75,9 @@ const Metrics = () => {
 				value: orderMetrics?.totalCount,
 			},
 			{
-				growth: 68,
-				growthContext: '+36k this week',
-				symbol: 'thumbs-up-arrow',
-				title: 'Unique Visitors',
-				value: '249.194.46',
+				symbol: 'analytics',
+				title: 'Site Visitors',
+				value: visitorsMetric,
 			},
 		],
 		[
@@ -84,6 +88,7 @@ const Metrics = () => {
 			orderMetrics?.lastPeriod,
 			orderMetrics?.paidAmount,
 			orderMetrics?.totalCount,
+			visitorsMetric,
 		]
 	);
 
@@ -148,20 +153,47 @@ const Metrics = () => {
 
 					<div className="col-md-4 p-0">
 						<span className="font-weight-bold ml-5">
-							Most visited pages
+							Most visited product pages
 						</span>
 
 						<div className="mt-4">
-							<ClayChart
-								data={{
-									colors: {
-										data1: colors.color1,
-										data2: colors.color2,
-									},
-									columns: barChart.columns,
-									type: 'donut',
-								}}
-							/>
+							{!analyticsLoading &&
+								analytics?.viewsMetrics.length > 1 && (
+									<ClayChart
+										axis={{
+											x: {
+												type: 'category',
+											},
+										}}
+										bar={{
+											padding: 1,
+											radius: {
+												ratio: 0.2,
+											},
+											width: {
+												max: 25,
+											},
+										}}
+										data={{
+											colors: analytics.colors,
+											columns: analytics.columns,
+											type: 'bar',
+											x: 'x',
+										}}
+										grid={{
+											lines: {
+												front: false,
+											},
+											x: {
+												show: false,
+											},
+											y: {
+												show: false,
+											},
+										}}
+										legend={{show: false}}
+									/>
+								)}
 						</div>
 					</div>
 				</div>

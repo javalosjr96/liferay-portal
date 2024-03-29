@@ -169,7 +169,7 @@ public class UpdateContactInformationMVCActionCommand
 
 		if (listType.equals(ListTypeConstants.ADDRESS)) {
 			return new AddressContactInfoManager(
-				className, classPK, _addressLocalService, _addressService);
+				_addressLocalService, _addressService, className, classPK);
 		}
 		else if (listType.equals(ListTypeConstants.EMAIL_ADDRESS)) {
 			return new EmailAddressContactInfoManager(

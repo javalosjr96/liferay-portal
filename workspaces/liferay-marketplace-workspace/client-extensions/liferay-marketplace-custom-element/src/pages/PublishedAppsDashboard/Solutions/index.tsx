@@ -20,7 +20,7 @@ const Solutions = () => {
 
 	const [page, setPage] = useState(1);
 
-	const {data: publishedSolutionsTable = {}} = useSWR(
+	const {data: publishedSolutionsTable = {}, mutate} = useSWR(
 		`/user-published-solutions/${supplierAccount?.id}/${page}/${catalogId}`,
 		() => {
 			if (!catalogId) {
@@ -57,18 +57,15 @@ const Solutions = () => {
 		>
 			<PublishedSolutionsTable
 				items={publishedSolutionsTable?.items ?? []}
+				mutate={mutate}
 			/>
 
 			{!!publishedSolutionsTable?.items?.length && (
 				<ClayPaginationBarWithBasicItems
-					active={page}
 					activeDelta={publishedSolutionsTable.pageSize}
+					activePage={page}
 					ellipsisBuffer={3}
-					ellipsisProps={{
-						'aria-label': 'More',
-						'title': 'More',
-					}}
-					onActiveChange={setPage}
+					onPageChange={setPage}
 					totalItems={publishedSolutionsTable.totalCount}
 				/>
 			)}

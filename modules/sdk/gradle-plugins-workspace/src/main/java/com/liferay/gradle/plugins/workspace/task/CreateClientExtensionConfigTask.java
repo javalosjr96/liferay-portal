@@ -7,6 +7,8 @@ package com.liferay.gradle.plugins.workspace.task;
 
 import aQute.bnd.osgi.Constants;
 
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
@@ -18,12 +20,12 @@ import com.google.common.collect.Sets;
 import com.liferay.gradle.plugins.workspace.configurator.ClientExtensionProjectConfigurator;
 import com.liferay.gradle.plugins.workspace.internal.client.extension.ClientExtension;
 import com.liferay.gradle.plugins.workspace.internal.util.GradleUtil;
+import com.liferay.gradle.plugins.workspace.internal.util.ResourceUtil;
 import com.liferay.gradle.plugins.workspace.internal.util.StringUtil;
 
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.StringReader;
 
 import java.nio.file.FileSystem;
@@ -56,11 +58,13 @@ import org.gradle.api.file.ProjectLayout;
 import org.gradle.api.file.RegularFile;
 import org.gradle.api.logging.Logger;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.provider.ProviderFactory;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.tasks.TaskInputs;
 import org.gradle.api.tasks.TaskOutputs;
 
 /**
@@ -70,12 +74,12 @@ public class CreateClientExtensionConfigTask extends DefaultTask {
 
 	public CreateClientExtensionConfigTask() {
 		_clientExtensionConfigFile = _addTaskOutputFile(
-			_project.getName() + _CLIENT_EXTENSION_CONFIG_FILE_NAME);
+			_project.getName() + ".client-extension-config.json");
 
 		_dockerFile = _addTaskOutputFile("Dockerfile");
 		_lcpJsonFile = _addTaskOutputFile("LCP.json");
 		_pluginPackagePropertiesFile = _addTaskOutputFile(
-			_PLUGIN_PACKAGE_PROPERTIES_PATH);
+			"WEB-INF/liferay-plugin-package.properties");
 	}
 
 	public void addClientExtension(ClientExtension clientExtension) {
@@ -85,14 +89,22 @@ public class CreateClientExtensionConfigTask extends DefaultTask {
 			(_siteInitializerJsonFile == null)) {
 
 			_siteInitializerJsonFile = _addTaskOutputFile(
-				_SITE_INITIALIZER_JSON_PATH);
+				"site-initializer/site-initializer.json");
 		}
-	}
 
-	public void addClientExtensionProperties(
-		Properties clientExtensionProperties) {
+		if (Objects.equals(clientExtension.type, "themeCSS") &&
+			clientExtension.typeSettings.containsKey(
+				"frontendTokenDefinitionJSON")) {
 
-		_clientExtensionProperties = clientExtensionProperties;
+			TaskInputs taskInputs = getInputs();
+
+			ProviderFactory providerFactory = _project.getProviders();
+
+			taskInputs.file(
+				providerFactory.provider(
+					() -> clientExtension.typeSettings.get(
+						"frontendTokenDefinitionJSON")));
+		}
 	}
 
 	@TaskAction
@@ -107,45 +119,41 @@ public class CreateClientExtensionConfigTask extends DefaultTask {
 		String batchType = null;
 
 		for (ClientExtension clientExtension : _clientExtensions) {
-			if (clientExtension.type.equals("batch")) {
+			String type = clientExtension.type;
+
+			if (Objects.equals(type, "batch")) {
 				pluginPackageProperties.put(
 					"Liferay-Client-Extension-Batch", "batch/");
 
 				batchType = "batch";
 			}
-
-			if (Objects.equals(clientExtension.type, "globalJS")) {
+			else if (Objects.equals(type, "globalJS")) {
 				_mapGlobalJSScriptElementAttributesToJSONString(
 					clientExtension);
 			}
-
-			if (clientExtension.type.equals("siteInitializer")) {
+			else if (Objects.equals(type, "siteInitializer")) {
 				pluginPackageProperties.put(
 					"Liferay-Client-Extension-Site-Initializer",
 					"site-initializer/");
 
-				batchType = StringUtil.getDockerSafeName(clientExtension.type);
+				batchType = StringUtil.getDockerSafeName(type);
 
 				_createSiteInitializerJsonFile(clientExtension);
 			}
+			else if (Objects.equals(type, "themeCSS")) {
+				_inlineFrontendTokenDefinitionJSON(clientExtension);
+			}
 
-			if (Objects.equals(clientExtension.classification, "frontend")) {
+			if (Objects.equals(
+					clientExtension.getClassification(), "frontend")) {
+
 				_expandWildcards(clientExtension.typeSettings);
 
 				pluginPackageProperties.put(
 					"Liferay-Client-Extension-Frontend", "static/");
 			}
 
-			String pid = _clientExtensionProperties.getProperty(
-				clientExtension.type + ".pid");
-
-			if (Objects.equals(clientExtension.type, "instanceSettings")) {
-				pid = clientExtension.typeSettings.remove("pid") + ".scoped";
-			}
-
-			if (pid != null) {
-				jsonMap.putAll(clientExtension.toJSONMap(pid));
-			}
+			jsonMap.putAll(clientExtension.toJSONMap());
 		}
 
 		Map<String, String> substitutionMap = new HashMap<>();
@@ -417,7 +425,7 @@ public class CreateClientExtensionConfigTask extends DefaultTask {
 	private String _getIdOrBatchType(ClientExtension clientExtension) {
 		String id = clientExtension.id;
 
-		if (Objects.equals(clientExtension.classification, "batch")) {
+		if (Objects.equals(clientExtension.getClassification(), "batch")) {
 			id = "batch";
 		}
 
@@ -483,6 +491,43 @@ public class CreateClientExtensionConfigTask extends DefaultTask {
 		}
 
 		return pluginPackageProperties;
+	}
+
+	private void _inlineFrontendTokenDefinitionJSON(
+		ClientExtension clientExtension) {
+
+		Map<String, Object> typeSettings = clientExtension.typeSettings;
+
+		Object frontendTokenDefinitionFile = typeSettings.remove(
+			"frontendTokenDefinitionJSON");
+
+		if (frontendTokenDefinitionFile == null) {
+			return;
+		}
+
+		String json = ResourceUtil.readString(
+			ResourceUtil.getLocalFileResolver(
+				_project.file(frontendTokenDefinitionFile)));
+
+		if (json.isEmpty()) {
+			json = "{}";
+		}
+
+		try {
+			typeSettings.put(
+				"frontendTokenDefinitionJSON",
+				_objectMapper.writeValueAsString(
+					_objectMapper.readValue(json, Map.class)));
+		}
+		catch (JsonParseException jsonParseException) {
+			throw new GradleException(
+				"Unable to JSON from file " + frontendTokenDefinitionFile,
+				jsonParseException);
+		}
+		catch (JsonProcessingException jsonProcessingException) {
+			throw new GradleException(
+				"Unable to write JSON", jsonProcessingException);
+		}
 	}
 
 	private boolean _isWildcardValue(String value) {
@@ -576,7 +621,7 @@ public class CreateClientExtensionConfigTask extends DefaultTask {
 
 				if ((fileBase64JsonNode == null) ||
 					!Objects.equals(
-						_BATCH_OBJECT_FILE_TOKEN,
+						"@batch_object_entry_file_base64@",
 						fileBase64JsonNode.asText())) {
 
 					continue;
@@ -588,7 +633,7 @@ public class CreateClientExtensionConfigTask extends DefaultTask {
 					throw new GradleException(
 						String.format(
 							"No name field found with token %s",
-							_BATCH_OBJECT_FILE_TOKEN));
+							"@batch_object_entry_file_base64@"));
 				}
 
 				File attachmentFile = new File(
@@ -689,7 +734,7 @@ public class CreateClientExtensionConfigTask extends DefaultTask {
 
 		clientExtensions.forEach(
 			clientExtension -> classifications.add(
-				clientExtension.classification));
+				clientExtension.getClassification()));
 
 		if (_groupConfiguration.containsAll(classifications)) {
 
@@ -750,46 +795,27 @@ public class CreateClientExtensionConfigTask extends DefaultTask {
 		String classificationGrouping, File inputFile, File outputFile,
 		Map<String, String> substitutionMap) {
 
-		InputStream inputStream1 = null;
-
 		try {
-			if (inputFile.exists()) {
-				inputStream1 = Files.newInputStream(inputFile.toPath());
-			}
-		}
-		catch (IOException ioException) {
-			throw new GradleException(
-				String.format(
-					"Unable to read file %s",
-					StringUtil.quote(inputFile.getName())),
-				ioException);
-		}
-
-		if (inputStream1 == null) {
-			inputStream1 =
-				CreateClientExtensionConfigTask.class.getResourceAsStream(
+			String content = ResourceUtil.readString(
+				ResourceUtil.getLocalFileResolver(inputFile),
+				ResourceUtil.getClassLoaderResolver(
+					CreateClientExtensionConfigTask.class,
 					String.format(
 						"dependencies/templates/%s/%s.tpl",
-						classificationGrouping, inputFile.getName()));
-		}
+						classificationGrouping, inputFile.getName())));
 
-		if (inputStream1 == null) {
+			for (Map.Entry<String, String> entry : substitutionMap.entrySet()) {
+				content = content.replace(entry.getKey(), entry.getValue());
+			}
+
+			Files.write(outputFile.toPath(), content.getBytes());
+		}
+		catch (GradleException gradleException) {
 			throw new GradleException(
 				String.format(
 					"Required file %s not found in project %s",
 					StringUtil.quote(inputFile.getName()),
 					StringUtil.quote(_project.getName())));
-		}
-
-		try (InputStream inputStream2 = inputStream1) {
-			String fileContent = StringUtil.read(inputStream2);
-
-			for (Map.Entry<String, String> entry : substitutionMap.entrySet()) {
-				fileContent = fileContent.replace(
-					entry.getKey(), entry.getValue());
-			}
-
-			Files.write(outputFile.toPath(), fileContent.getBytes());
 		}
 		catch (IOException ioException) {
 			throw new GradleException(
@@ -799,18 +825,6 @@ public class CreateClientExtensionConfigTask extends DefaultTask {
 				ioException);
 		}
 	}
-
-	private static final String _BATCH_OBJECT_FILE_TOKEN =
-		"@batch_object_entry_file_base64@";
-
-	private static final String _CLIENT_EXTENSION_CONFIG_FILE_NAME =
-		".client-extension-config.json";
-
-	private static final String _PLUGIN_PACKAGE_PROPERTIES_PATH =
-		"WEB-INF/liferay-plugin-package.properties";
-
-	private static final String _SITE_INITIALIZER_JSON_PATH =
-		"site-initializer/site-initializer.json";
 
 	private static final Set<String> _groupBatch = Sets.newHashSet(
 		"batch", "configuration");
@@ -835,7 +849,6 @@ public class CreateClientExtensionConfigTask extends DefaultTask {
 
 	private final Base64.Encoder _base64Encoder = Base64.getEncoder();
 	private final Object _clientExtensionConfigFile;
-	private Properties _clientExtensionProperties;
 	private final Set<ClientExtension> _clientExtensions = new HashSet<>();
 	private Object _dockerFile;
 	private Object _lcpJsonFile;

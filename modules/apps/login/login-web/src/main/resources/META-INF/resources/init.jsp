@@ -20,6 +20,7 @@ taglib uri="http://liferay.com/tld/user" prefix="liferay-user" %><%@
 taglib uri="http://liferay.com/tld/util" prefix="liferay-util" %>
 
 <%@ page import="com.liferay.captcha.configuration.CaptchaConfiguration" %><%@
+page import="com.liferay.login.web.internal.display.context.ForgotPasswordConfigurationDisplayContext" %><%@
 page import="com.liferay.login.web.internal.portlet.util.LoginUtil" %><%@
 page import="com.liferay.login.web.internal.servlet.taglib.include.NavigationPageIncludeUtil" %><%@
 page import="com.liferay.petra.string.StringPool" %><%@
@@ -56,6 +57,7 @@ page import="com.liferay.portal.kernel.exception.UserPasswordException" %><%@
 page import="com.liferay.portal.kernel.exception.UserReminderQueryException" %><%@
 page import="com.liferay.portal.kernel.exception.UserScreenNameException" %><%@
 page import="com.liferay.portal.kernel.exception.WebsiteURLException" %><%@
+page import="com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil" %><%@
 page import="com.liferay.portal.kernel.language.LanguageUtil" %><%@
 page import="com.liferay.portal.kernel.model.CompanyConstants" %><%@
 page import="com.liferay.portal.kernel.model.Contact" %><%@

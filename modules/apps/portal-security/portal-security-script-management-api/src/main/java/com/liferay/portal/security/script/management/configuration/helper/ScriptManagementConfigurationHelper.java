@@ -5,11 +5,20 @@
 
 package com.liferay.portal.security.script.management.configuration.helper;
 
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.module.configuration.ConfigurationException;
+
 /**
  * @author Feliphe Marinho
  */
 public interface ScriptManagementConfigurationHelper {
 
+	public String getScriptManagementConfigurationPortletURL()
+		throws PortalException;
+
 	public boolean isAllowScriptContentBeExecutedOrIncluded();
+
+	public boolean isScriptManagementConfigurationDefined()
+		throws ConfigurationException;
 
 }

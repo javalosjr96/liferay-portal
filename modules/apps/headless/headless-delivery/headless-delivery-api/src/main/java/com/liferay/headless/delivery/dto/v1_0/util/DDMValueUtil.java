@@ -118,12 +118,12 @@ public class DDMValueUtil {
 				localizedContentFieldValues, preferredLocale);
 		}
 		else if (Objects.equals(
-					DDMFormFieldTypeConstants.RADIO, ddmFormField.getType()) ||
+					DDMFormFieldTypeConstants.CHECKBOX_MULTIPLE,
+					ddmFormField.getType()) ||
+				 Objects.equals(
+					 DDMFormFieldTypeConstants.RADIO, ddmFormField.getType()) ||
 				 Objects.equals(
 					 DDMFormFieldTypeConstants.SELECT,
-					 ddmFormField.getType()) ||
-				 Objects.equals(
-					 DDMFormFieldTypeConstants.CHECKBOX_MULTIPLE,
 					 ddmFormField.getType())) {
 
 			return _toSelectValue(
@@ -193,8 +193,7 @@ public class DDMValueUtil {
 	}
 
 	private static String _getOptionValues(
-		DDMFormField ddmFormField, Locale locale, String optionValues,
-		boolean transformValuesToKeys) {
+		DDMFormField ddmFormField, Locale locale, String optionValues) {
 
 		try {
 			List<String> values = new ArrayList<>();
@@ -212,9 +211,7 @@ public class DDMValueUtil {
 						JSONFactoryUtil.createJSONArray(optionValues)));
 			}
 
-			if (transformValuesToKeys) {
-				values = _transformValuesToKeys(ddmFormField, locale, values);
-			}
+			values = _transformValuesToKeys(ddmFormField, locale, values);
 
 			if ((values.size() == 1) &&
 				DDMFormFieldType.RADIO.equals(ddmFormField.getType())) {
@@ -561,26 +558,21 @@ public class DDMValueUtil {
 				contentFieldValue, localizedContentFieldValues,
 				(localizedContentFieldValue, locale) -> {
 					String optionValues = localizedContentFieldValue.getData();
-					boolean transformValuesToKeys = true;
 
 					String value = localizedContentFieldValue.getValue();
 
 					if (Validator.isNotNull(value)) {
 						optionValues = value;
-						transformValuesToKeys = false;
 					}
 
-					return _getOptionValues(
-						ddmFormField, locale, optionValues,
-						transformValuesToKeys);
+					return _getOptionValues(ddmFormField, locale, optionValues);
 				},
 				preferredLocale);
 		}
 
 		return new UnlocalizedValue(
 			_getOptionValues(
-				ddmFormField, preferredLocale, contentFieldValue.getValue(),
-				false));
+				ddmFormField, preferredLocale, contentFieldValue.getValue()));
 	}
 
 	private static List<String> _transformValuesToKeys(
@@ -592,8 +584,16 @@ public class DDMValueUtil {
 			ddmFormField.getDDMFormFieldOptions();
 
 		Map<String, LocalizedValue> options = ddmFormFieldOptions.getOptions();
+		Map<String, String> optionsReferences =
+			ddmFormFieldOptions.getOptionsReferences();
 
 		for (String value : values) {
+			if (options.containsKey(value)) {
+				keys.add(value);
+
+				continue;
+			}
+
 			String key = StringPool.BLANK;
 
 			for (Map.Entry<String, LocalizedValue> entry : options.entrySet()) {
@@ -603,6 +603,18 @@ public class DDMValueUtil {
 					key = entry.getKey();
 
 					break;
+				}
+			}
+
+			if (Validator.isNull(key)) {
+				for (Map.Entry<String, String> entry :
+						optionsReferences.entrySet()) {
+
+					if (Objects.equals(entry.getValue(), value)) {
+						key = entry.getKey();
+
+						break;
+					}
 				}
 			}
 

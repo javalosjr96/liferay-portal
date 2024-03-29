@@ -8,7 +8,7 @@ import DropDown from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
 import ClayLabel from '@clayui/label';
 import {Status} from '@clayui/modal/lib/types';
-import {format} from 'date-fns';
+import {formatDistance} from 'date-fns';
 
 import {DashboardEmptyTable} from '../../../../../components/DashboardTable/DashboardEmptyTable';
 import Table from '../../../../../components/Table/Table';
@@ -170,7 +170,11 @@ const OrdersTable: React.FC<AppsTableProps> = ({items}) => {
 						key: 'createDate',
 						render: (createDate) => (
 							<span className="ml-2 text-capitalize text-nowrap">
-								{format(new Date(createDate), 'MMM dd, yyyy')}
+								{formatDistance(
+									new Date(createDate),
+									Date.now(),
+									{addSuffix: true}
+								)}
 							</span>
 						),
 						title: i18n.translate('request-created'),

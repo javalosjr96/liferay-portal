@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
+import com.liferay.portal.model.impl.ClassNameImpl;
 import com.liferay.portal.model.impl.ResourceActionImpl;
 import com.liferay.portal.service.impl.ClassNameLocalServiceImpl;
 import com.liferay.portal.service.impl.ResourceActionLocalServiceImpl;
@@ -132,6 +133,39 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 								TEST_CONTROL_TABLE_NEW_COLUMN));
 					}
 				});
+		}
+	}
+
+	@Test
+	public void testCollideClassNameId() throws Exception {
+		long classNameId = 1000000000L;
+
+		try {
+			DBPartitionUtil.forEachCompanyId(
+				companyId -> {
+					ClassName className = new ClassNameImpl();
+
+					className.setClassNameId(classNameId);
+					className.setValue("class.name." + companyId);
+
+					_classNameLocalService.addClassName(className);
+				});
+
+			DBPartitionUtil.forEachCompanyId(
+				companyId -> {
+					ClassName className =
+						_classNameLocalService.fetchByClassNameId(classNameId);
+
+					Assert.assertEquals(
+						classNameId, className.getClassNameId());
+					Assert.assertEquals(
+						"class.name." + companyId, className.getValue());
+				});
+		}
+		finally {
+			DBPartitionUtil.forEachCompanyId(
+				companyId -> _classNameLocalService.deleteClassName(
+					classNameId));
 		}
 	}
 

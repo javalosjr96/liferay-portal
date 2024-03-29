@@ -51,6 +51,7 @@ import com.liferay.object.internal.filter.parser.EqualityOperatorsObjectFilterPa
 import com.liferay.object.internal.filter.parser.InclusionOperatorsObjectFilterParser;
 import com.liferay.object.internal.filter.parser.ObjectFilterParser;
 import com.liferay.object.internal.petra.sql.dsl.DynamicObjectDefinitionLocalizationTableFactory;
+import com.liferay.object.internal.sort.SortDSLQueryVisitor;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectEntryTable;
@@ -72,6 +73,7 @@ import com.liferay.object.scope.ObjectScopeProvider;
 import com.liferay.object.scope.ObjectScopeProviderRegistry;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.service.ObjectFieldSettingLocalService;
+import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.ObjectStateFlowLocalService;
 import com.liferay.object.service.ObjectStateLocalService;
 import com.liferay.object.service.base.ObjectEntryLocalServiceBaseImpl;
@@ -99,7 +101,6 @@ import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.petra.sql.dsl.query.FromStep;
 import com.liferay.petra.sql.dsl.query.GroupByStep;
 import com.liferay.petra.sql.dsl.query.JoinStep;
-import com.liferay.petra.sql.dsl.query.sort.OrderByExpression;
 import com.liferay.petra.sql.dsl.spi.expression.Scalar;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -135,6 +136,7 @@ import com.liferay.portal.kernel.search.BaseModelSearchResult;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.auth.GuestOrUserUtil;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
@@ -1152,7 +1154,7 @@ public class ObjectEntryLocalServiceImpl
 	public List<Map<String, Serializable>> getValuesList(
 			long groupId, long companyId, long userId, long objectDefinitionId,
 			Predicate predicate, String search, int start, int end,
-			OrderByExpression[] orderByExpressions)
+			Sort[] sorts)
 		throws PortalException {
 
 		DynamicObjectDefinitionLocalizationTable
@@ -1176,54 +1178,68 @@ public class ObjectEntryLocalServiceImpl
 				extensionDynamicObjectDefinitionTable.getPrimaryKeyColumn()),
 			_EXPRESSIONS);
 
-		List<Object[]> rows = _list(
-			DSLQueryFactoryUtil.select(
-				selectExpressions
-			).from(
-				dynamicObjectDefinitionTable
-			).innerJoinON(
-				extensionDynamicObjectDefinitionTable,
-				extensionDynamicObjectDefinitionTable.getPrimaryKeyColumn(
-				).eq(
-					dynamicObjectDefinitionTable.getPrimaryKeyColumn()
-				)
-			).innerJoinON(
-				ObjectEntryTable.INSTANCE,
-				ObjectEntryTable.INSTANCE.objectEntryId.eq(
-					dynamicObjectDefinitionTable.getPrimaryKeyColumn())
-			).innerJoinON(
-				rootDynamicObjectDefinitionTable,
-				_getInnerJoinRootObjectDefinitionTablePredicate(
-					rootDynamicObjectDefinitionTable)
-			).leftJoinOn(
+		DSLQuery dslQuery = DSLQueryFactoryUtil.select(
+			selectExpressions
+		).from(
+			dynamicObjectDefinitionTable
+		).innerJoinON(
+			extensionDynamicObjectDefinitionTable,
+			extensionDynamicObjectDefinitionTable.getPrimaryKeyColumn(
+			).eq(
+				dynamicObjectDefinitionTable.getPrimaryKeyColumn()
+			)
+		).innerJoinON(
+			ObjectEntryTable.INSTANCE,
+			ObjectEntryTable.INSTANCE.objectEntryId.eq(
+				dynamicObjectDefinitionTable.getPrimaryKeyColumn())
+		).innerJoinON(
+			rootDynamicObjectDefinitionTable,
+			_getInnerJoinRootObjectDefinitionTablePredicate(
+				rootDynamicObjectDefinitionTable)
+		).leftJoinOn(
+			dynamicObjectDefinitionLocalizationTable,
+			_getLeftJoinLocalizationTablePredicate(
 				dynamicObjectDefinitionLocalizationTable,
-				_getLeftJoinLocalizationTablePredicate(
-					dynamicObjectDefinitionLocalizationTable,
-					dynamicObjectDefinitionTable)
-			).where(
-				ObjectEntryTable.INSTANCE.objectDefinitionId.eq(
-					objectDefinitionId
-				).and(
-					() -> {
-						if (groupId == 0) {
-							return null;
-						}
-
-						return ObjectEntryTable.INSTANCE.groupId.eq(groupId);
+				dynamicObjectDefinitionTable)
+		).where(
+			ObjectEntryTable.INSTANCE.objectDefinitionId.eq(
+				objectDefinitionId
+			).and(
+				() -> {
+					if (groupId == 0) {
+						return null;
 					}
-				).and(
-					Predicate.withParentheses(
-						_fillPredicate(objectDefinitionId, predicate, search))
-				).and(
-					_getPermissionWherePredicate(
-						dynamicObjectDefinitionTable, groupId)
-				)
-			).orderBy(
-				orderByExpressions
-			).limit(
-				start, end
-			),
-			objectDefinitionId, selectExpressions);
+
+					return ObjectEntryTable.INSTANCE.groupId.eq(groupId);
+				}
+			).and(
+				Predicate.withParentheses(
+					_fillPredicate(objectDefinitionId, predicate, search))
+			).and(
+				_getPermissionWherePredicate(
+					dynamicObjectDefinitionTable, groupId)
+			)
+		).limit(
+			start, end
+		);
+
+		if (sorts != null) {
+			SortDSLQueryVisitor sortDSLQueryVisitor = new SortDSLQueryVisitor(
+				_objectFieldLocalService,
+				_objectRelationshipLocalServiceSnapshot.get());
+
+			for (Sort sort : sorts) {
+				dslQuery = sortDSLQueryVisitor.visit(
+					dslQuery,
+					new com.liferay.object.internal.sort.Sort(
+						_objectDefinitionPersistence.findByPrimaryKey(
+							objectDefinitionId),
+						sort));
+			}
+		}
+
+		List<Object[]> rows = _list(
+			dslQuery, objectDefinitionId, selectExpressions);
 
 		List<Map<String, Serializable>> valuesList = new ArrayList<>(
 			rows.size());
@@ -4739,6 +4755,10 @@ public class ObjectEntryLocalServiceImpl
 	private static final Log _log = LogFactoryUtil.getLog(
 		ObjectEntryLocalServiceImpl.class);
 
+	private static final Snapshot<ObjectRelationshipLocalService>
+		_objectRelationshipLocalServiceSnapshot = new Snapshot<>(
+			ObjectEntryLocalServiceImpl.class,
+			ObjectRelationshipLocalService.class, null);
 	private static final ThreadLocal<Boolean> _skipModelListeners =
 		new CentralizedThreadLocal<>(
 			ObjectEntryLocalServiceImpl.class + "._skipModelListeners",

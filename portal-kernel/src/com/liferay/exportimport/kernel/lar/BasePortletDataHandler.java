@@ -6,10 +6,13 @@
 package com.liferay.exportimport.kernel.lar;
 
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.plugin.Version;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.PortletPreferencesLocalServiceUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
@@ -25,7 +28,10 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Supplier;
 
 import javax.portlet.PortletPreferences;
 
@@ -727,6 +733,20 @@ public abstract class BasePortletDataHandler implements PortletDataHandler {
 		return totalModelCount;
 	}
 
+	protected StagedModelType[] getStagedModelTypes(
+		Supplier<List<StagedModelType>> stagedModelTypesSupplier) {
+
+		return _stagedModelTypesMap.computeIfAbsent(
+			DBPartition.isPartitionEnabled() ?
+				CompanyThreadLocal.getCompanyId() : CompanyConstants.SYSTEM,
+			companyId -> {
+				List<StagedModelType> stagedModelTypes =
+					stagedModelTypesSupplier.get();
+
+				return stagedModelTypes.toArray(new StagedModelType[0]);
+			});
+	}
+
 	protected void setDataAlwaysStaged(boolean dataAlwaysStaged) {
 		_dataAlwaysStaged = dataAlwaysStaged;
 	}
@@ -832,6 +852,8 @@ public abstract class BasePortletDataHandler implements PortletDataHandler {
 	private String _portletId;
 	private boolean _publishToLiveByDefault;
 	private int _rank = 100;
+	private final Map<Long, StagedModelType[]> _stagedModelTypesMap =
+		new ConcurrentHashMap<>();
 	private PortletDataHandlerControl[] _stagingControls =
 		new PortletDataHandlerControl[0];
 

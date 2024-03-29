@@ -46,13 +46,6 @@ public class OracleSQLTransformerLogicTest
 	}
 
 	@Test
-	public void testReplaceCastText() {
-		Assert.assertEquals(
-			"select CAST(foo AS VARCHAR(4000)) from Foo",
-			sqlTransformer.transform(getCastTextOriginalSQL()));
-	}
-
-	@Test
 	public void testReplaceEscape() {
 		Assert.assertEquals(
 			"select foo from Foo where foo LIKE ? ESCAPE '\\'",
@@ -81,7 +74,18 @@ public class OracleSQLTransformerLogicTest
 
 	@Override
 	protected String getCastClobTextTransformedSQL() {
-		return "select DBMS_LOB.SUBSTR(foo, 4000, 1) from Foo";
+		return StringBundler.concat(
+			"select DBMS_LOB.SUBSTR(foo || (DBMS_LOB.SUBSTR(foo, 4000, 1) || ",
+			"(bar || foo)), 4000, 1), DBMS_LOB.SUBSTR(foo || (bar || foo), ",
+			"4000, 1) from Foo");
+	}
+
+	@Override
+	protected String getCastTextTransformedSQL() {
+		return StringBundler.concat(
+			"select CAST(foo || (CAST(foo AS VARCHAR(4000)) || (bar || foo)) ",
+			"AS VARCHAR(4000)), CAST(foo || (bar || foo) AS VARCHAR(4000)) ",
+			"from Foo");
 	}
 
 	@Override

@@ -59,17 +59,20 @@ public class PostgreSQLTransformerLogicTest
 
 	@Override
 	protected String getCastClobTextTransformedSQL() {
-		return "select CAST(foo AS TEXT) from Foo";
-	}
-
-	@Override
-	protected String getCastLongOriginalSQL() {
-		return "select CAST_LONG(foo) from Foo";
+		return "select CAST(foo || (CAST(foo AS TEXT) || (bar || foo)) AS " +
+			"TEXT), CAST(foo || (bar || foo) AS TEXT) from Foo";
 	}
 
 	@Override
 	protected String getCastLongTransformedSQL() {
-		return "select CAST(foo AS BIGINT) from Foo";
+		return "select CAST(1 + (CAST(foo AS BIGINT) - (bar x 2)) AS " +
+			"BIGINT), CAST(foo + (bar x 3) AS BIGINT) from Foo";
+	}
+
+	@Override
+	protected String getCastTextTransformedSQL() {
+		return "select CAST(foo || (CAST(foo AS TEXT) || (bar || foo)) AS " +
+			"TEXT), CAST(foo || (bar || foo) AS TEXT) from Foo";
 	}
 
 	@Override

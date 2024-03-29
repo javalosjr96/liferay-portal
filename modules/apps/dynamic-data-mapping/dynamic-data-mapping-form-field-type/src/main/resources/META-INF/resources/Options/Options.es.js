@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import ClayButton from '@clayui/button';
 import ClayIcon from '@clayui/icon';
 import {usePrevious} from '@liferay/frontend-js-react-web';
 import classNames from 'classnames';
@@ -13,18 +14,20 @@ import {DndProvider} from 'react-dnd';
 import {HTML5Backend} from 'react-dnd-html5-backend';
 
 import FieldBase from '../FieldBase/ReactFieldBase.es';
-import KeyValue from '../KeyValue/KeyValue.es';
+import OptionFieldKeyValue from '../OptionFieldKeyValue/OptionFieldKeyValue';
 import DnD from './DnD.es';
 import DragPreview from './DragPreview.es';
 import {
 	compose,
-	dedupValue,
 	getDefaultOptionValue,
+	getErrorMessage,
 	isOptionValueGenerated,
 	normalizeFields,
 	normalizeReference,
 	random,
 } from './util.es';
+
+import './Options.scss';
 
 const Option = React.forwardRef(
 	({children, className, disabled, style}, ref) => (
@@ -53,6 +56,8 @@ const getInitialOption = (generateOptionValueUsingOptionLabel) => {
 	);
 
 	const initalOption = {
+		displayErrors: false,
+		errorMessage: '',
 		id: random(),
 		label: '',
 		reference: optionValue,
@@ -71,7 +76,6 @@ const refreshFields = (
 	defaultLanguageId,
 	editingLanguageId,
 	generateOptionValueUsingOptionLabel,
-	initialOption,
 	options
 ) => {
 	const refreshedFields = [
@@ -92,10 +96,6 @@ const refreshFields = (
 						option.label
 				  ),
 		})),
-		{
-			generateKeyword: generateOptionValueUsingOptionLabel,
-			...initialOption,
-		},
 	].filter((field) => field && !!Object.keys(field).length);
 
 	return normalizeFields(
@@ -166,8 +166,6 @@ const Options = ({
 		return formattedValue;
 	});
 
-	const [fieldError, setFieldError] = useState(null);
-
 	const [fields, setFields] = useState(() => {
 		const options =
 			normalizedValue[editingLanguageId] ||
@@ -179,7 +177,6 @@ const Options = ({
 			defaultLanguageId,
 			editingLanguageId,
 			generateOptionValueUsingOptionLabel,
-			initialOptionRef.current,
 			options
 		);
 	});
@@ -230,7 +227,6 @@ const Options = ({
 					defaultLanguageId,
 					editingLanguageId,
 					generateOptionValueUsingOptionLabel,
-					initialOptionRef.current,
 					options
 				)
 			);
@@ -297,10 +293,39 @@ const Options = ({
 		});
 	};
 
+	const addErrorProperties = (fields, matchProperty, matchPropertyValue) => {
+		let matched = false;
+
+		const updatedFields = fields.map((field) => {
+			if (field[matchProperty] === matchPropertyValue) {
+				matched = true;
+
+				return {
+					...field,
+					errorMessage: getErrorMessage(matchProperty),
+					invalidField:
+						matchProperty === 'reference' ? 'value' : 'reference',
+				};
+			}
+
+			return field;
+		});
+
+		return matched ? updatedFields : fields;
+	};
+
+	const removeErrorProperties = (fields) => {
+		return fields.map((field) => {
+			return {
+				...field,
+				errorMessage: '',
+				invalidField: null,
+			};
+		});
+	};
+
 	const getSynchronizedValue = (fields) => {
 		const _fields = [...fields];
-
-		_fields.pop();
 
 		const availableLanguageIds = Object.getOwnPropertyNames(
 			normalizedValue
@@ -319,40 +344,82 @@ const Options = ({
 		return [[...fields], ...args];
 	};
 
-	const clearError = () => {
-		setFieldError(null);
+	const checkValidOptionName = (fields, newValue, fieldReference) => {
+		const field = fields
+			.filter(({reference}) => reference !== fieldReference)
+			.find(
+				({value}) => value?.toLowerCase() === newValue?.toLowerCase()
+			);
+
+		return field ? fieldReference : null;
 	};
 
-	const checkValidReference = (fields, value, fieldName) => {
+	const checkValidOptionReference = (fields, newValue, fieldName) => {
 		const field = fields
 			.filter(({value}) => value !== fieldName)
 			.find(
 				({reference}) =>
-					reference?.toLowerCase() === value?.toLowerCase()
+					reference?.toLowerCase() === newValue?.toLowerCase()
 			);
 
 		return field ? fieldName : null;
 	};
 
-	const dedup = (fields, index, property, value) => {
-		const {generateKeyword, id} = fields[index];
+	const dedup = (fields, index) => {
+		fields = fields.map((field) => {
+			if (field.invalidField === 'value') {
+				field['value'] = getDefaultOptionValue();
+			}
+			else if (field.invalidField === 'reference') {
+				field['reference'] = normalizeReference(fields, index);
+			}
 
-		if (index === fields.length - 1 && tabPressed) {
+			return field;
+		});
+
+		return removeErrorProperties(fields);
+	};
+
+	const validate = (fields, index, property, value) => {
+		if (index === fields.length && tabPressed) {
 			return [fields];
 		}
 
-		if (property === 'value' && generateKeyword) {
-			value = dedupValue(
+		if (property === 'value') {
+			const invalidNameFieldReference = checkValidOptionName(
 				fields,
-				value ? value : Liferay.Language.get('option'),
-				id,
-				generateOptionValueUsingOptionLabel
+				value,
+				fields[index].reference
 			);
+
+			if (invalidNameFieldReference) {
+				fields = addErrorProperties(
+					fields,
+					'reference',
+					invalidNameFieldReference
+				);
+			}
+			else {
+				fields = removeErrorProperties(fields);
+			}
 		}
 		else if (property === 'reference') {
-			setFieldError(
-				checkValidReference(fields, value, fields[index].value)
+			const invalidReferenceFieldName = checkValidOptionReference(
+				fields,
+				value,
+				fields[index].value
 			);
+
+			if (invalidReferenceFieldName) {
+				fields = addErrorProperties(
+					fields,
+					'value',
+					invalidReferenceFieldName
+				);
+			}
+			else {
+				fields = removeErrorProperties(fields);
+			}
 		}
 
 		return [fields, index, property, value];
@@ -384,14 +451,6 @@ const Options = ({
 	};
 
 	const add = (fields, index, property, value) => {
-		fields[index][property] = value;
-
-		fields[index]['newField'] = true;
-
-		if (defaultLanguageId !== editingLanguageId) {
-			fields[index]['edited'] = true;
-		}
-
 		const initialOption = getInitialOption(
 			generateOptionValueUsingOptionLabel
 		);
@@ -401,9 +460,19 @@ const Options = ({
 			...initialOption,
 		});
 
+		const newFieldIndex = index + 1;
+
+		fields[newFieldIndex][property] = value;
+
+		fields[newFieldIndex]['newField'] = true;
+
+		if (defaultLanguageId !== editingLanguageId) {
+			fields[newFieldIndex]['edited'] = true;
+		}
+
 		initialOptionRef.current = initialOption;
 
-		return [fields, index, property, value];
+		return [fields, newFieldIndex, property, value];
 	};
 
 	const change = (fields, index, property, value) => {
@@ -431,10 +500,6 @@ const Options = ({
 	const move = (fields, data) => {
 		const {itemPosition, targetPosition} = data;
 
-		if (itemPosition === fields.length - 1) {
-			return [fields];
-		}
-
 		const item = {...fields[itemPosition]};
 		const newTargetPosition =
 			targetPosition > itemPosition ? targetPosition - 1 : targetPosition;
@@ -446,13 +511,7 @@ const Options = ({
 	};
 
 	const normalize = (fields, index) => {
-		clearError();
-
-		fields[index]['reference'] = normalizeReference(
-			fields,
-			fields[index],
-			index
-		);
+		fields = dedup(fields, index);
 
 		return [
 			normalizeFields(
@@ -463,9 +522,9 @@ const Options = ({
 		];
 	};
 
-	const composedAdd = compose(clone, dedup, add, set);
+	const composedAdd = compose(clone, add, normalize, set);
 	const composedBlur = compose(clone, normalize, set);
-	const composedChange = compose(clone, dedup, change, set);
+	const composedChange = compose(clone, change, validate, set);
 	const composedDelete = compose(clone, handleDelete, set);
 	const composedMove = compose(clone, move, set);
 
@@ -516,21 +575,28 @@ const Options = ({
 					<Option disabled={disabled}>
 						{children({
 							defaultOptionRef,
-							fieldError,
+							expandedPanel: true,
 							handleBlur: composedBlur.bind(this, index),
-							handleField: !(fields.length - 1 === index)
-								? composedChange.bind(this, index)
-								: composedAdd.bind(this, index),
+							handleField: composedChange.bind(this, index),
 							index,
 							onClick: () =>
 								handleConfirmDelete(index, option.value),
 							option,
-							showCloseButton:
-								!(fields.length - 1 === index) && !disabled,
+							showCloseButton: fields.length > 1,
 						})}
 					</Option>
 				</DnD>
 			))}
+
+			<ClayButton
+				className="add-option-button"
+				displayType="secondary"
+				onClick={() => {
+					composedAdd.bind(this, fields.length - 1)('label', '');
+				}}
+			>
+				<span>{Liferay.Language.get('add-option')}</span>
+			</ClayButton>
 		</div>
 	);
 };
@@ -542,7 +608,7 @@ const Main = ({
 	generateOptionValueUsingOptionLabel = false,
 	onChange,
 	keywordReadOnly,
-	placeholder = Liferay.Language.get('enter-an-option'),
+	placeholder = Liferay.Language.get('option'),
 	readOnly,
 	required,
 	showKeyword,
@@ -569,7 +635,7 @@ const Main = ({
 				>
 					{({
 						defaultOptionRef,
-						fieldError,
+						expandedPanel,
 						handleBlur,
 						handleField,
 						index,
@@ -578,16 +644,16 @@ const Main = ({
 						showCloseButton,
 					}) =>
 						option && (
-							<KeyValue
+							<OptionFieldKeyValue
 								allowSpecialCharacters={allowSpecialCharacters}
-								displayErrors={
-									fieldError && fieldError === option.value
-								}
 								editingLanguageId={editingLanguageId}
-								errorMessage={Liferay.Language.get(
-									'this-reference-is-already-being-used'
-								)}
+								errorMessage={option.errorMessage}
+								expandedPanel={expandedPanel}
 								generateKeyword={option.generateKeyword}
+								generateOptionValueUsingOptionLabel={
+									generateOptionValueUsingOptionLabel
+								}
+								invalidField={option.invalidField}
 								keyword={option.value}
 								keywordReadOnly={keywordReadOnly}
 								name={`option${index}`}

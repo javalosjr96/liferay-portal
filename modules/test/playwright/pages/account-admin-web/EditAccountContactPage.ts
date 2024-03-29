@@ -13,10 +13,6 @@ export class EditAccountContactPage {
 	readonly page: Page;
 
 	constructor(page: Page) {
-		this.addressesLink = page.getByRole('link', {
-			exact: true,
-			name: 'Addresses',
-		});
 		this.contactInformationLink = page.getByRole('link', {
 			exact: true,
 			name: 'Contact Information',

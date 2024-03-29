@@ -43,7 +43,6 @@ public class SortParserImplTest {
 			_entityModel.getEntityFieldsMap(), "fieldExternal");
 
 		Assert.assertNotNull(entityField);
-
 		Assert.assertEquals("fieldExternal", entityField.getName());
 	}
 
@@ -54,7 +53,6 @@ public class SortParserImplTest {
 			"complexFieldExternal/fieldInsideComplexFieldExternal");
 
 		Assert.assertNotNull(entityField);
-
 		Assert.assertEquals(
 			"fieldInsideComplexFieldExternal", entityField.getName());
 	}
@@ -76,11 +74,12 @@ public class SortParserImplTest {
 		SortField sortField = _sortParserImpl.getSortField("fieldExternal:asc");
 
 		Assert.assertNotNull(sortField);
-
 		Assert.assertEquals(
 			"fieldInternal",
 			sortField.getSortableFieldName(LocaleUtil.getDefault()));
-
+		Assert.assertEquals(
+			"fieldInternal",
+			sortField.getSortableFieldPath(LocaleUtil.getDefault()));
 		Assert.assertTrue(sortField.isAscending());
 	}
 
@@ -89,11 +88,12 @@ public class SortParserImplTest {
 		SortField sortField = _sortParserImpl.getSortField("fieldExternal");
 
 		Assert.assertNotNull(sortField);
-
 		Assert.assertEquals(
 			"fieldInternal",
 			sortField.getSortableFieldName(LocaleUtil.getDefault()));
-
+		Assert.assertEquals(
+			"fieldInternal",
+			sortField.getSortableFieldPath(LocaleUtil.getDefault()));
 		Assert.assertTrue(sortField.isAscending());
 	}
 
@@ -103,11 +103,12 @@ public class SortParserImplTest {
 			"fieldExternal:desc");
 
 		Assert.assertNotNull(sortField);
-
 		Assert.assertEquals(
 			"fieldInternal",
 			sortField.getSortableFieldName(LocaleUtil.getDefault()));
-
+		Assert.assertEquals(
+			"fieldInternal",
+			sortField.getSortableFieldPath(LocaleUtil.getDefault()));
 		Assert.assertTrue(!sortField.isAscending());
 	}
 
@@ -133,11 +134,12 @@ public class SortParserImplTest {
 			"complexFieldExternal/fieldInsideComplexFieldExternal");
 
 		Assert.assertNotNull(sortField);
-
 		Assert.assertEquals(
 			"fieldInsideComplexFieldInternal",
 			sortField.getSortableFieldName(LocaleUtil.getDefault()));
-
+		Assert.assertEquals(
+			"complexFieldExternal/fieldInsideComplexFieldInternal",
+			sortField.getSortableFieldPath(LocaleUtil.getDefault()));
 		Assert.assertTrue(sortField.isAscending());
 	}
 
@@ -147,11 +149,12 @@ public class SortParserImplTest {
 			"complexFieldExternal/fieldInsideComplexFieldExternal:asc");
 
 		Assert.assertNotNull(sortField);
-
 		Assert.assertEquals(
 			"fieldInsideComplexFieldInternal",
 			sortField.getSortableFieldName(LocaleUtil.getDefault()));
-
+		Assert.assertEquals(
+			"complexFieldExternal/fieldInsideComplexFieldInternal",
+			sortField.getSortableFieldPath(LocaleUtil.getDefault()));
 		Assert.assertTrue(sortField.isAscending());
 	}
 
@@ -161,11 +164,12 @@ public class SortParserImplTest {
 			"complexFieldExternal/fieldInsideComplexFieldExternal:desc");
 
 		Assert.assertNotNull(sortField);
-
 		Assert.assertEquals(
 			"fieldInsideComplexFieldInternal",
 			sortField.getSortableFieldName(LocaleUtil.getDefault()));
-
+		Assert.assertEquals(
+			"complexFieldExternal/fieldInsideComplexFieldInternal",
+			sortField.getSortableFieldPath(LocaleUtil.getDefault()));
 		Assert.assertTrue(!sortField.isAscending());
 	}
 
@@ -236,6 +240,9 @@ public class SortParserImplTest {
 		Assert.assertEquals(
 			"fieldInternal1",
 			sortField.getSortableFieldName(LocaleUtil.getDefault()));
+		Assert.assertEquals(
+			"fieldInternal1",
+			sortField.getSortableFieldPath(LocaleUtil.getDefault()));
 	}
 
 	@Test
@@ -261,7 +268,9 @@ public class SortParserImplTest {
 		Assert.assertEquals(
 			"fieldInternal1",
 			sortField1.getSortableFieldName(LocaleUtil.getDefault()));
-
+		Assert.assertEquals(
+			"fieldInternal1",
+			sortField1.getSortableFieldPath(LocaleUtil.getDefault()));
 		Assert.assertTrue(sortField1.isAscending());
 
 		SortField sortField2 = sortFields.get(1);
@@ -269,7 +278,9 @@ public class SortParserImplTest {
 		Assert.assertEquals(
 			"fieldInternal2",
 			sortField2.getSortableFieldName(LocaleUtil.getDefault()));
-
+		Assert.assertEquals(
+			"fieldInternal2",
+			sortField2.getSortableFieldPath(LocaleUtil.getDefault()));
 		Assert.assertTrue(sortField2.isAscending());
 	}
 
@@ -287,6 +298,9 @@ public class SortParserImplTest {
 		Assert.assertEquals(
 			"fieldInternal1",
 			sortField1.getSortableFieldName(LocaleUtil.getDefault()));
+		Assert.assertEquals(
+			"fieldInternal1",
+			sortField1.getSortableFieldPath(LocaleUtil.getDefault()));
 
 		Assert.assertTrue(sortField1.isAscending());
 
@@ -295,7 +309,9 @@ public class SortParserImplTest {
 		Assert.assertEquals(
 			"fieldInternal2",
 			sortField2.getSortableFieldName(LocaleUtil.getDefault()));
-
+		Assert.assertEquals(
+			"fieldInternal2",
+			sortField2.getSortableFieldPath(LocaleUtil.getDefault()));
 		Assert.assertTrue(!sortField2.isAscending());
 	}
 
@@ -313,7 +329,9 @@ public class SortParserImplTest {
 		Assert.assertEquals(
 			"fieldInternal1",
 			sortField1.getSortableFieldName(LocaleUtil.getDefault()));
-
+		Assert.assertEquals(
+			"fieldInternal1",
+			sortField1.getSortableFieldPath(LocaleUtil.getDefault()));
 		Assert.assertTrue(sortField1.isAscending());
 
 		SortField sortField2 = sortFields.get(1);
@@ -321,7 +339,9 @@ public class SortParserImplTest {
 		Assert.assertEquals(
 			"fieldInternal2",
 			sortField2.getSortableFieldName(LocaleUtil.getDefault()));
-
+		Assert.assertEquals(
+			"fieldInternal2",
+			sortField2.getSortableFieldPath(LocaleUtil.getDefault()));
 		Assert.assertTrue(!sortField2.isAscending());
 	}
 
@@ -329,7 +349,16 @@ public class SortParserImplTest {
 
 		@Override
 		public Map<String, EntityField> getEntityFieldsMap() {
-			return HashMapBuilder.put(
+			return _entityFieldsMap;
+		}
+
+		@Override
+		public String getName() {
+			return "SomeEntityName";
+		}
+
+		private final Map<String, EntityField> _entityFieldsMap =
+			HashMapBuilder.put(
 				"complexFieldExternal",
 				(EntityField)new ComplexEntityField(
 					"complexFieldExternal",
@@ -350,12 +379,6 @@ public class SortParserImplTest {
 				new StringEntityField(
 					"fieldExternal2", locale -> "fieldInternal2")
 			).build();
-		}
-
-		@Override
-		public String getName() {
-			return "SomeEntityName";
-		}
 
 	};
 

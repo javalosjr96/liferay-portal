@@ -8,13 +8,11 @@
 import {Locator, Page} from '@playwright/test';
 
 export class EditAccountPhonePage {
-	readonly addPhoneButton: Locator;
 	readonly numberInput: Locator;
 	readonly page: Page;
 	readonly saveButton: Locator;
 
 	constructor(page: Page) {
-		this.addPhoneButton = page.getByLabel('Add Phone Numbers');
 		this.numberInput = page.getByRole('textbox', {name: 'Number'});
 		this.page = page;
 		this.saveButton = page.getByRole('button', {name: 'Save'});

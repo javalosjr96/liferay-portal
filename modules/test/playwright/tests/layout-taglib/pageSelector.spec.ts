@@ -15,6 +15,7 @@ export const test = mergeTests(
 	apiHelpersTest,
 	featureFlagsTest({
 		'LPS-178052': true,
+		'LPS-196847': true,
 	}),
 	isolatedSiteTest,
 	navigationMenusPagesTest
@@ -29,13 +30,19 @@ test('load more works properly in search results', async ({
 	// Create 15 Lemon pages
 
 	for (let i = 1; i <= 15; i++) {
-		await apiHelpers.headlessDelivery.createSitePage(site.id, `Lemon ${i}`);
+		await apiHelpers.headlessDelivery.createSitePage({
+			siteId: site.id,
+			title: `Lemon ${i}`,
+		});
 	}
 
 	// Create 30 Apple pages
 
 	for (let i = 1; i <= 30; i++) {
-		await apiHelpers.headlessDelivery.createSitePage(site.id, `Apple ${i}`);
+		await apiHelpers.headlessDelivery.createSitePage({
+			siteId: site.id,
+			title: `Apple ${i}`,
+		});
 	}
 
 	// Create a navigation menu and open pages selector
@@ -101,4 +108,44 @@ test('load more works properly in search results', async ({
 	).toHaveCount(30);
 
 	await expect(loadMoreButton).not.toBeVisible();
+});
+
+test('checks the correct label for restricted page in the layout tree', async ({
+	apiHelpers,
+	navigationMenusPage,
+	site,
+}) => {
+
+	// Create a page with only one permission
+
+	const pageName = getRandomString();
+
+	await apiHelpers.headlessDelivery.createSitePage({
+		pagePermissions: [
+			{
+				actionKeys: ['VIEW'],
+				roleKey: 'Owner',
+			},
+		],
+		siteId: site.id,
+		title: pageName,
+	});
+
+	// Create a navigation menu and open pages selector
+
+	await navigationMenusPage.goto(site.friendlyUrlPath);
+
+	await navigationMenusPage.createNavigationMenu(getRandomString());
+
+	const modal = await navigationMenusPage.openAddPageModal();
+
+	// Check the correct label for restricted page
+
+	await expect(
+		modal
+			.locator('div', {
+				hasText: pageName,
+			})
+			.getByLabel('Restricted Page')
+	).toBeVisible();
 });
