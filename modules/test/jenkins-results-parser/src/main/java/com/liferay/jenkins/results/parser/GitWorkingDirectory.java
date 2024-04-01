@@ -2087,6 +2087,31 @@ public class GitWorkingDirectory {
 		return _log(start, num, null, sha);
 	}
 
+	public List<LocalGitCommit> log(String branch1, String branch2)
+		throws IOException {
+
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("git log");
+		sb.append(" --oneline ");
+		sb.append(branch1);
+		sb.append(" ^");
+		sb.append(branch2);
+		sb.append(" | wc -l");
+
+		GitUtil.ExecutionResult result = executeBashCommands(
+			5, 1000, 30 * 1000, sb.toString());
+
+		if (result.getExitValue() != 0) {
+			throw new IOException(
+				JenkinsResultsParserUtil.combine(
+					"Unable to find log between ", branch1, " and ", branch2,
+					":\n\n", result.getStandardError()));
+		}
+
+		return log(Integer.parseInt(result.getStandardOut()));
+	}
+
 	public RemoteGitBranch pushToRemoteGitRepository(
 		boolean force, LocalGitBranch localGitBranch,
 		String remoteGitBranchName, GitRemote gitRemote) {

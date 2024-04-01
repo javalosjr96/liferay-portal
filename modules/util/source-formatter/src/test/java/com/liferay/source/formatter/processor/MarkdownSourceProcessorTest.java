@@ -27,4 +27,9 @@ public class MarkdownSourceProcessorTest extends BaseSourceProcessorTestCase {
 		test("IncorrectWhitespace.testmarkdown");
 	}
 
+	@Test
+	public void testMissingEmptyLines() throws Exception {
+		test("MissingEmptyLines.testmarkdown");
+	}
+
 }

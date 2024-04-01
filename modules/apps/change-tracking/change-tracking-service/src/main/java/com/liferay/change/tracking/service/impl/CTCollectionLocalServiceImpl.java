@@ -831,6 +831,8 @@ public class CTCollectionLocalServiceImpl
 
 		if ((fromCTCollection.getStatus() != WorkflowConstants.STATUS_DRAFT) &&
 			(fromCTCollection.getStatus() !=
+				WorkflowConstants.STATUS_EXPIRED) &&
+			(fromCTCollection.getStatus() !=
 				WorkflowConstants.STATUS_PENDING)) {
 
 			throw new CTCollectionStatusException(

@@ -1,0 +1,25 @@
+Here's the template to use for each breaking change (note how it ends with a
+horizontal rule):
+
+### Title
+- **Date:**
+- **JIRA Ticket:**
+
+#### What changed?
+
+#### Who is affected?
+
+#### How should I update my code?
+
+```java
+String s1 = "Hello";
+String s2 = "World";
+
+String s3 = "Hello World";
+
+if (reverse) {
+    s3 = "World Hello";
+}
+```
+
+#### Why was this change made?

@@ -39,8 +39,10 @@ describe('LockedKBArticleModal', () => {
 		expect(queryByText('article-in-edition')).not.toBeInTheDocument();
 	});
 
-	it('renders the modal when try to edit/expire/delete a locked article', () => {
-		const {getByText} = render(<LockedKBArticleModal open={true} />);
+	it('renders the modal as non group admin when try to edit/expire/delete a locked article', () => {
+		const {getByText} = render(
+			<LockedKBArticleModal groupAdmin={false} open={true} />
+		);
 
 		act(() => {
 			jest.runAllTimers();
@@ -50,9 +52,39 @@ describe('LockedKBArticleModal', () => {
 		expect(getByText('ok')).toBeInTheDocument();
 	});
 
-	it('renders the modal when try to move a locked article', async () => {
-		const {getByText} = await render(
+	it('renders the modal as group admin when try to edit/expire/delete a locked article', () => {
+		const actionURL = 'action-url';
+
+		const {getByRole, getByText} = render(
 			<LockedKBArticleModal
+				actionURL={actionURL}
+				groupAdmin={true}
+				open={true}
+			/>
+		);
+
+		act(() => {
+			jest.runAllTimers();
+		});
+
+		expect(
+			getByText('article-in-edition-by-user-x-description')
+		).toBeInTheDocument();
+		expect(getByText('cancel')).toBeInTheDocument();
+		expect(getByText('take-control-and-x')).toBeInTheDocument();
+		expect(getByRole('link', {name: 'take-control-and-x'})).toHaveAttribute(
+			'href',
+			actionURL
+		);
+	});
+
+	it('renders the modal as group admin when try to move a locked article', async () => {
+		const actionURL = 'action-url';
+
+		const {getByRole, getByText} = await render(
+			<LockedKBArticleModal
+				actionURL={actionURL}
+				groupAdmin={true}
 				open={false}
 				portletNamespace="_portletNamespace_"
 			/>
@@ -60,7 +92,7 @@ describe('LockedKBArticleModal', () => {
 
 		await act(() =>
 			Liferay.componentReady(bridgeComponentId).then(({open}) => {
-				open();
+				open('actionLabel', actionURL, 'userName');
 			})
 		);
 
@@ -68,6 +100,14 @@ describe('LockedKBArticleModal', () => {
 			jest.runAllTimers();
 		});
 
-		expect(getByText('article-in-edition')).toBeInTheDocument();
+		expect(
+			getByText('article-in-edition-by-user-x-description')
+		).toBeInTheDocument();
+		expect(getByText('cancel')).toBeInTheDocument();
+		expect(getByText('take-control-and-x')).toBeInTheDocument();
+		expect(getByRole('link', {name: 'take-control-and-x'})).toHaveAttribute(
+			'href',
+			actionURL
+		);
 	});
 });

@@ -3,11 +3,13 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-package com.liferay.change.tracking.web.internal.scheduler;
+package com.liferay.change.tracking.internal.scheduler;
 
 import com.liferay.change.tracking.constants.CTActionKeys;
 import com.liferay.change.tracking.constants.CTDestinationNames;
 import com.liferay.change.tracking.model.CTCollection;
+import com.liferay.change.tracking.scheduler.PublishScheduler;
+import com.liferay.change.tracking.scheduler.ScheduledPublishInfo;
 import com.liferay.change.tracking.service.CTCollectionLocalService;
 import com.liferay.change.tracking.service.CTPreferencesLocalService;
 import com.liferay.petra.lang.SafeCloseable;
@@ -41,7 +43,7 @@ import org.osgi.service.component.annotations.Reference;
  * @author Preston Crary
  */
 @Component(service = PublishScheduler.class)
-public class PublishScheduler {
+public class PublishSchedulerImpl implements PublishScheduler {
 
 	public ScheduledPublishInfo getScheduledPublishInfo(
 			CTCollection ctCollection)
@@ -60,9 +62,9 @@ public class PublishScheduler {
 		Message message = schedulerResponse.getMessage();
 
 		return new ScheduledPublishInfo(
-			ctCollection, message.getLong("userId"),
-			schedulerResponse.getJobName(),
-			_schedulerEngineHelper.getStartTime(schedulerResponse));
+			ctCollection, schedulerResponse.getJobName(),
+			_schedulerEngineHelper.getStartTime(schedulerResponse),
+			message.getLong("userId"));
 	}
 
 	public List<ScheduledPublishInfo> getScheduledPublishInfos()
@@ -96,9 +98,9 @@ public class PublishScheduler {
 
 			scheduledPublishInfos.add(
 				new ScheduledPublishInfo(
-					ctCollection, message.getLong("userId"),
-					schedulerResponse.getJobName(),
-					_schedulerEngineHelper.getStartTime(schedulerResponse)));
+					ctCollection, schedulerResponse.getJobName(),
+					_schedulerEngineHelper.getStartTime(schedulerResponse),
+					message.getLong("userId")));
 		}
 
 		return scheduledPublishInfos;
@@ -169,6 +171,16 @@ public class PublishScheduler {
 
 		CTCollection ctCollection = _ctCollectionLocalService.getCTCollection(
 			ctCollectionId);
+
+		SchedulerResponse schedulerResponse =
+			_schedulerEngineHelper.getScheduledJob(
+				_getSchedulerJobName(ctCollection),
+				CTDestinationNames.CT_COLLECTION_SCHEDULED_PUBLISH,
+				StorageType.PERSISTED);
+
+		if (schedulerResponse != null) {
+			return null;
+		}
 
 		_ctCollectionModelResourcePermission.check(
 			PermissionThreadLocal.getPermissionChecker(), ctCollection,
