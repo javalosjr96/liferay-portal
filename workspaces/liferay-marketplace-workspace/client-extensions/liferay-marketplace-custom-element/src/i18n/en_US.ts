@@ -70,6 +70,7 @@ export default {
 	'create-license-key': 'Create License Key',
 	'create-new-licenses-and-they-will-show-up-here':
 		'Create new licenses and they will show up here.',
+	'created-at': 'Created At',
 	'customer-account': 'Customer Account',
 	'customer-dashboard': 'Customer Dashboard',
 	'customer-roject': 'Customer Project',
@@ -151,6 +152,7 @@ export default {
 	'licenses': 'Licenses',
 	'liferay-learn': 'Liferay Learn',
 	'liferay-s': 'Liferay’s',
+	'list-with-latest-published-apps': 'List with latest published apps',
 	'lorem-ipsum-dolor-sit-amet-consectetur':
 		'Lorem ipsum dolor sit amet consectetur.',
 	'mac-addresses': 'Mac Addresses',
@@ -202,11 +204,11 @@ export default {
 	'qty': 'Qty',
 	'ram': 'RAM',
 	'ram-in-gbs': 'RAM in GBs',
+	'recent-published-apps': 'Recent Published Apps',
 	'remove-a-version': 'Remove a Version',
 	'request-a-marketplace-publisher-account':
 		'Request a Marketplace Publisher Account',
 	'request-account': 'Request Account',
-	'request-created': 'Request Created',
 	'request-description': 'Request Description',
 	'request-details': 'Request details',
 	'request-sent-successfully': 'Request sent successfully',

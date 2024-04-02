@@ -6,6 +6,7 @@
 import {APIResponse, expect as baseExpect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../fixtures/apiHelpersTest';
+import {applicationsMenuPageTest} from '../../fixtures/applicationsMenuPageTest';
 import {featureFlagsTest} from '../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../fixtures/isolatedSiteTest';
 import {workflowPagesTest} from '../../fixtures/workflowPagesTest';
@@ -40,6 +41,7 @@ const translateNameAndMetadataFields = async (
 
 const baseTest = mergeTests(
 	apiHelpersTest,
+	applicationsMenuPageTest,
 	isolatedSiteTest,
 	journalPagesTest,
 	workflowPagesTest
@@ -61,6 +63,8 @@ const expect = baseExpect.extend({
 		pass: response.ok(),
 	}),
 });
+
+const keepTitlesUntranslated = mergeTests(baseTest);
 
 const prefixUrlTest = mergeTests(
 	baseTest,
@@ -96,6 +100,44 @@ const privateContentIconTest = mergeTests(
 	featureFlagsTest({
 		'LPD-10626': true,
 	})
+);
+
+keepTitlesUntranslated(
+	'LPD-20723: Clay link is translating asset titles/names by default in vertical card',
+	async ({apiHelpers, journalPage, page, site}) => {
+		const contentStructureId = await getBasicWebContentStructureId(
+			apiHelpers
+		);
+
+		const title = 'add-web-content';
+
+		await addApprovedStructuredContent(
+			apiHelpers,
+			site.id,
+			contentStructureId,
+			title
+		);
+
+		await journalPage.goto(site.friendlyUrlPath);
+
+		await journalPage.changeView('cards');
+
+		await expect(page.getByRole('link', {name: title})).toBeVisible({
+			timeout: 1000,
+		});
+
+		await journalPage.changeView('list');
+
+		await expect(page.getByRole('link', {name: title})).toBeVisible({
+			timeout: 1000,
+		});
+
+		await journalPage.changeView('table');
+
+		await expect(page.getByRole('link', {name: title})).toBeVisible({
+			timeout: 1000,
+		});
+	}
 );
 
 privateContentIconTest(

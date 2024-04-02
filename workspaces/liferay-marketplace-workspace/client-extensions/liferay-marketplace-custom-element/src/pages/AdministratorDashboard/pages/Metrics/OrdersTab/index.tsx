@@ -177,7 +177,7 @@ const OrdersTable: React.FC<AppsTableProps> = ({items}) => {
 								)}
 							</span>
 						),
-						title: i18n.translate('request-created'),
+						title: i18n.translate('created-at'),
 					},
 					{
 						align: 'right',

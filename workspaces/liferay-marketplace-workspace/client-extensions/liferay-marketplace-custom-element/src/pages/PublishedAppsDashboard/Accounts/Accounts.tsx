@@ -367,7 +367,7 @@ function AccountDetailsPage({
 const Accounts = () => {
 	const {appsTotalCount, selectedAccount} = useOutletContext<any>();
 
-	const {members} = useMembers({
+	const {data: members = []} = useMembers({
 		accountId: Liferay.CommerceContext.account?.accountId ?? 0,
 		isCustomerDashboard: false,
 		isPublisherDashboard: true,

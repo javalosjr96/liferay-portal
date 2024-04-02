@@ -3,26 +3,25 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import ClayButton from '@clayui/button';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import {useState} from 'react';
 import {useNavigate, useOutletContext} from 'react-router-dom';
 import useSWR from 'swr';
 
-import {DashboardPage} from '../../../components/DashBoardPage/DashboardPage';
+import Page from '../../../components/Page';
 import SearchBuilder from '../../../core/SearchBuilder';
 import {useAccount} from '../../../hooks/data/useAccounts';
 import HeadlessCommerceAdminCatalogImpl from '../../../services/rest/HeadlessCommerceAdminCatalog';
 import PublishedAppsTable from './components/PublishedAppsTable';
 
 const Apps = () => {
+	const [page, setPage] = useState(1);
 	const {catalogId} = useOutletContext<any>();
+	const {data: supplierAccount} = useAccount();
 	const navigate = useNavigate();
 
-	const [page, setPage] = useState(1);
-
-	const {data: supplierAccount} = useAccount();
-
-	const {data: publishedProductTable = {}} = useSWR(
+	const {data: publishedProductTable = {}, error, isLoading} = useSWR(
 		`/user-published-apps/${supplierAccount?.id}/${page}/${catalogId}`,
 		() => {
 			if (!catalogId) {
@@ -49,14 +48,18 @@ const Apps = () => {
 	);
 
 	return (
-		<DashboardPage
-			buttonDisabled={!(catalogId && catalogId > 0)}
-			buttonMessage="New App"
-			messages={{
-				description: 'Manage and publish apps on the Marketplace',
-				title: 'Apps',
-			}}
-			onButtonClick={() => navigate('/app/create')}
+		<Page
+			description="Manage and publish apps on the Marketplace"
+			pageRendererProps={{error, isLoading}}
+			rightButton={
+				<ClayButton
+					disabled={!(catalogId && catalogId > 0)}
+					onClick={() => navigate('/app/create')}
+				>
+					New App
+				</ClayButton>
+			}
+			title="Apps"
 		>
 			<PublishedAppsTable items={publishedProductTable?.items ?? []} />
 
@@ -69,7 +72,7 @@ const Apps = () => {
 					totalItems={publishedProductTable.totalCount}
 				/>
 			)}
-		</DashboardPage>
+		</Page>
 	);
 };
 

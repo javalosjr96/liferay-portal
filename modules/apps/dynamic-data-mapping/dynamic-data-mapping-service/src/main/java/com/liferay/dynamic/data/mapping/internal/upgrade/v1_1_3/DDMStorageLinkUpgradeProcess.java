@@ -46,6 +46,11 @@ public class DDMStorageLinkUpgradeProcess extends UpgradeProcess {
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMStorageLink set structureVersionId = ? where " +
+						"structureId = ? and structureVersionId is null");
+			PreparedStatement preparedStatement4 =
+				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
+					connection,
+					"update DDMStorageLink set structureVersionId = ? where " +
 						"storageLinkId = ?");
 			ResultSet resultSet1 = preparedStatement1.executeQuery()) {
 
@@ -67,27 +72,38 @@ public class DDMStorageLinkUpgradeProcess extends UpgradeProcess {
 						Set<String> ddmStructureFieldNames = _getFieldNames(
 							resultSet2.getString("definition"), "fields");
 
-						if (ddmStructureFieldNames.containsAll(
+						if (!ddmStructureFieldNames.containsAll(
 								ddmContentFieldNames)) {
 
-							ddmStructureVersionIds.put(
-								resultSet1.getLong("storageLinkId"),
-								resultSet2.getLong("structureVersionId"));
+							continue;
 						}
+
+						preparedStatement3.setLong(
+							1, resultSet2.getLong("structureVersionId"));
+						preparedStatement3.setLong(
+							2, resultSet1.getLong("structureId"));
+
+						preparedStatement3.addBatch();
+
+						ddmStructureVersionIds.put(
+							resultSet1.getLong("storageLinkId"),
+							resultSet2.getLong("structureVersionId"));
 					}
+
+					preparedStatement3.executeBatch();
 				}
 			}
 
 			for (Map.Entry<Long, Long> entry :
 					ddmStructureVersionIds.entrySet()) {
 
-				preparedStatement3.setLong(1, entry.getValue());
-				preparedStatement3.setLong(2, entry.getKey());
+				preparedStatement4.setLong(1, entry.getValue());
+				preparedStatement4.setLong(2, entry.getKey());
 
-				preparedStatement3.addBatch();
+				preparedStatement4.addBatch();
 			}
 
-			preparedStatement3.executeBatch();
+			preparedStatement4.executeBatch();
 		}
 	}
 

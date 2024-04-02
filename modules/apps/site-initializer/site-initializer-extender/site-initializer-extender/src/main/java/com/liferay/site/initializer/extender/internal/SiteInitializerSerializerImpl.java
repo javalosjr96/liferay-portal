@@ -23,6 +23,8 @@ import com.liferay.layout.exporter.LayoutsExporter;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.util.structure.LayoutStructure;
+import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
+import com.liferay.layout.utility.page.service.LayoutUtilityPageEntryLocalService;
 import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -43,6 +45,7 @@ import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -94,11 +97,12 @@ public class SiteInitializerSerializerImpl
 				"documents/group", zipWriter);
 			_serializeDDMStructures(groupId, zipWriter);
 			_serializeDDMTemplates(groupId, zipWriter);
-			_serializeLayoutPageTemplates(groupId, zipWriter);
-			_serializeLayouts(groupId, "layouts", zipWriter);
 			_serializeJournalArticles(
 				groupId, JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
 				"journal-articles", zipWriter);
+			_serializeLayoutPageTemplates(groupId, zipWriter);
+			_serializeLayoutUtilityPageEntries(groupId, zipWriter);
+			_serializeLayouts(groupId, "layouts", zipWriter);
 			_serializeStyleBookEntries(groupId, zipWriter);
 			_serializeUserAccounts(groupId, zipWriter);
 
@@ -461,6 +465,39 @@ public class SiteInitializerSerializerImpl
 			zipWriter);
 	}
 
+	private void _serializeLayoutUtilityPageEntries(
+			long groupId, ZipWriter zipWriter)
+		throws Exception {
+
+		File file = _layoutsExporter.exportLayoutUtilityPageEntries(
+			ListUtil.toLongArray(
+				_layoutUtilityPageEntryLocalService.getLayoutUtilityPageEntries(
+					groupId),
+				LayoutUtilityPageEntry.LAYOUT_UTILITY_PAGE_ENTRY_ID_ACCESSOR));
+		ZipReader zipReader = null;
+
+		try {
+			zipReader = _zipReaderFactory.getZipReader(file);
+
+			for (String name : zipReader.getEntries()) {
+				String fileName = "layout-utility-page-entries/";
+
+				fileName += StringUtil.removeSubstring(
+					name, "layout-utility-page-template/");
+
+				_addZipEntry(
+					fileName, zipReader.getEntryAsInputStream(name), zipWriter);
+			}
+		}
+		finally {
+			if (zipReader != null) {
+				zipReader.close();
+			}
+
+			file.delete();
+		}
+	}
+
 	private void _serializeOrganization(
 		JSONArray jsonArray, Organization organization) {
 
@@ -644,6 +681,10 @@ public class SiteInitializerSerializerImpl
 
 	@Reference
 	private LayoutsExporter _layoutsExporter;
+
+	@Reference
+	private LayoutUtilityPageEntryLocalService
+		_layoutUtilityPageEntryLocalService;
 
 	@Reference
 	private OrganizationLocalService _organizationLocalService;

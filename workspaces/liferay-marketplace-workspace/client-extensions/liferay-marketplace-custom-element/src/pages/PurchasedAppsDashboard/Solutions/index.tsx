@@ -5,7 +5,7 @@
 
 import {useOutletContext} from 'react-router-dom';
 
-import {DashboardPage} from '../../../components/DashBoardPage/DashboardPage';
+import Page from '../../../components/Page';
 import {useMarketplaceContext} from '../../../context/MarketplaceContext';
 import {usePurchasedOrders} from '../usePurchasedOrders';
 import PurchasedSolutionsTable from './components/PurchasedSolutionsTable';
@@ -14,7 +14,11 @@ const Solutions = () => {
 	const {selectedAccount} = useOutletContext<any>();
 	const {channel} = useMarketplaceContext();
 
-	const {data: placedOrders = {items: []}} = usePurchasedOrders({
+	const {
+		data: placedOrders = {items: []},
+		error,
+		isLoading,
+	} = usePurchasedOrders({
 		accountId: selectedAccount?.id,
 		channelId: channel?.id,
 		orderTypeExternalReferenceCodes: ['SOLUTION30', 'SOLUTIONS7'],
@@ -23,17 +27,15 @@ const Solutions = () => {
 	});
 
 	return (
-		<DashboardPage
-			messages={{
-				description:
-					'Manage solution trial and purchases from the Marketplace',
-				title: 'My Solutions',
-			}}
+		<Page
+			description="Manage solution trial and purchases from the Marketplace"
+			pageRendererProps={{error, isLoading}}
+			title="My Solutions"
 		>
 			<PurchasedSolutionsTable
 				items={placedOrders.items as PlacedOrder[]}
 			/>
-		</DashboardPage>
+		</Page>
 	);
 };
 

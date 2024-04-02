@@ -7,6 +7,7 @@ package com.liferay.headless.delivery.internal.resource.v1_0;
 
 import com.liferay.asset.kernel.service.AssetCategoryLocalService;
 import com.liferay.asset.kernel.service.AssetTagLocalService;
+import com.liferay.depot.group.provider.SiteConnectedGroupGroupProvider;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFileEntryType;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
@@ -734,7 +735,9 @@ public class DocumentResourceImpl extends BaseDocumentResourceImpl {
 		try {
 			for (DLFileEntryType dlFileEntryType :
 					_dlFileEntryTypeLocalService.getFolderFileEntryTypes(
-						new long[] {groupId}, documentFolderId, true)) {
+						_siteConnectedGroupGroupProvider.
+							getAncestorSiteAndDepotGroupIds(groupId, true),
+						documentFolderId, true)) {
 
 				if (name.equals(
 						dlFileEntryType.getName(
@@ -1070,6 +1073,9 @@ public class DocumentResourceImpl extends BaseDocumentResourceImpl {
 
 	@Reference
 	private SearchRequestBuilderFactory _searchRequestBuilderFactory;
+
+	@Reference
+	private SiteConnectedGroupGroupProvider _siteConnectedGroupGroupProvider;
 
 	@Reference
 	private Sorts _sorts;

@@ -251,7 +251,7 @@ public abstract class BaseEntityDALO<T extends Entity>
 		retryable.executeWithRetries();
 	}
 
-	private JSONObject _get(final long id) {
+	private JSONObject _get(long id) {
 		Retryable<JSONObject> retryable = new BaseRetryable<JSONObject>() {
 
 			@Override

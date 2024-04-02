@@ -14,9 +14,12 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.util.PropsValues;
 
+import java.io.File;
 import java.io.Serializable;
 
+import java.net.URI;
 import java.net.URL;
 
 import org.osgi.framework.Bundle;
@@ -47,13 +50,22 @@ public class PortalCacheExtender {
 				ClassLoader classLoader = bundleWiring.getClassLoader();
 
 				_configure(
-					classLoader, _multiVMPortalCacheManager,
-					PropsKeys.EHCACHE_MULTI_VM_CONFIG_LOCATION,
-					"/META-INF/module-multi-vm.xml");
+					_getURL(
+						classLoader, PropsKeys.EHCACHE_MULTI_VM_CONFIG_LOCATION,
+						"/META-INF/module-multi-vm.xml"),
+					classLoader, _multiVMPortalCacheManager);
 				_configure(
-					classLoader, _singleVMPortalCacheManager,
-					PropsKeys.EHCACHE_SINGLE_VM_CONFIG_LOCATION,
-					"/META-INF/module-single-vm.xml");
+					_getURL(bundle.getSymbolicName(), "-multi-vm-ext.xml"),
+					classLoader, _multiVMPortalCacheManager);
+				_configure(
+					_getURL(
+						classLoader,
+						PropsKeys.EHCACHE_SINGLE_VM_CONFIG_LOCATION,
+						"/META-INF/module-single-vm.xml"),
+					classLoader, _singleVMPortalCacheManager);
+				_configure(
+					_getURL(bundle.getSymbolicName(), "-single-vm-ext.xml"),
+					classLoader, _singleVMPortalCacheManager);
 
 				return null;
 			}
@@ -69,8 +81,28 @@ public class PortalCacheExtender {
 	}
 
 	private void _configure(
-		ClassLoader classLoader, PortalCacheManager<?, ?> portalCacheManager,
-		String propertyKey, String defaultConfigurationFile) {
+		URL configurationURL, ClassLoader classLoader,
+		PortalCacheManager<?, ?> portalCacheManager) {
+
+		if (configurationURL == null) {
+			return;
+		}
+
+		if (_log.isInfoEnabled()) {
+			_log.info(
+				StringBundler.concat(
+					"Reconfiguring caches in cache manager ",
+					portalCacheManager.getPortalCacheManagerName(), " using ",
+					configurationURL));
+		}
+
+		portalCacheManager.reconfigurePortalCaches(
+			configurationURL, classLoader);
+	}
+
+	private URL _getURL(
+		ClassLoader classLoader, String propertyKey,
+		String defaultConfigurationFile) {
 
 		String configurationFile = null;
 
@@ -86,20 +118,31 @@ public class PortalCacheExtender {
 			configurationFile = defaultConfigurationFile;
 		}
 
-		URL configurationURL = classLoader.getResource(configurationFile);
+		return classLoader.getResource(configurationFile);
+	}
 
-		if (configurationURL != null) {
-			if (_log.isInfoEnabled()) {
-				_log.info(
-					StringBundler.concat(
-						"Reconfiguring caches in cache manager ",
-						portalCacheManager.getPortalCacheManagerName(),
-						" using ", configurationURL));
-			}
+	private URL _getURL(String symbolicName, String postfix) {
+		File configFile = new File(
+			StringBundler.concat(
+				PropsValues.MODULE_FRAMEWORK_BASE_DIR, "/ehcache/",
+				symbolicName, postfix));
 
-			portalCacheManager.reconfigurePortalCaches(
-				configurationURL, classLoader);
+		if (!configFile.exists()) {
+			return null;
 		}
+
+		URI uri = configFile.toURI();
+
+		try {
+			return uri.toURL();
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
+			}
+		}
+
+		return null;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

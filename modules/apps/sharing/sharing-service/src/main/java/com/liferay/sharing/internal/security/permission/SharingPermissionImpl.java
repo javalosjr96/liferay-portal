@@ -111,11 +111,17 @@ public class SharingPermissionImpl implements SharingPermission {
 		SharingPermissionChecker sharingPermissionChecker = null;
 
 		try {
-			ClassName className = _classNameLocalService.getClassName(
+			ClassName className = _classNameLocalService.fetchByClassNameId(
 				classNameId);
 
+			if (className == null) {
+				throw new PrincipalException(
+					"Sharing permission checker is null for class name ID " +
+						classNameId);
+			}
+
 			sharingPermissionChecker = _serviceTrackerMap.getService(
-				className.getClassName());
+				className.getValue());
 		}
 		catch (PortalException portalException) {
 			throw new SystemException(portalException);
@@ -123,7 +129,7 @@ public class SharingPermissionImpl implements SharingPermission {
 
 		if (sharingPermissionChecker == null) {
 			throw new PrincipalException(
-				"sharing permission checker is null for class name ID " +
+				"Sharing permission checker is null for class name ID " +
 					classNameId);
 		}
 

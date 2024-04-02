@@ -49,9 +49,10 @@ public class DLViewEntriesDisplayContextTest {
 	public static void setUpClass() {
 		_fileVersion = Mockito.mock(FileVersion.class);
 
-		_setUpDLURLHelperUtil();
 		_setUpFrameworkUtil();
 		_setUpPortalUtil();
+
+		_setUpDLURLHelperUtil();
 	}
 
 	@AfterClass

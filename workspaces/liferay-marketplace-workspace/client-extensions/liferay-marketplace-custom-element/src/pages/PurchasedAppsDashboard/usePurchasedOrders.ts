@@ -25,7 +25,9 @@ const usePurchasedOrders = ({
 	const key = `/placed-orders/${accountId}/${channelId}/${page}/${pageSize}`;
 
 	const swr = useSWR(
-		`/placed-orders/${accountId}/${channelId}/${page}/${pageSize}`,
+		accountId && channelId
+			? `/placed-orders/${accountId}/${channelId}/${page}/${pageSize}`
+			: null,
 		async () => {
 			const placedOrders = await HeadlessCommerceDeliveryOrder.getPlacedOrders(
 				channelId,
@@ -37,16 +39,18 @@ const usePurchasedOrders = ({
 				})
 			);
 
+			const placedOrdersFiltered = placedOrders.items.filter(
+				({orderTypeExternalReferenceCode}) =>
+					orderTypeExternalReferenceCodes.length
+						? orderTypeExternalReferenceCodes.includes(
+								orderTypeExternalReferenceCode
+						  )
+						: true
+			);
+
 			return {
 				...placedOrders,
-				items: placedOrders.items.filter(
-					({orderTypeExternalReferenceCode}) =>
-						orderTypeExternalReferenceCodes.length
-							? orderTypeExternalReferenceCodes.includes(
-									orderTypeExternalReferenceCode
-							  )
-							: true
-				),
+				items: placedOrdersFiltered,
 			};
 		}
 	);

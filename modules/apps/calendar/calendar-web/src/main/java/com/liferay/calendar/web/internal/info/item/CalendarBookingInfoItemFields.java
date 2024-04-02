@@ -28,6 +28,15 @@ public class CalendarBookingInfoItemFields {
 			InfoLocalizedValue.localize(
 				CalendarBookingInfoItemFields.class, "all-day")
 		).build();
+	public static final InfoField<TextInfoFieldType> calendarNameInfoField =
+		BuilderHolder._builder.infoFieldType(
+			TextInfoFieldType.INSTANCE
+		).name(
+			"calendarName"
+		).labelInfoLocalizedValue(
+			InfoLocalizedValue.localize(
+				CalendarBookingInfoItemFields.class, "calendar-name")
+		).build();
 	public static final InfoField<HTMLInfoFieldType> descriptionInfoField =
 		BuilderHolder._builder.infoFieldType(
 			HTMLInfoFieldType.INSTANCE
@@ -55,6 +64,15 @@ public class CalendarBookingInfoItemFields {
 			InfoLocalizedValue.localize(
 				CalendarBookingInfoItemFields.class, "event-url")
 		).build();
+	public static final InfoField<TextInfoFieldType> invitationsInfoField =
+		BuilderHolder._builder.infoFieldType(
+			TextInfoFieldType.INSTANCE
+		).name(
+			"invitations"
+		).labelInfoLocalizedValue(
+			InfoLocalizedValue.localize(
+				CalendarBookingInfoItemFields.class, "invitations")
+		).build();
 	public static final InfoField<TextInfoFieldType> locationInfoField =
 		BuilderHolder._builder.infoFieldType(
 			TextInfoFieldType.INSTANCE
@@ -63,6 +81,15 @@ public class CalendarBookingInfoItemFields {
 		).labelInfoLocalizedValue(
 			InfoLocalizedValue.localize(
 				CalendarBookingInfoItemFields.class, "location")
+		).build();
+	public static final InfoField<TextInfoFieldType> repetitionsInfoField =
+		BuilderHolder._builder.infoFieldType(
+			TextInfoFieldType.INSTANCE
+		).name(
+			"repetitions"
+		).labelInfoLocalizedValue(
+			InfoLocalizedValue.localize(
+				CalendarBookingInfoItemFields.class, "repetitions")
 		).build();
 	public static final InfoField<DateInfoFieldType> startDateInfoField =
 		BuilderHolder._builder.infoFieldType(

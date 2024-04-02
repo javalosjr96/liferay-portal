@@ -7,6 +7,7 @@ import ClayChart from '@clayui/charts';
 import {useMemo} from 'react';
 import useSWR from 'swr';
 
+import ErrorBoundary from '../../../../components/ErrorBoundary';
 import i18n from '../../../../i18n';
 import HeadlessCommerceAdminOrderImpl from '../../../../services/rest/HeadlessCommerceAdminOrder';
 import InfoCard from '../../components/InfoCard';
@@ -157,43 +158,45 @@ const Metrics = () => {
 						</span>
 
 						<div className="mt-4">
-							{!analyticsLoading &&
-								analytics?.viewsMetrics.length > 1 && (
-									<ClayChart
-										axis={{
-											x: {
-												type: 'category',
-											},
-										}}
-										bar={{
-											padding: 1,
-											radius: {
-												ratio: 0.2,
-											},
-											width: {
-												max: 25,
-											},
-										}}
-										data={{
-											colors: analytics.colors,
-											columns: analytics.columns,
-											type: 'bar',
-											x: 'x',
-										}}
-										grid={{
-											lines: {
-												front: false,
-											},
-											x: {
-												show: false,
-											},
-											y: {
-												show: false,
-											},
-										}}
-										legend={{show: false}}
-									/>
-								)}
+							<ErrorBoundary className="ml-5">
+								{!analyticsLoading &&
+									analytics?.columns[0].length > 1 && (
+										<ClayChart
+											axis={{
+												x: {
+													type: 'category',
+												},
+											}}
+											bar={{
+												padding: 1,
+												radius: {
+													ratio: 0.2,
+												},
+												width: {
+													max: 25,
+												},
+											}}
+											data={{
+												colors: analytics.colors,
+												columns: analytics.columns,
+												type: 'bar',
+												x: 'x',
+											}}
+											grid={{
+												lines: {
+													front: false,
+												},
+												x: {
+													show: false,
+												},
+												y: {
+													show: false,
+												},
+											}}
+											legend={{show: false}}
+										/>
+									)}
+							</ErrorBoundary>
 						</div>
 					</div>
 				</div>

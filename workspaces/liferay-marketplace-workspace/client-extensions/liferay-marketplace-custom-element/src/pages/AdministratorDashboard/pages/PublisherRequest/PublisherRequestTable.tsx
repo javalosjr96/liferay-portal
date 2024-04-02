@@ -112,7 +112,7 @@ const PublisherRequestTable: React.FC<AppsTableProps> = ({items, mutate}) => {
 								{format(new Date(dateCreated), 'MMM dd, yyyy')}
 							</span>
 						),
-						title: i18n.translate('request-created'),
+						title: i18n.translate('created-at'),
 					},
 					{
 						key: 'requestStatus',

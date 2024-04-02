@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import ClayButton from '@clayui/button';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import {useState} from 'react';
 import {useOutletContext} from 'react-router-dom';
@@ -11,21 +12,22 @@ import appsIcon from '../../../assets/icons/apps_fill_icon.svg';
 import {DashboardPage} from '../../../components/DashBoardPage/DashboardPage';
 import {DashboardEmptyTable} from '../../../components/DashboardTable/DashboardEmptyTable';
 import {getSiteURL} from '../../../components/InviteMemberModal/services';
+import Page from '../../../components/Page';
 import {Liferay} from '../../../liferay/liferay';
 import {usePurchasedOrders} from '../usePurchasedOrders';
 import PurchasedAppsTable from './components/PurchasedAppsTable';
 
 const Apps = () => {
-	const channelId = Number(Liferay.CommerceContext.commerceChannelId);
 	const [page, setPage] = useState(1);
 	const {selectedAccount} = useOutletContext<any>();
 
 	const {
 		data: placedOrders = {items: [], pageSize: 1, totalCount: 0},
 		error,
+		isLoading,
 	} = usePurchasedOrders({
 		accountId: selectedAccount?.id as number,
-		channelId,
+		channelId: Number(Liferay.CommerceContext.commerceChannelId),
 		orderTypeExternalReferenceCodes: ['CLOUDAPP', 'DXPAPP'],
 		page,
 		pageSize: 10,
@@ -68,15 +70,17 @@ const Apps = () => {
 	}
 
 	return (
-		<DashboardPage
-			buttonMessage="Add Apps"
-			messages={{
-				description: 'Manage apps purchase from the Marketplace',
-				title: 'My Apps',
-			}}
-			onButtonClick={() => {
-				Liferay.Util.navigate(getSiteURL() || '/');
-			}}
+		<Page
+			description="Manage apps purchase from the Marketplace"
+			pageRendererProps={{isLoading}}
+			rightButton={
+				<ClayButton
+					onClick={() => Liferay.Util.navigate(getSiteURL() || '/')}
+				>
+					Add Apps
+				</ClayButton>
+			}
+			title="My Apps"
 		>
 			<PurchasedAppsTable
 				items={(purchasedAppTable.items ?? []) as any}
@@ -91,7 +95,7 @@ const Apps = () => {
 					totalItems={purchasedAppTable?.totalCount}
 				/>
 			)}
-		</DashboardPage>
+		</Page>
 	);
 };
 

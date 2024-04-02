@@ -4,7 +4,6 @@
  */
 
 import ClayAlert from '@clayui/alert';
-import {ClayButtonWithIcon} from '@clayui/button';
 import {ClayInput} from '@clayui/form';
 import ClayLayout from '@clayui/layout';
 import ClayTable from '@clayui/table';
@@ -19,6 +18,7 @@ import {API_URL, OBJECT_RELATIONSHIP} from '../../../utils/constants';
 import openDefaultFailureToast from '../../../utils/openDefaultFailureToast';
 import openDefaultSuccessToast from '../../../utils/openDefaultSuccessToast';
 import {IField} from '../../../utils/types';
+import FieldAssignmentControls from '../components/FieldAssignmentControls';
 
 interface IFDSCardsSection {
 	externalReferenceCode: string;
@@ -84,6 +84,38 @@ export default function Cards(props: IFDSViewSectionProps) {
 						name: fdsCardsSection.fieldName,
 					},
 				};
+			})
+		);
+	};
+
+	const clearFDSCardSection = async (cardSection: ICardsSection) => {
+		setSaveButtonDisabled(true);
+
+		const response = await fetch(
+			`${API_URL.FDS_CARDS_SECTIONS}/by-external-reference-code/${cardSection.externalReferenceCode}`,
+			{method: 'DELETE'}
+		);
+
+		setSaveButtonDisabled(false);
+
+		if (!response.ok) {
+			openDefaultFailureToast();
+
+			return;
+		}
+
+		setCardsSections(
+			cardsSections.map((section) => {
+				if (section.name !== cardSection.name) {
+					return section;
+				}
+
+				const nextCardSection = {...cardSection};
+
+				delete nextCardSection.externalReferenceCode;
+				delete nextCardSection.field;
+
+				return nextCardSection;
 			})
 		);
 	};
@@ -193,6 +225,9 @@ export default function Cards(props: IFDSViewSectionProps) {
 							cardsSection={cardsSection}
 							key={cardsSection.name}
 							modalProps={props}
+							onClearSelection={() => {
+								clearFDSCardSection(cardsSection);
+							}}
 							onSelect={({closeModal, selectedField}) => {
 								saveFDSCardsSection({
 									cardsSection,
@@ -212,6 +247,7 @@ export default function Cards(props: IFDSViewSectionProps) {
 interface ICardsSectionProps {
 	cardsSection: ICardsSection;
 	modalProps: IFDSViewSectionProps;
+	onClearSelection: () => void;
 	onSelect: ({
 		closeModal,
 		selectedField,
@@ -225,12 +261,13 @@ interface ICardsSectionProps {
 function CardsSection({
 	cardsSection,
 	modalProps,
+	onClearSelection,
 	onSelect,
 	saveButtonDisabled,
 }: ICardsSectionProps) {
 	const {field, label} = cardsSection;
 
-	const onClick = () => {
+	const openSelectFieldModal = () => {
 		openModal({
 			contentComponent: ({closeModal}: {closeModal: Function}) => (
 				<FieldSelectModalContent
@@ -269,18 +306,18 @@ function CardsSection({
 								{'text-secondary': !field}
 							)}
 						>
-							{field?.name ||
-								Liferay.Language.get('not-assigned')}
+							{field
+								? field.label || field.name
+								: Liferay.Language.get('not-assigned')}
 						</p>
 					</ClayInput.GroupItem>
 
 					<ClayInput.GroupItem shrink>
-						<ClayButtonWithIcon
-							aria-label={Liferay.Language.get('assign-field')}
-							displayType="secondary"
-							onClick={onClick}
-							symbol="plus"
-							title={Liferay.Language.get('assign-field')}
+						<FieldAssignmentControls
+							field={field}
+							label={label}
+							onClearSelection={onClearSelection}
+							openSelectFieldModal={openSelectFieldModal}
 						/>
 					</ClayInput.GroupItem>
 				</ClayInput.Group>
