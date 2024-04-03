@@ -86,6 +86,14 @@ public class QueueListener {
 			if (!_isPartner(koroneikiAccountJSONObject)) {
 				channel.basicReject(deliveryTag, false);
 
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						StringBundler.concat(
+							"Account with name ",
+							koroneikiAccountJSONObject.getString("name"),
+							" is not a partner account"));
+				}
+
 				return;
 			}
 
@@ -94,6 +102,14 @@ public class QueueListener {
 
 			if (salesforceAccountKey.equals("")) {
 				channel.basicReject(deliveryTag, false);
+
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						StringBundler.concat(
+							"Account with name ",
+							koroneikiAccountJSONObject.getString("name"),
+							" does not have a Salesforce account key"));
+				}
 
 				return;
 			}
@@ -514,7 +530,7 @@ public class QueueListener {
 			).codecs(
 				clientCodecConfigurer -> clientCodecConfigurer.defaultCodecs(
 				).maxInMemorySize(
-					16 * 1024 * 1024
+					24 * 1024 * 1024
 				)
 			).build()
 		).build();
