@@ -27,6 +27,7 @@ import {
 	patchSKUById,
 	postPriceEntryIdTierPrice,
 } from '../../utils/api';
+import {isTrialSKU} from '../../utils/productUtils';
 import {getSkuPrice} from '../../utils/util';
 import IconButton from './components/IconButton/IconButton';
 import LicensePriceCard from './components/LicensePriceCard';
@@ -123,9 +124,7 @@ export function InformLicensingTermsPricePage({
 				);
 			}
 
-			if (sku?.sku !== 'TRIAL' || sku?.sku.endsWith('ts')) {
-				await processTier(priceEntry);
-			}
+			await processTier(priceEntry);
 		}
 	};
 
@@ -133,11 +132,13 @@ export function InformLicensingTermsPricePage({
 		const skusJSON = await getProductIdSkusPage(appProductId);
 
 		for (const sku of skusJSON?.items) {
-			await handlePostPriceEntryIdTierPrice(sku);
-			await patchSKUById(sku?.id, {
-				...sku,
-				price: getSkuPrice(appLicensePrice, sku),
-			});
+			if (!isTrialSKU(sku)) {
+				await handlePostPriceEntryIdTierPrice(sku);
+				await patchSKUById(sku?.id, {
+					...sku,
+					price: getSkuPrice(appLicensePrice, sku),
+				});
+			}
 		}
 	};
 

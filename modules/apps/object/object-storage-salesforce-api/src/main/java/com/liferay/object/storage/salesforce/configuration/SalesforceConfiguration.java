@@ -21,19 +21,19 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 )
 public interface SalesforceConfiguration {
 
-	@Meta.AD(name = "login-url", required = false)
-	public String loginURL();
-
 	@Meta.AD(name = "consumer-key", required = false)
 	public String consumerKey();
 
 	@Meta.AD(name = "consumer-secret", required = false)
 	public String consumerSecret();
 
-	@Meta.AD(name = "username", required = false)
-	public String username();
+	@Meta.AD(name = "login-url", required = false)
+	public String loginURL();
 
 	@Meta.AD(name = "password", required = false, type = Meta.Type.Password)
 	public String password();
+
+	@Meta.AD(name = "username", required = false)
+	public String username();
 
 }

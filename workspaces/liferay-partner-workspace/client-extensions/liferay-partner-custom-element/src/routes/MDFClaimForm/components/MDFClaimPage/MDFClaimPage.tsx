@@ -17,6 +17,7 @@ import ResumeCard from '../../../../common/components/ResumeCard';
 import MDFRequestDTO from '../../../../common/interfaces/dto/mdfRequestDTO';
 import LiferayFile from '../../../../common/interfaces/liferayFile';
 import MDFClaim from '../../../../common/interfaces/mdfClaim';
+import MDFClaimActivity from '../../../../common/interfaces/mdfClaimActivity';
 import MDFClaimProps from '../../../../common/interfaces/mdfClaimProps';
 import {ResourceName} from '../../../../common/services/liferay/object/enum/resourceName';
 import {Status} from '../../../../common/utils/constants/status';
@@ -72,6 +73,22 @@ const MDFClaimPage = ({
 			);
 		}
 	).length;
+
+	const isDisplayableMDFActivityClaim = (activity: MDFClaimActivity) => {
+		const claimableActivityByStatus =
+			activity.activityStatus?.key !== Status.EXPIRED.key &&
+			activity.activityStatus?.key !== Status.CANCELED.key &&
+			!activity.claimed;
+
+		const editableClaimActivityByStatus =
+			Boolean(activity.id) && !activity.selected;
+
+		const isDisplayable = activity.id
+			? hasPermissionShowForm
+			: claimableActivityByStatus || editableClaimActivityByStatus;
+
+		return isDisplayable;
+	};
 
 	const getClaimPage = () => {
 		if (!fieldEntries || !companiesEntries) {
@@ -145,20 +162,23 @@ const MDFClaimPage = ({
 						<span className="text-danger">*</span>
 					</p>
 
-					{values.activities?.map((activity, index) => (
-						<ActivityClaimPanel
-							activity={activity}
-							activityIndex={index}
-							hasPermissionEditClaimActivity={
-								hasPermissionShowForm
-							}
-							key={`${activity.id}-${index}`}
-							overallCampaignDescription={
-								mdfRequest.overallCampaignDescription
-							}
-							setFieldValue={setFieldValue}
-						/>
-					))}
+					{values.activities?.map(
+						(activity, index) =>
+							isDisplayableMDFActivityClaim(activity) && (
+								<ActivityClaimPanel
+									activity={activity}
+									activityIndex={index}
+									hasPermissionEditClaimActivity={
+										hasPermissionShowForm
+									}
+									key={`${activity.id}-${index}`}
+									overallCampaignDescription={
+										mdfRequest.overallCampaignDescription
+									}
+									setFieldValue={setFieldValue}
+								/>
+							)
+					)}
 				</PRMForm.Section>
 
 				<PRMForm.Section

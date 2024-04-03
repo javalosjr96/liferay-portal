@@ -514,6 +514,100 @@ public class ObjectRelationshipLocalServiceImpl
 	}
 
 	@Override
+	public void disableEdge(long objectDefinitionId2) throws PortalException {
+		ObjectDefinition objectDefinition2 =
+			_objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId2);
+
+		for (ObjectRelationship objectRelationship :
+				getObjectRelationshipsByObjectDefinitionId2(
+					objectDefinitionId2)) {
+
+			if (!objectRelationship.isEdge()) {
+				continue;
+			}
+
+			ObjectDefinition objectDefinition1 =
+				_objectDefinitionPersistence.findByPrimaryKey(
+					objectRelationship.getObjectDefinitionId1());
+
+			if (objectDefinition1.getRootObjectDefinitionId() !=
+					objectDefinition2.getRootObjectDefinitionId()) {
+
+				objectRelationship.setEdge(false);
+
+				objectRelationshipPersistence.update(objectRelationship);
+			}
+		}
+	}
+
+	@Override
+	public ObjectRelationship enableEdge(
+			long objectRelationshipId, boolean edge)
+		throws PortalException {
+
+		ObjectRelationship objectRelationship =
+			objectRelationshipLocalService.getObjectRelationship(
+				objectRelationshipId);
+
+		if (!edge ||
+			!Objects.equals(
+				objectRelationship.getDeletionType(),
+				ObjectRelationshipConstants.DELETION_TYPE_CASCADE)) {
+
+			return objectRelationship;
+		}
+
+		ObjectDefinitionLocalService objectDefinitionLocalService =
+			_objectDefinitionLocalServiceSnapshot.get();
+
+		ObjectDefinition objectDefinition1 =
+			objectDefinitionLocalService.getObjectDefinition(
+				objectRelationship.getObjectDefinitionId1());
+		ObjectDefinition objectDefinition2 =
+			objectDefinitionLocalService.getObjectDefinition(
+				objectRelationship.getObjectDefinitionId2());
+
+		if (objectDefinition1.getRootObjectDefinitionId() !=
+				objectDefinition2.getRootObjectDefinitionId()) {
+
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"Object relationship ", objectRelationshipId,
+						" cannot be an edge because its object definitions ",
+						"are bound to different root object definitions"));
+			}
+
+			return objectRelationship;
+		}
+		else if (objectDefinition1.getStatus() !=
+					objectDefinition2.getStatus()) {
+
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"Object relationship ", objectRelationshipId,
+						" cannot be an edge because its object definitions ",
+						"have different statuses"));
+			}
+
+			return objectRelationship;
+		}
+
+		_validateEdge(true, objectRelationship);
+
+		objectRelationship.setEdge(true);
+
+		objectRelationship = objectRelationshipPersistence.update(
+			objectRelationship);
+
+		_objectFieldLocalService.updateRequired(
+			objectRelationship.getObjectFieldId2(), true);
+
+		return objectRelationship;
+	}
+
+	@Override
 	public ObjectRelationship fetchObjectRelationshipByExternalReferenceCode(
 		String externalReferenceCode, long objectDefinitionId1) {
 

@@ -51,6 +51,7 @@ import com.liferay.portal.kernel.security.RandomUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -110,6 +111,8 @@ public class CommerceOrderEngineTest {
 
 		_user = UserTestUtil.addUser();
 
+		_permissionChecker = PermissionThreadLocal.getPermissionChecker();
+
 		PrincipalThreadLocal.setName(_user.getUserId());
 
 		PermissionThreadLocal.setPermissionChecker(
@@ -155,7 +158,7 @@ public class CommerceOrderEngineTest {
 	public void tearDown() throws PortalException {
 		_commerceOrderLocalService.deleteCommerceOrder(_commerceOrder);
 
-		CompanyThreadLocal.setCompanyId(_originalCompanyId);
+		CentralizedThreadLocal.clearShortLivedThreadLocals();
 	}
 
 	@Test
@@ -856,8 +859,6 @@ public class CommerceOrderEngineTest {
 			CommerceOrderConstants.ORDER_STATUS_COMPLETED,
 			_commerceOrder.getOrderStatus());
 
-		CentralizedThreadLocal.clearShortLivedThreadLocals();
-
 		for (ComponentDescriptionDTO componentDescriptionDTO :
 				componentDescriptionDTOs) {
 
@@ -1119,6 +1120,7 @@ public class CommerceOrderEngineTest {
 
 	private Group _group;
 	private long _originalCompanyId;
+	private PermissionChecker _permissionChecker;
 
 	@Inject
 	private ServiceComponentRuntime _serviceComponentRuntime;

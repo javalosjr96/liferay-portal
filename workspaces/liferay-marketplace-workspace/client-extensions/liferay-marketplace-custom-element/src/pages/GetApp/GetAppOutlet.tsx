@@ -46,7 +46,9 @@ const getProductBasePriceAndTrial = (
 	}
 
 	const {isFreeApp} = getProductPriceModel(product);
-	const skus = (product.skus as unknown) as DeliverySKU[];
+	const skus = ((product.skus as unknown) as DeliverySKU[]).filter(
+		({purchasable}) => purchasable
+	);
 
 	if (isFreeApp) {
 		return {

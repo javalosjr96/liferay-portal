@@ -3,16 +3,22 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {Page} from '@playwright/test';
+import {Locator, Page} from '@playwright/test';
 
 import {clickAndExpectToBeHidden} from '../../utils/clickAndExpectToBeHidden';
 import {clickAndExpectToBeVisible} from '../../utils/clickAndExpectToBeVisible';
 import {PORTLET_URLS} from '../../utils/portletUrls';
+import {waitForSuccessAlert} from '../../utils/waitForSuccessAlert';
 
 export class PagesAdminPage {
+	readonly configurationSaveButton: Locator;
 	readonly page: Page;
 
 	constructor(page: Page) {
+		this.configurationSaveButton = page.getByRole('button', {
+			exact: true,
+			name: 'Save',
+		});
 		this.page = page;
 	}
 
@@ -30,6 +36,44 @@ export class PagesAdminPage {
 			target: this.page.getByRole('menuitem', {name: 'Configuration'}),
 			trigger: this.page.getByTestId('headerOptions'),
 		});
+	}
+
+	async selectJavaScriptClientExtension(clientExtensionName: string) {
+		await this.gotoPagesConfiguration();
+
+		await this.page.getByRole('tab', {name: 'JavaScript'}).click();
+
+		await this.page
+			.getByRole('button', {name: 'Add JavaScript Client Extensions'})
+			.click();
+
+		await this.page.getByRole('menuitem', {name: 'In Page Head'}).click();
+
+		const iframe = this.page.frameLocator('#selectGlobalJSCETs_iframe_');
+
+		// Wait for "Select Items" checkbox label to be visible which occurs when JavaScript hydration is complete.
+
+		await iframe.getByText('Select Items').waitFor({state: 'visible'});
+
+		await iframe.getByLabel(clientExtensionName).check();
+
+		const addButton = this.page.getByRole('button', {
+			exact: true,
+			name: 'Add',
+		});
+
+		const clientExtensionEntry = this.page.getByRole('cell', {
+			name: clientExtensionName,
+		});
+
+		await clickAndExpectToBeVisible({
+			target: clientExtensionEntry,
+			trigger: addButton,
+		});
+
+		await this.configurationSaveButton.click();
+
+		await waitForSuccessAlert(this.page);
 	}
 
 	async selectThemeCSSClientExtension(clientExtensionName: string) {
@@ -59,12 +103,7 @@ export class PagesAdminPage {
 			trigger: clientExtension,
 		});
 
-		await this.page
-			.getByRole('button', {
-				exact: true,
-				name: 'Save',
-			})
-			.click();
+		await this.configurationSaveButton.click();
 	}
 
 	async selectPageAndChangePermissions(

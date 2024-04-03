@@ -183,6 +183,12 @@ public class ObjectRelationshipLocalServiceUtil {
 		return getService().deletePersistedModel(persistedModel);
 	}
 
+	public static void disableEdge(long objectDefinitionId2)
+		throws PortalException {
+
+		getService().disableEdge(objectDefinitionId2);
+	}
+
 	public static <T> T dslQuery(DSLQuery dslQuery) {
 		return getService().dslQuery(dslQuery);
 	}
@@ -266,6 +272,13 @@ public class ObjectRelationshipLocalServiceUtil {
 		com.liferay.portal.kernel.dao.orm.Projection projection) {
 
 		return getService().dynamicQueryCount(dynamicQuery, projection);
+	}
+
+	public static ObjectRelationship enableEdge(
+			long objectRelationshipId, boolean edge)
+		throws PortalException {
+
+		return getService().enableEdge(objectRelationshipId, edge);
 	}
 
 	public static ObjectRelationship fetchObjectRelationship(

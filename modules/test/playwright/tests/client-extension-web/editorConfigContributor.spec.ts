@@ -13,8 +13,8 @@ import getRandomString from '../../utils/getRandomString';
 import getPageDefinition from '../layout-content-page-editor-web/utils/getPageDefinition';
 import getWidgetDefinition from '../layout-content-page-editor-web/utils/getWidgetDefinition';
 import {clientExtensionsPageTest} from './fixtures/clientExtensionsPageTest';
+import {editEditorConfigContributorPageTest} from './fixtures/editEditorConfigContributorPageTest';
 import {editorSamplesPageTest} from './fixtures/editorSamplesPageTest';
-import {newEditorConfigContributorPageTest} from './fixtures/newEditorConfigContributorPageTest';
 
 export const test = mergeTests(
 	apiHelpersTest,
@@ -25,67 +25,63 @@ export const test = mergeTests(
 		'LPS-186870': true,
 	}),
 	isolatedSiteTest,
-	newEditorConfigContributorPageTest
+	editEditorConfigContributorPageTest
 );
 
 test('Create, edit and delete editor config contributor client extension @LPS-186870', async ({
 	clientExtensionsPage,
-	newEditorConfigContributorPage,
+	editEditorConfigContributorPage,
 }) => {
-	await clientExtensionsPage.goto();
+	await editEditorConfigContributorPage.goto();
 
-	await clientExtensionsPage.newClientExtensionButton.click();
+	const sampleName1 = getRandomString();
 
-	await clientExtensionsPage.editorConfigContributorMenuItem.click();
+	await editEditorConfigContributorPage.nameInput.fill(sampleName1);
 
-	const sampleName1 = 'Sample Name 1';
+	await editEditorConfigContributorPage.descriptionContentEditable.isEditable();
 
-	await newEditorConfigContributorPage.nameInput.fill(sampleName1);
-
-	await newEditorConfigContributorPage.descriptionEditable.isEditable();
-
-	await newEditorConfigContributorPage.descriptionEditable.fill(
+	await editEditorConfigContributorPage.descriptionContentEditable.fill(
 		'Sample Description'
 	);
 
-	await newEditorConfigContributorPage.urlInput.fill(
+	await editEditorConfigContributorPage.urlInput.fill(
 		'https://www.liferay.com'
 	);
 
-	await newEditorConfigContributorPage.portletNamesInput.fill(
+	await editEditorConfigContributorPage.portletNamesInput.fill(
 		'Sample Portlet Name'
 	);
 
-	await newEditorConfigContributorPage.editorNamesInput.fill(
+	await editEditorConfigContributorPage.editorNamesInput.fill(
 		'Sample Editor Names'
 	);
 
-	await newEditorConfigContributorPage.editorConfigKeysInput.fill(
+	await editEditorConfigContributorPage.editorConfigKeysInput.fill(
 		'Sample Editor Config Keys'
 	);
 
-	await newEditorConfigContributorPage.publishButton.click();
+	await editEditorConfigContributorPage.publish();
 
 	await clientExtensionsPage.editClientExtension(sampleName1);
 
-	const sampleName2 = 'Sample Name 2';
+	const sampleName2 = getRandomString();
 
-	await newEditorConfigContributorPage.nameInput.click();
+	await editEditorConfigContributorPage.nameInput.fill(sampleName2);
 
-	await newEditorConfigContributorPage.nameInput.fill(sampleName2);
+	await editEditorConfigContributorPage.publish();
 
-	await newEditorConfigContributorPage.publishButton.click();
-
-	await clientExtensionsPage.deleteClientExtension(sampleName2);
+	await editEditorConfigContributorPage.clientExtensionsPage.deleteClientExtension(
+		sampleName2
+	);
 });
 
 test('Add a toolbar button to a CKEditor, by applying editor config contributor client extension @LPS-186870', async ({
-	newEditorConfigContributorPage,
+	editEditorConfigContributorPage: newEditorConfigContributorPage,
 }) => {
 	await newEditorConfigContributorPage.goto();
 
 	await expect(
-		newEditorConfigContributorPage.descriptionEditable
+		newEditorConfigContributorPage.descriptionContentEditable
 	).toBeEditable();
 
 	await expect(

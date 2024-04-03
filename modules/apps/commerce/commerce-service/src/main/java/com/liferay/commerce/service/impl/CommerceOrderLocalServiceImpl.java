@@ -92,6 +92,7 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.SortFactoryUtil;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
@@ -481,7 +482,7 @@ public class CommerceOrderLocalServiceImpl
 			// Commerce order items
 
 			_commerceOrderItemLocalService.deleteCommerceOrderItems(
-				commerceOrder.getUserId(), commerceOrder.getCommerceOrderId());
+				_getUserId(commerceOrder), commerceOrder.getCommerceOrderId());
 
 			// Commerce order notes
 
@@ -553,10 +554,17 @@ public class CommerceOrderLocalServiceImpl
 
 	@Override
 	public void deleteCommerceOrdersByAccountId(
-		long commerceAccountId, Date date, int status) {
+			long commerceAccountId, Date date, int status)
+		throws PortalException {
 
-		commerceOrderPersistence.removeByC_LtC_O(
-			date, commerceAccountId, status);
+		List<CommerceOrder> commerceOrderList =
+			commerceOrderPersistence.findByC_LtC_O(
+				date, commerceAccountId, status, QueryUtil.ALL_POS,
+				QueryUtil.ALL_POS, null);
+
+		for (CommerceOrder commerceOrder : commerceOrderList) {
+			commerceOrderLocalService.deleteCommerceOrder(commerceOrder);
+		}
 	}
 
 	@Override
@@ -2322,6 +2330,21 @@ public class CommerceOrderLocalServiceImpl
 			commerceAddress.getCommerceAddressId(),
 			CommerceOrder.class.getName(), commerceOrder.getCommerceOrderId(),
 			serviceContext);
+	}
+
+	private long _getUserId(CommerceOrder commerceOrder) {
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
+		if (serviceContext != null) {
+			User user = _userLocalService.fetchUser(serviceContext.getUserId());
+
+			if (user != null) {
+				return user.getUserId();
+			}
+		}
+
+		return commerceOrder.getUserId();
 	}
 
 	private boolean _hasWorkflowDefinition(long groupId, long typePK)

@@ -9,6 +9,7 @@ import com.liferay.fragment.importer.FragmentsImportStrategy;
 import com.liferay.fragment.importer.FragmentsImporter;
 import com.liferay.layout.importer.LayoutsImportStrategy;
 import com.liferay.layout.importer.LayoutsImporter;
+import com.liferay.layout.util.LayoutServiceContextHelper;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.file.install.FileInstaller;
@@ -23,16 +24,9 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
-import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
-import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
-import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
-import com.liferay.portal.kernel.service.ServiceContext;
-import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -83,24 +77,11 @@ public class FragmentFileInstaller implements FileInstaller {
 
 	@Override
 	public URL transformURL(File file) throws Exception {
-		Long currentCompanyId = CompanyThreadLocal.getCompanyId();
-		PermissionChecker currentPermissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
-		String currentName = PrincipalThreadLocal.getName();
-		ServiceContext currentServiceContext =
-			ServiceContextThreadLocal.getServiceContext();
-
 		try {
 			_deploy(file);
 		}
 		finally {
 			file.delete();
-
-			CompanyThreadLocal.setCompanyId(currentCompanyId);
-			PermissionThreadLocal.setPermissionChecker(
-				currentPermissionChecker);
-			PrincipalThreadLocal.setName(currentName);
-			ServiceContextThreadLocal.pushServiceContext(currentServiceContext);
 		}
 
 		return null;
@@ -129,16 +110,12 @@ public class FragmentFileInstaller implements FileInstaller {
 		}
 
 		if ((company != null) && deployJSONObject.has("groupKey")) {
-			CompanyThreadLocal.setCompanyId(company.getCompanyId());
-
 			group = _getDeploymentGroup(
 				company.getCompanyId(), deployJSONObject.getString("groupKey"));
 
 			_importFragmentEntriesAndLayouts(company, file, group);
 		}
 		else if (company != null) {
-			CompanyThreadLocal.setCompanyId(company.getCompanyId());
-
 			group = _groupLocalService.getCompanyGroup(company.getCompanyId());
 
 			_importFragmentEntriesAndLayouts(company, file, group);
@@ -147,9 +124,6 @@ public class FragmentFileInstaller implements FileInstaller {
 			_companyLocalService.forEachCompany(
 				currentCompany -> {
 					try {
-						CompanyThreadLocal.setCompanyId(
-							currentCompany.getCompanyId());
-
 						_importFragmentEntriesAndLayouts(
 							currentCompany, file, null);
 					}
@@ -256,40 +230,27 @@ public class FragmentFileInstaller implements FileInstaller {
 			throw new Exception();
 		}
 
-		PermissionThreadLocal.setPermissionChecker(
-			PermissionCheckerFactoryUtil.create(user));
+		try (AutoCloseable autoCloseable =
+				_layoutServiceContextHelper.getServiceContextAutoCloseable(
+					company, user)) {
 
-		PrincipalThreadLocal.setName(user.getUserId());
+			long groupId = 0;
 
-		ServiceContext serviceContext = new ServiceContext();
+			if (group != null) {
+				groupId = group.getGroupId();
+			}
 
-		if (company != null) {
-			serviceContext.setCompanyId(company.getCompanyId());
-		}
-		else {
-			serviceContext.setCompanyId(CompanyConstants.SYSTEM);
-		}
+			_fragmentsImporter.importFragmentEntries(
+				user.getUserId(), groupId, 0, file,
+				FragmentsImportStrategy.OVERWRITE);
 
-		serviceContext.setUserId(user.getUserId());
+			if ((group != null) &&
+				(company.getGroupId() != group.getGroupId())) {
 
-		ServiceContextThreadLocal.pushServiceContext(serviceContext);
-
-		long groupId = 0;
-
-		if (group != null) {
-			groupId = group.getGroupId();
-		}
-
-		_fragmentsImporter.importFragmentEntries(
-			user.getUserId(), groupId, 0, file,
-			FragmentsImportStrategy.OVERWRITE);
-
-		if ((company != null) && (group != null) &&
-			(company.getGroupId() != group.getGroupId())) {
-
-			_layoutsImporter.importFile(
-				user.getUserId(), groupId, 0L, file,
-				LayoutsImportStrategy.OVERWRITE, true);
+				_layoutsImporter.importFile(
+					user.getUserId(), groupId, 0L, file,
+					LayoutsImportStrategy.OVERWRITE, true);
+			}
 		}
 	}
 
@@ -307,6 +268,9 @@ public class FragmentFileInstaller implements FileInstaller {
 
 	@Reference
 	private JSONFactory _jsonFactory;
+
+	@Reference
+	private LayoutServiceContextHelper _layoutServiceContextHelper;
 
 	@Reference
 	private LayoutsImporter _layoutsImporter;

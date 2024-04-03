@@ -5,9 +5,11 @@
 
 import ClayAlert from '@clayui/alert';
 import ClayButton from '@clayui/button';
-import {Text} from '@clayui/core';
+import {Body, Cell, Head, Row, Table, Text} from '@clayui/core';
+import ClayLoadingIndicator from '@clayui/loading-indicator';
 import ClayModal from '@clayui/modal';
 import {stringUtils} from '@liferay/object-js-components-web';
+import classNames from 'classnames';
 import React from 'react';
 
 import {
@@ -15,19 +17,30 @@ import {
 	modalImportWarningTitle,
 } from './modalImportLanguageUtil';
 
+import './ModalImportWarning.scss';
+
 interface ModalImportWarningProps {
 	errorMessage: string;
 	existingObjectDefinitions?: ObjectDefinition[];
 	handleImport: () => void;
 	handleOnClose: () => void;
+	importLoading: boolean;
 	modalImportKey: string;
 }
+
+const tableHeaderItems = [
+	{
+		id: 'objectDefinition',
+		name: Liferay.Language.get('object-definition'),
+	},
+];
 
 export function ModalImportWarning({
 	errorMessage,
 	existingObjectDefinitions,
 	handleImport,
 	handleOnClose,
+	importLoading,
 	modalImportKey,
 }: ModalImportWarningProps) {
 	return (
@@ -55,19 +68,36 @@ export function ModalImportWarning({
 					{Liferay.FeatureFlags['LPS-187142'] &&
 						!!existingObjectDefinitions?.length && (
 							<>
-								{existingObjectDefinitions.map(
-									(objectDefinition) => (
-										<li key={objectDefinition.name}>
-											{stringUtils.getLocalizableLabel(
-												objectDefinition.defaultLanguageId,
-												objectDefinition.label,
-												objectDefinition.name
-											)}
-										</li>
-									)
-								)}
+								<Table
+									columnsVisibility={false}
+									headingNoWrap
+									noWrap
+									striped={false}
+								>
+									<Head items={tableHeaderItems}>
+										{(column) => (
+											<Cell expanded key={column.id}>
+												{column.name}
+											</Cell>
+										)}
+									</Head>
 
-								<br />
+									<Body
+										defaultItems={existingObjectDefinitions}
+									>
+										{(objectDefinition) => (
+											<Row>
+												<Cell>
+													{stringUtils.getLocalizableLabel(
+														objectDefinition.defaultLanguageId,
+														objectDefinition.label,
+														objectDefinition.name
+													)}
+												</Cell>
+											</Row>
+										)}
+									</Body>
+								</Table>
 
 								<Text as="p" color="secondary">
 									{Liferay.Language.get(
@@ -77,7 +107,7 @@ export function ModalImportWarning({
 							</>
 						)}
 
-					<Text as="p" color="secondary">
+					<Text color="secondary">
 						{Liferay.Language.get(
 							'do-you-want-to-proceed-with-the-import-process'
 						)}
@@ -96,14 +126,24 @@ export function ModalImportWarning({
 						</ClayButton>
 
 						<ClayButton
-							disabled={errorMessage !== ''}
+							className={classNames({
+								'lfr-object__modal-import-warning-loading-button': importLoading,
+							})}
+							disabled={errorMessage !== '' || importLoading}
 							displayType="warning"
 							onClick={() => {
 								handleImport();
 							}}
 							type="button"
 						>
-							{Liferay.Language.get('continue')}
+							{importLoading ? (
+								<ClayLoadingIndicator
+									displayType="light"
+									size="sm"
+								/>
+							) : (
+								Liferay.Language.get('continue')
+							)}
 						</ClayButton>
 					</ClayButton.Group>
 				}

@@ -8,6 +8,7 @@ import {API} from '@liferay/object-js-components-web';
 import React, {FormEvent, useEffect, useState} from 'react';
 
 import {ModalImportContent} from './ModalImportContent';
+import {ModalImportFailed} from './ModalImportFailed';
 import {ModalImportWarning} from './ModalImportWarning';
 import {
 	handleDefaultImport,
@@ -28,6 +29,7 @@ interface ModalImportProps {
 	importURL: string;
 	modalImportKey: ModalImportKeys;
 	nameMaxLength: string;
+	objectFolderExternalReferenceCode?: string;
 	onAfterImport?: () => void;
 	portletNamespace: string;
 	showModal?: boolean;
@@ -46,10 +48,12 @@ export default function ModalImport({
 	importURL,
 	modalImportKey,
 	nameMaxLength,
+	objectFolderExternalReferenceCode,
 	onAfterImport,
 	portletNamespace,
 	showModal,
 }: ModalImportProps) {
+	const [importLoading, setImportLoading] = useState(false);
 	const [error, setError] = useState<API.ErrorDetails>();
 	const [existingObjectDefinitions, setExistingObjectDefinitions] = useState<
 		ObjectDefinition[]
@@ -69,6 +73,7 @@ export default function ModalImport({
 	const [name, setName] = useState('');
 	const [visible, setVisible] = useState(showModal ?? false);
 	const [warningModalVisible, setWarningModalVisible] = useState(false);
+	const [failedModalVisible, setFailedModalVisible] = useState(false);
 
 	const {observer, onClose} = useModal({
 		onClose: () => {
@@ -80,6 +85,7 @@ export default function ModalImport({
 				inputFile: null,
 			});
 			setName('');
+			setFailedModalVisible(false);
 			setWarningModalVisible(false);
 
 			if (handleOnClose) {
@@ -104,9 +110,13 @@ export default function ModalImport({
 			handleImportMultiplesObjectDefinitions({
 				importURL,
 				importedObjectDefinitions,
+				objectFolderExternalReferenceCode: objectFolderExternalReferenceCode as string,
 				onClose,
 				setError,
 				setExistingObjectDefinitions,
+				setFailedModalVisible,
+				setImportFormData,
+				setImportLoading,
 				setModalImportKeyState,
 				setWarningModalVisible,
 			});
@@ -126,6 +136,7 @@ export default function ModalImport({
 			onClose,
 			setError,
 			setImportFormData,
+			setImportLoading,
 			setWarningModalVisible,
 		});
 	};
@@ -150,9 +161,14 @@ export default function ModalImport({
 		<ClayModal
 			center
 			observer={observer}
-			status={warningModalVisible ? 'warning' : undefined}
+			size={failedModalVisible ? 'lg' : undefined}
+			status={
+				warningModalVisible || failedModalVisible
+					? 'warning'
+					: undefined
+			}
 		>
-			{warningModalVisible ? (
+			{warningModalVisible && (
 				<ModalImportWarning
 					errorMessage={error?.message ?? ''}
 					existingObjectDefinitions={existingObjectDefinitions}
@@ -163,12 +179,29 @@ export default function ModalImport({
 							onAfterImport,
 							onClose,
 							setError,
+							setFailedModalVisible,
+							setImportLoading,
+							setWarningModalVisible,
 						})
 					}
 					handleOnClose={onClose}
+					importLoading={importLoading}
 					modalImportKey={modalImportKeyState}
 				/>
-			) : (
+			)}
+
+			{Liferay.FeatureFlags['LPS-187142'] &&
+				failedModalVisible &&
+				importedObjectDefinitions &&
+				error?.type === 'importMultipleObjectDefinitions' && (
+					<ModalImportFailed
+						error={error}
+						handleOnclose={() => onClose()}
+						importedObjectDefinitions={importedObjectDefinitions}
+					/>
+				)}
+
+			{!warningModalVisible && !failedModalVisible && (
 				<ModalImportContent
 					JSONInputId={JSONInputId}
 					apiURL={apiURL}
@@ -177,6 +210,7 @@ export default function ModalImport({
 					fileName={fileName as string}
 					handleOnClose={onClose}
 					handleSubmit={handleSubmit}
+					importLoading={importLoading}
 					importURL={importURL}
 					importedObjectDefinitions={importedObjectDefinitions}
 					inputFile={inputFile as File}

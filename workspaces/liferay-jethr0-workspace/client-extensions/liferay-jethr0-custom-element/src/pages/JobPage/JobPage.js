@@ -16,10 +16,9 @@ import Jethr0ContainerFluid from '../../components/Jethr0ContainerFluid/Jethr0Co
 import Jethr0NavigationBar from '../../components/Jethr0NavigationBar/Jethr0NavigationBar';
 import Jethr0Table from '../../components/Jethr0Table/Jethr0Table';
 import {getBuildsByJob} from '../../objects/builds/BuildUtil';
-import {getJobById} from '../../objects/jobs/JobUtil';
+import {deleteJobById, getJobById} from '../../objects/jobs/JobUtil';
 import {toLocaleString} from '../../services/DateUtil';
 import {toDurationString} from '../../services/DurationUtil';
-import postSpringBootData from '../../services/postSpringBootData';
 
 function JobBuilds({jobId}) {
 	const [jobBuilds, setJobBuilds] = useState(null);
@@ -124,7 +123,11 @@ function JobInformation({job}) {
 		jobParameterDefinitions = job.definition.parameterDefinitions;
 	}
 
-	const jobParameters = JSON.parse(job.parameters);
+	let jobParameters = '';
+
+	if (job.parameters) {
+		jobParameters = JSON.parse(job.parameters);
+	}
 
 	return (
 		<ClayPanel
@@ -260,9 +263,9 @@ function JobPage() {
 							buttons={[
 								{
 									onClick: () => {
-										postSpringBootData({
+										deleteJobById({
+											id,
 											redirect: redirectToJobsPage,
-											urlPath: '/jobs/delete/' + id,
 										});
 									},
 									title: 'Delete',

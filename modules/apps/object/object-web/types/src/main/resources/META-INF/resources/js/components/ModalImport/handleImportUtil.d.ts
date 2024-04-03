@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -8,12 +8,15 @@ import {FormEvent} from 'react';
 import {ModalImportKeys} from './ModalImport';
 interface HandleImportProps {
 	importURL: string;
-	item: FormData | ObjectDefinition[];
+	item: FormData;
 	onAfterImport?: () => void;
 	onClose: () => void;
 	setError: (
 		value: React.SetStateAction<API.ErrorDetails | undefined>
 	) => void;
+	setFailedModalVisible?: (value: boolean) => void;
+	setImportLoading: (value: boolean) => void;
+	setWarningModalVisible: (value: boolean) => void;
 }
 interface HandleDefaultImportProps extends Omit<HandleImportProps, 'item'> {
 	JSONInputId: string;
@@ -23,12 +26,13 @@ interface HandleDefaultImportProps extends Omit<HandleImportProps, 'item'> {
 	importExtendedInfo: KeyValueObject;
 	inputFile?: File | null;
 	setImportFormData: (value: FormData) => void;
-	setWarningModalVisible: (value: boolean) => void;
 }
 interface HandleImportMultiplesObjectDefinitionsProps
 	extends Omit<HandleImportProps, 'item'> {
 	importedObjectDefinitions: ObjectDefinition[];
+	objectFolderExternalReferenceCode: string;
 	setExistingObjectDefinitions: (value: ObjectDefinition[]) => void;
+	setImportFormData: (value: FormData) => void;
 	setModalImportKeyState: (value: ModalImportKeys) => void;
 	setWarningModalVisible: (value: boolean) => void;
 }
@@ -44,6 +48,7 @@ export declare function handleDefaultImport({
 	onClose,
 	setError,
 	setImportFormData,
+	setImportLoading,
 	setWarningModalVisible,
 }: HandleDefaultImportProps): Promise<void>;
 export declare function handleImport({
@@ -52,14 +57,21 @@ export declare function handleImport({
 	onAfterImport,
 	onClose,
 	setError,
+	setFailedModalVisible,
+	setImportLoading,
+	setWarningModalVisible,
 }: HandleImportProps): Promise<void>;
 export declare function handleImportMultiplesObjectDefinitions({
 	importURL,
 	importedObjectDefinitions,
+	objectFolderExternalReferenceCode,
 	onAfterImport,
 	onClose,
 	setError,
 	setExistingObjectDefinitions,
+	setFailedModalVisible,
+	setImportFormData,
+	setImportLoading,
 	setModalImportKeyState,
 	setWarningModalVisible,
 }: HandleImportMultiplesObjectDefinitionsProps): Promise<void>;

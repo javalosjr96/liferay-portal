@@ -32,6 +32,8 @@ import com.liferay.object.constants.ObjectConstants;
 import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectRelationshipConstants;
 import com.liferay.object.definition.util.ObjectDefinitionUtil;
+import com.liferay.object.exception.ObjectDefinitionRootObjectDefinitionIdException;
+import com.liferay.object.exception.ObjectDefinitionStatusException;
 import com.liferay.object.exception.ObjectDefinitionStorageTypeException;
 import com.liferay.object.model.ObjectActionModel;
 import com.liferay.object.model.ObjectFieldModel;
@@ -52,6 +54,7 @@ import com.liferay.object.service.ObjectValidationRuleLocalService;
 import com.liferay.object.service.ObjectViewLocalService;
 import com.liferay.object.service.ObjectViewService;
 import com.liferay.object.system.SystemObjectDefinitionManagerRegistry;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.search.Field;
@@ -193,6 +196,21 @@ public class ObjectDefinitionResourceImpl
 			throw new ObjectDefinitionStorageTypeException();
 		}
 
+		String rootObjectDefinitionExternalReferenceCode =
+			objectDefinition.getRootObjectDefinitionExternalReferenceCode();
+
+		if (Validator.isNotNull(rootObjectDefinitionExternalReferenceCode) &&
+			!Objects.equals(
+				rootObjectDefinitionExternalReferenceCode,
+				objectDefinition.getExternalReferenceCode())) {
+
+			objectDefinition.setStatus((Status)null);
+
+			_validateRootObjectDefinition(
+				WorkflowConstants.STATUS_DRAFT,
+				rootObjectDefinitionExternalReferenceCode);
+		}
+
 		_addListTypeDefinition(objectDefinition);
 
 		com.liferay.object.model.ObjectDefinition
@@ -272,6 +290,13 @@ public class ObjectDefinitionResourceImpl
 				_objectDefinitionService.updateExternalReferenceCode(
 					serviceBuilderObjectDefinition.getObjectDefinitionId(),
 					objectDefinition.getExternalReferenceCode());
+		}
+
+		if (Validator.isNotNull(rootObjectDefinitionExternalReferenceCode)) {
+			serviceBuilderObjectDefinition =
+				_bindObjectDefinitionToRootObjectDefinition(
+					rootObjectDefinitionExternalReferenceCode,
+					serviceBuilderObjectDefinition);
 		}
 
 		com.liferay.object.model.ObjectField serviceBuilderObjectField =
@@ -387,6 +412,31 @@ public class ObjectDefinitionResourceImpl
 				_objectDefinitionService.getObjectDefinition(
 					objectDefinitionId);
 
+		Status objectDefinitionStatus = objectDefinition.getStatus();
+		int serviceBuilderObjectDefinitionStatus =
+			serviceBuilderObjectDefinition.getStatus();
+
+		if ((objectDefinitionStatus.getCode() !=
+				WorkflowConstants.STATUS_APPROVED) &&
+			(serviceBuilderObjectDefinitionStatus ==
+				WorkflowConstants.STATUS_APPROVED)) {
+
+			throw new ObjectDefinitionStatusException(
+				"Modifying the status of a published object definition is " +
+					"not allowed");
+		}
+
+		String rootObjectDefinitionExternalReferenceCode =
+			objectDefinition.getRootObjectDefinitionExternalReferenceCode();
+
+		if (Validator.isNotNull(rootObjectDefinitionExternalReferenceCode) &&
+			FeatureFlagManagerUtil.isEnabled("LPS-187142")) {
+
+			_validateRootObjectDefinition(
+				serviceBuilderObjectDefinition.getStatus(),
+				rootObjectDefinitionExternalReferenceCode);
+		}
+
 		_addListTypeDefinition(objectDefinition);
 
 		long accountEntryRestrictedObjectFieldId = 0;
@@ -417,7 +467,9 @@ public class ObjectDefinitionResourceImpl
 
 		int statusInt = serviceBuilderObjectDefinition.getStatus();
 
-		if (objectDefinition.getStatus() != null) {
+		if ((objectDefinition.getStatus() != null) &&
+			Validator.isNull(rootObjectDefinitionExternalReferenceCode)) {
+
 			Status status = objectDefinition.getStatus();
 
 			statusInt = status.getCode();
@@ -667,6 +719,18 @@ public class ObjectDefinitionResourceImpl
 			_objectViewLocalService.deleteObjectViews(objectDefinitionId);
 		}
 
+		if (Validator.isNotNull(rootObjectDefinitionExternalReferenceCode)) {
+			serviceBuilderObjectDefinition =
+				_bindObjectDefinitionToRootObjectDefinition(
+					rootObjectDefinitionExternalReferenceCode,
+					serviceBuilderObjectDefinition);
+
+			_objectRelationshipLocalService.disableEdge(
+				serviceBuilderObjectDefinition.getObjectDefinitionId());
+
+			statusInt = WorkflowConstants.STATUS_DRAFT;
+		}
+
 		_addObjectDefinitionResources(
 			accountEntryRestrictedObjectRelationshipsNames,
 			objectActions.toArray(new ObjectAction[0]), objectDefinitionId,
@@ -791,6 +855,9 @@ public class ObjectDefinitionResourceImpl
 								objectRelationship.getName());
 				}
 
+				boolean edge = GetterUtil.getBoolean(
+					objectRelationship.getEdge());
+
 				if (serviceBuilderObjectRelationship != null) {
 					if (updateReverseObjectRelationshipNames.contains(
 							serviceBuilderObjectRelationship.getName())) {
@@ -805,6 +872,11 @@ public class ObjectDefinitionResourceImpl
 						serviceBuilderObjectRelationship.
 							getObjectRelationshipId(),
 						objectRelationship);
+
+					_objectRelationshipLocalService.enableEdge(
+						serviceBuilderObjectRelationship.
+							getObjectRelationshipId(),
+						edge);
 
 					if (Objects.equals(
 							serviceBuilderObjectRelationship.getType(),
@@ -822,6 +894,9 @@ public class ObjectDefinitionResourceImpl
 					objectRelationshipResource.
 						postObjectDefinitionObjectRelationship(
 							objectDefinitionId, objectRelationship);
+
+				_objectRelationshipLocalService.enableEdge(
+					objectRelationship.getId(), edge);
 
 				if (Objects.equals(
 						objectRelationship.getTypeAsString(),
@@ -905,6 +980,45 @@ public class ObjectDefinitionResourceImpl
 					objectDefinitionId, objectView);
 			}
 		}
+	}
+
+	private com.liferay.object.model.ObjectDefinition
+			_bindObjectDefinitionToRootObjectDefinition(
+				String rootObjectDefinitionExternalReferenceCode,
+				com.liferay.object.model.ObjectDefinition
+					serviceBuilderObjectDefinition)
+		throws Exception {
+
+		com.liferay.object.model.ObjectDefinition
+			rootServiceBuilderObjectDefinition =
+				_objectDefinitionService.
+					fetchObjectDefinitionByExternalReferenceCode(
+						rootObjectDefinitionExternalReferenceCode,
+						serviceBuilderObjectDefinition.getCompanyId());
+
+		if (rootServiceBuilderObjectDefinition == null) {
+			rootServiceBuilderObjectDefinition =
+				_objectDefinitionLocalService.addObjectDefinition(
+					rootObjectDefinitionExternalReferenceCode,
+					contextUser.getUserId(),
+					serviceBuilderObjectDefinition.getObjectFolderId(), 0, true,
+					false);
+
+			rootServiceBuilderObjectDefinition =
+				_objectDefinitionLocalService.updateRootObjectDefinitionId(
+					rootServiceBuilderObjectDefinition.getObjectDefinitionId(),
+					rootServiceBuilderObjectDefinition.getObjectDefinitionId());
+		}
+
+		serviceBuilderObjectDefinition =
+			_objectDefinitionService.updateRootObjectDefinitionId(
+				serviceBuilderObjectDefinition.getObjectDefinitionId(),
+				rootServiceBuilderObjectDefinition.getObjectDefinitionId());
+
+		_objectDefinitionLocalService.updatePortlet(
+			serviceBuilderObjectDefinition.getObjectDefinitionId());
+
+		return serviceBuilderObjectDefinition;
 	}
 
 	private Set<String> _getAccountEntryRestrictedObjectRelationshipsNames(
@@ -1124,6 +1238,40 @@ public class ObjectDefinitionResourceImpl
 			).build());
 
 		return objectDefinition;
+	}
+
+	private void _validateRootObjectDefinition(
+			int objectDefinitionStatus,
+			String rootObjectDefinitionExternalReferenceCode)
+		throws Exception {
+
+		com.liferay.object.model.ObjectDefinition
+			rootServiceBuilderObjectDefinition =
+				_objectDefinitionService.
+					fetchObjectDefinitionByExternalReferenceCode(
+						rootObjectDefinitionExternalReferenceCode,
+						contextCompany.getCompanyId());
+
+		if (rootServiceBuilderObjectDefinition == null) {
+			return;
+		}
+
+		if (rootServiceBuilderObjectDefinition.getStatus() !=
+				objectDefinitionStatus) {
+
+			throw new ObjectDefinitionRootObjectDefinitionIdException(
+				"Unable to bind an object definition when the root object " +
+					"definition has a different status");
+		}
+
+		if (!rootServiceBuilderObjectDefinition.isRootNode()) {
+			throw new ObjectDefinitionRootObjectDefinitionIdException(
+				StringBundler.concat(
+					"Unable to set the object definition ",
+					rootServiceBuilderObjectDefinition.getObjectDefinitionId(),
+					" as a root object definition because it is bound to ",
+					"another root object definition"));
+		}
 	}
 
 	private static final EntityModel _entityModel =

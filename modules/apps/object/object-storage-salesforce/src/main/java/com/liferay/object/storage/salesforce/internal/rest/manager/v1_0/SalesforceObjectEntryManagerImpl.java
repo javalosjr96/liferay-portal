@@ -8,29 +8,21 @@ package com.liferay.object.storage.salesforce.internal.rest.manager.v1_0;
 import com.liferay.account.constants.AccountConstants;
 import com.liferay.account.model.AccountEntryModel;
 import com.liferay.account.service.AccountEntryLocalService;
-import com.liferay.list.type.entry.util.ListTypeEntryUtil;
-import com.liferay.list.type.model.ListTypeEntry;
-import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.constants.ObjectDefinitionConstants;
-import com.liferay.object.constants.ObjectFieldConstants;
-import com.liferay.object.constants.ObjectFieldSettingConstants;
-import com.liferay.object.field.business.type.ObjectFieldBusinessType;
-import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
-import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
-import com.liferay.object.rest.dto.v1_0.ListEntry;
 import com.liferay.object.rest.dto.v1_0.ObjectEntry;
-import com.liferay.object.rest.dto.v1_0.Status;
-import com.liferay.object.rest.dto.v1_0.util.CreatorUtil;
 import com.liferay.object.rest.filter.factory.FilterFactory;
 import com.liferay.object.rest.manager.exception.ObjectEntryManagerHttpException;
+import com.liferay.object.rest.manager.http.BaseObjectEntryManagerHttp;
+import com.liferay.object.rest.manager.http.ObjectEntryManagerHttp;
 import com.liferay.object.rest.manager.v1_0.BaseObjectEntryManager;
 import com.liferay.object.rest.manager.v1_0.ObjectEntryManager;
 import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.object.storage.salesforce.configuration.SalesforceConfiguration;
 import com.liferay.object.storage.salesforce.internal.web.cache.SalesforceAccessTokenWebCacheItem;
+import com.liferay.petra.function.UnsafeTriConsumer;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
@@ -38,24 +30,16 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.InlineSQLHelper;
-import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.util.ArrayUtil;
-import com.liferay.portal.kernel.util.ContentTypes;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -63,17 +47,8 @@ import com.liferay.portal.vulcan.aggregation.Aggregation;
 import com.liferay.portal.vulcan.dto.converter.DTOConverterContext;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
-import com.liferay.portal.vulcan.util.LocalizedMapUtil;
-
-import java.math.BigDecimal;
-
-import java.net.HttpURLConnection;
-
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -103,11 +78,13 @@ public class SalesforceObjectEntryManagerImpl
 			ObjectActionKeys.ADD_OBJECT_ENTRY, objectDefinition, scopeKey,
 			dtoConverterContext.getUser());
 
-		JSONObject responseJSONObject = _salesforceHttp.post(
+		JSONObject responseJSONObject = _objectEntryManagerHttp.post(
 			objectDefinition.getCompanyId(),
 			getGroupId(objectDefinition, scopeKey),
 			"sobjects/" + objectDefinition.getExternalReferenceCode(),
-			_toJSONObject(dtoConverterContext, objectDefinition, objectEntry));
+			toJSONObject(
+				dtoConverterContext, objectDefinition, objectEntry,
+				_getUnsafeTriConsumer(objectDefinition)));
 
 		return getObjectEntry(
 			objectDefinition.getCompanyId(), dtoConverterContext,
@@ -125,7 +102,7 @@ public class SalesforceObjectEntryManagerImpl
 			ActionKeys.DELETE, objectDefinition, scopeKey,
 			dtoConverterContext.getUser());
 
-		_salesforceHttp.delete(
+		_objectEntryManagerHttp.delete(
 			companyId, getGroupId(objectDefinition, scopeKey),
 			StringBundler.concat(
 				"sobjects/", objectDefinition.getExternalReferenceCode(), "/",
@@ -164,9 +141,10 @@ public class SalesforceObjectEntryManagerImpl
 			return null;
 		}
 
-		return _toObjectEntry(
-			companyId, _getDateFormat(), dtoConverterContext,
-			_salesforceHttp.get(
+		return toObjectEntry(
+			companyId, getDateFormat(),
+			_defaultObjectFieldNamesToJSONObjectKeys, dtoConverterContext,
+			_objectEntryManagerHttp.get(
 				companyId, getGroupId(objectDefinition, scopeKey),
 				StringBundler.concat(
 					"sobjects/", objectDefinition.getExternalReferenceCode(),
@@ -196,12 +174,14 @@ public class SalesforceObjectEntryManagerImpl
 			ActionKeys.UPDATE, objectDefinition, scopeKey,
 			dtoConverterContext.getUser());
 
-		_salesforceHttp.patch(
+		_objectEntryManagerHttp.patch(
 			companyId, getGroupId(objectDefinition, scopeKey),
 			StringBundler.concat(
 				"sobjects/", objectDefinition.getExternalReferenceCode(), "/",
 				externalReferenceCode),
-			_toJSONObject(dtoConverterContext, objectDefinition, objectEntry));
+			toJSONObject(
+				dtoConverterContext, objectDefinition, objectEntry,
+				_getUnsafeTriConsumer(objectDefinition)));
 
 		return getObjectEntry(
 			companyId, dtoConverterContext, externalReferenceCode,
@@ -239,38 +219,6 @@ public class SalesforceObjectEntryManagerImpl
 			"')");
 	}
 
-	private DateFormat _getDateFormat() {
-		return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ");
-	}
-
-	private ListEntry _getListEntry(
-		DTOConverterContext dtoConverterContext, String externalReferenceCode,
-		ObjectDefinition objectDefinition, ObjectField objectField) {
-
-		ListTypeEntry listTypeEntry =
-			_listTypeEntryLocalService.
-				fetchListTypeEntryByExternalReferenceCode(
-					externalReferenceCode, objectDefinition.getCompanyId(),
-					objectField.getListTypeDefinitionId());
-
-		if (listTypeEntry == null) {
-			return null;
-		}
-
-		return new ListEntry() {
-			{
-				setKey(listTypeEntry::getKey);
-				setName(
-					() -> listTypeEntry.getName(
-						dtoConverterContext.getLocale()));
-				setName_i18n(
-					() -> LocalizedMapUtil.getI18nMap(
-						dtoConverterContext.isAcceptAllLanguages(),
-						listTypeEntry.getNameMap()));
-			}
-		};
-	}
-
 	private String _getLocation(
 		ObjectDefinition objectDefinition, Pagination pagination,
 		String predicateString, String search, Sort[] sorts) {
@@ -301,7 +249,7 @@ public class SalesforceObjectEntryManagerImpl
 			String filterString, String search, Sort[] sorts)
 		throws Exception {
 
-		JSONObject responseJSONObject = _salesforceHttp.get(
+		JSONObject responseJSONObject = _objectEntryManagerHttp.get(
 			companyId, getGroupId(objectDefinition, scopeKey),
 			_getLocation(
 				objectDefinition, pagination,
@@ -321,8 +269,9 @@ public class SalesforceObjectEntryManagerImpl
 				responseJSONObject.getJSONArray("records");
 
 		return Page.of(
-			_toObjectEntries(
-				companyId, dtoConverterContext, jsonArray, objectDefinition),
+			toObjectEntries(
+				companyId, _defaultObjectFieldNamesToJSONObjectKeys,
+				dtoConverterContext, jsonArray, objectDefinition),
 			pagination,
 			_getTotalCount(
 				companyId, objectDefinition,
@@ -330,33 +279,6 @@ public class SalesforceObjectEntryManagerImpl
 					companyId, dtoConverterContext, objectDefinition,
 					filterString, scopeKey),
 				scopeKey, search));
-	}
-
-	private ObjectField _getObjectFieldByExternalReferenceCode(
-		String externalReferenceCode, List<ObjectField> objectFields) {
-
-		for (ObjectField objectField : objectFields) {
-			if (Objects.equals(
-					externalReferenceCode,
-					objectField.getExternalReferenceCode())) {
-
-				return objectField;
-			}
-		}
-
-		return null;
-	}
-
-	private ObjectField _getObjectFieldByName(
-		String name, List<ObjectField> objectFields) {
-
-		for (ObjectField objectField : objectFields) {
-			if (Objects.equals(name, objectField.getName())) {
-				return objectField;
-			}
-		}
-
-		return null;
 	}
 
 	private String _getSalesforcePagination(Pagination pagination) {
@@ -396,13 +318,14 @@ public class SalesforceObjectEntryManagerImpl
 				sb.append(StringPool.COMMA_AND_SPACE);
 			}
 
-			String defaultFieldName = _defaultObjectFieldNames.get(fieldName);
+			String defaultFieldName =
+				_defaultObjectFieldNamesToJSONObjectKeys.get(fieldName);
 
 			if (defaultFieldName != null) {
 				sb.append(defaultFieldName);
 			}
 			else {
-				ObjectField objectField = _getObjectFieldByName(
+				ObjectField objectField = fetchObjectFieldByName(
 					fieldName, objectFields);
 
 				if (objectField == null) {
@@ -461,7 +384,7 @@ public class SalesforceObjectEntryManagerImpl
 		String predicateString, String scopeKey, String search) {
 
 		if (Validator.isNotNull(search)) {
-			JSONObject responseJSONObject = _salesforceHttp.get(
+			JSONObject responseJSONObject = _objectEntryManagerHttp.get(
 				companyId, getGroupId(objectDefinition, scopeKey),
 				_getLocation(
 					objectDefinition, Pagination.of(1, 200), predicateString,
@@ -473,7 +396,7 @@ public class SalesforceObjectEntryManagerImpl
 			return jsonArray.length();
 		}
 
-		JSONObject responseJSONObject = _salesforceHttp.get(
+		JSONObject responseJSONObject = _objectEntryManagerHttp.get(
 			companyId, getGroupId(objectDefinition, scopeKey),
 			HttpComponentsUtil.addParameter(
 				"query", "q",
@@ -491,70 +414,11 @@ public class SalesforceObjectEntryManagerImpl
 		);
 	}
 
-	private JSONObject _toJSONObject(
-			DTOConverterContext dtoConverterContext,
-			ObjectDefinition objectDefinition, ObjectEntry objectEntry)
-		throws Exception {
+	private UnsafeTriConsumer
+		<Map<String, Object>, Object, ObjectField, Exception>
+			_getUnsafeTriConsumer(ObjectDefinition objectDefinition) {
 
-		Map<String, Object> map = new HashMap<>();
-
-		List<ObjectField> objectFields =
-			_objectFieldLocalService.getObjectFields(
-				objectDefinition.getObjectDefinitionId());
-
-		Map<String, Object> properties = objectEntry.getProperties();
-
-		for (String key : properties.keySet()) {
-			ObjectField objectField = _getObjectFieldByName(key, objectFields);
-
-			if (objectField == null) {
-				continue;
-			}
-
-			ObjectFieldBusinessType objectFieldBusinessType =
-				_objectFieldBusinessTypeRegistry.getObjectFieldBusinessType(
-					objectField.getBusinessType());
-
-			Object value = objectFieldBusinessType.getValue(
-				objectField, dtoConverterContext.getUserId(), properties);
-
-			if (objectField.compareBusinessType(
-					ObjectFieldConstants.BUSINESS_TYPE_MULTISELECT_PICKLIST)) {
-
-				StringBundler sb = new StringBundler();
-
-				for (String listTypeEntryKey : (List<String>)value) {
-					String listTypeEntryExternalReferenceCode =
-						ListTypeEntryUtil.getListTypeEntryExternalReferenceCode(
-							objectField.getListTypeDefinitionId(),
-							listTypeEntryKey);
-
-					if (Validator.isNull(listTypeEntryExternalReferenceCode)) {
-						continue;
-					}
-
-					sb.append(listTypeEntryExternalReferenceCode);
-					sb.append(StringPool.SEMICOLON);
-				}
-
-				if (sb.index() > 1) {
-					sb.setIndex(sb.index() - 1);
-				}
-
-				value = sb.toString();
-			}
-			else if (objectField.compareBusinessType(
-						ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
-
-				value = ListTypeEntryUtil.getListTypeEntryExternalReferenceCode(
-					objectField.getListTypeDefinitionId(),
-					GetterUtil.getString(value));
-			}
-
-			map.put(
-				objectField.getExternalReferenceCode(),
-				Objects.equals(value, StringPool.BLANK) ? null : value);
-
+		return (map, value, objectField) -> {
 			if (StringUtil.endsWith(
 					objectDefinition.getExternalReferenceCode(),
 					_CUSTOM_OBJECT_SUFFIX) &&
@@ -564,149 +428,13 @@ public class SalesforceObjectEntryManagerImpl
 
 				map.put("Name", value);
 			}
-		}
-
-		return _jsonFactory.createJSONObject(_jsonFactory.looseSerialize(map));
-	}
-
-	private List<ObjectEntry> _toObjectEntries(
-			long companyId, DTOConverterContext dtoConverterContext,
-			JSONArray jsonArray, ObjectDefinition objectDefinition)
-		throws Exception {
-
-		DateFormat dateFormat = _getDateFormat();
-
-		return JSONUtil.toList(
-			jsonArray,
-			jsonObject -> _toObjectEntry(
-				companyId, dateFormat, dtoConverterContext, jsonObject,
-				objectDefinition));
-	}
-
-	private ObjectEntry _toObjectEntry(
-			long companyId, DateFormat dateFormat,
-			DTOConverterContext dtoConverterContext, JSONObject jsonObject,
-			ObjectDefinition objectDefinition)
-		throws Exception {
-
-		return new ObjectEntry() {
-			{
-				setActions(
-					() -> HashMapBuilder.put(
-						"delete",
-						addDeleteAction(
-							objectDefinition, getScopeKey(),
-							dtoConverterContext.getUser())
-					).build());
-				setCreator(
-					() -> CreatorUtil.toCreator(
-						_portal, null,
-						_userLocalService.fetchUserByExternalReferenceCode(
-							jsonObject.getString("OwnerId"), companyId)));
-				setDateCreated(
-					() -> dateFormat.parse(
-						jsonObject.getString("CreatedDate")));
-				setDateModified(
-					() -> dateFormat.parse(
-						jsonObject.getString("LastModifiedDate")));
-				setExternalReferenceCode(() -> jsonObject.getString("Id"));
-				setProperties(
-					() -> _toProperties(
-						dtoConverterContext, jsonObject, objectDefinition,
-						_objectFieldLocalService.getObjectFields(
-							objectDefinition.getObjectDefinitionId())));
-				setStatus(
-					() -> new Status() {
-						{
-							setCode(() -> 0);
-							setLabel(() -> "approved");
-							setLabel_i18n(() -> "Approved");
-						}
-					});
-			}
 		};
 	}
 
-	private Map<String, Object> _toProperties(
-			DTOConverterContext dtoConverterContext, JSONObject jsonObject,
-			ObjectDefinition objectDefinition, List<ObjectField> objectFields)
-		throws Exception {
-
-		Map<String, Object> properties = new HashMap<>();
-
-		for (String key : jsonObject.keySet()) {
-			ObjectField objectField = _getObjectFieldByExternalReferenceCode(
-				key, objectFields);
-
-			if (objectField == null) {
-				continue;
-			}
-
-			if (jsonObject.isNull(key)) {
-				properties.put(objectField.getName(), null);
-
-				continue;
-			}
-
-			Object value = jsonObject.get(key);
-
-			if (objectField.compareBusinessType(
-					ObjectFieldConstants.BUSINESS_TYPE_DATE_TIME)) {
-
-				String pattern = "yyyy-MM-dd'T'HH:mm:ss.SSS";
-
-				if (StringUtil.equals(
-						ObjectFieldSettingUtil.getValue(
-							ObjectFieldSettingConstants.NAME_TIME_STORAGE,
-							objectField),
-						ObjectFieldSettingConstants.VALUE_CONVERT_TO_UTC)) {
-
-					pattern += "Z";
-				}
-
-				SimpleDateFormat simpleDateFormat = new SimpleDateFormat(
-					pattern);
-
-				value = simpleDateFormat.format(
-					simpleDateFormat.parse(GetterUtil.getString(value)));
-			}
-			else if (objectField.compareBusinessType(
-						ObjectFieldConstants.BUSINESS_TYPE_INTEGER) ||
-					 objectField.compareBusinessType(
-						 ObjectFieldConstants.BUSINESS_TYPE_LONG_INTEGER)) {
-
-				if (value instanceof BigDecimal) {
-					BigDecimal bigDecimalValue = (BigDecimal)value;
-
-					value = bigDecimalValue.toBigInteger();
-				}
-			}
-			else if (objectField.compareBusinessType(
-						ObjectFieldConstants.
-							BUSINESS_TYPE_MULTISELECT_PICKLIST)) {
-
-				value = TransformUtil.transformToList(
-					StringUtil.split(
-						GetterUtil.getString(value), StringPool.SEMICOLON),
-					listTypeEntryExternalReferenceCode -> _getListEntry(
-						dtoConverterContext, listTypeEntryExternalReferenceCode,
-						objectDefinition, objectField));
-			}
-			else if (objectField.compareBusinessType(
-						ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
-
-				value = _getListEntry(
-					dtoConverterContext, GetterUtil.getString(value),
-					objectDefinition, objectField);
-			}
-
-			properties.put(objectField.getName(), value);
-		}
-
-		return properties;
-	}
-
 	private static final String _CUSTOM_OBJECT_SUFFIX = "__c";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		SalesforceObjectEntryManagerImpl.class);
 
 	@Reference
 	private AccountEntryLocalService _accountEntryLocalService;
@@ -714,7 +442,7 @@ public class SalesforceObjectEntryManagerImpl
 	@Reference
 	private ConfigurationProvider _configurationProvider;
 
-	private final Map<String, String> _defaultObjectFieldNames =
+	private final Map<String, String> _defaultObjectFieldNamesToJSONObjectKeys =
 		HashMapBuilder.put(
 			"createDate", "CreatedDate"
 		).put(
@@ -735,195 +463,69 @@ public class SalesforceObjectEntryManagerImpl
 	private FilterFactory<String> _filterFactory;
 
 	@Reference
-	private Http _http;
-
-	@Reference
 	private InlineSQLHelper _inlineSQLHelper;
 
-	@Reference
-	private JSONFactory _jsonFactory;
+	private final ObjectEntryManagerHttp _objectEntryManagerHttp =
+		new BaseObjectEntryManagerHttp() {
 
-	@Reference
-	private ListTypeEntryLocalService _listTypeEntryLocalService;
+			@Override
+			public JSONObject getAccessToken(long companyId, long groupId) {
+				int retry = 0;
 
-	@Reference
-	private ObjectFieldBusinessTypeRegistry _objectFieldBusinessTypeRegistry;
+				while (retry < 3) {
+					JSONObject jSONObject =
+						SalesforceAccessTokenWebCacheItem.get(
+							_getSalesforceConfiguration(companyId, groupId));
+
+					if (jSONObject != null) {
+						return jSONObject;
+					}
+
+					try {
+						Thread.sleep(500);
+					}
+					catch (InterruptedException interruptedException) {
+						if (_log.isDebugEnabled()) {
+							_log.debug(interruptedException);
+						}
+					}
+
+					retry++;
+				}
+
+				throw new ObjectEntryManagerHttpException(
+					"Unable to authenticate with Salesforce");
+			}
+
+			@Override
+			public String getBaseURL(long companyId, long groupId) {
+				JSONObject jsonObject = getAccessToken(companyId, groupId);
+
+				return jsonObject.getString("instance_url") +
+					"/services/data/v54.0";
+			}
+
+			private SalesforceConfiguration _getSalesforceConfiguration(
+				long companyId, long groupId) {
+
+				try {
+					if (groupId == 0) {
+						return _configurationProvider.getCompanyConfiguration(
+							SalesforceConfiguration.class, companyId);
+					}
+
+					return _configurationProvider.getGroupConfiguration(
+						SalesforceConfiguration.class, groupId);
+				}
+				catch (ConfigurationException configurationException) {
+					return ReflectionUtil.throwException(
+						configurationException);
+				}
+			}
+
+		};
 
 	@Reference
 	private ObjectFieldLocalService _objectFieldLocalService;
-
-	@Reference
-	private Portal _portal;
-
-	private final SalesforceHttp _salesforceHttp = new SalesforceHttp();
-
-	@Reference
-	private UserLocalService _userLocalService;
-
-	private class SalesforceHttp {
-
-		public JSONObject delete(
-			long companyId, long groupId, String location) {
-
-			try {
-				return _invoke(
-					companyId, groupId, location, Http.Method.DELETE, null);
-			}
-			catch (Exception exception) {
-				return ReflectionUtil.throwException(exception);
-			}
-		}
-
-		public JSONObject get(long companyId, long groupId, String location) {
-			try {
-				return _invoke(
-					companyId, groupId, location, Http.Method.GET, null);
-			}
-			catch (Exception exception) {
-				return ReflectionUtil.throwException(exception);
-			}
-		}
-
-		public JSONObject patch(
-			long companyId, long groupId, String location,
-			JSONObject bodyJSONObject) {
-
-			try {
-				return _invoke(
-					companyId, groupId, location, Http.Method.PATCH,
-					bodyJSONObject);
-			}
-			catch (Exception exception) {
-				return ReflectionUtil.throwException(exception);
-			}
-		}
-
-		public JSONObject post(
-			long companyId, long groupId, String location,
-			JSONObject bodyJSONObject) {
-
-			try {
-				return _invoke(
-					companyId, groupId, location, Http.Method.POST,
-					bodyJSONObject);
-			}
-			catch (Exception exception) {
-				return ReflectionUtil.throwException(exception);
-			}
-		}
-
-		private JSONObject _getSalesforceAccessTokenJSONObject(
-			SalesforceConfiguration salesforceConfiguration) {
-
-			int retry = 0;
-
-			while (retry < 3) {
-				JSONObject jSONObject = SalesforceAccessTokenWebCacheItem.get(
-					salesforceConfiguration);
-
-				if (jSONObject != null) {
-					return jSONObject;
-				}
-
-				try {
-					Thread.sleep(500);
-				}
-				catch (InterruptedException interruptedException) {
-					if (_log.isDebugEnabled()) {
-						_log.debug(interruptedException);
-					}
-				}
-
-				retry++;
-			}
-
-			throw new ObjectEntryManagerHttpException(
-				"Unable to authenticate with Salesforce");
-		}
-
-		private SalesforceConfiguration _getSalesforceConfiguration(
-			long companyId, long groupId) {
-
-			try {
-				if (groupId == 0) {
-					return _configurationProvider.getCompanyConfiguration(
-						SalesforceConfiguration.class, companyId);
-				}
-
-				return _configurationProvider.getGroupConfiguration(
-					SalesforceConfiguration.class, groupId);
-			}
-			catch (ConfigurationException configurationException) {
-				return ReflectionUtil.throwException(configurationException);
-			}
-		}
-
-		private JSONObject _invoke(
-				long companyId, long groupId, String location,
-				Http.Method method, JSONObject bodyJSONObject)
-			throws Exception {
-
-			byte[] bytes = _invokeAsBytes(
-				companyId, groupId, location, method, bodyJSONObject);
-
-			if (bytes == null) {
-				return _jsonFactory.createJSONObject();
-			}
-
-			return _jsonFactory.createJSONObject(new String(bytes));
-		}
-
-		private byte[] _invokeAsBytes(
-				long companyId, long groupId, String location,
-				Http.Method method, JSONObject bodyJSONObject)
-			throws Exception {
-
-			Http.Options options = new Http.Options();
-
-			if (bodyJSONObject != null) {
-				options.addHeader(
-					HttpHeaders.CONTENT_TYPE, ContentTypes.APPLICATION_JSON);
-			}
-
-			JSONObject jsonObject = _getSalesforceAccessTokenJSONObject(
-				_getSalesforceConfiguration(companyId, groupId));
-
-			options.addHeader(
-				"Authorization",
-				"Bearer " + jsonObject.getString("access_token"));
-
-			if (bodyJSONObject != null) {
-				options.setBody(
-					bodyJSONObject.toString(), ContentTypes.APPLICATION_JSON,
-					StringPool.UTF8);
-			}
-
-			options.setFollowRedirects(false);
-			options.setLocation(
-				StringBundler.concat(
-					jsonObject.getString("instance_url"),
-					"/services/data/v54.0/", location));
-			options.setMethod(method);
-
-			byte[] bytes = _http.URLtoByteArray(options);
-
-			Http.Response response = options.getResponse();
-
-			if ((response.getResponseCode() < HttpURLConnection.HTTP_OK) ||
-				(response.getResponseCode() >=
-					HttpURLConnection.HTTP_MULT_CHOICE)) {
-
-				throw new ObjectEntryManagerHttpException(
-					StringBundler.concat(
-						"Unexpected response code ", response.getResponseCode(),
-						" with response message: ", new String(bytes)));
-			}
-
-			return bytes;
-		}
-
-		private final Log _log = LogFactoryUtil.getLog(SalesforceHttp.class);
-
-	}
 
 }

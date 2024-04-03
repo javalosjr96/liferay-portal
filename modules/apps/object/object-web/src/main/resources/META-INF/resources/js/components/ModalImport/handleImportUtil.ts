@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -12,12 +12,15 @@ import {ModalImportKeys} from './ModalImport';
 
 interface HandleImportProps {
 	importURL: string;
-	item: FormData | ObjectDefinition[];
+	item: FormData;
 	onAfterImport?: () => void;
 	onClose: () => void;
 	setError: (
 		value: React.SetStateAction<API.ErrorDetails | undefined>
 	) => void;
+	setFailedModalVisible?: (value: boolean) => void;
+	setImportLoading: (value: boolean) => void;
+	setWarningModalVisible: (value: boolean) => void;
 }
 
 interface HandleDefaultImportProps extends Omit<HandleImportProps, 'item'> {
@@ -28,13 +31,14 @@ interface HandleDefaultImportProps extends Omit<HandleImportProps, 'item'> {
 	importExtendedInfo: KeyValueObject;
 	inputFile?: File | null;
 	setImportFormData: (value: FormData) => void;
-	setWarningModalVisible: (value: boolean) => void;
 }
 
 interface HandleImportMultiplesObjectDefinitionsProps
 	extends Omit<HandleImportProps, 'item'> {
 	importedObjectDefinitions: ObjectDefinition[];
+	objectFolderExternalReferenceCode: string;
 	setExistingObjectDefinitions: (value: ObjectDefinition[]) => void;
+	setImportFormData: (value: FormData) => void;
 	setModalImportKeyState: (value: ModalImportKeys) => void;
 	setWarningModalVisible: (value: boolean) => void;
 }
@@ -51,6 +55,7 @@ export async function handleDefaultImport({
 	onClose,
 	setError,
 	setImportFormData,
+	setImportLoading,
 	setWarningModalVisible,
 }: HandleDefaultImportProps) {
 	const formData = new FormData(event.currentTarget);
@@ -83,6 +88,8 @@ export async function handleDefaultImport({
 			onAfterImport,
 			onClose,
 			setError,
+			setImportLoading,
+			setWarningModalVisible,
 		});
 	}
 	else {
@@ -97,8 +104,13 @@ export async function handleImport({
 	onAfterImport,
 	onClose,
 	setError,
+	setFailedModalVisible,
+	setImportLoading,
+	setWarningModalVisible,
 }: HandleImportProps) {
 	try {
+		setImportLoading(true);
+
 		await API.save({
 			item,
 			method: 'POST',
@@ -113,19 +125,37 @@ export async function handleImport({
 		else {
 			window.location.reload();
 		}
+
+		setImportLoading(false);
 	}
 	catch (error) {
+		if (
+			Liferay.FeatureFlags['LPS-187142'] &&
+			setFailedModalVisible &&
+			(error as API.ErrorDetails).type ===
+				'importMultipleObjectDefinitions'
+		) {
+			setFailedModalVisible(true);
+			setWarningModalVisible(false);
+		}
+
 		setError(error as API.ErrorDetails);
+
+		setImportLoading(false);
 	}
 }
 
 export async function handleImportMultiplesObjectDefinitions({
 	importURL,
 	importedObjectDefinitions,
+	objectFolderExternalReferenceCode,
 	onAfterImport,
 	onClose,
 	setError,
 	setExistingObjectDefinitions,
+	setFailedModalVisible,
+	setImportFormData,
+	setImportLoading,
 	setModalImportKeyState,
 	setWarningModalVisible,
 }: HandleImportMultiplesObjectDefinitionsProps) {
@@ -133,7 +163,7 @@ export async function handleImportMultiplesObjectDefinitions({
 
 	const objectDefinitionsMap = new Map<string, ObjectDefinition>(
 		items.map((objectDefinition) => [
-			objectDefinition.externalReferenceCode,
+			objectDefinition.name,
 			objectDefinition,
 		])
 	);
@@ -141,14 +171,21 @@ export async function handleImportMultiplesObjectDefinitions({
 	const existingObjectDefinitions: ObjectDefinition[] = [];
 
 	importedObjectDefinitions.forEach((objectDefinition) => {
-		if (objectDefinitionsMap.has(objectDefinition.externalReferenceCode)) {
+		if (objectDefinitionsMap.has(objectDefinition.name)) {
 			existingObjectDefinitions.push(
 				objectDefinitionsMap.get(
-					objectDefinition.externalReferenceCode
+					objectDefinition.name
 				) as ObjectDefinition
 			);
 		}
 	});
+
+	const importedObjectDefinitionsFormData = jsonToFormData({
+		objectDefinitions: JSON.stringify(importedObjectDefinitions),
+		objectFolderExternalReferenceCode,
+	});
+
+	setImportFormData(importedObjectDefinitionsFormData);
 
 	if (existingObjectDefinitions.length) {
 		setExistingObjectDefinitions(existingObjectDefinitions);
@@ -162,9 +199,12 @@ export async function handleImportMultiplesObjectDefinitions({
 
 	handleImport({
 		importURL,
-		item: importedObjectDefinitions,
+		item: importedObjectDefinitionsFormData,
 		onAfterImport,
 		onClose,
 		setError,
+		setFailedModalVisible,
+		setImportLoading,
+		setWarningModalVisible,
 	});
 }

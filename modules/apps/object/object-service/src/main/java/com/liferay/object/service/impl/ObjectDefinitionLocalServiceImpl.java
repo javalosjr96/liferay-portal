@@ -199,7 +199,7 @@ public class ObjectDefinitionLocalServiceImpl
 	@Override
 	public ObjectDefinition addObjectDefinition(
 			String externalReferenceCode, long userId, long objectFolderId,
-			boolean modifiable, boolean system)
+			long rootObjectDefinitionId, boolean modifiable, boolean system)
 		throws PortalException {
 
 		_validateExternalReferenceCode(
@@ -218,6 +218,7 @@ public class ObjectDefinitionLocalServiceImpl
 		objectDefinition.setObjectFolderId(
 			_getObjectFolderId(user.getCompanyId(), objectFolderId));
 
+		objectDefinition.setRootObjectDefinitionId(rootObjectDefinitionId);
 		objectDefinition.setActive(false);
 		objectDefinition.setLabel(externalReferenceCode);
 		objectDefinition.setModifiable(modifiable);
@@ -431,7 +432,7 @@ public class ObjectDefinitionLocalServiceImpl
 						rootObjectDefinitionId);
 			}
 
-			_updateObjectDefinitionPortlet(objectDefinition1);
+			updatePortlet(objectDefinition1.getObjectDefinitionId());
 
 			ObjectDefinition objectDefinition2 =
 				objectDefinitionLocalService.getObjectDefinition(
@@ -445,7 +446,7 @@ public class ObjectDefinitionLocalServiceImpl
 			_objectFieldLocalService.updateRequired(
 				objectRelationship.getObjectFieldId2(), true);
 
-			_updateObjectDefinitionPortlet(objectDefinition2);
+			updatePortlet(objectDefinition2.getObjectDefinitionId());
 		}
 	}
 
@@ -1036,7 +1037,7 @@ public class ObjectDefinitionLocalServiceImpl
 				objectDefinitionId);
 
 		Tree tree = _treeFactory.createObjectDefinitionTree(
-			objectDefinition.getRootObjectDefinitionId());
+			objectDefinition.getObjectDefinitionId());
 
 		Iterator<Node> iterator = tree.iterator(
 			objectDefinition.getObjectDefinitionId());
@@ -1047,7 +1048,10 @@ public class ObjectDefinitionLocalServiceImpl
 			objectDefinitionLocalService.updateRootObjectDefinitionId(
 				node.getPrimaryKey(), 0);
 
-			if (node.isRoot()) {
+			if (node.getEdge() == null) {
+				_objectRelationshipLocalService.disableEdge(
+					node.getPrimaryKey());
+
 				continue;
 			}
 
@@ -1170,6 +1174,7 @@ public class ObjectDefinitionLocalServiceImpl
 			pluralLabelMap, scope, status);
 	}
 
+	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public ObjectDefinition updateExternalReferenceCode(
 			long objectDefinitionId, String externalReferenceCode)
@@ -1211,6 +1216,26 @@ public class ObjectDefinitionLocalServiceImpl
 		return objectDefinition;
 	}
 
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public ObjectDefinition updatePortlet(long objectDefinitionId)
+		throws PortalException {
+
+		ObjectDefinition objectDefinition =
+			objectDefinitionPersistence.findByPrimaryKey(objectDefinitionId);
+
+		if (objectDefinition.isPortlet() &&
+			objectDefinition.isRootDescendantNode()) {
+
+			objectDefinition.setPortlet(false);
+
+			return objectDefinitionPersistence.update(objectDefinition);
+		}
+
+		return objectDefinition;
+	}
+
+	@Indexable(type = IndexableType.REINDEX)
 	@Override
 	public ObjectDefinition updateRootObjectDefinitionId(
 			long objectDefinitionId, long rootObjectDefinitionId)
@@ -2010,19 +2035,6 @@ public class ObjectDefinitionLocalServiceImpl
 			objectDefinition.getObjectFolderId(), oldObjectFolderId);
 
 		return objectDefinition;
-	}
-
-	private void _updateObjectDefinitionPortlet(
-			ObjectDefinition objectDefinition)
-		throws PortalException {
-
-		if (objectDefinition.isPortlet() &&
-			objectDefinition.isRootDescendantNode()) {
-
-			objectDefinition.setPortlet(false);
-
-			objectDefinitionPersistence.update(objectDefinition);
-		}
 	}
 
 	private ObjectDefinition _updateTitleObjectFieldId(
