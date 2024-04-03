@@ -589,7 +589,7 @@ const filterSchema = {
 				type: 'multiselect',
 			}),
 			overrides(baseFilters.team, {
-				disabled: false,
+				disabled: true,
 				name: 'componentToCaseResult/r_teamToComponents_c_teamId',
 				type: 'multiselect',
 			}),
@@ -670,7 +670,7 @@ const filterSchema = {
 
 		name: 'compareRunsCases',
 	},
-	compareRunsTeams: {
+	compareRunsTeamsAndComponents: {
 		fields: [
 			overrides(baseFilters.priority, {
 				name: 'testrayCasePriorities',
@@ -691,7 +691,7 @@ const filterSchema = {
 				type: 'select',
 			}),
 		] as RendererFields[],
-		name: 'compareRunsTeams',
+		name: 'compareRunsTeamsAndComponents',
 	},
 	components: {
 		fields: [
