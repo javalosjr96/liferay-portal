@@ -60,9 +60,7 @@ public class WorkflowDefinitionManagerTest extends BaseWorkflowManagerTestCase {
 	}
 
 	@Test
-	public void testDeployGroovyScriptBasedWorkflowDefinition()
-		throws Exception {
-
+	public void testDeployGroovyWorkflowDefinition() throws Exception {
 		String content = StringUtil.read(
 			getResourceInputStream("single-approver-workflow-definition.xml"));
 
@@ -72,7 +70,7 @@ public class WorkflowDefinitionManagerTest extends BaseWorkflowManagerTestCase {
 			AssertUtils.assertFailure(
 				KaleoDefinitionValidationException.NotAllowedScriptLanguage.
 					class,
-				"Script language \"groovy\" is not allowed",
+				"Ggroovy is not allowed",
 				() -> _workflowDefinitionManager.deployWorkflowDefinition(
 					TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
 					StringPool.BLANK, "Single Approver", content.getBytes()));

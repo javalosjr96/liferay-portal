@@ -57,8 +57,7 @@ public class XMLWorkflowValidator implements WorkflowValidator {
 			content.contains("<script-language>groovy</script-language>")) {
 
 			throw new KaleoDefinitionValidationException.
-				NotAllowedScriptLanguage(
-					"Script language \"groovy\" is not allowed");
+				NotAllowedScriptLanguage("Groovy is not allowed");
 		}
 
 		if (definition.getForksCount() != definition.getJoinsCount()) {
