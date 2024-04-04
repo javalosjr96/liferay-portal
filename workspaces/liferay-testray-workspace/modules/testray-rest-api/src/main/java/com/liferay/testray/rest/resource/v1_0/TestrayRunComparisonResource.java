@@ -39,7 +39,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface TestrayRunComparisonResource {
 
 	public TestrayRunComparison getTestrayRunComparison(
-			Long testrayRun1Id, Long testrayRun2Id,
+			Long testrayRunId1, Long testrayRunId2,
 			String testrayCasePriorities, Long testrayTeamId)
 		throws Exception;
 

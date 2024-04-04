@@ -43,12 +43,12 @@ public class Query {
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {testrayRunComparison(testrayCasePriorities: ___, testrayRun1Id: ___, testrayRun2Id: ___, testrayTeamId: ___){results}}"}' -u 'test@liferay.com:test'
+	 * curl -H 'Content-Type: text/plain; charset=utf-8' -X 'POST' 'http://localhost:8080/o/graphql' -d $'{"query": "query {testrayRunComparison(testrayCasePriorities: ___, testrayRunId1: ___, testrayRunId2: ___, testrayTeamId: ___){results}}"}' -u 'test@liferay.com:test'
 	 */
 	@GraphQLField
 	public TestrayRunComparison testrayRunComparison(
-			@GraphQLName("testrayRun1Id") Long testrayRun1Id,
-			@GraphQLName("testrayRun2Id") Long testrayRun2Id,
+			@GraphQLName("testrayRunId1") Long testrayRunId1,
+			@GraphQLName("testrayRunId2") Long testrayRunId2,
 			@GraphQLName("testrayCasePriorities") String testrayCasePriorities,
 			@GraphQLName("testrayTeamId") Long testrayTeamId)
 		throws Exception {
@@ -58,7 +58,7 @@ public class Query {
 			this::_populateResourceContext,
 			testrayRunComparisonResource ->
 				testrayRunComparisonResource.getTestrayRunComparison(
-					testrayRun1Id, testrayRun2Id, testrayCasePriorities,
+					testrayRunId1, testrayRunId2, testrayCasePriorities,
 					testrayTeamId));
 	}
 

@@ -15,18 +15,18 @@ info:
     version: v1.0
 openapi: 3.0.1
 paths:
-    "/testray-run-comparisons/{testrayRun1Id}/{testrayRun2Id}":
+    "/testray-run-comparisons/{testrayRunId1}/{testrayRunId2}":
         get:
             operationId: getTestrayRunComparison
             parameters:
                 - in: path
-                  name: testrayRun1Id
+                  name: testrayRunId1
                   required: true
                   schema:
                       format: int64
                       type: integer
                 - in: path
-                  name: testrayRun2Id
+                  name: testrayRunId2
                   required: true
                   schema:
                       format: int64

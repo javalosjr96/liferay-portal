@@ -43,17 +43,17 @@ public abstract class BaseTestrayRunComparisonResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/testray-rest/v1.0/testray-run-comparisons/{testrayRun1Id}/{testrayRun2Id}'  -u 'test@liferay.com:test'
+	 * curl -X 'GET' 'http://localhost:8080/o/testray-rest/v1.0/testray-run-comparisons/{testrayRunId1}/{testrayRunId2}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "testrayRun1Id"
+				name = "testrayRunId1"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "testrayRun2Id"
+				name = "testrayRunId2"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
@@ -74,19 +74,19 @@ public abstract class BaseTestrayRunComparisonResourceImpl
 	)
 	@javax.ws.rs.GET
 	@javax.ws.rs.Path(
-		"/testray-run-comparisons/{testrayRun1Id}/{testrayRun2Id}"
+		"/testray-run-comparisons/{testrayRunId1}/{testrayRunId2}"
 	)
 	@javax.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
 	public TestrayRunComparison getTestrayRunComparison(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@javax.validation.constraints.NotNull
-			@javax.ws.rs.PathParam("testrayRun1Id")
-			Long testrayRun1Id,
+			@javax.ws.rs.PathParam("testrayRunId1")
+			Long testrayRunId1,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@javax.validation.constraints.NotNull
-			@javax.ws.rs.PathParam("testrayRun2Id")
-			Long testrayRun2Id,
+			@javax.ws.rs.PathParam("testrayRunId2")
+			Long testrayRunId2,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@javax.ws.rs.QueryParam("testrayCasePriorities")
 			String testrayCasePriorities,
