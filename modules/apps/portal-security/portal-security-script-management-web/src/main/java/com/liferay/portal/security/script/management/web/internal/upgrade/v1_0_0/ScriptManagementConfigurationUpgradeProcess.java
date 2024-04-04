@@ -49,6 +49,39 @@ public class ScriptManagementConfigurationUpgradeProcess
 			).build());
 	}
 
+	private boolean _hasGroovy(ResultSet resultSet) throws Exception {
+		Queue<Map<String, Object>> queue = new LinkedList<>();
+
+		JSONObject jsonObject = _jsonFactory.createJSONObject(
+			resultSet.getString(1));
+
+		queue.add(jsonObject.toMap());
+
+		while (!queue.isEmpty()) {
+			Map<String, Object> map = queue.poll();
+
+			for (Map.Entry<String, Object> entry : map.entrySet()) {
+				if (entry.getValue() instanceof List) {
+					if (Objects.equals(entry.getKey(), "#cdata-value")) {
+						continue;
+					}
+
+					queue.addAll((List<Map<String, Object>>)entry.getValue());
+				}
+				else if (map.size() == 2) {
+					if (Objects.equals(
+							map.get("#tag-name"), "script-language") &&
+						Objects.equals(map.get("#value"), "groovy")) {
+
+						return true;
+					}
+				}
+			}
+		}
+
+		return false;
+	}
+
 	private boolean _hasGroovyScriptUses() throws Exception {
 		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				SQLTransformer.transform(
@@ -75,45 +108,8 @@ public class ScriptManagementConfigurationUpgradeProcess
 			}
 
 			while (resultSet1.next()) {
-				if (_hasWorkflowDefinitionGroovyScriptUse(resultSet1)) {
+				if (_hasGroovy(resultSet1)) {
 					return true;
-				}
-			}
-		}
-
-		return false;
-	}
-
-	private boolean _hasWorkflowDefinitionGroovyScriptUse(ResultSet resultSet)
-		throws Exception {
-
-		Queue<Map<String, Object>> queue = new LinkedList<>();
-
-		JSONObject jsonObject = _jsonFactory.createJSONObject(
-			resultSet.getString(1));
-
-		queue.add(jsonObject.toMap());
-
-		while (!queue.isEmpty()) {
-			Map<String, Object> jsonObjectsMap = queue.poll();
-
-			for (Map.Entry<String, Object> entry : jsonObjectsMap.entrySet()) {
-				if (entry.getValue() instanceof List) {
-					if (Objects.equals(entry.getKey(), "#cdata-value")) {
-						continue;
-					}
-
-					queue.addAll((List<Map<String, Object>>)entry.getValue());
-				}
-				else if (jsonObjectsMap.size() == 2) {
-					if (Objects.equals(
-							jsonObjectsMap.get("#tag-name"),
-							"script-language") &&
-						Objects.equals(
-							jsonObjectsMap.get("#value"), "groovy")) {
-
-						return true;
-					}
 				}
 			}
 		}
