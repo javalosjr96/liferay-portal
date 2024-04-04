@@ -16,118 +16,6 @@
 	"items": [
 		{
 			"accountEntryRestricted": true,
-			"accountEntryRestrictedObjectFieldName": "r_accountToCommerceReturnItems_accountEntryId",
-			"externalReferenceCode": "L_COMMERCE_RETURN_ITEM",
-			"label": {
-				"en_US": "Commerce Return Item"
-			},
-			"name": "CommerceReturnItem",
-			"objectFields": [
-				{
-					"DBType": "Long",
-					"businessType": "LongInteger",
-					"externalReferenceCode": "ACCEPTED",
-					"indexed": true,
-					"indexedAsKeyword": false,
-					"label": {
-						"en_US": "Accepted"
-					},
-					"name": "accepted",
-					"required": false,
-					"state": false,
-					"system": true,
-					"type": "Long"
-				},
-				{
-					"DBType": "BigDecimal",
-					"businessType": "PrecisionDecimal",
-					"externalReferenceCode": "AMOUNT",
-					"indexed": true,
-					"indexedAsKeyword": false,
-					"label": {
-						"en_US": "Amount"
-					},
-					"name": "amount",
-					"required": false,
-					"state": false,
-					"system": true,
-					"type": "BigDecimal"
-				},
-				{
-					"DBType": "Long",
-					"businessType": "LongInteger",
-					"externalReferenceCode": "AUTHORIZED",
-					"indexed": true,
-					"indexedAsKeyword": false,
-					"label": {
-						"en_US": "Authorized"
-					},
-					"name": "authorized",
-					"required": false,
-					"state": false,
-					"system": true,
-					"type": "Long"
-				},
-				{
-					"DBType": "BigDecimal",
-					"businessType": "PrecisionDecimal",
-					"externalReferenceCode": "QUANTITY",
-					"indexed": true,
-					"indexedAsKeyword": false,
-					"label": {
-						"en_US": "Quantity"
-					},
-					"name": "quantity",
-					"required": false,
-					"state": false,
-					"system": true,
-					"type": "BigDecimal"
-				},
-				{
-					"DBType": "String",
-					"businessType": "Picklist",
-					"defaultValue": "changeOfMind",
-					"externalReferenceCode": "RETURN_REASONS",
-					"indexed": true,
-					"indexedAsKeyword": false,
-					"label": {
-						"en_US": "Return Reason"
-					},
-					"listTypeDefinitionExternalReferenceCode": "L_COMMERCE_RETURN_REASONS",
-					"name": "returnReason",
-					"required": true,
-					"state": true,
-					"system": true,
-					"type": "String"
-				},
-				{
-					"DBType": "String",
-					"businessType": "Picklist",
-					"externalReferenceCode": "RETURN_RESOLUTION_METHODS",
-					"indexed": true,
-					"indexedAsKeyword": false,
-					"label": {
-						"en_US": "Return Resolution Method"
-					},
-					"listTypeDefinitionExternalReferenceCode": "L_COMMERCE_RETURN_RESOLUTION_METHODS",
-					"name": "returnResolutionMethod",
-					"required": false,
-					"state": false,
-					"system": true,
-					"type": "String"
-				}
-			],
-			"pluralLabel": {
-				"en_US": "Commerce Return Items"
-			},
-			"scope": "company",
-			"status": {
-				"code": 0
-			},
-			"titleObjectFieldName": "id"
-		},
-		{
-			"accountEntryRestricted": true,
 			"accountEntryRestrictedObjectFieldName": "r_accountToCommerceReturns_accountEntryId",
 			"externalReferenceCode": "L_COMMERCE_RETURN",
 			"label": {
@@ -327,6 +215,118 @@
 			],
 			"pluralLabel": {
 				"en_US": "Commerce Returns"
+			},
+			"scope": "company",
+			"status": {
+				"code": 0
+			},
+			"titleObjectFieldName": "id"
+		},
+		{
+			"accountEntryRestricted": true,
+			"accountEntryRestrictedObjectFieldName": "r_accountToCommerceReturnItems_accountEntryId",
+			"externalReferenceCode": "L_COMMERCE_RETURN_ITEM",
+			"label": {
+				"en_US": "Commerce Return Item"
+			},
+			"name": "CommerceReturnItem",
+			"objectFields": [
+				{
+					"DBType": "Long",
+					"businessType": "LongInteger",
+					"externalReferenceCode": "ACCEPTED",
+					"indexed": true,
+					"indexedAsKeyword": false,
+					"label": {
+						"en_US": "Accepted"
+					},
+					"name": "accepted",
+					"required": false,
+					"state": false,
+					"system": true,
+					"type": "Long"
+				},
+				{
+					"DBType": "BigDecimal",
+					"businessType": "PrecisionDecimal",
+					"externalReferenceCode": "AMOUNT",
+					"indexed": true,
+					"indexedAsKeyword": false,
+					"label": {
+						"en_US": "Amount"
+					},
+					"name": "amount",
+					"required": false,
+					"state": false,
+					"system": true,
+					"type": "BigDecimal"
+				},
+				{
+					"DBType": "Long",
+					"businessType": "LongInteger",
+					"externalReferenceCode": "AUTHORIZED",
+					"indexed": true,
+					"indexedAsKeyword": false,
+					"label": {
+						"en_US": "Authorized"
+					},
+					"name": "authorized",
+					"required": false,
+					"state": false,
+					"system": true,
+					"type": "Long"
+				},
+				{
+					"DBType": "BigDecimal",
+					"businessType": "PrecisionDecimal",
+					"externalReferenceCode": "QUANTITY",
+					"indexed": true,
+					"indexedAsKeyword": false,
+					"label": {
+						"en_US": "Quantity"
+					},
+					"name": "quantity",
+					"required": false,
+					"state": false,
+					"system": true,
+					"type": "BigDecimal"
+				},
+				{
+					"DBType": "String",
+					"businessType": "Picklist",
+					"defaultValue": "changeOfMind",
+					"externalReferenceCode": "RETURN_REASONS",
+					"indexed": true,
+					"indexedAsKeyword": false,
+					"label": {
+						"en_US": "Return Reason"
+					},
+					"listTypeDefinitionExternalReferenceCode": "L_COMMERCE_RETURN_REASONS",
+					"name": "returnReason",
+					"required": true,
+					"state": true,
+					"system": true,
+					"type": "String"
+				},
+				{
+					"DBType": "String",
+					"businessType": "Picklist",
+					"externalReferenceCode": "RETURN_RESOLUTION_METHODS",
+					"indexed": true,
+					"indexedAsKeyword": false,
+					"label": {
+						"en_US": "Return Resolution Method"
+					},
+					"listTypeDefinitionExternalReferenceCode": "L_COMMERCE_RETURN_RESOLUTION_METHODS",
+					"name": "returnResolutionMethod",
+					"required": false,
+					"state": false,
+					"system": true,
+					"type": "String"
+				}
+			],
+			"pluralLabel": {
+				"en_US": "Commerce Return Items"
 			},
 			"scope": "company",
 			"status": {

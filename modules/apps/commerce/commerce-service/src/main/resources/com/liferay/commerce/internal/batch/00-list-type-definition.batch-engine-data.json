@@ -15,32 +15,6 @@
 	},
 	"items": [
 		{
-			"externalReferenceCode": "L_COMMERCE_RETURN_STATUSES",
-			"listTypeEntries": [
-				{
-					"externalReferenceCode": "COMPLETE",
-					"key": "complete",
-					"name": "complete",
-					"name_i18n": {
-						"en-US": "Complete"
-					}
-				},
-				{
-					"externalReferenceCode": "DRAFT",
-					"key": "draft",
-					"name": "draft",
-					"name_i18n": {
-						"en-US": "Draft"
-					}
-				}
-			],
-			"name": "Commerce Return Statuses",
-			"name_i18n": {
-				"en-US": "Commerce Return Statuses"
-			},
-			"system": true
-		},
-		{
 			"externalReferenceCode": "L_COMMERCE_RETURN_REASONS",
 			"listTypeEntries": [
 				{
@@ -81,6 +55,32 @@
 			"name": "Commerce Return Resolution Methods",
 			"name_i18n": {
 				"en-US": "Commerce Return Resolution Methods"
+			},
+			"system": true
+		},
+		{
+			"externalReferenceCode": "L_COMMERCE_RETURN_STATUSES",
+			"listTypeEntries": [
+				{
+					"externalReferenceCode": "COMPLETE",
+					"key": "complete",
+					"name": "complete",
+					"name_i18n": {
+						"en-US": "Complete"
+					}
+				},
+				{
+					"externalReferenceCode": "DRAFT",
+					"key": "draft",
+					"name": "draft",
+					"name_i18n": {
+						"en-US": "Draft"
+					}
+				}
+			],
+			"name": "Commerce Return Statuses",
+			"name_i18n": {
+				"en-US": "Commerce Return Statuses"
 			},
 			"system": true
 		}
