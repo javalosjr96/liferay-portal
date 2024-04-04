@@ -676,8 +676,10 @@ public class SiteInitializerSerializerImpl
 					"roles",
 					JSONUtil.toJSONArray(
 						roleNamesMap.get(emailAddress),
-						role -> {
-							if (StringUtil.equals(role, RoleConstants.USER)) {
+						roleName -> {
+							if (StringUtil.equals(
+									roleName, RoleConstants.USER)) {
+
 								return null;
 							}
 
