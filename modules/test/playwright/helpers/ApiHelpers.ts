@@ -130,6 +130,10 @@ export class ApiHelpers {
 			headers
 		);
 
+		if (response.status() === 204) {
+			return;
+		}
+
 		return response.json();
 	}
 
