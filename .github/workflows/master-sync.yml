@@ -1,15 +1,19 @@
-name: Sync Repository
-
+name: Create Pull Request and Comment
 on:
   workflow_dispatch:
-  push: { branches: [ main ] }  # Adjust branch to watch for pushes
-
+  workflow_run:
+    workflows: ['Scheduled Empty Commit Branch']
+    types: [completed]
 jobs:
-  sync:
+  create-pull-request:
     runs-on: ubuntu-latest
+    env:
+        GITHUB_TOKEN: ${{ secrets.GITHUBPRTOKEN }}
     steps:
-      - uses: repo-sync/github-sync@v3  # Replace with the latest version
-        with:
-          source: "liferay/liferay-portal"
-          destination: "javalosjr96/liferay-portal"
-          branch: "master" 
+      - uses: actions/checkout@v3
+      - name: Create Pull Request with gh
+        run: |
+          gh repo sync \
+           --source="liferay/liferay-portal" \
+           --destination="javalosjr96/liferay-portal" \
+           --branch="master"
