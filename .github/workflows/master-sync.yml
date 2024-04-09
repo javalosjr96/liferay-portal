@@ -13,7 +13,4 @@ jobs:
       - uses: actions/checkout@v3
       - name: Create Pull Request with gh
         run: |
-          gh repo sync \
-           --source="liferay/liferay-portal" \
-           --destination="javalosjr96/liferay-portal" \
-           --branch="master"
+          gh repo sync javalosjr96/liferay-portal
