@@ -1,9 +1,8 @@
-name: Create Pull Request and Comment
+name: Sync with Master
 on:
-  workflow_dispatch:
-  workflow_run:
-    workflows: ['Scheduled Empty Commit Branch']
-    types: [completed]
+   schedule:
+   - cron: '0 9 * * *'
+   workflow_dispatch:
 jobs:
   create-pull-request:
     runs-on: ubuntu-latest
