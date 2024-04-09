@@ -62,7 +62,9 @@ public class LayoutFriendlyURLEntryUpgradeProcess extends UpgradeProcess {
 				_privateLayoutClassNameId, " ELSE ", _publicLayoutClassNameId,
 				" END as classNameId from LayoutFriendlyURL left join ",
 				"FriendlyURLEntryLocalization on ",
-				"(FriendlyURLEntryLocalization.languageId = ",
+				"(FriendlyURLEntryLocalization.ctCollectionId = ",
+				"LayoutFriendlyURL.ctCollectionId and ",
+				"FriendlyURLEntryLocalization.languageId = ",
 				"LayoutFriendlyURL.languageId and ",
 				"FriendlyURLEntryLocalization.urlTitle = ",
 				"LayoutFriendlyURL.friendlyURL and ",
@@ -103,17 +105,13 @@ public class LayoutFriendlyURLEntryUpgradeProcess extends UpgradeProcess {
 								classNameId, plid, companyId, ctCollectionId,
 								defaultLanguageIds, groupId);
 
-						if ((friendlyURLEntryId == 0) ||
-							!_addFriendlyURLEntryMappingIfAbsent(
-								classNameId, plid, ctCollectionId, companyId,
-								friendlyURLEntryId)) {
-
+						if (friendlyURLEntryId == 0) {
 							return;
 						}
 
 						Map<String, String> friendlyURLMap = _getFriendlyURLMap(
-							companyId, ctCollectionId, groupId, plid,
-							privateLayout);
+							companyId, classNameId, ctCollectionId, groupId,
+							plid, privateLayout);
 
 						for (Map.Entry<String, String> entry :
 								friendlyURLMap.entrySet()) {
@@ -133,7 +131,7 @@ public class LayoutFriendlyURLEntryUpgradeProcess extends UpgradeProcess {
 							preparedStatement.setLong(9, classNameId);
 							preparedStatement.setLong(10, plid);
 
-							preparedStatement.addBatch();
+							preparedStatement.executeUpdate();
 						}
 					}
 					catch (Exception exception) {
@@ -156,6 +154,13 @@ public class LayoutFriendlyURLEntryUpgradeProcess extends UpgradeProcess {
 			Map<Long, String> defaultLanguageIds, long groupId)
 		throws Exception {
 
+		long friendlyURLEntryId = _getMappedFriendlyURLEntryId(
+			classNameId, classPK, ctCollectionId);
+
+		if (friendlyURLEntryId > 0) {
+			return friendlyURLEntryId;
+		}
+
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
 					"select friendlyURLEntryId from FriendlyURLEntry where ",
@@ -170,9 +175,18 @@ public class LayoutFriendlyURLEntryUpgradeProcess extends UpgradeProcess {
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				if (resultSet.next()) {
-					return resultSet.getLong("friendlyURLEntryId");
+					friendlyURLEntryId = resultSet.getLong(
+						"friendlyURLEntryId");
 				}
 			}
+		}
+
+		if (friendlyURLEntryId > 0) {
+			_addFriendlyURLEntryMapping(
+				classNameId, classPK, ctCollectionId, companyId,
+				friendlyURLEntryId);
+
+			return friendlyURLEntryId;
 		}
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
@@ -192,8 +206,7 @@ public class LayoutFriendlyURLEntryUpgradeProcess extends UpgradeProcess {
 
 			preparedStatement.setString(4, defaultLanguageId);
 
-			long friendlyURLEntryId = increment(
-				FriendlyURLEntry.class.getName());
+			friendlyURLEntryId = increment(FriendlyURLEntry.class.getName());
 
 			preparedStatement.setLong(5, friendlyURLEntryId);
 
@@ -210,6 +223,10 @@ public class LayoutFriendlyURLEntryUpgradeProcess extends UpgradeProcess {
 
 			preparedStatement.executeUpdate();
 
+			_addFriendlyURLEntryMapping(
+				classNameId, classPK, ctCollectionId, companyId,
+				friendlyURLEntryId);
+
 			return friendlyURLEntryId;
 		}
 		catch (Exception exception) {
@@ -221,25 +238,10 @@ public class LayoutFriendlyURLEntryUpgradeProcess extends UpgradeProcess {
 		return 0;
 	}
 
-	private boolean _addFriendlyURLEntryMappingIfAbsent(
+	private void _addFriendlyURLEntryMapping(
 			long classNameId, long classPK, long ctCollectionId, long companyId,
 			long friendlyURLEntryId)
 		throws Exception {
-
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				"select 1 from FriendlyURLEntryMapping where ctCollectionId " +
-					"= ? and classNameId = ? and classPK = ?")) {
-
-			preparedStatement.setLong(1, ctCollectionId);
-			preparedStatement.setLong(2, classNameId);
-			preparedStatement.setLong(3, classPK);
-
-			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-				if (resultSet.next()) {
-					return true;
-				}
-			}
-		}
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				StringBundler.concat(
@@ -258,37 +260,45 @@ public class LayoutFriendlyURLEntryUpgradeProcess extends UpgradeProcess {
 			preparedStatement.setLong(7, friendlyURLEntryId);
 
 			preparedStatement.executeUpdate();
-
-			return true;
 		}
-		catch (Exception exception) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"Unable to add friendly URL Entry Mapping", exception);
-			}
-		}
-
-		return false;
 	}
 
 	private Map<String, String> _getFriendlyURLMap(
-			long companyId, long ctCollectionId, long groupId, long plid,
-			boolean privateLayout)
+			long companyId, long classNameId, long ctCollectionId, long groupId,
+			long plid, boolean privateLayout)
 		throws Exception {
 
 		Map<String, String> friendlyURLMap = new HashMap<>();
 
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				StringBundler.concat(
-					"select friendlyURL, languageId from LayoutFriendlyURL ",
-					"where ctCollectionId = ? and groupId = ? and companyId = ",
-					"? and plid = ? and privateLayout = ? "))) {
+		String sql = StringBundler.concat(
+			"select LayoutFriendlyURL.friendlyURL, ",
+			"LayoutFriendlyURL.languageId from LayoutFriendlyURL left join ",
+			"FriendlyURLEntryLocalization on ",
+			"(FriendlyURLEntryLocalization.ctCollectionId = ",
+			"LayoutFriendlyURL.ctCollectionId and ",
+			"FriendlyURLEntryLocalization.languageId = ",
+			"LayoutFriendlyURL.languageId and ",
+			"FriendlyURLEntryLocalization.urlTitle = ",
+			"LayoutFriendlyURL.friendlyURL and ",
+			"FriendlyURLEntryLocalization.groupId = LayoutFriendlyURL.groupId ",
+			"and FriendlyURLEntryLocalization.classNameId = ? and ",
+			"FriendlyURLEntryLocalization.classPK = LayoutFriendlyURL.plid) ",
+			"where LayoutFriendlyURL.ctCollectionId = ? and ",
+			"LayoutFriendlyURL.groupId = ? and LayoutFriendlyURL.companyId = ",
+			"? and LayoutFriendlyURL.plid = ? and ",
+			"LayoutFriendlyURL.privateLayout = ? and ",
+			"FriendlyURLEntryLocalization.friendlyURLEntryLocalizationId is ",
+			"null");
 
-			preparedStatement.setLong(1, ctCollectionId);
-			preparedStatement.setLong(2, groupId);
-			preparedStatement.setLong(3, companyId);
-			preparedStatement.setLong(4, plid);
-			preparedStatement.setBoolean(5, privateLayout);
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				SQLTransformer.transform(sql))) {
+
+			preparedStatement.setLong(1, classNameId);
+			preparedStatement.setLong(2, ctCollectionId);
+			preparedStatement.setLong(3, groupId);
+			preparedStatement.setLong(4, companyId);
+			preparedStatement.setLong(5, plid);
+			preparedStatement.setBoolean(6, privateLayout);
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				while (resultSet.next()) {
@@ -300,6 +310,29 @@ public class LayoutFriendlyURLEntryUpgradeProcess extends UpgradeProcess {
 		}
 
 		return friendlyURLMap;
+	}
+
+	private long _getMappedFriendlyURLEntryId(
+			long classNameId, long classPK, long ctCollectionId)
+		throws Exception {
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				"select friendlyURLEntryId from FriendlyURLEntryMapping " +
+					"where ctCollectionId = ? and classNameId = ? and " +
+						"classPK = ?")) {
+
+			preparedStatement.setLong(1, ctCollectionId);
+			preparedStatement.setLong(2, classNameId);
+			preparedStatement.setLong(3, classPK);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					return resultSet.getLong("friendlyURLEntryId");
+				}
+			}
+		}
+
+		return 0;
 	}
 
 	private String _getSiteDefaultLocale(long groupId) {

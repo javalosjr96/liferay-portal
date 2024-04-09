@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import ClayTable from '@clayui/table';
+import {Body, Cell, Head, Row, Table as ClayTable} from '@clayui/core';
 import {ClayTooltipProvider} from '@clayui/tooltip';
 import classNames from 'classnames';
 
@@ -11,65 +11,67 @@ import TableColumn from '../../interfaces/tableColumn';
 
 import './index.css';
 
+interface BasicRow {
+	[key: string]: string | number | boolean | string[] | undefined;
+}
+
 interface TableProps<T> {
 	className?: string;
 	columns: TableColumn<T>[];
-	customClickOnRow?: (row: T) => void;
+	customClickOnRow?: (item: T) => void;
+	layoutAuto: boolean;
 	rows: T[];
 }
 
-const Table = <T extends unknown>({
+type ChildrenRender<T> = ((item: T) => React.ReactElement) & string;
+
+const Table = <T extends BasicRow>({
 	className,
 	columns,
 	customClickOnRow,
+	layoutAuto,
 	rows,
 }: TableProps<T>) => (
 	<ClayTooltipProvider>
 		<ClayTable
 			borderless
-			className={className}
+			className={classNames(className, {
+				'table-layout-auto': layoutAuto,
+			})}
+			columnsVisibility={false}
 			noWrap
-			responsive
-			tableVerticalAlignment="middle"
 		>
-			<ClayTable.Head>
-				<ClayTable.Row>
-					{columns.map((column: TableColumn<T>, index: number) => (
-						<ClayTable.Cell
-							align="left"
-							className="align-baseline border-neutral-2 rounded-0"
-							headingCell
-							key={index}
+			<Head align="left" items={columns}>
+				{
+					((column) => (
+						<Cell
+							className="align-baseline border-neutral-2 rounded-0 text-neutral-10"
+							key={column.columnKey}
 						>
-							{column.label instanceof String ? (
-								<p className="mb-0 mt-4 text-neutral-10">
-									{column.label}
-								</p>
-							) : (
-								column.label
-							)}
-						</ClayTable.Cell>
-					))}
-				</ClayTable.Row>
-			</ClayTable.Head>
+							{column.label}
+						</Cell>
+					)) as ChildrenRender<TableColumn<T>>
+				}
+			</Head>
 
-			<ClayTable.Body>
+			<Body align="left">
 				{rows.map((row, rowIndex) => (
-					<ClayTable.Row key={rowIndex}>
+					<Row
+						key={rowIndex}
+						onClick={() => {
+							if (customClickOnRow) {
+								return customClickOnRow(row);
+							}
+						}}
+					>
 						{columns.map((column, colIndex) => {
 							const data: any = row[column.columnKey as keyof T];
 
 							return (
-								<ClayTable.Cell
+								<Cell
 									align="left"
 									className="border-0 font-weight-normal py-4 table-cell"
-									headingCell
-									key={colIndex}
-									onClick={() => {
-										if (customClickOnRow) {
-											return customClickOnRow(row);
-										}
-									}}
+									key={`${rowIndex}-${colIndex}`}
 								>
 									{column.render ? (
 										column.render(data, row, rowIndex)
@@ -93,12 +95,12 @@ const Table = <T extends unknown>({
 											{data}
 										</span>
 									)}
-								</ClayTable.Cell>
+								</Cell>
 							);
 						})}
-					</ClayTable.Row>
+					</Row>
 				))}
-			</ClayTable.Body>
+			</Body>
 		</ClayTable>
 	</ClayTooltipProvider>
 );

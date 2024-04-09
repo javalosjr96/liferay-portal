@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.ResourceActions;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.rule.NewEnv;
 import com.liferay.portal.kernel.test.util.PropsTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
@@ -106,6 +107,8 @@ public class SearchResultSummaryDisplayContextBuilderTest {
 			portletURL, searchResultSummaryDisplayContext.getPortletURL());
 	}
 
+	@NewEnv(type = NewEnv.Type.JVM)
+	@NewEnv.JVMArgsLine("-Djava.locale.providers=CLDR")
 	@Test
 	public void testCreationDate() throws Exception {
 		String entryClassName = RandomTestUtil.randomString();
@@ -123,17 +126,17 @@ public class SearchResultSummaryDisplayContextBuilderTest {
 
 		document.addKeyword(Field.CREATE_DATE, "20180425171442");
 
-		_assertCreationDate("Apr 25, 2018 5:14 PM", document);
+		_assertCreationDate("Apr 25, 18 5:14 PM", document);
 
 		_assertCreationDate(LocaleUtil.BRAZIL, "25/04/2018 17:14", document);
 		_assertCreationDate(LocaleUtil.CHINA, "2018-4-25 下午5:14", document);
 		_assertCreationDate(LocaleUtil.GERMANY, "25.04.2018 17:14", document);
 		_assertCreationDate(LocaleUtil.HUNGARY, "2018.04.25. 17:14", document);
-		_assertCreationDate(LocaleUtil.ITALY, "25-apr-2018 17.14", document);
+		_assertCreationDate(LocaleUtil.ITALY, "25/apr/18 17:14", document);
 		_assertCreationDate(LocaleUtil.JAPAN, "2018/04/25 17:14", document);
 		_assertCreationDate(
-			LocaleUtil.NETHERLANDS, "25-apr-2018 17:14", document);
-		_assertCreationDate(LocaleUtil.SPAIN, "25-abr-2018 17:14", document);
+			LocaleUtil.NETHERLANDS, "25 apr. 18 17:14", document);
+		_assertCreationDate(LocaleUtil.SPAIN, "25/04/2018 17:14", document);
 	}
 
 	@Test

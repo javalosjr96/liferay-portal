@@ -5,9 +5,11 @@
 
 // @ts-ignore
 
-import {Locator, Page} from '@playwright/test';
+import {Locator, Page, expect} from '@playwright/test';
 
 import {liferayConfig} from '../../../liferay.config';
+import {SegmentEditorPage} from '../../../pages/segments-web/SegmentEditorPage';
+import fillAndClickOutside from '../../../utils/fillAndClickOutside';
 import getRandomString from '../../../utils/getRandomString';
 import {waitForSuccessAlert} from '../../../utils/waitForSuccessAlert';
 import getPageDefinition from '../utils/getPageDefinition';
@@ -15,18 +17,26 @@ import getPageDefinition from '../utils/getPageDefinition';
 export class PageEditorPage {
 	readonly page: Page;
 
+	readonly experienceSelector: Locator;
 	readonly publishButton: Locator;
 	readonly redoButton: Locator;
 	readonly undoButton: Locator;
 	readonly undoHistory: Locator;
 
+	readonly segmentEditorPage: SegmentEditorPage;
+
 	constructor(page: Page) {
 		this.page = page;
 
+		this.experienceSelector = page.locator(
+			'.page-editor__experience-selector'
+		);
 		this.publishButton = page.getByLabel('Publish', {exact: true});
 		this.redoButton = page.getByTitle('Redo');
 		this.undoButton = page.getByTitle('Undo');
 		this.undoHistory = page.locator('.page-editor__undo-history');
+
+		this.segmentEditorPage = new SegmentEditorPage(page);
 	}
 
 	async changeFragmentConfiguration(
@@ -93,6 +103,43 @@ export class PageEditorPage {
 		await this.waitForChangesSaved();
 	}
 
+	async closeExperienceSelector() {
+		const isOpen = await this.experienceSelector.evaluate(
+			(element) => element.getAttribute('aria-expanded') === 'true'
+		);
+
+		if (isOpen) {
+			await this.experienceSelector.click();
+
+			await this.page
+				.getByText('Select Experience')
+				.waitFor({state: 'hidden'});
+		}
+	}
+
+	async createExperience(name: string) {
+		await this.openExperienceSelector();
+
+		await this.page.getByLabel('New Experience').click();
+
+		const nameInput = this.page.getByPlaceholder('Experience Name');
+
+		await nameInput.waitFor();
+
+		await fillAndClickOutside(this.page, nameInput, name);
+
+		await this.page.locator('.modal-footer').getByText('Save').click();
+
+		await this.page.getByText('Select Experience').waitFor();
+
+		await this.closeExperienceSelector();
+
+		await waitForSuccessAlert(
+			this.page,
+			'Success:The experience was created successfully.'
+		);
+	}
+
 	async createPageWithFragmentAndGoToEditMode({apiHelpers, fragment, site}) {
 		await this.page.goto(liferayConfig.environment.baseUrl);
 
@@ -112,6 +159,132 @@ export class PageEditorPage {
 	async deleteFragment(fragmentId: string) {
 		await this.selectFragment(fragmentId);
 		await this.page.keyboard.press('Backspace');
+	}
+
+	async duplicateExperience(experience: string) {
+		await this.openExperienceSelector();
+
+		await this.page
+			.locator('.dropdown-menu__experience', {
+				hasText: experience,
+			})
+			.getByLabel('Duplicate Experience')
+			.click();
+
+		await waitForSuccessAlert(
+			this.page,
+			'Success:The experience was duplicated successfully.'
+		);
+	}
+
+	async editEditableText(
+		fragmentId: string,
+		editableId: string,
+		value: string
+	) {
+
+		// Select fragment and editable
+
+		await this.selectFragment(fragmentId);
+
+		await this.selectEditable(fragmentId, editableId);
+
+		// Click editable again to enable edition
+
+		const editable = this.getEditable(fragmentId, editableId);
+
+		await editable.click();
+
+		// Click CKEditor
+
+		await editable.locator('.cke_editable_inline').waitFor();
+
+		await editable.locator('.cke_editable_inline').click();
+
+		// Clear current content and fill with new one
+
+		await this.page.keyboard.press('Control+KeyA');
+		await this.page.keyboard.press('Backspace');
+
+		await this.page.keyboard.type(value);
+
+		await this.page.locator('header.page-editor__disabled-area').click();
+
+		await this.waitForChangesSaved();
+	}
+
+	async editExperienceName(name: string, newName: string) {
+		await this.openExperienceSelector();
+
+		await this.page
+			.locator('.dropdown-menu__experience', {
+				hasText: name,
+			})
+			.getByLabel('Edit Experience')
+			.click();
+
+		const nameInput = this.page.getByPlaceholder('Experience Name');
+
+		await nameInput.waitFor();
+
+		await fillAndClickOutside(this.page, nameInput, newName);
+
+		await this.page.locator('.modal-footer').getByText('Save').click();
+
+		await this.page.getByText('Select Experience').waitFor();
+
+		await this.closeExperienceSelector();
+
+		await waitForSuccessAlert(
+			this.page,
+			'Success:The experience was updated successfully.'
+		);
+	}
+
+	async editExperienceSegment(name: string, segment: string) {
+		await this.openExperienceSelector();
+
+		await this.page
+			.locator('.dropdown-menu__experience', {hasText: name})
+			.getByLabel('Edit Experience')
+			.click();
+
+		// Check segment already exists, otherwise create it
+
+		const audienceSelector = this.page.getByLabel('Audience');
+
+		const options = await audienceSelector.evaluate(
+			(element: HTMLSelectElement) =>
+				Array.from(element.options).map((option) => option.label)
+		);
+
+		if (options.includes(segment)) {
+			await audienceSelector.selectOption({label: segment});
+		}
+		else {
+			await this.page.getByText('New Segment').click();
+
+			await this.page.getByText('No Conditions yet').waitFor();
+
+			await this.segmentEditorPage.createSegment(segment, {
+				user: ['First Name'],
+			});
+
+			await this.page.getByText('Edit Experience').waitFor();
+		}
+
+		// Save changes
+
+		await this.page.locator('.modal-footer').getByText('Save').click();
+
+		await this.page.getByText('Select Experience').waitFor();
+
+		await this.closeExperienceSelector();
+
+		await waitForSuccessAlert(
+			this.page,
+			'Success:The experience was updated successfully.'
+		);
 	}
 
 	async getFragmentStyle(
@@ -156,6 +329,18 @@ export class PageEditorPage {
 		);
 	}
 
+	async openExperienceSelector() {
+		const isOpen = await this.experienceSelector.evaluate(
+			(element) => element.getAttribute('aria-expanded') === 'true'
+		);
+
+		if (!isOpen) {
+			await this.experienceSelector.click();
+
+			await this.page.getByText('Select Experience').waitFor();
+		}
+	}
+
 	async openSpacingSelector(fragmentId: string, spacingType: SpacingType) {
 		await this.selectFragment(fragmentId);
 		await this.goToConfigurationTab('Styles');
@@ -170,6 +355,18 @@ export class PageEditorPage {
 			this.page,
 			'Success:The page was published successfully.'
 		);
+	}
+
+	async removeFragment(fragmentId: string) {
+		await this.selectFragment(fragmentId);
+
+		const fragment = this.getFragment(fragmentId);
+
+		await this.page.keyboard.press('Backspace');
+
+		await this.waitForChangesSaved();
+
+		await fragment.waitFor({state: 'hidden'});
 	}
 
 	async resetSpacing(fragmentId: string, spacingType: SpacingType) {
@@ -190,7 +387,47 @@ export class PageEditorPage {
 			return;
 		}
 
-		await this.getFragment(fragmentId, isDesktop).click();
+		const fragment = await this.getFragment(fragmentId, isDesktop);
+
+		await fragment.click();
+
+		const isActive = await this.isActive(fragmentId, isDesktop);
+
+		await expect(isActive).toBe(true);
+	}
+
+	async selectEditable(
+		fragmentId: string,
+		editableId: string,
+		isDesktop = true
+	) {
+		await this.selectFragment(fragmentId, isDesktop);
+
+		const editable = await this.getEditable(
+			fragmentId,
+			editableId,
+			isDesktop
+		);
+
+		await editable.click();
+
+		await expect(editable).toBeFocused();
+	}
+
+	async switchExperience(experience: string) {
+		await this.openExperienceSelector();
+
+		await this.page.getByText('Select Experience').waitFor();
+
+		await this.page
+			.locator('.dropdown-menu__experience', {
+				hasText: experience,
+			})
+			.click();
+
+		await expect(this.experienceSelector).toContainText(experience);
+
+		await this.closeExperienceSelector();
 	}
 
 	async switchViewport(viewport: Viewport) {
@@ -218,6 +455,12 @@ export class PageEditorPage {
 				.frameLocator('.page-editor__global-context-iframe')
 				.locator(`.lfr-layout-structure-item-${fragmentId}`);
 		}
+	}
+
+	getEditable(fragmentId: string, editableId: string, isDesktop = true) {
+		return this.getFragment(fragmentId, isDesktop).locator(
+			`[data-lfr-editable-id="${editableId}"]`
+		);
 	}
 
 	getTopper(fragmentId: string, isDesktop = true) {

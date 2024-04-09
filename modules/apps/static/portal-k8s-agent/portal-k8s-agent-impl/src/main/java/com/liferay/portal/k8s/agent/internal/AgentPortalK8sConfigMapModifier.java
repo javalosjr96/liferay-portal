@@ -160,15 +160,187 @@ public class AgentPortalK8sConfigMapModifier
 
 	@Override
 	public Result modifyConfigMap(
+		Consumer<ConfigMapModel> configMapModelConsumer, String configMapName) {
+
+		Result result = _modifyConfigMap(configMapModelConsumer, configMapName);
+
+		if (_log.isInfoEnabled()) {
+			_log.info(
+				StringBundler.concat(
+					"Config map ", configMapName, " ", result));
+		}
+
+		return result;
+	}
+
+	@Deactivate
+	protected void deactivate() {
+		if (_log.isInfoEnabled()) {
+			_log.info("Deactivating K8s agent");
+		}
+
+		_sharedIndexInformer.close();
+
+		_kubernetesClient.close();
+
+		_scheduledExecutorService.shutdown();
+
+		if (_log.isInfoEnabled()) {
+			_log.info("Deactivated K8s agent");
+		}
+	}
+
+	private void _add(ConfigMap configMap) {
+		if (_log.isInfoEnabled()) {
+			_log.info("Adding config map " + configMap.toString());
+		}
+
+		Map<String, String> data = configMap.getData();
+
+		if (data == null) {
+			if (_log.isInfoEnabled()) {
+				_log.info("Data is null for config map " + configMap);
+			}
+
+			return;
+		}
+
+		for (Map.Entry<String, String> entry : data.entrySet()) {
+			try {
+				_processConfigurations(
+					configMap, entry.getKey(), entry.getValue());
+			}
+			catch (Exception exception) {
+				_log.error(exception);
+			}
+		}
+	}
+
+	private Map<String, String> _copy(Map<String, String> annotations) {
+		return new TreeMap<>(_getMap(annotations));
+	}
+
+	private void _delete(ConfigMap configMap) {
+		if (_log.isInfoEnabled()) {
+			_log.info("Deleting config map " + configMap);
+		}
+
+		Map<String, String> data = configMap.getData();
+
+		if (data == null) {
+			if (_log.isInfoEnabled()) {
+				_log.info("Data is null for config map " + configMap);
+			}
+
+			return;
+		}
+
+		Configuration[] configurations = null;
+
+		try {
+			ObjectMeta objectMeta = configMap.getMetadata();
+
+			configurations = _configurationAdmin.listConfigurations(
+				"(.k8s.config.uid=" + objectMeta.getUid() + ")");
+		}
+		catch (Exception exception) {
+			_log.error(exception);
+		}
+
+		if (configurations == null) {
+			return;
+		}
+
+		for (Configuration configuration : configurations) {
+			try {
+				configuration.delete();
+			}
+			catch (Exception exception) {
+				_log.error(exception);
+			}
+		}
+	}
+
+	private Configuration _getConfiguration(String pid) throws Exception {
+		if (pid.endsWith(_FILE_EXTENSION)) {
+			pid = pid.substring(0, pid.length() - _FILE_EXTENSION.length());
+		}
+
+		int index = pid.indexOf(CharPool.TILDE);
+
+		if (index <= 0) {
+			index = pid.indexOf(CharPool.UNDERLINE);
+
+			if (index <= 0) {
+				index = pid.indexOf(CharPool.DASH);
+			}
+		}
+
+		if (index > 0) {
+			String name = pid.substring(index + 1);
+
+			pid = pid.substring(0, index);
+
+			return _configurationAdmin.getFactoryConfiguration(
+				pid, name, StringPool.QUESTION);
+		}
+
+		return _configurationAdmin.getConfiguration(pid, StringPool.QUESTION);
+	}
+
+	private Map<String, String> _getMap(Map<String, String> map) {
+		if (map == null) {
+			map = new TreeMap<>();
+		}
+
+		return map;
+	}
+
+	private String _getVirtualInstancePid(
+		org.apache.felix.configurator.impl.model.Config config,
+		String virtualInstanceId) {
+
+		String pid = config.getPid();
+
+		String factoryPid = ConfigurationFactoryUtil.getFactoryPidFromPid(pid);
+
+		if (factoryPid == null) {
+			return pid;
+		}
+
+		return StringBundler.concat(pid, "/", virtualInstanceId);
+	}
+
+	private Result _modifyConfigMap(
 		Consumer<PortalK8sConfigMapModifier.ConfigMapModel>
 			configMapModelConsumer,
 		String configMapName) {
 
-		if (_clusterMasterExecutor.isEnabled() &&
-			(!_clusterMasterExecutor.isMaster() ||
-			 !AgentPortalK8sThreadLocal.isExecuteOnCurrentNode())) {
+		if (_clusterMasterExecutor.isEnabled()) {
+			if (_log.isDebugEnabled()) {
+				ClusterNode localClusterNode =
+					_clusterExecutor.getLocalClusterNode();
 
-			return Result.UNCHANGED;
+				_log.debug(
+					StringBundler.concat(
+						"Current node ", localClusterNode.getClusterNodeId(),
+						" is ",
+						!_clusterMasterExecutor.isMaster() ? "not " : "",
+						"master"));
+			}
+
+			if (AgentPortalK8sThreadLocal.isExecuteOnCurrentNode()) {
+				if (_log.isDebugEnabled()) {
+					_log.debug("Execute on current node");
+				}
+			}
+			else if (!_clusterMasterExecutor.isMaster()) {
+				if (_log.isDebugEnabled()) {
+					_log.debug("Execute on master only");
+				}
+
+				return Result.UNCHANGED;
+			}
 		}
 
 		Objects.requireNonNull(
@@ -184,14 +356,26 @@ public class AgentPortalK8sConfigMapModifier
 		).get();
 
 		if (configMap != null) {
-			Map<String, String> annotations = _getAnnotations(configMap);
-			Map<String, String> binaryData = _getBinaryData(configMap);
-			Map<String, String> data = _getData(configMap);
-			Map<String, String> labels = _getLabels(configMap);
+			ObjectMeta objectMeta = configMap.getMetadata();
 
-			ConfigMap originalConfigMap = new ConfigMapBuilder(
-				configMap
-			).build();
+			Map<String, String> originalAnnotations = _getMap(
+				objectMeta.getAnnotations());
+
+			Map<String, String> annotations = _copy(originalAnnotations);
+
+			Map<String, String> originalBinaryData = _getMap(
+				configMap.getBinaryData());
+
+			Map<String, String> binaryData = _copy(originalBinaryData);
+
+			Map<String, String> originalData = _getMap(configMap.getData());
+
+			Map<String, String> data = _copy(originalData);
+
+			Map<String, String> originalLabels = _getMap(
+				objectMeta.getLabels());
+
+			Map<String, String> labels = _copy(originalLabels);
 
 			configMapModelConsumer.accept(
 				new ConfigMapModel() {
@@ -230,11 +414,18 @@ public class AgentPortalK8sConfigMapModifier
 
 				return Result.DELETED;
 			}
-			else if (!Objects.equals(
-						binaryData, originalConfigMap.getBinaryData()) ||
-					 !Objects.equals(data, originalConfigMap.getData())) {
+			else if (!Objects.equals(annotations, originalAnnotations) ||
+					 !Objects.equals(binaryData, originalBinaryData) ||
+					 !Objects.equals(data, originalData) ||
+					 !Objects.equals(labels, originalLabels)) {
 
 				_validateLabels(configMapName, labels);
+
+				configMap.setData(binaryData);
+				configMap.setData(data);
+
+				objectMeta.setAnnotations(annotations);
+				objectMeta.setLabels(labels);
 
 				configMap = _kubernetesClient.configMaps(
 				).withName(
@@ -257,10 +448,10 @@ public class AgentPortalK8sConfigMapModifier
 			return Result.UNCHANGED;
 		}
 
-		Map<String, String> annotations = _getMapImpl();
-		Map<String, String> binaryData = _getMapImpl();
-		Map<String, String> data = _getMapImpl();
-		Map<String, String> labels = _getMapImpl();
+		Map<String, String> annotations = new TreeMap<>();
+		Map<String, String> binaryData = new TreeMap<>();
+		Map<String, String> data = new TreeMap<>();
+		Map<String, String> labels = new TreeMap<>();
 
 		configMapModelConsumer.accept(
 			new ConfigMapModel() {
@@ -330,180 +521,6 @@ public class AgentPortalK8sConfigMapModifier
 		}
 
 		return Result.CREATED;
-	}
-
-	@Deactivate
-	protected void deactivate() {
-		if (_log.isInfoEnabled()) {
-			_log.info("Deactivating K8s agent");
-		}
-
-		_sharedIndexInformer.close();
-
-		_kubernetesClient.close();
-
-		_scheduledExecutorService.shutdown();
-
-		if (_log.isInfoEnabled()) {
-			_log.info("Deactivated K8s agent");
-		}
-	}
-
-	private void _add(ConfigMap configMap) {
-		if (_log.isInfoEnabled()) {
-			_log.info("Adding config map " + configMap.toString());
-		}
-
-		Map<String, String> data = configMap.getData();
-
-		if (data == null) {
-			if (_log.isInfoEnabled()) {
-				_log.info("Data is null for config map " + configMap);
-			}
-
-			return;
-		}
-
-		for (Map.Entry<String, String> entry : data.entrySet()) {
-			try {
-				_processConfigurations(
-					configMap, entry.getKey(), entry.getValue());
-			}
-			catch (Exception exception) {
-				_log.error(exception);
-			}
-		}
-	}
-
-	private void _delete(ConfigMap configMap) {
-		if (_log.isInfoEnabled()) {
-			_log.info("Deleting config map " + configMap);
-		}
-
-		Map<String, String> data = configMap.getData();
-
-		if (data == null) {
-			if (_log.isInfoEnabled()) {
-				_log.info("Data is null for config map " + configMap);
-			}
-
-			return;
-		}
-
-		Configuration[] configurations = null;
-
-		try {
-			ObjectMeta objectMeta = configMap.getMetadata();
-
-			configurations = _configurationAdmin.listConfigurations(
-				"(.k8s.config.uid=" + objectMeta.getUid() + ")");
-		}
-		catch (Exception exception) {
-			_log.error(exception);
-		}
-
-		if (configurations == null) {
-			return;
-		}
-
-		for (Configuration configuration : configurations) {
-			try {
-				configuration.delete();
-			}
-			catch (Exception exception) {
-				_log.error(exception);
-			}
-		}
-	}
-
-	private Map<String, String> _getAnnotations(ConfigMap configMap) {
-		Map<String, String> annotations = _getMapImpl();
-
-		ObjectMeta objectMeta = configMap.getMetadata();
-
-		if (objectMeta != null) {
-			annotations = objectMeta.getAnnotations();
-		}
-
-		return annotations;
-	}
-
-	private Map<String, String> _getBinaryData(ConfigMap configMap) {
-		Map<String, String> binaryData = configMap.getBinaryData();
-
-		if (binaryData == null) {
-			binaryData = _getMapImpl();
-		}
-
-		return binaryData;
-	}
-
-	private Configuration _getConfiguration(String pid) throws Exception {
-		if (pid.endsWith(_FILE_EXTENSION)) {
-			pid = pid.substring(0, pid.length() - _FILE_EXTENSION.length());
-		}
-
-		int index = pid.indexOf(CharPool.TILDE);
-
-		if (index <= 0) {
-			index = pid.indexOf(CharPool.UNDERLINE);
-
-			if (index <= 0) {
-				index = pid.indexOf(CharPool.DASH);
-			}
-		}
-
-		if (index > 0) {
-			String name = pid.substring(index + 1);
-
-			pid = pid.substring(0, index);
-
-			return _configurationAdmin.getFactoryConfiguration(
-				pid, name, StringPool.QUESTION);
-		}
-
-		return _configurationAdmin.getConfiguration(pid, StringPool.QUESTION);
-	}
-
-	private Map<String, String> _getData(ConfigMap configMap) {
-		Map<String, String> data = configMap.getData();
-
-		if (data == null) {
-			data = _getMapImpl();
-		}
-
-		return data;
-	}
-
-	private Map<String, String> _getLabels(ConfigMap configMap) {
-		Map<String, String> labels = _getMapImpl();
-
-		ObjectMeta objectMeta = configMap.getMetadata();
-
-		if (objectMeta != null) {
-			labels = objectMeta.getLabels();
-		}
-
-		return labels;
-	}
-
-	private Map<String, String> _getMapImpl() {
-		return new TreeMap<>();
-	}
-
-	private String _getVirtualInstancePid(
-		org.apache.felix.configurator.impl.model.Config config,
-		String virtualInstanceId) {
-
-		String pid = config.getPid();
-
-		String factoryPid = ConfigurationFactoryUtil.getFactoryPidFromPid(pid);
-
-		if (factoryPid == null) {
-			return pid;
-		}
-
-		return StringBundler.concat(pid, "/", virtualInstanceId);
 	}
 
 	private void _processConfiguration(

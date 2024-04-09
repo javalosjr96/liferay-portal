@@ -18,6 +18,7 @@ import com.liferay.object.service.ObjectActionLocalService;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectValidationRuleLocalService;
 import com.liferay.object.test.util.ObjectDefinitionTestUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -36,14 +37,19 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
+import com.liferay.portal.workflow.definition.groovy.script.use.WorkflowDefinitionGroovyScriptUseSourceURLFactory;
+import com.liferay.portal.workflow.manager.WorkflowDefinitionManager;
+import com.liferay.portal.workflow.portlet.tab.WorkflowPortletTabRegistry;
 
 import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -92,6 +98,9 @@ public class GetGroovyScriptUsesMVCResourceCommandTest {
 		_createObjectDefinitionGroovyScriptUses(
 			"company1", objectDefinition1, user1.getUserId());
 
+		_createWorkflowDefinitions(
+			company1.getCompanyId(), "company1", user1.getUserId());
+
 		Company company2 = _companyLocalService.getCompany(
 			TestPropsValues.getCompanyId());
 
@@ -103,6 +112,9 @@ public class GetGroovyScriptUsesMVCResourceCommandTest {
 		_createObjectDefinitionGroovyScriptUses(
 			"liferay", objectDefinition2, user2.getUserId());
 
+		_createWorkflowDefinitions(
+			company2.getCompanyId(), "liferay", user2.getUserId());
+
 		Assert.assertEquals(
 			JSONFactoryUtil.createJSONArray(
 			).put(
@@ -112,7 +124,7 @@ public class GetGroovyScriptUsesMVCResourceCommandTest {
 					"sourceName", "company1ActiveGroovyObjectAction"
 				).put(
 					"sourceURL",
-					_objectDefinitionGroovyScriptUseSourceURLFactory.create(
+					ObjectDefinitionGroovyScriptUseSourceURLFactory.create(
 						company1, objectDefinition1.getObjectDefinitionId(),
 						_portal, "actions")
 				)
@@ -123,9 +135,33 @@ public class GetGroovyScriptUsesMVCResourceCommandTest {
 					"sourceName", "company1ActiveGroovyObjectValidation"
 				).put(
 					"sourceURL",
-					_objectDefinitionGroovyScriptUseSourceURLFactory.create(
+					ObjectDefinitionGroovyScriptUseSourceURLFactory.create(
 						company1, objectDefinition1.getObjectDefinitionId(),
 						_portal, "validations")
+				)
+			).put(
+				JSONUtil.put(
+					"companyWebId", "company1.com"
+				).put(
+					"sourceName", "company1PublishedGroovyWorkflowDefinition"
+				).put(
+					"sourceURL",
+					WorkflowDefinitionGroovyScriptUseSourceURLFactory.create(
+						company1, _portal,
+						"company1PublishedGroovyWorkflowDefinition", 1,
+						_workflowPortletTabRegistry)
+				)
+			).put(
+				JSONUtil.put(
+					"companyWebId", "company1.com"
+				).put(
+					"sourceName", "company1PublishedJavaWorkflowDefinition"
+				).put(
+					"sourceURL",
+					WorkflowDefinitionGroovyScriptUseSourceURLFactory.create(
+						company1, _portal,
+						"company1PublishedJavaWorkflowDefinition", 1,
+						_workflowPortletTabRegistry)
 				)
 			).put(
 				JSONUtil.put(
@@ -134,7 +170,7 @@ public class GetGroovyScriptUsesMVCResourceCommandTest {
 					"sourceName", "liferayActiveGroovyObjectAction"
 				).put(
 					"sourceURL",
-					_objectDefinitionGroovyScriptUseSourceURLFactory.create(
+					ObjectDefinitionGroovyScriptUseSourceURLFactory.create(
 						company2, objectDefinition2.getObjectDefinitionId(),
 						_portal, "actions")
 				)
@@ -145,9 +181,33 @@ public class GetGroovyScriptUsesMVCResourceCommandTest {
 					"sourceName", "liferayActiveGroovyObjectValidation"
 				).put(
 					"sourceURL",
-					_objectDefinitionGroovyScriptUseSourceURLFactory.create(
+					ObjectDefinitionGroovyScriptUseSourceURLFactory.create(
 						company2, objectDefinition2.getObjectDefinitionId(),
 						_portal, "validations")
+				)
+			).put(
+				JSONUtil.put(
+					"companyWebId", "liferay.com"
+				).put(
+					"sourceName", "liferayPublishedGroovyWorkflowDefinition"
+				).put(
+					"sourceURL",
+					WorkflowDefinitionGroovyScriptUseSourceURLFactory.create(
+						company2, _portal,
+						"liferayPublishedGroovyWorkflowDefinition", 1,
+						_workflowPortletTabRegistry)
+				)
+			).put(
+				JSONUtil.put(
+					"companyWebId", "liferay.com"
+				).put(
+					"sourceName", "liferayPublishedJavaWorkflowDefinition"
+				).put(
+					"sourceURL",
+					WorkflowDefinitionGroovyScriptUseSourceURLFactory.create(
+						company2, _portal,
+						"liferayPublishedJavaWorkflowDefinition", 1,
+						_workflowPortletTabRegistry)
 				)
 			).toString(),
 			_getGroovyScriptUsesJSONArrayString());
@@ -260,6 +320,51 @@ public class GetGroovyScriptUsesMVCResourceCommandTest {
 			userId);
 	}
 
+	private void _createWorkflowDefinitions(
+			long companyId, String companyName, long userId)
+		throws Exception {
+
+		_workflowDefinitionManager.deployWorkflowDefinition(
+			companyId, userId,
+			companyName + "PublishedGroovyWorkflowDefinition",
+			companyName + "PublishedGroovyWorkflowDefinition",
+			_getContentBytes("workflow-definition-2.json"));
+		_workflowDefinitionManager.deployWorkflowDefinition(
+			companyId, userId, companyName + "PublishedJavaWorkflowDefinition",
+			companyName + "PublishedJavaWorkflowDefinition",
+			_getContentBytes("workflow-definition-3.json"));
+		_workflowDefinitionManager.deployWorkflowDefinition(
+			companyId, userId, companyName + "PublishedWorkflowDefinition",
+			StringUtil.randomId(),
+			_getContentBytes("workflow-definition-1.json"));
+
+		_workflowDefinitionManager.saveWorkflowDefinition(
+			companyId, userId,
+			companyName + "UnpublishedGroovyWorkflowDefinition",
+			StringUtil.randomId(),
+			_getContentBytes("workflow-definition-2.json"));
+		_workflowDefinitionManager.saveWorkflowDefinition(
+			companyId, userId,
+			companyName + "UnpublishedJavaWorkflowDefinition",
+			StringUtil.randomId(),
+			_getContentBytes("workflow-definition-3.json"));
+	}
+
+	private byte[] _getContentBytes(String fileName) throws Exception {
+		Class<?> clazz = getClass();
+
+		ClassLoader classLoader = clazz.getClassLoader();
+
+		InputStream inputStream = classLoader.getResourceAsStream(
+			StringBundler.concat(
+				"com/liferay/portal/security/script/management/web/internal",
+				"/portlet/action/test/dependencies/", fileName));
+
+		String content = StringUtil.read(inputStream);
+
+		return content.getBytes();
+	}
+
 	private String _getGroovyScriptUsesJSONArrayString() throws Exception {
 		MockLiferayResourceResponse mockLiferayResourceResponse =
 			new MockLiferayResourceResponse();
@@ -285,10 +390,6 @@ public class GetGroovyScriptUsesMVCResourceCommandTest {
 	@Inject
 	private ObjectActionLocalService _objectActionLocalService;
 
-	private final ObjectDefinitionGroovyScriptUseSourceURLFactory
-		_objectDefinitionGroovyScriptUseSourceURLFactory =
-			new ObjectDefinitionGroovyScriptUseSourceURLFactory();
-
 	@Inject
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
@@ -303,5 +404,11 @@ public class GetGroovyScriptUsesMVCResourceCommandTest {
 
 	@Inject
 	private UserLocalService _userLocalService;
+
+	@Inject
+	private WorkflowDefinitionManager _workflowDefinitionManager;
+
+	@Inject
+	private WorkflowPortletTabRegistry _workflowPortletTabRegistry;
 
 }

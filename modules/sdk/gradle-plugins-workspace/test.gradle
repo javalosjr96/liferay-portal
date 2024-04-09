@@ -167,7 +167,18 @@ gradleTest {
 
 	deprecationMessagesAreFailures = false
 
-	exclude "**/*_base*"
+	exclude "src/gradleTest/*.gradle"
+
+	fileTree(dir: "src/gradleTest", include: "*.gradle").each {
+		String propertyName = "commonScript.${it.name}"
+
+		gradleArguments "--project-prop", "${propertyName}=" + FileUtil.getAbsolutePath(it)
+
+		println ""
+		println "Script path: ${it}"
+		println "Property name: ${propertyName}"
+		println "Usage: 'apply from: project.property(\"${propertyName}\")'"
+	}
 
 	gradleArguments "--project-prop", "app.server.parent.dir=" + FileUtil.getAbsolutePath(copyBundle.destinationDir)
 	gradleArguments "--project-prop", "pluginClasspathDir=${uri(gradleTestDependenciesDir)}"

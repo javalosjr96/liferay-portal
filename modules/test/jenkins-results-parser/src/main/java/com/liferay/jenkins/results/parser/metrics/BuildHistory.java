@@ -93,10 +93,12 @@ public class BuildHistory {
 		return _startTime;
 	}
 
-	public JSONArray getTableJSONArray(String firstColumnHeader) {
-		Table table = _getTable(firstColumnHeader);
+	public JSONArray getTableJSONArray(
+		String groupIdentifierName, int intervalDays) {
 
-		return table.getJSONArray();
+		Table table = _getTable(groupIdentifierName);
+
+		return table.getJSONArray(intervalDays);
 	}
 
 	public JSONObject getTimelineJSONObject() {
@@ -163,99 +165,98 @@ public class BuildHistory {
 
 	protected class Table {
 
-		public JSONArray getJSONArray() {
+		public JSONArray getJSONArray(int intervalDays) {
+			String[][] dateStringsArray = _split(
+				JenkinsResultsParserUtil.getDateStrings(
+					getStartTime(), getDuration()),
+				intervalDays);
+
+			String[] dateStrings = new String[dateStringsArray.length];
+
+			Long[] averageTopLevelBuildDurations =
+				new Long[dateStringsArray.length];
+			Long[] invokedBuilds = new Long[dateStringsArray.length];
+			Long[] invokedTopLevelBuilds = new Long[dateStringsArray.length];
+			Long[] totalServerDurations = new Long[dateStringsArray.length];
+
+			for (int i = 0; i < dateStringsArray.length; i++) {
+				dateStrings[i] = dateStringsArray[i][0];
+
+				invokedBuilds[i] = _getTotalValue(
+					_dailyInvokedBuilds, dateStringsArray[i]);
+				invokedTopLevelBuilds[i] = _getTotalValue(
+					_dailyInvokedTopLevelBuilds, dateStringsArray[i]);
+				totalServerDurations[i] = _getTotalValue(
+					_dailyTotalBuildDurations, dateStringsArray[i]);
+
+				long topLevelBuildDuration = _getTotalValue(
+					_dailyTotalTopLevelBuildDurations, dateStringsArray[i]);
+
+				averageTopLevelBuildDurations[i] = _getQuotient(
+					topLevelBuildDuration, invokedTopLevelBuilds[i]);
+			}
+
+			List<List<Object>> rows = new ArrayList<>();
+
+			rows.add(
+				new ArrayList<Object>() {
+					{
+						add(_groupIdentifierName);
+						add("Metric");
+						addAll(Arrays.asList(dateStrings));
+					}
+				});
+
+			rows.add(
+				new ArrayList<Object>() {
+					{
+						add(getName());
+						add("Invoked Builds");
+						addAll(Arrays.asList(invokedBuilds));
+					}
+				});
+
+			rows.add(
+				new ArrayList<Object>() {
+					{
+						add(getName());
+						add("Invoked Top Level Builds");
+						addAll(Arrays.asList(invokedTopLevelBuilds));
+					}
+				});
+
+			rows.add(
+				new ArrayList<Object>() {
+					{
+						add(getName());
+						add("Average Top Level Build Duration");
+						addAll(Arrays.asList(averageTopLevelBuildDurations));
+					}
+				});
+
+			rows.add(
+				new ArrayList<Object>() {
+					{
+						add(getName());
+						add("Total Server Duration");
+						addAll(Arrays.asList(totalServerDurations));
+					}
+				});
+
 			JSONArray jsonArray = new JSONArray();
 
-			for (List<Object> row : _rows) {
+			for (List<Object> row : rows) {
 				jsonArray.put(new JSONArray(row));
 			}
 
 			return jsonArray;
 		}
 
-		protected Table(final String firstColumnHeader) {
-			final String[] dateStrings =
-				JenkinsResultsParserUtil.getDateStrings(
-					getStartTime(), getDuration());
-
-			_averageTopLevelBuildDurations = new Long[dateStrings.length];
-			_averageTopLevelQueueDurations = new Long[dateStrings.length];
-			_invokedBuilds = new Long[dateStrings.length];
-			_invokedTopLevelBuilds = new Long[dateStrings.length];
-			_totalServerDurations = new Long[dateStrings.length];
-
-			for (int i = 0; i < dateStrings.length; i++) {
-				String dateString = dateStrings[i];
-
-				_invokedBuilds[i] = _getValue(_dailyInvokedBuilds, dateString);
-
-				_invokedTopLevelBuilds[i] = _getValue(
-					_dailyInvokedTopLevelBuilds, dateString);
-
-				_totalServerDurations[i] = _getValue(
-					_dailyTotalBuildDurations, dateString);
-
-				_averageTopLevelBuildDurations[i] = _getQuotient(
-					_getValue(_dailyTotalTopLevelBuildDurations, dateString),
-					_getValue(_dailyInvokedTopLevelBuilds, dateString));
-
-				_averageTopLevelQueueDurations[i] = _getQuotient(
-					_getValue(_dailyTotalTopLevelQueueTime, dateString),
-					_getValue(_dailyInvokedTopLevelBuilds, dateString));
-			}
-
-			_rows.add(
-				new ArrayList<Object>() {
-					{
-						add(firstColumnHeader);
-						add("Metric");
-						addAll(Arrays.asList(dateStrings));
-					}
-				});
-
-			_rows.add(
-				new ArrayList<Object>() {
-					{
-						add(getName());
-						add("Invoked Builds");
-						addAll(Arrays.asList(_invokedBuilds));
-					}
-				});
-
-			_rows.add(
-				new ArrayList<Object>() {
-					{
-						add(getName());
-						add("Invoked Top Level Builds");
-						addAll(Arrays.asList(_invokedTopLevelBuilds));
-					}
-				});
-
-			_rows.add(
-				new ArrayList<Object>() {
-					{
-						add(getName());
-						add("Average Top Level Build Duration");
-						addAll(Arrays.asList(_averageTopLevelBuildDurations));
-					}
-				});
-
-			_rows.add(
-				new ArrayList<Object>() {
-					{
-						add(getName());
-						add("Total Server Duration");
-						addAll(Arrays.asList(_totalServerDurations));
-					}
-				});
+		protected Table(String groupIdentifierName) {
+			_groupIdentifierName = groupIdentifierName;
 		}
 
-		private final Long[] _averageTopLevelBuildDurations;
-		private final Long[] _averageTopLevelQueueDurations;
-		private final Long[] _invokedBuilds;
-		private final Long[] _invokedTopLevelBuilds;
-		private final List<List<Object>> _rows = new ArrayList<>();
-		private final Long[] _totalServerDurations;
+		private final String _groupIdentifierName;
 
 	}
 
@@ -444,12 +445,18 @@ public class BuildHistory {
 		return _timeline;
 	}
 
-	private Long _getValue(Map<String, Long> dailyValueMap, String dateString) {
-		if (dailyValueMap.containsKey(dateString)) {
-			return dailyValueMap.get(dateString);
+	private Long _getTotalValue(
+		Map<String, Long> dailyValueMap, String... dateStrings) {
+
+		long totalValue = 0L;
+
+		for (String dateString : dateStrings) {
+			if (dailyValueMap.containsKey(dateString)) {
+				totalValue += dailyValueMap.get(dateString);
+			}
 		}
 
-		return 0L;
+		return totalValue;
 	}
 
 	private void _mergeMap(
@@ -465,6 +472,26 @@ public class BuildHistory {
 				(currentValue == null) ? entry.getValue() :
 					entry.getValue() + currentValue);
 		}
+	}
+
+	private String[][] _split(String[] array, int size) {
+		int count = (int)Math.ceil((double)array.length / size);
+
+		String[][] arrays = new String[count][];
+
+		for (int i = 0; i < count; ++i) {
+			int start = i * size;
+
+			int length = Math.min(array.length - start, size);
+
+			String[] curArray = new String[length];
+
+			System.arraycopy(array, start, curArray, 0, length);
+
+			arrays[i] = curArray;
+		}
+
+		return arrays;
 	}
 
 	private static final long _TIMELINE_SAMPLE_PERIOD_MINUTES = 15;

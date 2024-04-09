@@ -113,8 +113,8 @@ public abstract class BaseJRPEventHandler extends BaseEventHandler {
 			throw new InvalidJSONException("Missing \"name\" from build JSON");
 		}
 
-		BuildEntity.State state = BuildEntity.State.getByKey(
-			buildJSONObject.optString("state"));
+		BuildEntity.State state = BuildEntity.State.get(
+			buildJSONObject.opt("state"));
 
 		if (state == null) {
 			state = BuildEntity.State.OPENED;
@@ -297,15 +297,13 @@ public abstract class BaseJRPEventHandler extends BaseEventHandler {
 				"Missing \"priority\" from job JSON");
 		}
 
-		JobEntity.State state = JobEntity.State.getByKey(
-			jobJSONObject.optString("state"));
+		JobEntity.State state = JobEntity.State.get(jobJSONObject.opt("state"));
 
 		if (state == null) {
 			state = JobEntity.State.OPENED;
 		}
 
-		JobEntity.Type type = JobEntity.Type.getByKey(
-			jobJSONObject.optString("type"));
+		JobEntity.Type type = JobEntity.Type.get(jobJSONObject.opt("type"));
 
 		if (type == null) {
 			throw new InvalidJSONException(

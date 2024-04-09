@@ -99,7 +99,11 @@ const MDFClaimList = () => {
 
 			return (
 				<div className="mt-3">
-					<Table<MDFClaimListItem> columns={columns} rows={items} />
+					<Table<MDFClaimListItem>
+						columns={columns}
+						layoutAuto
+						rows={items}
+					/>
 
 					<ClayPaginationBarWithBasicItems
 						{...pagination}

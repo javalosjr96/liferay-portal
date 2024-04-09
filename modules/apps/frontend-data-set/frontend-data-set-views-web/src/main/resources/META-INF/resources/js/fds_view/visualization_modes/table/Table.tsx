@@ -39,7 +39,7 @@ import '../../../../css/TableVisualizationMode.scss';
 
 import ClayIcon from '@clayui/icon';
 
-import {IFDSField, IField} from '../../../utils/types';
+import {EFieldType, IFDSField, IField} from '../../../utils/types';
 import AddFieldsModalContent from './modal_content/AddFieldsModalContent';
 
 const defaultLanguageId = Liferay.ThemeDisplay.getDefaultLanguageId();
@@ -159,14 +159,17 @@ const SaveFDSFieldsModalContent = ({
 	const saveFDSFields = async () => {
 		setSaveButtonDisabled(true);
 
-		const creationData: Array<{name: string; type: string}> = [];
+		const creationData: Array<{
+			name: string;
+			type: string;
+		}> = [];
 		const deletionIds: Array<number> = [];
 
 		fields?.forEach((field) => {
 			if (field.selected && !field.id) {
 				creationData.push({
 					name: field.name,
-					type: field.type || 'string',
+					type: field.type || EFieldType.STRING,
 				});
 			}
 
@@ -431,8 +434,9 @@ const EditFDSFieldModalContent = ({
 	const [selectedFDSFieldRenderer, setSelectedFDSFieldRenderer] = useState(
 		fdsField.renderer ?? 'default'
 	);
+
 	const [fdsFieldSortable, setFSDFieldSortable] = useState<boolean>(
-		fdsField.sortable ?? true
+		fdsField.sortable ?? fdsField.type !== EFieldType.OBJECT
 	);
 
 	const fdsInternalCellRendererNames = FDS_INTERNAL_CELL_RENDERERS.map(
@@ -613,6 +617,7 @@ const EditFDSFieldModalContent = ({
 				<ClayForm.Group>
 					<ClayCheckbox
 						checked={fdsFieldSortable}
+						disabled={fdsField.type === EFieldType.OBJECT}
 						inline
 						label={Liferay.Language.get('sortable')}
 						onChange={({target: {checked}}) =>
@@ -620,14 +625,16 @@ const EditFDSFieldModalContent = ({
 						}
 					/>
 
-					<span
-						className="label-icon lfr-portal-tooltip ml-2"
-						title={Liferay.Language.get(
-							'if-checked,-data-set-items-can-be-sorted-by-this-field'
-						)}
-					>
-						<ClayIcon symbol="question-circle-full" />
-					</span>
+					{fdsField.type !== EFieldType.OBJECT && (
+						<span
+							className="label-icon lfr-portal-tooltip ml-2"
+							title={Liferay.Language.get(
+								'if-checked,-data-set-items-can-be-sorted-by-this-field'
+							)}
+						>
+							<ClayIcon symbol="question-circle-full" />
+						</span>
+					)}
 				</ClayForm.Group>
 			</ClayModal.Body>
 

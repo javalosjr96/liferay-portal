@@ -33,7 +33,10 @@ public class CommerceReturnTableFDSView extends BaseTableFDSView {
 
 		return fdsTableSchemaBuilder.add(
 			"id", "return-id",
-			fdsTableSchemaField -> fdsTableSchemaField.setSortable(true)
+			fdsTableSchemaField -> {
+				fdsTableSchemaField.setContentRenderer("actionLink");
+				fdsTableSchemaField.setSortable(true);
+			}
 		).add(
 			"r_accountToCommerceReturns_accountEntry.name", "account"
 		).add(

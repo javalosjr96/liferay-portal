@@ -24,6 +24,7 @@ import useLiferayNavigate from '../../common/hooks/useLiferayNavigate';
 import usePagination from '../../common/hooks/usePagination';
 import usePermissionActions from '../../common/hooks/usePermissionActions';
 import {DealRegistrationListItem} from '../../common/interfaces/dealRegistrationListItem';
+import TableColumn from '../../common/interfaces/tableColumn';
 import {Liferay} from '../../common/services/liferay';
 import getDoubleParagraph from '../../common/utils/getDoubleParagraph';
 import ModalContent from './components/ModalContent';
@@ -32,6 +33,7 @@ import useGetListItemsFromDealRegistration from './hooks/useGetListItemsFromDeal
 export type DealRegistrationItem = {
 	[key in DealRegistrationColumnKey]?: any;
 };
+
 interface IProps {
 	sort: string;
 }
@@ -82,10 +84,11 @@ const DealRegistrationList = ({sort}: IProps) => {
 	const filteredData = data.items;
 	const filteredCSVData = dataCSV.items;
 
-	const columns = [
+	const columns: TableColumn<DealRegistrationItem>[] = [
 		{
 			columnKey: DealRegistrationColumnKey.PARTNER_ACCOUNT_NAME,
 			label: 'Partner Account Name',
+			size: 'md',
 		},
 		{
 			columnKey: DealRegistrationColumnKey.PARTNER_NAME,
@@ -94,6 +97,7 @@ const DealRegistrationList = ({sort}: IProps) => {
 		{
 			columnKey: DealRegistrationColumnKey.ACCOUNT_NAME,
 			label: 'Account Name',
+			size: 'sm',
 		},
 		{
 			columnKey: DealRegistrationColumnKey.DATE_SUBMITTED,
@@ -102,10 +106,12 @@ const DealRegistrationList = ({sort}: IProps) => {
 		{
 			columnKey: DealRegistrationColumnKey.PRIMARY_PROSPECT_NAME,
 			label: getDoubleParagraph('Primary Prospect', 'Name'),
+			size: 'sm',
 		},
 		{
 			columnKey: DealRegistrationColumnKey.PRIMARY_PROSPECT_EMAIL,
 			label: getDoubleParagraph('Primary Prospect', 'Email'),
+			size: 'sm',
 		},
 		{
 			columnKey: DealRegistrationColumnKey.PRIMARY_PROSPECT_PHONE,
@@ -152,6 +158,7 @@ const DealRegistrationList = ({sort}: IProps) => {
 					<Table<DealRegistrationListItem>
 						columns={columns}
 						customClickOnRow={handleCustomClickOnRow}
+						layoutAuto
 						rows={items}
 					/>
 

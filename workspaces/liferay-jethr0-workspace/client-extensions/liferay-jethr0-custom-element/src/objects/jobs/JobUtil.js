@@ -18,11 +18,25 @@ export function createJob({data, redirect}) {
 		method: 'POST',
 		urlPath: '/o/c/jobs',
 	})
-		.then((request) => request.text())
-		.then((result) => {
-			if (redirect !== null) {
-				redirect(result);
-			}
+		.then((parentRequest) => parentRequest.text())
+		.then((parentResult) => {
+			const parentResultJSON = JSON.parse(parentResult);
+
+			liferayRequest({
+				headers,
+				method: 'PUT',
+				urlPath: `/o/c/jobs/${parentResultJSON.id}/object-actions/Jethr0EtcSpringBootJobAdd`,
+			})
+				.then((request) => request.text())
+				.then(() => {
+					if (redirect !== null) {
+						redirect(parentResult);
+					}
+				})
+				.catch((error) => {
+					// eslint-disable-next-line no-console
+					console.log(error);
+				});
 		})
 		.catch((error) => {
 			// eslint-disable-next-line no-console
@@ -62,19 +76,77 @@ export function getJobById({id, setJob}) {
 		});
 }
 
-export function getJobs({setJobs}) {
-	liferayRequest({urlPath: '/o/c/jobs'})
+export function getJobQueueOrderedJobs({setJobs}) {
+	liferayRequest({
+		urlPath: '/o/c/jobprioritizers',
+		urlSearchParams: new URLSearchParams({
+			pageSize: 1,
+			sort: 'dateCreated:desc',
+		}),
+	})
 		.then((request) => request.text())
 		.then((result) => {
 			const resultJSON = JSON.parse(result);
 
-			const jobs = [];
+			getJobs({
+				orderedJobIds: JSON.parse(
+					resultJSON.items[0].prioritizedJobIds
+				),
+				setJobs,
+			});
+		})
+		.catch((error) => {
+			// eslint-disable-next-line no-console
+			console.log(error);
+		});
+}
+
+export function getJobs({orderedJobIds, setJobs}) {
+	let filter = '';
+
+	if (orderedJobIds) {
+		for (let i = 0; i < orderedJobIds.length; i++) {
+			if (i > 0) {
+				filter += ' or ';
+			}
+
+			filter += `id eq '${orderedJobIds[i]}'`;
+		}
+	}
+
+	liferayRequest({
+		urlPath: '/o/c/jobs',
+		urlSearchParams: new URLSearchParams({filter}),
+	})
+		.then((request) => request.text())
+		.then((result) => {
+			const resultJSON = JSON.parse(result);
+
+			const jobsMap = new Map();
+
+			let jobs = [];
 
 			resultJSON.items.forEach((item) => {
-				jobs.push(new Job(item));
+				const job = new Job(item);
+
+				jobs.push(job);
+
+				jobsMap.set(job.id, job);
 			});
 
-			if (jobs && setJobs) {
+			if (orderedJobIds) {
+				jobs = [];
+
+				for (const jobId of orderedJobIds) {
+					const job = jobsMap.get(jobId);
+
+					if (job) {
+						jobs.push(jobsMap.get(jobId));
+					}
+				}
+			}
+
+			if (setJobs) {
 				setJobs(jobs);
 			}
 		})

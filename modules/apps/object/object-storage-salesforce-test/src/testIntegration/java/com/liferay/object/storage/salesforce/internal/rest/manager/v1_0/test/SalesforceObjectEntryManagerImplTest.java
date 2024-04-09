@@ -293,6 +293,7 @@ public class SalesforceObjectEntryManagerImplTest
 		ObjectEntry objectEntry3 = _addObjectEntry(
 			"completed", new Date(date.getTime() + Time.DAY), title3);
 		ObjectEntry objectEntry4 = _addObjectEntry("queued", date, title4);
+		ObjectEntry objectEntry5 = _addObjectEntry("queued", date, null);
 
 		// And/or with equals/not equals expression
 
@@ -335,7 +336,7 @@ public class SalesforceObjectEntryManagerImplTest
 					" or ", buildEqualsExpressionFilterString("dueDate", date),
 					" or ", buildEqualsExpressionFilterString("title", title1))
 			).build(),
-			objectEntry1, objectEntry4);
+			objectEntry1, objectEntry4, objectEntry5);
 
 		testGetObjectEntries(
 			HashMapBuilder.put(
@@ -402,6 +403,12 @@ public class SalesforceObjectEntryManagerImplTest
 			).build(),
 			objectEntry2, objectEntry3, objectEntry4);
 
+		testGetObjectEntries(
+			HashMapBuilder.put(
+				"filter", buildEqualsExpressionFilterString("title", null)
+			).build(),
+			objectEntry5);
+
 		// Range expression
 
 		testGetObjectEntries(
@@ -413,7 +420,7 @@ public class SalesforceObjectEntryManagerImplTest
 							objectEntry1.getProperties(), "dueDate")),
 					new Date(), "dueDate", "yyyy-MM-dd")
 			).build(),
-			objectEntry1, objectEntry4);
+			objectEntry1, objectEntry4, objectEntry5);
 	}
 
 	@Test

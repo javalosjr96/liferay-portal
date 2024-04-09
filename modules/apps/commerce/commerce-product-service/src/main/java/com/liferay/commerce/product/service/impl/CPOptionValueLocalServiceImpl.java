@@ -5,12 +5,15 @@
 
 package com.liferay.commerce.product.service.impl;
 
+import com.liferay.commerce.product.constants.CPConstants;
 import com.liferay.commerce.product.exception.CPOptionValueKeyException;
 import com.liferay.commerce.product.exception.CPOptionValueNameException;
 import com.liferay.commerce.product.model.CPOption;
 import com.liferay.commerce.product.model.CPOptionValue;
 import com.liferay.commerce.product.service.base.CPOptionValueLocalServiceBaseImpl;
+import com.liferay.commerce.product.service.persistence.CPOptionPersistence;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
@@ -39,6 +42,9 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.TimeZoneUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.io.Serializable;
@@ -47,6 +53,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -91,7 +98,7 @@ public class CPOptionValueLocalServiceImpl
 
 		key = _friendlyURLNormalizer.normalize(key);
 
-		_validateKey(0, cpOptionId, key);
+		_validateKey(_cpOptionPersistence.findByPrimaryKey(cpOptionId), 0, key);
 
 		_validateName(nameMap);
 
@@ -276,7 +283,7 @@ public class CPOptionValueLocalServiceImpl
 		key = _friendlyURLNormalizer.normalize(key);
 
 		_validateKey(
-			cpOptionValue.getCPOptionValueId(), cpOptionValue.getCPOptionId(),
+			cpOptionValue.getCPOption(), cpOptionValue.getCPOptionValueId(),
 			key);
 
 		_validateName(nameMap);
@@ -369,6 +376,29 @@ public class CPOptionValueLocalServiceImpl
 		return cpOptionValues;
 	}
 
+	private String _getTimeZone(String[] splits) {
+		if ((splits == null) || (splits.length < 7) || splits[7].isEmpty()) {
+			return StringPool.BLANK;
+		}
+
+		if (splits.length == 8) {
+			return splits[7].toUpperCase();
+		}
+
+		String timeZone = StringBundler.concat(
+			StringUtil.upperCaseFirstLetter(splits[7]),
+			StringPool.FORWARD_SLASH,
+			StringUtil.upperCaseFirstLetter(splits[8]));
+
+		if ((splits.length > 9) && Validator.isNotNull(splits[9])) {
+			return StringBundler.concat(
+				timeZone, StringPool.UNDERLINE,
+				StringUtil.upperCaseFirstLetter(splits[9]));
+		}
+
+		return timeZone;
+	}
+
 	private void _reindexCPOption(long cpOptionId) throws PortalException {
 		Indexer<CPOption> indexer = IndexerRegistryUtil.nullSafeGetIndexer(
 			CPOption.class);
@@ -407,7 +437,8 @@ public class CPOptionValueLocalServiceImpl
 		return GetterUtil.getInteger(indexer.searchCount(searchContext));
 	}
 
-	private void _validateKey(long cpOptionValueId, long cpOptionId, String key)
+	private void _validateKey(
+			CPOption cpOption, long cpOptionValueId, String key)
 		throws PortalException {
 
 		if (Validator.isBlank(key)) {
@@ -415,12 +446,57 @@ public class CPOptionValueLocalServiceImpl
 		}
 
 		CPOptionValue cpOptionValue = cpOptionValuePersistence.fetchByC_K(
-			cpOptionId, key);
+			cpOption.getCPOptionId(), key);
 
 		if ((cpOptionValue != null) &&
 			(cpOptionValue.getCPOptionValueId() != cpOptionValueId)) {
 
 			throw new CPOptionValueKeyException("Duplicate key " + key);
+		}
+
+		if (Objects.equals(
+				CPConstants.PRODUCT_OPTION_SELECT_DATE_KEY,
+				cpOption.getCommerceOptionTypeKey())) {
+
+			if (key == null) {
+				throw new CPOptionValueKeyException("Key is mandatory");
+			}
+
+			if (!key.matches("^[a-z0-9-]*$")) {
+				throw new CPOptionValueKeyException("Invalid key");
+			}
+
+			String[] splits = key.split(StringPool.DASH);
+
+			Integer month = 0;
+			Integer day = 0;
+			Integer year = 0;
+			Integer hour = 0;
+			Integer minute = 0;
+
+			try {
+				month = Integer.valueOf(splits[0]);
+				day = Integer.valueOf(splits[1]);
+				year = Integer.valueOf(splits[2]);
+				hour = Integer.valueOf(splits[3]);
+				minute = Integer.valueOf(splits[4]);
+				Integer.valueOf(splits[5]);
+			}
+			catch (NumberFormatException numberFormatException) {
+				throw new CPOptionValueKeyException(
+					"Invalid date", numberFormatException);
+			}
+
+			_portal.getDate(
+				month - 1, day, year, hour, minute,
+				TimeZoneUtil.getTimeZone(_getTimeZone(splits)),
+				CPOptionValueKeyException.class);
+
+			if (!Objects.equals(CPConstants.DAYS_DURATION_TYPE, splits[6]) &&
+				!Objects.equals(CPConstants.HOURS_DURATION_TYPE, splits[6])) {
+
+				throw new CPOptionValueKeyException("Invalid duration type");
+			}
 		}
 	}
 
@@ -442,10 +518,16 @@ public class CPOptionValueLocalServiceImpl
 	};
 
 	@Reference
+	private CPOptionPersistence _cpOptionPersistence;
+
+	@Reference
 	private ExpandoRowLocalService _expandoRowLocalService;
 
 	@Reference
 	private FriendlyURLNormalizer _friendlyURLNormalizer;
+
+	@Reference
+	private Portal _portal;
 
 	@Reference
 	private UserLocalService _userLocalService;

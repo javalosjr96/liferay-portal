@@ -11,6 +11,10 @@
 
 <br /><br />
 
-<aui:input label="web-dav-username" name="<%= StringUtil.randomId() %>" type="resource" value="<%= user.getUserId() %>" />
+<%
+User selectedUser = userDisplayContext.getSelectedUser();
+%>
+
+<aui:input label="web-dav-username" name="<%= StringUtil.randomId() %>" type="resource" value="<%= selectedUser.getUserId() %>" />
 
 <aui:input id="webDAVPassword" label="web-dav-password" name="<%= StringUtil.randomId() %>" type="resource" value='<%= renderRequest.getParameter("webDAVPassword") %>' />

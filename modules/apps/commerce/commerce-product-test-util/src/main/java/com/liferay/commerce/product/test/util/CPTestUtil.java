@@ -43,6 +43,7 @@ import com.liferay.commerce.service.CPDefinitionInventoryLocalServiceUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProviderUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.configuration.ConfigurationException;
@@ -53,6 +54,7 @@ import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
@@ -300,6 +302,36 @@ public class CPTestUtil {
 		return CPDefinitionOptionRelLocalServiceUtil.addCPDefinitionOptionRel(
 			cpDefinitionId, cpOptionId, true,
 			ServiceContextTestUtil.getServiceContext(groupId));
+	}
+
+	public static CPDefinitionOptionValueRel addCPDefinitionOptionValueRel(
+			long cpDefinitionId, long cpOptionId, String key, String name,
+			String priceType, boolean required, boolean skuContributor,
+			ServiceContext serviceContext)
+		throws PortalException {
+
+		CPDefinitionOptionRel cpDefinitionOptionRel =
+			CPDefinitionOptionRelLocalServiceUtil.fetchCPDefinitionOptionRel(
+				cpDefinitionId, cpOptionId);
+
+		if (cpDefinitionOptionRel == null) {
+			cpDefinitionOptionRel =
+				CPDefinitionOptionRelLocalServiceUtil.addCPDefinitionOptionRel(
+					cpDefinitionId, cpOptionId,
+					RandomTestUtil.randomLocaleStringMap(),
+					RandomTestUtil.randomLocaleStringMap(),
+					CPConstants.PRODUCT_OPTION_SELECT_DATE_KEY,
+					RandomTestUtil.randomDouble(), false, required,
+					skuContributor, false, priceType, serviceContext);
+		}
+
+		return CPDefinitionOptionValueRelLocalServiceUtil.
+			addCPDefinitionOptionValueRel(
+				cpDefinitionOptionRel.getCPDefinitionOptionRelId(), key,
+				HashMapBuilder.put(
+					LocaleUtil.getDefault(), name
+				).build(),
+				RandomTestUtil.randomDouble(), serviceContext);
 	}
 
 	public static CPDefinitionOptionValueRel
@@ -666,6 +698,15 @@ public class CPTestUtil {
 			ServiceContextTestUtil.getServiceContext());
 	}
 
+	public static CPOptionValue addCPOptionValue(CPOption cpOption, String key)
+		throws PortalException {
+
+		return CPOptionValueLocalServiceUtil.addCPOptionValue(
+			cpOption.getCPOptionId(), RandomTestUtil.randomLocaleStringMap(),
+			RandomTestUtil.randomDouble(), key,
+			ServiceContextTestUtil.getServiceContext());
+	}
+
 	public static CPSpecificationOption addCPSpecificationOption(long groupId)
 		throws PortalException {
 
@@ -695,7 +736,13 @@ public class CPTestUtil {
 		CPOptionConfiguration cpOptionConfiguration =
 			_getCPOptionConfiguration();
 
-		return cpOptionConfiguration.allowedCommerceOptionTypes();
+		return ArrayUtil.filter(
+			cpOptionConfiguration.allowedCommerceOptionTypes(),
+			commerceOptionType ->
+				!Objects.equals(
+					CPConstants.PRODUCT_OPTION_SELECT_DATE_KEY,
+					commerceOptionType) ||
+				FeatureFlagManagerUtil.isEnabled("LPD-10887"));
 	}
 
 	public static String getDefaultCommerceOptionTypeKey(boolean skuContributor)
@@ -704,8 +751,13 @@ public class CPTestUtil {
 		CPOptionConfiguration cpOptionConfiguration =
 			_getCPOptionConfiguration();
 
-		String[] allowedCommerceOptionTypes =
-			cpOptionConfiguration.allowedCommerceOptionTypes();
+		String[] allowedCommerceOptionTypes = ArrayUtil.filter(
+			cpOptionConfiguration.allowedCommerceOptionTypes(),
+			commerceOptionType ->
+				!Objects.equals(
+					CPConstants.PRODUCT_OPTION_SELECT_DATE_KEY,
+					commerceOptionType) &&
+				FeatureFlagManagerUtil.isEnabled("LPD-10887"));
 
 		if (skuContributor) {
 			allowedCommerceOptionTypes =

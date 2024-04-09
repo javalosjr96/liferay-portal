@@ -1,13 +1,13 @@
 {
 	"dependencies": {
-		"@clayui/button": "3.111.0",
-		"@clayui/core": "3.112.0",
+		"@clayui/button": "3.113.0",
+		"@clayui/core": "3.113.0",
 		"@clayui/empty-state": "3.111.0",
-		"@clayui/form": "3.111.0",
+		"@clayui/form": "3.113.0",
 		"@clayui/icon": "3.111.0",
 		"@clayui/layout": "3.111.0",
 		"@clayui/loading-indicator": "3.111.0",
-		"@clayui/pagination": "3.112.0",
+		"@clayui/pagination": "3.113.0",
 		"@clayui/table": "3.111.0",
 		"classnames": "2.3.1",
 		"frontend-js-web": "*",
@@ -19,7 +19,8 @@
 	"scripts": {
 		"build": "liferay-npm-scripts build",
 		"checkFormat": "liferay-npm-scripts check",
-		"format": "liferay-npm-scripts fix"
+		"format": "liferay-npm-scripts fix",
+		"test": "liferay-npm-scripts test"
 	},
 	"version": "16.1.13"
 }

@@ -62,6 +62,7 @@ const ActivityContent = ({mdfRequestActivity}: IProps) => {
 						label: '',
 					},
 				]}
+				layoutAuto
 				rows={mdfRequestActivity.budgets
 					.filter((budget) => !budget.removed)
 					.map((budget) => ({
@@ -84,6 +85,7 @@ const ActivityContent = ({mdfRequestActivity}: IProps) => {
 						label: '',
 					},
 				]}
+				layoutAuto
 				rows={leadList}
 			/>
 		</>

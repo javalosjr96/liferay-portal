@@ -73,7 +73,7 @@ export async function syncAllContacts(page) {
 		await syncContactsButton.click();
 	}
 
-	await page.getByRole('button', {name: 'Next'}).click();
+	await page.getByRole('button', {exact: true, name: 'Next'}).click();
 }
 
 export async function syncSite(page) {
@@ -83,43 +83,37 @@ export async function syncSite(page) {
 		timeout: 100 * 1000,
 	});
 
-	// Known issue. See https://liferay.atlassian.net/browse/LRAC-13481
-
-	const tryAgainButton = page.getByRole('button', {name: 'Try Again'});
-
-	if (await tryAgainButton.isVisible()) {
-		await page.getByRole('button', {name: 'Previous'}).click();
-
-		await page.getByRole('button', {name: 'Next'}).click();
-	}
-
 	const wizard = page.getByTestId('VIEW_WIZARD_MODE');
 
 	await expect(wizard.getByText('Available Properties')).toBeVisible({
 		timeout: 100 * 1000,
 	});
 
-	await page
-		.getByTestId('Liferay DXP')
-		.getByRole('button', {name: 'Assign'})
-		.click();
+	const assignButton = await page.$(
+		'table.table tbody tr:first-child button'
+	);
+
+	await assignButton.click();
 
 	await page.getByRole('tab', {name: 'Sites'}).click();
 
-	await page
-		.getByTestId('1')
-		.getByTestId('Liferay DXP')
-		.getByLabel('')
-		.check();
+	await page.waitForTimeout(3000);
 
-	await page
-		.getByLabel('Assign to Liferay DXP')
-		.getByRole('button', {name: 'Assign'})
-		.click();
+	const checkbox = await page.$(
+		'.modal table.table tbody tr:first-child input[type="checkbox"]'
+	);
 
-	await expect(page.getByLabel('Assign to Liferay DXP')).toBeHidden({
-		timeout: 100 * 1000,
-	});
+	await checkbox.check();
 
-	await page.getByRole('button', {name: 'Next'}).click();
+	const submitButton = await page.$(
+		'.modal .modal-item-last button.btn-primary'
+	);
+
+	await submitButton.click();
+
+	await expect(
+		page.getByText('Success:Properties settings have been saved.')
+	).toBeVisible();
+
+	await page.getByRole('button', {exact: true, name: 'Next'}).click();
 }

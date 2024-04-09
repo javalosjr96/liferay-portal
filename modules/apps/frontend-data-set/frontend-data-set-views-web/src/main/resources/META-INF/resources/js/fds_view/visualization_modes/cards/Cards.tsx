@@ -73,7 +73,7 @@ export default function Cards(props: IFDSViewSectionProps) {
 				);
 
 				if (!fdsCardsSection) {
-					return cardsSection;
+					return {label: cardsSection.label, name: cardsSection.name};
 				}
 
 				return {
@@ -88,11 +88,25 @@ export default function Cards(props: IFDSViewSectionProps) {
 		);
 	};
 
-	const clearFDSCardSection = async (cardSection: ICardsSection) => {
+	const clearFDSCardSection = async ({
+		cardsSection,
+		closeModal,
+	}: {
+		cardsSection: ICardsSection;
+		closeModal?: Function;
+	}) => {
+		if (!cardsSection.externalReferenceCode) {
+			if (closeModal) {
+				closeModal();
+			}
+
+			return;
+		}
+
 		setSaveButtonDisabled(true);
 
 		const response = await fetch(
-			`${API_URL.FDS_CARDS_SECTIONS}/by-external-reference-code/${cardSection.externalReferenceCode}`,
+			`${API_URL.FDS_CARDS_SECTIONS}/by-external-reference-code/${cardsSection.externalReferenceCode}`,
 			{method: 'DELETE'}
 		);
 
@@ -104,13 +118,17 @@ export default function Cards(props: IFDSViewSectionProps) {
 			return;
 		}
 
+		if (closeModal) {
+			closeModal();
+		}
+
 		setCardsSections(
 			cardsSections.map((section) => {
-				if (section.name !== cardSection.name) {
+				if (section.name !== cardsSection.name) {
 					return section;
 				}
 
-				const nextCardSection = {...cardSection};
+				const nextCardSection = {...cardsSection};
 
 				delete nextCardSection.externalReferenceCode;
 				delete nextCardSection.field;
@@ -118,6 +136,8 @@ export default function Cards(props: IFDSViewSectionProps) {
 				return nextCardSection;
 			})
 		);
+
+		openDefaultSuccessToast();
 	};
 
 	const saveFDSCardsSection = async ({
@@ -161,22 +181,21 @@ export default function Cards(props: IFDSViewSectionProps) {
 			return;
 		}
 
-		const fdsCardsSection: IFDSCardsSection = await response.json();
+		const fdsCardSection: IFDSCardsSection = await response.json();
 
 		closeModal();
 
 		setCardsSections(
-			cardsSections.map((cardsSection) => {
-				if (cardsSection.name !== fdsCardsSection.name) {
-					return cardsSection;
+			cardsSections.map((cardSection) => {
+				if (cardSection.name !== fdsCardSection.name) {
+					return cardSection;
 				}
 
 				return {
-					...cardsSection,
-					externalReferenceCode:
-						fdsCardsSection.externalReferenceCode,
+					...cardSection,
+					externalReferenceCode: fdsCardSection.externalReferenceCode,
 					field: {
-						name: fdsCardsSection.fieldName,
+						name: fdsCardSection.fieldName,
 					},
 				};
 			})
@@ -226,14 +245,19 @@ export default function Cards(props: IFDSViewSectionProps) {
 							key={cardsSection.name}
 							modalProps={props}
 							onClearSelection={() => {
-								clearFDSCardSection(cardsSection);
+								clearFDSCardSection({cardsSection});
 							}}
 							onSelect={({closeModal, selectedField}) => {
-								saveFDSCardsSection({
-									cardsSection,
-									closeModal,
-									field: selectedField,
-								});
+								selectedField
+									? saveFDSCardsSection({
+											cardsSection,
+											closeModal,
+											field: selectedField,
+									  })
+									: clearFDSCardSection({
+											cardsSection,
+											closeModal,
+									  });
 							}}
 							saveButtonDisabled={saveButtonDisabled}
 						/>

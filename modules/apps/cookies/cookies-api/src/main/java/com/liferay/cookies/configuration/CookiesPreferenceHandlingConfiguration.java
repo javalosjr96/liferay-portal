@@ -13,7 +13,8 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
  * @author Olivér Kecskeméty
  */
 @ExtendedObjectClassDefinition(
-	category = "cookies", scope = ExtendedObjectClassDefinition.Scope.GROUP
+	category = "cookies", scope = ExtendedObjectClassDefinition.Scope.GROUP,
+	visibilityControllerKey = "cookies-preference-handling"
 )
 @Meta.OCD(
 	id = "com.liferay.cookies.configuration.CookiesPreferenceHandlingConfiguration",
@@ -29,7 +30,8 @@ public interface CookiesPreferenceHandlingConfiguration {
 	public boolean enabled();
 
 	@Meta.AD(
-		deflt = "true", description = "cookie-explicit-consent-mode-help",
+		deflt = "true",
+		description = "cookie-explicit-consent-mode-help-deprecated",
 		name = "cookie-explicit-consent-mode", required = false
 	)
 	public boolean explicitConsentMode();

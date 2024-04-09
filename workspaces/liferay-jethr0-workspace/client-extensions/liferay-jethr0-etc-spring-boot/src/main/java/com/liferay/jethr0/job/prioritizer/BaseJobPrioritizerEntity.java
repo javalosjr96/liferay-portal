@@ -8,7 +8,11 @@ package com.liferay.jethr0.job.prioritizer;
 import com.liferay.jethr0.entity.BaseEntity;
 import com.liferay.jethr0.job.comparator.JobComparatorEntity;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.json.JSONObject;
 
@@ -41,7 +45,11 @@ public abstract class BaseJobPrioritizerEntity
 	public JSONObject getJSONObject() {
 		JSONObject jsonObject = super.getJSONObject();
 
-		jsonObject.put("name", getName());
+		jsonObject.put(
+			"name", getName()
+		).put(
+			"prioritizedJobIds", String.valueOf(getPrioritizedJobIds())
+		);
 
 		return jsonObject;
 	}
@@ -49,6 +57,10 @@ public abstract class BaseJobPrioritizerEntity
 	@Override
 	public String getName() {
 		return _name;
+	}
+
+	public List<Long> getPrioritizedJobIds() {
+		return _prioritizedJobIds;
 	}
 
 	@Override
@@ -66,16 +78,38 @@ public abstract class BaseJobPrioritizerEntity
 	}
 
 	@Override
+	public void setJSONObject(JSONObject jsonObject) {
+		super.setJSONObject(jsonObject);
+
+		_name = jsonObject.getString("name");
+
+		String prioritizedJobIds = jsonObject.getString("prioritizedJobIds");
+
+		Matcher matcher = _jobIdsPattern.matcher(prioritizedJobIds);
+
+		_prioritizedJobIds = new ArrayList<>();
+
+		while (matcher.find()) {
+			_prioritizedJobIds.add(Long.valueOf(matcher.group()));
+		}
+	}
+
+	@Override
 	public void setName(String name) {
 		_name = name;
 	}
 
-	protected BaseJobPrioritizerEntity(JSONObject jsonObject) {
-		super(jsonObject);
-
-		_name = jsonObject.getString("name");
+	public void setPrioritizedJobIds(List<Long> prioritizedJobIDs) {
+		_prioritizedJobIds = prioritizedJobIDs;
 	}
 
+	protected BaseJobPrioritizerEntity(JSONObject jsonObject) {
+		super(jsonObject);
+	}
+
+	private static final Pattern _jobIdsPattern = Pattern.compile("\\d+");
+
 	private String _name;
+	private List<Long> _prioritizedJobIds;
 
 }

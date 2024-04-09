@@ -283,6 +283,8 @@ const reducer = (state: InitialState, action: AppActions) => {
 
 export type ListViewContextProviderProps = Partial<InitialState>;
 
+type Option = {label: string; value: string};
+
 const ListViewContextProvider: React.FC<
 	ListViewContextProviderProps & {children: ReactNode; id: string}
 > = ({children, id, ...initialStateProps}) => {
@@ -305,18 +307,51 @@ const ListViewContextProvider: React.FC<
 	);
 
 	useEffect(() => {
-		if (!filter && filterSchemaStorage && filterPinnedStorage) {
+		const filters =
+			filterPinnedStorage?.filter &&
+			Object.keys(filterPinnedStorage?.filter).map((key) => {
+				if (Array.isArray(filterPinnedStorage?.filter[key])) {
+					return {
+						name: key,
+						value: (filterPinnedStorage?.filter as any)[key].map(
+							(options: Option) => options.value || options
+						),
+					};
+				}
+				else {
+					return {
+						name: key,
+						value: filterPinnedStorage?.filter[key],
+					};
+				}
+			});
+
+		const formattedFilter = filters?.reduce(
+			(previousValue, currentValue) => {
+				return {
+					...previousValue,
+					[currentValue.name]: currentValue.value,
+				};
+			},
+			{}
+		);
+
+		if (!filter && filterSchemaStorage && formattedFilter) {
 			setSearchParams(
 				new URLSearchParams({
-					filter: JSON.stringify(filterPinnedStorage?.filter),
+					filter: JSON.stringify(formattedFilter),
 					filterSchema: filterSchemaStorage as string,
 					page: '1',
 					pageSize: '20',
 				})
 			);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [
+		filter,
+		filterPinnedStorage?.filter,
+		filterSchemaStorage,
+		setSearchParams,
+	]);
 
 	const [state, dispatch] = useReducer(reducer, {
 		...initialState,

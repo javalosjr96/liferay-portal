@@ -10,6 +10,7 @@ import {DEFAULT_LABEL} from '../utils/constants';
 
 export class FDSFragmentPage {
 	readonly apiHelpers: ApiHelpers;
+	readonly creationMenuButton: Locator;
 	readonly editPageButton: Locator;
 	readonly fdsActiveViewSelector: Locator;
 	readonly fdsCardsWrapper: Locator;
@@ -21,6 +22,7 @@ export class FDSFragmentPage {
 
 	constructor(page: Page) {
 		this.apiHelpers = new ApiHelpers(page);
+		this.creationMenuButton = page.getByTestId('fdsCreationActionButton');
 		this.fdsActiveViewSelector = page.getByLabel('Show View Options');
 		this.fdsCardsWrapper = page.getByTestId('visualization-mode-cards');
 		this.fdsListWrapper = page.getByTestId('visualization-mode-list');
@@ -111,7 +113,9 @@ export class FDSFragmentPage {
 	}
 
 	async createSite(name: string): Promise<Site> {
-		const site = await this.apiHelpers.headlessSite.createSite(name);
+		const site = await this.apiHelpers.headlessSite.createSite({
+			name,
+		});
 
 		return site;
 	}

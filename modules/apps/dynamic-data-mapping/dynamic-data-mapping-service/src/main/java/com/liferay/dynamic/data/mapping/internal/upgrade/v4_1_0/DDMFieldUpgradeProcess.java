@@ -464,8 +464,8 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 					"structureId = ", structureId, " and structureVersionId = ",
 					structureVersionId, " and ctCollectionId = 0"));
 			PreparedStatement preparedStatement2 = connection.prepareStatement(
-				"select structureVersionId from DDMStructureVersion where " +
-					"structureId = ?");
+				"select max(structureVersionId) from DDMStructureVersion " +
+					"where structureId = ?");
 			ResultSet resultSet1 = preparedStatement1.executeQuery()) {
 
 			if (resultSet1.next()) {
@@ -487,8 +487,7 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 				try (ResultSet resultSet2 = preparedStatement2.executeQuery()) {
 					if (resultSet2.next()) {
 						DDMForm parentDDMForm = _getFullHierarchyDDMForm(
-							parentStructureId,
-							resultSet2.getLong("structureVersionId"));
+							parentStructureId, resultSet2.getLong(1));
 
 						List<DDMFormField> ddmFormFields =
 							fullHierarchyDDMForm.getDDMFormFields();
@@ -625,19 +624,7 @@ public class DDMFieldUpgradeProcess extends UpgradeProcess {
 		List<DDMFormFieldValue> newDDMFormFieldValues = new ArrayList<>();
 
 		for (DDMFormFieldValue ddmFormFieldValue : ddmFormFieldValues) {
-			String type = null;
-
-			try {
-				type = ddmFormFieldValue.getType();
-			}
-			catch (Exception exception) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"Unable to get dynamic data mapping form field value " +
-							"type for content ID " + contentId,
-						exception);
-				}
-			}
+			String type = ddmFormFieldValue.getType();
 
 			if (ListUtil.isNotEmpty(
 					ddmFormFieldValue.getNestedDDMFormFieldValues()) &&

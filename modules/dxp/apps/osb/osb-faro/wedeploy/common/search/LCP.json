@@ -20,6 +20,7 @@
 		"timeoutSeconds": 1
 	},
 	"memory": 8192,
+	"podManagementPolicy": "Parallel",
 	"ports": [
 		{
 			"external": false,
@@ -39,5 +40,9 @@
 		"periodSeconds": 10,
 		"successThreshold": 2,
 		"timeoutSeconds": 5
+	},
+	"scale": 1,
+	"volumes": {
+		"esdata": "/data"
 	}
 }

@@ -42,7 +42,7 @@ public class GitBranchEntityDALO extends BaseEntityDALO<GitBranchEntity> {
 
 		List<GitBranchEntity.Type> typesList = Arrays.asList(types);
 
-		for (GitBranchEntity gitBranchEntity : getAll(filter, null)) {
+		for (GitBranchEntity gitBranchEntity : getAll(filter, null, null)) {
 			if (!typesList.contains(gitBranchEntity.getType())) {
 				continue;
 			}
@@ -54,7 +54,7 @@ public class GitBranchEntityDALO extends BaseEntityDALO<GitBranchEntity> {
 	}
 
 	@Override
-	protected EntityFactory<GitBranchEntity> getEntityFactory() {
+	public EntityFactory<GitBranchEntity> getEntityFactory() {
 		return _gitBranchEntityFactory;
 	}
 

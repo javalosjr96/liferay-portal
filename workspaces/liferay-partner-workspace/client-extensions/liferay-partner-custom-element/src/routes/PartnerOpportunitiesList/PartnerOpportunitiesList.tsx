@@ -151,6 +151,7 @@ const PartnerOpportunitiesList = ({isRenewalListing, name, sort}: IProps) => {
 					<Table<PartnerOpportunitiesItem>
 						columns={columns}
 						customClickOnRow={handleCustomClickOnRow}
+						layoutAuto
 						rows={items}
 					/>
 

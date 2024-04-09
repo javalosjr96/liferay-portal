@@ -6,6 +6,7 @@
 package com.liferay.portal.vulcan.internal.jaxrs.context.provider;
 
 import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.vulcan.internal.jaxrs.lifecycle.SafeReleaseInstanceResourceProvider;
 import com.liferay.portal.vulcan.jaxrs.constants.JaxRsConstants;
 import com.liferay.portal.vulcan.resource.EntityModelResource;
 
@@ -69,6 +70,10 @@ public class ContextProviderUtil {
 		OperationResourceInfo operationResourceInfo = exchange.get(
 			OperationResourceInfo.class);
 
+		if (operationResourceInfo == null) {
+			return null;
+		}
+
 		ResourceContext resourceContext = new ResourceContextImpl(
 			message, operationResourceInfo);
 
@@ -79,6 +84,13 @@ public class ContextProviderUtil {
 			classResourceInfo.getResourceProvider();
 
 		if (resourceProvider != null) {
+			if (!(resourceProvider instanceof
+					SafeReleaseInstanceResourceProvider)) {
+
+				classResourceInfo.setResourceProvider(
+					new SafeReleaseInstanceResourceProvider(resourceProvider));
+			}
+
 			Object instance = resourceProvider.getInstance(message);
 
 			resourceContext.initResource(instance);
@@ -105,6 +117,29 @@ public class ContextProviderUtil {
 				}
 			}
 		};
+	}
+
+	public static void releaseResourceInstance(Message message) {
+		Exchange exchange = message.getExchange();
+
+		Object resource = getMatchedResource(message);
+
+		if (resource == null) {
+			return;
+		}
+
+		OperationResourceInfo operationResourceInfo = exchange.get(
+			OperationResourceInfo.class);
+
+		ClassResourceInfo classResourceInfo =
+			operationResourceInfo.getClassResourceInfo();
+
+		ResourceProvider resourceProvider =
+			classResourceInfo.getResourceProvider();
+
+		if (resourceProvider != null) {
+			resourceProvider.releaseInstance(message, resource);
+		}
 	}
 
 	private static Object _fetchExistingResource(

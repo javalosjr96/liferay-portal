@@ -211,9 +211,6 @@ public class SegmentsExperienceLocalServiceImpl
 			segmentsExperiencePersistence.findByPrimaryKey(
 				segmentsExperienceId);
 
-		_checkUnlockedLayout(
-			segmentsExperience.getPlid(), GuestOrUserUtil.getUserId());
-
 		return segmentsExperienceLocalService.deleteSegmentsExperience(
 			segmentsExperience);
 	}
@@ -234,8 +231,10 @@ public class SegmentsExperienceLocalServiceImpl
 					segmentsExperience.getSegmentsExperienceId());
 		}
 
-		_checkUnlockedLayout(
-			segmentsExperience.getPlid(), GuestOrUserUtil.getUserId());
+		if (!GroupThreadLocal.isDeleteInProcess()) {
+			_checkUnlockedLayout(
+				segmentsExperience.getPlid(), GuestOrUserUtil.getUserId());
+		}
 
 		segmentsExperiencePersistence.remove(segmentsExperience);
 

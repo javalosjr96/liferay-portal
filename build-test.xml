@@ -2116,10 +2116,20 @@ war.path=${app.server.portal.dir}/</echo>
 						</else>
 					</if>
 
-					<mirrors-get
-						dest="@{patching.tool.dir}/patches"
-						src="http://files.liferay.com/private/ee/fix-packs/${patch.portal.version}/dxp/liferay-fix-pack-${fixpack.build.name}.zip"
-					/>
+					<if>
+						<and>
+							<isset property="patch.portal.version" />
+							<not>
+								<matches pattern="\d{4}.q[1234].\d+" string="${patch.portal.version}" />
+							</not>
+						</and>
+						<then>
+							<mirrors-get
+								dest="@{patching.tool.dir}/patches"
+								src="http://files.liferay.com/private/ee/fix-packs/${patch.portal.version}/dxp/liferay-fix-pack-${fixpack.build.name}.zip"
+							/>
+						</then>
+					</if>
 				</then>
 			</if>
 		</sequential>
@@ -11907,7 +11917,18 @@ mail.session.jndi.name=
 memory.scheduler.org.quartz.threadPool.threadCount=1
 persisted.scheduler.org.quartz.threadPool.threadCount=1
 virtual.hosts.default.site.name=
-virtual.hosts.valid.hosts=*
+virtual.hosts.valid.hosts=\
+	localhost,\
+	127.0.0.1,\
+	[::1],\
+	[0:0:0:0:0:0:0:1],\
+	${env.HOSTNAME},\
+	www.able.com,\
+	www.baker.com,\
+	www.charlie.com,\
+	www.dog.com,\
+	www.easy.com,\
+	www.fox.com
 com.liferay.portal.servlet.filters.strip.StripFilter=true
 web.server.http.port=8080
 admin.email.from.address=test@liferay.com

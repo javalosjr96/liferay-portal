@@ -25,6 +25,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class JobEntityDALO extends BaseEntityDALO<JobEntity> {
 
+	@Override
+	public EntityFactory<JobEntity> getEntityFactory() {
+		return _jobEntityFactory;
+	}
+
 	public Set<JobEntity> getJobsByState(JobEntity.State... states) {
 		Set<JobEntity> jobEntities = new HashSet<>();
 
@@ -42,7 +47,7 @@ public class JobEntityDALO extends BaseEntityDALO<JobEntity> {
 
 		List<JobEntity.State> statesList = Arrays.asList(states);
 
-		for (JobEntity jobEntity : getAll(filter, null)) {
+		for (JobEntity jobEntity : getAll(filter, null, null)) {
 			if (!statesList.contains(jobEntity.getState())) {
 				continue;
 			}
@@ -51,11 +56,6 @@ public class JobEntityDALO extends BaseEntityDALO<JobEntity> {
 		}
 
 		return jobEntities;
-	}
-
-	@Override
-	protected EntityFactory<JobEntity> getEntityFactory() {
-		return _jobEntityFactory;
 	}
 
 	@Autowired

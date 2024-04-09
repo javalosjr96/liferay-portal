@@ -19,14 +19,14 @@ export const useFetchCurrentUser = (initialGroupId: string = '0') => {
 	const dispatch = useDispatch();
 
 	useEffect(() => {
-		const groupId = !isNaN(Number(initialGroupId)) ? initialGroupId : 0;
+		let groupId = '0';
+
+		if (initialGroupId && initialGroupId !== 'add') {
+			groupId = initialGroupId;
+		}
 
 		dispatch(fetchCurrentUser(groupId));
 	}, [initialGroupId]);
-
-	if (error) {
-		throw new Error('Error on fetchCurrentUser');
-	}
 
 	return {
 		data,
@@ -46,5 +46,13 @@ export const useCurrentUser = (): User => {
 		state.getIn(['users', currentUserId, 'data'])
 	);
 
-	return data;
+	const newUser = new User({
+		emailAddress: '',
+		id: '',
+		name: '',
+		roleName: '',
+		status: 1
+	});
+
+	return data || newUser;
 };

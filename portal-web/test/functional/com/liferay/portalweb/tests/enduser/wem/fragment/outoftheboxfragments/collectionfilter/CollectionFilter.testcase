@@ -24,227 +24,6 @@ definition {
 		}
 	}
 
-	@description = "This is a test for LPS-137722. View alert info shown in dropdown menu when select multiple target collections without filters in common."
-	@priority = 4
-	test CannotSelectMultipleCollectionsWithoutFiltersInCommon {
-		property test.liferay.virtual.instance = "false";
-		property test.run.type = "single";
-
-		task ("Enable Basic Web Content and Basic Document collection providers in Gogo Shell") {
-			GogoShell.openGogoShellAdmin();
-
-			GogoShell.executeCommand(commandName = "scr:enable com.liferay.journal.web.internal.info.collection.provider.BasicWebContentSingleFormVariationInfoCollectionProvider");
-
-			GogoShell.viewOutput(outputContent = "true");
-
-			GogoShell.executeCommand(commandName = "scr:enable com.liferay.document.library.web.internal.info.collection.provider.BasicDocumentSingleFormVariationInfoCollectionProvider");
-
-			GogoShell.viewOutput(outputContent = "true");
-		}
-
-		task ("Add a vocabulary") {
-			JSONCategory.addVocabulary(
-				groupName = ${randomSiteName},
-				title = "Type");
-		}
-
-		task ("Add 2 categories in Type vocabulary") {
-			var suvId = JSONCategory.addCategory(
-				groupName = ${randomSiteName},
-				title = "SUV",
-				vocabularyName = "Type");
-			var carId = JSONCategory.addCategory(
-				groupName = ${randomSiteName},
-				title = "Car",
-				vocabularyName = "Type");
-		}
-
-		task ("Add three web contents") {
-			for (var style : list "X,Y,3") {
-				JSONWebcontent.addWebContent(
-					content = "Tesla Model ${style}",
-					groupName = ${randomSiteName},
-					title = "Tesla Model ${style}");
-			}
-		}
-
-		task ("Add three documents with SUV category") {
-			for (var style : list "X1,X3,X5") {
-				JSONDocument.addFile(
-					assetCategoryIds = ${suvId},
-					dmDocumentTitle = "BMW ${style}",
-					groupName = ${randomSiteName});
-			}
-		}
-
-		task ("Add a content page") {
-			JSONLayout.addPublicLayout(
-				groupName = ${randomSiteName},
-				layoutName = "Test Page Name",
-				type = "content");
-		}
-
-		task ("Add a Grid to page") {
-			ContentPagesNavigator.openEditContentPage(
-				pageName = "Test Page Name",
-				siteName = ${randomSiteName});
-
-			PageEditor.addFragment(
-				collectionName = "Layout Elements",
-				fragmentName = "Grid");
-		}
-
-		task ("Change Number of Modules to 2") {
-			PageEditor.editLayoutGrid(
-				columnCount = 2,
-				panel = "General");
-		}
-
-		task ("Add one Collection Display to each module of Grid") {
-			for (var columnNumber : list "1,2") {
-				PageEditor.addElementToColumn(
-					collectionName = "Content Display",
-					columnNumber = ${columnNumber},
-					fragmentName = "Collection Display",
-					navTab = "Fragments");
-			}
-		}
-
-		task ("Select the Basic Web Content collection provider and Bordered List in the first Collection Display") {
-			PageEditor.editCollectionDisplay(
-				fragmentName = "Collection Display",
-				infoListProviderName = "Basic Web Content",
-				styleDisplay = "Bordered List");
-		}
-
-		task ("View the title of three web contents shown in the first Collection Display") {
-			var n = 1;
-
-			for (var style : list "3,Y,X") {
-				AssertVisible(
-					key_entryContent = "[normalize-space()='Tesla Model ${style}']",
-					key_fragmentName = "Collection Display",
-					key_position = ${n},
-					locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST");
-
-				var n = ${n} + 1;
-			}
-		}
-
-		task ("Select the Basic Document collection provider and Bulleted List in the second Collection Display") {
-			PageEditor.editCollectionDisplay(
-				fragmentName = "Collection Display",
-				index = 2,
-				infoListProviderName = "Basic Document",
-				styleDisplay = "Bulleted List");
-		}
-
-		task ("View the title of documents shown in the second Collection Display") {
-			var n = 1;
-
-			for (var style : list "X5,X3,X1") {
-				AssertVisible(
-					key_entryContent = "[normalize-space()='BMW ${style}']",
-					key_fragmentName = "Collection Display",
-					key_position = ${n},
-					locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BULLETED_LIST");
-
-				var n = ${n} + 1;
-			}
-		}
-
-		task ("Add a Collection Filter above the Collection Display") {
-			PageEditor.addFragment(
-				collectionName = "Content Display",
-				dropTarget = "Header",
-				fragmentName = "Collection Filter",
-				targetFragmentName = "Grid");
-		}
-
-		task ("View the alert info shown in dropdown menu of Target Collection field") {
-			PageEditor.gotoConfiguration(fragmentName = "Collection Filter");
-
-			Click(
-				key_fieldLabel = "Target Collection",
-				key_text = "Select",
-				locator1 = "Button#ANY_WITH_LABEL");
-
-			AssertVisible(
-				infoMessage = "Multiple selection must have at least one filter in common.",
-				locator1 = "Dropdown#INFO");
-		}
-
-		task ("Cannot select the Basic Document after select the Basic Web Content") {
-			Check.checkNotVisible(
-				key_checkboxName = "Basic Web Content",
-				locator1 = "MenuItem#ANY_CHECKBOX");
-
-			AssertElementPresent(
-				key_checkboxName = "Basic Document",
-				locator1 = "Checkbox#CHECKBOX_DISABLED");
-
-			Click(
-				key_fieldLabel = "Target Collection",
-				key_text = "Basic Web Content",
-				locator1 = "Button#ANY_WITH_LABEL");
-		}
-
-		task ("Select the Keywords as Filter") {
-			PageEditor.editCollectionFilter(
-				filter = "Keywords",
-				fragmentName = "Collection Filter");
-		}
-
-		task ("View the Search is shown in Collection Filter") {
-			AssertAttributeValue(
-				index = 1,
-				locator1 = "PageEditor#COLLECTION_FILTER_SEARCH_FIELD",
-				value1 = "placeholder",
-				value2 = "Search");
-		}
-
-		task ("Cannot select the Basic Web Content after select the Basic Document") {
-			PageEditor.gotoConfiguration(fragmentName = "Collection Filter");
-
-			Click(
-				key_fieldLabel = "Target Collection",
-				key_text = "Basic Web Content",
-				locator1 = "Button#ANY_WITH_LABEL");
-
-			Uncheck.uncheckToggleSwitch(
-				key_checkboxName = "Basic Web Content",
-				locator1 = "MenuItem#ANY_CHECKBOX");
-
-			Check.checkNotVisible(
-				key_checkboxName = "Basic Document",
-				locator1 = "MenuItem#ANY_CHECKBOX");
-
-			AssertElementPresent(
-				key_checkboxName = "Basic Web Content",
-				locator1 = "Checkbox#CHECKBOX_DISABLED");
-
-			Click(
-				key_fieldLabel = "Target Collection",
-				key_text = "Basic Document",
-				locator1 = "Button#ANY_WITH_LABEL");
-		}
-
-		task ("Select the Category as Filter and Type vocabulary as Source") {
-			PageEditor.editCollectionFilter(
-				categoryNameList = "SUV,Car",
-				filter = "Category",
-				fragmentName = "Collection Filter",
-				vocabularyName = "Type");
-		}
-
-		task ("View the Select is shown in Collection Filter") {
-			AssertTextEquals(
-				key_title = "Type",
-				locator1 = "PageEditor#COLLECTION_FILTER_DROPDOWN_TOGGLE",
-				value1 = "Select");
-		}
-	}
-
 	@description = "This is a test for LPS-111807. The user could enable search field in dropdown list of Collection Filter."
 	@priority = 5
 	test EnableSearchFieldInDropdownList {
@@ -252,34 +31,10 @@ definition {
 
 		var groupId = JSONGroupSetter.setGroupId(groupName = ${randomSiteName});
 
-		task ("Add two vocabularies") {
-			for (var vocabularyName : list "Size,Warehouse") {
-				JSONCategory.addVocabulary(
-					groupId = ${groupId},
-					title = ${vocabularyName});
-			}
-		}
-
-		task ("Add 8 categories in Size vocabulary") {
-			for (var categoryName : list "6.5 inch,7 inch,7.5 inch,8 inch,8.5 inch") {
-				JSONCategory.addCategory(
-					groupId = ${groupId},
-					title = ${categoryName},
-					vocabularyName = "Size");
-			}
-
-			var inch90Id = JSONCategory.addCategory(
+		task ("Add Warehouse vocabulary") {
+			JSONCategory.addVocabulary(
 				groupId = ${groupId},
-				title = "9 inch",
-				vocabularyName = "Size");
-			var inch95Id = JSONCategory.addCategory(
-				groupId = ${groupId},
-				title = "9.5 inch",
-				vocabularyName = "Size");
-			var inch100Id = JSONCategory.addCategory(
-				groupId = ${groupId},
-				title = "10 inch",
-				vocabularyName = "Size");
+				title = "Warehouse");
 		}
 
 		task ("Add 8 categories in Warehouse vocabulary") {
@@ -304,59 +59,49 @@ definition {
 				vocabularyName = "Warehouse");
 		}
 
-		task ("Add the first web content with 10 inch and United States") {
+		task ("Add the first web content with United States") {
 			JSONWebcontent.addWebContent(
-				assetCategoryIds = "${inch100Id},${usId}",
+				assetCategoryIds = ${usId},
 				content = "Air Force 1",
 				groupId = ${groupId},
 				title = "Air Force 1");
 		}
 
-		task ("Add the second web content with 9.5 inch and China") {
+		task ("Add the second web content with China") {
 			JSONWebcontent.addWebContent(
-				assetCategoryIds = "${inch95Id},${cnId}",
+				assetCategoryIds = ${cnId},
 				content = "Air Jordan 1",
 				groupId = ${groupId},
 				title = "Air Jordan 1");
 		}
 
-		task ("Add the third web content with 9 inch and United States") {
+		task ("Add the third web content United States") {
 			JSONWebcontent.addWebContent(
-				assetCategoryIds = "${inch90Id},${usId}",
+				assetCategoryIds = ${usId},
 				content = "Air Max 1",
 				groupId = ${groupId},
 				title = "Air Max 1");
 		}
 
-		task ("Add the fourth web content with 10 inch and Spain") {
+		task ("Add the fourth web content Spain") {
 			JSONWebcontent.addWebContent(
-				assetCategoryIds = "${inch100Id},${esId}",
+				assetCategoryIds = ${esId},
 				content = "LeBron VIII",
 				groupId = ${groupId},
 				title = "LeBron VIII");
 		}
 
-		task ("Add a manual collection with All Types") {
-			AssetListsAdmin.openAssetListsAdmin(siteURLKey = ${siteURLKey});
+		JSONAssetlist.addDynamicAssetListEntryWithItemType(
+			groupName = ${randomSiteName},
+			itemSubtype = "Basic Web Content",
+			itemType = "Web Content Article",
+			title = "Dynamic Collection");
 
-			AssetListsAdmin.addManualSelection(assetListTitle = "Manual Collection");
-
-			AssetListsAdmin.configureItemTypeInManualCollection(itemType = "All Types");
-		}
-
-		task ("Select all assets as collection items") {
-			for (var assetName : list "Air Max 1,Air Jordan 1,Air Force 1,LeBron VIII") {
-				AssetListsAdmin.selectAsset(
-					assetName = ${assetName},
-					assetType = "Basic Web Content");
-			}
-		}
-
-		task ("Add a collection page based on manual collection") {
+		task ("Add a collection page based on dynamic collection") {
 			PagesAdmin.openPagesAdmin(siteURLKey = ${siteURLKey});
 
 			ContentPages.addCollectionPage(
-				collectionName = "Manual Collection",
+				collectionName = "Dynamic Collection",
 				pageName = "Collection Page Name",
 				tabName = "Collections");
 		}
@@ -365,143 +110,45 @@ definition {
 			PageEditor.editCollectionDisplay(
 				fragmentName = "Collection Display",
 				listItemStyle = "Title",
-				selectedName = "Manual Collection",
+				selectedName = "Dynamic Collection",
 				styleDisplay = "Bordered List");
 		}
 
-		task ("Add a Grid above the Container") {
-			PageEditor.addFragment(
-				collectionName = "Layout Elements",
-				dropTarget = "Header",
-				fragmentName = "Grid",
-				targetFragmentName = "Container");
-		}
-
-		task ("Change Number of Modules to 2") {
-			PageEditor.editLayoutGrid(
-				columnCount = 2,
-				panel = "General");
-		}
-
-		task ("Add a Collection Filter to each module of Grid") {
-			for (var columnNumber : list "1,2") {
-				PageEditor.addElementToColumn(
-					collectionName = "Content Display",
-					columnNumber = ${columnNumber},
-					fragmentName = "Collection Filter",
-					navTab = "Fragments");
-			}
-		}
-
-		task ("Select the Size vocabulary and Include Search Field in first Collection Filter") {
-			PageEditor.editCollectionFilter(
-				categoryNameList = "6.5 inch,7 inch,7.5 inch,8 inch,8.5 inch,9 inch,9.5 inch,10 inch",
-				columnNumber = 1,
-				filter = "Category",
-				fragmentName = "Collection Filter",
-				includeSearchField = "true",
-				targetCollection = "Manual Collection",
-				vocabularyName = "Size");
-		}
+		PageEditor.addFragment(
+			collectionName = "Content Display",
+			dropTarget = "Header",
+			fragmentName = "Collection Filter",
+			targetFragmentName = "Collection Display");
 
 		task ("Select the Warehouse vocabulary, Single Selection and Include Search Field in second Collection Filter") {
 			PageEditor.editCollectionFilter(
 				categoryNameList = "Brazil,Canada,China,England,France,Japan,Spain,United States",
-				columnNumber = 2,
 				filter = "Category",
 				fragmentName = "Collection Filter",
 				includeSearchField = "true",
 				singleSelection = "true",
-				targetCollection = "Manual Collection",
+				targetCollection = "Dynamic Collection",
 				vocabularyName = "Warehouse");
 		}
 
-		task ("Open the Preview modal") {
-			PageEditor.previewInANewTab();
-		}
-
-		task ("View all web contents shown in Collection Display") {
-			var n = 1;
-
-			for (var title : list "Air Max 1,Air Jordan 1,Air Force 1,LeBron VIII") {
-				AssertVisible(
-					key_entryContent = "[normalize-space(text())='${title}']",
-					key_fragmentName = "Collection Display",
-					key_position = ${n},
-					locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
-
-				var n = ${n} + 1;
-			}
-		}
-
-		task ("Search 10 inch and select it in the first Collection Filter") {
-			Page.selectFilterInCollectionFilter(
-				categoryNameList = "10 inch",
-				columnNumber = 1,
-				multipleSelection = "true",
-				searchTerm = "10 inch",
-				selectedName = "10 inch",
-				title = "Size");
-		}
-
-		task ("View only the Air Force 1 and LeBron VIII shown in Collection Display") {
-			var n = 1;
-
-			for (var title : list "Air Force 1,LeBron VIII") {
-				AssertVisible(
-					key_entryContent = "[normalize-space(text())='${title}']",
-					key_fragmentName = "Collection Display",
-					key_position = ${n},
-					locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
-
-				var n = ${n} + 1;
-			}
-		}
-
-		task ("Search Spain and select it in the second Collection Filter") {
-			Page.selectFilterInCollectionFilter(
-				columnNumber = 2,
-				filterName = "Spain",
-				searchTerm = "Spain",
-				selectedName = "Spain",
-				title = "Warehouse");
-		}
-
-		task ("View only the LeBron VIII shown in Collection Display") {
-			AssertVisible(
-				key_entryContent = "[normalize-space(text())='LeBron VIII']",
-				key_fragmentName = "Collection Display",
-				key_position = 1,
-				locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
-
-			Close.closeWindow();
-
-			PageEditor.publish();
-		}
-
 		task ("Navigate to page in view mode") {
+			PageEditor.publish();
+
 			ContentPagesNavigator.openViewContentPage(
 				pageName = "Collection Page Name",
 				siteName = ${randomSiteName});
 		}
 
 		task ("View all web contents shown in Collection Display") {
-			var n = 1;
-
 			for (var title : list "Air Max 1,Air Jordan 1,Air Force 1,LeBron VIII") {
 				AssertVisible(
-					key_entryContent = "[normalize-space(text())='${title}']",
-					key_fragmentName = "Collection Display",
-					key_position = ${n},
-					locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
-
-				var n = ${n} + 1;
+					locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_AT_VIEW_MODE",
+					title = ${title});
 			}
 		}
 
 		task ("Search United States and select it in the second Collection Filter") {
 			Page.selectFilterInCollectionFilter(
-				columnNumber = 2,
 				filterName = "United States",
 				searchTerm = "United States",
 				selectedName = "United States",
@@ -509,47 +156,15 @@ definition {
 		}
 
 		task ("View only the Air Max 1,Air Force 1 shown in Collection Display") {
-			var n = 1;
-
 			for (var title : list "Air Max 1,Air Force 1") {
 				AssertVisible(
-					key_entryContent = "[normalize-space(text())='${title}']",
-					key_fragmentName = "Collection Display",
-					key_position = ${n},
-					locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
-
-				var n = ${n} + 1;
+					locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_AT_VIEW_MODE",
+					title = ${title});
 			}
 
 			AssertElementNotPresent(
-				key_entryContent = "[normalize-space(text())='LeBron VIII']",
-				key_fragmentName = "Collection Display",
-				key_position = 3,
-				locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
-		}
-
-		task ("Search 9 inch and select it in the first Collection Filter") {
-			Page.selectFilterInCollectionFilter(
-				categoryNameList = "9 inch",
-				columnNumber = 1,
-				multipleSelection = "true",
-				searchTerm = "9 inch",
-				selectedName = "9 inch",
-				title = "Size");
-		}
-
-		task ("View only the Air Max 1 shown in Collection Display") {
-			AssertVisible(
-				key_entryContent = "[normalize-space(text())='Air Max 1']",
-				key_fragmentName = "Collection Display",
-				key_position = 1,
-				locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
-
-			AssertElementNotPresent(
-				key_entryContent = "[normalize-space(text())='Air Force 1']",
-				key_fragmentName = "Collection Display",
-				key_position = 2,
-				locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
+				locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_AT_VIEW_MODE",
+				title = "LeBron VIII");
 		}
 	}
 
@@ -757,26 +372,10 @@ definition {
 				mimeType = "image/jpeg",
 				sourceFileName = "Document_1.jpg");
 
-			JSONAssetlist.addManualAssetListEntryWithItemType(
+			JSONAssetlist.addDynamicAssetListEntryWithItemType(
 				groupName = ${randomSiteName},
 				itemType = "All Types",
-				title = "Manual Collection");
-
-			AssetListsAdmin.openAssetListsAdmin(siteURLKey = ${siteURLKey});
-
-			AssetListsAdmin.editAssetList(assetListTitle = "Manual Collection");
-
-			AssetListsAdmin.selectAsset(
-				assetName = "Wenjie M5",
-				assetType = "Basic Web Content");
-
-			AssetListsAdmin.selectAsset(
-				assetName = "GA8 Intelligent System",
-				assetType = "Blogs Entry");
-
-			AssetListsAdmin.selectAsset(
-				assetName = "GA8 Interior",
-				assetType = "Basic Document");
+				title = "Dynamic Collection");
 
 			JSONLayout.addPublicLayout(
 				groupName = ${randomSiteName},
@@ -792,7 +391,7 @@ definition {
 				fragmentName = "Collection Display");
 
 			PageEditor.editCollectionDisplay(
-				assetListName = "Manual Collection",
+				assetListName = "Dynamic Collection",
 				fragmentName = "Collection Display");
 
 			PageEditor.addFragment(
@@ -822,13 +421,13 @@ definition {
 			PageEditor.editCollectionFilter(
 				filter = "Tags",
 				fragmentName = "Collection Filter",
-				targetCollection = "Manual Collection");
+				targetCollection = "Dynamic Collection");
 
 			PageEditor.editCollectionFilter(
 				filter = "Tags",
 				fragmentName = "Collection Filter",
 				index = 2,
-				targetCollection = "Manual Collection");
+				targetCollection = "Dynamic Collection");
 
 			PageEditor.publish();
 		}
@@ -3791,13 +3390,6 @@ definition {
 				groupName = ${randomSiteName},
 				title = "Car",
 				vocabularyName = "Type");
-
-			for (var title : list "Trunk,Hatchback") {
-				JSONCategory.addCategory(
-					groupName = ${randomSiteName},
-					title = ${title},
-					vocabularyName = "Type");
-			}
 		}
 
 		task ("Add the first web content with Car") {
@@ -3883,9 +3475,9 @@ definition {
 				targetCollection = "Dynamic Collection");
 		}
 
-		task ("View No Results Found in Collection Dipslay when search Toyota at Preview mode") {
-			PageEditor.previewInANewTab();
+		PageEditor.publish();
 
+		task ("View No Results Found in Collection Dipslay when search Toyota at Preview mode") {
 			var n = 1;
 
 			for (var title : list "Tesla Model 3,Tesla Model Y,Tesla Model X") {
@@ -3900,137 +3492,6 @@ definition {
 			}
 
 			Page.searchInCollectionFilter(searchTerm = "Toyota");
-
-			AssertTextEquals.assertPartialText(
-				index = 1,
-				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
-				value1 = "No Results Found");
-
-			Close.closeWindow();
-
-			PageEditor.publish();
-		}
-
-		task ("View No Results Found in Collection Dipslay when search BMW at View mode") {
-			ContentPagesNavigator.openViewContentPage(
-				pageName = "Test Page Name 1",
-				siteName = ${randomSiteName});
-
-			var n = 1;
-
-			for (var title : list "Tesla Model 3,Tesla Model Y,Tesla Model X") {
-				AssertTextEquals(
-					key_colPosition = 1,
-					key_fragmentName = "heading",
-					key_rowPosition = ${n},
-					locator1 = "Fragment#CONTRIBUTED_FRAGMENT_INLINE_CONTENT_IN_COLLECTION_DISPLAY",
-					value1 = ${title});
-
-				var n = ${n} + 1;
-			}
-
-			Page.searchInCollectionFilter(searchTerm = "BMW");
-
-			AssertTextEquals.assertPartialText(
-				index = 1,
-				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
-				value1 = "No Results Found");
-		}
-
-		task ("Add the second content page") {
-			JSONLayout.addPublicLayout(
-				groupName = ${randomSiteName},
-				layoutName = "Test Page Name 2",
-				type = "content");
-		}
-
-		task ("Add a Collection Display fragment to page") {
-			ContentPagesNavigator.openEditContentPage(
-				pageName = "Test Page Name 2",
-				siteName = ${randomSiteName});
-
-			PageEditor.addFragment(
-				collectionName = "Content Display",
-				fragmentName = "Collection Display");
-		}
-
-		task ("Select the dynamic collection and Bordered List in Collection Display") {
-			PageEditor.editCollectionDisplay(
-				assetListName = "Dynamic Collection",
-				fragmentName = "Collection Display",
-				styleDisplay = "Bordered List");
-		}
-
-		task ("Add a Collection Filter above the Collection Display") {
-			PageEditor.addFragment(
-				collectionName = "Content Display",
-				dropTarget = "Header",
-				fragmentName = "Collection Filter",
-				targetFragmentName = "Collection Display");
-		}
-
-		task ("Select the dynamic collection as Target Collection and select the Category as Filter and Type as Source") {
-			PageEditor.editCollectionFilter(
-				categoryNameList = "SUV,Car,Trunk,Hatchback",
-				filter = "Category",
-				fragmentName = "Collection Filter",
-				targetCollection = "Dynamic Collection",
-				vocabularyName = "Type");
-		}
-
-		task ("View No Results Found in Collection Dipslay when select Trunk at Preview mode") {
-			PageEditor.previewInANewTab();
-
-			var n = 1;
-
-			for (var title : list "Tesla Model 3,Tesla Model Y,Tesla Model X") {
-				AssertVisible(
-					key_entryContent = "[normalize-space(text())='${title}']",
-					key_fragmentName = "Collection Display",
-					key_position = ${n},
-					locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
-
-				var n = ${n} + 1;
-			}
-
-			Page.selectFilterInCollectionFilter(
-				categoryNameList = "Trunk",
-				multipleSelection = "true",
-				selectedName = "Trunk",
-				title = "Type");
-
-			AssertTextEquals.assertPartialText(
-				index = 1,
-				locator1 = "PageEditor#COLLECTION_DISPLAY_EMPTY_STATE",
-				value1 = "No Results Found");
-
-			Close.closeWindow();
-
-			PageEditor.publish();
-		}
-
-		task ("View No Results Found in Collection Dipslay when select Hatchback at View mode") {
-			ContentPagesNavigator.openViewContentPage(
-				pageName = "Test Page Name 2",
-				siteName = ${randomSiteName});
-
-			var n = 1;
-
-			for (var title : list "Tesla Model 3,Tesla Model Y,Tesla Model X") {
-				AssertVisible(
-					key_entryContent = "[normalize-space(text())='${title}']",
-					key_fragmentName = "Collection Display",
-					key_position = ${n},
-					locator1 = "PageEditor#COLLECTION_ITEM_CONTENT_IN_BORDERED_LIST_AT_VIEW_MODE");
-
-				var n = ${n} + 1;
-			}
-
-			Page.selectFilterInCollectionFilter(
-				categoryNameList = "Hatchback",
-				multipleSelection = "true",
-				selectedName = "Hatchback",
-				title = "Type");
 
 			AssertTextEquals.assertPartialText(
 				index = 1,

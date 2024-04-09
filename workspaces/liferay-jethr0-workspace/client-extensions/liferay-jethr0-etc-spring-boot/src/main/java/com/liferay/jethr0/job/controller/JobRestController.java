@@ -9,6 +9,8 @@ import com.liferay.jethr0.bui1d.BuildEntity;
 import com.liferay.jethr0.bui1d.queue.BuildQueue;
 import com.liferay.jethr0.bui1d.repository.BuildEntityRepository;
 import com.liferay.jethr0.bui1d.run.BuildRunEntity;
+import com.liferay.jethr0.event.EventHandler;
+import com.liferay.jethr0.event.liferay.LiferayEventHandlerFactory;
 import com.liferay.jethr0.jenkins.JenkinsQueue;
 import com.liferay.jethr0.job.JobEntity;
 import com.liferay.jethr0.job.definition.JobDefinition;
@@ -42,6 +44,22 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/jobs")
 @RestController
 public class JobRestController {
+
+	@PostMapping("/action")
+	public ResponseEntity<String> action(
+		@AuthenticationPrincipal Jwt jwt, @RequestBody String body) {
+
+		try {
+			EventHandler eventHandler =
+				_liferayEventHandlerFactory.newEventHandler(
+					new JSONObject(body));
+
+			return new ResponseEntity<>(eventHandler.process(), HttpStatus.OK);
+		}
+		catch (Exception exception) {
+			throw new RuntimeException(exception);
+		}
+	}
 
 	@PostMapping("/create")
 	public ResponseEntity<String> createJob(
@@ -266,5 +284,8 @@ public class JobRestController {
 
 	@Autowired
 	private JobQueue _jobQueue;
+
+	@Autowired
+	private LiferayEventHandlerFactory _liferayEventHandlerFactory;
 
 }

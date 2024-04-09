@@ -140,7 +140,7 @@ public class PropagateContributedFragmentEntriesChangesMVCActionCommand
 				ExtendedObjectClassDefinition.Scope.SYSTEM.getValue())) {
 
 			throw new PortalException(
-				"Invalid scope primary key 0 for " + scope + " scope");
+				"Invalid scope primary key 0 for scope " + scope);
 		}
 
 		boolean propagateChanges = ParamUtil.getBoolean(

@@ -200,11 +200,7 @@ public class ObjectDefinitionResourceImpl
 		String rootObjectDefinitionExternalReferenceCode =
 			objectDefinition.getRootObjectDefinitionExternalReferenceCode();
 
-		if (Validator.isNotNull(rootObjectDefinitionExternalReferenceCode) &&
-			!Objects.equals(
-				rootObjectDefinitionExternalReferenceCode,
-				objectDefinition.getExternalReferenceCode())) {
-
+		if (Validator.isNotNull(rootObjectDefinitionExternalReferenceCode)) {
 			objectDefinition.setStatus((Status)null);
 
 			_validateRootObjectDefinition(
@@ -727,6 +723,17 @@ public class ObjectDefinitionResourceImpl
 		}
 
 		if (Validator.isNotNull(rootObjectDefinitionExternalReferenceCode)) {
+			if (serviceBuilderObjectDefinition.isRootNode() &&
+				!Objects.equals(
+					serviceBuilderObjectDefinition.
+						getRootObjectDefinitionExternalReferenceCode(),
+					rootObjectDefinitionExternalReferenceCode)) {
+
+				rootObjectDefinitionExternalReferenceCode =
+					serviceBuilderObjectDefinition.
+						getRootObjectDefinitionExternalReferenceCode();
+			}
+
 			serviceBuilderObjectDefinition =
 				_bindObjectDefinitionToRootObjectDefinition(
 					rootObjectDefinitionExternalReferenceCode,

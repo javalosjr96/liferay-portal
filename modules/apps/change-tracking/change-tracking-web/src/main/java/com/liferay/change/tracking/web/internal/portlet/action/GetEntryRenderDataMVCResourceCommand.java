@@ -26,6 +26,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.change.tracking.sql.CTSQLModeThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.io.unsync.UnsyncStringReader;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -35,14 +36,20 @@ import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModel;
+import com.liferay.portal.kernel.model.GroupedModel;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.WorkflowInstanceLink;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCResourceCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
 import com.liferay.portal.kernel.servlet.PipingServletResponse;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.HtmlUtil;
+import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -50,6 +57,8 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.kernel.workflow.WorkflowTask;
+import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
 import com.liferay.segments.constants.SegmentsExperienceConstants;
 import com.liferay.segments.model.SegmentsEntry;
 import com.liferay.segments.model.SegmentsExperience;
@@ -58,10 +67,14 @@ import com.liferay.segments.model.SegmentsExperienceTable;
 import com.liferay.segments.service.SegmentsEntryLocalService;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 
+import java.text.Format;
+
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Objects;
 
 import javax.portlet.ActionRequest;
@@ -591,6 +604,26 @@ public class GetEntryRenderDataMVCResourceCommand
 					new UnsyncStringReader(rightPreview)));
 		}
 
+		String workflowView = null;
+
+		Map<String, String> workflowData = new LinkedHashMap<>();
+
+		if (_ctDisplayRendererRegistry.isWorkflowEnabled(ctEntry, rightModel) &&
+			(ctEntry.getChangeType() != CTConstants.CT_CHANGE_TYPE_DELETION)) {
+
+			workflowData = _getWorkflowData(ctEntry, rightModel, themeDisplay);
+		}
+
+		if (!workflowData.isEmpty()) {
+			workflowView = _getWorkflowViewHTML(themeDisplay, workflowData);
+		}
+
+		if ((workflowView != null) &&
+			FeatureFlagManagerUtil.isEnabled("LPD-10703")) {
+
+			jsonObject.put("workflowView", workflowView);
+		}
+
 		if (ctDisplayRenderer.showPreviewDiff() &&
 			(leftLocalizedPreviewJSONObject != null) &&
 			(rightLocalizedPreviewJSONObject != null)) {
@@ -990,6 +1023,118 @@ public class GetEntryRenderDataMVCResourceCommand
 		jsonObject.put("segmentsExperiences", jsonArray);
 	}
 
+	private <T extends BaseModel<T>> Map<String, String> _getWorkflowData(
+			CTEntry ctEntry, T model, ThemeDisplay themeDisplay)
+		throws Exception {
+
+		long groupId = 0;
+
+		if (model instanceof GroupedModel) {
+			GroupedModel groupedModel = (GroupedModel)model;
+
+			groupId = groupedModel.getGroupId();
+		}
+
+		WorkflowInstanceLink workflowInstanceLink =
+			_workflowInstanceLinkLocalService.fetchWorkflowInstanceLink(
+				ctEntry.getCompanyId(), groupId,
+				_portal.getClassName(ctEntry.getModelClassNameId()),
+				ctEntry.getModelClassPK());
+
+		if (workflowInstanceLink == null) {
+			return new LinkedHashMap<>();
+		}
+
+		List<WorkflowTask> workflowTasks =
+			_workflowTaskManager.getWorkflowTasksByWorkflowInstance(
+				ctEntry.getCompanyId(), null,
+				workflowInstanceLink.getWorkflowInstanceId(), false, 0, 1,
+				null);
+
+		if (workflowTasks.isEmpty()) {
+			return new LinkedHashMap<>();
+		}
+
+		Format format = FastDateFormatFactoryUtil.getDateTime(
+			themeDisplay.getLocale(), themeDisplay.getTimeZone());
+		WorkflowTask workflowTask = workflowTasks.get(0);
+
+		return LinkedHashMapBuilder.put(
+			"assigned-to",
+			() -> {
+				if (workflowTask.isAssignedToSingleUser()) {
+					return _language.get(themeDisplay.getLocale(), "nobody");
+				}
+
+				return _portal.getUserName(
+					workflowTask.getAssigneeUserId(),
+					String.valueOf(workflowTask.getAssigneeUserId()));
+			}
+		).put(
+			"create-date", format.format(workflowTask.getCreateDate())
+		).put(
+			"due-date",
+			() -> {
+				if (workflowTask.getDueDate() != null) {
+					return format.format(workflowTask.getDueDate());
+				}
+
+				return _language.get(themeDisplay.getLocale(), "never");
+			}
+		).put(
+			"status",
+			() -> {
+				Map<String, Object> modelAttributes =
+					model.getModelAttributes();
+
+				return String.valueOf(modelAttributes.get("status"));
+			}
+		).put(
+			"task-name", workflowTask.getLabel(themeDisplay.getLocale())
+		).build();
+	}
+
+	private String _getWorkflowViewHTML(
+		ThemeDisplay themeDisplay, Map<String, String> workflowData) {
+
+		StringBundler sb = new StringBundler();
+
+		sb.append("<div class=\"table-responsive\"><table class=\"");
+		sb.append("publications-render-table table table-autofit ");
+		sb.append("table-nowrap\">");
+
+		for (Map.Entry<String, String> entry : workflowData.entrySet()) {
+			sb.append("<tr><td class=\"publications-key-td ");
+			sb.append("table-cell-expand-small\">");
+			sb.append(_language.get(themeDisplay.getLocale(), entry.getKey()));
+			sb.append("</td><td class=\"table-cell-expand\">");
+
+			if (Objects.equals(entry.getKey(), "status")) {
+				int status = Integer.valueOf(entry.getValue());
+
+				sb.append("<span class=\"label label-");
+				sb.append(WorkflowConstants.getStatusStyle(status));
+				sb.append("\"");
+				sb.append("<span class=\"label-item label-item-expand\">");
+				sb.append(
+					_language.get(
+						themeDisplay.getLocale(),
+						WorkflowConstants.getStatusLabel(status)));
+				sb.append("</span");
+				sb.append("</span");
+			}
+			else {
+				sb.append(HtmlUtil.escape(String.valueOf(entry.getValue())));
+			}
+
+			sb.append("</td></tr>");
+		}
+
+		sb.append("</table></div>");
+
+		return sb.toString();
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		GetEntryRenderDataMVCResourceCommand.class);
 
@@ -1025,5 +1170,11 @@ public class GetEntryRenderDataMVCResourceCommand
 
 	@Reference
 	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
+
+	@Reference
+	private WorkflowInstanceLinkLocalService _workflowInstanceLinkLocalService;
+
+	@Reference
+	private WorkflowTaskManager _workflowTaskManager;
 
 }

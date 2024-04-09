@@ -144,8 +144,10 @@ public class ClientExtension {
 	}
 
 	private static final Properties _clientExtensionProperties =
-		ResourceUtil.readProperties(
-			ResourceUtil.getClassLoaderResolver(
-				ClientExtension.class, "client-extension.properties"));
+		Objects.requireNonNull(
+			ResourceUtil.readProperties(
+				ResourceUtil.getClassLoaderResolver(
+					ClientExtension.class, "client-extension.properties")),
+			"Unable to read client-extension.properties file from class path");
 
 }

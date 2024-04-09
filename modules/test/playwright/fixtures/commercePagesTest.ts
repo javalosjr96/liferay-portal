@@ -7,6 +7,7 @@
 
 import {test} from '@playwright/test';
 
+import {CheckoutPage} from '../pages/commerce/commerce-checkout-web/checkoutPage';
 import {PendingOrdersPage} from '../pages/commerce/commerce-order-content-web/pendingOrdersPage';
 import {SpecificationFacetsPage} from '../pages/commerce/commerce-product-content-search-web/specificationFacetsPage';
 import {AttachmentsPage} from '../pages/commerce/commerce-product-definitions-web/attachmentsPage';
@@ -15,6 +16,7 @@ import {CommerceAdminChannelDetailsPage} from '../pages/commerce/commerceAdminCh
 import {CommerceAdminChannelsPage} from '../pages/commerce/commerceAdminChannelsPage';
 import {CommerceAdminOrderDetailsPage} from '../pages/commerce/commerceAdminOrderDetailsPage';
 import {CommerceAdminOrdersPage} from '../pages/commerce/commerceAdminOrdersPage';
+import {CommerceAdminProductDetailsDiagramPage} from '../pages/commerce/commerceAdminProductDetailsDiagramPage';
 import {CommerceAdminProductDetailsPage} from '../pages/commerce/commerceAdminProductDetailsPage';
 import {CommerceAdminProductDetailsProductRelationsPage} from '../pages/commerce/commerceAdminProductDetailsProductRelationsPage';
 import {CommerceAdminProductPage} from '../pages/commerce/commerceAdminProductPage';
@@ -24,11 +26,13 @@ import {CommercePaymentsPage} from '../pages/commerce/commercePaymentsPage';
 
 const commercePagesTest = test.extend<{
 	attachmentsPage: AttachmentsPage;
+	checkoutPage: CheckoutPage;
 	commerceAdminChannelDetailsCountriesPage: CommerceAdminChannelDetailsCountriesPage;
 	commerceAdminChannelDetailsPage: CommerceAdminChannelDetailsPage;
 	commerceAdminChannelsPage: CommerceAdminChannelsPage;
 	commerceAdminOrderDetailsPage: CommerceAdminOrderDetailsPage;
 	commerceAdminOrdersPage: CommerceAdminOrdersPage;
+	commerceAdminProductDetailsDiagramPage: CommerceAdminProductDetailsDiagramPage;
 	commerceAdminProductDetailsPage: CommerceAdminProductDetailsPage;
 	commerceAdminProductDetailsProductRelationsPage: CommerceAdminProductDetailsProductRelationsPage;
 	commerceAdminProductPage: CommerceAdminProductPage;
@@ -40,6 +44,9 @@ const commercePagesTest = test.extend<{
 }>({
 	attachmentsPage: async ({page}, use) => {
 		await use(new AttachmentsPage(page));
+	},
+	checkoutPage: async ({page}, use) => {
+		await use(new CheckoutPage(page));
 	},
 	commerceAdminChannelDetailsCountriesPage: async ({page}, use) => {
 		await use(new CommerceAdminChannelDetailsCountriesPage(page));
@@ -55,6 +62,9 @@ const commercePagesTest = test.extend<{
 	},
 	commerceAdminOrdersPage: async ({page}, use) => {
 		await use(new CommerceAdminOrdersPage(page));
+	},
+	commerceAdminProductDetailsDiagramPage: async ({page}, use) => {
+		await use(new CommerceAdminProductDetailsDiagramPage(page));
 	},
 	commerceAdminProductDetailsPage: async ({page}, use) => {
 		await use(new CommerceAdminProductDetailsPage(page));

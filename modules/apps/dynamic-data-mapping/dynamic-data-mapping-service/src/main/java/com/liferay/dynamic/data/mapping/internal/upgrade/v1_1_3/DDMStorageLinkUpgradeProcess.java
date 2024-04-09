@@ -7,23 +7,12 @@ package com.liferay.dynamic.data.mapping.internal.upgrade.v1_1_3;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
-import com.liferay.portal.kernel.json.JSONArray;
-import com.liferay.portal.kernel.json.JSONFactoryUtil;
-import com.liferay.portal.kernel.json.JSONObject;
-import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
-import com.liferay.portal.kernel.util.SetUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * @author Pedro Queiroz
@@ -34,76 +23,33 @@ public class DDMStorageLinkUpgradeProcess extends UpgradeProcess {
 	protected void doUpgrade() throws Exception {
 		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				StringBundler.concat(
-					"select DDMStorageLink.storageLinkId, ",
-					"DDMStorageLink.structureId, DDMStorageLink.classPK, ",
-					"DDMContent.data_ from DDMStorageLink, DDMContent where ",
-					"DDMStorageLink.classPK = DDMContent.contentId"));
-			PreparedStatement preparedStatement2 = connection.prepareStatement(
-				"select DDMStructureVersion.structureVersionId, " +
-					"DDMStructureVersion.definition from DDMStructureVersion " +
-						"where structureId = ?");
-			PreparedStatement preparedStatement3 =
+					"select distinct DDMStorageLink.structureId, ",
+					"TEMP_TABLE.structureVersionId from DDMStorageLink inner ",
+					"join (select structureId, max(structureVersionId) as ",
+					"structureVersionId from DDMStructureVersion group by ",
+					"DDMStructureVersion.structureId) TEMP_TABLE on ",
+					"DDMStorageLink.structureId = TEMP_TABLE.structureId"));
+			PreparedStatement preparedStatement2 =
 				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
 					connection,
 					"update DDMStorageLink set structureVersionId = ? where " +
-						"structureId = ? and structureVersionId is null");
-			PreparedStatement preparedStatement4 =
-				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
-					connection,
-					"update DDMStorageLink set structureVersionId = ? where " +
-						"storageLinkId = ?");
-			ResultSet resultSet1 = preparedStatement1.executeQuery()) {
+						"structureId = ?");
+			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
-			Map<Long, Long> ddmStructureVersionIds = new HashMap<>();
+			while (resultSet.next()) {
+				long ddmStructureVersionId = resultSet.getLong(
+					"structureVersionId");
 
-			while (resultSet1.next()) {
-				Set<String> ddmContentFieldNames = _getFieldNames(
-					resultSet1.getString("data_"), "fieldValues");
+				if (ddmStructureVersionId > 0) {
+					preparedStatement2.setLong(1, ddmStructureVersionId);
+					preparedStatement2.setLong(
+						2, resultSet.getLong("structureId"));
 
-				if (SetUtil.isEmpty(ddmContentFieldNames)) {
-					continue;
-				}
-
-				preparedStatement2.setLong(
-					1, resultSet1.getLong("structureId"));
-
-				try (ResultSet resultSet2 = preparedStatement2.executeQuery()) {
-					while (resultSet2.next()) {
-						Set<String> ddmStructureFieldNames = _getFieldNames(
-							resultSet2.getString("definition"), "fields");
-
-						if (!ddmStructureFieldNames.containsAll(
-								ddmContentFieldNames)) {
-
-							continue;
-						}
-
-						preparedStatement3.setLong(
-							1, resultSet2.getLong("structureVersionId"));
-						preparedStatement3.setLong(
-							2, resultSet1.getLong("structureId"));
-
-						preparedStatement3.addBatch();
-
-						ddmStructureVersionIds.put(
-							resultSet1.getLong("storageLinkId"),
-							resultSet2.getLong("structureVersionId"));
-					}
-
-					preparedStatement3.executeBatch();
+					preparedStatement2.addBatch();
 				}
 			}
 
-			for (Map.Entry<Long, Long> entry :
-					ddmStructureVersionIds.entrySet()) {
-
-				preparedStatement4.setLong(1, entry.getValue());
-				preparedStatement4.setLong(2, entry.getKey());
-
-				preparedStatement4.addBatch();
-			}
-
-			preparedStatement4.executeBatch();
+			preparedStatement2.executeBatch();
 		}
 	}
 
@@ -113,28 +59,6 @@ public class DDMStorageLinkUpgradeProcess extends UpgradeProcess {
 			UpgradeProcessFactory.addColumns(
 				"DDMStorageLink", "structureVersionId LONG")
 		};
-	}
-
-	private Set<String> _getFieldNames(String json, String key)
-		throws Exception {
-
-		JSONObject jsonObject = JSONFactoryUtil.createJSONObject(json);
-
-		JSONArray jsonArray = jsonObject.getJSONArray(key);
-
-		if (jsonArray == null) {
-			return Collections.emptySet();
-		}
-
-		Set<String> fieldNames = new HashSet<>();
-
-		for (int i = 0; i < jsonArray.length(); i++) {
-			fieldNames.add(
-				JSONUtil.getValueAsString(
-					jsonArray, "JSONObject/" + i, "Object/name"));
-		}
-
-		return fieldNames;
 	}
 
 }

@@ -54,6 +54,7 @@ const ActivityReviewEntry = ({mdfRequestActivity}: IProps) => {
 						label: '',
 					},
 				]}
+				layoutAuto
 				rows={[
 					{
 						title: 'Activity name',

@@ -6,7 +6,11 @@
 package com.liferay.layout.utility.page.internal.exportimport.data.handler.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.exportimport.kernel.lar.PortletDataContextFactoryUtil;
+import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
+import com.liferay.exportimport.kernel.lifecycle.ExportImportLifecycleManagerUtil;
+import com.liferay.exportimport.kernel.lifecycle.constants.ExportImportLifecycleConstants;
 import com.liferay.exportimport.test.util.lar.BaseStagedModelDataHandlerTestCase;
 import com.liferay.layout.utility.page.kernel.constants.LayoutUtilityPageEntryConstants;
 import com.liferay.layout.utility.page.model.LayoutUtilityPageEntry;
@@ -159,6 +163,66 @@ public class LayoutUtilityPageEntryStagedModelDataHandlerTest
 			importedLayoutUtilityPageEntry.isDefaultLayoutUtilityPageEntry());
 	}
 
+	@Test
+	public void testImportLayoutUtilityPageEntryWithCopyAsNewAndAlreadyExists()
+		throws Exception {
+
+		initExport();
+
+		LayoutUtilityPageEntry layoutUtilityPageEntry =
+			_layoutUtilityPageEntryLocalService.addLayoutUtilityPageEntry(
+				null, TestPropsValues.getUserId(), stagingGroup.getGroupId(), 0,
+				0, true, _TEST_NAME, _TEST_TYPE, 0,
+				ServiceContextTestUtil.getServiceContext(
+					stagingGroup.getGroupId(), TestPropsValues.getUserId()));
+
+		StagedModelDataHandlerUtil.exportStagedModel(
+			portletDataContext, layoutUtilityPageEntry);
+
+		initImport();
+
+		_layoutUtilityPageEntryLocalService.addLayoutUtilityPageEntry(
+			null, TestPropsValues.getUserId(), liveGroup.getGroupId(), 0, 0,
+			true, _TEST_NAME, _TEST_TYPE, 0,
+			ServiceContextTestUtil.getServiceContext(
+				liveGroup.getGroupId(), TestPropsValues.getUserId()));
+
+		ExportImportLifecycleManagerUtil.fireExportImportLifecycleEvent(
+			ExportImportLifecycleConstants.EVENT_LAYOUT_IMPORT_STARTED,
+			ExportImportLifecycleConstants.
+				PROCESS_FLAG_LAYOUT_IMPORT_IN_PROCESS,
+			portletDataContext.getExportImportProcessId(),
+			PortletDataContextFactoryUtil.clonePortletDataContext(
+				portletDataContext));
+
+		LayoutUtilityPageEntry exportedLayoutUtilityPageEntry =
+			(LayoutUtilityPageEntry)readExportedStagedModel(
+				layoutUtilityPageEntry);
+
+		portletDataContext.setDataStrategy(
+			PortletDataHandlerKeys.DATA_STRATEGY_COPY_AS_NEW);
+
+		StagedModelDataHandlerUtil.importStagedModel(
+			portletDataContext, exportedLayoutUtilityPageEntry);
+
+		ExportImportLifecycleManagerUtil.fireExportImportLifecycleEvent(
+			ExportImportLifecycleConstants.EVENT_LAYOUT_IMPORT_SUCCEEDED,
+			ExportImportLifecycleConstants.
+				PROCESS_FLAG_LAYOUT_IMPORT_IN_PROCESS,
+			portletDataContext.getExportImportProcessId(),
+			PortletDataContextFactoryUtil.clonePortletDataContext(
+				portletDataContext));
+
+		LayoutUtilityPageEntry importedLayoutUtilityPageEntry =
+			_layoutUtilityPageEntryLocalService.
+				getDefaultLayoutUtilityPageEntry(
+					liveGroup.getGroupId(), _TEST_TYPE);
+
+		Assert.assertNotEquals(
+			layoutUtilityPageEntry.getUuid(),
+			importedLayoutUtilityPageEntry.getUuid());
+	}
+
 	@Override
 	protected StagedModel addStagedModel(
 			Group group,
@@ -233,6 +297,10 @@ public class LayoutUtilityPageEntryStagedModelDataHandlerTest
 		return (LayoutUtilityPageEntry)getStagedModel(
 			layoutUtilityPageEntry.getUuid(), group);
 	}
+
+	private static final String _TEST_NAME = "Test Layout Utility Page";
+
+	private static final String _TEST_TYPE = "test";
 
 	@Inject
 	private LayoutUtilityPageEntryLocalService

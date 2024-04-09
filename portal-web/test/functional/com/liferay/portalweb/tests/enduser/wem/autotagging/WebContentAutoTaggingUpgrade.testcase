@@ -23,23 +23,24 @@ definition {
 	@priority = 5
 	test ViewWebContentArchive72101 {
 		property data.archive.type = "data-archive-auto-tagging";
+		property portal.release = "quarantine";
 		property portal.version = "7.2.10.1";
 
 		ValidateAutoTaggingUpgrade.editTagsAndDeleteAutoTaggedWebContent(
-			tagName = "dxp",
+			tagName = "DXP",
 			webContentTitle = "Digital Transformation or Digital Experience?");
 
 		ValidateAutoTaggingUpgrade.editTagsAndDeleteAutoTaggedWebContent(
-			tagName = "computers",
+			tagName = "Computers",
 			webContentTitle = "WC Google Text AutoTagging");
 
 		ValidateAutoTaggingUpgrade.addAutoTaggedWebContent(
-			tagName = "adventures",
+			tagName = "Adventures",
 			webContentContent = "Alice's Adventures in Wonderland",
 			webContentTitle = "WC New OpenNLP AutoTagging");
 
 		ValidateAutoTaggingUpgrade.addAutoTaggedWebContent(
-			tagName = "value people",
+			tagName = "Value People",
 			webContentContent = "Serving a wide range of enterprises, we strive to stay true to our core values: Produce Excellence, Lead by Serving, Value People, Grow and Get Better.",
 			webContentTitle = "WC New Google AutoTagging");
 	}
@@ -58,12 +59,12 @@ definition {
 			webContentTitle = "WC Google Text AutoTagging");
 
 		ValidateAutoTaggingUpgrade.addAutoTaggedWebContent(
-			tagName = "adventures",
+			tagName = "Adventures",
 			webContentContent = "Alice's Adventures in Wonderland",
 			webContentTitle = "WC New OpenNLP AutoTagging");
 
 		ValidateAutoTaggingUpgrade.addAutoTaggedWebContent(
-			tagName = "value people",
+			tagName = "Value People",
 			webContentContent = "Serving a wide range of enterprises, we strive to stay true to our core values: Produce Excellence, Lead by Serving, Value People, Grow and Get Better.",
 			webContentTitle = "WC New Google AutoTagging");
 	}

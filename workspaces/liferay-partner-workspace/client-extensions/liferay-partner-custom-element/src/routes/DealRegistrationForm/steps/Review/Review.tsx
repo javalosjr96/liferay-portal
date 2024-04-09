@@ -41,6 +41,7 @@ const Review = ({
 							label: '',
 						},
 					]}
+					layoutAuto
 					rows={[
 						{
 							title: 'Partner Account Name',
@@ -65,6 +66,7 @@ const Review = ({
 							label: '',
 						},
 					]}
+					layoutAuto
 					rows={[
 						{
 							title: 'Account Name',
@@ -109,6 +111,7 @@ const Review = ({
 							label: '',
 						},
 					]}
+					layoutAuto
 					rows={[
 						{
 							title: 'First Name',
@@ -149,6 +152,7 @@ const Review = ({
 							label: '',
 						},
 					]}
+					layoutAuto
 					rows={[
 						{
 							title: 'First Name',
@@ -177,6 +181,7 @@ const Review = ({
 							label: '',
 						},
 					]}
+					layoutAuto
 					rows={[
 						{
 							title: 'Additional Information',
@@ -198,6 +203,7 @@ const Review = ({
 							label: '',
 						},
 					]}
+					layoutAuto
 					rows={[
 						{
 							title: 'Project Need',
@@ -222,6 +228,7 @@ const Review = ({
 							label: '',
 						},
 					]}
+					layoutAuto
 					rows={[
 						{
 							title: 'Project Timeline',

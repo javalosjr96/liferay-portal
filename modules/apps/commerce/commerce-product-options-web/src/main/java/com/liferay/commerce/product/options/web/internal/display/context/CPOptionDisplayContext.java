@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.settings.SystemSettingsLocator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.portlet.PortletURL;
 import javax.portlet.RenderResponse;
@@ -193,6 +194,17 @@ public class CPOptionDisplayContext {
 		}
 
 		return commerceOptionType.hasValues();
+	}
+
+	public boolean isCPOptionSelectDate() {
+		if (Objects.equals(
+				CPConstants.PRODUCT_OPTION_SELECT_DATE_KEY,
+				_cpOption.getCommerceOptionTypeKey())) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	protected final CPRequestHelper cpRequestHelper;
