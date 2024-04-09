@@ -1,16 +1,15 @@
-name: Master Sync
+name: Sync Repository
+
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ['Scheduled Empty Commit Branch']
-    types: [completed]
+  push: { branches: [ main ] }  # Adjust branch to watch for pushes
+
 jobs:
-  create-pull-request:
+  sync:
     runs-on: ubuntu-latest
-    env:
-        GITHUB_TOKEN: ${{ secrets.GITHUBPRTOKEN }}
     steps:
-      - uses: actions/checkout@v3
-      - name: Sync with Master with gh
-        run: |
-          gh repo sync 
+      - uses: repo-sync/github-sync@v3  # Replace with the latest version
+        with:
+          source: "liferay/liferay-portal"
+          destination: "javalosjr96/liferay-portal"
+          branch: "master" 
