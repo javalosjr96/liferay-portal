@@ -77,8 +77,8 @@ public class UploadGoogleDriveDocumentBackgroundTaskExecutor
 		Map<String, Serializable> taskContextMap =
 			backgroundTask.getTaskContextMap();
 
-		long companyId = GetterUtil.getLong(
-			taskContextMap.get(GoogleDriveBackgroundTaskConstants.COMPANY_ID));
+		long companyId = backgroundTask.getCompanyId();
+
 		long fileEntryId = GetterUtil.getLong(
 			taskContextMap.get(
 				GoogleDriveBackgroundTaskConstants.FILE_ENTRY_ID));
