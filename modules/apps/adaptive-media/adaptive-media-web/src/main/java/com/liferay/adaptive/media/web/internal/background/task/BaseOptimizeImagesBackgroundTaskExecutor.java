@@ -39,9 +39,8 @@ public abstract class BaseOptimizeImagesBackgroundTaskExecutor
 
 		String configurationEntryUuid = (String)taskContextMap.get(
 			AMOptimizeImagesBackgroundTaskConstants.CONFIGURATION_ENTRY_UUID);
-		long companyId = GetterUtil.getLong(
-			taskContextMap.get(
-				AMOptimizeImagesBackgroundTaskConstants.COMPANY_ID));
+
+		long companyId = backgroundTask.getCompanyId();
 
 		optimizeImages(configurationEntryUuid, companyId);
 

@@ -1,0 +1,1433 @@
+4e7992dc37d91fc10ba5c67204c2eeb7c5b361da LPD-24564 baseline
+modules/apps/object/object-api/bnd.bnd
+modules/apps/object/object-api/src/main/resources/com/liferay/object/service/packageinfo
+c999ead87d31256e8c0e4f759770bd9ca7a21c0b LPD-24564 regen
+modules/apps/object/object-api/src/main/java/com/liferay/object/model/ObjectDefinitionModel.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/model/ObjectDefinitionWrapper.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionServiceUtil.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionServiceWrapper.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/model/impl/ObjectDefinitionModelImpl.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/service/http/ObjectDefinitionServiceHttp.java
+2a027c13c35127b825b06498d979a5868fcbaf64 LPD-24564 regen
+modules/apps/object/object-admin-rest-client/src/main/java/com/liferay/object/admin/rest/client/serdes/v1_0/ObjectDefinitionSerDes.java
+51d7a2333521083c3a684b28e8ce24e1e72a677a LPD-24564 auto SF
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/test/ObjectDefinitionLocalServiceTest.java
+4bc43d0aee96b248348fe152fbc360ac08444adb LPD-24564 Mass rename
+modules/apps/object/object-admin-rest-api/src/main/java/com/liferay/object/admin/rest/dto/v1_0/ObjectDefinition.java
+modules/apps/object/object-admin-rest-client/src/main/java/com/liferay/object/admin/rest/client/dto/v1_0/ObjectDefinition.java
+modules/apps/object/object-admin-rest-client/src/main/java/com/liferay/object/admin/rest/client/serdes/v1_0/ObjectDefinitionSerDes.java
+modules/apps/object/object-admin-rest-impl/rest-openapi.yaml
+modules/apps/object/object-admin-rest-impl/src/main/java/com/liferay/object/admin/rest/internal/dto/v1_0/util/ObjectDefinitionUtil.java
+modules/apps/object/object-admin-rest-impl/src/main/java/com/liferay/object/admin/rest/internal/graphql/query/v1_0/Query.java
+modules/apps/object/object-admin-rest-impl/src/main/java/com/liferay/object/admin/rest/internal/resource/v1_0/BaseObjectDefinitionResourceImpl.java
+modules/apps/object/object-admin-rest-impl/src/main/java/com/liferay/object/admin/rest/internal/resource/v1_0/ObjectDefinitionResourceImpl.java
+modules/apps/object/object-admin-rest-test/src/testIntegration/java/com/liferay/object/admin/rest/resource/v1_0/test/BaseObjectDefinitionResourceTestCase.java
+modules/apps/object/object-admin-rest-test/src/testIntegration/java/com/liferay/object/admin/rest/resource/v1_0/test/ObjectDefinitionResourceTest.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/model/ObjectDefinitionModel.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/model/ObjectDefinitionTable.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/model/ObjectDefinitionWrapper.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionLocalService.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionLocalServiceUtil.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionLocalServiceWrapper.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionService.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionServiceUtil.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionServiceWrapper.java
+modules/apps/object/object-service/service.xml
+modules/apps/object/object-service/src/main/java/com/liferay/object/internal/deployer/ObjectDefinitionDeployerImpl.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/internal/model/listener/AccountEntryOrganizationRelModelListener.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/internal/upgrade/v9_2_0/ObjectDefinitionUpgradeProcess.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/model/impl/ObjectDefinitionCacheModel.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/model/impl/ObjectDefinitionModelImpl.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/service/http/ObjectDefinitionServiceHttp.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/service/impl/ObjectDefinitionLocalServiceImpl.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/service/impl/ObjectDefinitionServiceImpl.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/service/impl/ObjectEntryLocalServiceImpl.java
+modules/apps/object/object-service/src/main/resources/META-INF/module-hbm.xml
+modules/apps/object/object-service/src/main/resources/META-INF/portlet-model-hints.xml
+modules/apps/object/object-service/src/main/resources/META-INF/sql/tables.sql
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/internal/upgrade/v9_2_0/test/ObjectDefinitionUpgradeProcessTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/persistence/test/ObjectDefinitionPersistenceTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/test/ObjectDefinitionLocalServiceTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/test/ObjectEntryLocalServiceTest.java
+modules/apps/object/object-web/src/main/java/com/liferay/object/web/internal/info/collection/provider/ObjectEntrySingleFormVariationInfoCollectionProvider.java
+modules/apps/object/object-web/src/main/resources/META-INF/resources/js/components/ObjectDetails/ConfigurationContainer.tsx
+modules/apps/object/object-web/src/main/resources/META-INF/resources/js/types.d.ts
+27096d792971b30b9e80e4b95cd58e4361f34961 LPD-24564 SF
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/test/ObjectDefinitionLocalServiceTest.java
+42f5af84ed49f1129c58c4c7174a269092266db6 LPD-24564 Regen
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ar.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_bg.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ca.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_cs.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_da.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_de.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_el.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_AU.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_GB.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_AR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_CO.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_MX.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_et.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_eu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fa.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_gl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hi_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_in.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_it.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_iw.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ja.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_kk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_km.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ko.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lo.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lt.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ms.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nb.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl_BE.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_BR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_PT.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ro.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ru.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS_latin.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sv.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ta_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_th.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_tr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_uk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_vi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_CN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_TW.properties
+5c7509062a097be6739359cbaed4d203fc6b884e LPD-24564 Is this true?
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+2f081122af8d2c3e08687ced96391b80d6ec3835 LPD-24564 Fix integration test
+modules/apps/object/object-admin-rest-test/src/testIntegration/java/com/liferay/object/admin/rest/resource/v1_0/test/ObjectDefinitionResourceTest.java
+3bdccb68faa8b78c147d55630fdddd43432f9d0c LPD-24997 Add integration test
+modules/apps/object/object-admin-rest-test/src/testIntegration/java/com/liferay/object/admin/rest/resource/v1_0/test/ObjectDefinitionResourceTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/test/ObjectDefinitionLocalServiceTest.java
+bf5b897a804ec9a904f2dd636b7d7d537c8cd96e LPD-24564 buildLang
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ar.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_bg.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ca.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_cs.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_da.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_de.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_el.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_AU.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_GB.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_AR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_CO.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_MX.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_et.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_eu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fa.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_gl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hi_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_in.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_it.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_iw.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ja.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_kk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_km.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ko.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lo.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lt.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ms.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nb.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl_BE.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_BR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_PT.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ro.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ru.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS_latin.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sv.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ta_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_th.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_tr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_uk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_vi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_CN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_TW.properties
+bdd9d4876380a815df7c6ae7271e4646e215b0f9 LPD-24564 Add release feature flag
+modules/apps/object/object-admin-rest-impl/src/main/java/com/liferay/object/admin/rest/internal/dto/v1_0/util/ObjectDefinitionUtil.java
+modules/apps/object/object-admin-rest-impl/src/main/java/com/liferay/object/admin/rest/internal/resource/v1_0/ObjectDefinitionResourceImpl.java
+modules/apps/object/object-web/src/main/resources/META-INF/resources/js/components/ObjectDetails/ConfigurationContainer.tsx
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+portal-impl/src/portal.properties
+20035d617681931a8819dab29d2f575d19d58ff8 LPD-24564 Continue if object definition is not isEnableIndexedSearch on _reindex
+modules/apps/object/object-service/src/main/java/com/liferay/object/internal/model/listener/AccountEntryOrganizationRelModelListener.java
+2a3f3f7c2d7ccd0158738932135b07f5a793b3b6 LPD-24564 Prevent NPE if object definition is not isEnableIndexedSearch in getCollectionInfoPage
+modules/apps/object/object-web/src/main/java/com/liferay/object/web/internal/info/collection/provider/ObjectEntrySingleFormVariationInfoCollectionProvider.java
+12d86ce173763cf437d61e34097617110d880763 LPD-24564 Simplify
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/internal/upgrade/v9_2_0/test/ObjectDefinitionUpgradeProcessTest.java
+b24cd6bb119d3325b3cf5dbdd4cccd0fb010df77 LPD-24564 buildLang
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ar.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_bg.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ca.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_cs.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_da.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_de.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_el.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_AU.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_GB.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_AR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_CO.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_MX.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_et.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_eu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fa.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_gl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hi_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_in.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_it.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_iw.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ja.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_kk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_km.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ko.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lo.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lt.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ms.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nb.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl_BE.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_BR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_PT.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ro.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ru.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS_latin.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sv.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ta_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_th.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_tr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_uk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_vi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_CN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_TW.properties
+33d37e9412ecdec0f3e9bda49fb78c6518a61f03 LPD-24564 Add language key
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+3ee7b607fe4833b14e09c15f488538c828dde306 LPD-24564 Implement ObjectDefinitionUpgradeProcessTest
+modules/apps/object/object-test/build.gradle
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/internal/upgrade/v9_2_0/test/ObjectDefinitionUpgradeProcessTest.java
+529c5425751e084beb5aa54cc53849399be6a48c LPD-24564 Skip if object definition is not isEnableIndexedSearch
+modules/apps/object/object-service/src/main/java/com/liferay/object/service/impl/ObjectEntryLocalServiceImpl.java
+684ebe77279667e43a35119680178a3331899306 LPD-24564 baseline
+modules/apps/object/object-admin-rest-api/bnd.bnd
+modules/apps/object/object-admin-rest-api/src/main/resources/com/liferay/object/admin/rest/dto/v1_0/packageinfo
+modules/apps/object/object-api/src/main/resources/com/liferay/object/model/packageinfo
+2a60621400b4c75ddd6f496e4d47ba8cfd6255f4 LPD-24564 Add logic to not register services
+modules/apps/object/object-service/src/main/java/com/liferay/object/internal/deployer/ObjectDefinitionDeployerImpl.java
+0e04f2e83722c77316047a5756f20e3438a691d3 LPD-24564 Show field from UI
+modules/apps/object/object-web/src/main/resources/META-INF/resources/js/components/ObjectDetails/ConfigurationContainer.tsx
+modules/apps/object/object-web/src/main/resources/META-INF/resources/js/types.d.ts
+583e4d76d41f9d93a4e0cd3e457b281ca3fc152a LPD-24564 Add logic to Resource
+modules/apps/object/object-admin-rest-impl/src/main/java/com/liferay/object/admin/rest/internal/dto/v1_0/util/ObjectDefinitionUtil.java
+modules/apps/object/object-admin-rest-impl/src/main/java/com/liferay/object/admin/rest/internal/resource/v1_0/ObjectDefinitionResourceImpl.java
+4816522526227d8802b356f1efeee240911bae38 LPD-24564 Fix usages
+modules/apps/batch-planner/batch-planner-test/src/testIntegration/java/com/liferay/batch/planner/batch/engine/broker/test/BatchEngineBrokerTest.java
+modules/apps/dynamic-data-mapping/dynamic-data-mapping-test/src/testIntegration/java/com/liferay/dynamic/data/mapping/exportimport/data/handler/test/DDMFormInstanceStagedModelDataHandlerTest.java
+modules/apps/fragment/fragment-entry-processor/fragment-entry-processor-editable-test/src/testIntegration/java/com/liferay/fragment/entry/processor/editable/test/EditableFragmentEntryProcessorTest.java
+modules/apps/fragment/fragment-test/src/testIntegration/java/com/liferay/fragment/input/template/parser/test/FragmentEntryInputTemplateNodeContextHelperTest.java
+modules/apps/frontend-data-set/frontend-data-set-sample-web/src/main/java/com/liferay/frontend/data/set/sample/web/internal/portlet/FDSSamplePortlet.java
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/java/com/liferay/frontend/data/set/views/web/internal/portlet/FDSViewsPortlet.java
+modules/apps/headless/headless-builder/headless-builder-test/src/testIntegration/java/com/liferay/headless/builder/resource/test/HeadlessBuilderOpenAPIResourceTest.java
+modules/apps/headless/headless-builder/headless-builder-test/src/testIntegration/java/com/liferay/headless/builder/test/util/ObjectDefinitionTestUtil.java
+modules/apps/headless/headless-discovery/headless-discovery-test/src/testIntegration/java/com/liferay/headless/discovery/jaxrs/resource/v1_0/test/HeadlessDiscoveryOpenAPIResourceTest.java
+modules/apps/info/info-test/src/testIntegration/java/com/liferay/info/request/struts/test/EditInfoItemStrutsActionTest.java
+modules/apps/info/info-test/src/testIntegration/java/com/liferay/info/request/struts/test/ExecuteInfoItemActionStrutsActionTest.java
+modules/apps/layout/layout-page-template-admin-web-test/src/testIntegration/java/com/liferay/layout/page/template/admin/web/internal/portlet/action/test/ImportExportLayoutPageTemplateEntriesTest.java
+modules/apps/list-type/list-type-test/src/testIntegration/java/com/liferay/list/type/service/test/ListTypeDefinitionLocalServiceTest.java
+modules/apps/notification/notification-test/src/testIntegration/java/com/liferay/notification/internal/type/test/BaseNotificationTypeTest.java
+modules/apps/notification/notification-test/src/testIntegration/java/com/liferay/notification/internal/type/test/EmailNotificationTypeTest.java
+modules/apps/object/object-admin-rest-test/src/testIntegration/java/com/liferay/object/admin/rest/resource/v1_0/test/util/ObjectDefinitionTestUtil.java
+modules/apps/object/object-rest-test/src/testIntegration/java/com/liferay/object/rest/internal/graphql/v1_0/test/ObjectDefinitionGraphQLTest.java
+modules/apps/object/object-rest-test/src/testIntegration/java/com/liferay/object/rest/internal/manager/v1_0/test/DefaultObjectEntryManagerImplTest.java
+modules/apps/object/object-rest-test/src/testIntegration/java/com/liferay/object/rest/internal/odata/entity/v1_0/test/ObjectEntryEntityModelTest.java
+modules/apps/object/object-rest-test/src/testIntegration/java/com/liferay/object/rest/internal/resource/v1_0/test/ObjectEntryResourceTest.java
+modules/apps/object/object-rest-test/src/testIntegration/java/com/liferay/object/rest/internal/vulcan/extension/v1_0/test/ObjectEntryExtensionProviderTest.java
+modules/apps/object/object-rest-test/src/testIntegration/java/com/liferay/object/rest/internal/vulcan/extension/v1_0/test/ObjectRelationshipExtensionProviderTest.java
+modules/apps/object/object-storage-salesforce-test/src/testIntegration/java/com/liferay/object/storage/salesforce/internal/rest/manager/v1_0/test/SalesforceObjectEntryManagerImplTest.java
+modules/apps/object/object-storage-sugarcrm-test/src/testIntegration/java/com/liferay/object/storage/sugarcrm/internal/rest/manager/v1_0/test/SugarCRMObjectEntryManagerImplTest.java
+modules/apps/object/object-test-util/src/main/java/com/liferay/object/test/util/ObjectDefinitionTestUtil.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/internal/field/business/type/test/MultiselectPicklistObjectFieldBusinessTypeTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/internal/info/collection/provider/test/ManyToManyObjectRelationshipInfoCollectionProviderTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/internal/info/collection/provider/test/OneToManyObjectRelationshipInfoCollectionProviderTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/related/models/test/ObjectRelatedModelsProviderTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/related/models/test/util/ObjectDefinitionTestUtil.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/test/ObjectDefinitionLocalServiceTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/test/ObjectDefinitionServiceTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/test/ObjectEntryLocalServiceTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/test/ObjectFieldLocalServiceTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/test/ObjectRelationshipServiceTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/test/ObjectStateFlowLocalServiceTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/web/internal/info/item/provider/test/ObjectEntryInfoItemFieldValuesProviderTest.java
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/web/internal/info/item/provider/test/ObjectEntryInfoItemFormProviderTest.java
+modules/apps/portal-security/portal-security-script-management-test/src/testIntegration/java/com/liferay/portal/security/script/management/web/internal/portlet/action/test/GetGroovyScriptUsesMVCResourceCommandTest.java
+modules/apps/portal-security/portal-security-script-management-test/src/testIntegration/java/com/liferay/portal/security/script/management/web/internal/upgrade/v1_1_0/test/ScriptManagementConfigurationUpgradeProcessTest.java
+f20678798f8d965a818e0de04e0d40ed03c6be71 LPD-24564 buildRest
+modules/apps/object/object-admin-rest-api/src/main/java/com/liferay/object/admin/rest/dto/v1_0/ObjectDefinition.java
+modules/apps/object/object-admin-rest-client/src/main/java/com/liferay/object/admin/rest/client/dto/v1_0/ObjectDefinition.java
+modules/apps/object/object-admin-rest-client/src/main/java/com/liferay/object/admin/rest/client/serdes/v1_0/ObjectDefinitionSerDes.java
+modules/apps/object/object-admin-rest-impl/src/main/java/com/liferay/object/admin/rest/internal/graphql/query/v1_0/Query.java
+modules/apps/object/object-admin-rest-impl/src/main/java/com/liferay/object/admin/rest/internal/resource/v1_0/BaseObjectDefinitionResourceImpl.java
+modules/apps/object/object-admin-rest-test/src/testIntegration/java/com/liferay/object/admin/rest/resource/v1_0/test/BaseObjectDefinitionResourceTestCase.java
+15830f9df0c005186771eca7e4041f2269b19c31 LPD-24564 Add new property to open api
+modules/apps/object/object-admin-rest-impl/rest-openapi.yaml
+5831461c481521176def6c72a7b04d1f18f5138f LPD-24564 buildService
+modules/apps/object/object-api/src/main/java/com/liferay/object/model/ObjectDefinitionModel.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/model/ObjectDefinitionTable.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/model/ObjectDefinitionWrapper.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionLocalService.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionLocalServiceUtil.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionLocalServiceWrapper.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionService.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionServiceUtil.java
+modules/apps/object/object-api/src/main/java/com/liferay/object/service/ObjectDefinitionServiceWrapper.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/model/impl/ObjectDefinitionCacheModel.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/model/impl/ObjectDefinitionModelImpl.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/service/http/ObjectDefinitionServiceHttp.java
+modules/apps/object/object-service/src/main/resources/META-INF/module-hbm.xml
+modules/apps/object/object-service/src/main/resources/META-INF/portlet-model-hints.xml
+modules/apps/object/object-service/src/main/resources/META-INF/sql/tables.sql
+modules/apps/object/object-test/src/testIntegration/java/com/liferay/object/service/persistence/test/ObjectDefinitionPersistenceTest.java
+7a2fa8279c8f8edf248a178c222b2ccfa79a616d LPD-24564 Add upgrade step
+modules/apps/object/object-service/bnd.bnd
+modules/apps/object/object-service/src/main/java/com/liferay/object/internal/upgrade/registry/ObjectServiceUpgradeStepRegistrator.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/internal/upgrade/v9_2_0/ObjectDefinitionUpgradeProcess.java
+3e6ce7197138c170a5246fbf94c1a953de9716ec LPD-24564 Change method signature to support the new column
+modules/apps/object/object-service/src/main/java/com/liferay/object/service/impl/ObjectDefinitionLocalServiceImpl.java
+modules/apps/object/object-service/src/main/java/com/liferay/object/service/impl/ObjectDefinitionServiceImpl.java
+212151f95d54868292db133c50f246072a3f85f1 LPD-24564 Add new column enableIndexedSearch
+modules/apps/object/object-service/service.xml
+94fd094718da1e68e680862c00ed3a79299c3107 LPD-23435 Rename
+modules/apps/object/object-rest-test/src/testIntegration/java/com/liferay/object/rest/internal/manager/v1_0/test/DefaultObjectEntryManagerImplTest.java
+b78b2c210698396819af09d4b76fada88d03f141 LPD-23435 Simplify
+modules/apps/object/object-rest-test/src/testIntegration/java/com/liferay/object/rest/internal/manager/v1_0/test/DefaultObjectEntryManagerImplTest.java
+869d055708a3f78af5ce7ff46e66a7306ede2a82 LPD-23435 Test the visibility of folders and files attached to a user with object definition permissions
+modules/apps/object/object-rest-test/src/testIntegration/java/com/liferay/object/rest/internal/manager/v1_0/test/DefaultObjectEntryManagerImplTest.java
+5d79a9e27a3706e4ab75e995d24924f3bbcebb3a LPD-23435 Create new method with scope as a parameter
+modules/apps/object/object-rest-test/src/testIntegration/java/com/liferay/object/rest/internal/manager/v1_0/test/DefaultObjectEntryManagerImplTest.java
+40308a78515456037c20d71614c2c8ed3613ddbd LPD-25247 Add test for exporting/importing collectionFieldId
+modules/apps/fragment/fragment-test/build.gradle
+modules/apps/fragment/fragment-test/src/testIntegration/java/com/liferay/fragment/internal/exportimport/data/handler/test/FragmentEntryLinkStagedModelDataHandlerTest.java
+modules/apps/fragment/fragment-test/src/testIntegration/resources/com/liferay/fragment/internal/exportimport/data/handler/test/dependencies/collection-item-template-editable-values.json
+fcb90756a7053a7097fffdad9974154effc8b4fb LPD-25247 Not needed, this is already done in configuration processors
+modules/apps/fragment/fragment-service/src/main/java/com/liferay/fragment/internal/exportimport/content/processor/EditableValuesMappingExportImportContentProcessor.java
+cc003ae806d40259915bb484a83b6e79adee4296 LPD-25247 Make sure className and classNameId are updated
+modules/apps/fragment/fragment-service/src/main/java/com/liferay/fragment/internal/exportimport/content/processor/BaseEditableValuesConfigurationExportImportContentProcessor.java
+modules/apps/fragment/fragment-service/src/main/java/com/liferay/fragment/internal/exportimport/content/processor/CollectionSelectorEditableValuesConfigurationExportImportContentProcessor.java
+4a6f8048578570aaebd2abf9291e4423b71c5e72 LPD-25247 Fix order
+modules/apps/fragment/fragment-service/src/main/java/com/liferay/fragment/internal/exportimport/content/processor/CollectionSelectorEditableValuesConfigurationExportImportContentProcessor.java
+4533d233c9c9b2ffc94e3642b44a3c001e3dfac3 LPD-25247 Add test to check that the assetList is exported correctly
+modules/apps/fragment/fragment-test/build.gradle
+modules/apps/fragment/fragment-test/src/testIntegration/java/com/liferay/fragment/internal/exportimport/data/handler/test/FragmentEntryLinkStagedModelDataHandlerTest.java
+modules/apps/fragment/fragment-test/src/testIntegration/resources/com/liferay/fragment/internal/exportimport/data/handler/test/dependencies/collection-selector-editable-values.json
+modules/apps/fragment/fragment-test/src/testIntegration/resources/com/liferay/fragment/internal/exportimport/data/handler/test/dependencies/configuration-collection-selector.json
+dbcd9a60ccb331a052bf1c373f720ae9e0f696cd LRSD-4238 SF
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/util/TestrayUtil.java
+3988ad2069ba1e0bccb15413770f5cc21380a259 LRSD-4238 Rename
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/rest-openapi.yaml
+6626a6023250f7854b1668cd4c63e3a09c5686df LRSD-4238 Inline
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/resource/v1_0/TestrayTestFlowResourceImpl.java
+7b20eb0c3801d65a6156cd7ba4459942c987b00a LRSD-4238 Clear cache
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/resource/v1_0/TestrayTestFlowResourceImpl.java
+5bc1ab9a10a25f858e8138b0941b7e88c6ce0116 LRSD-4238 Rename to make it consistent
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/components/Sidebar/TasksSidebar/index.tsx
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/hooks/data/useSubtaskScore.ts
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/hooks/useSidebarTask.ts
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/pages/Testflow/Subtask/SubtaskCaseResults.tsx
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/pages/Testflow/Subtask/SubtaskCompleteModal.tsx
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/pages/Testflow/Subtask/SubtaskHeaderActions.tsx
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/pages/Testflow/Subtask/SubtaskOutlet.tsx
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/pages/Testflow/Subtask/index.tsx
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/pages/Testflow/Subtask/useSubtasksActions.tsx
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/pages/Testflow/TaskHeaderActions.tsx
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/pages/Testflow/TestflowOutlet.tsx
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/pages/Testflow/TestflowTasks.tsx
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/schema/filter.ts
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/services/rest/TestraySubtask.ts
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/services/rest/TestraySubtaskCaseResults.ts
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/services/rest/types.ts
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/util/statuses.ts
+d24aee82f5552f4b2dd9497e66d2aa47d5730aab LRSD-4238 Update endpoint
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/services/rest/TestraySubtask.ts
+ce9d27c29e9f5ea15dc2f8bf95a06a93a86d1bed LRSD-4238 Rename
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/resource/v1_0/TestrayTestFlowResourceImpl.java
+b0ec0d434e2ad25865202cf483c1aad5dd670975 LRSD-4238 Regen
+workspaces/liferay-testray-workspace/modules/testray-rest-api/src/main/java/com/liferay/testray/rest/dto/v1_0/TestrayCaseResultTestFlowUpdate.java
+workspaces/liferay-testray-workspace/modules/testray-rest-api/src/main/java/com/liferay/testray/rest/dto/v1_0/TestrayTestFlow.java
+workspaces/liferay-testray-workspace/modules/testray-rest-api/src/main/java/com/liferay/testray/rest/resource/v1_0/TestrayTestFlowResource.java
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/graphql/mutation/v1_0/Mutation.java
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/graphql/servlet/v1_0/ServletDataImpl.java
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/resource/v1_0/BaseTestrayTestFlowResourceImpl.java
+efb5c24eba7ce2a7bc74c5567e2e0ada77422eb3 LRSD-4238 Rename
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/rest-openapi.yaml
+ea0082ce55b563ccf7f5eaddb7b4bb406711d5c4 LRSD-4238 SF
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/resource/v1_0/TestrayStatusMetricResourceImpl.java
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/util/TestrayUtil.java
+9bd014d35b98dc5aa6ef03b6f5cf9efabf4554bf LRSD-4238 Renamed runSQL to executeQuery
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/resource/v1_0/TestrayBuildAutofillResourceImpl.java
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/resource/v1_0/TestrayStatusMetricResourceImpl.java
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/resource/v1_0/TestrayTestFlowResourceImpl.java
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/util/TestrayUtil.java
+2ba61c35b7b4f2ec71464c66f2a2db9f8c528504 LRSD-4238 Updated API Usage on Frontend
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/pages/Testflow/Subtask/SubtaskCompleteModal.tsx
+workspaces/liferay-testray-workspace/client-extensions/liferay-testray-custom-element/src/services/rest/TestraySubtask.ts
+94a348f444b00a346faa4f2e673cd2211629ad76 LRSD-4238 Generated Files
+workspaces/liferay-testray-workspace/modules/testray-rest-api/src/main/java/com/liferay/testray/rest/dto/v1_0/TestrayCaseResultTestFlowUpdate.java
+workspaces/liferay-testray-workspace/modules/testray-rest-api/src/main/java/com/liferay/testray/rest/resource/v1_0/TestrayTestFlowResource.java
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/graphql/mutation/v1_0/Mutation.java
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/graphql/servlet/v1_0/ServletDataImpl.java
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/resource/v1_0/BaseTestrayTestFlowResourceImpl.java
+636b4bfc99f466834a3e4bf4fc4b3f1bf87556b2 LRSD-4238 Implemented Subtask Case Results update on complete
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/resource/v1_0/TestrayTestFlowResourceImpl.java
+9b39bf525da4129776704676b3b7ea752a0338dd LRSD-4238 Created updateSQL function on Custom API
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/src/main/java/com/liferay/testray/rest/internal/util/TestrayUtil.java
+9c2a2a5fef6f40b77e4f3523260c93a64e22278d LRSD-4238 Updated rest-openapi.yaml
+workspaces/liferay-testray-workspace/modules/testray-rest-impl/rest-openapi.yaml
+0c9702f2989ce820bb2297eeb8fda65d409a1311 LCD-37706 Increase the individuals interactions to improve the segment tests
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/analyticscloud/SegmentsCompositionOverview.testcase
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/analyticscloud/SegmentsCreation.testcase
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/analyticscloud/SegmentsCreationWebBehavior.testcase
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/analyticscloud/SegmentsDistribution.testcase
+80ee3c37d7d7d15326605d6e46c396b0d92025b8 LRSD-4233 SF
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-etc-cron/src/main/java/com/liferay/learn/Main.java
+ee85f2a926a7fdfe8ce411b1cfa25c28f26629fe LRSD-4233 Create a variable to bipass md5sum check in learn cron
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-etc-cron/src/main/java/com/liferay/learn/Main.java
+a8d51fa6722aa1916802a444db0bf18973299eb3 LPD-23956 add tests to check for workflow comments
+modules/test/playwright/tests/change-tracking-web/viewChangesWorkflow.spec.ts
+fbba1a3f2c1a4586b5c658e39ffd813021109521 LPD-25062 enable CommerceCountryManager SAP
+modules/apps/commerce/commerce-api/src/main/java/com/liferay/commerce/constants/CommerceSAPConstants.java
+22c2b243c17c77036f2725c52a0af0376d9b45b7 LCD-37703 Update the test to use the static segment
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/analyticscloud/PageProfilePath.testcase
+34f8e5aba735dd29e568e5287eb94709a61426d6 LCD-37703 Update the test to generate different number of interactions with the page to use the segment filter because of LPD-6538
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/analyticscloud/PageProfilePath.testcase
+6d7b49ac39fcfc58466bcbd56b0a7ed96b2588fb LCD-37703 Move the xpath related with the path analysis to the ACPagePath.path file
+portal-web/test/functional/com/liferay/portalweb/macros/analyticscloud/ACPagePath.macro
+portal-web/test/functional/com/liferay/portalweb/paths/analyticscloud/ACPagePath.path
+portal-web/test/functional/com/liferay/portalweb/paths/analyticscloud/ACSites.path
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/analyticscloud/PageProfilePath.testcase
+5fa9a07dec6fa6ffe92f9735612d436d564e6e04 LPD-25183 Fix test for LPD-19627: Translate several fields...
+modules/test/playwright/tests/journal-web/journalArticle.spec.ts
+d1791c778c551804af92badcc21d5f9d3ef18433 LPD-25183 Fix test for LPD-23278
+modules/test/playwright/tests/journal-web/journalArticle.spec.ts
+b255d927a4ca62d612da2779da65f3a6450a52dd LPD-25316 Skip NPMRegistryUpdatesListener notifying on deactivation.
+modules/apps/frontend-js/frontend-js-loader-modules-extender/src/main/java/com/liferay/frontend/js/loader/modules/extender/internal/npm/NPMRegistryImpl.java
+4d5e7ac280fd09e44553c5b924e9eea28601aad2 LPD-25292 SF
+modules/apps/static/portal-osgi-web/portal-osgi-web-servlet-jsp-compiler-test/src/testIntegration/java/com/liferay/portal/osgi/web/servlet/jsp/compiler/test/JspServletPerformanceTest.java
+0ddd78d7dd937f4d9d79c0098026d2737e1a683d LPD-25292 Finish writing the contents of the jar to the outputstream
+modules/apps/static/portal-osgi-web/portal-osgi-web-servlet-jsp-compiler-test/src/testIntegration/java/com/liferay/portal/osgi/web/servlet/jsp/compiler/test/JspServletPerformanceTest.java
+0a01c22d7c16dc2c90138412a0c4041ce9d462d7 LPD-25238 Remove waitForTimeout usages
+modules/test/playwright/pages/asset-list-web/CollectionsPage.ts
+modules/test/playwright/pages/layout-admin-web/PagesAdminPage.ts
+modules/test/playwright/tests/layout-admin-web/millerColumns.spec.ts
+modules/test/playwright/tests/layout-content-page-editor-web/advancedFragmentConfiguration.spec.ts
+modules/test/playwright/tests/layout-content-page-editor-web/collectionFilter.spec.ts
+modules/test/playwright/tests/layout-content-page-editor-web/tagsFragment.spec.ts
+modules/test/playwright/tests/style-book-web/previewSelector.spec.ts
+83eec95b854321e66dbc70bab6149c2f561aa1db LPD-25238 Allow passing a FrameLocator
+modules/test/playwright/utils/waitForSuccessAlert.ts
+34634d0e88e4cabde8a48fc72919fe7e06b0712b LPD-25238 Delete poshi test
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/segmentation/ExperienceCreateExperience.testcase
+0a681c2ee384d291f081489f2e3add8c2c6acc5c LPD-25238 Add new test for deleting an experience
+modules/test/playwright/tests/layout-content-page-editor-web/experiences.spec.ts
+modules/test/playwright/tests/layout-content-page-editor-web/pages/PageEditorPage.ts
+06c31f3122e1d9545726e5e76dd31e8d21b3b29f LPD-25324 search-experiences-rest-impl: gw buildRest
+modules/dxp/apps/search-experiences/search-experiences-rest-impl/src/main/java/com/liferay/search/experiences/rest/internal/graphql/mutation/v1_0/Mutation.java
+modules/dxp/apps/search-experiences/search-experiences-rest-impl/src/main/java/com/liferay/search/experiences/rest/internal/resource/v1_0/BaseSearchResponseResourceImpl.java
+64b978ec0122237921bb38be8bd0a0d43c81d995 LPD-25324 search-experiences-rest-impl: Add help text
+modules/dxp/apps/search-experiences/search-experiences-rest-impl/rest-openapi.yaml
+c0d39190fbb206a26a66aab9cf889d044b0ea80d LCD-37743 Fix the assert in Segment Criteria card
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/analyticscloud/SegmentsCreationWebBehavior.testcase
+c8ffcf04c2c1f0ab624dad165f58c9c1495fd51b LCD-37743 Update the search mascros to wait for the loading icon is not present in the end of the macro
+portal-web/test/functional/com/liferay/portalweb/macros/analyticscloud/ACSegments.macro
+portal-web/test/functional/com/liferay/portalweb/macros/analyticscloud/ACUtils.macro
+f668d0991cbb36109a7fcdfc0257c7bd26eaa8f4 Revert "LPD-22805 Picklist source for selection filters"
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/java/com/liferay/frontend/data/set/views/web/internal/portlet/FDSViewsPortlet.java
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/Filters.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/SelectionFilter.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/SelectionFilter.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/source_type/ObjectPicklist.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/utils/types.ts
+modules/apps/frontend-data-set/frontend-data-set-views-web/types/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/SelectionFilter.d.ts
+modules/apps/frontend-data-set/frontend-data-set-views-web/types/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/source_type/ObjectPicklist.d.ts
+modules/apps/frontend-data-set/frontend-data-set-views-web/types/src/main/resources/META-INF/resources/js/utils/types.d.ts
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+portal-impl/src/portal.properties
+5eff8133cf570561c017d4e79b192963210b4ea5 Revert "LPD-23189 Filters Test Automation"
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/source_type/ObjectPicklist.tsx
+modules/test/playwright/tests/frontend-data-set-views-web/fixtures/picklistApiHelpersTest.ts
+modules/test/playwright/tests/frontend-data-set-views-web/helpers/PicklistApiHelpers.ts
+modules/test/playwright/tests/frontend-data-set-views-web/pages/view/tabs/FiltersPage.ts
+modules/test/playwright/tests/frontend-data-set-views-web/selectionFilters.spec.ts
+modules/test/playwright/tests/frontend-data-set-views-web/utils/types.ts
+79ce4435db94e5f6287dde78c1a72ac130b8513b Revert "LPD-22805 SF"
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/java/com/liferay/frontend/data/set/views/web/internal/portlet/FDSViewsPortlet.java
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/Filters.tsx
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+modules/test/playwright/tests/frontend-data-set-views-web/helpers/PicklistApiHelpers.ts
+modules/test/playwright/tests/frontend-data-set-views-web/selectionFilters.spec.ts
+portal-impl/src/portal.properties
+8beb2bc2d2cc108c7446ab69a1171677d172904d Revert "LPD-22805 Selection filters source types portlet"
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/java/com/liferay/frontend/data/set/views/web/internal/portlet/FDSViewsPortlet.java
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/Filters.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/SelectionFilter.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/utils/types.ts
+modules/apps/frontend-data-set/frontend-data-set-views-web/types/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/SelectionFilter.d.ts
+modules/apps/frontend-data-set/frontend-data-set-views-web/types/src/main/resources/META-INF/resources/js/utils/types.d.ts
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+98ade1180ee9583449c0c6c9ede0518ca5dcd5a8 Revert "LPD-22805 Fix keys"
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+68dae5318b183eb8a71b865327ecafbc0a0c4b85 Revert "LPD-19838 Wordsmith"
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/SelectionFilter.tsx
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+e36f8d677353ee6792886c317bffe40248d576ef Revert "LPD-19838 Regen"
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ar.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_bg.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ca.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_cs.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_da.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_de.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_el.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_AU.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_GB.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_AR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_CO.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_MX.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_et.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_eu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fa.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_gl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hi_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_in.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_it.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_iw.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ja.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_kk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_km.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ko.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lo.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lt.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ms.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nb.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl_BE.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_BR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_PT.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ro.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ru.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS_latin.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sv.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ta_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_th.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_tr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_uk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_vi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_CN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_TW.properties
+d37ea3b45420b274c687d4e199ed2169050b57e2 LPS-77699 Update Translations
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ar.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ca.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_eu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_gl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sv.properties
+347916b89aecdd81cf082433705589111e5aecf9 LPD-19838 Regen
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ar.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_bg.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ca.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_cs.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_da.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_de.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_el.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_AU.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_GB.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_AR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_CO.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_MX.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_et.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_eu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fa.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_gl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hi_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_in.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_it.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_iw.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ja.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_kk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_km.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ko.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lo.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lt.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ms.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nb.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl_BE.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_BR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_PT.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ro.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ru.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS_latin.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sv.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ta_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_th.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_tr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_uk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_vi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_CN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_TW.properties
+bbf6e6c1a977f05550df135849e3b3683b2ac5ba LPD-19838 Wordsmith
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/SelectionFilter.tsx
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+5974929b074ae52275cdc939b5e58a33a9e5cd48 LPD-22805 Fix keys
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+58f0dd28d71b6bd20b3b8a4c5f332d1c86a9ac26 LPD-22805 Selection filters source types portlet
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/java/com/liferay/frontend/data/set/views/web/internal/portlet/FDSViewsPortlet.java
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/Filters.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/SelectionFilter.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/utils/types.ts
+modules/apps/frontend-data-set/frontend-data-set-views-web/types/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/SelectionFilter.d.ts
+modules/apps/frontend-data-set/frontend-data-set-views-web/types/src/main/resources/META-INF/resources/js/utils/types.d.ts
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+21b17a2a273a467311ec8c08421316e2187a7d0c LPD-22805 SF
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/java/com/liferay/frontend/data/set/views/web/internal/portlet/FDSViewsPortlet.java
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/Filters.tsx
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+modules/test/playwright/tests/frontend-data-set-views-web/helpers/PicklistApiHelpers.ts
+modules/test/playwright/tests/frontend-data-set-views-web/selectionFilters.spec.ts
+portal-impl/src/portal.properties
+916d7509ee812a15803e97aaf7c07733d96d1df9 LPD-23189 Filters Test Automation
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/source_type/ObjectPicklist.tsx
+modules/test/playwright/tests/frontend-data-set-views-web/fixtures/picklistApiHelpersTest.ts
+modules/test/playwright/tests/frontend-data-set-views-web/helpers/PicklistApiHelpers.ts
+modules/test/playwright/tests/frontend-data-set-views-web/pages/view/tabs/FiltersPage.ts
+modules/test/playwright/tests/frontend-data-set-views-web/selectionFilters.spec.ts
+modules/test/playwright/tests/frontend-data-set-views-web/utils/types.ts
+3acf32662c265054fabd1c9de3c6f0a4070ee314 LPD-22805 Picklist source for selection filters
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/java/com/liferay/frontend/data/set/views/web/internal/portlet/FDSViewsPortlet.java
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/Filters.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/SelectionFilter.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/SelectionFilter.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/source_type/ObjectPicklist.tsx
+modules/apps/frontend-data-set/frontend-data-set-views-web/src/main/resources/META-INF/resources/js/utils/types.ts
+modules/apps/frontend-data-set/frontend-data-set-views-web/types/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/SelectionFilter.d.ts
+modules/apps/frontend-data-set/frontend-data-set-views-web/types/src/main/resources/META-INF/resources/js/fds_view/filters/modal_content/selection_filter/source_type/ObjectPicklist.d.ts
+modules/apps/frontend-data-set/frontend-data-set-views-web/types/src/main/resources/META-INF/resources/js/utils/types.d.ts
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+portal-impl/src/portal.properties
+30a16ed44bf2d84103f36f322ac30ad4d94131a0 LPD-24689 Get the id of the actual creator user, instead of the current user
+modules/apps/object/object-service/src/main/java/com/liferay/object/internal/action/util/ObjectEntryVariablesUtil.java
+0ba44504b73a28ce3f5e534219ba505166bb995c LPD-24689 Add integration test for Notification triggered by System Object, using the Author term
+modules/apps/notification/notification-test/src/testIntegration/java/com/liferay/notification/internal/type/test/EmailNotificationTypeTest.java
+8f09b2a25eca2c7dd9bc464107f827ba0cf41074 LPD-25302 Remove Poshi test since it is already being covered by integration test (see 75f8db513d888e6125ea221af0f05639ff773829)
+modules/apps/object/object-test/src/testFunctional/tests/CreateObject.testcase
+ff248b6426448c39df47121fbe353bd84d782645 LPD-25216 baseline
+modules/apps/layout/layout-api/bnd.bnd
+modules/apps/layout/layout-api/src/main/resources/com/liferay/layout/util/structure/packageinfo
+ff7dfb3cceabe2497e2d35c01a79407844772baf LPD-25216 Prevents null pointer exceptions
+modules/apps/asset/asset-list-web/src/main/java/com/liferay/asset/list/web/internal/display/context/InfoCollectionProviderItemsDisplayContext.java
+d729ead9fafd8b16660c6f0b75141f2dff6ea0bd LPD-25216 Uses new method
+modules/apps/fragment/fragment-renderer-categorization-inputs-impl/src/main/java/com/liferay/fragment/renderer/categorization/inputs/internal/CategoriesInputFragmentRenderer.java
+modules/apps/fragment/fragment-renderer-categorization-inputs-impl/src/main/java/com/liferay/fragment/renderer/categorization/inputs/internal/TagsInputFragmentRenderer.java
+modules/apps/headless/headless-delivery/headless-delivery-impl/src/main/java/com/liferay/headless/delivery/internal/dto/v1_0/mapper/FormLayoutStructureItemMapper.java
+modules/apps/layout/layout-content-page-editor-web/src/main/java/com/liferay/layout/content/page/editor/web/internal/manager/ContentManager.java
+modules/apps/layout/layout-content-page-editor-web/src/main/java/com/liferay/layout/content/page/editor/web/internal/manager/FormItemManager.java
+modules/apps/layout/layout-content-page-editor-web/src/main/java/com/liferay/layout/content/page/editor/web/internal/manager/FragmentEntryLinkManager.java
+modules/apps/layout/layout-taglib/src/main/java/com/liferay/layout/taglib/internal/display/context/RenderLayoutStructureDisplayContext.java
+modules/apps/layout/layout-taglib/src/main/java/com/liferay/layout/taglib/servlet/taglib/renderer/LayoutStructureRenderer.java
+54f807b719891bdd4626df3946c405c94cf6f837 LPD-25216 Adds new ClassName method to centralize getClassName, since in certain situations like the one described in the LPD the classNameId for Objects is wrong
+modules/apps/layout/layout-api/src/main/java/com/liferay/layout/util/structure/FormStyledLayoutStructureItem.java
+b54d8ddddbe6dee75939ece41e8e63b48ed0c31d LPD-23257 Create a Test to Cover getCheckedChildren Function
+modules/apps/notification/notification-web/src/main/resources/META-INF/resources/js/tests/RoleUtils.spec.ts
+modules/apps/notification/notification-web/types/src/main/resources/META-INF/resources/js/tests/RoleUtils.spec.d.ts
+259b1ee1b27e27fec410ca872cbe148d72a5fd93 LPD-23257 Configuring Jest in notification-web
+modules/apps/notification/notification-web/jest-setup.config.js
+modules/apps/notification/notification-web/package.json
+ae2deee6375125fef6764b5083c6cd27099bbda2 LPD-23257 Create a Test to Cover Roles Groups in Email Notification Templates
+modules/apps/notification/notification-web/src/main/resources/META-INF/resources/js/components/BasicInfoContainer/BasicInfoContainer.tsx
+modules/apps/notification/notification-web/src/main/resources/META-INF/resources/js/components/ContentContainer/ContentContainer.tsx
+modules/apps/notification/notification-web/src/main/resources/META-INF/resources/js/components/SettingsContainer/PrimaryRecipients.tsx
+modules/apps/notification/notification-web/src/main/resources/META-INF/resources/js/components/SettingsContainer/SecondaryRecipients.tsx
+modules/apps/notification/notification-web/src/main/resources/META-INF/resources/js/components/SettingsContainer/Sender.tsx
+modules/apps/object/object-js-components-web/src/main/resources/META-INF/resources/components/Select/MultipleSelect.tsx
+modules/apps/object/object-js-components-web/src/main/resources/META-INF/resources/components/Select/SingleSelect.tsx
+modules/test/playwright/fixtures/notificationPagesTest.ts
+modules/test/playwright/pages/notification-web/EmailNotificationTemplatePage.ts
+modules/test/playwright/pages/notification-web/NotificationTemplatesPage.ts
+modules/test/playwright/playwright.config.ts
+modules/test/playwright/tests/notification-web/config.ts
+modules/test/playwright/tests/notification-web/emailNotificationTemplate.spec.ts
+modules/test/playwright/tests/notification-web/test.properties
+modules/test/playwright/utils/portletUrls.ts
+test.properties
+a7979a0804cf6960ddff0b6e6e8e17f286783652 LPD-24065 add 'can delete object field' playwright test
+modules/test/playwright/tests/object-web/objectFields.spec.ts
+77090b89e697f7bdef461e9508e1e74c16b6478f LPD-24065 refactor 'modalDeleteObjectDefinitionConfirmationButton'
+modules/test/playwright/pages/object-web/ModelBuilderPage.ts
+8df7ea0bd3d954d89726681aa75d9e406e597d79 LPD-24065 add 'deleteTrashButton' locator
+modules/test/playwright/pages/object-web/ModelBuilderPage.ts
+956bd35271bc09dfd03032c10f212d5c80591f6f LPD-24065 add postObjectFieldByExternalReferenceCode
+modules/test/playwright/helpers/ObjectAdminApiHelper.ts
+8a111622e8da430aa29c36b629575296ad664d5d LPD-25228 Use CONTAINS instead of PREFIX in ExpectedLog for MariaDB
+modules/apps/redirect/redirect-test/src/testIntegration/java/com/liferay/redirect/service/test/RedirectNotFoundEntryLocalServiceTest.java
+f224b2789b3b0676c4c7b82132200757031fafc8 LPD-25046 Build Rest search-experiences-rest-test
+modules/dxp/apps/search-experiences/search-experiences-rest-test/src/testIntegration/java/com/liferay/search/experiences/rest/resource/v1_0/test/BaseSXPBlueprintResourceTestCase.java
+modules/dxp/apps/search-experiences/search-experiences-rest-test/src/testIntegration/java/com/liferay/search/experiences/rest/resource/v1_0/test/BaseSXPElementResourceTestCase.java
+5ce6df2509bcded344fa359496fa834e51c18d04 LPD-25046 Build Rest
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseBlogPostingImageResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseBlogPostingResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseCommentResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseContentElementResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseContentStructureResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseContentTemplateResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseDocumentFolderResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseDocumentResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseKnowledgeBaseArticleResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseMessageBoardMessageResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseMessageBoardSectionResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseMessageBoardThreadResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseSitePageResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseStructuredContentFolderResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseStructuredContentResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseWikiNodeResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseWikiPageResourceTestCase.java
+595e4f6c24e30d2fb6c1db3ca5e8c4f0a0facc36 LPD-22038 SF
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/portlet/action/EditPortalDefaultPermissionsConfigurationMVCActionCommand.java
+7bb3726effc316ef01f1c985efb6fbc1ad174e2c LPD-22038 Autogenerated Code (buildLang)
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ar.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_bg.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ca.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_cs.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_da.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_de.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_el.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_AU.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_en_GB.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_AR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_CO.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_es_MX.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_et.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_eu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fa.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_fr_CA.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_gl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hi_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_hu.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_in.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_it.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_iw.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ja.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_kk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_km.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ko.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lo.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_lt.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ms.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nb.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_nl_BE.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_BR.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_pt_PT.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ro.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ru.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sl.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sr_RS_latin.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_sv.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_ta_IN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_th.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_tr.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_uk.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_vi.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_CN.properties
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language_zh_TW.properties
+7ab415ebb428e60878d3473addebbea5ad9394aa LPD-22038 Autogenerated Code (ant update-portal-osgi-configuration-properties
+portal-impl/src/portal-osgi-configuration.properties
+dc21a1329701d6bbc8a8aba5eb2718cbfd2f440b LPD-22038 Rename
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/configuration/admin/display/DefaultPermissionsPortalSettingsConfigurationScreenWrapper.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/configuration/admin/display/DefaultPermissionsSiteSettingsConfigurationScreenWrapper.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/display/context/BaseViewPortalDefaultPermissionsConfigurationDisplayContext.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/display/context/CompanyViewPortalDefaultPermissionsConfigurationDisplayContext.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/display/context/GroupViewPortalDefaultPermissionsConfigurationDisplayContext.java
+2bed8b6c16128e17938ba6756733ad6f56a52aa1 LPD-22038 Functional test
+modules/test/playwright/fixtures/portalDefaultPermissionsPagesTest.ts
+modules/test/playwright/pages/portal-default-permissions-web/PortalDefaultPermissionsSiteConfigurationPage.ts
+modules/test/playwright/tests/portal-default-permissions-web/defaultPermissionsConfiguration.spec.ts
+eacf5dc6435dd19625276dd636ddb2fb4b8884fa LPD-22038 New keywords
+modules/apps/portal-language/portal-language-lang/src/main/resources/content/Language.properties
+9e3aa22ceec5405fadaaa53e5ea9f18405940d62 LPD-22038 Site default permissions web module
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/configuration/admin/display/DefaultPermissionsPortalSettingsConfigurationScreenWrapper.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/configuration/admin/display/DefaultPermissionsSiteSettingsConfigurationScreenWrapper.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/configuration/manager/CompanyPortalDefaultPermissionsConfigurationManagerImpl.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/configuration/manager/GroupPortalDefaultPermissionsConfigurationManagerImpl.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/display/context/BaseViewPortalDefaultPermissionsConfigurationDisplayContext.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/display/context/EditPortalDefaultPermissionsConfigurationDisplayContext.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/display/context/ViewCompanyPortalDefaultPermissionsConfigurationDisplayContext.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/display/context/ViewGroupPortalDefaultPermissionsConfigurationDisplayContext.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/portlet/action/EditPortalDefaultPermissionsConfigurationMVCActionCommand.java
+modules/apps/portal/portal-default-permissions-web/src/main/java/com/liferay/portal/defaultpermissions/web/internal/portlet/action/EditPortalDefaultPermissionsConfigurationMVCRenderCommand.java
+modules/apps/portal/portal-default-permissions-web/src/main/resources/META-INF/resources/configuration/view_company_portal_default_permissions_configuration.jsp
+modules/apps/portal/portal-default-permissions-web/src/main/resources/META-INF/resources/configuration/view_company_portal_default_permissions_entry_action.jsp
+modules/apps/portal/portal-default-permissions-web/src/main/resources/META-INF/resources/configuration/view_portal_default_permissions_configuration.jsp
+modules/apps/portal/portal-default-permissions-web/src/main/resources/META-INF/resources/init.jsp
+modules/apps/portal/portal-default-permissions-web/src/main/resources/META-INF/resources/js/index.js
+modules/apps/portal/portal-default-permissions-web/src/main/resources/META-INF/resources/js/viewCompanyPortalDefaultPermissionsConfiguration.js
+modules/apps/portal/portal-default-permissions-web/src/main/resources/META-INF/resources/js/viewPortalDefaultPermissionsButtonPropsTransformer.js
+modules/apps/portal/portal-default-permissions-web/src/main/resources/META-INF/resources/js/viewPortalDefaultPermissionsDropdownPropsTransformer.js
+3cb663dc70ac05f3518aa881dc75d012dd0dbef5 LPD-22038 Site default permissions API module
+modules/apps/portal/portal-default-permissions-api/src/main/java/com/liferay/portal/defaultpermissions/configuration/PortalDefaultPermissionsGroupConfiguration.java
+modules/apps/portal/portal-default-permissions-api/src/main/java/com/liferay/portal/defaultpermissions/configuration/manager/PortalDefaultPermissionsConfigurationManager.java
+2cbbb45b2e225c78af5ab9b7a2f5ea36a744308e LPD-22038 Add module dependencies
+modules/apps/portal/portal-default-permissions-web/build.gradle
+6692ff850a1fa4e6622fbf372cfcfe0b6176d2bf LRCI-4140 SF
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/pages/JobsPage/JobsPage.js
+af08a3cda6ee8c1478df1cb0da39b20a690cba63 LRCI-4140 SF
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/package.json
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/objects/jobs/JobUtil.js
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/objects/routines/RoutineUtil.js
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/pages/JobQueuePage/JobQueuePage.js
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/pages/JobsPage/JobsPage.js
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/pages/RoutinesPage/RoutinesPage.js
+1c5d944874acd638c7de62ed103a674bc02e65fd LRCI-4140 Add jobs pagination within the UI
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/objects/jobs/JobUtil.js
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/pages/JobQueuePage/JobQueuePage.js
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/pages/JobsPage/JobsPage.js
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/pages/RoutinesPage/RoutinesPage.js
+e06e2ca9d6dc15c97d6e2b13b5fa607212924356 LRCI-4140 Add routines pagination within the UI
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/package.json
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/objects/routines/RoutineUtil.js
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/pages/RoutinesPage/RoutinesPage.js
+6fc908cd2f35f4e3ba672750e86b83209c9a285b LPD-24898 Buy space
+modules/apps/portal-security/portal-security-antisamy/src/main/java/com/liferay/portal/security/antisamy/internal/configuration/admin/service/AntiSamySanitizerPublisherManagedServiceFactory.java
+3bc4cd950b757560ba62c70b8ce2600e8c7d36c9 LPD-24898 Prevent NPE when deleting AntiSamy sanitizers by class name entries while AntiSamy is disabled
+modules/apps/portal-security/portal-security-antisamy/src/main/java/com/liferay/portal/security/antisamy/internal/configuration/admin/service/AntiSamySanitizerPublisherManagedServiceFactory.java
+30d9745ec30ae60b8fb79a795abb7dd0ecf6ac1a LPD-24898 add null safety to disabled antisamy
+modules/apps/portal-security/portal-security-antisamy/src/main/java/com/liferay/portal/security/antisamy/internal/configuration/admin/service/AntiSamySanitizerPublisherManagedServiceFactory.java
+826957e3d256336814347388266b4743f73377ba LPD-24898 remove unused exception
+modules/apps/portal-security/portal-security-antisamy/src/main/java/com/liferay/portal/security/antisamy/internal/configuration/admin/service/AntiSamySanitizerPublisherManagedServiceFactory.java
+170e4774aaa6f93f36aa9d1238ec0d09abba3214 LPD-5169 Auto SF
+workspaces/liferay-tryitnow-workspace/client-extensions/liferay-tryitnow-site-initializer/site-initializer/layouts/2_trial-guide/page-definition.json
+cac233c19c46f6cdeaafa00b80326ee292032e38 LPD-22656 SF
+portal-impl/src/com/liferay/portal/action/LoginAction.java
+1a1ee1cdd070082ae7cbf04f522bad9e6e5c52a7 LPD-22656 Add the sign in initiating layout (identified by p_l_id) as a default for the redirect parameter. Because it is no longer used to render the portlet in the popup.
+portal-impl/src/com/liferay/portal/action/LoginAction.java
+8e2fcac9351c95d848bdf770b34c2198ef3f2c8c LPD-22656 Even when requesting content for the popup, the UP layout should be used so session messages can be used
+portal-impl/src/com/liferay/portal/action/LoginAction.java
+3a02ce5a28b9126c324fb1ddd624e582d45f79c5 LPD-22656 Preserve params when redirecting to the utility page
+portal-impl/src/com/liferay/portal/action/LoginAction.java
+02a8ca7dd308d8f755d55f3fddc0f025cb430f5f LPD-22656 Render the whole utility page, not just the Sign In portlet
+modules/apps/login/login-web/src/main/java/com/liferay/login/web/internal/portlet/action/LoginMVCActionCommand.java
+2ae7a43ad792ceb461484bdbd6753e8157825460 LPD-24825 Use data structure returned by the deserializer, which puts everything inside arrays, even when there is no chance to have more then one element in the array
+modules/dxp/apps/portal-workflow/portal-workflow-kaleo-designer-web/src/main/resources/META-INF/resources/designer/js/definition-builder/diagram-builder/components/sidebar/sections/notifications/NotificationsInfo.js
+d81afc7e72185c8193de155059cc8837587a18a2 LPD-24825 recipientDetails is already a new object, no need to create currentRecipient or to reassign recipientDetails. Also return previousItem as a new object.
+modules/dxp/apps/portal-workflow/portal-workflow-kaleo-designer-web/src/main/resources/META-INF/resources/designer/js/definition-builder/diagram-builder/components/sidebar/sections/notifications/NotificationsInfo.js
+50048194a55dbd72d4d0d5b3c38fc7d053638588 LRSD-4148 Remove displayStyleGroupIds so pages work in any environment
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/cloud/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/commerce/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/content-management-system/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/development-and-tooling/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/digital-asset-management/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/dxp-self-hosted-installation-maintenance-and-administration/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/integration/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/personalization/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/platform/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/search/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/security/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/sites/page-definition.json
+8d70acdae65758ea72cd26fe645051713e3bd6dc LRSD-4148 SF
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/ddm-templates/learn-search-bar/ddm-template.ftl
+4cbf232fa1e829da82908e18552759843b431087 LRSD-4148 Rename
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/ddm-templates/learn-search-bar/ddm-template.ftl
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/ddm-templates/learn-search-bar/ddm-template.json
+e7f1af5b8a2e21b247bfe8bd038f524a96caa5b4 LRSD-4148 SF
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-global-css/assets/global.css
+fa2f0e429284617f07317eb5eddf135fbcd7b386 LRSD-4148 create and apply new template for search capability input
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-global-css/assets/global.css
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/ddm-templates/learn-searchbar/ddm-template.ftl
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/ddm-templates/learn-searchbar/ddm-template.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/cloud/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/commerce/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/content-management-system/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/development-and-tooling/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/digital-asset-management/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/dxp-self-hosted-installation-maintenance-and-administration/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/integration/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/personalization/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/platform/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/search/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/security/page-definition.json
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/layouts/3_capabilities/sites/page-definition.json
+8a20722151137305b78f1ee570f26d72402756a0 LPD-24443 Remove Poshi test since it is already being covered by integration test (see dfbdd737b34840393aac0ca529cf2ed03d14c836)
+modules/apps/object/object-test/src/testFunctional/tests/ObjectActions.testcase
+12aa0172df73e63aba8df554925bcbe443b5cfa6 LPD-24665 Add tests
+modules/apps/friendly-url/friendly-url-test/src/testIntegration/java/com/liferay/friendly/url/service/test/FriendlyURLEntryLocalServiceTest.java
+74cc54fd5ef4b33136fffd1aa61ca5a97b5697df LPD-24665 Allow get unlocalized urltitles if needed (and localized asset categories)
+modules/apps/friendly-url/friendly-url-service/src/main/java/com/liferay/friendly/url/model/impl/FriendlyURLEntryImpl.java
+b8c853dc92c5e8fb1f3aa5ad25d7e41f5ce41848 LPD-25271 We only care the getKbFolderId(), avoid creating the dummy parent folder on every startup.
+modules/apps/knowledge-base/knowledge-base-web/src/main/java/com/liferay/knowledge/base/web/internal/portlet/DisplayPortlet.java
+618a3f404827f66989c6d0451bf73f91b49b3113 LPD-25271 No need of secure random. This was introduced by the inline from 470885bd. The original code was just using plain Random.
+modules/apps/static/portal-osgi-web/portal-osgi-web-http-servlet-impl/src/main/java/com/liferay/portal/osgi/web/http/servlet/internal/activator/HttpServletImplBundleActivator.java
+3b610d04ba6be201e7d7ef18eda70aec227fd21d LRSD-4254 Add grandchild support to cards
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-site-initializer/site-initializer/ddm-templates/learn-article/ddm-template.ftl
+b3d4c3edb9770ab9143ae45d0c5574a0806f9415 LRCI-4140 Delete EventHandlerContext
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/entity/EntityInitializer.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/BaseEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/BaseEventHandlerFactory.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/EventHandlerContext.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/BaseGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/BaseGitHubEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/BaseGitHubIssueEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/BaseGitHubPullRequestEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/BaseOpenGitHubPullRequestEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/BaseTestGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/CloseGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/FixpackOpenGitHubPullRequestEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/FixpackTestGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/ForwardGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/GitHubEventHandlerFactory.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/HelpGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/JenkinsOpenGitHubPullRequestEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/JenkinsTestGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/MergeGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/PluginsOpenGitHubPullRequestEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/PluginsTestGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/PortalOpenGitHubPullRequestEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/PortalTestGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/PusherGitHubEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/QAWebsitesOpenGitHubPullRequestEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/QAWebsitesTestGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/ReevaluateGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/ReopenGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/ReportGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/StopGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/SubrepositoryOpenGitHubPullRequestEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/SubrepositoryTestGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/SynchronizeGitHubPullRequestEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/BaseJenkinsEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/BuildCompletedEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/BuildStartedEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/ComputerIdleEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/ComputerUpdateEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/JenkinsEventHandlerFactory.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/BaseJRPEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/CreateBuildEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/CreateBuildRunEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/CreateJenkinsCohortEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/CreateJobEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/JRPEventHandlerFactory.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/QueueJobEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/AddJobLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/AddRoutineLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/BaseJobLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/BaseLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/BaseRoutineLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/DeleteJobLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/DeleteRoutineLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/LiferayEventHandlerFactory.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/UpdateJobLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/UpdateRoutineLiferayEventHandler.java
+293672108e8e0923b6f62a3a0837373723cc1286 LRCI-4140 Add Jethr0ContextUtil to make various beans accessible from many different contexts
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/Jethr0SpringBootApplication.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/entity/EntityInitializer.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/BaseEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/EventHandlerContext.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/BaseGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/BaseGitHubEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/BaseGitHubIssueEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/BaseGitHubPullRequestEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/ForwardGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/MergeGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/PortalTestGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/PusherGitHubEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/ReevaluateGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/ReportGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/StopGitHubCommentEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/SubrepositoryOpenGitHubPullRequestEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/BaseJenkinsEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/BuildCompletedEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/BuildStartedEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/ComputerIdleEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/ComputerUpdateEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/BaseJRPEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/CreateBuildEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/CreateBuildRunEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/CreateJenkinsCohortEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/CreateJobEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jrp/QueueJobEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/AddJobLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/AddRoutineLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/DeleteJobLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/DeleteRoutineLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/UpdateJobLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/UpdateRoutineLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/util/Jethr0ContextUtil.java
+d86d9840912ce882d71242b2f4a832e447a93bbb LRCI-4140 Add ContextUtil that will get a bean objects
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/entity/EntityInitializer.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/util/ContextUtil.java
+ac05e7837d37b0fdd7d8a4bb8199c0bbd145c0ad LRCI-4140 Add short sha to GitHubCommit objects
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/commit/GitHubCommit.java
+9a6aca2969048962dd2f2cb8edd8634e379c53a3 LRCI-4140 Add method to create a Jenkins Server based on just a URL
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/jenkins/BaseJenkinsEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/jenkins/repository/JenkinsServerEntityRepository.java
+f4be8f2770f15f9228c339b9caeadde473913a57 LRCI-4140 Check cache before pulling from Liferay if possible for Jenkins objects
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/jenkins/dalo/JenkinsNodeEntityDALO.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/jenkins/repository/JenkinsCohortEntityRepository.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/jenkins/repository/JenkinsNodeEntityRepository.java
+f7468cc6a7170f63dd111a4a2c0f5b0cb07c97a8 LRCI-4140 Add some debugging to display event updates
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/github/PusherGitHubEventHandler.java
+7c7408f9dad19094bb5ebcadb4053e30caad1ef6 LRCI-4140 Add username to upstream url references in the UI
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/pages/RoutinePage/RoutinePage.js
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-custom-element/src/pages/UpstreamBranchPage/UpstreamBranchPage.js
+c7fe6e15e1ccdda1e032e3354683c9f24a8b0316 LRCI-4140 Use brackets instead of parenthesis
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-batch/batch/06-object-entry.batch-engine-data.json
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/event/liferay/AddJobLiferayEventHandler.java
+workspaces/liferay-jethr0-workspace/client-extensions/liferay-jethr0-etc-spring-boot/src/main/java/com/liferay/jethr0/util/JobUtil.java
+6a2a243412ce2795c101f87571efe987be1a99c9 LPD-24824 only show organizations that the user manages/is a member in the Select Organizations Menu
+modules/apps/organizations/organizations-item-selector-web/src/main/java/com/liferay/organizations/item/selector/web/internal/OrganizationItemSelectorView.java
+modules/apps/organizations/organizations-item-selector-web/src/main/java/com/liferay/organizations/item/selector/web/internal/display/context/OrganizationItemSelectorViewDisplayContext.java
+827eb57e708cc79d6740256f3b4b480f4fc20bad LPD-24267 Wordsmith
+modules/apps/analytics/analytics-batch-export-import-impl/src/main/java/com/liferay/analytics/batch/exportimport/internal/manager/AnalyticsBatchExportImportManagerImpl.java
+fffb7c849b85f059d9501f1058c1a0f7ac9bcc34 LPD-24267 analytics-batch-export-import-impl Skip uploading empty exports
+modules/apps/analytics/analytics-batch-export-import-impl/src/main/java/com/liferay/analytics/batch/exportimport/internal/manager/AnalyticsBatchExportImportManagerImpl.java
+0749f3e09e9dfa64ddd9c58b615d1a2101ee72c8 LPD-24267 analytics-batch-export-import-impl Skip export if sync is not enabled
+modules/apps/analytics/analytics-batch-export-import-impl/src/main/java/com/liferay/analytics/batch/exportimport/internal/engine/AccountGroupAnalyticsDXPEntityBatchEngineTaskItemDelegate.java
+modules/apps/analytics/analytics-batch-export-import-impl/src/main/java/com/liferay/analytics/batch/exportimport/internal/engine/AnalyticsAssociationAnalyticsDXPEntityBatchEngineTaskItemDelegate.java
+modules/apps/analytics/analytics-batch-export-import-impl/src/main/java/com/liferay/analytics/batch/exportimport/internal/engine/ExpandoColumnAnalyticsDXPEntityBatchEngineTaskItemDelegate.java
+modules/apps/analytics/analytics-batch-export-import-impl/src/main/java/com/liferay/analytics/batch/exportimport/internal/engine/GroupAnalyticsDXPEntityBatchEngineTaskItemDelegate.java
+modules/apps/analytics/analytics-batch-export-import-impl/src/main/java/com/liferay/analytics/batch/exportimport/internal/engine/OrganizationAnalyticsDXPEntityBatchEngineTaskItemDelegate.java
+modules/apps/analytics/analytics-batch-export-import-impl/src/main/java/com/liferay/analytics/batch/exportimport/internal/engine/RoleAnalyticsDXPEntityBatchEngineTaskItemDelegate.java
+modules/apps/analytics/analytics-batch-export-import-impl/src/main/java/com/liferay/analytics/batch/exportimport/internal/engine/TeamAnalyticsDXPEntityBatchEngineTaskItemDelegate.java
+modules/apps/analytics/analytics-batch-export-import-impl/src/main/java/com/liferay/analytics/batch/exportimport/internal/engine/UserGroupAnalyticsDXPEntityBatchEngineTaskItemDelegate.java
+08800029636d1c9d74bc8b4ba4aa45e9b50ba538 LPD-23309 buildLang
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_ar.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_bg.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_ca.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_cs.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_da.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_de.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_el.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_en.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_en_AU.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_en_CA.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_en_GB.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_es.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_es_AR.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_es_CO.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_es_MX.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_et.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_eu.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_fa.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_fi.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_fr.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_fr_CA.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_gl.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_hi_IN.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_hr.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_hu.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_in.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_it.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_iw.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_ja.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_kk.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_km.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_ko.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_lo.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_lt.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_ms.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_nb.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_nl.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_nl_BE.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_pl.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_pt_BR.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_pt_PT.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_ro.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_ru.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_sk.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_sl.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_sr_RS.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_sr_RS_latin.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_sv.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_ta_IN.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_th.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_tr.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_uk.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_vi.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_zh_CN.properties
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language_zh_TW.properties
+7796ccfb55e4068e7ef4fe11e95b69909ad862f6 LPD-23309 Update languages
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/resources/content/Language.properties
+d6d383c41b3dc07342bd70e9d64238a33a58476b LPD-23309 Fix unit tests
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/js/cerebro-shared/hocs/mappers/__tests__/__snapshots__/locations.js.snap
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/js/shared/components/download-report/__tests__/DownloadReportModal.tsx
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/js/shared/components/download-report/__tests__/__snapshots__/DownloadIndividualReportModal.tsx.snap
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/js/sites/touchpoints/components/sankey/__tests__/PagePathCard.tsx
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/js/sites/touchpoints/components/sankey/__tests__/__snapshots__/PagePathCard.tsx.snap
+1513f1a0cd1aa8f92c1a01ff433e5a0257391680 LPD-23309 Apply UI changes
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/js/individual/dashboard/pages/index.tsx
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/js/shared/components/download-report/DownloadIndividualReportModal.tsx
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/js/shared/components/download-report/DownloadPDFReport.tsx
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/js/shared/components/download-report/DownloadReportButton.tsx
+modules/dxp/apps/osb/osb-faro/osb-faro-web/src/main/js/shared/components/download-report/DownloadReportModal.tsx
+68365b8ecd99abfd137bec3154e457b120cb5f87 LPD-25193 Update message for poshi test
+portal-web/test/functional/com/liferay/portalweb/macros/Subcategory.macro
+4379629e01004cda66621cb544015ec501159672 LPD-23437 - poshi - SF
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSetViewFields.testcase
+18cfd8ccd48a89fe419acd671d02e31db6f8c48f LPD-23437 - poshi - Quarantine tests failing due to migration to Treeview when viewing Visualization Modes
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSet.testcase
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSetViewFields.testcase
+8a9a9aa733d9b9f5abe17bdd47b4fe3efe895304 LPD-23437 - poshi - Fix test that was checking for all fields to be checked/unchecked but wasnt compatible with Treeview
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSetViewFields.testcase
+251b989997ec2dbaf96e69137d19ff9a64be8bf5 LPD-23437 - poshi - Rename "Fields" to "Visualization Modes" in testcase files
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSetFragment.testcase
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSetFragmentPagination.testcase
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSetViewActions.testcase
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSetViewBug.testcase
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSetViewFields.testcase
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSetViewFilters.testcase
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/frontenddataset/FrontendDataSetClientExtension.testcase
+e4e5173cd706b61b176afc4d812d918c25eb1de1 LPD-23437 - poshi - Delete tests that we already have in Playwright
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSetViewFields.testcase
+90220596869df1e9a4bddb1598fe58b959735564 LPD-23437 - poshi - Rename "Fields" to "Visualization Modes"
+portal-web/test/functional/com/liferay/portalweb/macros/frontendinfrastructure/DataSetAdmin.macro
+portal-web/test/functional/com/liferay/portalweb/tests/enduser/frontendinfrastructure/uiinfrastructure/dataset/DataSet.testcase
+5a14b6d56f347a995999d4ae92224905b5bf4595 LRSD-4254 Fix card border radius
+workspaces/liferay-learn-workspace/client-extensions/liferay-learn-global-css/assets/global.css
+794a4b4e132d74ac17d01c01dea9093ac7a7c464 LPD-25026 Adapt spacing
+modules/apps/layout/layout-content-page-editor-web/src/main/resources/META-INF/resources/page_editor/plugins/browser/components/page_structure/components/item_configuration_panels/FormMappingOptions.js
+265a33e1b90267bb2c2645c0212ff53c5a57438e LPD-25026 Change modal height, size and add button label
+modules/apps/layout/layout-content-page-editor-web/src/main/resources/META-INF/resources/page_editor/common/openInfoFieldSelector.js
+ab0a5973c97976d8d98cbbd64dd8f40d268ae462 LPD-25245 Warning message appears when user tries to delete a solution
+workspaces/liferay-marketplace-workspace/client-extensions/liferay-marketplace-custom-element/src/i18n/en_US.ts
+workspaces/liferay-marketplace-workspace/client-extensions/liferay-marketplace-custom-element/src/pages/PublisherDashboard/pages/Solutions/PublishedSolutionsTable.tsx
+57185a88fb909edad549fb307680ff3606cafbfa LPD-25046 Move SearchTestRule to test/rule
+modules/apps/account/account-test/src/testIntegration/java/com/liferay/account/retriever/test/AccountOrganizationRetrieverTest.java
+modules/apps/account/account-test/src/testIntegration/java/com/liferay/account/retriever/test/AccountUserRetrieverTest.java
+modules/apps/account/account-test/src/testIntegration/java/com/liferay/account/retriever/test/AccountUserRetrieverWhenSearchingAccountRoleUsersTest.java
+modules/apps/account/account-test/src/testIntegration/java/com/liferay/account/retriever/test/AccountUserRetrieverWhenSearchingByEmailAddressDomainsTest.java
+modules/apps/account/account-test/src/testIntegration/java/com/liferay/account/service/test/AccountEntryLocalServiceTest.java
+modules/apps/account/account-test/src/testIntegration/java/com/liferay/account/service/test/AccountEntryServiceWhenSearchingAccountEntriesTest.java
+modules/apps/asset/asset-categories-test/src/testIntegration/java/com/liferay/asset/categories/search/test/AssetCategoryIndexerIndexedFieldsTest.java
+modules/apps/asset/asset-categories-test/src/testIntegration/java/com/liferay/asset/categories/search/test/AssetCategoryIndexerReindexTest.java
+modules/apps/asset/asset-categories-test/src/testIntegration/java/com/liferay/asset/categories/search/test/AssetCategoryMultiLanguageSearchTest.java
+modules/apps/asset/asset-categories-test/src/testIntegration/java/com/liferay/asset/categories/search/test/AssetCategoryTitlesMultiLanguageSearchTest.java
+modules/apps/asset/asset-categories-test/src/testIntegration/java/com/liferay/asset/categories/search/test/AssetCategoryVocabularyVisibilitySearchTest.java
+modules/apps/asset/asset-categories-test/src/testIntegration/java/com/liferay/asset/categories/search/test/AssetVocabularyIndexerIndexedFieldsTest.java
+modules/apps/asset/asset-categories-test/src/testIntegration/java/com/liferay/asset/categories/search/test/AssetVocabularyIndexerReindexTest.java
+modules/apps/asset/asset-categories-test/src/testIntegration/java/com/liferay/asset/categories/search/test/AssetVocabularyMultiLanguageSearchTest.java
+modules/apps/asset/asset-categories-test/src/testIntegration/java/com/liferay/asset/categories/service/test/AssetVocabularyServiceTest.java
+modules/apps/asset/asset-publisher-test/src/testIntegration/java/com/liferay/asset/publisher/exportimport/test/AssetPublisherExportImportTest.java
+modules/apps/asset/asset-tags-test/src/testIntegration/java/com/liferay/asset/tags/search/test/AssetTagIndexerIndexedFieldsTest.java
+modules/apps/asset/asset-tags-test/src/testIntegration/java/com/liferay/asset/tags/search/test/AssetTagIndexerReindexTest.java
+modules/apps/asset/asset-tags-test/src/testIntegration/java/com/liferay/asset/tags/search/test/AssetTagNamesMultiLanguageSearchTest.java
+modules/apps/asset/asset-tags-test/src/testIntegration/java/com/liferay/asset/tags/search/test/AssetTagNamesOrganizationSearchTest.java
+modules/apps/asset/asset-tags-test/src/testIntegration/java/com/liferay/asset/tags/search/test/AssetTagsSearchTest.java
+modules/apps/asset/asset-test-util/src/main/java/com/liferay/asset/test/util/BaseAssetSearchTestCase.java
+modules/apps/asset/asset-test/src/testIntegration/java/com/liferay/asset/info/collection/provider/test/AssetInfoCollectionProviderTest.java
+modules/apps/asset/asset-test/src/testIntegration/java/com/liferay/asset/search/test/AssetSearcherClassNameIdsTest.java
+modules/apps/asset/asset-test/src/testIntegration/java/com/liferay/asset/search/test/AssetSearcherStagingTest.java
+modules/apps/asset/asset-test/src/testIntegration/java/com/liferay/asset/search/test/AssetUtilSearchSortTest.java
+modules/apps/asset/asset-test/src/testIntegration/java/com/liferay/asset/util/test/AssetHelperTest.java
+modules/apps/blogs/blogs-test/src/testIntegration/java/com/liferay/blogs/search/test/BlogsEntryIndexerIndexedFieldsTest.java
+modules/apps/blogs/blogs-test/src/testIntegration/java/com/liferay/blogs/search/test/BlogsEntryIndexerReindexTest.java
+modules/apps/blogs/blogs-test/src/testIntegration/java/com/liferay/blogs/search/test/BlogsEntryMultiLanguageSearchTest.java
+modules/apps/blogs/blogs-test/src/testIntegration/java/com/liferay/blogs/service/test/BlogsEntryStatusTransitionTest.java
+modules/apps/bookmarks/bookmarks-test/src/testIntegration/java/com/liferay/bookmarks/search/test/BookmarksEntryIndexerIndexedFieldsTest.java
+modules/apps/bookmarks/bookmarks-test/src/testIntegration/java/com/liferay/bookmarks/search/test/BookmarksEntryIndexerReindexTest.java
+modules/apps/bookmarks/bookmarks-test/src/testIntegration/java/com/liferay/bookmarks/search/test/BookmarksEntryMultiLanguageSearchTest.java
+modules/apps/bookmarks/bookmarks-test/src/testIntegration/java/com/liferay/bookmarks/search/test/BookmarksFolderIndexerIndexedFieldsTest.java
+modules/apps/bookmarks/bookmarks-test/src/testIntegration/java/com/liferay/bookmarks/search/test/BookmarksFolderIndexerReindexTest.java
+modules/apps/bookmarks/bookmarks-test/src/testIntegration/java/com/liferay/bookmarks/search/test/BookmarksFolderMultiLanguageSearchTest.java
+modules/apps/bookmarks/bookmarks-test/src/testIntegration/java/com/liferay/bookmarks/service/test/BookmarksFolderServiceTest.java
+modules/apps/calendar/calendar-test/src/testIntegration/java/com/liferay/calendar/search/test/BaseCalendarIndexerTestCase.java
+modules/apps/calendar/calendar-test/src/testIntegration/java/com/liferay/calendar/search/test/CalendarSearcherTest.java
+modules/apps/calendar/calendar-test/src/testIntegration/java/com/liferay/calendar/service/test/CalendarBookingLocalServiceTest.java
+modules/apps/change-tracking/change-tracking-rest-test/src/testIntegration/java/com/liferay/change/tracking/rest/resource/v1_0/test/BaseCTEntryResourceTestCase.java
+modules/apps/change-tracking/change-tracking-rest-test/src/testIntegration/java/com/liferay/change/tracking/rest/resource/v1_0/test/BaseCTProcessResourceTestCase.java
+modules/apps/change-tracking/change-tracking-test/src/testIntegration/java/com/liferay/change/tracking/internal/search/test/SearchCTTest.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-account-test/src/testIntegration/java/com/liferay/headless/commerce/admin/account/resource/v1_0/test/BaseAccountResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-account-test/src/testIntegration/java/com/liferay/headless/commerce/admin/account/resource/v1_0/test/BaseAdminAccountGroupResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-catalog-test/src/testIntegration/java/com/liferay/headless/commerce/admin/catalog/resource/v1_0/test/BaseCatalogResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-catalog-test/src/testIntegration/java/com/liferay/headless/commerce/admin/catalog/resource/v1_0/test/BaseCurrencyResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-catalog-test/src/testIntegration/java/com/liferay/headless/commerce/admin/catalog/resource/v1_0/test/BaseOptionCategoryResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-catalog-test/src/testIntegration/java/com/liferay/headless/commerce/admin/catalog/resource/v1_0/test/BaseOptionResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-catalog-test/src/testIntegration/java/com/liferay/headless/commerce/admin/catalog/resource/v1_0/test/BaseProductGroupResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-catalog-test/src/testIntegration/java/com/liferay/headless/commerce/admin/catalog/resource/v1_0/test/BaseProductResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-catalog-test/src/testIntegration/java/com/liferay/headless/commerce/admin/catalog/resource/v1_0/test/BaseSkuResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-catalog-test/src/testIntegration/java/com/liferay/headless/commerce/admin/catalog/resource/v1_0/test/BaseSpecificationResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-channel-test/src/testIntegration/java/com/liferay/headless/commerce/admin/channel/resource/v1_0/test/BaseAccountAddressChannelResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-channel-test/src/testIntegration/java/com/liferay/headless/commerce/admin/channel/resource/v1_0/test/BaseChannelAccountResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-channel-test/src/testIntegration/java/com/liferay/headless/commerce/admin/channel/resource/v1_0/test/BaseChannelResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-channel-test/src/testIntegration/java/com/liferay/headless/commerce/admin/channel/resource/v1_0/test/BasePaymentMethodGroupRelOrderTypeResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-channel-test/src/testIntegration/java/com/liferay/headless/commerce/admin/channel/resource/v1_0/test/BasePaymentMethodGroupRelTermResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-channel-test/src/testIntegration/java/com/liferay/headless/commerce/admin/channel/resource/v1_0/test/BaseShippingFixedOptionOrderTypeResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-channel-test/src/testIntegration/java/com/liferay/headless/commerce/admin/channel/resource/v1_0/test/BaseShippingFixedOptionTermResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-inventory-test/src/testIntegration/java/com/liferay/headless/commerce/admin/inventory/resource/v1_0/test/BaseWarehouseChannelResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-inventory-test/src/testIntegration/java/com/liferay/headless/commerce/admin/inventory/resource/v1_0/test/BaseWarehouseOrderTypeResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-inventory-test/src/testIntegration/java/com/liferay/headless/commerce/admin/inventory/resource/v1_0/test/BaseWarehouseResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-order-test/src/testIntegration/java/com/liferay/headless/commerce/admin/order/resource/v1_0/test/BaseOrderItemResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-order-test/src/testIntegration/java/com/liferay/headless/commerce/admin/order/resource/v1_0/test/BaseOrderResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-order-test/src/testIntegration/java/com/liferay/headless/commerce/admin/order/resource/v1_0/test/BaseOrderRuleAccountGroupResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-order-test/src/testIntegration/java/com/liferay/headless/commerce/admin/order/resource/v1_0/test/BaseOrderRuleAccountResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-order-test/src/testIntegration/java/com/liferay/headless/commerce/admin/order/resource/v1_0/test/BaseOrderRuleChannelResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-order-test/src/testIntegration/java/com/liferay/headless/commerce/admin/order/resource/v1_0/test/BaseOrderRuleResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-order-test/src/testIntegration/java/com/liferay/headless/commerce/admin/order/resource/v1_0/test/BaseOrderTypeResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-order-test/src/testIntegration/java/com/liferay/headless/commerce/admin/order/resource/v1_0/test/BaseTermResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-payment-test/src/testIntegration/java/com/liferay/headless/commerce/admin/payment/resource/v1_0/test/BasePaymentResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v1_0/test/BasePriceListResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BaseDiscountAccountGroupResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BaseDiscountAccountResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BaseDiscountCategoryResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BaseDiscountChannelResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BaseDiscountOrderTypeResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BaseDiscountProductGroupResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BaseDiscountProductResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BaseDiscountResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BaseDiscountRuleResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BaseDiscountSkuResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BasePriceEntryResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BasePriceListAccountGroupResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BasePriceListAccountResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BasePriceListChannelResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BasePriceListResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BasePriceModifierCategoryResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BasePriceModifierProductGroupResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BasePriceModifierProductResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-pricing-test/src/testIntegration/java/com/liferay/headless/commerce/admin/pricing/resource/v2_0/test/BasePriceModifierResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-shipment-test/src/testIntegration/java/com/liferay/headless/commerce/admin/shipment/resource/v1_0/test/BaseShipmentResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-admin-site-setting-test/src/testIntegration/java/com/liferay/headless/commerce/admin/site/setting/resource/v1_0/test/BaseMeasurementUnitResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-delivery-catalog-test/src/testIntegration/java/com/liferay/headless/commerce/delivery/catalog/resource/v1_0/test/BaseAccountResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-delivery-catalog-test/src/testIntegration/java/com/liferay/headless/commerce/delivery/catalog/resource/v1_0/test/BaseChannelResourceTestCase.java
+modules/apps/commerce/headless/headless-commerce/headless-commerce-delivery-catalog-test/src/testIntegration/java/com/liferay/headless/commerce/delivery/catalog/resource/v1_0/test/BaseProductResourceTestCase.java
+modules/apps/configuration-admin/configuration-admin-test/src/testIntegration/java/com/liferay/configuration/admin/internal/search/test/ConfigurationModelIndexerTest.java
+modules/apps/contacts/contacts-test/src/testIntegration/java/com/liferay/contacts/search/test/ContactIndexerIndexedFieldsTest.java
+modules/apps/contacts/contacts-test/src/testIntegration/java/com/liferay/contacts/search/test/ContactIndexerReindexTest.java
+modules/apps/contacts/contacts-test/src/testIntegration/java/com/liferay/contacts/search/test/ContactMultiLanguageSearchTest.java
+modules/apps/data-engine/data-engine-rest-test/src/testIntegration/java/com/liferay/data/engine/rest/resource/v2_0/test/DataDefinitionResourceTest.java
+modules/apps/depot/depot-test/src/testIntegration/java/com/liferay/depot/internal/search/test/DepotEntrySearchTest.java
+modules/apps/document-library/document-library-test/src/testIntegration/java/com/liferay/document/library/app/service/test/DLAppServiceWhenSearchingFileEntriesTest.java
+modules/apps/dynamic-data-lists/dynamic-data-lists-test/src/testIntegration/java/com/liferay/dynamic/data/lists/search/test/DDLRecordSearchTest.java
+modules/apps/dynamic-data-mapping/dynamic-data-mapping-test/src/testIntegration/java/com/liferay/dynamic/data/mapping/search/test/DDMFormInstanceRecordSearchTest.java
+modules/apps/dynamic-data-mapping/dynamic-data-mapping-test/src/testIntegration/java/com/liferay/dynamic/data/mapping/search/test/DDMTemplateSearchTest.java
+modules/apps/dynamic-data-mapping/dynamic-data-mapping-test/src/testIntegration/java/com/liferay/dynamic/data/mapping/service/test/DDMStructureLocalServiceTest.java
+modules/apps/dynamic-data-mapping/dynamic-data-mapping-test/src/testIntegration/java/com/liferay/dynamic/data/mapping/service/test/DDMStructureServiceTest.java
+modules/apps/dynamic-data-mapping/dynamic-data-mapping-test/src/testIntegration/java/com/liferay/dynamic/data/mapping/service/test/DDMTemplateLocalServiceTest.java
+modules/apps/dynamic-data-mapping/dynamic-data-mapping-test/src/testIntegration/java/com/liferay/dynamic/data/mapping/service/test/DDMTemplateServiceTest.java
+modules/apps/export-import/export-import-test/src/testIntegration/java/com/liferay/exportimport/internal/search/test/ExportImportIndexedFieldsTest.java
+modules/apps/export-import/export-import-test/src/testIntegration/java/com/liferay/exportimport/internal/search/test/ExportImportMultiLanguageSearchTest.java
+modules/apps/headless/headless-admin-content/headless-admin-content-test/src/testIntegration/java/com/liferay/headless/admin/content/resource/v1_0/test/BaseStructuredContentResourceTestCase.java
+modules/apps/headless/headless-admin-list-type/headless-admin-list-type-test/src/testIntegration/java/com/liferay/headless/admin/list/type/resource/v1_0/test/BaseListTypeDefinitionResourceTestCase.java
+modules/apps/headless/headless-admin-list-type/headless-admin-list-type-test/src/testIntegration/java/com/liferay/headless/admin/list/type/resource/v1_0/test/BaseListTypeEntryResourceTestCase.java
+modules/apps/headless/headless-admin-taxonomy/headless-admin-taxonomy-test/src/testIntegration/java/com/liferay/headless/admin/taxonomy/resource/v1_0/test/BaseKeywordResourceTestCase.java
+modules/apps/headless/headless-admin-taxonomy/headless-admin-taxonomy-test/src/testIntegration/java/com/liferay/headless/admin/taxonomy/resource/v1_0/test/BaseTaxonomyCategoryResourceTestCase.java
+modules/apps/headless/headless-admin-taxonomy/headless-admin-taxonomy-test/src/testIntegration/java/com/liferay/headless/admin/taxonomy/resource/v1_0/test/BaseTaxonomyVocabularyResourceTestCase.java
+modules/apps/headless/headless-admin-user/headless-admin-user-test/src/testIntegration/java/com/liferay/headless/admin/user/resource/v1_0/test/BaseAccountGroupResourceTestCase.java
+modules/apps/headless/headless-admin-user/headless-admin-user-test/src/testIntegration/java/com/liferay/headless/admin/user/resource/v1_0/test/BaseAccountResourceTestCase.java
+modules/apps/headless/headless-admin-user/headless-admin-user-test/src/testIntegration/java/com/liferay/headless/admin/user/resource/v1_0/test/BaseAccountRoleResourceTestCase.java
+modules/apps/headless/headless-admin-user/headless-admin-user-test/src/testIntegration/java/com/liferay/headless/admin/user/resource/v1_0/test/BaseOrganizationResourceTestCase.java
+modules/apps/headless/headless-admin-user/headless-admin-user-test/src/testIntegration/java/com/liferay/headless/admin/user/resource/v1_0/test/BaseUserAccountResourceTestCase.java
+modules/apps/headless/headless-admin-user/headless-admin-user-test/src/testIntegration/java/com/liferay/headless/admin/user/resource/v1_0/test/BaseUserGroupResourceTestCase.java
+modules/apps/headless/headless-admin-user/headless-admin-user-test/src/testIntegration/java/com/liferay/headless/admin/user/resource/v1_0/test/SegmentResourceTest.java
+modules/apps/headless/headless-admin-user/headless-admin-user-test/src/testIntegration/java/com/liferay/headless/admin/user/resource/v1_0/test/SegmentUserResourceTest.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseBlogPostingImageResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseBlogPostingResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseCommentResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseContentElementResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseContentStructureResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseContentTemplateResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseDocumentFolderResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseDocumentResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseKnowledgeBaseArticleResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseMessageBoardMessageResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseMessageBoardSectionResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseMessageBoardThreadResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseSitePageResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseStructuredContentFolderResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseStructuredContentResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseWikiNodeResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/BaseWikiPageResourceTestCase.java
+modules/apps/headless/headless-delivery/headless-delivery-test/src/testIntegration/java/com/liferay/headless/delivery/resource/v1_0/test/ContentSetElementResourceTest.java
+modules/apps/headless/headless-user-notification/headless-user-notification-test/src/testIntegration/java/com/liferay/headless/user/notification/resource/v1_0/test/BaseUserNotificationResourceTestCase.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/search/test/JournalArticleDDMStructureIndexerTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/search/test/JournalArticleExpandoGeolocationSearchTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/search/test/JournalArticleExpandoSearchTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/search/test/JournalArticleIndexableTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/search/test/JournalArticleIndexerLocalizedContentTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/search/test/JournalArticleIndexerSummaryTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/search/test/JournalArticleMultiLanguageSearchGroupIdsTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/search/test/JournalArticleMultiLanguageSearchJapaneseSummaryTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/search/test/JournalArticleMultiLanguageSearchSummaryTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/search/test/JournalArticleMultiLanguageSearchTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/search/test/JournalFolderIndexerLocalizedTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/service/test/JournalArticleIndexVersionsTest.java
+modules/apps/journal/journal-test/src/testIntegration/java/com/liferay/journal/service/test/JournalArticleScheduledTest.java
+modules/apps/layout/layout-content-page-editor-web-test/src/testIntegration/java/com/liferay/layout/content/page/editor/web/internal/portlet/action/test/GetCollectionFieldMVCResourceCommandTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBCategoryIndexerIndexedFieldsTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBCategoryIndexerReindexTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBCategoryIndexerTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBMessageIndexerIndexedFieldsTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBMessageIndexerLocalizedTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBMessageIndexerReindexTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBMessageIndexerSummaryTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBMessageIndexerTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBThreadIndexerIndexedFieldsTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBThreadIndexerReindexTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBThreadIndexerTest.java
+modules/apps/message-boards/message-boards-test/src/testIntegration/java/com/liferay/message/boards/search/test/MBThreadMultiLanguageSearchTest.java
+modules/apps/notification/notification-rest-test/src/testIntegration/java/com/liferay/notification/rest/resource/v1_0/test/BaseNotificationQueueEntryResourceTestCase.java
+modules/apps/notification/notification-rest-test/src/testIntegration/java/com/liferay/notification/rest/resource/v1_0/test/BaseNotificationTemplateResourceTestCase.java
+modules/apps/object/object-admin-rest-test/src/testIntegration/java/com/liferay/object/admin/rest/resource/v1_0/test/BaseObjectDefinitionResourceTestCase.java
+modules/apps/object/object-admin-rest-test/src/testIntegration/java/com/liferay/object/admin/rest/resource/v1_0/test/BaseObjectFieldResourceTestCase.java
+modules/apps/object/object-admin-rest-test/src/testIntegration/java/com/liferay/object/admin/rest/resource/v1_0/test/BaseObjectRelationshipResourceTestCase.java
+modules/apps/organizations/organizations-test/src/testIntegration/java/com/liferay/organizations/search/test/OrganizationIndexerIndexedFieldsTest.java
+modules/apps/organizations/organizations-test/src/testIntegration/java/com/liferay/organizations/search/test/OrganizationIndexerReindexTest.java
+modules/apps/organizations/organizations-test/src/testIntegration/java/com/liferay/organizations/search/test/OrganizationMultiLanguageSearchTest.java
+modules/apps/organizations/organizations-test/src/testIntegration/java/com/liferay/organizations/service/test/OrganizationLocalServiceTest.java
+modules/apps/organizations/organizations-test/src/testIntegration/java/com/liferay/organizations/service/test/OrganizationLocalServiceWhenSearchingOrganizationsTreeTest.java
+modules/apps/portal-search/portal-search-test-util/bnd.bnd
+modules/apps/portal-search/portal-search-test-util/src/main/java/com/liferay/portal/search/test/rule/SearchTestRule.java
+modules/apps/portal-search/portal-search-test-util/src/main/java/com/liferay/portal/search/test/util/BaseSearchRequestBuilderHighlightTestCase.java
+modules/apps/portal-search/portal-search-test-util/src/main/java/com/liferay/portal/search/test/util/BaseSearchTestCase.java
+modules/apps/portal-search/portal-search-test-util/src/main/resources/com/liferay/portal/search/test/rule/packageinfo
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/aggregations/test/AggregationsInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/document/test/DocumentBuilderInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/document/test/LegacyDocumentBuilderInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/engine/adapter/test/SearchEngineAdapterTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/facet/faceted/searcher/test/AggregationFilteringTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/facet/faceted/searcher/test/BaseFacetedSearcherTestCase.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/geolocation/test/GeoBuildersInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/highlight/test/HighlightFieldBuilderInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/highlight/test/HighlightsInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/indexer/clause/contributors/test/IndexerClauseContributorsTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/indexer/clauses/test/IndexerClausesChangeTrackingTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/indexer/clauses/test/IndexerClausesComplexQueryPartTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/indexer/clauses/test/IndexerClausesPermissionTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/indexer/clauses/test/IndexerClausesTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/indexer/post/processor/test/IndexerPostProcessorTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/indexer/scores/test/IndexerScoreDistortionTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/indexer/test/IndexerPostProcessorRegistryTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/internal/test/IndexerRegistryImplTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/internal/test/SearchPermissionCheckerTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/localization/test/SearchLocalizationHelperTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/multilanguage/test/MultiLanguageSearchFieldsSharedAcrossIndexersTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/pagination/test/SearchPaginationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/query/function/score/test/ScoreFunctionsInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/query/test/QueriesInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/script/test/ScriptsInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/searcher/test/SearchRequestBuilderFactoryInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/searcher/test/SearchRequestBuilderTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/searcher/test/SearchResponseGetSearchTimeValueTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/significance/test/SignificanceHeuristicsInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/sort/test/SortBuilderInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/sort/test/SortsInstantiationTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/test/BackupAndRestoreIndexesTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/test/BaseIndexerGetFullQueryTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/test/ExpandoSearchTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/test/IndexerRequestBufferTest.java
+modules/apps/portal-search/portal-search-test/src/testIntegration/java/com/liferay/portal/search/test/SearchEngineRegistrationTest.java
+modules/apps/portal-workflow/portal-workflow-kaleo-test/src/testIntegration/java/com/liferay/portal/workflow/kaleo/internal/runtime/integration/test/WorkflowTaskManagerImplTest.java
+modules/apps/portal-workflow/portal-workflow-kaleo-test/src/testIntegration/java/com/liferay/portal/workflow/kaleo/service/test/KaleoActionLocalServiceTest.java
+modules/apps/portal-workflow/portal-workflow-kaleo-test/src/testIntegration/java/com/liferay/portal/workflow/kaleo/service/test/KaleoLogLocalServiceTest.java
+modules/apps/portal-workflow/portal-workflow-kaleo-test/src/testIntegration/java/com/liferay/portal/workflow/kaleo/service/test/KaleoTaskInstanceTokenServiceTest.java
+modules/apps/trash/trash-test-util/src/main/java/com/liferay/trash/test/util/BaseTrashHandlerTestCase.java
+modules/apps/user-groups-admin/user-groups-admin-test/src/testIntegration/java/com/liferay/user/groups/admin/service/test/UserGroupLocalServiceTest.java
+modules/apps/user-groups-admin/user-groups-admin-web-test/src/testIntegration/java/com/liferay/user/groups/admin/web/internal/search/test/UserGroupIndexerIndexedFieldsTest.java
+modules/apps/user-groups-admin/user-groups-admin-web-test/src/testIntegration/java/com/liferay/user/groups/admin/web/internal/search/test/UserGroupIndexerReindexTest.java
+modules/apps/user-groups-admin/user-groups-admin-web-test/src/testIntegration/java/com/liferay/user/groups/admin/web/internal/search/test/UserGroupIndexerTest.java
+modules/apps/user-groups-admin/user-groups-admin-web-test/src/testIntegration/java/com/liferay/user/groups/admin/web/internal/search/test/UserGroupMultiLanguageSearchTest.java
+modules/apps/users-admin/users-admin-test/src/testIntegration/java/com/liferay/users/admin/indexer/test/OrganizationIndexerTest.java
+modules/apps/users-admin/users-admin-test/src/testIntegration/java/com/liferay/users/admin/indexer/test/UserIndexerTest.java
+modules/apps/users-admin/users-admin-test/src/testIntegration/java/com/liferay/users/admin/search/test/UserIndexerIndexedFieldsTest.java
+modules/apps/users-admin/users-admin-test/src/testIntegration/java/com/liferay/users/admin/search/test/UserIndexerReindexTest.java
+modules/apps/users-admin/users-admin-test/src/testIntegration/java/com/liferay/users/admin/search/test/UserMultiLanguageSearchTest.java
+modules/apps/wiki/wiki-test/src/testIntegration/java/com/liferay/wiki/attachments/test/WikiAttachmentsTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/AssigneeMetricResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/AssigneeResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/CalendarResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/HistogramMetricResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/IndexResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/InstanceResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/NodeMetricResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/NodeResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/ProcessMetricResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/ProcessResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/ReindexStatusResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/RoleResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/SLAResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/TaskResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-rest-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/rest/resource/v1_0/test/TimeRangeResourceTest.java
+modules/dxp/apps/portal-workflow/portal-workflow-metrics-test/src/testIntegration/java/com/liferay/portal/workflow/metrics/service/util/BaseWorkflowMetricsTestCase.java
+modules/dxp/apps/search-experiences/search-experiences-rest-test/src/testIntegration/java/com/liferay/search/experiences/rest/resource/v1_0/test/BaseSXPBlueprintResourceTestCase.java
+modules/dxp/apps/search-experiences/search-experiences-rest-test/src/testIntegration/java/com/liferay/search/experiences/rest/resource/v1_0/test/BaseSXPElementResourceTestCase.java
+modules/util/portal-tools-rest-builder/src/main/resources/com/liferay/portal/tools/rest/builder/dependencies/base_resource_test_case.ftl

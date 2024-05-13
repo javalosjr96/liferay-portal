@@ -5,6 +5,7 @@
 
 package com.liferay.portal.search.internal;
 
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTask;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskManager;
@@ -23,6 +24,7 @@ import com.liferay.portal.kernel.search.SearchEngineHelper;
 import com.liferay.portal.kernel.search.SearchException;
 import com.liferay.portal.kernel.search.SearchPermissionChecker;
 import com.liferay.portal.kernel.search.background.task.ReindexBackgroundTaskConstants;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
 import com.liferay.portal.kernel.service.CompanyLocalService;
@@ -412,10 +414,10 @@ public class IndexWriterHelperImpl implements IndexWriterHelper {
 
 		taskContextMap.put(
 			BackgroundTaskContextMapConstants.DELETE_ON_SUCCESS, true);
-		taskContextMap.put(
-			ReindexBackgroundTaskConstants.COMPANY_IDS, companyIds);
 
-		try {
+		for
+
+		try(SafeCloseable safeCloseable = CompanyThreadLocal.setWithSafeCloseable()) {
 			return _backgroundTaskManager.addBackgroundTask(
 				userId, CompanyConstants.SYSTEM, jobName,
 				ReindexPortalBackgroundTaskExecutor.class.getName(),

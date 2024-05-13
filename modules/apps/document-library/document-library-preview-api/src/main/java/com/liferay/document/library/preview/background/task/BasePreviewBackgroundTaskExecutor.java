@@ -44,10 +44,7 @@ public abstract class BasePreviewBackgroundTaskExecutor
 	public BackgroundTaskResult execute(BackgroundTask backgroundTask)
 		throws Exception {
 
-		Map<String, Serializable> taskContextMap =
-			backgroundTask.getTaskContextMap();
-
-		long companyId = GetterUtil.getLong(taskContextMap.get("companyId"));
+		long companyId = backgroundTask.getCompanyId();
 
 		try {
 			generatePreviews(companyId);
