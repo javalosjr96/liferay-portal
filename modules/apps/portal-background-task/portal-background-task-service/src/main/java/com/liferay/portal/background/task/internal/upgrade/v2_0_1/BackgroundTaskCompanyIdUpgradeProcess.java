@@ -3,12 +3,11 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+package com.liferay.portal.background.task.internal.upgrade.v2_0_1;
+
 /**
  * @author Jorge Avalos
  */
-
-package com.liferay.portal.background.task.internal.upgrade.v2_0_1;
-
 import com.liferay.portal.background.task.model.BackgroundTask;
 import com.liferay.portal.background.task.service.BackgroundTaskLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
