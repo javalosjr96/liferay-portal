@@ -143,7 +143,7 @@ definition {
 	@priority = 5
 	test AddUserandSuborganizationAfterUpgrade625 {
 		property data.archive.type = "data-archive-admin-org-with-user";
-		property database.types = "mysql";
+		property database.types = "postgresql";
 		property portal.version = "6.2.5";
 
 		ValidateOrganizationsUpgrade.addUserAndSuborganization();
@@ -247,7 +247,7 @@ definition {
 	@priority = 5
 	test AddUserandSuborganizationAfterUpgrade621015 {
 		property data.archive.type = "data-archive-admin-org-with-user";
-		property database.types = "db2,mysql,oracle,sybase";
+		property database.types = "db2,postgresql,oracle,sybase";
 		property portal.version = "6.2.10.15";
 
 		ValidateOrganizationsUpgrade.addUserAndSuborganization();
