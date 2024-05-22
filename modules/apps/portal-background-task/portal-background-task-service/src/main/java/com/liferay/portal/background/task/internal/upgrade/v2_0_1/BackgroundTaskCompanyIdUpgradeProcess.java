@@ -5,13 +5,16 @@
 
 package com.liferay.portal.background.task.internal.upgrade.v2_0_1;
 
-import com.liferay.portal.background.task.model.BackgroundTask;
-import com.liferay.portal.background.task.service.BackgroundTaskLocalService;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
 
 import java.io.Serializable;
 
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /**
@@ -19,48 +22,70 @@ import java.util.Map;
  */
 public class BackgroundTaskCompanyIdUpgradeProcess extends UpgradeProcess {
 
-	public BackgroundTaskCompanyIdUpgradeProcess(
-		BackgroundTaskLocalService backgroundTaskLocalService) {
+	public static void removeCompanyId(Map<String, Serializable> map) {
+		Iterator<Map.Entry<String, Serializable>> iterator = map.entrySet(
+		).iterator();
 
-		_backgroundTaskLocalService = backgroundTaskLocalService;
+		while (iterator.hasNext()) {
+			Map.Entry<String, Serializable> entry = iterator.next();
+
+			String key = entry.getKey();
+
+			if (key.equals("companyId")) {
+				iterator.remove();
+			}
+			else {
+				Object value = entry.getValue();
+
+				if (value instanceof LinkedHashMap) {
+					removeCompanyId((Map<String, Serializable>)value);
+				}
+			}
+		}
 	}
 
 	@Override
 	protected void doUpgrade() throws Exception {
 		try (LoggingTimer loggingTimer = new LoggingTimer()) {
 			processConcurrently(
-				"Select backgroundTaskId from BackgroundTask",
+				"Select backgroundTaskId,taskContextMap from BackgroundTask " +
+					"where taskContextMap LIKE \"%companyId:%\"",
+				"Update BackgroundTask set taskContextMap = ? where " +
+					"backgroundTaskId = ?",
 				resultSet -> new Object[] {
-					resultSet.getLong("backgroundTaskId")
+					resultSet.getLong("backgroundTaskId"),
+					GetterUtil.getString(resultSet.getString("taskContextMap"))
 				},
-				values -> {
-					BackgroundTask backgroundTask =
-						_backgroundTaskLocalService.getBackgroundTask(
-							(Long)values[0]);
+				(values, preparedStatement) -> {
+					String taskContextMapValue = (String)values[1];
 
-					Map<String, Serializable> taskContextMap =
-						backgroundTask.getTaskContextMap();
+					System.out.println(taskContextMapValue);
 
-					taskContextMap.remove("companyId");
+					if (taskContextMapValue != null) {
+						long backgroundTaskId = (Long)values[0];
 
-					Map<String, Serializable> threadLocalValues =
-						(Map<String, Serializable>)taskContextMap.get(
-							"threadLocalValues");
+						ObjectMapper mapper = new ObjectMapper();
 
-					threadLocalValues.remove("companyId");
+						Map<String, Serializable> taskContextMap =
+							mapper.readValue(
+								taskContextMapValue, LinkedHashMap.class);
 
-					taskContextMap.replace(
-						"threadLocalValues", (Serializable)threadLocalValues);
+						removeCompanyId(taskContextMap);
 
-					backgroundTask.setTaskContextMap(taskContextMap);
+						taskContextMapValue = mapper.writeValueAsString(
+							taskContextMap);
 
-					_backgroundTaskLocalService.updateBackgroundTask(
-						backgroundTask);
+						System.out.println(taskContextMapValue);
+
+						preparedStatement.setString(1, taskContextMapValue);
+
+						preparedStatement.setLong(2, backgroundTaskId);
+
+						preparedStatement.addBatch();
+					}
 				},
-				"Failed to clear companyId from task context map");
+				"Unable to remove companyId");
 		}
 	}
-
-	private final BackgroundTaskLocalService _backgroundTaskLocalService;
 
 }
