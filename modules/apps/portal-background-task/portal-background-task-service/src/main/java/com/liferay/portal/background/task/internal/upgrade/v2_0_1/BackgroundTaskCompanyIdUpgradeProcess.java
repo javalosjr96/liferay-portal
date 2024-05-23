@@ -8,12 +8,12 @@ package com.liferay.portal.background.task.internal.upgrade.v2_0_1;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.LoggingTimer;
 
 import java.io.Serializable;
 
-import java.util.Iterator;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -23,68 +23,55 @@ import java.util.Map;
 public class BackgroundTaskCompanyIdUpgradeProcess extends UpgradeProcess {
 
 	public static void removeCompanyId(Map<String, Serializable> map) {
-		Iterator<Map.Entry<String, Serializable>> iterator = map.entrySet(
-		).iterator();
+		Map<String, Serializable> taskContextMap =
+			(Map<String, Serializable>)map.get("map");
 
-		while (iterator.hasNext()) {
-			Map.Entry<String, Serializable> entry = iterator.next();
+		taskContextMap.remove("companyId");
 
-			String key = entry.getKey();
-
-			if (key.equals("companyId")) {
-				iterator.remove();
-			}
-			else {
-				Object value = entry.getValue();
-
-				if (value instanceof LinkedHashMap) {
-					removeCompanyId((Map<String, Serializable>)value);
-				}
-			}
-		}
+		((Map<String, Serializable>)
+			((Map<String, Serializable>)taskContextMap.get(
+				"threadLocalValues")).get("map")).remove("companyId");
 	}
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		try (LoggingTimer loggingTimer = new LoggingTimer()) {
-			processConcurrently(
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"Select backgroundTaskId,taskContextMap from BackgroundTask " +
-					"where taskContextMap LIKE \"%companyId:%\"",
-				"Update BackgroundTask set taskContextMap = ? where " +
-					"backgroundTaskId = ?",
-				resultSet -> new Object[] {
-					resultSet.getLong("backgroundTaskId"),
-					GetterUtil.getString(resultSet.getString("taskContextMap"))
-				},
-				(values, preparedStatement) -> {
-					String taskContextMapValue = (String)values[1];
+					"where taskContextMap LIKE \"%companyId%\"")) {
 
-					System.out.println(taskContextMapValue);
+			ResultSet resultSet = preparedStatement.executeQuery();
 
-					if (taskContextMapValue != null) {
-						long backgroundTaskId = (Long)values[0];
+			while (resultSet.next()) {
+				String taskContextMapValue = resultSet.getString(
+					"taskContextMap");
 
-						ObjectMapper mapper = new ObjectMapper();
+				if (taskContextMapValue != null) {
+					long backgroundTaskId = resultSet.getLong(
+						"backgroundTaskId");
 
-						Map<String, Serializable> taskContextMap =
-							mapper.readValue(
-								taskContextMapValue, LinkedHashMap.class);
+					ObjectMapper mapper = new ObjectMapper();
 
-						removeCompanyId(taskContextMap);
+					LinkedHashMap taskContextMap = mapper.readValue(
+						taskContextMapValue, LinkedHashMap.class);
 
-						taskContextMapValue = mapper.writeValueAsString(
-							taskContextMap);
+					removeCompanyId(taskContextMap);
 
-						System.out.println(taskContextMapValue);
+					taskContextMapValue = mapper.writeValueAsString(
+						taskContextMap);
 
-						preparedStatement.setString(1, taskContextMapValue);
+					try (PreparedStatement updateSQL =
+							connection.prepareStatement(
+								"Update BackgroundTask set taskContextMap = ? where " +
+									"backgroundTaskId = ?")) {
 
-						preparedStatement.setLong(2, backgroundTaskId);
+						updateSQL.setString(1, taskContextMapValue);
 
-						preparedStatement.addBatch();
+						updateSQL.setLong(2, backgroundTaskId);
+
+						updateSQL.executeUpdate();
 					}
-				},
-				"Unable to remove companyId");
+				}
+			}
 		}
 	}
 

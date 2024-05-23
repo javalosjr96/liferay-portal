@@ -64,11 +64,10 @@ public class BackgroundTaskCompanyIdUpgradeProcessTest {
 		Map<String, Serializable> taskContextMap =
 			_backgroundTask.getTaskContextMap();
 
-		Assert.assertEquals(
+		Assert.assertTrue(
 			_getTaskContextMap(
 				true
-			).toString(),
-			taskContextMap.toString());
+			).equals(taskContextMap));
 
 		_upgradeProcess.upgrade();
 
@@ -79,11 +78,10 @@ public class BackgroundTaskCompanyIdUpgradeProcessTest {
 
 		taskContextMap = _backgroundTask.getTaskContextMap();
 
-		Assert.assertEquals(
+		Assert.assertTrue(
 			_getTaskContextMap(
 				false
-			).toString(),
-			taskContextMap.toString());
+			).equals(taskContextMap));
 	}
 
 	private Map<String, Serializable> _getTaskContextMap(boolean addCompanyId)
