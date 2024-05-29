@@ -41,14 +41,19 @@ definition {
 	}
 
 	@summary = "Drop index ${indexName} on ${tableName}"
-	macro dropMySQLIndex(indexName = null, tableName = null) {
+	macro dropIndex(indexName = null, tableName = null) {
 		Variables.assertDefined(parameterList = "${indexName},${tableName}");
 
-		SQL.executeSQLStatement(sqlStatement = "drop index ${indexName} on ${tableName};");
+		if (${databaseType} == "mysql") {
+			SQL.executeSQLStatement(sqlStatement = "drop index ${indexName} on ${tableName};");
+		}
+		else if (${databaseType} == "postgresql") {
+			SQL.executeSQLStatement(sqlStatement = "drop index ${indexName};");
+		}
 
-		var hasMySQLIndex = SQL.hasMySQLIndex(indexName = ${indexName});
+		var hasIndex = SQL.hasIndex(indexName = "IX_EC00543C");
 
-		if (${hasMySQLIndex} == "true") {
+		if (${hasIndex} == "true") {
 			fail("Index ${indexName} wasn't dropped");
 		}
 	}
@@ -70,11 +75,16 @@ definition {
 		return ${output};
 	}
 
-	@summary = "Assert an index on the MySQL database"
-	macro hasMySQLIndex(indexName = null) {
+	@summary = "Assert an index on the MySQL or Postgres database"
+	macro hasIndex(indexName = null) {
 		Variables.assertDefined(parameterList = ${indexName});
 
-		var indexQuery = "SELECT COUNT(DISTINCT(index_name)) FROM information_schema.statistics WHERE index_schema = database() AND index_name = '${indexName}';";
+		if (${databaseType} == "mysql") {
+			var indexQuery = "SELECT COUNT(DISTINCT(index_name)) FROM information_schema.statistics WHERE index_schema = database() AND index_name = '${indexName}';";
+		}
+		else if (${databaseType} == "postgresql") {
+			var indexQuery = "SELECT COUNT(DISTINCT(indexname)) FROM pg_indexes WHERE schemaname = current_schema AND indexname = '${indexName}';";
+		}
 
 		var index = SQL.executeSQLStatement(sqlStatement = ${indexQuery});
 
