@@ -917,7 +917,14 @@ definition {
 
 		SQL.executeSQLStatement(sqlStatement = "drop database if exists lportal;");
 
-		AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dkeep.osgi.state=true -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		if (${databaseType} == "mysql") {
+			AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		}
+		else if (${databaseType} == "postgresql") {
+			SQL.executeSQLStatement(sqlStatement = "drop schema public cascade;");
+
+			SQL.executeSQLStatement(sqlStatement = "create schema public;");
+		}
 
 		AntCommands.runCommand("build-test.xml", "start-app-server -Ddelete.liferay.home=false -Dkeep.osgi.state=true");
 
@@ -1028,7 +1035,14 @@ definition {
 
 		SQL.executeSQLStatement(sqlStatement = "drop database if exists lportal;");
 
-		AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dkeep.osgi.state=true -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		if (${databaseType} == "mysql") {
+			AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		}
+		else if (${databaseType} == "postgresql") {
+			SQL.executeSQLStatement(sqlStatement = "drop schema public cascade;");
+
+			SQL.executeSQLStatement(sqlStatement = "create schema public;");
+		}
 
 		AntCommands.runCommand("build-test.xml", "start-app-server -Ddelete.liferay.home=false -Dkeep.osgi.state=true");
 

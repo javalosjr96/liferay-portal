@@ -50,7 +50,14 @@ definition {
 		}
 
 		task ("When the server is started again with a fresh database") {
-			AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+			if (${databaseType} == "mysql") {
+				AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+			}
+			else if (${databaseType} == "postgresql") {
+				SQL.executeSQLStatement(sqlStatement = "drop schema public cascade;");
+
+				SQL.executeSQLStatement(sqlStatement = "create schema public;");
+			}
 
 			TestCase.updatePortalProperties(
 				newProperty = "upgrade.database.auto.run=false",
@@ -117,7 +124,14 @@ definition {
 		}
 
 		task ("When the user rebuild the database And clean the missing partitions") {
-			AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+			if (${databaseType} == "mysql") {
+				AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+			}
+			else if (${databaseType} == "postgresql") {
+				SQL.executeSQLStatement(sqlStatement = "drop schema public cascade;");
+
+				SQL.executeSQLStatement(sqlStatement = "create schema public;");
+			}
 
 			SQL.executeSQLStatement(sqlStatement = "DROP DATABASE lpartition_42638;");
 
@@ -188,7 +202,14 @@ definition {
 
 		AntCommands.runCommand("build-test.xml", "export-database-schema -Ddatabase.file.prefix=upgraded -Ddatabase.schema.name=lportal");
 
-		AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		if (${databaseType} == "mysql") {
+			AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		}
+		else if (${databaseType} == "postgresql") {
+			SQL.executeSQLStatement(sqlStatement = "drop schema public cascade;");
+
+			SQL.executeSQLStatement(sqlStatement = "create schema public;");
+		}
 
 		Portlet.startServer();
 
@@ -210,7 +231,14 @@ definition {
 
 		AntCommands.runCommand("build-test.xml", "export-database-schema -Ddatabase.file.prefix=upgraded -Ddatabase.schema.name=lportal");
 
-		AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		if (${databaseType} == "mysql") {
+			AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		}
+		else if (${databaseType} == "postgresql") {
+			SQL.executeSQLStatement(sqlStatement = "drop schema public cascade;");
+
+			SQL.executeSQLStatement(sqlStatement = "create schema public;");
+		}
 
 		Portlet.startServer();
 
@@ -232,7 +260,14 @@ definition {
 
 		AntCommands.runCommand("build-test.xml", "export-database-schema -Ddatabase.file.prefix=upgraded -Ddatabase.schema.name=lportal");
 
-		AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		if (${databaseType} == "mysql") {
+			AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		}
+		else if (${databaseType} == "postgresql") {
+			SQL.executeSQLStatement(sqlStatement = "drop schema public cascade;");
+
+			SQL.executeSQLStatement(sqlStatement = "create schema public;");
+		}
 
 		Portlet.startServer();
 
@@ -256,7 +291,14 @@ definition {
 
 		AntCommands.runCommand("build-test.xml", "export-database-schema -Ddatabase.file.prefix=upgraded -Ddatabase.schema.name=lportal");
 
-		AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		if (${databaseType} == "mysql") {
+			AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		}
+		else if (${databaseType} == "postgresql") {
+			SQL.executeSQLStatement(sqlStatement = "drop schema public cascade;");
+
+			SQL.executeSQLStatement(sqlStatement = "create schema public;");
+		}
 
 		Portlet.startServer();
 
@@ -278,7 +320,14 @@ definition {
 
 		AntCommands.runCommand("build-test.xml", "export-database-schema -Ddatabase.file.prefix=upgraded -Ddatabase.schema.name=lportal");
 
-		AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		if (${databaseType} == "mysql") {
+			AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		}
+		else if (${databaseType} == "postgresql") {
+			SQL.executeSQLStatement(sqlStatement = "drop schema public cascade;");
+
+			SQL.executeSQLStatement(sqlStatement = "create schema public;");
+		}
 
 		Portlet.startServer();
 
@@ -300,7 +349,7 @@ definition {
 
 		AntCommands.runCommand("build-test.xml", "export-database-schema -Ddatabase.file.prefix=upgraded -Ddatabase.schema.name=lportal");
 
-		AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=postgresql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-postgresql.sql");
 
 		Portlet.startServer();
 
@@ -324,7 +373,14 @@ definition {
 
 		AntCommands.runCommand("build-test.xml", "export-database-schema -Ddatabase.file.prefix=upgraded -Ddatabase.schema.name=lportal");
 
-		AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		if (${databaseType} == "mysql") {
+			AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+		}
+		else if (${databaseType} == "postgresql") {
+			SQL.executeSQLStatement(sqlStatement = "drop schema public cascade;");
+
+			SQL.executeSQLStatement(sqlStatement = "create schema public;");
+		}
 
 		Portlet.startServer();
 

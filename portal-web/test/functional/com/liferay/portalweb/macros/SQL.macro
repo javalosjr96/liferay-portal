@@ -42,7 +42,7 @@ definition {
 
 	@summary = "Drop index ${indexName} on ${tableName}"
 	macro dropIndex(indexName = null, tableName = null) {
-		Variables.assertDefined(parameterList = "${indexName},${tableName}");
+		Variables.assertDefined(parameterList = "${indexName}, ${tableName}");
 
 		if (${databaseType} == "mysql") {
 			SQL.executeSQLStatement(sqlStatement = "drop index ${indexName} on ${tableName};");
@@ -78,6 +78,8 @@ definition {
 	@summary = "Assert an index on the MySQL or Postgres database"
 	macro hasIndex(indexName = null) {
 		Variables.assertDefined(parameterList = ${indexName});
+
+		var databaseType = PropsUtil.get("database.type");
 
 		if (${databaseType} == "mysql") {
 			var indexQuery = "SELECT COUNT(DISTINCT(index_name)) FROM information_schema.statistics WHERE index_schema = database() AND index_name = '${indexName}';";
