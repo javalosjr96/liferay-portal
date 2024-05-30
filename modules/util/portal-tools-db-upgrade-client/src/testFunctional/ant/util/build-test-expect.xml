@@ -37,6 +37,15 @@
 				replace="${database.password}"
 			/>
 
+			<get-database-property property.name="database.password" />
+
+			<replaceregexp
+				file="temp.expect"
+				flags="gi"
+				match="\[database.type\]"
+				replace="${database.type}"
+			/>
+
 			<get-database-property property.name="database.port" />
 
 			<replaceregexp
