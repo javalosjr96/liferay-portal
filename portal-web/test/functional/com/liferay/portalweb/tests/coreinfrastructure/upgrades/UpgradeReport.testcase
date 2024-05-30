@@ -100,7 +100,7 @@ definition {
 	@description = "LPS-154683: Upgrade Report shows errors"
 	@priority = 4
 	test ErrorsLogged {
-		property custom.mysql.sql.statement = "ALTER TABLE Release_ DROP servletContextName;";
+		property custom.sql.statement = "ALTER TABLE Release_ DROP servletContextName;";
 
 		task ("Given upgrade.report is enabled When the portal gets upgraded and an error was captured during the upgrade") {
 			var upgradeReportContent = UpgradeReport.getUpgradeReportFileContent();
