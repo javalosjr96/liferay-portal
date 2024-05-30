@@ -14971,6 +14971,22 @@ go</echo>
 								<arg value="--file=${liferay.home}/${database.type}.sql" />
 								<arg value="--username=${database.username}" />
 							</exec>
+
+							<get-testcase-property property.name="custom.sql.statement" />
+
+							<if>
+								<and>
+									<equals arg1="${database.type}" arg2="postgresql" />
+									<isset property="custom.sql.statement" />
+								</and>
+								<then>
+									<sql classpath="${app.server.shielded-container-lib.portal.dir}/${jdbc.postgresql.driver}" driver="${database.postgresql.driver}" onerror="continue" output="output.txt" password="${database.postgresql.password}" print="true" url="${database.postgresql.url}" userid="${database.postgresql.username}">
+										<![CDATA[
+											${custom.mysql.sql.statement}
+										]]>
+									</sql>
+								</then>
+							</if>
 						</then>
 					</elseif>
 					<elseif>
