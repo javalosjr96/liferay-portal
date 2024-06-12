@@ -100,7 +100,9 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 	}
 
 	@Test
-	public void testAddIndexControlTableSystemCompany() throws Exception {
+	public void testAddIndexWithoutSettingCompanyThreadLocal()
+		throws Exception {
+
 		createIndex(TEST_CONTROL_TABLE_NAME);
 
 		Assert.assertTrue(
