@@ -293,7 +293,7 @@ public class UpgradePartitionedConfigurationTableTest
 
 	private static final String _UPGRADE_CLASS_NAME =
 		"com.liferay.portal.configuration.persistence.internal.upgrade." +
-			"v2_0_0.ConfigurationDBPartitionUpgradeProcess";
+			"v2_0_0.ConfigurationUpgradeProcess";
 
 	private static long _companyId;
 	private static DataSource _dataSource;
