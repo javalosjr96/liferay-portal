@@ -33,7 +33,7 @@ import org.apache.felix.cm.file.ConfigurationHandler;
 /**
  * @author Luis Ortiz
  */
-public class ConfigurationDBPartitionUpgradeProcess extends UpgradeProcess {
+public class ConfigurationUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
@@ -246,7 +246,7 @@ public class ConfigurationDBPartitionUpgradeProcess extends UpgradeProcess {
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		ConfigurationDBPartitionUpgradeProcess.class);
+		ConfigurationUpgradeProcess.class);
 
 	private static final AtomicInteger _atomicInteger = new AtomicInteger();
 	private static final CopyOnWriteArrayList<ScopeConfiguration>

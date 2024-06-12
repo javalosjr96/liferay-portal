@@ -15,7 +15,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 /**
  * @author Mariano Álvaro Sáiz
  */
-public class QuartzDBPartitionUpgradeProcess extends UpgradeProcess {
+public class QuartzUpgradeProcess extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {

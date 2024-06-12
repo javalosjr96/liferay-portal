@@ -59,7 +59,7 @@ import org.junit.runner.RunWith;
  * @author Kevin Lee
  */
 @RunWith(Arquillian.class)
-public class QuartzDBPartitionUpgradeProcessTest {
+public class QuartzUpgradeProcessTest {
 
 	@ClassRule
 	@Rule
@@ -295,7 +295,7 @@ public class QuartzDBPartitionUpgradeProcessTest {
 
 	private static final String _CLASS_NAME =
 		"com.liferay.portal.scheduler.quartz.internal.upgrade.v1_0_1." +
-			"QuartzDBPartitionUpgradeProcess";
+			"QuartzUpgradeProcess";
 
 	private static final String _CT_DESTINATION_NAME =
 		"liferay/ct_collection_scheduled_publish";

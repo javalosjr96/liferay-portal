@@ -27,8 +27,7 @@ import org.junit.runner.RunWith;
  * @author Mariano Álvaro Sáiz
  */
 @RunWith(Arquillian.class)
-public class QuartzDBPartitionUpgradeProcessTest
-	extends BaseDBPartitionTestCase {
+public class QuartzUpgradeProcessTest extends BaseDBPartitionTestCase {
 
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -74,7 +73,7 @@ public class QuartzDBPartitionUpgradeProcessTest
 
 	private static final String _CLASS_NAME =
 		"com.liferay.portal.scheduler.quartz.internal.upgrade.v1_0_3." +
-			"QuartzDBPartitionUpgradeProcess";
+			"QuartzUpgradeProcess";
 
 	private static final Index[] _QUARTZ_INDEXES = {
 		new Index("IX_BE3835E5", "QUARTZ_FIRED_TRIGGERS", false),
