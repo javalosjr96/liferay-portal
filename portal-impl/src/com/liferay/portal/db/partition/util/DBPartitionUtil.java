@@ -901,7 +901,7 @@ public class DBPartitionUtil {
 			DBInspector dbInspector = new DBInspector(connection);
 
 			if ((dbInspector.isControlTable(tableName) &&
-				 (getCurrentCompanyId() != _defaultCompanyId)) ||
+				 !(CompanyThreadLocal.getCompanyId() == _defaultCompanyId)) ||
 				dbInspector.hasView(tableName)) {
 
 				return true;
