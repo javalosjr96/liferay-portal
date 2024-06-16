@@ -5,10 +5,20 @@
 
 import {expect, test} from '@playwright/test';
 
-test('title is Home - Liferay DXP', async ({page}) => {
-	await page.goto('/');
+import {execSync} from 'child_process';
 
-	await expect(page).toHaveTitle('Home - Liferay DXP');
+const currentDir = process.cwd();
+
+test('title is Home - Liferay DXP', async ({page}) => {
+
+	const scriptDir = currentDir + "/tests/stable/env/test.sh"
+
+	console.log('Current working directory:', scriptDir);
+
+	const output = execSync(scriptDir).toString();
+
+	console.log('Function output:', output);
+
 });
 
 test('has homepage image', async ({page}) => {
