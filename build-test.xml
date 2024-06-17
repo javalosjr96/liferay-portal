@@ -5573,6 +5573,8 @@ ${custom.upgrade.properties}</echo>
 					<isset property="skip.rebuild.database" />
 				</not>
 				<then>
+					<echo message="Portal Version: ${portal.version}" />
+
 					<get-testcase-property property.name="database.hypersonic.embedded" />
 
 					<antcall target="delete-liferay-home">
@@ -5581,9 +5583,14 @@ ${custom.upgrade.properties}</echo>
 
 					<get-database-property property.name="database.docker.image" />
 
+					<echo message="Portal Version: ${portal.version}" />
+
 					<if>
 						<isset property="database.docker.image" />
 						<then>
+
+							<echo message="Program output: 11" />
+
 							<get-database-property property.name="database.host" />
 							<get-database-property property.name="database.password" />
 							<get-database-property property.name="database.schema" />
@@ -5915,6 +5922,8 @@ ${custom.upgrade.properties}</echo>
 					</if>
 				</then>
 			</if>
+
+			<echo message="Program output: 11" />
 		</sequential>
 	</macrodef>
 
@@ -9991,6 +10000,7 @@ org.apache.catalina.tribes.level = FINE]]>
 	</target>
 
 	<target name="delete-liferay-home">
+		<echo message="Program output:Omegalol" />
 		<if>
 			<not>
 				<equals arg1="${delete.liferay.home}" arg2="false" />
@@ -10001,21 +10011,29 @@ org.apache.catalina.tribes.level = FINE]]>
 						<isset property="test.app.server.liferay.home" />
 					</not>
 					<then>
+						<echo message="Program output:1" />
 						<set-app-server-properties />
 					</then>
 				</if>
 
+				<echo message="Program output:2" />
+
 				<get-testcase-property property.name="delete.temp.dir" />
+
+				<echo message="Program output:3" />
 
 				<if>
 					<equals arg1="${delete.temp.dir}" arg2="true" />
 
 					<then>
 						<delete dir="${app.server.tomcat.temp.dir}" />
+						<echo message="Program output:4" />
 					</then>
 				</if>
 
 				<get-testcase-property property.name="portal.version" />
+
+				<echo message="Program output:5" />
 
 				<if>
 					<and>
@@ -10025,6 +10043,7 @@ org.apache.catalina.tribes.level = FINE]]>
 						</not>
 					</and>
 					<then>
+						<echo message="Program output:6" />
 						<delete dir="${test.app.server.liferay.home}/osgi/state" />
 
 						<if>
@@ -10058,13 +10077,16 @@ org.apache.catalina.tribes.level = FINE]]>
 								<equals arg1="${keep.osgi.state}" arg2="true" />
 							</not>
 							<then>
+								<echo message="Program output:7" />
 								<delete dir="${test.app.server.liferay.home}/osgi/state" />
 							</then>
 						</if>
 
 						<delete dir="${test.app.server.liferay.home}/logs" />
+						<echo message="Program output:8" />
 
 						<delete file="${test.app.server.liferay.home}/portal-setup-wizard.properties" />
+						<echo message="Program output:9" />
 					</else>
 				</if>
 			</then>

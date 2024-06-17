@@ -6,5 +6,4 @@
 export const config = {
 	name: 'stable',
 	testDir: 'tests/stable',
-	timeout: 60 * 1000,
 };

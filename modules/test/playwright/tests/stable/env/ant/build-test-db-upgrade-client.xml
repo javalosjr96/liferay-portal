@@ -6,6 +6,8 @@
 
 	<macrodef name="clean-database-upgrade-client">
 		<sequential>
+
+			<echo message="Portal Version: ${app.server.types}" />
 			<stop-one-java-process process.name="LocalProcess" />
 			<stop-one-java-process process.name="DBUpgrader" />
 
@@ -19,6 +21,14 @@
 			<delete failonerror="false" file="temp.log" />
 		</sequential>
 	</macrodef>
+
+	<target name="setup-simple-portal">
+		<sequential>
+			<antcall target="run-simple-server">
+				<param name="startup.testing.cold" value="${startup.testing.cold}" />
+			</antcall>
+		</sequential>
+	</target>
 
 	<macrodef name="get-database-upgrade-client-paths">
 		<sequential>

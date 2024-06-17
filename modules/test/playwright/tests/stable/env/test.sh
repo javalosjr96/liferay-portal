@@ -9,9 +9,11 @@ function main {
 
   cd ant
 
-  ant -f build-test-db-upgrade-client.xml clean-database-upgrade-client
+  target="clean-database-upgrade-client"
 
-  echo "Database Upgrade Client Reset"
+  ant -f build-test-db-upgrade-client.xml "$1"
+
+  echo "Task: $1 complete"
 }
 
 main "${@}"
