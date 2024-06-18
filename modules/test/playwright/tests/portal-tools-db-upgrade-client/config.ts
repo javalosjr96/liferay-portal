@@ -6,5 +6,4 @@
 export const config = {
 	name: 'portal-tools-db-upgrade-client',
 	testDir: 'tests/portal-tools-db-upgrade-client',
-
 };

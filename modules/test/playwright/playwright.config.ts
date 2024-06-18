@@ -50,6 +50,7 @@ import {config as productNavigationUserPersonalBarWebConfig} from './tests/produ
 import {config as questionsWebConfig} from './tests/questions-web/config';
 import {config as rolesAdminWebConfig} from './tests/roles-admin-web/config';
 import {config as siteAdminConfig} from './tests/site-admin-web/config';
+import {config as dbUpgradeClientConfig} from './tests/portal-tools-db-upgrade-client/config';
 import {config as stableConfig} from './tests/stable/config';
 import {config as stylebookConfig} from './tests/style-book-web/config';
 import {config as usersAdminWebConfig} from './tests/users-admin-web/config';
@@ -110,6 +111,7 @@ export default defineConfig({
 		rolesAdminWebConfig,
 		siteAdminConfig,
 		stableConfig,
+		dbUpgradeClientConfig,
 		stylebookConfig,
 		usersAdminWebConfig,
 		wikiWebConfig,
