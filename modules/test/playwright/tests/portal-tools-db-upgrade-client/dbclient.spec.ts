@@ -101,6 +101,17 @@ test('CheckUpgradePropertiesDBExtSet', async ({page}) => {
         'check-upgrade-properties-db-ext-set');
 });
 test('CheckUpgradePropertiesNoneSet', async ({page}) => {
+    const properties = {
+        'app.server.type': 'tomcat',
+        'database.host' : 'localhost',
+        'database.port' : '13306',
+        'database.username' : 'root',
+        'database.password' : 'liferay',
+        'database.type':'mysql'
+    };
+
+    Object.entries(properties).forEach(([key, value]) => process.env[key] = value);
+
     await runAntTask(
          'build-test-db-upgrade-client.xml',
         'check-upgrade-properties-none-set');

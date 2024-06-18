@@ -560,6 +560,25 @@
 	</target>
 
 	<target name="check-upgrade-properties-none-set">
+
+		<echo message="${env.database.username}" />
+		<echo message="${env.database.password}" />
+		<echo message="${env.database.host}" />
+		<echo message="${env.database.port}" />
+		<echo message="${env.database.type}" />
+
+		<property name="database.username" value="${env.database.username}" />
+		<property name="database.password" value="${env.database.password}" />
+		<property name="database.host" value="${env.database.host}" />
+		<property name="database.port" value="${env.database.port}" />
+		<property name="database.type" value="${env.database.type}" />
+
+		<echo message="${database.username}" />
+		<echo message="${database.password}" />
+		<echo message="${database.host}" />
+		<echo message="${database.port}" />
+		<echo message="${database.type}" />
+
 		<get-database-upgrade-client-paths />
 
 		<prepare-database-upgrade-properties />
