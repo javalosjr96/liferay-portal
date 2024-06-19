@@ -20,6 +20,145 @@
 		</sequential>
 	</macrodef>
 
+	<scriptdef name="propertyreset" language="javascript"
+			   description="Allows to assign @{property} new value">
+		<attribute name="name"/>
+		<attribute name="value"/>
+		project.setProperty(attributes.get("name"), attributes.get("value"));
+	</scriptdef>
+
+	<macrodef name="prepare-database-client-upgrade-properties">
+		<sequential>
+			<delete file="${liferay.home}/tools/portal-tools-db-upgrade-client/logs/upgrade.log" />
+
+			<if>
+				<equals arg1="${app.server.type}" arg2="jboss" />
+				<then>
+					<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/app-server.properties">dir=${app.server.dir}
+						extra.lib.dirs=modules/system/layers/base/javax/mail,modules/system/layers/base/javax/persistence,modules/system/layers/base/javax/servlet,modules/system/layers/base/javax/transaction
+						global.lib.dir=modules/com/liferay/portal/main
+						portal.dir=standalone/deployments/ROOT.war
+						server.detector.server.id=jboss</echo>
+				</then>
+				<elseif>
+					<equals arg1="${app.server.type}" arg2="tcserver" />
+					<then>
+						<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/app-server.properties">dir=${app.server.dir}
+							extra.lib.dirs=runtimes/tomcat-9.0.10.A.RELEASE/lib
+							global.lib.dir=instances/liferay/lib
+							portal.dir=instances/liferay/webapps/ROOT
+							server.detector.server.id=tomcat</echo>
+					</then>
+				</elseif>
+				<elseif>
+					<equals arg1="${app.server.type}" arg2="tomcat" />
+					<then>
+						<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/app-server.properties">dir=${app.server.dir}
+							extra.lib.dirs=bin
+							global.lib.dir=lib
+							portal.dir=webapps/ROOT
+							server.detector.server.id=tomcat</echo>
+					</then>
+				</elseif>
+				<elseif>
+					<equals arg1="${app.server.type}" arg2="weblogic" />
+					<then>
+						<if>
+							<equals arg1="${app.server.weblogic.version}" arg2="12.2.1" />
+							<then>
+								<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/app-server.properties">dir=${app.server.dir}
+									extra.lib.dirs=wlserver/modules
+									global.lib.dir=domains/liferay/lib
+									portal.dir=domains/liferay/autodeploy/ROOT
+									server.detector.server.id=weblogic</echo>
+							</then>
+							<else>
+								<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/app-server.properties">dir=${app.server.weblogic.dir}
+									extra.lib.dirs=oracle/wlserver/modules
+									global.lib.dir=domains/liferay/lib
+									portal.dir=/domains/liferay/autodeploy/ROOT
+									server.detector.server.id=weblogic</echo>
+							</else>
+						</if>
+					</then>
+				</elseif>
+				<elseif>
+					<equals arg1="${app.server.type}" arg2="websphere" />
+					<then>
+						<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/app-server.properties">dir=${app.server.dir}
+							extra.lib.dirs=javaext
+							global.lib.dir=lib
+							portal.dir=profiles/liferay/installedApps/liferay-cell/liferay-portal.ear/liferay-portal.war
+							server.detector.server.id=websphere</echo>
+					</then>
+				</elseif>
+				<elseif>
+					<equals arg1="${app.server.type}" arg2="wildfly" />
+					<then>
+						<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/app-server.properties">dir=${app.server.dir}
+							extra.lib.dirs=modules/system/layers/base/javax/mail,modules/system/layers/base/javax/persistence,modules/system/layers/base/javax/servlet,modules/system/layers/base/javax/transaction
+							global.lib.dir=modules/com/liferay/portal/main
+							portal.dir=standalone/deployments/ROOT.war
+							server.detector.server.id=wildfly</echo>
+					</then>
+				</elseif>
+			</if>
+
+			<get-database-property property.name="database.driver" />
+			<get-database-property property.name="database.password" />
+			<get-database-property property.name="database.url" />
+			<get-database-property property.name="database.username" />
+
+			<if>
+				<or>
+					<equals arg1="${database.driver}" arg2=""/>
+					<equals arg1="${database.password}" arg2=""/>
+					<equals arg1="${database.url}" arg2=""/>
+					<equals arg1="${database.username}" arg2=""/>
+				</or>
+				<then>
+					<propertyreset name="database.host" value="${env.database.host}" />
+					<propertyreset name="database.port" value="${env.database.port}" />
+					<propertyreset name="database.type" value="${env.database.type}" />
+					<propertyreset name="database.url" value="${env.database.url}"/>
+					<propertyreset name="database.password" value="${env.database.password}"/>
+				</then>
+			</if>
+
+			<if>
+				<or>
+					<equals arg1="${database.type}" arg2="mariadb" />
+					<equals arg1="${database.type}" arg2="mysql" />
+				</or>
+				<then>
+					<property name="database.url.upgrade" value="${database.url}&amp;rewriteBatchedStatements=true" />
+				</then>
+				<elseif>
+					<equals arg1="${database.type}" arg2="postgresql" />
+					<then>
+						<property name="database.url.upgrade" value="${database.url}?reWriteBatchedInserts=true" />
+					</then>
+				</elseif>
+				<elseif>
+					<equals arg1="${database.type}" arg2="sqlserver" />
+					<then>
+						<property name="database.url.upgrade" value="${database.url};useBulkCopyForBatchInsert=true" />
+					</then>
+				</elseif>
+				<else>
+					<property name="database.url.upgrade" value="${database.url}" />
+				</else>
+			</if>
+
+			<echo file="${liferay.home}/tools/portal-tools-db-upgrade-client/portal-upgrade-database.properties">jdbc.default.driverClassName=${database.driver}
+				jdbc.default.url=${database.url.upgrade}
+				jdbc.default.username=${database.username}
+				jdbc.default.password=${database.password}</echo>
+
+			<prepare-upgrade-ext-properties />
+		</sequential>
+	</macrodef>
+
 	<macrodef name="get-database-upgrade-client-paths">
 		<sequential>
 			<property name="db.upgrade.client.home" value="${liferay.home}/tools/portal-tools-db-upgrade-client" />
@@ -113,7 +252,6 @@
 
 	<target name="check-upgrade-client-additional-settings">
 		<get-database-upgrade-client-paths />
-
 		<parallel failonany="true">
 			<execute dir="${db.upgrade.client.home}" failonerror="true">
 				db_upgrade_client${file.suffix.bat} -j "-Dfile.encoding=UTF8 -Duser.country=US -Duser.language=en -Duser.timezone=GMT -Xmx4096m"
@@ -561,27 +699,9 @@
 
 	<target name="check-upgrade-properties-none-set">
 
-		<echo message="${env.database.username}" />
-		<echo message="${env.database.password}" />
-		<echo message="${env.database.host}" />
-		<echo message="${env.database.port}" />
-		<echo message="${env.database.type}" />
-
-		<property name="database.username" value="${env.database.username}" />
-		<property name="database.password" value="${env.database.password}" />
-		<property name="database.host" value="${env.database.host}" />
-		<property name="database.port" value="${env.database.port}" />
-		<property name="database.type" value="${env.database.type}" />
-
-		<echo message="${database.username}" />
-		<echo message="${database.password}" />
-		<echo message="${database.host}" />
-		<echo message="${database.port}" />
-		<echo message="${database.type}" />
-
 		<get-database-upgrade-client-paths />
 
-		<prepare-database-upgrade-properties />
+		<prepare-database-client-upgrade-properties />
 
 		<delete file="${db.upgrade.client.home}/app-server.properties" />
 
@@ -593,6 +713,10 @@
 			db.upgrade.client.home="${db.upgrade.client.home}"
 			expect.file="check-upgrade-properties-none-set.expect"
 			file.suffix.bat="${file.suffix.bat}"
+			database.password="${database.password}"
+			database.host="${database.host}"
+			database.username ="${database.username}"
+			database.port ="${database.port}"
 		/>
 
 		<fail message="Exception thrown, failing.">

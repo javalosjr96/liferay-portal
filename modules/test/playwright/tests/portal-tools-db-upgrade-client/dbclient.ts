@@ -30,6 +30,14 @@ async function runAntTask(buildFile, taskName) {
 }
 
 test('CheckUpgradeClientAdditionalSettings', async ({page}) => {
+
+    const envVars = process.env;
+
+    // Loop through each key-value pair and print
+    for (const [key, value] of Object.entries(envVars)) {
+        console.log(`${key}: ${value}`);
+    }
+
     await runAntTask(
          'build-test-db-upgrade-client.xml',
         'check-upgrade-client-additional-settings');
@@ -101,17 +109,6 @@ test('CheckUpgradePropertiesDBExtSet', async ({page}) => {
         'check-upgrade-properties-db-ext-set');
 });
 test('CheckUpgradePropertiesNoneSet', async ({page}) => {
-    const properties = {
-        'app.server.type': 'tomcat',
-        'database.host' : 'localhost',
-        'database.port' : '13306',
-        'database.username' : 'root',
-        'database.password' : 'liferay',
-        'database.type':'mysql'
-    };
-
-    Object.entries(properties).forEach(([key, value]) => process.env[key] = value);
-
     await runAntTask(
          'build-test-db-upgrade-client.xml',
         'check-upgrade-properties-none-set');

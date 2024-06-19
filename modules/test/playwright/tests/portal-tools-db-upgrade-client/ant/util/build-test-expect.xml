@@ -2,15 +2,30 @@
 
 <project basedir="." name="portal-test-expect" xmlns:antelope="antlib:ise.antelope.tasks">
 	<import file="../../../../../../../build-test.xml" />
-
 	<macrodef name="run-expect">
 		<attribute name="db.upgrade.client.home" />
 		<attribute name="file.suffix.bat" />
 		<attribute name="expect.file" />
-
+		<attribute name="database.host" />
+		<attribute name="database.password" />
+		<attribute name="database.username" />
+		<attribute name="database.port" />
 		<sequential>
 			<delete failonerror="false" file="temp.expect" />
-
+			<if>
+				<or>
+					<equals arg1="${database.host}" arg2=""/>
+					<equals arg1="${database.password}" arg2=""/>
+					<equals arg1="${database.username}" arg2=""/>
+					<equals arg1="${database.port}" arg2=""/>
+				</or>
+				<then>
+					<get-database-property property.name="database.host" />
+					<get-database-property property.name="database.password" />
+					<get-database-property property.name="database.username" />
+					<get-database-property property.name="database.port" />
+				</then>
+			</if>
 			<copy
 				failonerror="true"
 				file="${db.upgrade.client.src.dir}/src/testFunctional/dependencies/@{expect.file}"
@@ -18,9 +33,6 @@
 				overwrite="true"
 				tofile="temp.expect"
 			/>
-
-			<get-database-property property.name="database.host" />
-
 			<replaceregexp
 				file="temp.expect"
 				flags="gi"
@@ -28,7 +40,6 @@
 				replace="${database.host}"
 			/>
 
-			<get-database-property property.name="database.password" />
 
 			<replaceregexp
 				file="temp.expect"
@@ -37,8 +48,6 @@
 				replace="${database.password}"
 			/>
 
-			<get-database-property property.name="database.port" />
-
 			<replaceregexp
 				file="temp.expect"
 				flags="gi"
@@ -46,7 +55,6 @@
 				replace="${database.port}"
 			/>
 
-			<get-database-property property.name="database.username" />
 
 			<replaceregexp
 				file="temp.expect"
