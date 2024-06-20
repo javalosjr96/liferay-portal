@@ -3,7 +3,12 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import dotenv from 'dotenv';
+
+dotenv.config({path: __dirname + '/.env'});
+
 export const config = {
 	name: 'portal-tools-db-upgrade-client',
 	testDir: 'tests/portal-tools-db-upgrade-client',
+	timeout: 5 * 60 * 1000,
 };

@@ -10,6 +10,7 @@
 		"@axe-core/playwright": "^4.9.1",
 		"@liferay/eslint-plugin": "1.5.0",
 		"@liferay/prettier-plugin": "1.1.5",
+		"dotenv": "^8.2.0",
 		"@playwright/test": "1.39.0",
 		"@types/node": "^20.9.0",
 		"@types/yauzl": "^2.10.3",

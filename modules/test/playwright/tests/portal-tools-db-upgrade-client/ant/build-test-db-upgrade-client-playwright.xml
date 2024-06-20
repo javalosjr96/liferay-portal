@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 
-<project basedir="." name="portal-test-db-upgrade-client" xmlns:antelope="antlib:ise.antelope.tasks">
+<project basedir="." name="portal-test-db-upgrade-client-playwright" xmlns:antelope="antlib:ise.antelope.tasks">
 	<import file="../../../../../../build-test.xml" />
 	<import file="util/build-test-expect.xml" />
 
@@ -9,19 +9,21 @@
 			<stop-one-java-process process.name="LocalProcess" />
 			<stop-one-java-process process.name="DBUpgrader" />
 
-			<exec executable="/bin/bash" logError="true" output="true">
+			<sleep seconds="2"/>
+
+			<exec executable="/bin/bash" logError="false" output="true">
 				<arg value="-c" />
-				<arg value="pkill -f db.upgrade.client" />
+				<arg value="pkill -f 'db\.upgrade.*'" />
 			</exec>
 
 			<delete failonerror="false" file="${db.upgrade.client.log}" />
 			<delete failonerror="false" file="${user.home}/portal-ext.properties" />
 			<delete failonerror="false" file="temp.log" />
+			<delete failonerror="false" file="${db.upgrade.client.home}/db_upgrade.pid" />
 		</sequential>
 	</macrodef>
 
-	<scriptdef name="propertyreset" language="javascript"
-			   description="Allows to assign @{property} new value">
+	<scriptdef name="property-reset" language="javascript">
 		<attribute name="name"/>
 		<attribute name="value"/>
 		project.setProperty(attributes.get("name"), attributes.get("value"));
@@ -117,11 +119,11 @@
 					<equals arg1="${database.username}" arg2=""/>
 				</or>
 				<then>
-					<propertyreset name="database.host" value="${env.database.host}" />
-					<propertyreset name="database.port" value="${env.database.port}" />
-					<propertyreset name="database.type" value="${env.database.type}" />
-					<propertyreset name="database.url" value="${env.database.url}"/>
-					<propertyreset name="database.password" value="${env.database.password}"/>
+					<property-reset name="database.host" value="${env.DATABASE_HOST}" />
+					<property-reset name="database.port" value="${env.DATABASE_PORT}" />
+					<property-reset name="database.type" value="${env.DATABASE_TYPE}" />
+					<property-reset name="database.url" value="${env.DATABASE_URL}"/>
+					<property-reset name="database.password" value="${env.DATABASE_PASSWORD}"/>
 				</then>
 			</if>
 
@@ -251,7 +253,11 @@
 	</target>
 
 	<target name="check-upgrade-client-additional-settings">
+
 		<get-database-upgrade-client-paths />
+
+		<prepare-database-client-upgrade-properties/>
+
 		<parallel failonany="true">
 			<execute dir="${db.upgrade.client.home}" failonerror="true">
 				db_upgrade_client${file.suffix.bat} -j "-Dfile.encoding=UTF8 -Duser.country=US -Duser.language=en -Duser.timezone=GMT -Xmx4096m"
@@ -280,6 +286,8 @@
 
 	<target name="check-upgrade-client-custom-log">
 		<get-database-upgrade-client-paths />
+		<prepare-database-client-upgrade-properties/>
+		<clean-database-upgrade-client/>
 
 		<execute dir="${db.upgrade.client.home}" failonerror="true">
 			db_upgrade_client${file.suffix.bat} -l log_file.txt
@@ -316,11 +324,17 @@
 
 	<target name="check-upgrade-client-gogoshell-command-output">
 		<get-database-upgrade-client-paths />
+		<prepare-database-client-upgrade-properties/>
+		<clean-database-upgrade-client/>
 
 		<run-expect
 			db.upgrade.client.home="${db.upgrade.client.home}"
 			expect.file="check-upgrade-client-gogoshell-command-output.expect"
 			file.suffix.bat="${file.suffix.bat}"
+			database.password="${database.password}"
+			database.host="${database.host}"
+			database.username ="${database.username}"
+			database.port ="${database.port}"
 		/>
 
 		<fail message="Prefix g! for command does not exist!">
@@ -339,7 +353,7 @@
 		<get-database-upgrade-client-paths />
 
 		<waitfor maxwait="150" maxwaitunit="second" timeoutproperty="gogoshell.missing">
-			<resourcecontains
+		stop_app_server	<resourcecontains
 				resource="${db.upgrade.client.log}"
 				substring="Connecting to Gogo shell because the upgrade failed or is incomplete"
 			/>
@@ -357,56 +371,26 @@
 		<fail if="gogoshell.timeout" message="The Gogo shell connection did not connect as expected." />
 	</target>
 
-	<target name="check-upgrade-client-gogoshell-failed-connection-error">
-		<get-database-upgrade-client-paths />
-
-		<if>
-			<not>
-				<available file="${selenium.output.dir.name}" type="dir" />
-			</not>
-			<then>
-				<mkdir dir="${selenium.output.dir.name}" />
-			</then>
-		</if>
-
-		<execute dir="${db.upgrade.client.home}">
-			db_upgrade_client${file.suffix.bat} run > ${selenium.output.dir.name}/gogoshell.failed.connection.output
-		</execute>
-
-		<loadfile
-			property="upgrade.gogoshell.failed.connection.output"
-			srcFile="${selenium.output.dir.name}/gogoshell.failed.connection.output"
-		/>
-
-		<echo>${upgrade.gogoshell.failed.connection.output}</echo>
-
-		<if>
-			<not>
-				<and>
-					<contains string="${upgrade.gogoshell.failed.connection.output}" substring="Connecting to Gogo shell because the upgrade failed or is incomplete" />
-					<contains string="${upgrade.gogoshell.failed.connection.output}" substring="java.net.ConnectException: Connection refused" />
-				</and>
-			</not>
-			<then>
-				<fail message="The upgrade client failed to print out the exception." />
-			</then>
-		</if>
-
-		<echo>The upgrade client printed out the exception successfully.</echo>
-	</target>
-
 	<target name="check-upgrade-client-gogoshell-help-output">
 		<get-database-upgrade-client-paths />
+		<prepare-database-client-upgrade-properties/>
+		<clean-database-upgrade-client/>
 
 		<run-expect
 			db.upgrade.client.home="${db.upgrade.client.home}"
 			expect.file="check-upgrade-client-gogoshell-help-output.expect"
 			file.suffix.bat="${file.suffix.bat}"
+			database.password="${database.password}"
+			database.host="${database.host}"
+			database.username ="${database.username}"
+			database.port ="${database.port}"
 		/>
 	</target>
 
 	<target name="check-upgrade-client-help">
 		<get-database-upgrade-client-paths />
+		<prepare-database-client-upgrade-properties/>
+		<clean-database-upgrade-client/>
 
 		<local name="upgrade.help.output" />
 
@@ -436,6 +420,7 @@
 
 	<target name="check-upgrade-client-home-ext-properties">
 		<get-database-upgrade-client-paths />
+		<clean-database-upgrade-client/>
 
 		<trycatch>
 			<try>
@@ -468,44 +453,10 @@
 		</trycatch>
 	</target>
 
-	<target name="check-upgrade-client-java-version">
-		<get-database-upgrade-client-paths />
-
-		<parallel failonany="true">
-			<execute dir="${db.upgrade.client.home}" failonerror="true">
-				JAVA_HOME=${java.jdk.7.x64.home} echo JAVA_HOME=${JAVA_HOME}
-				db_upgrade_client${file.suffix.bat}
-			</execute>
-
-			<sequential>
-				<local name="java.error.available" />
-
-				<waitfor maxwait="15000" timeoutproperty="java.error.available">
-					<resourcecontains
-						resource="${db.upgrade.client.log}"
-						substring="Unsupported major.minor version"
-					/>
-				</waitfor>
-
-				<if>
-					<isset property="java.error.available" />
-					<then>
-						<clean-database-upgrade-client />
-
-						<echo>The upgrade client correctly failed to run on a version older than Java SE 8.</echo>
-					</then>
-					<else>
-						<fail message="The upgrade client should not be able to run on versions older than Java SE 8." />
-					</else>
-				</if>
-
-				<echo>${java.error.available}: Unsupported major.minor version</echo>
-			</sequential>
-		</parallel>
-	</target>
-
 	<target name="check-upgrade-client-second-process">
 		<get-database-upgrade-client-paths />
+		<prepare-database-client-upgrade-properties/>
+		<clean-database-upgrade-client/>
 
 		<modify-script-exit-code />
 
@@ -539,12 +490,18 @@
 						<fail message="Upgrade client is attempting to start a second upgrade process." />
 					</else>
 				</if>
+				<clean-database-upgrade-client/>
 			</sequential>
 		</parallel>
 	</target>
 
 	<target name="check-upgrade-client-sh-disconnect">
+
 		<get-database-upgrade-client-paths />
+
+		<prepare-database-client-upgrade-properties/>
+
+		<clean-database-upgrade-client/>
 
 		<parallel failonany="true">
 			<exec executable="/bin/bash" spawn="true">
@@ -572,12 +529,15 @@
 				<echo>${upgrade.log.contents}</echo>
 
 				<fail if="upgrade.failed" message="Upgrade has failed." />
+				<clean-database-upgrade-client/>
 			</sequential>
 		</parallel>
 	</target>
 
 	<target name="check-upgrade-client-zip-content">
 		<get-database-upgrade-client-paths />
+		<prepare-database-client-upgrade-properties/>
+		<clean-database-upgrade-client/>
 
 		<delete dir="${db.upgrade.client.home}/" />
 
@@ -619,19 +579,27 @@
 	<target name="check-upgrade-debug-options">
 		<get-database-upgrade-client-paths />
 
+		<prepare-database-client-upgrade-properties/>
+
+		<clean-database-upgrade-client/>
+
 		<run-expect
 			db.upgrade.client.home="${db.upgrade.client.home}"
 			expect.file="check-upgrade-debug-options.expect"
 			file.suffix.bat="${file.suffix.bat}"
+			database.password="${database.password}"
+			database.host="${database.host}"
+			database.username ="${database.username}"
+			database.port ="${database.port}"
 		/>
-
-		<clean-database-upgrade-client />
 	</target>
 
 	<target name="check-upgrade-properties-app-db-set">
 		<get-database-upgrade-client-paths />
 
-		<prepare-database-upgrade-properties />
+		<prepare-database-client-upgrade-properties />
+
+		<clean-database-upgrade-client/>
 
 		<delete file="${db.upgrade.client.home}/portal-upgrade-ext.properties" />
 
@@ -639,6 +607,10 @@
 			db.upgrade.client.home="${db.upgrade.client.home}"
 			expect.file="check-upgrade-properties-app-db-set.expect"
 			file.suffix.bat="${file.suffix.bat}"
+			database.password="${database.password}"
+			database.host="${database.host}"
+			database.username ="${database.username}"
+			database.port ="${database.port}"
 		/>
 
 		<fail message="Exception thrown, failing.">
@@ -649,12 +621,16 @@
 				/>
 			</condition>
 		</fail>
+
+		<clean-database-upgrade-client/>
 	</target>
 
 	<target name="check-upgrade-properties-app-ext-set">
 		<get-database-upgrade-client-paths />
 
-		<prepare-database-upgrade-properties />
+		<prepare-database-client-upgrade-properties />
+
+		<clean-database-upgrade-client/>
 
 		<delete file="${db.upgrade.client.home}/portal-upgrade-database.properties" />
 
@@ -662,6 +638,10 @@
 			db.upgrade.client.home="${db.upgrade.client.home}"
 			expect.file="check-upgrade-properties-app-ext-set.expect"
 			file.suffix.bat="${file.suffix.bat}"
+			database.password="${database.password}"
+			database.host="${database.host}"
+			database.username ="${database.username}"
+			database.port ="${database.port}"
 		/>
 
 		<fail message="Exception thrown, failing.">
@@ -677,7 +657,9 @@
 	<target name="check-upgrade-properties-db-ext-set">
 		<get-database-upgrade-client-paths />
 
-		<prepare-database-upgrade-properties />
+		<prepare-database-client-upgrade-properties />
+
+		<clean-database-upgrade-client/>
 
 		<delete file="${db.upgrade.client.home}/app-server.properties" />
 
@@ -685,6 +667,10 @@
 			db.upgrade.client.home="${db.upgrade.client.home}"
 			expect.file="check-upgrade-properties-db-ext-set.expect"
 			file.suffix.bat="${file.suffix.bat}"
+			database.password="${database.password}"
+			database.host="${database.host}"
+			database.username ="${database.username}"
+			database.port ="${database.port}"
 		/>
 
 		<fail message="Exception thrown, failing.">
@@ -701,7 +687,9 @@
 
 		<get-database-upgrade-client-paths />
 
-		<prepare-database-client-upgrade-properties />
+		<prepare-database-client-upgrade-properties/>
+
+		<clean-database-upgrade-client/>
 
 		<delete file="${db.upgrade.client.home}/app-server.properties" />
 
@@ -804,26 +792,18 @@
 		<delete dir="${db.upgrade.client.home}/temp" />
 	</target>
 
-	<target name="execute-all-pending-upgrades-from-gogo-shell">
-		<get-database-upgrade-client-paths />
-
-		<echo append="true" file="${db.upgrade.client.home}/portal-upgrade-ext.properties">
-upgrade.database.auto.run=false</echo>
-
-		<run-expect
-			db.upgrade.client.home="${db.upgrade.client.home}"
-			expect.file="execute-all-pending-upgrades-from-gogo-shell.expect"
-			file.suffix.bat="${file.suffix.bat}"
-		/>
-	</target>
-
 	<target name="execute-upgrade-client-gogoshell">
 		<get-database-upgrade-client-paths />
+		<prepare-database-client-upgrade-properties/>
 
 		<run-expect
 			db.upgrade.client.home="${db.upgrade.client.home}"
 			expect.file="check-upgrade-client-gogo-shell-connection.expect"
 			file.suffix.bat="${file.suffix.bat}"
+			database.password="${database.password}"
+			database.host="${database.host}"
+			database.username ="${database.username}"
+			database.port ="${database.port}"
 		/>
 	</target>
 
