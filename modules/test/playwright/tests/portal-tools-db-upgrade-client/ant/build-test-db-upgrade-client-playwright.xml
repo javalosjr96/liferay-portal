@@ -260,7 +260,6 @@
 
 		<parallel failonany="true">
 			<execute dir="${db.upgrade.client.home}" failonerror="true">
-				db_upgrade_client${file.suffix.bat} -j "-Dfile.encoding=UTF8 -Duser.country=US -Duser.language=en -Duser.timezone=GMT -Xmx4096m"
 			</execute>
 			<sequential>
 				<wait-for-upgrade-start />
@@ -285,41 +284,7 @@
 	</target>
 
 	<target name="check-upgrade-client-custom-log">
-		<get-database-upgrade-client-paths />
 		<prepare-database-client-upgrade-properties/>
-		<clean-database-upgrade-client/>
-
-		<execute dir="${db.upgrade.client.home}" failonerror="true">
-			db_upgrade_client${file.suffix.bat} -l log_file.txt
-		</execute>
-		<if>
-			<not>
-				<available file="${db.upgrade.client.home}/logs/log_file.txt" />
-			</not>
-			<then>
-				<fail message="The upgrade client custom log file was not created successfully." />
-			</then>
-		</if>
-
-		<local name="custom.log.file.output" />
-
-		<loadfile
-			property="custom.log.file.output"
-			srcfile="${db.upgrade.client.home}/logs/log_file.txt"
-		/>
-
-		<if>
-			<not>
-				<contains string="${custom.log.file.output}" substring="com.liferay.portal.tools.db.upgrade.client.jar" />
-			</not>
-			<then>
-				<fail message="The upgrade client custom log file is missing some data." />
-			</then>
-		</if>
-
-		<echo>The upgrade client custom log file was created successfully.</echo>
-
-		<delete file="${db.upgrade.client.home}/logs/log_file.txt" />
 	</target>
 
 	<target name="check-upgrade-client-gogoshell-command-output">

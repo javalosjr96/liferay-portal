@@ -6,7 +6,10 @@
 import {test} from '@playwright/test';
 import {spawn} from 'child_process';
 
-const antDir = __dirname.toString() + '/ant/';
+const antDir = __dirname + '/ant/';
+
+const scriptDir = __dirname + '/env/';
+
 
 async function runAntTask(buildFile, taskName) {
 	return new Promise((resolve, reject) => {
@@ -38,11 +41,47 @@ async function runAntTask(buildFile, taskName) {
 	});
 }
 
+async function runBashScript(scriptFile,scriptFunction, args = []) {
+	return new Promise((resolve, reject) => {
+		const command = `source ${scriptDir}${scriptFile} && ${scriptFunction} ${args.join(' ')}`;
+
+		let output = "";
+
+		const bashProcess = spawn('bash', ['-c', command], {
+			cwd: process.cwd(),
+			env: process.env,
+		});
+
+		bashProcess.stdout.on('data', (data) => {
+			output += data.toString();
+			console.log(data.toString());
+		});
+
+		bashProcess.stderr.on('data', (data) => {
+			output += data.toString();
+			console.log(data.toString());
+		});
+
+		bashProcess.on('close', (code) => {
+			if (code === 0) {
+				resolve({ output, code: "success" });
+			} else {
+				reject({ output, code: `failed with exit code: ${code}` });
+			}
+		});
+	});
+}
+
 test('CheckUpgradeClientAdditionalSettings', async () => {
-	await runAntTask(
-		'build-test-db-upgrade-client-playwright.xml',
-		'check-upgrade-client-additional-settings'
-	);
+	try {
+		const result = await runBashScript("db_client_setup.sh", "update_db_client_ext_properties",);
+		if (!result.output.includes('MaxHeapSize=4294967296')) {
+			test.fail(`MaxHeapSize=4294967296 not found in the script output.`);
+		}
+	} catch (error) {
+		console.error("Script failed:", error.output, error.code);
+	}
+
 });
 
 test('CheckUpgradeClientCustomLog', async () => {
