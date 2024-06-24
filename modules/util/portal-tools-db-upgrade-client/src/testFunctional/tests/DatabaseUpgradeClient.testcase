@@ -34,7 +34,7 @@ definition {
 	@description = "LPS-195984:  Upgrade client throws error when Gogo Shell is unable to connect."
 	@priority = 2
 	test CheckUpgradeClientFailedGogoShellReturnsError {
-		property custom.mysql.sql.statement = "ALTER TABLE JournalArticle DROP type_;";
+		property custom.sql.statement = "ALTER TABLE JournalArticle DROP type_;";
 		property custom.upgrade.properties = "module.framework.properties.osgi.console=80";
 		property skip.get.testcase.database.properties = "true";
 		property skip.upgrade-legacy-database = "true";
@@ -60,7 +60,7 @@ definition {
 	@description = "LPS-158522: Upgrade client can connect to Gogo Shell with a failed upgrade"
 	@priority = 4
 	test CheckUpgradeClientGogoShellFailedUpgrade {
-		property custom.mysql.sql.statement = "ALTER TABLE JournalArticle DROP type_;";
+		property custom.sql.statement = "ALTER TABLE JournalArticle DROP type_;";
 		property skip.get.testcase.database.properties = "true";
 		property skip.upgrade-legacy-database = "true";
 		property timeout.explicit.wait = "490";
