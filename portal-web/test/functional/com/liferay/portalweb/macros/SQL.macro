@@ -44,13 +44,16 @@ definition {
 	macro dropIndex(indexName = null, tableName = null) {
 		Variables.assertDefined(parameterList = "${indexName},${tableName}");
 
+		var databaseType = PropsUtil.get("database.type");
+
 		if (${databaseType} == "mysql") {
 			SQL.executeSQLStatement(sqlStatement = "drop index ${indexName} on ${tableName};");
 		}
 		else if (${databaseType} == "postgresql") {
 			SQL.executeSQLStatement(sqlStatement = "drop index ${indexName};");
 		}
-		var hasIndex = SQL.hasIndex(indexName = "IX_EC00543C");
+		var hasIndex = SQL.hasIndex(indexName = ${indexName});
+
 		if (${hasIndex} == "true") {
 			fail("Index ${indexName} wasn't dropped");
 		}
@@ -88,8 +91,10 @@ definition {
 	macro hasIndex(indexName = null) {
 		Variables.assertDefined(parameterList = ${indexName});
 
+		var databaseType = PropsUtil.get("database.type");
+
 		if (${databaseType} == "postgresql") {
-			indexName = StringUtil.lowerCase(indexName)
+			indexName = StringUtil.lowerCase(${indexName});
 			var indexQuery = "SELECT COUNT(DISTINCT(indexname)) FROM pg_indexes WHERE schemaname = current_schema AND indexname = '${indexName}';";
 		}
 		else if (${databaseType} == "mysql") {
