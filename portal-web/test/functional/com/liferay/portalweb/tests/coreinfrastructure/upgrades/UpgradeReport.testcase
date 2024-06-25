@@ -119,7 +119,7 @@ definition {
 				fail("Upgrade report does not contain the error class name.");
 			}
 
-			if (!(contains(${upgradeReportContent}, "1 occurrences of the following event: com.liferay.portal.kernel.upgrade.UpgradeException: java.sql.SQLSyntaxErrorException: Unknown column 'servletContextName' in 'where clause'"))) {
+			if (!(contains(${upgradeReportContent}, "1 occurrences of the following event: com.liferay.portal.kernel.upgrade.UpgradeException: org.postgresql.util.PSQLException: ERROR: column "servletcontextname" does not exist"))) {
 				echo(${upgradeReportContent});
 
 				fail("Upgrade report does not contain the error message.");
