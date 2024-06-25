@@ -421,7 +421,7 @@ definition {
 				fail("upgrade.report.execution.time is not present in portal log.");
 			}
 
-			if (!(contains(${logContent}, "upgrade.report.database.version=mysql"))) {
+			if (!(contains(${logContent}, "upgrade.report.database.version=postgres"))) {
 				fail("upgrade.report.database.version is not present in portal log.");
 			}
 
