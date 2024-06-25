@@ -54,9 +54,13 @@ definition {
 				AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
 			}
 			else if (${databaseType} == "postgresql") {
-				SQL.executeSQLStatement(sqlStatement = "drop schema public cascade;");
+				SQL.executeSettingAutoCommitSQLStatement(
+					autoCommit = "true",
+					sqlStatement = "drop schema public cascade;");
 
-				SQL.executeSQLStatement(sqlStatement = "create schema public;");
+				SQL.executeSettingAutoCommitSQLStatement(
+					autoCommit = "true",
+					sqlStatement = "create schema public;");
 			}
 
 			TestCase.updatePortalProperties(
