@@ -2372,6 +2372,8 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 		<attribute default="tomcat" name="app.server.type" />
 		<attribute default="" name="aws.store.enabled" />
 		<attribute default="" name="database.partition.enabled" />
+		<attribute default="" name="database.partition.enabled" />
+		<attribute default="" name="database.partition.enabled" />
 		<attribute name="database.type" />
 		<attribute default="${database.@{database.type}.version}" name="database.version" />
 		<attribute default="" name="refreshdependencies" />
@@ -6479,6 +6481,8 @@ information. Make sure to commit in all format-javadoc results.
 					database.partition.enabled="true"
 					database.type="mysql"
 					database.version="5.7"
+					osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+					osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 				/>
 			</try>
 
@@ -6715,6 +6719,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6735,6 +6741,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6755,6 +6763,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6775,6 +6785,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="8.0"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6833,6 +6845,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="12.1"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6853,6 +6867,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="13.4"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6873,6 +6889,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="14.4"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6893,6 +6911,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="15.3"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -7004,6 +7024,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7012,6 +7034,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="15.3"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7067,6 +7091,8 @@ information. Make sure to commit in all format-javadoc results.
 		<run-modules-integration-test
 			database.partition.enabled="true"
 			database.type="mysql"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7075,6 +7101,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7083,6 +7111,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7091,6 +7121,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7099,6 +7131,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7107,6 +7141,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="8.0"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7115,6 +7151,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="8.0"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7123,6 +7161,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="8.0"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7135,35 +7175,83 @@ information. Make sure to commit in all format-javadoc results.
 	</target>
 
 	<target name="modules-integration-postgresql121-jdk8">
-		<run-modules-integration-test database.partition.enabled="true" database.type="postgresql" database.version="12.1" />
+		<run-modules-integration-test
+			database.partition.enabled="true"
+			database.type="postgresql"
+			database.version="12.1"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+		/>
 	</target>
 
 	<target name="modules-integration-postgresql121-jdk11_open">
-		<run-modules-integration-test database.partition.enabled="true" database.type="postgresql" database.version="12.1" />
+		<run-modules-integration-test
+			database.partition.enabled="true"
+			database.type="postgresql"
+			database.version="12.1"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+		/>
 	</target>
 
 	<target name="modules-integration-postgresql134-jdk8">
-		<run-modules-integration-test database.partition.enabled="true" database.type="postgresql" database.version="13.4" />
+		<run-modules-integration-test
+			database.partition.enabled="true"
+			database.type="postgresql"
+			database.version="13.4"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+		/>
 	</target>
 
 	<target name="modules-integration-postgresql134-jdk11_open">
-		<run-modules-integration-test database.partition.enabled="true" database.type="postgresql" database.version="13.4" />
+		<run-modules-integration-test
+			database.partition.enabled="true"
+			database.type="postgresql"
+			database.version="13.4"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+		/>
 	</target>
 
 	<target name="modules-integration-postgresql144-jdk8">
-		<run-modules-integration-test database.partition.enabled="true" database.type="postgresql" database.version="14.4" />
+		<run-modules-integration-test
+			database.partition.enabled="true"
+			database.type="postgresql"
+			database.version="14.4"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+		/>
 	</target>
 
 	<target name="modules-integration-postgresql144-jdk11_open">
-		<run-modules-integration-test database.partition.enabled="true" database.type="postgresql" database.version="14.4" />
+		<run-modules-integration-test
+			database.partition.enabled="true"
+			database.type="postgresql"
+			database.version="14.4"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+		/>
 	</target>
 
 	<target name="modules-integration-postgresql153-jdk8">
-		<run-modules-integration-test database.partition.enabled="true" database.type="postgresql" database.version="15.3" />
+		<run-modules-integration-test
+			database.partition.enabled="true"
+			database.type="postgresql"
+			database.version="15.3"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+		/>
 	</target>
 
 	<target name="modules-integration-postgresql153-jdk11_open">
-		<run-modules-integration-test database.partition.enabled="true" database.type="postgresql" database.version="15.3" />
+		<run-modules-integration-test
+			database.partition.enabled="true"
+			database.type="postgresql"
+			database.version="15.3"
+			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+		/>
 	</target>
 
 	<target name="modules-integration-project-templates-jdk8">
