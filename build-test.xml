@@ -10696,6 +10696,67 @@ org.apache.catalina.tribes.level = FINE]]>
 		</for>
 	</target>
 
+	<target name="deploy-osgi-portal-instance-configuration">
+
+		<echo message="param1: ${osgi.portal.instance.configuration}"/>
+		<echo message="param2: ${osgi.portal.instance.configuration.file.name}"/>
+
+		<var name="osgi.module.configurations.index" value="1" />
+
+		<for delimiter=":" list="${osgi.portal.instance.configurations}" param="configuration">
+			<sequential>
+				<echo file="${liferay.home}/osgi/configs/${osgi.module.configurations.index}">@{configuration}</echo>
+
+				<math
+					datatype="int"
+					operand1="${osgi.module.configurations.index}"
+					operand2="1"
+					operation="+"
+					result="osgi.module.configurations.index"
+				/>
+			</sequential>
+		</for>
+
+		<var name="osgi.module.configuration.file.names.index" value="1" />
+
+		<for delimiter=":" list="${osgi.portal.instance.configuration.file.names}" param="file.names">
+			<sequential>
+				<if>
+					<available file="${liferay.home}/osgi/configs/${osgi.module.configuration.file.names.index}" />
+					<then>
+						<move
+							file="${liferay.home}/osgi/configs/${osgi.module.configuration.file.names.index}"
+							overwrite="true"
+							tofile="${liferay.home}/osgi/configs/@{file.names}"
+						/>
+
+						<math
+							datatype="int"
+							operand1="${osgi.module.configuration.file.names.index}"
+							operand2="1"
+							operation="+"
+							result="osgi.module.configuration.file.names.index"
+						/>
+					</then>
+				</if>
+			</sequential>
+		</for>
+
+		<pathconvert property="osgi.configs">
+			<path>
+				<fileset
+					dir="${liferay.home}/osgi/configs"
+				/>
+			</path>
+		</pathconvert>
+
+		<for delimiter=":" list="${osgi.configs}" param="osgi.config">
+			<sequential>
+				<print-file file.name="@{osgi.config}" />
+			</sequential>
+		</for>
+	</target>
+
 	<target name="deploy-osgi-module-to-specific-bundle">
 		<gradle-execute dir="${project.dir}/${module.base.dir}" forcedcacheenabled="false" task="deploy">
 			<arg value="-Pliferay.home=${liferayHome}" />

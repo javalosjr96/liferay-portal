@@ -2372,8 +2372,8 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 		<attribute default="tomcat" name="app.server.type" />
 		<attribute default="" name="aws.store.enabled" />
 		<attribute default="" name="database.partition.enabled" />
-		<attribute default="" name="osgi.module.configuration.file.names" />
-		<attribute default="" name="osgi.module.configurations" />
+		<attribute default="" name="osgi.portal.instance.configuration.file.name" />
+		<attribute default="" name="osgi.portal.instance.configuration" />
 		<attribute name="database.type" />
 		<attribute default="${database.@{database.type}.version}" name="database.version" />
 		<attribute default="" name="refreshdependencies" />
@@ -2422,9 +2422,9 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 
 							<antcall target="prepare-portal-test-object-storage-sugarcrm-properties" />
 
-							<antcall if:set="env.JENKINS_HOME" inheritAll="false" target="deploy-osgi-module-configurations">
-								<param name="osgi.module.configuration.file.names" value="@{osgi.module.configuration.file.names}" />
-								<param name="osgi.module.configurations" value="@{osgi.module.configurations}" />
+							<antcall if:set="osgi.portal.instance.configuration.file.name" inheritAll="false" target="deploy-osgi-portal-instance-configuration">
+								<param name="osgi.portal.instance.configuration.file.name" value="@{osgi.portal.instance.configuration.file.name}" />
+								<param name="osgi.portal.instance.configuration" value="@{osgi.portal.instance.configuration}" />
 							</antcall>
 
 							<ant dir="portal-test" inheritAll="false" target="deploy" />
@@ -6486,8 +6486,8 @@ information. Make sure to commit in all format-javadoc results.
 					database.partition.enabled="true"
 					database.type="mysql"
 					database.version="5.7"
-					osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-					osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+					osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+					osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 				/>
 			</try>
 
@@ -6724,8 +6724,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6746,8 +6746,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6768,8 +6768,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6790,8 +6790,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="8.0"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6850,8 +6850,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="12.1"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6872,8 +6872,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="13.4"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6894,8 +6894,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="14.4"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -6916,8 +6916,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="15.3"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 			test.build.fix.pack.zip.url="${test.build.fix.pack.zip.url}"
 			test.fix.pack.base.url="${test.fix.pack.base.url}"
 			test.license.xml.url="${test.license.xml.url}"
@@ -7029,8 +7029,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7039,8 +7039,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="15.3"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7096,8 +7096,8 @@ information. Make sure to commit in all format-javadoc results.
 		<run-modules-integration-test
 			database.partition.enabled="true"
 			database.type="mysql"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7106,8 +7106,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7116,8 +7116,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7126,8 +7126,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7136,8 +7136,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="5.7"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7146,8 +7146,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="8.0"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7156,8 +7156,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="8.0"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7166,8 +7166,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="mysql"
 			database.version="8.0"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7184,8 +7184,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="12.1"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7194,8 +7194,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="12.1"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7204,8 +7204,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="13.4"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7214,8 +7214,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="13.4"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7224,8 +7224,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="14.4"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7234,8 +7234,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="14.4"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7244,8 +7244,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="15.3"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
@@ -7254,8 +7254,8 @@ information. Make sure to commit in all format-javadoc results.
 			database.partition.enabled="true"
 			database.type="postgresql"
 			database.version="15.3"
-			osgi.module.configuration.file.names="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
-			osgi.module.configurations="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
+			osgi.portal.instance.configuration.file.name="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~www.able.com.config"
+			osgi.portal.instance.configuration="mx=&quot;www.able.com&quot;${line.separator}virtualHostname=&quot;www.able.com&quot;"
 		/>
 	</target>
 
