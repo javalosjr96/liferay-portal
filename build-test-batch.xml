@@ -2422,7 +2422,7 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 
 							<antcall target="prepare-portal-test-object-storage-sugarcrm-properties" />
 
-							<antcall if:set="@{osgi.module.configuration.file.names}" inheritAll="false" target="deploy-osgi-module-configurations">
+							<antcall if:set="env.JENKINS_HOME" inheritAll="false" target="deploy-osgi-module-configurations">
 								<param name="osgi.module.configuration.file.names" value="@{osgi.module.configuration.file.names}" />
 								<param name="osgi.module.configurations" value="@{osgi.module.configurations}" />
 							</antcall>
