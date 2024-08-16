@@ -77,7 +77,7 @@ public class TestPropsValues {
 					}
 				}
 				else{
-					throw new PortalException("DB partition is not enabled");
+					throw new PortalException("Only one company exists.");
 				}
 			}
 			else if (Validator.isNull(companyWebId)) {
