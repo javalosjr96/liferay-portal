@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -56,6 +57,13 @@ public class TestPropsValues {
 
 	static {
 		String companyWebId = TestPropsUtil.get("company.web.id");
+
+		List<Company> companies1 = CompanyLocalServiceUtil.getCompanies();
+		for (Company company : companies1) {
+			System.out.println(company.getWebId());
+		}
+
+		System.out.println(DBPartition.isPartitionEnabled());
 
 		try {
 			if (DBPartition.isPartitionEnabled()){
