@@ -21,7 +21,6 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -58,25 +57,23 @@ public class TestPropsValues {
 	static {
 		String companyWebId = TestPropsUtil.get("company.web.id");
 
-		List<Company> companies1 = CompanyLocalServiceUtil.getCompanies();
-		for (Company company : companies1) {
-			System.out.println(company.getWebId());
-		}
-
-		System.out.println(DBPartition.isPartitionEnabled());
-
 		try {
-			if (DBPartition.isPartitionEnabled()){
-				List<Company> companies = CompanyLocalServiceUtil.getCompanies();
-				if (companies.size() > 1){
-					for (Company company : companies){
-						if(Objects.equals(company.getWebId(), companyWebId)){
+			if (DBPartition.isPartitionEnabled()) {
+				List<Company> companies =
+					CompanyLocalServiceUtil.getCompanies();
+
+				if (companies.size() > 1) {
+					for (Company company : companies) {
+						if (Objects.equals(company.getWebId(), companyWebId)) {
 							continue;
 						}
+
 						companyWebId = company.getWebId();
+
+						break;
 					}
 				}
-				else{
+				else {
 					throw new PortalException("Only one company exists.");
 				}
 			}
