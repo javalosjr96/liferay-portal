@@ -40,11 +40,14 @@ public class PermissionCheckerMethodTestRule extends MethodTestRule<Void> {
 	public Void beforeMethod(Description description, Object target)
 		throws Exception {
 
-		try(SafeCloseable safeCloseable = CompanyThreadLocal.setWithSafeCloseable(TestPropsValues.getCompanyId())) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setWithSafeCloseable(
+					TestPropsValues.getCompanyId())) {
 
 			setUpPermissionThreadLocal();
 			setUpPrincipalThreadLocal();
 		}
+
 		return null;
 	}
 

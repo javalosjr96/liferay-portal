@@ -762,7 +762,7 @@ public class MainServlet extends HttpServlet {
 		}
 
 		if (StartupHelperUtil.isDBNew()) {
-			CompanyLocalServiceUtil.addCompany(
+			Company company = CompanyLocalServiceUtil.addCompany(
 				null, PropsValues.COMPANY_DEFAULT_WEB_ID,
 				GetterUtil.getString(
 					PropsValues.COMPANY_DEFAULT_VIRTUAL_HOST_NAME, "localhost"),
@@ -771,26 +771,20 @@ public class MainServlet extends HttpServlet {
 					PropsValues.COMPANY_DEFAULT_WEB_ID),
 				0, true, PropsValues.COMPANY_DEFAULT_ADD_DEFAULT_ADMIN_USER,
 				null, null, null, null, null, null);
+
+			PortalInstances.initCompany(company, true);
 		}
-
-		if (Validator.isNull(PropsValues.COMPANY_DEFAULT_WEB_ID)) {
-			throw new RuntimeException("Company default web ID is null");
-		}
-
-		CompanyLocalServiceUtil.forEachCompany(
-			company -> {
-				if (StartupHelperUtil.isDBNew() &&
-					Objects.equals(
-						PropsValues.COMPANY_DEFAULT_WEB_ID,
-						company.getWebId())) {
-
-					PortalInstances.initCompany(company, true);
-				}
-				else {
+		else{
+			if (Validator.isNull(PropsValues.COMPANY_DEFAULT_WEB_ID)) {
+				throw new RuntimeException("Company default web ID is null");
+			}
+			
+			CompanyLocalServiceUtil.forEachCompany(
+				company -> {
 					PortalInstances.initCompany(company, false);
-				}
-			});
+				});
 
+		}
 		PortalInstancePool.enableCache();
 	}
 
