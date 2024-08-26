@@ -52,6 +52,7 @@ import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.InactiveRequestHandler;
 import com.liferay.portal.kernel.servlet.PortalSessionThreadLocal;
 import com.liferay.portal.kernel.template.TemplateManager;
+import com.liferay.portal.kernel.transaction.TransactionCommitCallbackUtil;
 import com.liferay.portal.kernel.upgrade.ReleaseManager;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -774,17 +775,18 @@ public class MainServlet extends HttpServlet {
 
 			PortalInstances.initCompany(company, true);
 		}
-		else{
+		else {
 			if (Validator.isNull(PropsValues.COMPANY_DEFAULT_WEB_ID)) {
 				throw new RuntimeException("Company default web ID is null");
 			}
-			
+
 			CompanyLocalServiceUtil.forEachCompany(
 				company -> {
 					PortalInstances.initCompany(company, false);
 				});
 
 		}
+
 		PortalInstancePool.enableCache();
 	}
 
