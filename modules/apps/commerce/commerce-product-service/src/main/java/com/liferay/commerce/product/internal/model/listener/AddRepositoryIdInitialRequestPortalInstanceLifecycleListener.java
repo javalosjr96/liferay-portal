@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.model.Image;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
@@ -70,7 +71,11 @@ public class AddRepositoryIdInitialRequestPortalInstanceLifecycleListener
 				_commerceCatalogLocalService.getCommerceCatalogs(
 					companyId, true);
 
+			Company company = _companyLocalService.getCompany(companyId);
+
 			if (commerceCatalogs.isEmpty()) {
+				PrincipalThreadLocal.setName(company.getUserId());
+
 				Message message = new Message();
 
 				message.setPayload(
@@ -88,7 +93,6 @@ public class AddRepositoryIdInitialRequestPortalInstanceLifecycleListener
 					DestinationNames.COMMERCE_BASE_PRICE_LIST, message);
 			}
 
-			Company company = _companyLocalService.getCompany(companyId);
 
 			FileEntry fileEntry =
 				_dlAppLocalService.fetchFileEntryByExternalReferenceCode(

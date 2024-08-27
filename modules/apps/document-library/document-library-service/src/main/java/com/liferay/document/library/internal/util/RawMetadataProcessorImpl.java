@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
 import com.liferay.portal.kernel.search.Indexer;
 import com.liferay.portal.kernel.search.IndexerRegistryUtil;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.xml.Element;
@@ -169,6 +170,8 @@ public class RawMetadataProcessorImpl
 	@Override
 	public void trigger(
 		FileVersion sourceFileVersion, FileVersion destinationFileVersion) {
+
+		PrincipalThreadLocal.setName(destinationFileVersion.getUserId());
 
 		MessageBusUtil.sendMessage(
 			DestinationNames.DOCUMENT_LIBRARY_RAW_METADATA_PROCESSOR,
