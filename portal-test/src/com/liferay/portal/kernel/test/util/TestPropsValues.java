@@ -21,6 +21,9 @@ import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.Validator;
 
+import java.util.List;
+import java.util.Objects;
+
 /**
  * @author Brian Wing Shun Chan
  * @author Alexander Chow
@@ -46,8 +49,6 @@ public class TestPropsValues {
 	public static final int JUNIT_DELAY_FACTOR = GetterUtil.getInteger(
 		TestPropsUtil.get("junit.delay.factor"));
 
-	public static final String PARTITION_COMPANY_WEB_ID = "db-partition.com";
-
 	public static final String PORTAL_URL = TestPropsUtil.get("portal.url");
 
 	public static final String USER_PASSWORD = TestPropsUtil.get(
@@ -57,17 +58,18 @@ public class TestPropsValues {
 		String companyWebId = TestPropsUtil.get("company.web.id");
 
 		try {
-			if (DBPartition.isPartitionEnabled()) {
-				try {
-					Company company = CompanyLocalServiceUtil.getCompanyByWebId(
-						PARTITION_COMPANY_WEB_ID);
-
-					companyWebId = company.getWebId();
+			if (DBPartition.isPartitionEnabled()){
+				List<Company> companies = CompanyLocalServiceUtil.getCompanies();
+				if (companies.size() > 1){
+					for (Company company : companies){
+						if(Objects.equals(company.getWebId(), companyWebId)){
+							continue;
+						}
+						companyWebId = company.getWebId();
+					}
 				}
-				catch (Exception e) {
-					throw new PortalException(
-						"Missing partitioned company: " +
-							PARTITION_COMPANY_WEB_ID);
+				else{
+					throw new PortalException("DB partition is not enabled");
 				}
 			}
 			else if (Validator.isNull(companyWebId)) {
