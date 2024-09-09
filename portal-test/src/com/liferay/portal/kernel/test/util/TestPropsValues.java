@@ -59,18 +59,10 @@ public class TestPropsValues {
 
 		try {
 			if (DBPartition.isPartitionEnabled()){
-				List<Company> companies = CompanyLocalServiceUtil.getCompanies();
-				if (companies.size() > 1){
-					for (Company company : companies){
-						if(Objects.equals(company.getWebId(), companyWebId)){
-							continue;
-						}
-						companyWebId = company.getWebId();
-					}
-				}
-				else{
-					throw new PortalException("DB partition is not enabled");
-				}
+				Company company = CompanyTestUtil.addCompany();
+
+				companyWebId = company.getWebId();
+
 			}
 			else if (Validator.isNull(companyWebId)) {
 				companyWebId = GetterUtil.getString(
