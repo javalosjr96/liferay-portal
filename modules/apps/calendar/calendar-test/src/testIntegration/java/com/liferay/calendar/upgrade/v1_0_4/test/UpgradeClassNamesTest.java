@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
@@ -53,23 +54,28 @@ public class UpgradeClassNamesTest {
 
 	@Before
 	public void setUp() throws Exception {
-		DB db = DBManagerUtil.getDB();
+		_companyLocalService.forEachCompany(company -> {
+			DB db = DBManagerUtil.getDB();
 
-		db.runSQL(
-			StringBundler.concat(
-				"create table ResourceBlock (mvccVersion LONG default 0 not ",
-				"null, resourceBlockId LONG not null primary key, companyId ",
-				"LONG, groupId LONG, name VARCHAR(75) null, permissionsHash ",
-				"VARCHAR(75) null, referenceCount LONG);"));
+			db.runSQL(
+				StringBundler.concat(
+					"create table ResourceBlock (mvccVersion LONG default 0 not ",
+					"null, resourceBlockId LONG not null primary key, companyId ",
+					"LONG, groupId LONG, name VARCHAR(75) null, permissionsHash ",
+					"VARCHAR(75) null, referenceCount LONG);"));
 
-		setUpUpgradeCalendarResource();
+			setUpUpgradeCalendarResource();});
+
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		DB db = DBManagerUtil.getDB();
+		_companyLocalService.forEachCompany(company -> {
+			DB db = DBManagerUtil.getDB();
 
-		db.runSQL("drop table ResourceBlock");
+			db.runSQL("drop table ResourceBlock");
+		});
+
 	}
 
 	@Test
@@ -292,6 +298,9 @@ public class UpgradeClassNamesTest {
 
 	@Inject
 	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Inject
+	private CompanyLocalService _companyLocalService;
 
 	private UpgradeProcess _upgradeProcess;
 
