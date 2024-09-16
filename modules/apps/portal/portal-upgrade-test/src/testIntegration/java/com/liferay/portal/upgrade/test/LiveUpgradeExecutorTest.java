@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.test.rule.Inject;
@@ -59,26 +60,32 @@ public class LiveUpgradeExecutorTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_db.runSQL(
-			StringBundler.concat(
-				"create table ", _TABLE_NAME,
-				" (id LONG not null primary key, name VARCHAR(128) not null, ",
-				"description VARCHAR(255) null)"));
-		_db.runSQL(
-			StringBundler.concat(
-				"insert into ", _TABLE_NAME,
-				" (id, name) values (1, 'test_a')"));
-		_db.runSQL(
-			StringBundler.concat(
-				"insert into ", _TABLE_NAME,
-				" (id, name) values (2, 'test_b')"));
+		_companyLocalService.forEachCompany(
+			company -> {
+				_db.runSQL(
+					StringBundler.concat(
+						"create table ", _TABLE_NAME,
+						" (id LONG not null primary key, name VARCHAR(128) ",
+						"not null, description VARCHAR(255) null)"));
+				_db.runSQL(
+					StringBundler.concat(
+						"insert into ", _TABLE_NAME,
+						" (id, name) values (1, 'test_a')"));
+				_db.runSQL(
+					StringBundler.concat(
+						"insert into ", _TABLE_NAME,
+						" (id, name) values (2, 'test_b')"));
+			});
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		_db.runSQL("DROP_TABLE_IF_EXISTS(" + _TABLE_NAME + ")");
-		_db.runSQL("DROP_TABLE_IF_EXISTS(" + _getArchiveTableName() + ")");
-		_db.runSQL("DROP_TABLE_IF_EXISTS(" + _getTempTableName() + ")");
+		_companyLocalService.forEachCompany(
+			company -> {
+				_db.runSQL("DROP_TABLE_IF_EXISTS(" + _TABLE_NAME + ")");
+				_db.runSQL("DROP_TABLE_IF_EXISTS(" + _getArchiveTableName() + ")");
+				_db.runSQL("DROP_TABLE_IF_EXISTS(" + _getTempTableName() + ")");
+			});
 	}
 
 	@Test
@@ -259,6 +266,9 @@ public class LiveUpgradeExecutorTest {
 	private static Connection _connection;
 	private static DB _db;
 	private static DBInspector _dbInspector;
+
+	@Inject
+	private CompanyLocalService _companyLocalService;
 
 	@Inject
 	private LiveUpgradeExecutor _liveUpgradeExecutor;
