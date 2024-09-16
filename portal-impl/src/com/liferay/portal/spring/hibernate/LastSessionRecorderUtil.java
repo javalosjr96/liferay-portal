@@ -12,7 +12,8 @@ import com.liferay.portal.kernel.transaction.TransactionAttribute;
 import com.liferay.portal.kernel.transaction.TransactionLifecycleListener;
 import com.liferay.portal.kernel.transaction.TransactionStatus;
 
-import java.sql.SQLException;
+import java.sql.Connection;
+
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -69,10 +70,11 @@ public class LastSessionRecorderUtil {
 	private static void _syncSessionState(Session session) {
 		if (session.isOpen()) {
 			try {
-				if(((SessionImpl) session).connection().isClosed()){
-					return;
-				}
-				else{
+				SessionImpl sessionImpl = (SessionImpl)session;
+
+				Connection connection = sessionImpl.connection();
+
+				if (!connection.isClosed()) {
 					session.flush();
 
 					session.clear();
