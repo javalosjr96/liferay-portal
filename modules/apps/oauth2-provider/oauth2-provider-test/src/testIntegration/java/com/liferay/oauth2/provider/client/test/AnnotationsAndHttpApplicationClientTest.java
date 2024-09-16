@@ -64,9 +64,7 @@ public class AnnotationsAndHttpApplicationClientTest
 
 		@Override
 		protected void prepareTest() throws Exception {
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
-
-			User user = UserTestUtil.getAdminUser(defaultCompanyId);
+User user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 			Dictionary<String, Object> annotatedApplicationProperties =
 				HashMapDictionaryBuilder.<String, Object>put(

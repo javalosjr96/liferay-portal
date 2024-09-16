@@ -155,9 +155,7 @@ public class ScopeCheckerGuestAllowedTest extends BaseClientTestCase {
 					"oauth2.scope.checker.type", "http.method"
 				).build());
 
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
-
-			User user = UserTestUtil.getAdminUser(defaultCompanyId);
+User user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplication",

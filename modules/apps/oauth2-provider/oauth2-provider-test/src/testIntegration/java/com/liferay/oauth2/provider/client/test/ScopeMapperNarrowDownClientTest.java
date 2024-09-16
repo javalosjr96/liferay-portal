@@ -102,9 +102,7 @@ public class ScopeMapperNarrowDownClientTest extends BaseClientTestCase {
 
 		@Override
 		protected void prepareTest() throws Exception {
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
-
-			User user = UserTestUtil.getAdminUser(defaultCompanyId);
+User user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 			Dictionary<String, Object> applicationProperties =
 				HashMapDictionaryBuilder.<String, Object>put(

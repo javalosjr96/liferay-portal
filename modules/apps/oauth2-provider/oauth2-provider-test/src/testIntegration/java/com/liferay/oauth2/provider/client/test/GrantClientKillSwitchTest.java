@@ -53,9 +53,7 @@ public class GrantClientKillSwitchTest extends BaseClientTestCase {
 				MapUtil.singletonDictionary(
 					"oauth2.allow.client.credentials.grant", false));
 
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
-
-			User user = UserTestUtil.getAdminUser(defaultCompanyId);
+User user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 			registerJaxRsApplication(
 				new TestAnnotatedApplication(), "annotated",

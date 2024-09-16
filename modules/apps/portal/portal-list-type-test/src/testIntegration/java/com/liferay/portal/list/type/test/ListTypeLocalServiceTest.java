@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.service.ListTypeLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -54,7 +55,7 @@ public class ListTypeLocalServiceTest {
 	@AfterClass
 	public static void tearDownClass() throws Exception {
 		UserTestUtil.setUser(
-			UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId()));
+			UserTestUtil.getAdminUser(TestPropsValues.getCompanyId()));
 
 		CompanyLocalServiceUtil.deleteCompany(_company.getCompanyId());
 	}

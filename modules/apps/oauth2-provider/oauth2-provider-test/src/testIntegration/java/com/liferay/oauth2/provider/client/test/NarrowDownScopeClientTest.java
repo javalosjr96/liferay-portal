@@ -109,9 +109,7 @@ public class NarrowDownScopeClientTest extends BaseClientTestCase {
 
 		@Override
 		protected void prepareTest() throws Exception {
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
-
-			User user = UserTestUtil.getAdminUser(defaultCompanyId);
+User user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 			registerJaxRsApplication(
 				new TestApplication(), "methods",

@@ -108,9 +108,7 @@ public class ScopeFinderTest extends BaseClientTestCase {
 					() -> registerScopeFinder(scopeFinder, properties2)),
 				"annotated", properties1);
 
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
-
-			User user = UserTestUtil.getAdminUser(defaultCompanyId);
+User user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 			createOAuth2Application(
 				defaultCompanyId, user, "oauthTestClientCredentials",

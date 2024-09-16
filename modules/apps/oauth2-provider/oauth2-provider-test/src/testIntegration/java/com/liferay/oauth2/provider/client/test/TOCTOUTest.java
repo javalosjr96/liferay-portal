@@ -213,9 +213,7 @@ public class TOCTOUTest extends BaseClientTestCase {
 
 		@Override
 		protected void prepareTest() throws Exception {
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
-
-			User user = UserTestUtil.getAdminUser(defaultCompanyId);
+User user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 			OAuth2Application oAuth2Application = createOAuth2Application(
 				defaultCompanyId, user, "oauthTestApplicationCode",

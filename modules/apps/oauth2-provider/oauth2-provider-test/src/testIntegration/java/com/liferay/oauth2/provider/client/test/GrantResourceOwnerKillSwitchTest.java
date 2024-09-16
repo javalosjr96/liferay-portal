@@ -57,9 +57,7 @@ public class GrantResourceOwnerKillSwitchTest extends BaseClientTestCase {
 					"oauth2.allow.resource.owner.password.credentials.grant",
 					false));
 
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
-
-			User user = UserTestUtil.getAdminUser(defaultCompanyId);
+User user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 			registerJaxRsApplication(
 				new TestAnnotatedApplication(), "annotated",
