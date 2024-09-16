@@ -8,6 +8,9 @@ package com.liferay.portal.db.partition.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.counter.kernel.service.CounterLocalServiceUtil;
+import com.liferay.knowledge.base.model.KBArticle;
+import com.liferay.knowledge.base.model.KBFolder;
+import com.liferay.knowledge.base.service.KBArticleLocalService;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.db.partition.test.util.BaseDBPartitionTestCase;
@@ -16,17 +19,28 @@ import com.liferay.portal.events.StartupHelperUtil;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ClassName;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
+import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.util.HTTPTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Time;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.impl.ClassNameImpl;
 import com.liferay.portal.model.impl.ResourceActionImpl;
 import com.liferay.portal.service.impl.ClassNameLocalServiceImpl;
@@ -42,6 +56,7 @@ import java.sql.ResultSet;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -92,6 +107,32 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 
 		DBPartitionUtil.forEachCompanyId(
 			companyId -> _counterLocalService.reset(_CLASS_NAME));
+	}
+
+	@Test
+	public void testAddCompanyWithHeadlessAPI() throws Exception {
+		JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
+			JSONUtil.put(
+				"domain", "able.com"
+			).put(
+				"portalInstanceId", "able.com"
+			).put(
+				"virtualHost", "www.able.com"
+			).toString(),
+			"headless-portal-instances/v1.0/portal-instances",
+			Http.Method.POST);
+
+		long companyId = jsonObject.getLong("companyId");
+
+		Company company = _companyLocalService.fetchCompany(companyId);
+
+		Assert.assertEquals("able.com", company.getWebId());
+
+		_companyLocalService.deleteCompany(company);
+
+		company = _companyLocalService.fetchCompany(companyId);
+
+		Assert.assertNull(company);
 	}
 
 	@Test
@@ -721,6 +762,44 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 		Assert.assertArrayEquals(expectedCompanyIds, actualCompanyIds);
 	}
 
+	@Test
+	public void testWebContentChangesWithDBPartitioningEnabled()
+		throws Exception {
+
+		Date displayDate = new Date(
+			System.currentTimeMillis() + (Time.MINUTE * 10));
+
+		DBPartitionUtil.forEachCompanyId(
+			companyId -> {
+				KBArticle kbArticle = _kbArticleLocalService.addKBArticle(
+					null, UserLocalServiceUtil.getGuestUserId(companyId),
+					PortalUtil.getClassNameId(KBFolder.class.getName()), 0,
+					RandomTestUtil.randomString(),
+					RandomTestUtil.randomString(),
+					RandomTestUtil.randomString(),
+					RandomTestUtil.randomString(), null, null, displayDate,
+					null, null, null,
+					ServiceContextTestUtil.getServiceContext());
+
+				Assert.assertEquals(
+					WorkflowConstants.STATUS_SCHEDULED, kbArticle.getStatus());
+
+				kbArticle.setDisplayDate(
+					new Date(System.currentTimeMillis() - (Time.MINUTE * 10)));
+
+				kbArticle = _kbArticleLocalService.updateKBArticle(kbArticle);
+
+				_kbArticleLocalService.checkKBArticles(companyId);
+
+				kbArticle = _kbArticleLocalService.getLatestKBArticle(
+					kbArticle.getResourcePrimKey(),
+					WorkflowConstants.STATUS_ANY);
+
+				Assert.assertEquals(
+					WorkflowConstants.STATUS_APPROVED, kbArticle.getStatus());
+			});
+	}
+
 	public class DBPartitionUpgradeProcess extends UpgradeProcess {
 
 		public long[] getCompanyIds() {
@@ -766,6 +845,12 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 	private ClassNameLocalService _classNameLocalService;
 
 	@Inject
+	private CompanyLocalService _companyLocalService;
+
+	@Inject
 	private CounterLocalService _counterLocalService;
+
+	@Inject
+	private KBArticleLocalService _kbArticleLocalService;
 
 }
