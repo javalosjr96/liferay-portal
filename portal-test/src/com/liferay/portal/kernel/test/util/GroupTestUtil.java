@@ -8,6 +8,7 @@ package com.liferay.portal.kernel.test.util;
 import com.liferay.exportimport.kernel.configuration.ExportImportConfigurationParameterMapFactoryUtil;
 import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.exportimport.kernel.service.StagingLocalServiceUtil;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cache.thread.local.Lifecycle;
 import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCacheManager;
@@ -15,6 +16,7 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.GroupServiceUtil;
 import com.liferay.portal.kernel.service.LayoutSetLocalServiceUtil;
@@ -88,6 +90,9 @@ public class GroupTestUtil {
 			return group;
 		}
 
+		Group guestGroup = GroupLocalServiceUtil.getGroup(
+			companyId, GroupConstants.GUEST);
+
 		Map<Locale, String> nameMap = HashMapBuilder.put(
 			LocaleUtil.getDefault(), name
 		).build();
@@ -108,7 +113,7 @@ public class GroupTestUtil {
 				LocaleUtil.getDefault(), RandomTestUtil.randomString()
 			).build(),
 			type, manualMembership, membershipRestriction, friendlyURL, site,
-			active, ServiceContextTestUtil.getServiceContext());
+			active, ServiceContextTestUtil.getServiceContext(companyId, guestGroup.getGroupId(), userId));
 	}
 
 	public static Group addGroup(
@@ -199,10 +204,14 @@ public class GroupTestUtil {
 
 	public static Group addGroupToCompany(long companyId, long parentGroupId)
 		throws Exception {
+		try(SafeCloseable safeCloseable =
+				CompanyThreadLocal.setWithSafeCloseable(companyId)){
 
 		User user = UserTestUtil.getAdminUser(companyId);
 
 		return addGroup(companyId, user.getUserId(), parentGroupId);
+		}
+
 	}
 
 	public static void addLayoutSetVirtualHost(

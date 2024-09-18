@@ -64,23 +64,17 @@ public class UpgradeProcessTest {
 	@Before
 	public void setUp() throws Exception {
 		_companyLocalService.forEachCompany(
-			company -> {
-				_db.runSQL(
-					StringBundler.concat(
-						"create table ", TABLE_NAME, " (id LONG not null primary key, ",
-						"typeVarchar VARCHAR(75) not null);"));
-			});
-
+			company -> _db.runSQL(
+				StringBundler.concat(
+					"create table ", TABLE_NAME,
+					" (id LONG not null primary key, typeVarchar VARCHAR(75) ",
+					"not null);")));
 	}
 
 	@After
 	public void tearDown() throws Exception {
 		_companyLocalService.forEachCompany(
-			company -> {
-				_db.runSQL("drop table " + TABLE_NAME);
-			});
-
-
+			company -> _db.runSQL("drop table " + TABLE_NAME));
 	}
 
 	@Test
@@ -132,11 +126,11 @@ public class UpgradeProcessTest {
 		upgradeProcess.upgrade();
 	}
 
+	@Inject
+	private static CompanyLocalService _companyLocalService;
+
 	private static Connection _connection;
 	private static DB _db;
 	private static AtomicLong _tempIndexCounter;
-
-	@Inject
-	CompanyLocalService _companyLocalService;
 
 }

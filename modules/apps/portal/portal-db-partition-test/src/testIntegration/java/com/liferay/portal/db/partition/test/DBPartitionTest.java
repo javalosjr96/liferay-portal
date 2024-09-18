@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
@@ -238,7 +239,8 @@ public class DBPartitionTest extends BaseDBPartitionTestCase {
 					}
 				}
 
-				if (PortalInstancePool.getDefaultCompanyId() == companyId) {
+				if (PortalInstancePool.getDefaultCompanyId() == companyId ||
+					TestPropsValues.getCompanyId() == companyId) {
 					Assert.assertTrue(rowCount > 0);
 				}
 				else {

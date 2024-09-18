@@ -83,7 +83,8 @@ public class LiveUpgradeExecutorTest {
 		_companyLocalService.forEachCompany(
 			company -> {
 				_db.runSQL("DROP_TABLE_IF_EXISTS(" + _TABLE_NAME + ")");
-				_db.runSQL("DROP_TABLE_IF_EXISTS(" + _getArchiveTableName() + ")");
+				_db.runSQL(
+					"DROP_TABLE_IF_EXISTS(" + _getArchiveTableName() + ")");
 				_db.runSQL("DROP_TABLE_IF_EXISTS(" + _getTempTableName() + ")");
 			});
 	}
