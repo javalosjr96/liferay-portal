@@ -1,71 +1,54 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
 package com.liferay.portal.test.rule;
 
 import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.exception.NoSuchCompanyException;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
-import com.liferay.portal.kernel.test.rule.AbstractTestRule;
+
+import org.junit.rules.TestRule;
 import org.junit.runner.Description;
+import org.junit.runners.model.Statement;
 
-import java.util.Map;
-
-public class DBPartitionTestRule
-	extends AbstractTestRule<Map<String, String>, Map<String, String>> {
+/**
+ * @author Jorge Avalos
+ */
+public class DBPartitionTestRule implements TestRule {
 
 	public static final DBPartitionTestRule INSTANCE =
 		new DBPartitionTestRule();
 
-	static
-	{
+	@Override
+	public Statement apply(Statement statement, Description description) {
 		try {
 			if (DBPartition.isPartitionEnabled()) {
 				try {
-					CompanyLocalServiceUtil.getCompanyByWebId("db-partition.com");
-					}
+					CompanyLocalServiceUtil.getCompanyByWebId(_PARTITION_NAME);
+				}
 				catch (Exception exception) {
 					if (exception instanceof NoSuchCompanyException) {
 						CompanyLocalServiceUtil.addCompany(
-							null, "db-partition.com",
-							"db-partition.com",
-							"db-partition.com",
-							0, true, true,
-							null, null,
-							null, null, null, null);
+							null, _PARTITION_NAME, _PARTITION_NAME,
+							_PARTITION_NAME, 0, true, true, null, null, null,
+							null, null, null);
 					}
-			}
-
+					else {
+						throw exception;
+					}
+				}
 			}
 		}
-		catch (PortalException e) {
-			throw new RuntimeException(e);
+		catch (PortalException portalException) {
+			throw new RuntimeException(portalException);
 		}
+
+		return statement;
 	}
 
+	private static final String _PARTITION_NAME = "db-partition.com";
 
-	@Override
-	protected void afterClass(
-		Description description, Map<String, String> stringStringMap)
-		throws Throwable {
-
-	}
-
-	@Override
-	protected void afterMethod(
-		Description description, Map<String, String> stringStringMap,
-		Object target) throws Throwable {
-
-	}
-
-	@Override
-	protected Map<String, String> beforeClass(Description description)
-		throws Throwable {
-		return null;
-	}
-
-	@Override
-	protected Map<String, String> beforeMethod(
-		Description description, Object target) throws Throwable {
-		return null;
-	}
 }
