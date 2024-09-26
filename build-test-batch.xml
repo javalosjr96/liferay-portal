@@ -2430,31 +2430,6 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 								<param name="app.server.start.executable.arg.line" value="${test.batch.app.server.start.executable.arg.line}" />
 							</antcall>
 
-							<if>
-								<or>
-									<equals arg1="@{database.type}" arg2="mysql" />
-									<equals arg1="@{database.type}" arg2="postgresql" />
-								</or>
-								<then>
-									<if>
-										<and>
-											<equals arg1="@{database.partition.enabled}" arg2="true" />
-										</and>
-										<then>
-											<antcall inheritall="false" target="stop-app-server" />
-
-											<antcall inheritAll="false" target="start-app-server-preserve-liferay-home">
-												<param name="app.server.start.executable.arg.line" value="${test.batch.app.server.start.executable.arg.line}" />
-											</antcall>
-
-											<antcall target="deploy-osgi-portal-instance-configuration">
-												<param name="osgi.portal.instance.configuration.file.name" value="com.liferay.portal.instances.internal.configuration.PortalInstancesConfiguration~db-partition.com.config" />
-												<param name="osgi.portal.instance.configuration" value="mx=&quot;db-partition.com&quot;${line.separator}virtualHostname=&quot;db-partition.com&quot;" />
-											</antcall>
-										</then>
-									</if>
-								</then>
-							</if>
 
 							<deploy-release-dependency-modules-post-startup />
 
