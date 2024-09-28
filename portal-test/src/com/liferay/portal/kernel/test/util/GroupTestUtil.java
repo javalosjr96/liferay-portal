@@ -8,6 +8,7 @@ package com.liferay.portal.kernel.test.util;
 import com.liferay.exportimport.kernel.configuration.ExportImportConfigurationParameterMapFactoryUtil;
 import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.exportimport.kernel.service.StagingLocalServiceUtil;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cache.thread.local.Lifecycle;
 import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCacheManager;
@@ -15,6 +16,7 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.GroupServiceUtil;
 import com.liferay.portal.kernel.service.LayoutSetLocalServiceUtil;
@@ -205,10 +207,16 @@ public class GroupTestUtil {
 
 	public static Group addGroupToCompany(long companyId, long parentGroupId)
 		throws Exception {
+		
+		try(SafeCloseable safecloseable = CompanyThreadLocal.setWithSafeCloseable(companyId)) {
 
-		User user = UserTestUtil.getAdminUser(companyId);
+			User user = UserTestUtil.getAdminUser(companyId);
 
-		return addGroup(companyId, user.getUserId(), parentGroupId);
+			return addGroup(companyId, user.getUserId(), parentGroupId);
+
+
+		}
+
 	}
 
 	public static void addLayoutSetVirtualHost(

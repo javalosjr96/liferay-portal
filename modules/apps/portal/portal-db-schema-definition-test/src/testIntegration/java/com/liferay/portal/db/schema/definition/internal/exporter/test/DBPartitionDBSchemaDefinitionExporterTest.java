@@ -226,14 +226,7 @@ public class DBPartitionDBSchemaDefinitionExporterTest
 
 			Assert.assertTrue(
 				reportContent.contains(
-					"Default virtual instance missing tables:"));
-
-			Assert.assertTrue(
-				reportContent.contains(
-					StringBundler.concat(
-						"Virtual instance ", TestPropsValues.getCompanyId(),
-						" missing tables: ",
-						StringUtil.toLowerCase("TestTable"))));
+					"Default virtual instance missing tables: testtable"));
 
 			Assert.assertTrue(
 				reportContent.contains(
@@ -241,6 +234,14 @@ public class DBPartitionDBSchemaDefinitionExporterTest
 						"Virtual instance ", _company.getCompanyId(),
 						" missing tables: ",
 						StringUtil.toLowerCase("TestTable2"))));
+
+			Assert.assertTrue(
+				reportContent.contains(
+					StringBundler.concat(
+						"Virtual instance ", TestPropsValues.getCompanyId(),
+						" missing tables:")));
+
+
 		}
 		finally {
 			db.runSQL(
