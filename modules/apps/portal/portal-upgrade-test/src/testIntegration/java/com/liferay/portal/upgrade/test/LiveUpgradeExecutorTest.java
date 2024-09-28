@@ -60,8 +60,6 @@ public class LiveUpgradeExecutorTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_companyLocalService.forEachCompany(
-			company -> {
 				_db.runSQL(
 					StringBundler.concat(
 						"create table ", _TABLE_NAME,
@@ -75,18 +73,16 @@ public class LiveUpgradeExecutorTest {
 					StringBundler.concat(
 						"insert into ", _TABLE_NAME,
 						" (id, name) values (2, 'test_b')"));
-			});
+
 	}
 
 	@After
 	public void tearDown() throws Exception {
-		_companyLocalService.forEachCompany(
-			company -> {
 				_db.runSQL("DROP_TABLE_IF_EXISTS(" + _TABLE_NAME + ")");
 				_db.runSQL(
 					"DROP_TABLE_IF_EXISTS(" + _getArchiveTableName() + ")");
 				_db.runSQL("DROP_TABLE_IF_EXISTS(" + _getTempTableName() + ")");
-			});
+
 	}
 
 	@Test
