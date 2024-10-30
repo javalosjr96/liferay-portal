@@ -11,12 +11,6 @@ import com.liferay.headless.commerce.machine.learning.client.pagination.Page;
 import com.liferay.headless.commerce.machine.learning.client.pagination.Pagination;
 import com.liferay.headless.commerce.machine.learning.client.problem.Problem;
 import com.liferay.headless.commerce.machine.learning.client.serdes.v1_0.AccountCategoryForecastSerDes;
-import com.liferay.portal.kernel.db.partition.DBPartition;
-import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
-import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.service.UserLocalServiceUtil;
-import com.liferay.portal.kernel.util.LocaleUtil;
 
 import java.net.URL;
 
@@ -59,12 +53,7 @@ public interface AccountCategoryForecastResource {
 
 	public static class Builder {
 
-		public Builder authentication(String login, String password)
-			throws PortalException {
-			if(DBPartition.isPartitionEnabled()){
-				UserLocalServiceUtil.getGuestUser(CompanyThreadLocal.getCompanyId());
-			}
-
+		public Builder authentication(String login, String password) {
 			_login = login;
 			_password = password;
 
