@@ -30,7 +30,7 @@ public class JWTAssertAuthorizationGrantTest
 
 	@Test
 	public void testGrantWithCorrectAudience() throws Exception {
-		User user = UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId());
+		User user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 		JWTAssertionAuthorizationGrant jwtAssertionAuthorizationGrant =
 			new JWTAssertionAuthorizationGrant(
@@ -45,7 +45,7 @@ public class JWTAssertAuthorizationGrantTest
 
 	@Test
 	public void testGrantWithWrongAudience() throws Exception {
-		User user = UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId());
+		User user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 		JWTAssertionAuthorizationGrant jwtAssertionAuthorizationGrant =
 			new JWTAssertionAuthorizationGrant(
@@ -64,7 +64,7 @@ public class JWTAssertAuthorizationGrantTest
 		User user = null;
 
 		try {
-			user = UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId());
+			user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 			return new JWTAssertionAuthorizationGrant(
 				TEST_CLIENT_ID_1, null, user.getUuid(), getTokenWebTarget());

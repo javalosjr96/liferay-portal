@@ -108,7 +108,7 @@ public class ScopeFinderTest extends BaseClientTestCase {
 					() -> registerScopeFinder(scopeFinder, properties2)),
 				"annotated", properties1);
 
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
+			long defaultCompanyId = TestPropsValues.getCompanyId();
 
 			User user = UserTestUtil.getAdminUser(defaultCompanyId);
 

@@ -45,7 +45,7 @@ public class UpgradeVirtualHostTest extends BaseCTUpgradeProcessTestCase {
 	protected CTModel<?> addCTModel() throws Exception {
 		List<VirtualHost> virtualHosts =
 			_virtualHostLocalService.updateVirtualHosts(
-				PortalUtil.getDefaultCompanyId(), 0,
+				TestPropsValues.getCompanyId(), 0,
 				TreeMapBuilder.put(
 					"localhost", StringPool.BLANK
 				).build());

@@ -87,7 +87,7 @@ public class SiteNavigationMenuPortletDisplayTemplateHandlerTest {
 	public void testGetExpandoAttributes() throws Exception {
 		ExpandoTable expandoTable =
 			ExpandoTableLocalServiceUtil.addDefaultTable(
-				PortalUtil.getDefaultCompanyId(),
+				TestPropsValues.getCompanyId(),
 				SiteNavigationMenuItem.class.getName());
 
 		String expandoAttributeName = RandomTestUtil.randomString();
