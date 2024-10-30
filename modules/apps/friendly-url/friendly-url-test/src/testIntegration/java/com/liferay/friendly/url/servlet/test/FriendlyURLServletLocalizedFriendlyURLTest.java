@@ -76,7 +76,7 @@ public class FriendlyURLServletLocalizedFriendlyURLTest {
 		_defaultLocale = LocaleUtil.getDefault();
 
 		CompanyTestUtil.resetCompanyLocales(
-			_portal.getDefaultCompanyId(),
+			TestPropsValues.getCompanyId(),
 			Arrays.asList(
 				LocaleUtil.CANADA_FRENCH, LocaleUtil.SPAIN, LocaleUtil.US),
 			LocaleUtil.US);
@@ -101,7 +101,7 @@ public class FriendlyURLServletLocalizedFriendlyURLTest {
 	@AfterClass
 	public static void tearDownClass() throws Exception {
 		CompanyTestUtil.resetCompanyLocales(
-			_portal.getDefaultCompanyId(), _availableLocales, _defaultLocale);
+			TestPropsValues.getCompanyId(), _availableLocales, _defaultLocale);
 	}
 
 	@Before

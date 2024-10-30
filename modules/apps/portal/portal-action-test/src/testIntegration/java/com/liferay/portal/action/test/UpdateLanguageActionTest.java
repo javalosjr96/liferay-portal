@@ -82,7 +82,7 @@ public class UpdateLanguageActionTest {
 		_language.init();
 
 		CompanyTestUtil.resetCompanyLocales(
-			_portal.getDefaultCompanyId(), _availableLocales, _defaultLocale);
+			TestPropsValues.getCompanyId(), _availableLocales, _defaultLocale);
 
 		PropsValues.LOCALES_ENABLED = TransformUtil.transformToArray(
 			_availableLocales, locale -> _language.getLanguageId(locale),
@@ -94,7 +94,7 @@ public class UpdateLanguageActionTest {
 		_language.init();
 
 		CompanyTestUtil.resetCompanyLocales(
-			_portal.getDefaultCompanyId(), _originalAvailableLocales,
+			TestPropsValues.getCompanyId(), _originalAvailableLocales,
 			_originalDefaultLocale);
 
 		PropsValues.LOCALES_ENABLED = _originalLocalesEnabled;
