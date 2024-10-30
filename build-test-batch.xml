@@ -2418,6 +2418,20 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 		<attribute default="" name="test.portal.bundle.zip.url" />
 		<attribute default="" name="test.sql.zip.url" />
 
+		<if>
+			<equals arg1="@{database.type}" arg2="mysql" />
+			<then>
+				<attribute name="database.partition.enabled" value="true" />
+			</then>
+		</if>
+
+		<if>
+			<equals arg1="@{database.type}" arg2="postgresql" />
+			<then>
+				<attribute name="database.partition.enabled" value="true" />
+			</then>
+		</if>
+
 		<sequential>
 			<var name="app.server.type" value="@{app.server.type}" />
 			<var name="app.server.version" value="@{app.server.version}" />
