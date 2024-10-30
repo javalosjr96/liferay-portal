@@ -799,7 +799,7 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 
 			ExpandoTable expandoTable =
 				_expandoTableLocalService.addDefaultTable(
-					PortalUtil.getDefaultCompanyId(), Layout.class.getName());
+					TestPropsValues.getCompanyId(), Layout.class.getName());
 
 			String randomExpandoAttributeName = RandomTestUtil.randomString();
 

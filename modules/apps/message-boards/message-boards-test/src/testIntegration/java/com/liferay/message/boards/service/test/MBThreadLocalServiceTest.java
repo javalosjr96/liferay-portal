@@ -145,7 +145,7 @@ public class MBThreadLocalServiceTest {
 			expandoCount, ExpandoValueLocalServiceUtil.getExpandoValuesCount());
 
 		ExpandoTableLocalServiceUtil.deleteTables(
-			PortalUtil.getDefaultCompanyId(), MBMessage.class.getName());
+			TestPropsValues.getCompanyId(), MBMessage.class.getName());
 	}
 
 	@Test
@@ -272,7 +272,7 @@ public class MBThreadLocalServiceTest {
 
 		ExpandoTable expandoTable =
 			ExpandoTableLocalServiceUtil.addDefaultTable(
-				PortalUtil.getDefaultCompanyId(), MBMessage.class.getName());
+				TestPropsValues.getCompanyId(), MBMessage.class.getName());
 
 		ExpandoColumnLocalServiceUtil.addColumn(
 			expandoTable.getTableId(), name, ExpandoColumnConstants.STRING,

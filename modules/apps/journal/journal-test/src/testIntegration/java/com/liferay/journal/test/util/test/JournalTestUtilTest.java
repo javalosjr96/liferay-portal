@@ -134,7 +134,7 @@ public class JournalTestUtilTest {
 
 		try {
 			CompanyTestUtil.resetCompanyLocales(
-				PortalUtil.getDefaultCompanyId(), Arrays.asList(LocaleUtil.US),
+				TestPropsValues.getCompanyId(), Arrays.asList(LocaleUtil.US),
 				LocaleUtil.US);
 
 			DDMStructureTestUtil.addStructure(
@@ -142,7 +142,7 @@ public class JournalTestUtilTest {
 		}
 		finally {
 			CompanyTestUtil.resetCompanyLocales(
-				PortalUtil.getDefaultCompanyId(), availableLocales,
+				TestPropsValues.getCompanyId(), availableLocales,
 				defaultLocale);
 		}
 	}

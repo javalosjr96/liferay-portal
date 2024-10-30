@@ -104,7 +104,7 @@ public class SegmentUserResourceTest extends BaseSegmentUserResourceTestCase {
 		throws Exception {
 
 		User user = UserTestUtil.addUser(
-			PortalUtil.getDefaultCompanyId(), UserConstants.USER_ID_DEFAULT,
+			TestPropsValues.getCompanyId(), UserConstants.USER_ID_DEFAULT,
 			null, segmentUser.getEmailAddress(), StringPool.BLANK,
 			LocaleUtil.getDefault(), segmentUser.getName(),
 			segmentUser.getName(), null, new ServiceContext());

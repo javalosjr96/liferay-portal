@@ -57,7 +57,7 @@ public class GrantResourceOwnerKillSwitchTest extends BaseClientTestCase {
 					"oauth2.allow.resource.owner.password.credentials.grant",
 					false));
 
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
+			long defaultCompanyId = TestPropsValues.getCompanyId();
 
 			User user = UserTestUtil.getAdminUser(defaultCompanyId);
 

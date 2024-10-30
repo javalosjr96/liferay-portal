@@ -74,7 +74,7 @@ public class ExpiredAuthorizationsAfterlifeTest extends BaseClientTestCase {
 					"oauth2.expired.authorizations.afterlife.duration",
 					Time.HOUR * 12 / Time.SECOND));
 
-			long companyId = PortalUtil.getDefaultCompanyId();
+			long companyId = TestPropsValues.getCompanyId();
 
 			User user = UserTestUtil.getAdminUser(companyId);
 

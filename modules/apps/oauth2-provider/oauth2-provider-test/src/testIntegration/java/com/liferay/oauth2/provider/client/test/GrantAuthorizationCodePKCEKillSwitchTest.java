@@ -67,7 +67,7 @@ public class GrantAuthorizationCodePKCEKillSwitchTest
 				MapUtil.singletonDictionary(
 					"oauth2.allow.authorization.code.pkce.grant", false));
 
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
+			long defaultCompanyId = TestPropsValues.getCompanyId();
 
 			User user = UserTestUtil.getAdminUser(defaultCompanyId);
 
