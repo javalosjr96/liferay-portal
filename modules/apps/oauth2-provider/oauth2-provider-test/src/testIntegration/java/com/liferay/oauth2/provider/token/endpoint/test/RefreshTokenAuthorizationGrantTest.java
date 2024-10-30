@@ -98,7 +98,7 @@ public class RefreshTokenAuthorizationGrantTest
 
 		@Override
 		protected void prepareTest() throws Exception {
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
+			long defaultCompanyId = TestPropsValues.getCompanyId();
 
 			User user = UserTestUtil.getAdminUser(defaultCompanyId);
 

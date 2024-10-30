@@ -910,7 +910,7 @@ public class DLFileEntryLocalServiceTest {
 	public void testCopyFileEntry() throws Exception {
 		ExpandoTable expandoTable =
 			ExpandoTableLocalServiceUtil.addDefaultTable(
-				PortalUtil.getDefaultCompanyId(), DLFileEntry.class.getName());
+				TestPropsValues.getCompanyId(), DLFileEntry.class.getName());
 
 		ExpandoColumnLocalServiceUtil.addColumn(
 			expandoTable.getTableId(), "ExpandoAttributeName",

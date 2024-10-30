@@ -43,7 +43,7 @@ public class LocalOAuthClientTest {
 
 	@Test
 	public void test() throws Exception {
-		User user = UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId());
+		User user = UserTestUtil.getAdminUser(TestPropsValues.getCompanyId());
 
 		OAuth2Application oAuth2Application =
 			_oAuth2ApplicationLocalService.addOAuth2Application(

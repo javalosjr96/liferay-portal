@@ -169,7 +169,7 @@ public class FriendlyURLServletTest {
 			LocaleUtil.US, LocaleUtil.UK, LocaleUtil.HUNGARY);
 
 		CompanyTestUtil.resetCompanyLocales(
-			PortalUtil.getDefaultCompanyId(), enabledLocales, LocaleUtil.US);
+			TestPropsValues.getCompanyId(), enabledLocales, LocaleUtil.US);
 
 		try {
 			_group = GroupTestUtil.updateDisplaySettings(
@@ -257,7 +257,7 @@ public class FriendlyURLServletTest {
 		}
 		finally {
 			CompanyTestUtil.resetCompanyLocales(
-				PortalUtil.getDefaultCompanyId(), availableLocales,
+				TestPropsValues.getCompanyId(), availableLocales,
 				defaultLocale);
 		}
 	}

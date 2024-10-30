@@ -364,7 +364,7 @@ public class WebDAVOSXTest extends BaseWebDAVTestCase {
 
 		try {
 			Group group = GroupLocalServiceUtil.getFriendlyURLGroup(
-				PortalUtil.getDefaultCompanyId(), getGroupFriendlyURL());
+				TestPropsValues.getCompanyId(), getGroupFriendlyURL());
 
 			Folder folder = _dlAppLocalService.getFolder(
 				group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
@@ -672,7 +672,7 @@ public class WebDAVOSXTest extends BaseWebDAVTestCase {
 
 		try {
 			Group group = GroupLocalServiceUtil.getFriendlyURLGroup(
-				PortalUtil.getDefaultCompanyId(), getGroupFriendlyURL());
+				TestPropsValues.getCompanyId(), getGroupFriendlyURL());
 
 			Folder folder = _dlAppLocalService.getFolder(
 				TestPropsValues.getGroupId(),
@@ -767,7 +767,7 @@ public class WebDAVOSXTest extends BaseWebDAVTestCase {
 
 		try {
 			Group group = GroupLocalServiceUtil.getFriendlyURLGroup(
-				PortalUtil.getDefaultCompanyId(), getGroupFriendlyURL());
+				TestPropsValues.getCompanyId(), getGroupFriendlyURL());
 
 			Folder folder = _dlAppLocalService.getFolder(
 				TestPropsValues.getGroupId(),

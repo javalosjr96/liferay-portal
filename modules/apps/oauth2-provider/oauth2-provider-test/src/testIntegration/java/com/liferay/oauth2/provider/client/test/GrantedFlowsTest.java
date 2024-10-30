@@ -103,7 +103,7 @@ public class GrantedFlowsTest extends BaseClientTestCase {
 
 		@Override
 		protected void prepareTest() throws Exception {
-			long defaultCompanyId = PortalUtil.getDefaultCompanyId();
+			long defaultCompanyId = TestPropsValues.getCompanyId();
 
 			User user = UserTestUtil.getAdminUser(defaultCompanyId);
 

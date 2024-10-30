@@ -54,7 +54,7 @@ public class ListTypeLocalServiceTest {
 	@AfterClass
 	public static void tearDownClass() throws Exception {
 		UserTestUtil.setUser(
-			UserTestUtil.getAdminUser(PortalUtil.getDefaultCompanyId()));
+			UserTestUtil.getAdminUser(TestPropsValues.getCompanyId()));
 
 		CompanyLocalServiceUtil.deleteCompany(_company.getCompanyId());
 	}
@@ -107,11 +107,11 @@ public class ListTypeLocalServiceTest {
 
 			try (SafeCloseable safeCloseable2 =
 					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						PortalUtil.getDefaultCompanyId())) {
+						TestPropsValues.getCompanyId())) {
 
 				Assert.assertNull(
 					_listTypeLocalService.getListType(
-						PortalUtil.getDefaultCompanyId(), _LIST_TYPE_NAME,
+						TestPropsValues.getCompanyId(), _LIST_TYPE_NAME,
 						_LIST_TYPE_TYPE));
 			}
 		}
@@ -145,10 +145,10 @@ public class ListTypeLocalServiceTest {
 
 			try (SafeCloseable safeCloseable2 =
 					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						PortalUtil.getDefaultCompanyId())) {
+						TestPropsValues.getCompanyId())) {
 
 				listTypes = _listTypeLocalService.getListTypes(
-					PortalUtil.getDefaultCompanyId(), _LIST_TYPE_TYPE);
+					TestPropsValues.getCompanyId(), _LIST_TYPE_TYPE);
 
 				Assert.assertEquals(listTypes.toString(), 0, listTypes.size());
 			}

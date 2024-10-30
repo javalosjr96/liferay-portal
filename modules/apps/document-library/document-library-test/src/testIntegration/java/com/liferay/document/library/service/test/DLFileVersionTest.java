@@ -103,7 +103,7 @@ public class DLFileVersionTest {
 
 		ExpandoTable expandoTable =
 			ExpandoTableLocalServiceUtil.addDefaultTable(
-				PortalUtil.getDefaultCompanyId(), DLFileEntry.class.getName());
+				TestPropsValues.getCompanyId(), DLFileEntry.class.getName());
 
 		ExpandoColumnLocalServiceUtil.addColumn(
 			expandoTable.getTableId(), _EXPANDO_ATTRIBUTE_NAME,
@@ -125,7 +125,7 @@ public class DLFileVersionTest {
 	public void tearDown() throws Exception {
 		ExpandoTable expandoTable =
 			ExpandoTableLocalServiceUtil.getDefaultTable(
-				PortalUtil.getDefaultCompanyId(), DLFileEntry.class.getName());
+				TestPropsValues.getCompanyId(), DLFileEntry.class.getName());
 
 		ExpandoTableLocalServiceUtil.deleteTable(expandoTable);
 

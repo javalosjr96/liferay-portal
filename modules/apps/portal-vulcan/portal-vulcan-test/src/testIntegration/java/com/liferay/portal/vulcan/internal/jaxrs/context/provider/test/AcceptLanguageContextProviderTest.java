@@ -87,7 +87,7 @@ public class AcceptLanguageContextProviderTest {
 	@AfterClass
 	public static void tearDownClass() throws Exception {
 		CompanyTestUtil.resetCompanyLocales(
-			PortalUtil.getDefaultCompanyId(), _availableLocales,
+			TestPropsValues.getCompanyId(), _availableLocales,
 			_defaultLocale);
 	}
 
