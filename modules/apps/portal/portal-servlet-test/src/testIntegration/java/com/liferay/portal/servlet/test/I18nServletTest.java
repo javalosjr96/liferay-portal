@@ -72,7 +72,7 @@ public class I18nServletTest extends I18nServlet {
 		_language.init();
 
 		CompanyTestUtil.resetCompanyLocales(
-			_portal.getDefaultCompanyId(),
+			TestPropsValues.getCompanyId(),
 			Arrays.asList(
 				LocaleUtil.CANADA_FRENCH, LocaleUtil.SPAIN, LocaleUtil.UK,
 				LocaleUtil.US, _hebrewLocale),
@@ -92,7 +92,7 @@ public class I18nServletTest extends I18nServlet {
 		_language.init();
 
 		CompanyTestUtil.resetCompanyLocales(
-			_portal.getDefaultCompanyId(), _availableLocales, _defaultLocale);
+			TestPropsValues.getCompanyId(), _availableLocales, _defaultLocale);
 
 		PropsValues.LOCALES_ENABLED = _localesEnabled;
 	}

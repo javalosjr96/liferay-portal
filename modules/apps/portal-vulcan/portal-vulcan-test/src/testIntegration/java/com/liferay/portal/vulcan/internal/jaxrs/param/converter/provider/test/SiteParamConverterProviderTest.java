@@ -95,7 +95,7 @@ public class SiteParamConverterProviderTest {
 
 	@Test
 	public void testValidGroup() throws Exception {
-		long defaultCompanyId = _portal.getDefaultCompanyId();
+		long defaultCompanyId = TestPropsValues.getCompanyId();
 
 		User user = UserTestUtil.getAdminUser(defaultCompanyId);
 
