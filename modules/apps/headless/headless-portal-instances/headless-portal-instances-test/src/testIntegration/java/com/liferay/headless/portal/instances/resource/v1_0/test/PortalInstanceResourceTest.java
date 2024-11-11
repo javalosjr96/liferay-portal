@@ -91,22 +91,7 @@ public class PortalInstanceResourceTest
 	public void testPostPortalInstance() throws Exception {
 		_testPostPortalInstanceWithoutAdmin();
 		_testPostPortalInstanceWithAdmin();
-	}
-
-	@Test
-	public void testPostPortalInstanceWithAdminWhenCompanyStrangersTrue()
-		throws Exception {
-
-		PropsUtil.set(
-			PropsKeys.COMPANY_SECURITY_STRANGERS, Boolean.TRUE.toString());
-
-		try {
-			_testPostPortalInstanceWithAdmin();
-		}
-		finally {
-			PropsUtil.set(
-				PropsKeys.COMPANY_SECURITY_STRANGERS, Boolean.FALSE.toString());
-		}
+		_testPostPortalInstanceWithAdminWithCompanyStrangersTrue();
 	}
 
 	@Override
@@ -418,6 +403,21 @@ public class PortalInstanceResourceTest
 			if (postPortalInstance != null) {
 				_deletePortalInstance(postPortalInstance);
 			}
+		}
+	}
+
+	private void _testPostPortalInstanceWithAdminWithCompanyStrangersTrue()
+		throws Exception {
+
+		PropsUtil.set(
+			PropsKeys.COMPANY_SECURITY_STRANGERS, Boolean.TRUE.toString());
+
+		try {
+			_testPostPortalInstanceWithAdmin();
+		}
+		finally {
+			PropsUtil.set(
+				PropsKeys.COMPANY_SECURITY_STRANGERS, Boolean.FALSE.toString());
 		}
 	}
 
