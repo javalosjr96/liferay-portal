@@ -71,6 +71,10 @@ public class SegmentsConfigurationProviderTest {
 		mockHttpServletRequest.setAttribute(
 			WebKeys.THEME_DISPLAY, themeDisplay);
 
+		mockHttpServletRequest.addHeader("Host", TestPropsValues.COMPANY_WEB_ID);
+
+		mockHttpServletRequest.setAttribute(WebKeys.COMPANY_ID, TestPropsValues.getCompanyId());
+
 		mockHttpServletRequest.setAttribute(
 			WebKeys.USER_ID, TestPropsValues.getUserId());
 

@@ -149,6 +149,8 @@ public class FileEntryAnalyticsReportsInfoItemTest {
 			mockHttpServletRequest.setAttribute(
 				WebKeys.CURRENT_COMPLETE_URL, StringPool.BLANK);
 
+			mockHttpServletRequest.addHeader("Host", TestPropsValues.COMPANY_WEB_ID);
+
 			ThemeDisplay themeDisplay = new ThemeDisplay();
 
 			themeDisplay.setCompany(
