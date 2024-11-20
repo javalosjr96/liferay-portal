@@ -5,6 +5,7 @@
 
 package com.liferay.portal.kernel.test.util;
 
+import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
@@ -34,6 +35,11 @@ import javax.portlet.PortletPreferences;
 public class CompanyTestUtil {
 
 	public static Company addCompany() throws Exception {
+		if (DBPartition.isPartitionEnabled()) {
+			return CompanyLocalServiceUtil.getCompanyByWebId(
+				TestPropsValues.COMPANY_WEB_ID);
+		}
+
 		return addCompany(RandomTestUtil.randomString());
 	}
 
