@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.test.constants.TestDataConstants;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
@@ -91,8 +92,8 @@ public class SkuVirtualSettingsFileEntryResourceTest
 		Assert.assertEquals(
 			new String(FileUtil.getBytes(multipartFiles.get("file"))),
 			_read(
-				"http://localhost:8080" +
-					skuVirtualSettingsFileEntry.getSrc()));
+				"http://" + TestPropsValues.COMPANY_WEB_ID + ":8080" +
+				skuVirtualSettingsFileEntry.getSrc()));
 	}
 
 	@Override
