@@ -11,6 +11,7 @@ import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.blogs.service.BlogsEntryLocalService;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
@@ -35,6 +36,7 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import java.util.Date;
 
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -81,6 +83,8 @@ public class BlogsAMImageCounterTest {
 	@Test
 	public void testBlogsAMImageCounterOnlyCountsBlogsImagesPerCompany()
 		throws Exception {
+
+		Assume.assumeFalse(DBPartition.isPartitionEnabled());
 
 		String originalName = PrincipalThreadLocal.getName();
 
