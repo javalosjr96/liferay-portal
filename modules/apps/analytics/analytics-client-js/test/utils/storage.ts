@@ -13,22 +13,6 @@ import {
 
 const STORAGE_KEY = 'some-key';
 
-window.Liferay = {
-	FeatureFlags: {
-		'LPD-10588': false,
-	},
-	Util: {
-		LocalStorage: {
-			TYPES: {
-				PERFORMANCE: 'performance',
-			},
-			getItem: jest.fn(),
-			removeItem: jest.fn(),
-			setItem: jest.fn(),
-		},
-	},
-};
-
 describe('Storage Utils', () => {
 	beforeEach(() => {
 
