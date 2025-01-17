@@ -186,7 +186,7 @@ public class CompanyLocalServiceTest {
 	public void testAddAndDeleteCompany() throws Exception {
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company.getCompanyId());
+		removeCompany(company.getCompanyId());
 
 		for (String webId : PortalInstancePool.getWebIds()) {
 			Assert.assertNotEquals(company.getWebId(), webId);
@@ -218,7 +218,7 @@ public class CompanyLocalServiceTest {
 				companyId, userId, companyOrganizationGroup.getGroupId());
 		}
 		finally {
-			_companyLocalService.deleteCompany(company);
+			removeCompany(company);
 		}
 
 		Assert.assertNull(
@@ -254,7 +254,7 @@ public class CompanyLocalServiceTest {
 			companyStagingGroup = companyGroup.getStagingGroup();
 		}
 		finally {
-			_companyLocalService.deleteCompany(company.getCompanyId());
+			removeCompany(company.getCompanyId());
 		}
 
 		Assert.assertNull(
@@ -316,7 +316,7 @@ public class CompanyLocalServiceTest {
 				null, null, serviceContext);
 		}
 		finally {
-			_companyLocalService.deleteCompany(companyId);
+			removeCompany(companyId);
 		}
 
 		Assert.assertNull(
@@ -359,7 +359,7 @@ public class CompanyLocalServiceTest {
 				});
 		}
 		finally {
-			_companyLocalService.deleteCompany(companyId);
+			removeCompany(companyId);
 		}
 
 		Assert.assertNull(
@@ -406,7 +406,7 @@ public class CompanyLocalServiceTest {
 				});
 		}
 		finally {
-			_companyLocalService.deleteCompany(companyId);
+			removeCompany(companyId);
 		}
 
 		Assert.assertNull(
@@ -434,7 +434,7 @@ public class CompanyLocalServiceTest {
 				companyId, userId, parentGroup.getGroupId());
 		}
 		finally {
-			_companyLocalService.deleteCompany(company.getCompanyId());
+			removeCompany(company.getCompanyId());
 		}
 
 		Assert.assertNull(
@@ -496,11 +496,11 @@ public class CompanyLocalServiceTest {
 			StartupHelperUtil.setDBNew(false);
 
 			if (company1 != null) {
-				_companyLocalService.deleteCompany(company1);
+				removeCompany(company1);
 			}
 
 			if (company2 != null) {
-				_companyLocalService.deleteCompany(company2);
+				removeCompany(company2);
 			}
 
 			if (!originalCompanyPredictableCompanyIdsEnabled) {
@@ -536,7 +536,7 @@ public class CompanyLocalServiceTest {
 				companyOrganizationGroup, companyAdminUser.getUserId());
 		}
 		finally {
-			_companyLocalService.deleteCompany(company);
+			removeCompany(company);
 		}
 
 		Assert.assertNull(
@@ -572,7 +572,7 @@ public class CompanyLocalServiceTest {
 				user.getUserId(), userGroup);
 		}
 		finally {
-			_companyLocalService.deleteCompany(company.getCompanyId());
+			removeCompany(company.getCompanyId());
 		}
 
 		Assert.assertNull(
@@ -620,7 +620,7 @@ public class CompanyLocalServiceTest {
 				user.getUserId(), group.getGroupId(), role.getRoleId());
 		}
 		finally {
-			_companyLocalService.deleteCompany(company.getCompanyId());
+			removeCompany(company.getCompanyId());
 		}
 
 		Assert.assertNull(_roleLocalService.fetchRole(role.getRoleId()));
@@ -638,7 +638,7 @@ public class CompanyLocalServiceTest {
 
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		_passwordPolicyLocalService.getDefaultPasswordPolicy(
 			company.getCompanyId());
@@ -648,7 +648,7 @@ public class CompanyLocalServiceTest {
 	public void testDeleteCompanyDeletesGroups() throws Exception {
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		Assert.assertEquals(
 			0,
@@ -666,7 +666,7 @@ public class CompanyLocalServiceTest {
 	public void testDeleteCompanyDeletesLayoutPrototypes() throws Exception {
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		Assert.assertEquals(
 			0,
@@ -682,7 +682,7 @@ public class CompanyLocalServiceTest {
 	public void testDeleteCompanyDeletesLayoutSetPrototypes() throws Exception {
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		List<LayoutSetPrototype> layoutSetPrototypes =
 			_layoutSetPrototypeLocalService.getLayoutSetPrototypes(
@@ -698,7 +698,7 @@ public class CompanyLocalServiceTest {
 
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		TransactionInvokerUtil.invoke(
 			_transactionConfig,
@@ -714,7 +714,7 @@ public class CompanyLocalServiceTest {
 	public void testDeleteCompanyDeletesOrganizations() throws Exception {
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		Assert.assertEquals(
 			0,
@@ -727,7 +727,7 @@ public class CompanyLocalServiceTest {
 	public void testDeleteCompanyDeletesPortalInstance() throws Exception {
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		_companyLocalService.forEachCompanyId(
 			companyId -> Assert.assertNotEquals(
@@ -739,7 +739,7 @@ public class CompanyLocalServiceTest {
 	public void testDeleteCompanyDeletesPortalPreferences() throws Throwable {
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		TransactionInvokerUtil.invoke(
 			_transactionConfig,
@@ -757,7 +757,7 @@ public class CompanyLocalServiceTest {
 	public void testDeleteCompanyDeletesPortlets() throws Throwable {
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		TransactionInvokerUtil.invoke(
 			_transactionConfig,
@@ -775,7 +775,7 @@ public class CompanyLocalServiceTest {
 	public void testDeleteCompanyDeletesRoles() throws Exception {
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		List<Role> roles = _roleLocalService.getRoles(company.getCompanyId());
 
@@ -820,7 +820,7 @@ public class CompanyLocalServiceTest {
 				user.getUserId(), group.getGroupId(), role.getRoleId());
 		}
 		finally {
-			_companyLocalService.deleteCompany(company.getCompanyId());
+			removeCompany(company.getCompanyId());
 		}
 
 		Assert.assertEquals(UserGroupRole.class.getName(), list.get(0));
@@ -831,7 +831,7 @@ public class CompanyLocalServiceTest {
 	public void testDeleteCompanyDeletesUsers() throws Exception {
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		List<User> users = _userLocalService.getCompanyUsers(
 			company.getCompanyId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);
@@ -843,7 +843,7 @@ public class CompanyLocalServiceTest {
 	public void testDeleteCompanyDeletesVirtualHost() throws Exception {
 		Company company = addCompany();
 
-		_companyLocalService.deleteCompany(company);
+		removeCompany(company);
 
 		_virtualHostLocalService.getVirtualHost(company.getWebId());
 	}
@@ -852,7 +852,7 @@ public class CompanyLocalServiceTest {
 	public void testDeleteDefaultCompany() throws Exception {
 		long companyId = PortalInstancePool.getDefaultCompanyId();
 
-		_companyLocalService.deleteCompany(companyId);
+		removeCompany(companyId);
 	}
 
 	@Test
@@ -908,7 +908,7 @@ public class CompanyLocalServiceTest {
 					"0:0:0:0:0:0:0:1"));
 		}
 		finally {
-			_companyLocalService.deleteCompany(company);
+			removeCompany(company);
 		}
 	}
 
@@ -934,7 +934,7 @@ public class CompanyLocalServiceTest {
 				_language.getAvailableLocales());
 		}
 		finally {
-			_companyLocalService.deleteCompany(company);
+			removeCompany(company);
 		}
 	}
 
@@ -1009,7 +1009,7 @@ public class CompanyLocalServiceTest {
 					PropsKeys.LOCALES));
 		}
 		finally {
-			_companyLocalService.deleteCompany(company);
+			removeCompany(company);
 		}
 	}
 
@@ -1045,7 +1045,7 @@ public class CompanyLocalServiceTest {
 				_language.getAvailableLocales());
 		}
 		finally {
-			_companyLocalService.deleteCompany(company);
+			removeCompany(company);
 		}
 	}
 
@@ -1069,7 +1069,7 @@ public class CompanyLocalServiceTest {
 			Assert.assertEquals("CET", user.getTimeZoneId());
 		}
 		finally {
-			_companyLocalService.deleteCompany(company.getCompanyId());
+			removeCompany(company.getCompanyId());
 		}
 	}
 
@@ -1090,7 +1090,7 @@ public class CompanyLocalServiceTest {
 				true);
 		}
 		finally {
-			_companyLocalService.deleteCompany(companyId);
+			removeCompany(companyId);
 		}
 	}
 
@@ -1123,7 +1123,7 @@ public class CompanyLocalServiceTest {
 				company, new String[] {RandomTestUtil.randomString()}, false);
 		}
 		finally {
-			_companyLocalService.deleteCompany(company.getCompanyId());
+			removeCompany(company.getCompanyId());
 		}
 	}
 
@@ -1225,6 +1225,18 @@ public class CompanyLocalServiceTest {
 		return serviceContext;
 	}
 
+	protected void removeCompany(Company company) throws Exception {
+		_companyLocalService.deleteCompany(company);
+
+		CompanyThreadLocal.setCompanyId(_companyId);
+	}
+
+	protected void removeCompany(long companyId) throws Exception {
+		_companyLocalService.deleteCompany(companyId);
+
+		CompanyThreadLocal.setCompanyId(_companyId);
+	}
+
 	protected void testUpdateCompanyNames(
 			Company company, String[] companyNames, boolean expectFailure)
 		throws Exception {
@@ -1286,7 +1298,7 @@ public class CompanyLocalServiceTest {
 			Assert.assertTrue(mailMxUpdate);
 		}
 		finally {
-			_companyLocalService.deleteCompany(company.getCompanyId());
+			removeCompany(company.getCompanyId());
 		}
 	}
 
@@ -1318,7 +1330,7 @@ public class CompanyLocalServiceTest {
 			}
 		}
 		finally {
-			_companyLocalService.deleteCompany(company.getCompanyId());
+			removeCompany(company.getCompanyId());
 		}
 	}
 
