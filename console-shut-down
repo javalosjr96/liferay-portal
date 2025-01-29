@@ -1,0 +1,188 @@
+     [echo] stop.app.server.0.start.timestamp: 01-27-2025 17:46:09:916 PST
+[beanshell] WARNING: sun.reflect.Reflection.getCallerClass is not supported. This will impact performance.
+[beanshell] Retrying http://mirrors-no-cache.lax.liferay.com/github.com/liferay/liferay-jenkins-ee/build.properties in 30 seconds
+[beanshell] Retrying http://mirrors-no-cache.lax.liferay.com/github.com/liferay/liferay-jenkins-ee/build.properties in 30 seconds
+[beanshell] Retrying http://mirrors-no-cache.lax.liferay.com/github.com/liferay/liferay-jenkins-ee/build.properties in 30 seconds
+[beanshell] HTTP call took 4 hours 47 minutes. URL: http://mirrors-no-cache.lax.liferay.com/github.com/liferay/liferay-jenkins-ee/build.properties
+     [echo] ## Using /usr/lib/jvm/java-21-openjdk-21.0.5.0.11-1.fc40.x86_64 as JAVA_HOME.
+     [echo] Executing commands: 
+     [echo] 
+     [echo] docker logs localhost_mysql > /tmp/docker-logs/localhost_mysql.log
+     [echo] 
+     [echo] 
+     [echo] ##
+     [echo] ## /tmp/docker-logs/localhost_mysql.log
+     [echo] ##
+     [echo] 
+[beanshell] 2025-01-28 01:31:29+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 5.7.44-1.el7 started.
+[beanshell] 2025-01-28 01:32:06+00:00 [Note] [Entrypoint]: Switching to dedicated user 'mysql'
+[beanshell] 2025-01-28 01:32:06+00:00 [Note] [Entrypoint]: Entrypoint script for MySQL Server 5.7.44-1.el7 started.
+[beanshell] 2025-01-28 01:32:43+00:00 [Note] [Entrypoint]: Initializing database files
+[beanshell] 2025-01-28T01:32:47.899584Z 0 [Warning] TIMESTAMP with implicit DEFAULT value is deprecated. Please use --explicit_defaults_for_timestamp server option (see documentation for more details).
+[beanshell] 2025-01-28T01:32:48.013984Z 0 [Warning] InnoDB: New log files created, LSN=45790
+[beanshell] 2025-01-28T01:32:48.059645Z 0 [Warning] InnoDB: Creating foreign key constraint system tables.
+[beanshell] 2025-01-28T01:32:48.132419Z 0 [Warning] No existing UUID has been found, so we assume that this is the first time that this server has been started. Generating a new UUID: c801d472-dd17-11ef-91c6-0242ac110002.
+[beanshell] 2025-01-28T01:32:48.139527Z 0 [Warning] Gtid table is not ready to be used. Table 'mysql.gtid_executed' cannot be opened.
+[beanshell] 2025-01-28T01:32:48.223810Z 0 [Warning] A deprecated TLS version TLSv1 is enabled. Please use TLSv1.2 or higher.
+[beanshell] 2025-01-28T01:32:48.223823Z 0 [Warning] A deprecated TLS version TLSv1.1 is enabled. Please use TLSv1.2 or higher.
+[beanshell] 2025-01-28T01:32:48.224093Z 0 [Warning] CA certificate ca.pem is self signed.
+[beanshell] 2025-01-28T01:32:48.242540Z 1 [Warning] root@localhost is created with an empty password ! Please consider switching off the --initialize-insecure option.
+[beanshell] 2025-01-28 01:32:54+00:00 [Note] [Entrypoint]: Database files initialized
+[beanshell] 2025-01-28 01:32:54+00:00 [Note] [Entrypoint]: Starting temporary server
+[beanshell] 2025-01-28 01:32:54+00:00 [Note] [Entrypoint]: Waiting for server startup
+[beanshell] 2025-01-28T01:32:58.993856Z 0 [Warning] TIMESTAMP with implicit DEFAULT value is deprecated. Please use --explicit_defaults_for_timestamp server option (see documentation for more details).
+[beanshell] 2025-01-28T01:32:58.994685Z 0 [Note] mysqld (mysqld 5.7.44) starting as process 155 ...
+[beanshell] 2025-01-28T01:32:58.996542Z 0 [Note] InnoDB: PUNCH HOLE support available
+[beanshell] 2025-01-28T01:32:58.996553Z 0 [Note] InnoDB: Mutexes and rw_locks use GCC atomic builtins
+[beanshell] 2025-01-28T01:32:58.996555Z 0 [Note] InnoDB: Uses event mutexes
+[beanshell] 2025-01-28T01:32:58.996556Z 0 [Note] InnoDB: GCC builtin __atomic_thread_fence() is used for memory barrier
+[beanshell] 2025-01-28T01:32:58.996558Z 0 [Note] InnoDB: Compressed tables use zlib 1.2.13
+[beanshell] 2025-01-28T01:32:58.996560Z 0 [Note] InnoDB: Using Linux native AIO
+[beanshell] 2025-01-28T01:32:58.996720Z 0 [Note] InnoDB: Number of pools: 1
+[beanshell] 2025-01-28T01:32:58.996774Z 0 [Note] InnoDB: Using CPU crc32 instructions
+[beanshell] 2025-01-28T01:32:58.997604Z 0 [Note] InnoDB: Initializing buffer pool, total size = 128M, instances = 1, chunk size = 128M
+[beanshell] 2025-01-28T01:32:59.001299Z 0 [Note] InnoDB: Completed initialization of buffer pool
+[beanshell] 2025-01-28T01:32:59.002522Z 0 [Note] InnoDB: If the mysqld execution user is authorized, page cleaner thread priority can be changed. See the man page of setpriority().
+[beanshell] 2025-01-28T01:32:59.013351Z 0 [Note] InnoDB: Highest supported file format is Barracuda.
+[beanshell] 2025-01-28T01:32:59.023362Z 0 [Note] InnoDB: Creating shared tablespace for temporary tables
+[beanshell] 2025-01-28T01:32:59.023406Z 0 [Note] InnoDB: Setting file './ibtmp1' size to 12 MB. Physically writing the file full; Please wait ...
+[beanshell] 2025-01-28T01:32:59.035058Z 0 [Note] InnoDB: File './ibtmp1' size is now 12 MB.
+[beanshell] 2025-01-28T01:32:59.035454Z 0 [Note] InnoDB: 96 redo rollback segment(s) found. 96 redo rollback segment(s) are active.
+[beanshell] 2025-01-28T01:32:59.035458Z 0 [Note] InnoDB: 32 non-redo rollback segment(s) are active.
+[beanshell] 2025-01-28T01:32:59.035963Z 0 [Note] InnoDB: 5.7.44 started; log sequence number 2768291
+[beanshell] 2025-01-28T01:32:59.036050Z 0 [Note] InnoDB: Loading buffer pool(s) from /var/lib/mysql/ib_buffer_pool
+[beanshell] 2025-01-28T01:32:59.036146Z 0 [Note] Plugin 'FEDERATED' is disabled.
+[beanshell] 2025-01-28T01:32:59.036900Z 0 [Note] InnoDB: Buffer pool(s) load completed at 250128  1:32:59
+[beanshell] 2025-01-28T01:32:59.039189Z 0 [Note] Found ca.pem, server-cert.pem and server-key.pem in data directory. Trying to enable SSL support using them.
+[beanshell] 2025-01-28T01:32:59.039196Z 0 [Note] Skipping generation of SSL certificates as certificate files are present in data directory.
+[beanshell] 2025-01-28T01:32:59.039199Z 0 [Warning] A deprecated TLS version TLSv1 is enabled. Please use TLSv1.2 or higher.
+[beanshell] 2025-01-28T01:32:59.039200Z 0 [Warning] A deprecated TLS version TLSv1.1 is enabled. Please use TLSv1.2 or higher.
+[beanshell] 2025-01-28T01:32:59.039514Z 0 [Warning] CA certificate ca.pem is self signed.
+[beanshell] 2025-01-28T01:32:59.039528Z 0 [Note] Skipping generation of RSA key pair as key files are present in data directory.
+[beanshell] 2025-01-28T01:32:59.059513Z 0 [Warning] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
+[beanshell] 2025-01-28T01:32:59.062476Z 0 [Note] Event Scheduler: Loaded 0 events
+[beanshell] 2025-01-28T01:32:59.062610Z 0 [Note] mysqld: ready for connections.
+[beanshell] Version: '5.7.44'  socket: '/var/run/mysqld/mysqld.sock'  port: 0  MySQL Community Server (GPL)
+[beanshell] 2025-01-28 01:32:59+00:00 [Note] [Entrypoint]: Temporary server started.
+[beanshell] '/var/lib/mysql/mysql.sock' -> '/var/run/mysqld/mysqld.sock'
+[beanshell] 2025-01-28T01:33:05.130480Z 3 [Note] InnoDB: Stopping purge
+[beanshell] 2025-01-28T01:33:05.147405Z 3 [Note] InnoDB: Resuming purge
+[beanshell] 2025-01-28T01:33:05.154352Z 3 [Note] InnoDB: Stopping purge
+[beanshell] 2025-01-28T01:33:05.168483Z 3 [Note] InnoDB: Resuming purge
+[beanshell] 2025-01-28T01:33:05.175275Z 3 [Note] InnoDB: Stopping purge
+[beanshell] 2025-01-28T01:33:05.190411Z 3 [Note] InnoDB: Resuming purge
+[beanshell] 2025-01-28T01:33:05.197961Z 3 [Note] InnoDB: Stopping purge
+[beanshell] 2025-01-28T01:33:05.212825Z 3 [Note] InnoDB: Resuming purge
+[beanshell] Warning: Unable to load '/usr/share/zoneinfo/iso3166.tab' as time zone. Skipping it.
+[beanshell] Warning: Unable to load '/usr/share/zoneinfo/leapseconds' as time zone. Skipping it.
+[beanshell] Warning: Unable to load '/usr/share/zoneinfo/tzdata.zi' as time zone. Skipping it.
+[beanshell] Warning: Unable to load '/usr/share/zoneinfo/zone.tab' as time zone. Skipping it.
+[beanshell] Warning: Unable to load '/usr/share/zoneinfo/zone1970.tab' as time zone. Skipping it.
+[beanshell] 
+[beanshell] 2025-01-28 01:33:06+00:00 [Note] [Entrypoint]: Stopping temporary server
+[beanshell] 2025-01-28T01:33:06.304134Z 0 [Note] Giving 0 client threads a chance to die gracefully
+[beanshell] 2025-01-28T01:33:06.304152Z 0 [Note] Shutting down slave threads
+[beanshell] 2025-01-28T01:33:06.304155Z 0 [Note] Forcefully disconnecting 0 remaining clients
+[beanshell] 2025-01-28T01:33:06.304160Z 0 [Note] Event Scheduler: Purging the queue. 0 events
+[beanshell] 2025-01-28T01:33:06.304290Z 0 [Note] Binlog end
+[beanshell] 2025-01-28T01:33:06.304778Z 0 [Note] Shutting down plugin 'ngram'
+[beanshell] 2025-01-28T01:33:06.304788Z 0 [Note] Shutting down plugin 'partition'
+[beanshell] 2025-01-28T01:33:06.304790Z 0 [Note] Shutting down plugin 'BLACKHOLE'
+[beanshell] 2025-01-28T01:33:06.304791Z 0 [Note] Shutting down plugin 'ARCHIVE'
+[beanshell] 2025-01-28T01:33:06.304793Z 0 [Note] Shutting down plugin 'PERFORMANCE_SCHEMA'
+[beanshell] 2025-01-28T01:33:06.304817Z 0 [Note] Shutting down plugin 'MRG_MYISAM'
+[beanshell] 2025-01-28T01:33:06.304822Z 0 [Note] Shutting down plugin 'MyISAM'
+[beanshell] 2025-01-28T01:33:06.304827Z 0 [Note] Shutting down plugin 'INNODB_SYS_VIRTUAL'
+[beanshell] 2025-01-28T01:33:06.304829Z 0 [Note] Shutting down plugin 'INNODB_SYS_DATAFILES'
+[beanshell] 2025-01-28T01:33:06.304830Z 0 [Note] Shutting down plugin 'INNODB_SYS_TABLESPACES'
+[beanshell] 2025-01-28T01:33:06.304831Z 0 [Note] Shutting down plugin 'INNODB_SYS_FOREIGN_COLS'
+[beanshell] 2025-01-28T01:33:06.304832Z 0 [Note] Shutting down plugin 'INNODB_SYS_FOREIGN'
+[beanshell] 2025-01-28T01:33:06.304833Z 0 [Note] Shutting down plugin 'INNODB_SYS_FIELDS'
+[beanshell] 2025-01-28T01:33:06.304834Z 0 [Note] Shutting down plugin 'INNODB_SYS_COLUMNS'
+[beanshell] 2025-01-28T01:33:06.304835Z 0 [Note] Shutting down plugin 'INNODB_SYS_INDEXES'
+[beanshell] 2025-01-28T01:33:06.304837Z 0 [Note] Shutting down plugin 'INNODB_SYS_TABLESTATS'
+[beanshell] 2025-01-28T01:33:06.304839Z 0 [Note] Shutting down plugin 'INNODB_SYS_TABLES'
+[beanshell] 2025-01-28T01:33:06.304840Z 0 [Note] Shutting down plugin 'INNODB_FT_INDEX_TABLE'
+[beanshell] 2025-01-28T01:33:06.304841Z 0 [Note] Shutting down plugin 'INNODB_FT_INDEX_CACHE'
+[beanshell] 2025-01-28T01:33:06.304842Z 0 [Note] Shutting down plugin 'INNODB_FT_CONFIG'
+[beanshell] 2025-01-28T01:33:06.304843Z 0 [Note] Shutting down plugin 'INNODB_FT_BEING_DELETED'
+[beanshell] 2025-01-28T01:33:06.304844Z 0 [Note] Shutting down plugin 'INNODB_FT_DELETED'
+[beanshell] 2025-01-28T01:33:06.304846Z 0 [Note] Shutting down plugin 'INNODB_FT_DEFAULT_STOPWORD'
+[beanshell] 2025-01-28T01:33:06.304847Z 0 [Note] Shutting down plugin 'INNODB_METRICS'
+[beanshell] 2025-01-28T01:33:06.304848Z 0 [Note] Shutting down plugin 'INNODB_TEMP_TABLE_INFO'
+[beanshell] 2025-01-28T01:33:06.304850Z 0 [Note] Shutting down plugin 'INNODB_BUFFER_POOL_STATS'
+[beanshell] 2025-01-28T01:33:06.304851Z 0 [Note] Shutting down plugin 'INNODB_BUFFER_PAGE_LRU'
+[beanshell] 2025-01-28T01:33:06.304852Z 0 [Note] Shutting down plugin 'INNODB_BUFFER_PAGE'
+[beanshell] 2025-01-28T01:33:06.304853Z 0 [Note] Shutting down plugin 'INNODB_CMP_PER_INDEX_RESET'
+[beanshell] 2025-01-28T01:33:06.304854Z 0 [Note] Shutting down plugin 'INNODB_CMP_PER_INDEX'
+[beanshell] 2025-01-28T01:33:06.304855Z 0 [Note] Shutting down plugin 'INNODB_CMPMEM_RESET'
+[beanshell] 2025-01-28T01:33:06.304856Z 0 [Note] Shutting down plugin 'INNODB_CMPMEM'
+[beanshell] 2025-01-28T01:33:06.304858Z 0 [Note] Shutting down plugin 'INNODB_CMP_RESET'
+[beanshell] 2025-01-28T01:33:06.304859Z 0 [Note] Shutting down plugin 'INNODB_CMP'
+[beanshell] 2025-01-28T01:33:06.304860Z 0 [Note] Shutting down plugin 'INNODB_LOCK_WAITS'
+[beanshell] 2025-01-28T01:33:06.304861Z 0 [Note] Shutting down plugin 'INNODB_LOCKS'
+[beanshell] 2025-01-28T01:33:06.304862Z 0 [Note] Shutting down plugin 'INNODB_TRX'
+[beanshell] 2025-01-28T01:33:06.304863Z 0 [Note] Shutting down plugin 'InnoDB'
+[beanshell] 2025-01-28T01:33:06.305024Z 0 [Note] InnoDB: FTS optimize thread exiting.
+[beanshell] 2025-01-28T01:33:06.305093Z 0 [Note] InnoDB: Starting shutdown...
+[beanshell] 2025-01-28T01:33:06.405371Z 0 [Note] InnoDB: Dumping buffer pool(s) to /var/lib/mysql/ib_buffer_pool
+[beanshell] 2025-01-28T01:33:06.406527Z 0 [Note] InnoDB: Buffer pool(s) dump completed at 250128  1:33:06
+[beanshell] 2025-01-28T01:33:08.047287Z 0 [Note] InnoDB: Shutdown completed; log sequence number 12219428
+[beanshell] 2025-01-28T01:33:08.047518Z 0 [Note] InnoDB: Removed temporary tablespace data file: "ibtmp1"
+[beanshell] 2025-01-28T01:33:08.047527Z 0 [Note] Shutting down plugin 'MEMORY'
+[beanshell] 2025-01-28T01:33:08.047530Z 0 [Note] Shutting down plugin 'CSV'
+[beanshell] 2025-01-28T01:33:08.047531Z 0 [Note] Shutting down plugin 'sha256_password'
+[beanshell] 2025-01-28T01:33:08.047533Z 0 [Note] Shutting down plugin 'mysql_native_password'
+[beanshell] 2025-01-28T01:33:08.047600Z 0 [Note] Shutting down plugin 'binlog'
+[beanshell] 2025-01-28T01:33:08.720052Z 0 [Note] mysqld: Shutdown complete
+[beanshell] 
+[beanshell] 2025-01-28 01:33:09+00:00 [Note] [Entrypoint]: Temporary server stopped
+[beanshell] 
+[beanshell] 2025-01-28 01:33:09+00:00 [Note] [Entrypoint]: MySQL init process done. Ready for start up.
+[beanshell] 
+[beanshell] 2025-01-28T01:33:13.665028Z 0 [Warning] TIMESTAMP with implicit DEFAULT value is deprecated. Please use --explicit_defaults_for_timestamp server option (see documentation for more details).
+[beanshell] 2025-01-28T01:33:13.666021Z 0 [Note] mysqld (mysqld 5.7.44) starting as process 1 ...
+[beanshell] 2025-01-28T01:33:13.667707Z 0 [Note] InnoDB: PUNCH HOLE support available
+[beanshell] 2025-01-28T01:33:13.667720Z 0 [Note] InnoDB: Mutexes and rw_locks use GCC atomic builtins
+[beanshell] 2025-01-28T01:33:13.667723Z 0 [Note] InnoDB: Uses event mutexes
+[beanshell] 2025-01-28T01:33:13.667724Z 0 [Note] InnoDB: GCC builtin __atomic_thread_fence() is used for memory barrier
+[beanshell] 2025-01-28T01:33:13.667726Z 0 [Note] InnoDB: Compressed tables use zlib 1.2.13
+[beanshell] 2025-01-28T01:33:13.667729Z 0 [Note] InnoDB: Using Linux native AIO
+[beanshell] 2025-01-28T01:33:13.667871Z 0 [Note] InnoDB: Number of pools: 1
+[beanshell] 2025-01-28T01:33:13.667953Z 0 [Note] InnoDB: Using CPU crc32 instructions
+[beanshell] 2025-01-28T01:33:13.669718Z 0 [Note] InnoDB: Initializing buffer pool, total size = 128M, instances = 1, chunk size = 128M
+[beanshell] 2025-01-28T01:33:13.673948Z 0 [Note] InnoDB: Completed initialization of buffer pool
+[beanshell] 2025-01-28T01:33:13.675079Z 0 [Note] InnoDB: If the mysqld execution user is authorized, page cleaner thread priority can be changed. See the man page of setpriority().
+[beanshell] 2025-01-28T01:33:13.687242Z 0 [Note] InnoDB: Highest supported file format is Barracuda.
+[beanshell] 2025-01-28T01:33:13.700242Z 0 [Note] InnoDB: Creating shared tablespace for temporary tables
+[beanshell] 2025-01-28T01:33:13.700291Z 0 [Note] InnoDB: Setting file './ibtmp1' size to 12 MB. Physically writing the file full; Please wait ...
+[beanshell] 2025-01-28T01:33:13.712106Z 0 [Note] InnoDB: File './ibtmp1' size is now 12 MB.
+[beanshell] 2025-01-28T01:33:13.712525Z 0 [Note] InnoDB: 96 redo rollback segment(s) found. 96 redo rollback segment(s) are active.
+[beanshell] 2025-01-28T01:33:13.712532Z 0 [Note] InnoDB: 32 non-redo rollback segment(s) are active.
+[beanshell] 2025-01-28T01:33:13.712756Z 0 [Note] InnoDB: Waiting for purge to start
+[beanshell] 2025-01-28T01:33:13.763000Z 0 [Note] InnoDB: 5.7.44 started; log sequence number 12219428
+[beanshell] 2025-01-28T01:33:13.763203Z 0 [Note] Plugin 'FEDERATED' is disabled.
+[beanshell] 2025-01-28T01:33:13.763413Z 0 [Note] InnoDB: Loading buffer pool(s) from /var/lib/mysql/ib_buffer_pool
+[beanshell] 2025-01-28T01:33:13.765970Z 0 [Note] InnoDB: Buffer pool(s) load completed at 250128  1:33:13
+[beanshell] 2025-01-28T01:33:13.767972Z 0 [Note] Found ca.pem, server-cert.pem and server-key.pem in data directory. Trying to enable SSL support using them.
+[beanshell] 2025-01-28T01:33:13.767980Z 0 [Note] Skipping generation of SSL certificates as certificate files are present in data directory.
+[beanshell] 2025-01-28T01:33:13.767982Z 0 [Warning] A deprecated TLS version TLSv1 is enabled. Please use TLSv1.2 or higher.
+[beanshell] 2025-01-28T01:33:13.767983Z 0 [Warning] A deprecated TLS version TLSv1.1 is enabled. Please use TLSv1.2 or higher.
+[beanshell] 2025-01-28T01:33:13.768270Z 0 [Warning] CA certificate ca.pem is self signed.
+[beanshell] 2025-01-28T01:33:13.768284Z 0 [Note] Skipping generation of RSA key pair as key files are present in data directory.
+[beanshell] 2025-01-28T01:33:13.768416Z 0 [Note] Server hostname (bind-address): '*'; port: 3306
+[beanshell] 2025-01-28T01:33:13.768436Z 0 [Note] IPv6 is available.
+[beanshell] 2025-01-28T01:33:13.768445Z 0 [Note]   - '::' resolves to '::';
+[beanshell] 2025-01-28T01:33:13.768453Z 0 [Note] Server socket created on IP: '::'.
+[beanshell] 2025-01-28T01:33:13.775591Z 0 [Warning] Insecure configuration for --pid-file: Location '/var/run/mysqld' in the path is accessible to all OS users. Consider choosing a different directory.
+[beanshell] 2025-01-28T01:33:13.780002Z 0 [Note] Event Scheduler: Loaded 0 events
+[beanshell] 2025-01-28T01:33:13.780355Z 0 [Note] mysqld: ready for connections.
+[beanshell] Version: '5.7.44'  socket: '/var/run/mysqld/mysqld.sock'  port: 3306  MySQL Community Server (GPL)
+[beanshell] 
+     [echo] Executing commands: 
+     [echo] 
+     [echo] docker stats --no-stream
+     [echo] 
+     [exec] CONTAINER ID   NAME              CPU %     MEM USAGE / LIMIT    MEM %     NET I/O      BLOCK I/O        PIDS
+     [exec] c0bbc413d179   localhost_mysql   0.05%     16.24GiB / 62.4GiB   26.03%    8.4kB / 0B   57.5MB / 879MB   28
+[stopwatch] [stop.app.server.0: 286:45.991 sec]
