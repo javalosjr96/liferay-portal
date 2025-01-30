@@ -25,4 +25,4 @@ Import-Package:\
 	!org.jsoup.*,\
 	\
 	*
--fixupmessages "Classes found in the wrong directory"; restrict:=error; is:=ignore
+-fixupmessages "Classes found in the wrong directory"; restrict:=error; is:=warning
