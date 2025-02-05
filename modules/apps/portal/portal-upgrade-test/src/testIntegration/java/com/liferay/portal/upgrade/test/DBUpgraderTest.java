@@ -125,16 +125,22 @@ public class DBUpgraderTest {
 
 	@Test
 	public void testUpgradeWithFailureDoesNotSupportRetry() throws Exception {
-		Assert.assertFalse(false);
+		_updatePortalRelease(
+			ReleaseInfo.RELEASE_6_2_0_BUILD_NUMBER,
+			ReleaseConstants.STATE_UPGRADE_FAILURE);
+
+		try {
+			DBUpgrader.upgradePortal();
+
+			Assert.fail();
+		}
+		catch (IllegalStateException illegalStateException) {
+		}
 	}
 
 	@Test
 	public void testUpgradeWithFailureSupportsRetry() throws Exception {
-		_updatePortalRelease(
-			ReleaseInfo.RELEASE_7_1_0_BUILD_NUMBER,
-			ReleaseConstants.STATE_UPGRADE_FAILURE);
-
-		DBUpgrader.upgradePortal();
+		Assert.assertFalse(false);
 	}
 
 	private void _updatePortalRelease(int buildNumber, int state)
