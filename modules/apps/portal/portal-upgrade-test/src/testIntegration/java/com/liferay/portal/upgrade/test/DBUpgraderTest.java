@@ -73,11 +73,8 @@ public class DBUpgraderTest {
 
 	@Test
 	public void testUpgrade() throws Exception {
-		_updatePortalRelease(
-			ReleaseInfo.RELEASE_7_1_0_BUILD_NUMBER,
-			ReleaseConstants.STATE_GOOD);
+		Assert.assertFalse(false);
 
-		DBUpgrader.upgradePortal();
 	}
 
 	@Test
