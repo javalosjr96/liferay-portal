@@ -230,16 +230,18 @@ public class DBUpgrader {
 	}
 
 	public static void upgradeModules() {
-		_registerModuleServiceLifecycle("portal.initialized");
-
 		if (_upgradeClient) {
+			_registerModuleServiceLifecycle("portal.initialized");
+
 			DependencyManagerSyncUtil.sync();
 		}
 
 		PortalCacheHelperUtil.clearPortalCaches(
 			PortalCacheManagerNames.MULTI_VM);
 
-		_registerModuleServiceLifecycle("portlets.initialized");
+		if (_upgradeClient) {
+			_registerModuleServiceLifecycle("portlets.initialized");
+		}
 
 		if (_upgradeClient || StartupHelperUtil.isNewRelease()) {
 			IndexUpdaterUtil.updateAllIndexes();
