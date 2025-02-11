@@ -13,6 +13,8 @@ import com.liferay.portal.events.EventsProcessorUtil;
 import com.liferay.portal.events.ShutdownHelperUtil;
 import com.liferay.portal.events.StartupAction;
 import com.liferay.portal.events.StartupHelperUtil;
+import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
+import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.cache.thread.local.Lifecycle;
 import com.liferay.portal.kernel.cache.thread.local.ThreadLocalCacheManager;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
@@ -382,12 +384,7 @@ public class MainServlet extends HttpServlet {
 			_log.error(exception);
 		}
 
-		if (DBUpgrader.isUpgradeDatabaseAutoRunEnabled()) {
-			DBUpgrader.upgradeModules();
-
-			StartupHelperUtil.setUpgrading(false);
-		}
-		else if (PropsValues.DATABASE_INDEXES_UPDATE_ON_STARTUP &&
+		if (PropsValues.DATABASE_INDEXES_UPDATE_ON_STARTUP &&
 				 !StartupHelperUtil.isDBNew()) {
 
 			IndexUpdaterUtil.updateAllIndexes();
@@ -1254,6 +1251,9 @@ public class MainServlet extends HttpServlet {
 					"service.version", ReleaseInfo.getVersion()
 				).build()));
 
+		PortalCacheHelperUtil.clearPortalCaches(
+			PortalCacheManagerNames.MULTI_VM);
+
 		_serviceRegistrations.add(
 			bundleContext.registerService(
 				ModuleServiceLifecycle.class,
@@ -1266,6 +1266,8 @@ public class MainServlet extends HttpServlet {
 				).put(
 					"service.version", ReleaseInfo.getVersion()
 				).build()));
+
+		StartupHelperUtil.setUpgrading(false);
 
 		_serviceRegistrations.add(
 			bundleContext.registerService(
