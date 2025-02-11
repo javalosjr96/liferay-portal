@@ -139,12 +139,16 @@ public class VerifyResourcePermissions extends VerifyProcess {
 
 		sb.append(" from ");
 		sb.append(verifiableResourcedModel.getTableName());
-		sb.append(" left join ResourcePermission on (ResourcePermission.");
-		sb.append("companyId = ");
+		sb.append(" where ");
+		sb.append(verifiableResourcedModel.getTableName());
+		sb.append(".companyId = ");
 		sb.append(role.getCompanyId());
-		sb.append(" and ResourcePermission.name = '");
+		sb.append(" AND NOT EXISTS (SELECT 1 FROM ResourcePermission where ");
+		sb.append("ResourcePermission.companyId = ");
+		sb.append(role.getCompanyId());
+		sb.append(" and ResourcePermission.name = ' ");
 		sb.append(verifiableResourcedModel.getModelName());
-		sb.append("' and ResourcePermission.scope = ");
+		sb.append("'and ResourcePermission.scope = ");
 		sb.append(ResourceConstants.SCOPE_INDIVIDUAL);
 		sb.append(" and ResourcePermission.primKeyId = ");
 		sb.append(verifiableResourcedModel.getTableName());
@@ -152,11 +156,7 @@ public class VerifyResourcePermissions extends VerifyProcess {
 		sb.append(verifiableResourcedModel.getPrimaryKeyColumnName());
 		sb.append(" and ResourcePermission.roleId = ");
 		sb.append(role.getRoleId());
-		sb.append(") where ");
-		sb.append(verifiableResourcedModel.getTableName());
-		sb.append(".companyId = ");
-		sb.append(role.getCompanyId());
-		sb.append(" and ResourcePermission.primKeyId is NULL");
+		sb.append(" );");
 
 		return SQLTransformer.transform(sb.toString());
 	}
