@@ -121,6 +121,12 @@ public class DBUpgraderTest {
 			ReflectionTestUtil.setFieldValue(
 				StartupHelperUtil.class, "_newRelease", newRelease);
 		}
+
+		try {
+			Thread.sleep(300000);
+		} catch (InterruptedException e) {
+			System.err.println("Thread interrupted!");
+		}
 	}
 
 	@Test
