@@ -409,7 +409,7 @@ public class DBUpgrader {
 	private static void _registerModuleServiceLifecycle(
 		String moduleServiceLifecycle) {
 
-		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
+		BundleContext bundleContext = _systemBundleUtil.getBundleContext();
 
 		bundleContext.registerService(
 			ModuleServiceLifecycle.class,
@@ -433,6 +433,8 @@ public class DBUpgrader {
 	private static final Version _VERSION_7010 = new Version(0, 0, 6);
 
 	private static final Log _log = LogFactoryUtil.getLog(DBUpgrader.class);
+
+	private static volatile SystemBundleUtil _systemBundleUtil;
 
 	private static volatile Appender _appender;
 	private static volatile StopWatch _stopWatch;

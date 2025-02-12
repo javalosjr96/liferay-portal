@@ -7,15 +7,19 @@ package com.liferay.portal.upgrade.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.concurrent.DCLSingleton;
+import com.liferay.portal.db.partition.db.DBPartitionDB;
+import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.events.StartupHelperUtil;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.model.ReleaseConstants;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.tools.DBUpgrader;
@@ -24,6 +28,7 @@ import com.liferay.portal.util.PropsUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.util.Objects;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -33,6 +38,8 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.FrameworkUtil;
 
 /**
  * @author Luis Ortiz
@@ -92,7 +99,24 @@ public class DBUpgraderTest {
 		String upgradeDatabaseAutoRun = PropsUtil.get(
 			PropsKeys.UPGRADE_DATABASE_AUTO_RUN);
 
-		try {
+		try (AutoCloseable autoCloseable =
+				 ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					 DBUpgrader.class, "_systemBundleUtil",
+					 ProxyUtil.newProxyInstance(
+						 DBUpgrader.class.getClassLoader(),
+						 new Class<?>[] {DBUpgrader.class},
+						 (proxy, method, args) -> {
+							 if (Objects.equals(
+								 method.getName(), "getBundleContext")) {
+
+								 Bundle testBundle = FrameworkUtil.getBundle(DBUpgraderTest.class);
+
+								 return testBundle.getBundleContext();
+							 }
+
+							 return method.invoke(_systemBundleUtil, args);
+						 }))) {
+
 			PropsUtil.set(PropsKeys.UPGRADE_DATABASE_AUTO_RUN, "false");
 
 			DBUpgrader.upgradeModules();
@@ -114,6 +138,11 @@ public class DBUpgraderTest {
 
 			Assert.assertFalse(dbInspector.hasIndex("Lock_", "IX_TEST"));
 		}
+		catch (Exception exception) {
+
+			System.out.println(exception);
+		}
+
 		finally {
 			PropsUtil.set(
 				PropsKeys.UPGRADE_DATABASE_AUTO_RUN, upgradeDatabaseAutoRun);
@@ -151,9 +180,9 @@ public class DBUpgraderTest {
 		throws Exception {
 
 		try (Connection connection = DataAccess.getConnection();
-			PreparedStatement preparedStatement = connection.prepareStatement(
-				"update Release_ set buildNumber = ?, state_ = ? where " +
-					"releaseId = ?")) {
+			 PreparedStatement preparedStatement = connection.prepareStatement(
+				 "update Release_ set buildNumber = ?, state_ = ? where " +
+				 "releaseId = ?")) {
 
 			preparedStatement.setInt(1, buildNumber);
 			preparedStatement.setInt(2, state);
@@ -168,6 +197,8 @@ public class DBUpgraderTest {
 		dclSingleton.destroy(null);
 	}
 
+
+	private static SystemBundleUtil _systemBundleUtil;
 	private static Connection _connection;
 	private static int _currentBuildNumber;
 	private static int _currentState;
