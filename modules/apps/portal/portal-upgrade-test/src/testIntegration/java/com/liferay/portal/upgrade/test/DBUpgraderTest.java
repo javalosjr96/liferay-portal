@@ -56,6 +56,12 @@ public class DBUpgraderTest {
 
 		_upgrading = ReflectionTestUtil.getAndSetFieldValue(
 			StartupHelperUtil.class, "_upgrading", true);
+
+		_portalInitialized = ReflectionTestUtil.getAndSetFieldValue(
+			DBUpgrader.class, "_PORTAL_INITIALIZED_", "test.portal.initialized");
+
+		_portletsInitialized = ReflectionTestUtil.getAndSetFieldValue(
+			DBUpgrader.class, "_PORTLETS_INITIALIZED_", "test.portlets.initialized");
 	}
 
 	@AfterClass
@@ -64,6 +70,12 @@ public class DBUpgraderTest {
 
 		ReflectionTestUtil.setFieldValue(
 			StartupHelperUtil.class, "_upgrading", _upgrading);
+
+		ReflectionTestUtil.setFieldValue(
+			DBUpgrader.class, "_PORTAL_INITIALIZED_", _portalInitialized);
+
+		ReflectionTestUtil.setFieldValue(
+			DBUpgrader.class, "_PORTLETS_INITIALIZED_", _portletsInitialized);
 	}
 
 	@After
@@ -167,6 +179,10 @@ public class DBUpgraderTest {
 
 		dclSingleton.destroy(null);
 	}
+
+	private static String _portalInitialized;
+
+	private static String _portletsInitialized;
 
 	private static Connection _connection;
 	private static int _currentBuildNumber;
