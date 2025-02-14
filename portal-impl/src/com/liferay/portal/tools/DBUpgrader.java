@@ -430,13 +430,13 @@ public class DBUpgrader {
 		db.runSQL("update CompanyInfo set key_ = null");
 	}
 
+	private static final String _PORTAL_INITIALIZED_ = "portal.initialized";
+
+	private static final String _PORTLETS_INITIALIZED_ = "portlets.initialized";
+
 	private static final Version _VERSION_7010 = new Version(0, 0, 6);
 
 	private static final Log _log = LogFactoryUtil.getLog(DBUpgrader.class);
-
-	private static String _PORTLETS_INITIALIZED_ = "portlets.initialized";
-	
-	private static String _PORTAL_INITIALIZED_ = "portal.initialized";
 
 	private static volatile Appender _appender;
 	private static volatile StopWatch _stopWatch;
