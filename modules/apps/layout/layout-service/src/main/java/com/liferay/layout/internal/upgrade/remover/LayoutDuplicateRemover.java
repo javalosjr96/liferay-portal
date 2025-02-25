@@ -8,10 +8,10 @@ import com.liferay.portal.kernel.service.LayoutLocalService;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
+
 @Component(
 	property = "service.tables=portal",
-	service = DuplicateRemover.class
-)
+	service = DuplicateRemover.class)
 
 public class LayoutDuplicateRemover extends PortalDuplicateRemover {
 
