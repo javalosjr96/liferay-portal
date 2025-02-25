@@ -7,6 +7,8 @@ package com.liferay.portal.db.index;
 
 import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.portal.db.DBResourceUtil;
+import com.liferay.portal.db.remover.DuplicateRemover;
+import com.liferay.portal.db.remover.PortalDuplicateRemover;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
@@ -25,6 +27,7 @@ import com.liferay.portal.kernel.util.Validator;
 import java.sql.Connection;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,7 +40,11 @@ import java.util.concurrent.Future;
 import java.util.concurrent.FutureTask;
 
 import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 import org.osgi.framework.BundleEvent;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.InvalidSyntaxException;
+import org.osgi.framework.ServiceReference;
 import org.osgi.util.tracker.BundleTracker;
 import org.osgi.util.tracker.BundleTrackerCustomizer;
 
@@ -245,10 +252,40 @@ public class IndexUpdaterUtil {
 		return true;
 	}
 
+	public static void _deleteDuplicateEntries(String tableName, String indexesSQL)
+		throws InvalidSyntaxException {
+		BundleContext bundleContext =
+			FrameworkUtil.getBundle(DuplicateRemover.class).getBundleContext();
+
+		DuplicateRemover duplicateRemover = new PortalDuplicateRemover();
+
+		if (tableName.equals("layout") || tableName.equals("Layout")) {
+
+			String filter = ("tables=test");
+
+			Collection<ServiceReference<DuplicateRemover>> serviceReference =
+				bundleContext.getServiceReferences(
+					DuplicateRemover.class, filter);
+
+			if (serviceReference != null) {
+				duplicateRemover =
+					bundleContext.getService(
+						serviceReference.iterator().next());
+			}
+			else {
+				throw new RuntimeException();
+			}
+
+			System.out.println(duplicateRemover.getTableName());
+		}
+	}
+
 	private static void _updateIndexes(String tableName, String indexesSQL)
 		throws Exception {
 
 		DB db = DBManagerUtil.getDB();
+
+		_deleteDuplicateEntries(tableName, indexesSQL);
 
 		db.process(
 			companyId -> {
@@ -280,5 +317,4 @@ public class IndexUpdaterUtil {
 		Collections.synchronizedList(new ArrayList<Future<?>>());
 	private static final Set<String> _processedServletContextNames =
 		ConcurrentHashMap.newKeySet();
-
 }
