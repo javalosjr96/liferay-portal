@@ -123,15 +123,8 @@ public class UpgradeExecutor {
 
 			_executeUpgradeInfos(bundle, upgradeInfos);
 
-			Release release = _releaseLocalService.fetchRelease(
+			return _releaseLocalService.fetchRelease(
 				bundleSymbolicName);
-
-			if (release != null) {
-				_releasePublisher.publish(
-					release, _isInitialRelease(upgradeInfos));
-			}
-
-			return release;
 		}
 		catch (Exception exception) {
 			Release release = _releaseLocalService.fetchRelease(
@@ -219,8 +212,12 @@ public class UpgradeExecutor {
 				release.setVerified(false);
 				release.setState(state);
 
+				_releasePublisher.publish(
+					release, _isInitialRelease(upgradeInfos));
+
 				_releaseLocalService.updateRelease(release);
 			}
+
 		}
 
 		if (_requiresUpdateIndexes(bundle, upgradeInfos)) {

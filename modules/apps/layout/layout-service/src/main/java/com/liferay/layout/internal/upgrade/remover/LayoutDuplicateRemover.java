@@ -10,7 +10,7 @@ import org.osgi.service.component.annotations.Reference;
 
 
 @Component(
-	property = "service.tables=portal",
+	property = "service.tables=test",
 	service = DuplicateRemover.class)
 
 public class LayoutDuplicateRemover extends PortalDuplicateRemover {

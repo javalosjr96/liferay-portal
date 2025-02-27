@@ -254,30 +254,24 @@ public class IndexUpdaterUtil {
 
 	public static void _deleteDuplicateEntries(String tableName, String indexesSQL)
 		throws InvalidSyntaxException {
-		BundleContext bundleContext =
-			FrameworkUtil.getBundle(DuplicateRemover.class).getBundleContext();
+ 		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
 		DuplicateRemover duplicateRemover = new PortalDuplicateRemover();
 
-		if (tableName.equals("layout") || tableName.equals("Layout")) {
-
-			String filter = ("tables=test");
+		String filter = ("(service.tables=test)");
 
 			Collection<ServiceReference<DuplicateRemover>> serviceReference =
 				bundleContext.getServiceReferences(
 					DuplicateRemover.class, filter);
 
-			if (serviceReference != null) {
+			if (serviceReference != null && !serviceReference.isEmpty()) {
 				duplicateRemover =
 					bundleContext.getService(
 						serviceReference.iterator().next());
 			}
-			else {
-				throw new RuntimeException();
-			}
 
 			System.out.println(duplicateRemover.getTableName());
-		}
+
 	}
 
 	private static void _updateIndexes(String tableName, String indexesSQL)
