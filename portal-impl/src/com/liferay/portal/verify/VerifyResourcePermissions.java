@@ -152,7 +152,7 @@ public class VerifyResourcePermissions extends VerifyProcess {
 		sb.append(verifiableResourcedModel.getPrimaryKeyColumnName());
 		sb.append(" and ResourcePermission.roleId = ");
 		sb.append(role.getRoleId());
-		sb.append(") where ");
+		sb.append(" and ResourcePermission.viewActionId = 1) where ");
 		sb.append(verifiableResourcedModel.getTableName());
 		sb.append(".companyId = ");
 		sb.append(role.getCompanyId());
