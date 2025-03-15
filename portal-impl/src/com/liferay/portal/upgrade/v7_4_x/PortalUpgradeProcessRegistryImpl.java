@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.upgrade.BaseExternalReferenceCodeUpgradeProcess
 import com.liferay.portal.kernel.upgrade.BaseUuidUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.CTModelUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.DBColumnSizeUpgradeProcess;
+import com.liferay.portal.kernel.upgrade.DefaultDuplicateRemovalProcess;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.GuestUnsupportedResourcePermissionsUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
@@ -589,6 +590,17 @@ public class PortalUpgradeProcessRegistryImpl
 
 		upgradeVersionTreeMap.put(
 			new Version(31, 16, 0), AssetVocabularyGroupRelTable.create());
+
+		upgradeVersionTreeMap.put(
+			new Version(31, 16, 1),
+			new DefaultDuplicateRemovalProcess("Ticket", "key_"),
+			new DefaultDuplicateRemovalProcess(
+				"PortletItem", "groupId, classNameId, portletId, name"),
+			new DefaultDuplicateRemovalProcess(
+				"SocialActivitySetting",
+				"groupId, classNameId, activityType, name, ctCollectionId"),
+			new DefaultDuplicateRemovalProcess(
+				"PortalPreferences", "ownerType, ownerId"));
 	}
 
 }
