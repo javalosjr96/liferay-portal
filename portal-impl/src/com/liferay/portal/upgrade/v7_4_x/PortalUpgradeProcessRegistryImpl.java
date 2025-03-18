@@ -602,10 +602,10 @@ public class PortalUpgradeProcessRegistryImpl
 			new DefaultDuplicateRemovalProcess(
 				"PortletItem", "groupId", "classNameId", "portletId", "name"),
 			new DefaultDuplicateRemovalProcess(
-				"SocialActivitySetting",
-				"groupId", "classNameId", "activityType", "name", "ctCollectionId"),
+				"SocialActivitySetting", "groupId", "classNameId",
+				"activityType", "name", "ctCollectionId"),
 			new DefaultDuplicateRemovalProcess(
-				"PortalPreferences", "ownerType"," ownerId"));
+				"PortalPreferences", "ownerType", " ownerId"));
 	}
 
 }

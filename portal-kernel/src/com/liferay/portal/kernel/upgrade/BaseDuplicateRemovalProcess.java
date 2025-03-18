@@ -31,8 +31,8 @@ public class BaseDuplicateRemovalProcess extends UpgradeProcess {
 		String tableName, String orderBy, String... columns) {
 
 		_tableName = tableName;
-		_columns = String.join(", ", columns);
 		_orderBy = orderBy;
+		_columns = String.join(", ", columns);
 	}
 
 	@Override
