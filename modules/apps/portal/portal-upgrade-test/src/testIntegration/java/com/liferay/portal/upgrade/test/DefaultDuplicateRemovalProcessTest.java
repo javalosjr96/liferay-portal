@@ -60,14 +60,14 @@ public class DefaultDuplicateRemovalProcessTest {
 					StringBundler.concat(
 						"insert into TestTable values (0, '",
 						RandomTestUtil.randomString(10), "', ",
-						RandomTestUtil.randomLong(1, 9999),
+						RandomTestUtil.randomLong(1, 8999),
 						", 1, 2, 3, 4, 1)"));
 
 				_db.runSQL(
 					StringBundler.concat(
 						"insert into TestTable values (0, '",
 						RandomTestUtil.randomString(10), "', ",
-						RandomTestUtil.randomLong(1, 9999),
+						RandomTestUtil.randomLong(1, 8999),
 						", 1, 2, 3, 4, 1)"));
 
 				_db.runSQL(
