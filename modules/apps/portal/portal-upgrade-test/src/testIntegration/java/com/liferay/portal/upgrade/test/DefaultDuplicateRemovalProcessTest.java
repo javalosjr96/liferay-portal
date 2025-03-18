@@ -85,7 +85,7 @@ public class DefaultDuplicateRemovalProcessTest {
 	}
 
 	@Test
-	public void testUpgradeCTModel() throws Exception {
+	public void testDefaultDuplicateRemovalProcess() throws Exception {
 		String countSQL = StringBundler.concat(
 			"SELECT COUNT(*) FROM TestTable GROUP BY uniqueIndexColumn1, ",
 			"uniqueIndexColumn2, uniqueIndexColumn3, uniqueIndexColumn4 ",

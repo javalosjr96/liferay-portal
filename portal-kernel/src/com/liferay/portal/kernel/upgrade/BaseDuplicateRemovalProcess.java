@@ -110,7 +110,9 @@ public class BaseDuplicateRemovalProcess extends UpgradeProcess {
 			}
 		}
 		catch (Exception exception) {
-			_log.error(exception);
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
+			}
 		}
 
 		return queryResult;
@@ -160,7 +162,9 @@ public class BaseDuplicateRemovalProcess extends UpgradeProcess {
 			}
 		}
 		catch (Exception exception) {
-			_log.error(exception);
+			if (_log.isWarnEnabled()) {
+				_log.warn(exception);
+			}
 		}
 
 		return indexesDuplicatesList;
@@ -170,8 +174,9 @@ public class BaseDuplicateRemovalProcess extends UpgradeProcess {
 		if (_log.isWarnEnabled()) {
 			_log.warn(
 				StringBundler.concat(
-					"Removed ", duplicate.toString(), " from ", _tableName,
-					" for ", _columns));
+					"Deleted duplicate entry from ", _tableName,
+					" table for index columns (", _columns, "): ",
+					duplicate.toString()));
 		}
 	}
 
