@@ -28,10 +28,10 @@ import java.util.Map;
 public class BaseDuplicateRemovalProcess extends UpgradeProcess {
 
 	public BaseDuplicateRemovalProcess(
-		String tableName, String columns, String orderBy) {
+		String tableName, String orderBy, String... columns) {
 
 		_tableName = tableName;
-		_columns = columns;
+		_columns = String.join(", ", columns);
 		_orderBy = orderBy;
 	}
 

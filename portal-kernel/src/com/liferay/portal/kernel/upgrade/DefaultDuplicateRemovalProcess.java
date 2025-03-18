@@ -11,8 +11,8 @@ package com.liferay.portal.kernel.upgrade;
 public class DefaultDuplicateRemovalProcess
 	extends BaseDuplicateRemovalProcess {
 
-	public DefaultDuplicateRemovalProcess(String tableName, String columns) {
-		super(tableName, columns, null);
+	public DefaultDuplicateRemovalProcess(String tableName, String... columns) {
+		super(tableName, null, columns);
 	}
 
 	@Override
