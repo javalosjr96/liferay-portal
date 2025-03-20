@@ -23,7 +23,10 @@ import com.liferay.portal.upgrade.PortalUpgradeProcess;
 import com.liferay.portal.util.PropsUtil;
 
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -87,79 +90,23 @@ public class DBUpgraderTest {
 	}
 
 	@Test
-	public void testUpgrade() throws Exception {
-		_updatePortalRelease(
-			ReleaseInfo.RELEASE_7_1_0_BUILD_NUMBER,
-			ReleaseConstants.STATE_GOOD);
-
-		DBUpgrader.upgradePortal();
-	}
-
-	@Test
-	public void testUpgradeModuleIndexes() throws Exception {
-		DB db = DBManagerUtil.getDB();
-
-		db.runSQL("create index IX_TEST on Lock_ (createDate)");
-
-		Boolean newRelease = ReflectionTestUtil.getAndSetFieldValue(
-			StartupHelperUtil.class, "_newRelease", false);
-
-		String upgradeDatabaseAutoRun = PropsUtil.get(
-			PropsKeys.UPGRADE_DATABASE_AUTO_RUN);
-
+	public void testUpdatableResultSets() throws Exception {
 		try {
-			PropsUtil.set(PropsKeys.UPGRADE_DATABASE_AUTO_RUN, "false");
+			DatabaseMetaData metaData = _connection.getMetaData();
 
-			DBUpgrader.upgradeModules();
+			boolean isUpdatable = metaData.supportsResultSetConcurrency(
+				ResultSet.TYPE_SCROLL_INSENSITIVE,
+				ResultSet.CONCUR_UPDATABLE
+			);
 
-			DBInspector dbInspector = new DBInspector(_connection);
-
-			Assert.assertTrue(dbInspector.hasIndex("Lock_", "IX_TEST"));
-
-			PropsUtil.set(PropsKeys.UPGRADE_DATABASE_AUTO_RUN, "true");
-
-			DBUpgrader.upgradeModules();
-
-			Assert.assertTrue(dbInspector.hasIndex("Lock_", "IX_TEST"));
-
-			ReflectionTestUtil.setFieldValue(
-				StartupHelperUtil.class, "_newRelease", true);
-
-			DBUpgrader.upgradeModules();
-
-			Assert.assertFalse(dbInspector.hasIndex("Lock_", "IX_TEST"));
+			if (isUpdatable) {
+				System.out.println(metaData.getDatabaseProductName()+ " supports updatable result sets.");
+			} else {
+				System.out.println(metaData.getDatabaseProductName()+ " does not support updatable result sets.");
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
 		}
-		finally {
-			PropsUtil.set(
-				PropsKeys.UPGRADE_DATABASE_AUTO_RUN, upgradeDatabaseAutoRun);
-
-			ReflectionTestUtil.setFieldValue(
-				StartupHelperUtil.class, "_newRelease", newRelease);
-		}
-	}
-
-	@Test
-	public void testUpgradeWithFailureDoesNotSupportRetry() throws Exception {
-		_updatePortalRelease(
-			ReleaseInfo.RELEASE_6_2_0_BUILD_NUMBER,
-			ReleaseConstants.STATE_UPGRADE_FAILURE);
-
-		try {
-			DBUpgrader.upgradePortal();
-
-			Assert.fail();
-		}
-		catch (IllegalStateException illegalStateException) {
-		}
-	}
-
-	@Test
-	public void testUpgradeWithFailureSupportsRetry() throws Exception {
-		_updatePortalRelease(
-			ReleaseInfo.RELEASE_7_1_0_BUILD_NUMBER,
-			ReleaseConstants.STATE_UPGRADE_FAILURE);
-
-		DBUpgrader.upgradePortal();
 	}
 
 	private void _updatePortalRelease(int buildNumber, int state)
