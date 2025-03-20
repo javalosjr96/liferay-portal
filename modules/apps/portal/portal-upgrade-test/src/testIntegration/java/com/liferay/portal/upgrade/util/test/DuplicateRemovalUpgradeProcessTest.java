@@ -38,7 +38,7 @@ import org.junit.runner.RunWith;
  * @author Jorge Avalos
  */
 @RunWith(Arquillian.class)
-public class DuplicateRemovalProcessTest {
+public class DuplicateRemovalUpgradeProcessTest {
 
 	@ClassRule
 	@Rule
