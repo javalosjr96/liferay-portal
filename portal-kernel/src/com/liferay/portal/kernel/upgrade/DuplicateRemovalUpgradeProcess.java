@@ -149,8 +149,8 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 			while (resultSet.next()) {
 				String[] columnResults = new String[_columnNames.length];
 
-				for (int i = 1; i <= columnResults.length; i++) {
-					columnResults[i - 1] = resultSet.getString(i);
+				for (int i = 0; i <= columnResults.length; i++) {
+					columnResults[i] = resultSet.getString(i);
 				}
 
 				indexesDuplicatesList.add(columnResults);
