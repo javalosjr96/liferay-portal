@@ -45,7 +45,7 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 	}
 
 	protected List<Map<String, String>> getDuplicatesSQL(
-			String[] duplicatedColumnValues)
+			String[] duplicatedColumnEntry)
 		throws SQLException {
 
 		List<Map<String, String>> queryResult = new ArrayList<>();
@@ -64,12 +64,12 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 		for (int i = 0; i < _columnNames.length; i++) {
 			sb.append(_columnNames[i]);
 
-			if (duplicatedColumnValues[i] == null) {
+			if (duplicatedColumnEntry[i] == null) {
 				sb.append(" is null ");
 			}
 			else {
 				sb.append(" = '");
-				sb.append(_escape(duplicatedColumnValues[i]));
+				sb.append(_escape(duplicatedColumnEntry[i]));
 				sb.append("' ");
 			}
 
@@ -118,8 +118,8 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 			_DB_ESCAPE_STRINGS[1]);
 	}
 
-	private List<String[]> _getDuplicatedColumnValuesList() throws Exception {
-		List<String[]> columnValuesList = new ArrayList<>();
+	private List<String[]> _getDuplicatedColumnEntries() throws Exception {
+		List<String[]> duplicatedColumnEntries = new ArrayList<>();
 
 		StringBundler sb = new StringBundler(7);
 
@@ -142,11 +142,11 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 					columnValues[i] = resultSet.getString(i + 1);
 				}
 
-				columnValuesList.add(columnValues);
+				duplicatedColumnEntries.add(columnValues);
 			}
 		}
 
-		return columnValuesList;
+		return duplicatedColumnEntries;
 	}
 
 	private void _logDeletedDuplicates(Map<String, String> duplicate) {
@@ -161,17 +161,16 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 	}
 
 	private void _removeDuplicates() throws Exception {
-		List<String[]> duplicatedColumnValuesList =
-			_getDuplicatedColumnValuesList();
+		List<String[]> duplicatedColumnEntries = _getDuplicatedColumnEntries();
 
-		for (String[] duplicatedColumnValues : duplicatedColumnValuesList) {
-			List<Map<String, String>> duplicatesList = getDuplicatesSQL(
-				duplicatedColumnValues);
+		for (String[] duplicatedColumnEntry : duplicatedColumnEntries) {
+			List<Map<String, String>> duplicates = getDuplicatesSQL(
+				duplicatedColumnEntry);
 
-			int duplicateCount = duplicatesList.size();
+			int duplicatesCount = duplicates.size();
 
-			for (Map<String, String> duplicate : duplicatesList) {
-				if (duplicateCount == 1) {
+			for (Map<String, String> duplicate : duplicates) {
+				if (duplicatesCount == 1) {
 					break;
 				}
 
@@ -219,7 +218,7 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 				}
 				finally {
 					_logDeletedDuplicates(duplicate);
-					duplicateCount--;
+					duplicatesCount--;
 				}
 			}
 		}
