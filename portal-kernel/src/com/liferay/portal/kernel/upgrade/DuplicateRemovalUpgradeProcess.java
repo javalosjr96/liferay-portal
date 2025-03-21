@@ -60,7 +60,7 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 			sb.append(_columnNames[i]);
 
 			if (duplicatedColumnValues[i] == null) {
-				sb.append(" IS NULL ");
+				sb.append(" is null ");
 			}
 			else {
 				sb.append(" = '");
