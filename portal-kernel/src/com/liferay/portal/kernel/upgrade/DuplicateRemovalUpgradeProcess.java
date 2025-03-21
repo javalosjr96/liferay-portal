@@ -12,7 +12,6 @@ import com.liferay.portal.kernel.util.StringUtil;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 
 import java.util.ArrayList;
@@ -46,13 +45,19 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 	}
 
 	protected List<Map<String, String>> getDuplicatesSQL(
-		String[] duplicatedColumnValues) {
+			String[] duplicatedColumnValues)
+		throws SQLException {
 
 		List<Map<String, String>> queryResult = new ArrayList<>();
 
 		StringBundler sb = new StringBundler();
 
-		sb.append("select * from ");
+		String[] primaryKeyColumnNames = getPrimaryKeyColumnNames(
+			connection, _tableName);
+
+		sb.append("select ");
+		sb.append(String.join(", ", primaryKeyColumnNames));
+		sb.append(" from ");
 		sb.append(_tableName);
 		sb.append(" where ");
 
@@ -82,19 +87,13 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 				sb.toString());
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
-			ResultSetMetaData metaData = resultSet.getMetaData();
-
-			String[] columnNames = new String[metaData.getColumnCount()];
-
-			for (int i = 0; i < columnNames.length; i++) {
-				columnNames[i] = metaData.getColumnName(i + 1);
-			}
-
 			while (resultSet.next()) {
 				Map<String, String> queryMap = new LinkedHashMap<>();
 
-				for (String columnName : columnNames) {
-					queryMap.put(columnName, resultSet.getString(columnName));
+				for (String primaryKeyColumnName : primaryKeyColumnNames) {
+					queryMap.put(
+						primaryKeyColumnName,
+						resultSet.getString(primaryKeyColumnName));
 				}
 
 				queryResult.add(queryMap);
