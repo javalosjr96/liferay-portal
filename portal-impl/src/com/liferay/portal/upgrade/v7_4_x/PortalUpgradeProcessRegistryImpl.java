@@ -603,14 +603,15 @@ public class PortalUpgradeProcessRegistryImpl
 		upgradeVersionTreeMap.put(
 			new Version(31, 18, 1),
 			new DuplicateRemovalUpgradeProcess(
-				"PortalPreferences", "ownerType, ownerId"),
+				"PortalPreferences", "ownerType", "ownerId"),
 			new DuplicateRemovalUpgradeProcess(
-				"PortletItem", "groupId, classNameId, portletId, name"),
+				"PortletItem", "groupId", "classNameId", "portletId", "name"),
 			new DuplicateRemovalUpgradeProcess(
 				"SocialActivitySetting",
-				"groupId, classNameId, activityType, name, ctCollectionId"),
+				"groupId", "classNameId", "activityType", "name", "ctCollectionId"),
 			new DuplicateRemovalUpgradeProcess(
-				"Ticket", "key_", "ticketId asc"));
+				"Ticket", new String[]{"ticketId"},"asc","key_"));
+
 	}
 
 }

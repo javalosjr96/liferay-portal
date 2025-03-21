@@ -26,16 +26,16 @@ import java.util.Map;
  */
 public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 
-	public DuplicateRemovalUpgradeProcess(String tableName, String columns) {
-		this(tableName, columns, null);
+	public DuplicateRemovalUpgradeProcess(String tableName, String... columns) {
+		this(tableName, null, null, columns);
 	}
 
 	public DuplicateRemovalUpgradeProcess(
-		String tableName, String columns, String orderByClause) {
+		String tableName, String[] orderByColumns, String sortOrder, String... columns) {
 
 		_tableName = tableName;
-		_columns = columns;
-		_orderByClause = orderByClause;
+		_columns = String.join(", ", columns);
+		_orderByClause = "test";
 	}
 
 	@Override
