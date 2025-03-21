@@ -31,7 +31,7 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 	}
 
 	public DuplicateRemovalUpgradeProcess(
-		String tableName, String[] columns,String orderByClause) {
+		String tableName, String[] columns, String orderByClause) {
 
 		_tableName = tableName;
 		_columns = String.join(", ", columns);
