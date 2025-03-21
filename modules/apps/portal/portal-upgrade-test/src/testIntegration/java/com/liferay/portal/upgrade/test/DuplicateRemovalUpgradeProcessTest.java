@@ -123,7 +123,7 @@ public class DuplicateRemovalUpgradeProcessTest {
 		_assertDuplicates(true);
 
 		try (PreparedStatement preparedStatement = _connection.prepareStatement(
-				"SELECT primaryKeyColumn FROM TestTable");
+				"select primaryKeyColumn from TestTable");
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			Assert.assertTrue(resultSet.next());
@@ -155,7 +155,7 @@ public class DuplicateRemovalUpgradeProcessTest {
 		_assertDuplicates(true);
 
 		try (PreparedStatement preparedStatement = _connection.prepareStatement(
-				"SELECT primaryKeyColumn FROM TestTable");
+				"select primaryKeyColumn from TestTable");
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			Assert.assertTrue(resultSet.next());
@@ -166,8 +166,8 @@ public class DuplicateRemovalUpgradeProcessTest {
 
 	private void _assertDuplicates(boolean removed) throws SQLException {
 		String countSQL =
-			"SELECT COUNT(*) FROM TestTable GROUP BY column1, column2, " +
-				"column3, column4 HAVING COUNT(*) > 1";
+			"select count(*) from TestTable group by column1, column2, " +
+				"column3, column4 having count(*) > 1";
 
 		if (removed) {
 			_companyLocalService.forEachCompany(
