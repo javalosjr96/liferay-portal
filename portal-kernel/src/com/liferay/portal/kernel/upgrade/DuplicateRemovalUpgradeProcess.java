@@ -86,19 +86,15 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 
 			String[] columnNames = new String[metaData.getColumnCount()];
 
-			for (int i = 1; i <= columnNames.length; i++) {
-				String columnName = metaData.getColumnName(i);
-
-				columnNames[i - 1] = columnName;
+			for (int i = 0; i <= columnNames.length; i++) {
+				columnNames[i] = metaData.getColumnName(i);
 			}
 
 			while (resultSet.next()) {
 				Map<String, String> queryMap = new LinkedHashMap<>();
 
 				for (int i = 0; i < columnNames.length; i++) {
-					String value = resultSet.getString(columnNames[i]);
-
-					queryMap.put(columnNames[i], value);
+					queryMap.put(columnNames[i], resultSet.getString(columnNames[i]));
 				}
 
 				queryResult.add(queryMap);
