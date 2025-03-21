@@ -140,10 +140,8 @@ public class DuplicateRemovalUpgradeProcess extends UpgradeProcess {
 		sb.append(String.join(", ", _columnNames));
 		sb.append(" having count(*) > 1");
 
-		String sql = sb.toString();
-
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				sql);
+				sb.toString());
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			while (resultSet.next()) {
