@@ -78,11 +78,11 @@ import org.apache.commons.io.FileUtils;
 import org.apache.felix.cm.PersistenceManager;
 import org.apache.logging.log4j.ThreadContext;
 
+
 /**
  * @author Sam Ziemer
  */
 public class UpgradeReport {
-
 	public UpgradeReport() {
 		_initialBuildNumber = _getBuildNumber();
 
@@ -150,7 +150,9 @@ public class UpgradeReport {
 	}
 
 	private List<MessagesPrinter> _getMessagesPrinters(
-		Map<String, Map<String, Integer>> map1) {
+		Map<String, Map<String, Integer>> map1, boolean includeOccurrences) {
+
+		_includeOccurrences = includeOccurrences;
 
 		List<MessagesPrinter> messagesPrinters = new ArrayList<>();
 
@@ -548,7 +550,10 @@ public class UpgradeReport {
 		).put(
 			"execution.time", _executionTimeString
 		).put(
-			"errors", _getMessagesPrinters(upgradeRecorder.getErrorMessages())
+			"data.clean.up",
+			_getMessagesPrinters(upgradeRecorder.getCleanUpMessages(),false)
+		).put(
+			"errors", _getMessagesPrinters(upgradeRecorder.getErrorMessages(),true)
 		).put(
 			"failed.sqls", UpgradeSQLRecorder.getFailedSQLs()
 		).put(
@@ -637,7 +642,7 @@ public class UpgradeReport {
 			}
 		).put(
 			"warnings",
-			_getMessagesPrinters(upgradeRecorder.getWarningMessages())
+			_getMessagesPrinters(upgradeRecorder.getWarningMessages(),true)
 		).build();
 	}
 
@@ -997,6 +1002,8 @@ public class UpgradeReport {
 	private static final Log _log = LogFactoryUtil.getLog(UpgradeReport.class);
 
 	private static boolean _logContext;
+	private static boolean _includeOccurrences;
+
 	private static final Snapshot<PersistenceManager>
 		_persistenceManagerSnapshot = new Snapshot<>(
 			UpgradeReport.class, PersistenceManager.class);
@@ -1068,9 +1075,12 @@ public class UpgradeReport {
 					return _occurrences + StringPool.COLON + _message;
 				}
 
-				return StringBundler.concat(
-					_occurrences, " occurrences of the following event: ",
-					_message);
+				if(_includeOccurrences){
+					return StringBundler.concat(
+						_occurrences, " occurrences of the following event: ",
+						_message);
+				}
+				return _message;
 			}
 
 			private final String _message;
