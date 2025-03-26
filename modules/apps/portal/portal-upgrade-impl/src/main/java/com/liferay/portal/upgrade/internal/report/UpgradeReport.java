@@ -96,7 +96,7 @@ public class UpgradeReport {
 			if (_log.isInfoEnabled()) {
 				_log.info(
 					"Upgrade report was not generated because no upgrade " +
-					"processes were executed");
+						"processes were executed");
 			}
 
 			return;
@@ -325,20 +325,20 @@ public class UpgradeReport {
 				"storage.size",
 				() -> {
 					if (PropsValues.UPGRADE_REPORT_DL_STORAGE_SIZE_TIMEOUT ==
-						0) {
+							0) {
 
 						return "Disabled";
 					}
 
 					if (!StringUtil.endsWith(
-						PropsValues.DL_STORE_IMPL, "FileSystemStore")) {
+							PropsValues.DL_STORE_IMPL, "FileSystemStore")) {
 
 						return "Check externally";
 					}
 
 					if (_rootDir == null) {
 						return "Unable to determine. Document library " +
-							   "\"rootDir\" was not set";
+							"\"rootDir\" was not set";
 					}
 
 					_dlSize = 0;
@@ -347,7 +347,7 @@ public class UpgradeReport {
 						_dlSizeThread.start();
 						_dlSizeThread.join(
 							PropsValues.UPGRADE_REPORT_DL_STORAGE_SIZE_TIMEOUT *
-							Time.SECOND);
+								Time.SECOND);
 					}
 					catch (Exception exception) {
 						_log.error(
@@ -361,8 +361,8 @@ public class UpgradeReport {
 						if (_log.isInfoEnabled()) {
 							_log.info(
 								"Unable to determine the document library " +
-								"size. Increase the timeout or check it " +
-								"manually.");
+									"size. Increase the timeout or check it " +
+										"manually.");
 						}
 
 						return "Unable to determine";
@@ -405,7 +405,7 @@ public class UpgradeReport {
 
 					for (String keyword : keywords) {
 						if (StringUtil.containsIgnoreCase(
-							key, keyword, StringPool.BLANK)) {
+								key, keyword, StringPool.BLANK)) {
 
 							value = StringPool.EIGHT_STARS;
 
@@ -426,12 +426,12 @@ public class UpgradeReport {
 				Map<String, String> propertiesMap = new TreeMap<>();
 
 				for (String propertiesFilePathString :
-					propertiesFilePathStrings) {
+						propertiesFilePathStrings) {
 
 					Properties properties = new Properties();
 
 					try (InputStream inputStream = new FileInputStream(
-						propertiesFilePathString)) {
+							propertiesFilePathString)) {
 
 						properties.load(inputStream);
 					}
@@ -439,7 +439,7 @@ public class UpgradeReport {
 						if (_log.isWarnEnabled()) {
 							_log.warn(
 								"Unable to load properties file from: " +
-								propertiesFilePathString,
+									propertiesFilePathString,
 								ioException);
 						}
 
@@ -472,7 +472,7 @@ public class UpgradeReport {
 				List<PropertyPrinter> propertyPrinters = new ArrayList<>();
 
 				for (Map.Entry<String, String> entry :
-					propertiesMap.entrySet()) {
+						propertiesMap.entrySet()) {
 
 					propertyPrinters.add(
 						new PropertyPrinter(entry.getKey(), entry.getValue()));
@@ -530,10 +530,10 @@ public class UpgradeReport {
 						return new TablePrinter(
 							(finalTableCount >= 0) ?
 								String.valueOf(finalTableCount) :
-								StringPool.DASH,
+									StringPool.DASH,
 							(initialTableCount >= 0) ?
 								String.valueOf(initialTableCount) :
-								StringPool.DASH,
+									StringPool.DASH,
 							tableName);
 					});
 			}
@@ -579,7 +579,7 @@ public class UpgradeReport {
 					String className = message.substring(startIndex, endIndex);
 
 					if (className.equals(
-						PortalUpgradeProcess.class.getName())) {
+							PortalUpgradeProcess.class.getName())) {
 
 						continue;
 					}
@@ -594,8 +594,8 @@ public class UpgradeReport {
 						message.substring(startIndex, endIndex));
 
 					if (duration >=
-						PropsValues.
-							UPGRADE_REPORT_UPGRADE_PROCESS_THRESHOLD) {
+							PropsValues.
+								UPGRADE_REPORT_UPGRADE_PROCESS_THRESHOLD) {
 
 						upgradeProcessDurations.put(className, duration);
 					}
@@ -607,10 +607,10 @@ public class UpgradeReport {
 				int count = 0;
 
 				for (Map.Entry<String, Long> entry :
-					ListUtil.sort(
-						new ArrayList<>(upgradeProcessDurations.entrySet()),
-						Collections.reverseOrder(
-							Map.Entry.comparingByValue(Long::compare)))) {
+						ListUtil.sort(
+							new ArrayList<>(upgradeProcessDurations.entrySet()),
+							Collections.reverseOrder(
+								Map.Entry.comparingByValue(Long::compare)))) {
 
 					longestRunningUpgradeProcesses.add(
 						new RunningUpgradeProcess(
@@ -659,7 +659,7 @@ public class UpgradeReport {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						"Unable to generate the upgrade report at " +
-						PropsValues.UPGRADE_REPORT_DIR);
+							PropsValues.UPGRADE_REPORT_DIR);
 				}
 			}
 		}
@@ -731,17 +731,17 @@ public class UpgradeReport {
 			String dlStoreConfigurationPid = StringPool.BLANK;
 
 			if (StringUtil.equals(
-				PropsValues.DL_STORE_IMPL,
-				"com.liferay.portal.store.file.system." +
-				"AdvancedFileSystemStore")) {
+					PropsValues.DL_STORE_IMPL,
+					"com.liferay.portal.store.file.system." +
+						"AdvancedFileSystemStore")) {
 
 				dlStoreConfigurationPid =
 					_CONFIGURATION_PID_ADVANCED_FILE_SYSTEM_STORE;
 			}
 			else if (StringUtil.equals(
-				PropsValues.DL_STORE_IMPL,
-				"com.liferay.portal.store.file.system." +
-				"FileSystemStore")) {
+						PropsValues.DL_STORE_IMPL,
+						"com.liferay.portal.store.file.system." +
+							"FileSystemStore")) {
 
 				dlStoreConfigurationPid = _CONFIGURATION_PID_FILE_SYSTEM_STORE;
 			}
@@ -777,8 +777,8 @@ public class UpgradeReport {
 			DBInspector dbInspector = new DBInspector(connection);
 
 			try (ResultSet resultSet1 = databaseMetaData.getTables(
-				dbInspector.getCatalog(), dbInspector.getSchema(), null,
-				new String[] {"TABLE"})) {
+					dbInspector.getCatalog(), dbInspector.getSchema(), null,
+					new String[] {"TABLE"})) {
 
 				Map<String, Integer> tableCounts = new HashMap<>();
 
@@ -786,10 +786,10 @@ public class UpgradeReport {
 					String tableName = resultSet1.getString("TABLE_NAME");
 
 					try (PreparedStatement preparedStatement =
-							 connection.prepareStatement(
-								 "select count(*) from " + tableName);
-						 ResultSet resultSet2 =
-							 preparedStatement.executeQuery()) {
+							connection.prepareStatement(
+								"select count(*) from " + tableName);
+						ResultSet resultSet2 =
+							preparedStatement.executeQuery()) {
 
 						if (resultSet2.next()) {
 							tableCounts.put(tableName, resultSet2.getInt(1));
@@ -970,13 +970,13 @@ public class UpgradeReport {
 			if (_log.isInfoEnabled()) {
 				_log.info(
 					"Upgrade report generated in " +
-					reportFile.getAbsolutePath());
+						reportFile.getAbsolutePath());
 			}
 		}
 		catch (IOException ioException) {
 			_log.error(
 				"Unable to generate the upgrade report in " +
-				reportFile.getAbsolutePath(),
+					reportFile.getAbsolutePath(),
 				ioException);
 		}
 		finally {
@@ -988,11 +988,11 @@ public class UpgradeReport {
 
 	private static final String _CONFIGURATION_PID_ADVANCED_FILE_SYSTEM_STORE =
 		"com.liferay.portal.store.file.system.configuration." +
-		"AdvancedFileSystemStoreConfiguration";
+			"AdvancedFileSystemStoreConfiguration";
 
 	private static final String _CONFIGURATION_PID_FILE_SYSTEM_STORE =
 		"com.liferay.portal.store.file.system.configuration." +
-		"FileSystemStoreConfiguration";
+			"FileSystemStoreConfiguration";
 
 	private static final int _LONGEST_RUNNING_SQLS_COUNT = 20;
 
@@ -1003,7 +1003,7 @@ public class UpgradeReport {
 	private static boolean _logContext;
 	private static final Snapshot<PersistenceManager>
 		_persistenceManagerSnapshot = new Snapshot<>(
-		UpgradeReport.class, PersistenceManager.class);
+			UpgradeReport.class, PersistenceManager.class);
 	private static final Snapshot<ReleaseManager> _releaseManagerSnapshot =
 		new Snapshot<>(UpgradeReport.class, ReleaseManager.class);
 
@@ -1041,7 +1041,7 @@ public class UpgradeReport {
 		public String toString() {
 			if (_logContext) {
 				return _className + StringPool.COLON +
-					   _messagePrinters.toString();
+					_messagePrinters.toString();
 			}
 
 			StringBundler sb = new StringBundler();
@@ -1101,7 +1101,7 @@ public class UpgradeReport {
 			_key = key;
 
 			if (ArrayUtil.contains(
-				PropsValues.ADMIN_OBFUSCATED_PROPERTIES, key)) {
+					PropsValues.ADMIN_OBFUSCATED_PROPERTIES, key)) {
 
 				_value = StringPool.EIGHT_STARS;
 			}
