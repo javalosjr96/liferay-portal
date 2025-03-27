@@ -9,10 +9,10 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.db.index.IndexUpdaterUtil;
 import com.liferay.portal.kernel.dao.db.DB;
+import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
-import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.PortalPreferences;
 import com.liferay.portal.kernel.model.PortletItem;
 import com.liferay.portal.kernel.model.Ticket;
@@ -29,8 +29,6 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.social.kernel.model.SocialActivitySetting;
 import com.liferay.social.kernel.service.SocialActivitySettingLocalServiceUtil;
-
-import java.io.IOException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -59,12 +57,14 @@ public class DuplicateIndexEntriesUpgradeProcessTest {
 	public static void setUpClass() throws Exception {
 		_connection = DataAccess.getConnection();
 
+		_dbInspector = new DBInspector(_connection);
+
 		_db = DBManagerUtil.getDB();
 	}
 
 	@Test
 	public void testDuplicateRemovalProcessOnPortalPreferences()
-		throws IOException, PortalException, SQLException {
+		throws Exception {
 
 		_dropIndexes("PortalPreferences", "ownerType");
 
@@ -89,30 +89,20 @@ public class DuplicateIndexEntriesUpgradeProcessTest {
 
 		_assertCount("PortalPreferences", true, "ownerType", "ownerId");
 
-		IndexUpdaterUtil.updateAllIndexes();
+		IndexUpdaterUtil.updatePortalIndexes();
 
-		portalPreferences.setPortalPreferencesId(3);
+		Assert.assertTrue(
+			_dbInspector.hasIndex("PortalPreferences", "IX_D1846D13"));
 
-		try {
-			PortalPreferencesLocalServiceUtil.addPortalPreferences(
-				portalPreferences);
-			Assert.fail();
-		}
-		catch (Exception exception) {
-		}
-		finally {
-			portalPreferences.setPortalPreferencesId(1);
+		portalPreferences.setPortalPreferencesId(1);
 
-			Assert.assertEquals(
-				portalPreferences,
-				PortalPreferencesLocalServiceUtil.getPortalPreferences(1));
-		}
+		Assert.assertEquals(
+			portalPreferences,
+			PortalPreferencesLocalServiceUtil.getPortalPreferences(1));
 	}
 
 	@Test
-	public void testDuplicateRemovalProcessOnPortletItem()
-		throws IOException, PortalException, SQLException {
-
+	public void testDuplicateRemovalProcessOnPortletItem() throws Exception {
 		_dropIndexes("PortletItem", "groupId");
 
 		PortletItem portletItem = PortletItemLocalServiceUtil.createPortletItem(
@@ -142,25 +132,17 @@ public class DuplicateIndexEntriesUpgradeProcessTest {
 
 		IndexUpdaterUtil.updateAllIndexes();
 
-		portletItem.setPortletItemId(3);
+		Assert.assertTrue(_dbInspector.hasIndex("PortletItem", "IX_C6246ECD"));
 
-		try {
-			PortletItemLocalServiceUtil.addPortletItem(portletItem);
-			Assert.fail();
-		}
-		catch (Exception exception) {
-		}
-		finally {
-			portletItem.setPortletItemId(1);
+		portletItem.setPortletItemId(1);
 
-			Assert.assertEquals(
-				portletItem, PortletItemLocalServiceUtil.getPortletItem(1));
-		}
+		Assert.assertEquals(
+			portletItem, PortletItemLocalServiceUtil.getPortletItem(1));
 	}
 
 	@Test
 	public void testDuplicateRemovalProcessOnSocialActivitySetting()
-		throws IOException, PortalException, SQLException {
+		throws Exception {
 
 		_dropIndexes("SocialActivitySetting", "groupId");
 
@@ -200,29 +182,18 @@ public class DuplicateIndexEntriesUpgradeProcessTest {
 
 		IndexUpdaterUtil.updateAllIndexes();
 
-		socialActivitySetting.setActivitySettingId(3);
+		Assert.assertTrue(
+			_dbInspector.hasIndex("SocialActivitySetting", "IX_4FC6CD18"));
 
-		try {
-			SocialActivitySettingLocalServiceUtil.addSocialActivitySetting(
-				socialActivitySetting);
-			Assert.fail();
-		}
-		catch (Exception exception) {
-		}
-		finally {
-			socialActivitySetting.setActivitySettingId(1);
+		socialActivitySetting.setActivitySettingId(1);
 
-			Assert.assertEquals(
-				socialActivitySetting,
-				SocialActivitySettingLocalServiceUtil.getSocialActivitySetting(
-					1));
-		}
+		Assert.assertEquals(
+			socialActivitySetting,
+			SocialActivitySettingLocalServiceUtil.getSocialActivitySetting(1));
 	}
 
 	@Test
-	public void testDuplicateRemovalProcessOnTicket()
-		throws IOException, PortalException, SQLException {
-
+	public void testDuplicateRemovalProcessOnTicket() throws Exception {
 		_dropIndexes("Ticket", "key_");
 
 		Ticket ticket = TicketLocalServiceUtil.createTicket(1);
@@ -245,63 +216,60 @@ public class DuplicateIndexEntriesUpgradeProcessTest {
 
 		ticket.setTicketId(3);
 
-		try {
-			TicketLocalServiceUtil.addTicket(ticket);
-			Assert.fail();
-		}
-		catch (Exception exception) {
-		}
-		finally {
-			ticket.setTicketId(2);
+		Assert.assertTrue(_dbInspector.hasIndex("Ticket", "IX_B2468446"));
 
-			Assert.assertEquals(ticket, TicketLocalServiceUtil.getTicket(2));
-		}
+		ticket.setTicketId(2);
+
+		Assert.assertEquals(ticket, TicketLocalServiceUtil.getTicket(2));
 	}
 
 	private void _assertCount(
 			String tableName, boolean duplicatesRemoved, String... columns)
-		throws SQLException {
+		throws Exception {
 
-		_companyLocalService.forEachCompany(
-			company -> {
-				try (PreparedStatement preparedStatement =
-						_connection.prepareStatement(
-							StringBundler.concat(
-								"select count(*) from ", tableName,
-								" group by ", String.join(", ", columns),
-								" having count(*) > 1"));
-					ResultSet resultSet = preparedStatement.executeQuery()) {
+		try {
+			_companyLocalService.forEachCompany(
+				company -> {
+					try (PreparedStatement preparedStatement =
+							_connection.prepareStatement(
+								StringBundler.concat(
+									"select count(*) from ", tableName,
+									" group by ", String.join(", ", columns),
+									" having count(*) > 1"));
+						ResultSet resultSet =
+							preparedStatement.executeQuery()) {
 
-					if (!duplicatesRemoved) {
-						Assert.assertTrue(resultSet.next());
+						if (!duplicatesRemoved) {
+							Assert.assertTrue(resultSet.next());
 
-						Assert.assertEquals(2, resultSet.getInt(1));
+							Assert.assertEquals(2, resultSet.getInt(1));
 
-						return;
+							return;
+						}
+
+						Assert.assertFalse(resultSet.next());
 					}
-
-					Assert.assertFalse(resultSet.next());
-				}
-			});
+				});
+		}
+		catch (SQLException sqlException) {
+			throw new Exception(sqlException);
+		}
 	}
 
 	private void _dropIndexes(String tableName, String columnName)
-		throws IOException, SQLException {
+		throws Exception {
 
 		try {
 			_db.dropIndexes(_connection, tableName, columnName);
 		}
 		catch (SQLException sqlException) {
-			throw new SQLException(sqlException);
-		}
-		catch (IOException ioException) {
-			throw new IOException(ioException);
+			throw new Exception(sqlException);
 		}
 	}
 
 	private void _runUpgrade(
 			String tableName, String[] columns, String orderByClause)
-		throws UpgradeException {
+		throws Exception {
 
 		DuplicateIndexEntriesUpgradeProcess upgradeProcess = null;
 
@@ -322,7 +290,7 @@ public class DuplicateIndexEntriesUpgradeProcessTest {
 			upgradeProcess.upgrade();
 		}
 		catch (UpgradeException upgradeException) {
-			throw new UpgradeException(upgradeException);
+			throw new Exception(upgradeException);
 		}
 		finally {
 			EntityCacheUtil.clearCache();
@@ -334,5 +302,6 @@ public class DuplicateIndexEntriesUpgradeProcessTest {
 
 	private static Connection _connection;
 	private static DB _db;
+	private static DBInspector _dbInspector;
 
 }
