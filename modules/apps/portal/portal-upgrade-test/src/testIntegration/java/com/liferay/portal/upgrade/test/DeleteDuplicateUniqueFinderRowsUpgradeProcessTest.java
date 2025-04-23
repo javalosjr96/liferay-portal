@@ -76,6 +76,9 @@ public class DeleteDuplicateUniqueFinderRowsUpgradeProcessTest {
 	public void tearDown() throws Exception {
 		_companyLocalService.forEachCompany(
 			company -> _db.runSQL("drop table TestTable"));
+
+		_companyLocalService.forEachCompany(
+			company -> _db.runSQL("drop table bck_TestTable"));
 	}
 
 	@Test

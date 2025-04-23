@@ -5,7 +5,9 @@
 
 package com.liferay.portal.kernel.upgrade;
 
+import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.StringBundler;
@@ -59,14 +61,16 @@ public class DeleteDuplicateUniqueFinderRowsUpgradeProcess
 					break;
 				}
 
+				String[] primaryKeyColumnNames = getPrimaryKeyColumnNames(
+					connection, _tableName);
+
+				_backupTableData(primaryKeyColumnNames, duplicateRow);
+
 				StringBundler sb = new StringBundler();
 
 				sb.append("delete from ");
 				sb.append(_tableName);
 				sb.append(" where ");
-
-				String[] primaryKeyColumnNames = getPrimaryKeyColumnNames(
-					connection, _tableName);
 
 				for (String primaryKeyColumnName : primaryKeyColumnNames) {
 					sb.append(primaryKeyColumnName);
@@ -139,8 +143,9 @@ public class DeleteDuplicateUniqueFinderRowsUpgradeProcess
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				sb.toString())) {
 
-			DatabaseMetaData databaseMetaData = connection.getMetaData();
 			DBInspector dbInspector = new DBInspector(connection);
+
+			DatabaseMetaData databaseMetaData = connection.getMetaData();
 			int parameterIndex = 1;
 
 			for (int i = 0; i < _columnNames.length; i++) {
@@ -193,6 +198,50 @@ public class DeleteDuplicateUniqueFinderRowsUpgradeProcess
 		}
 
 		return duplicateRows;
+	}
+
+	private void _backupTableData(
+			String[] primaryKeyColumnNames, Map<String, String> duplicateRow)
+		throws Exception {
+
+		try {
+			DBInspector dbInspector = new DBInspector(connection);
+
+			DatabaseMetaData databaseMetaData = connection.getMetaData();
+
+			String backupTableName = "bck_" + _tableName;
+
+			DB db = DBManagerUtil.getDB();
+
+			if (!hasTable(
+					dbInspector.normalizeName(
+						backupTableName, databaseMetaData))) {
+
+				db.copyTableStructure(connection, _tableName, backupTableName);
+			}
+
+			StringBundler sb = new StringBundler(7);
+
+			sb.append("insert into ");
+			sb.append(backupTableName);
+			sb.append(" select * from ");
+			sb.append(_tableName);
+			sb.append(" where ");
+
+			for (String primaryKeyColumnName : primaryKeyColumnNames) {
+				sb.append(primaryKeyColumnName);
+				sb.append(" = ");
+				sb.append(duplicateRow.get(primaryKeyColumnName));
+				sb.append(" and ");
+			}
+
+			sb.setIndex(sb.index() - 1);
+
+			db.runSQL(sb.toString());
+		}
+		catch (Exception exception) {
+			throw new Exception(exception);
+		}
 	}
 
 	private List<String[]> _getDuplicateColumnValuesList() throws Exception {
