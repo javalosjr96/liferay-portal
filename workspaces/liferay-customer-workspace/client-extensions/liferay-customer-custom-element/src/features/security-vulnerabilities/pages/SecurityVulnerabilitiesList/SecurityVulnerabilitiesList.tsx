@@ -151,6 +151,7 @@ const SecurityVulnerabilitiesList = () => {
 							onChange={(keywords) =>
 								updateSearchParams({
 									[JiraEnum.KEYWORDS]: keywords,
+									[JiraEnum.PAGE]: 1,
 								})
 							}
 						/>
@@ -170,7 +171,10 @@ const SecurityVulnerabilitiesList = () => {
 									[JiraEnum.AFFECTED_VERSIONS]: jiraVersions,
 								}}
 								onChange={(params) =>
-									updateSearchParams(params)
+									updateSearchParams({
+										...params,
+										[JiraEnum.PAGE]: 1,
+									})
 								}
 								params={searchParams}
 								sortOptions={SORT_OPTIONS}

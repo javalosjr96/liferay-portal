@@ -5,6 +5,8 @@
 
 package com.liferay.jenkins.results.parser;
 
+import com.google.common.collect.Lists;
+
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
@@ -490,28 +492,36 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 			callables.add(callable);
 		}
 
-		ParallelExecutor<Object> parallelExecutor = new ParallelExecutor<>(
-			callables, getExecutorService(), "update");
+		List<List<Callable<Object>>> callablesList = Lists.partition(
+			callables, _getInvokedGroupSize());
 
-		try {
-			long buildUpdateTimeout = 60 * 90;
+		for (int i = 0; i < callablesList.size(); i++) {
+			ParallelExecutor<Object> parallelExecutor = new ParallelExecutor<>(
+				callablesList.get(i), getExecutorService(), "update-" + i);
 
-			String buildUpdateTimeoutString =
-				JenkinsResultsParserUtil.getBuildProperty(
-					"build.update.timeout", getBranchName(), getJobName(),
-					getTestSuiteName());
+			try {
+				long buildUpdateTimeout = 60 * 90;
 
-			if (JenkinsResultsParserUtil.isInteger(buildUpdateTimeoutString)) {
-				buildUpdateTimeout = Long.parseLong(buildUpdateTimeoutString);
+				String buildUpdateTimeoutString =
+					JenkinsResultsParserUtil.getBuildProperty(
+						"build.update.timeout", getBranchName(), getJobName(),
+						getTestSuiteName());
+
+				if (JenkinsResultsParserUtil.isInteger(
+						buildUpdateTimeoutString)) {
+
+					buildUpdateTimeout = Long.parseLong(
+						buildUpdateTimeoutString);
+				}
+				else if (Objects.equals(getJobName(), "test-portal-release")) {
+					buildUpdateTimeout = 60 * 240;
+				}
+
+				parallelExecutor.execute(buildUpdateTimeout);
 			}
-			else if (Objects.equals(getJobName(), "test-portal-release")) {
-				buildUpdateTimeout = 60 * 240;
+			catch (IOException | TimeoutException exception) {
+				throw new RuntimeException(exception);
 			}
-
-			parallelExecutor.execute(buildUpdateTimeout);
-		}
-		catch (IOException | TimeoutException exception) {
-			throw new RuntimeException(exception);
 		}
 
 		findDownstreamBuilds();
@@ -688,6 +698,24 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 		Collections.sort(
 			_downstreamBuilds, new BaseBuild.BuildDisplayNameComparator());
 	}
+
+	private int _getInvokedGroupSize() {
+		try {
+			String invokedGroupSize = JenkinsResultsParserUtil.getBuildProperty(
+				"test.batch.invoked.group.size");
+
+			if (JenkinsResultsParserUtil.isInteger(invokedGroupSize)) {
+				return Integer.parseInt(invokedGroupSize);
+			}
+		}
+		catch (IOException ioException) {
+			return _INVOKED_GROUP_SIZE_DEFAULT;
+		}
+
+		return _INVOKED_GROUP_SIZE_DEFAULT;
+	}
+
+	private static final int _INVOKED_GROUP_SIZE_DEFAULT = 500;
 
 	private static final Pattern _buildURLPattern = Pattern.compile(
 		"http[s]?\\:\\/\\/(?<hostname>[^\\/]+)\\/.*");
