@@ -6,8 +6,8 @@
 import {devices} from '@playwright/test';
 
 export const config = {
-	name: 'openid-link',
-	testDir: 'tests/openid-link',
+	name: 'openid-link.main',
+	testDir: 'tests/openid-link/main',
 	use: {
 		...devices['Desktop Chrome'],
 	},

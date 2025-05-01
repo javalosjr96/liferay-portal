@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'commerce-wish-list-web',
-	testDir: 'tests/commerce/commerce-wish-list-web',
+	name: 'commerce-wish-list-web.main',
+	testDir: 'tests/commerce/commerce-wish-list-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

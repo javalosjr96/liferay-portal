@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'cookies-banner-web',
-	testDir: 'tests/cookies-banner-web',
+	name: 'cookies-banner-web.main',
+	testDir: 'tests/cookies-banner-web/main',
 };

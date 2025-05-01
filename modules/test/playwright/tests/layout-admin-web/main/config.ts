@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'layout-admin-web',
-	testDir: 'tests/layout-admin-web',
+	name: 'layout-admin-web.main',
+	testDir: 'tests/layout-admin-web/main',
 };

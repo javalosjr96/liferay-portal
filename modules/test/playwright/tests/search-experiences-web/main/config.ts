@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'search-experiences-web',
-	testDir: 'tests/search-experiences-web',
+	name: 'search-experiences-web.main',
+	testDir: 'tests/search-experiences-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

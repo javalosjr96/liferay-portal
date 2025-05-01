@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'frontend-editor-ckeditor-web',
-	testDir: 'tests/frontend-editor-ckeditor-web',
+	name: 'frontend-editor-ckeditor-web.main',
+	testDir: 'tests/frontend-editor-ckeditor-web/main',
 };

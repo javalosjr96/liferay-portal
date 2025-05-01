@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'export-import-web',
-	testDir: 'tests/export-import-web',
+	name: 'export-import-web.main',
+	testDir: 'tests/export-import-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

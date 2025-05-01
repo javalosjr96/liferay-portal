@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'friendly-url-web',
-	testDir: 'tests/friendly-url-web',
+	name: 'friendly-url-web.main',
+	testDir: 'tests/friendly-url-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

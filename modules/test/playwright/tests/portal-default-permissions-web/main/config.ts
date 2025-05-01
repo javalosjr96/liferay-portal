@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'portal-default-permissions-web',
-	testDir: 'tests/portal-default-permissions-web',
+	name: 'portal-default-permissions-web.main',
+	testDir: 'tests/portal-default-permissions-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'accessibility-menu-web',
-	testDir: 'tests/accessibility-menu-web',
+	name: 'accessibility-menu-web.main',
+	testDir: 'tests/accessibility-menu-web/main',
 };

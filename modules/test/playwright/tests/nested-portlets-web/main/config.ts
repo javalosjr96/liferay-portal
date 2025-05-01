@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'nested-portlets-web',
-	testDir: 'tests/nested-portlets-web',
+	name: 'nested-portlets-web.main',
+	testDir: 'tests/nested-portlets-web/main',
 };

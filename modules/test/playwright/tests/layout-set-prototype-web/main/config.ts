@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'layout-set-prototype-web',
-	testDir: 'tests/layout-set-prototype-web',
+	name: 'layout-set-prototype-web.main',
+	testDir: 'tests/layout-set-prototype-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

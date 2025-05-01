@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'frontend-taglib',
-	testDir: 'tests/frontend-taglib',
+	name: 'frontend-taglib.main',
+	testDir: 'tests/frontend-taglib/main',
 };

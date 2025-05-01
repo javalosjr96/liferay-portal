@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'blogs-web',
-	testDir: 'tests/blogs-web',
+	name: 'blogs-web.main',
+	testDir: 'tests/blogs-web/main',
 };

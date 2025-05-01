@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'segments-web',
-	testDir: 'tests/segments-web',
+	name: 'segments-web.main',
+	testDir: 'tests/segments-web/main',
 };

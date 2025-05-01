@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'commerce-theme-minium',
-	testDir: 'tests/commerce/commerce-theme-minium',
+	name: 'commerce-theme-minium.main',
+	testDir: 'tests/commerce/commerce-theme-minium/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

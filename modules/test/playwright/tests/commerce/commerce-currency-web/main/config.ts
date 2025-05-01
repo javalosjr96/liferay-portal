@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'commerce-currency-web',
-	testDir: 'tests/commerce/commerce-currency-web',
+	name: 'commerce-currency-web.main',
+	testDir: 'tests/commerce/commerce-currency-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

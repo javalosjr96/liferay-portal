@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'product-navigation-product-menu-web',
-	testDir: 'tests/product-navigation-product-menu-web',
+	name: 'product-navigation-product-menu-web.main',
+	testDir: 'tests/product-navigation-product-menu-web/main',
 };

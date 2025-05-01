@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'asset-publisher-web',
-	testDir: 'tests/asset-publisher-web',
+	name: 'asset-publisher-web.main',
+	testDir: 'tests/asset-publisher-web/main',
 };

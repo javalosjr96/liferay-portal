@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'jethr0',
-	testDir: 'tests/workspaces/liferay-workspace-jethr0',
+	name: 'liferay-workspace-jethr0.main',
+	testDir: 'tests/workspaces/liferay-workspace-jethr0/main',
 };

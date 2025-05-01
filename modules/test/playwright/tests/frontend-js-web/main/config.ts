@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'frontend-js-web',
-	testDir: 'tests/frontend-js-web',
+	name: 'frontend-js-web.main',
+	testDir: 'tests/frontend-js-web/main',
 };

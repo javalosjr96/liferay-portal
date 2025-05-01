@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'osb-faro-web',
-	testDir: 'tests/osb-faro-web',
+	name: 'osb-faro-web.main',
+	testDir: 'tests/osb-faro-web/main',
 };

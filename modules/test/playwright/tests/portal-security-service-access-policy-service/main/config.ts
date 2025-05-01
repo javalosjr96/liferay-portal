@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'portal-security-service-access-policy-service',
-	testDir: 'tests/portal-security-service-access-policy-service',
+	name: 'portal-security-service-access-policy-service.main',
+	testDir: 'tests/portal-security-service-access-policy-service/main',
 };

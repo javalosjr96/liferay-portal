@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'analytics-reports-js-components-web',
-	testDir: 'tests/analytics-reports-js-components-web',
+	name: 'analytics-reports-js-components-web.main',
+	testDir: 'tests/analytics-reports-js-components-web/main',
 };

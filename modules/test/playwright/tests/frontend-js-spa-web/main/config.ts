@@ -6,8 +6,8 @@
 import {devices} from '@playwright/test';
 
 export const config = {
-	name: 'frontend-js-spa-web',
-	testDir: 'tests/frontend-js-spa-web',
+	name: 'frontend-js-spa-web.main',
+	testDir: 'tests/frontend-js-spa-web/main',
 	use: {
 		...devices['Desktop Chrome'],
 	},

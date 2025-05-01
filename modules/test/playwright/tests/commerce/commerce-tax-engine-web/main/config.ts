@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'commerce-tax-engine-web',
-	testDir: 'tests/commerce/commerce-tax-engine-web',
+	name: 'commerce-tax-engine-web.main',
+	testDir: 'tests/commerce/commerce-tax-engine-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

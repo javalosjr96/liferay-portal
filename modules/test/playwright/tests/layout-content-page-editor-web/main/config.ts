@@ -5,6 +5,6 @@
 
 export const config = {
 	dependencies: ['page-management-site-setup'],
-	name: 'layout-content-page-editor-web',
-	testDir: 'tests/layout-content-page-editor-web',
+	name: 'layout-content-page-editor-web.main',
+	testDir: 'tests/layout-content-page-editor-web/main',
 };

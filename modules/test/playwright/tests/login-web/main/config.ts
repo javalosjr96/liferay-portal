@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'login-web',
-	testDir: 'tests/login-web',
+	name: 'login-web.main',
+	testDir: 'tests/login-web/main',
 };

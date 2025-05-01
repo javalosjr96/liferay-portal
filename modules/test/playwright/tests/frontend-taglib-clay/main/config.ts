@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'frontend-taglib-clay',
-	testDir: 'tests/frontend-taglib-clay',
+	name: 'frontend-taglib-clay.main',
+	testDir: 'tests/frontend-taglib-clay/main',
 };

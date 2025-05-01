@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'roles-selector-web',
-	testDir: 'tests/roles-selector-web',
+	name: 'roles-selector-web.main',
+	testDir: 'tests/roles-selector-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

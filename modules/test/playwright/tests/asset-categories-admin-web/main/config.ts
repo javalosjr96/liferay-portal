@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'asset-categories-admin-web',
-	testDir: 'tests/asset-categories-admin-web',
+	name: 'asset-categories-admin-web.main',
+	testDir: 'tests/asset-categories-admin-web/main',
 };

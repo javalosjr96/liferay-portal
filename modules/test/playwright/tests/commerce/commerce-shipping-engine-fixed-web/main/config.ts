@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'commerce-shipping-engine-fixed-web',
-	testDir: 'tests/commerce/commerce-shipping-engine-fixed-web',
+	name: 'commerce-shipping-engine-fixed-web.main',
+	testDir: 'tests/commerce/commerce-shipping-engine-fixed-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'site-cms-site-initializer',
-	testDir: 'tests/site-cms-site-initializer',
+	name: 'site-cms-site-initializer.main',
+	testDir: 'tests/site-cms-site-initializer/main',
 };

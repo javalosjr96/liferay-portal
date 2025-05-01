@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'document-library-web',
-	testDir: 'tests/document-library-web',
+	name: 'document-library-web.main',
+	testDir: 'tests/document-library-web/main',
 };

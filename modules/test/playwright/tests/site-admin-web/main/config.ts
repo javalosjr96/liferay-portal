@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'site-admin-web',
-	testDir: 'tests/site-admin-web',
+	name: 'site-admin-web.main',
+	testDir: 'tests/site-admin-web/main',
 };

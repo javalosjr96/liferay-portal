@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'commerce-product-content-web',
-	testDir: 'tests/commerce/commerce-product-content-web',
+	name: 'commerce-product-content-web.main',
+	testDir: 'tests/commerce/commerce-product-content-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

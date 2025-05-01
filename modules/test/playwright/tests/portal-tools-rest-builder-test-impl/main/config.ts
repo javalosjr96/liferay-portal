@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'portal-tools-rest-builder-test-impl',
-	testDir: 'tests/portal-tools-rest-builder-test-impl',
+	name: 'portal-tools-rest-builder-test-impl.main',
+	testDir: 'tests/portal-tools-rest-builder-test-impl/main',
 };

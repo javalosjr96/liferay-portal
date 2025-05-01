@@ -6,8 +6,8 @@
 import {devices} from '@playwright/test';
 
 export const config = {
-	name: 'captcha-web',
-	testDir: 'tests/captcha-web',
+	name: 'captcha-web.main',
+	testDir: 'tests/captcha-web/main',
 	use: {
 		...devices['Desktop Chrome'],
 	},

@@ -4,7 +4,7 @@
  */
 
 export const config = {
-	name: 'saml-web',
-	testDir: 'tests/saml-web',
+	name: 'saml-web.main',
+	testDir: 'tests/saml-web/main',
 	timeout: 480 * 1000,
 };

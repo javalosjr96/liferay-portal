@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'portal-web',
-	testDir: 'tests/portal-web',
+	name: 'portal-web.main',
+	testDir: 'tests/portal-web/main',
 };

@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'site-navigation-menu-web',
-	testDir: 'tests/site-navigation-menu-web',
+	name: 'site-navigation-menu-web.main',
+	testDir: 'tests/site-navigation-menu-web/main',
 };

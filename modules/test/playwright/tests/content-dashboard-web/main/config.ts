@@ -6,8 +6,8 @@
 import {devices} from '@playwright/test';
 
 export const config = {
-	name: 'content-dashboard-web',
-	testDir: 'tests/content-dashboard-web',
+	name: 'content-dashboard-web.main',
+	testDir: 'tests/content-dashboard-web/main',
 	use: {
 		...devices['Desktop Chrome'],
 	},

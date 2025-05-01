@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'portal-security-script-management-web',
-	testDir: 'tests/portal-security-script-management-web',
+	name: 'portal-security-script-management-web.main',
+	testDir: 'tests/portal-security-script-management-web/main',
 };

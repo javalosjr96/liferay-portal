@@ -4,7 +4,7 @@
  */
 
 export const config = {
-	name: 'batch-planner',
-	testDir: 'tests/batch-planner',
+	name: 'batch-planner.main',
+	testDir: 'tests/batch-planner/main',
 	timeout: 60 * 1000,
 };

@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'customer',
-	testDir: 'tests/workspaces/liferay-customer-workspace',
+	name: 'liferay-customer-workspace.main',
+	testDir: 'tests/workspaces/liferay-customer-workspace/main',
 };

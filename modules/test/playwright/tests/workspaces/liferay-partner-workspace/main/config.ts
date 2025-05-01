@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'partner',
-	testDir: 'tests/workspaces/liferay-partner-workspace',
+	name: 'liferay-partner-workspace.main',
+	testDir: 'tests/workspaces/liferay-partner-workspace/main',
 };

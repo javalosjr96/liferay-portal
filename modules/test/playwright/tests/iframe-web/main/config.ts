@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'iframe-web',
-	testDir: 'tests/iframe-web',
+	name: 'iframe-web.main',
+	testDir: 'tests/iframe-web/main',
 };

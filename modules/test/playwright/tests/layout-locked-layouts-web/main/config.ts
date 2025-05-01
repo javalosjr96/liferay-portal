@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'layout-locked-layouts-web',
-	testDir: 'tests/layout-locked-layouts-web',
+	name: 'layout-locked-layouts-web.main',
+	testDir: 'tests/layout-locked-layouts-web/main',
 };

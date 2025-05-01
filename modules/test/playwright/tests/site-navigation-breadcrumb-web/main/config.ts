@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'site-navigation-breadcrumb-web',
-	testDir: 'tests/site-navigation-breadcrumb-web',
+	name: 'site-navigation-breadcrumb-web.main',
+	testDir: 'tests/site-navigation-breadcrumb-web/main',
 };

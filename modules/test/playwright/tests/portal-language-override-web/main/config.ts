@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'portal-language-override-web',
-	testDir: 'tests/portal-language-override-web',
+	name: 'portal-language-override-web.main',
+	testDir: 'tests/portal-language-override-web/main',
 };

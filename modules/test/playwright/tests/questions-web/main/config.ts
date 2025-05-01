@@ -6,8 +6,8 @@
 import {devices} from '@playwright/test';
 
 export const config = {
-	name: 'questions-web',
-	testDir: 'tests/questions-web',
+	name: 'questions-web.main',
+	testDir: 'tests/questions-web/main',
 	use: {
 		...devices['Desktop Chrome'],
 	},

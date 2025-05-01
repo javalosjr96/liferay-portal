@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'announcements-web',
-	testDir: 'tests/announcements-web',
+	name: 'announcements-web.main',
+	testDir: 'tests/announcements-web/main',
 };

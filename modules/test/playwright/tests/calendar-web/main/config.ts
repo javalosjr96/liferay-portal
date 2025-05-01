@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'calendar-web',
-	testDir: 'tests/calendar-web',
+	name: 'calendar-web.main',
+	testDir: 'tests/calendar-web/main',
 };

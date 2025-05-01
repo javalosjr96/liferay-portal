@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'portal-security-audit-web',
-	testDir: 'tests/portal-security-audit-web',
+	name: 'portal-security-audit-web.main',
+	testDir: 'tests/portal-security-audit-web/main',
 };

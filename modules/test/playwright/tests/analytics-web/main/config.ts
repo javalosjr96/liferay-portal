@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'analytics-web',
-	testDir: 'tests/analytics-web',
+	name: 'analytics-web.main',
+	testDir: 'tests/analytics-web/main',
 };

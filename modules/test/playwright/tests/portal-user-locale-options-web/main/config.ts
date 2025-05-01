@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'portal-user-locale-options-web',
-	testDir: 'tests/portal-user-locale-options-web',
+	name: 'portal-user-locale-options-web.main',
+	testDir: 'tests/portal-user-locale-options-web/main',
 };

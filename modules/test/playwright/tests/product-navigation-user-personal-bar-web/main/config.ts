@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'product-navigation-user-personal-bar-web',
-	testDir: 'tests/product-navigation-user-personal-bar-web',
+	name: 'product-navigation-user-personal-bar-web.main',
+	testDir: 'tests/product-navigation-user-personal-bar-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

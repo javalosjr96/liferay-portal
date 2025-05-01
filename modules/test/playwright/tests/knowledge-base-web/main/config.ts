@@ -7,8 +7,8 @@ export const config = {
 	expect: {
 		timeout: 30 * 1000,
 	},
-	name: 'knowledge-base-web',
-	testDir: 'tests/knowledge-base-web',
+	name: 'knowledge-base-web.main',
+	testDir: 'tests/knowledge-base-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

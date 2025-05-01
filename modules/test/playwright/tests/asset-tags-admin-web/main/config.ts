@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'asset-tags-admin-web',
-	testDir: 'tests/asset-tags-admin-web',
+	name: 'asset-tags-admin-web.main',
+	testDir: 'tests/asset-tags-admin-web/main',
 };

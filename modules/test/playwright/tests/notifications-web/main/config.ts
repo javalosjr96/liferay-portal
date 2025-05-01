@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'notifications-web',
-	testDir: 'tests/notifications-web',
+	name: 'notifications-web.main',
+	testDir: 'tests/notifications-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

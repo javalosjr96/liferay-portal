@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'frontend-theme',
-	testDir: 'tests/frontend-theme',
+	name: 'frontend-theme.main',
+	testDir: 'tests/frontend-theme/main',
 };

@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'client-extension-web',
-	testDir: 'tests/client-extension-web',
+	name: 'client-extension-web.main',
+	testDir: 'tests/client-extension-web/main',
 	testIgnore: 'tests/cluster/*',
 	use: {
 		testIdAttribute: 'data-qa-id',

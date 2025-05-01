@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'marketplace',
-	testDir: 'tests/workspaces/liferay-workspace-marketplace',
+	name: 'liferay-workspace-marketplace.main',
+	testDir: 'tests/workspaces/liferay-workspace-marketplace/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

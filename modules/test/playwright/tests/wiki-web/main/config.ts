@@ -6,8 +6,8 @@
 import {devices} from '@playwright/test';
 
 export const config = {
-	name: 'wiki-web',
-	testDir: 'tests/wiki-web',
+	name: 'wiki-web.main',
+	testDir: 'tests/wiki-web/main',
 	use: {
 		...devices['Desktop Chrome'],
 	},

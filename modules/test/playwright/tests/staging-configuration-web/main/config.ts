@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'staging-configuration-web',
-	testDir: 'tests/staging-configuration-web',
+	name: 'staging-configuration-web.main',
+	testDir: 'tests/staging-configuration-web/main',
 };

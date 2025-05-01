@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'depot-web',
-	testDir: 'tests/depot-web',
+	name: 'depot-web.main',
+	testDir: 'tests/depot-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'item-selector-taglib',
-	testDir: 'tests/item-selector-taglib',
+	name: 'item-selector-taglib.main',
+	testDir: 'tests/item-selector-taglib/main',
 };

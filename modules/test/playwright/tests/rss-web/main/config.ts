@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'rss-web',
-	testDir: 'tests/rss-web',
+	name: 'rss-web.main',
+	testDir: 'tests/rss-web/main',
 };

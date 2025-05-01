@@ -4,7 +4,7 @@
  */
 
 export const config = {
-	name: 'portal-security-ldap',
-	testDir: 'tests/portal-security-ldap',
+	name: 'portal-security-ldap.main',
+	testDir: 'tests/portal-security-ldap/main',
 	timeout: 180 * 1000,
 };

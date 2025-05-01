@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'notification-web',
-	testDir: 'tests/notification-web',
+	name: 'notification-web.main',
+	testDir: 'tests/notification-web/main',
 	use: {
 		permissions: ['clipboard-read', 'clipboard-write'],
 	},

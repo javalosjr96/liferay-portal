@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'commerce-site-initializer',
-	testDir: 'tests/commerce/commerce-site-initializer',
+	name: 'commerce-site-initializer.main',
+	testDir: 'tests/commerce/commerce-site-initializer/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

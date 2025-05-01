@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'account-admin-web',
-	testDir: 'tests/account-admin-web',
+	name: 'account-admin-web.main',
+	testDir: 'tests/account-admin-web/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},

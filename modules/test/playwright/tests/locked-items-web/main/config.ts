@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'locked-items-web',
-	testDir: 'tests/locked-items-web',
+	name: 'locked-items-web.main',
+	testDir: 'tests/locked-items-web/main',
 };

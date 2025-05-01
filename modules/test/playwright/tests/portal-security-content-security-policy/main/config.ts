@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'portal-security-content-security-policy',
-	testDir: 'tests/portal-security-content-security-policy',
+	name: 'portal-security-content-security-policy.main',
+	testDir: 'tests/portal-security-content-security-policy/main',
 };

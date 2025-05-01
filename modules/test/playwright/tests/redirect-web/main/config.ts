@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'redirect-web',
-	testDir: 'tests/redirect-web',
+	name: 'redirect-web.main',
+	testDir: 'tests/redirect-web/main',
 };

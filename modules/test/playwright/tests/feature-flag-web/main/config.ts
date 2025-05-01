@@ -6,8 +6,8 @@
 import {devices} from '@playwright/test';
 
 export const config = {
-	name: 'feature-flag-web',
-	testDir: 'tests/feature-flag-web',
+	name: 'feature-flag-web.main',
+	testDir: 'tests/feature-flag-web/main',
 	use: {
 		...devices['Desktop Chrome'],
 	},

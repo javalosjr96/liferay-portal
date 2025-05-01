@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'portlet-configuration-css-web',
-	testDir: 'tests/portlet-configuration-css-web',
+	name: 'portlet-configuration-css-web.main',
+	testDir: 'tests/portlet-configuration-css-web/main',
 };

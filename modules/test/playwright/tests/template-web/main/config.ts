@@ -4,6 +4,6 @@
  */
 
 export const config = {
-	name: 'template-web',
-	testDir: 'tests/template-web',
+	name: 'template-web.main',
+	testDir: 'tests/template-web/main',
 };

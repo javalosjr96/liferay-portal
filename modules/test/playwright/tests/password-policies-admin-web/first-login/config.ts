@@ -5,5 +5,5 @@
 
 export const config = {
 	name: 'password-policies-admin-web.first-login',
-	testDir: 'tests/password-policies-admin-web-first-login',
+	testDir: 'tests/password-policies-admin-web/first-login',
 };
