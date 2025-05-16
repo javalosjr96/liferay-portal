@@ -13,7 +13,7 @@ public class PreUpgradeVerifyProcessSuite extends PreUpgradeVerifyProcess {
 	@Override
 	protected void doVerify() throws Exception {
 		verify(new PreUpgradeVerifyProperties());
-		verify(new PreUpgradeVerifyUnicode());
+		verify(new PreUpgradeVerifyCollation());
 
 	}
 
