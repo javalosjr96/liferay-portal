@@ -15,6 +15,7 @@ public class PreupgradeVerifyProcessSuite extends PreupgradeVerifyProcess {
 		verify(new PreupgradeVerifyDatabaseCharacterSet());
 		verify(new PreupgradeVerifyDefaultUsers());
 		verify(new PreupgradeVerifyProperties());
+		verify(new PreupgradeVerifyDatabaseState());
 	}
 
 	@Override
