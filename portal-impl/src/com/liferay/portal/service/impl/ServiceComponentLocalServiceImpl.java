@@ -9,6 +9,7 @@ import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.events.StartupHelperUtil;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.exception.OldServiceComponentException;
@@ -141,7 +142,9 @@ public class ServiceComponentLocalServiceImpl
 						" has build number ", previousBuildNumber,
 						" which is newer than ", buildNumber));
 			}
-			else {
+			else if (!buildNamespace.startsWith("com.liferay") ||
+					 !StartupHelperUtil.isUpgrading()) {
+
 				return serviceComponent;
 			}
 		}
