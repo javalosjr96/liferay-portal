@@ -83,10 +83,11 @@ public class PreupgradeVerifyDatabaseStateTest
 				Set<String> databaseTables = new HashSet<>(
 					dbInspector.getTableNames(null));
 
-				Set<String> targetVersionTables = DBResourceUtil.getTargetVersionTables(
-					connection);
+				Set<String> targetVersionTables =
+					DBResourceUtil.getTargetVersionTables(connection);
 
-				targetVersionTables.removeAll(DBResourceUtil.getPreupgradedServiceTables(connection));
+				targetVersionTables.removeAll(
+					DBResourceUtil.getPreupgradedServiceTables(connection));
 
 				databaseTables.retainAll(targetVersionTables);
 
