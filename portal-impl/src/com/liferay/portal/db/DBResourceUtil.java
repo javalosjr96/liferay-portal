@@ -8,9 +8,9 @@ package com.liferay.portal.db;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.util.BundleUtil;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.URLUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -97,11 +97,7 @@ public class DBResourceUtil {
 		DBInspector dbInspector = new DBInspector(connection);
 
 		for (Bundle bundle : bundleContext.getBundles()) {
-			String symbolicName = bundle.getSymbolicName();
-
-			if (!symbolicName.startsWith("com.liferay") ||
-				!symbolicName.contains("service")) {
-
+			if (!BundleUtil.isLiferayServiceBundle(bundle)) {
 				continue;
 			}
 
