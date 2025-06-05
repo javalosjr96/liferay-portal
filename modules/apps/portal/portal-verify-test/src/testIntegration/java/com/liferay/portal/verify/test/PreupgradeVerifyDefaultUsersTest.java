@@ -96,13 +96,6 @@ public class PreupgradeVerifyDefaultUsersTest
 		return new PreupgradeVerifyDefaultUsers();
 	}
 
-	private void _verifyException(Exception exception, String expectedMessage)
-		throws Exception {
-
-		String message = exception.getMessage();
-
-		Assert.assertTrue(message.contains(expectedMessage));
-	}
 
 	@Inject
 	private RoleLocalService _roleLocalService;
