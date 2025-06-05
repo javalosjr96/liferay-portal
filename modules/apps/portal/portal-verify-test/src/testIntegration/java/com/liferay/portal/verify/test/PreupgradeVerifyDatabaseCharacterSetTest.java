@@ -100,20 +100,20 @@ public class PreupgradeVerifyDatabaseCharacterSetTest
 			(_db.getDBType() == DBType.MARIADB) ||
 			(_db.getDBType() == DBType.POSTGRESQL));
 
+		Exception exception1 = null;
+
 		try {
 			InfrastructureUtil.setDataSource(
 				_unsupportedCharacterSetDataSource);
 
 			testVerify();
 		}
-		catch (Exception exception) {
-			String message = exception.getMessage();
-
-			Assert.assertTrue(
-				message.contains("Unsupported database character set: "));
+		catch (Exception exception2) {
+			exception1 = exception2;
 		}
 		finally {
 			InfrastructureUtil.setDataSource(_dataSource);
+			_verifyException(exception1, "Unsupported database character set: ");
 		}
 	}
 
@@ -153,6 +153,8 @@ public class PreupgradeVerifyDatabaseCharacterSetTest
 				serviceComponent);
 
 			_db.runSQL("drop table TestTable");
+
+			_verifyException(exception1, "Mixed database character set and collation:\n");
 		}
 	}
 
