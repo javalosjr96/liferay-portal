@@ -50,18 +50,22 @@ public class PreupgradeVerifyDefaultUsersTest
 		Role administratorRole = _roleLocalService.getRole(
 			TestPropsValues.getCompanyId(), RoleConstants.ADMINISTRATOR);
 
+		Exception exception1 = null;
+
 		try {
 			_userLocalService.deleteRoleUser(
 				administratorRole.getRoleId(), defaultAdminUser);
 
 			super.testVerify();
 		}
-		catch (Exception exception) {
-			_verifyException(exception, "Default admin user not found");
+		catch (Exception exception2) {
+			exception1 = exception2;
 		}
 		finally {
 			_userLocalService.addRoleUser(
 				administratorRole.getRoleId(), defaultAdminUser);
+
+			_verifyException(exception1, "Default admin user not found");
 		}
 	}
 
@@ -72,6 +76,8 @@ public class PreupgradeVerifyDefaultUsersTest
 		User defaultGuestUser = _userLocalService.getGuestUser(
 			TestPropsValues.getCompanyId());
 
+		Exception exception1 = null;
+
 		try {
 			db.runSQL(
 				StringBundler.concat(
@@ -80,14 +86,16 @@ public class PreupgradeVerifyDefaultUsersTest
 
 			super.testVerify();
 		}
-		catch (Exception exception) {
-			_verifyException(exception, "Default guest user not found");
+		catch (Exception exception2) {
+			exception1 = exception2;
 		}
 		finally {
 			db.runSQL(
 				StringBundler.concat(
 					"update User_ set type_ = ", UserConstants.TYPE_GUEST,
 					" where userId = ", defaultGuestUser.getUserId()));
+
+			_verifyException(exception1, "Default guest user not found");
 		}
 	}
 
@@ -96,6 +104,13 @@ public class PreupgradeVerifyDefaultUsersTest
 		return new PreupgradeVerifyDefaultUsers();
 	}
 
+	private void _verifyException(Exception exception, String expectedMessage) {
+		Assert.assertNotNull(exception);
+
+		String message = exception.getMessage();
+
+		Assert.assertTrue(message.contains(expectedMessage));
+	}
 
 	@Inject
 	private RoleLocalService _roleLocalService;
