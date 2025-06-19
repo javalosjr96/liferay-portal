@@ -51,7 +51,9 @@ public class PreupgradeVerifyProcessSuiteTest {
 		}
 		catch (VerifyException verifyException) {
 			Assert.assertEquals(
-				StringBundler.concat(
+				StringBundler.concat("A preupgrade verification process has failed. No changes ",
+					"have been made.  Please fix the reported issues and re-",
+					"run the upgrade: ",
 					"Exception in PreupgradeVerifyCompanyUsers, Exception in ",
 					"PreupgradeVerifyDatabaseCharacterSet, Exception in ",
 					"PreupgradeVerifyDatabasePrivileges, Exception in ",
