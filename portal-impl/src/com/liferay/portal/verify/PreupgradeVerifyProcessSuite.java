@@ -22,7 +22,6 @@ public class PreupgradeVerifyProcessSuite extends PreupgradeVerifyProcess {
 
 	@Override
 	public void doVerify() throws Exception {
-		if (PropsValues.UPGRADE_DATABASE_PREUPGRADE_VERIFY_ENABLED) {
 			_verify(new PreupgradeVerifyCompanyUsers());
 			_verify(new PreupgradeVerifyDatabaseCharacterSet());
 			_verify(new PreupgradeVerifyDatabasePrivileges());
@@ -34,7 +33,6 @@ public class PreupgradeVerifyProcessSuite extends PreupgradeVerifyProcess {
 					StringUtil.merge(
 						_exceptionMessages, StringPool.COMMA_AND_SPACE));
 			}
-		}
 	}
 
 	@Override
