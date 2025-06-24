@@ -10,6 +10,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.util.PropsValues;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,16 +22,18 @@ public class PreupgradeVerifyProcessSuite extends PreupgradeVerifyProcess {
 
 	@Override
 	public void doVerify() throws Exception {
-		_verify(new PreupgradeVerifyCompanyUsers());
-		_verify(new PreupgradeVerifyDatabaseCharacterSet());
-		_verify(new PreupgradeVerifyDatabasePrivileges());
-		_verify(new PreupgradeVerifyDatabaseState());
-		_verify(new PreupgradeVerifyProperties());
+		if (PropsValues.UPGRADE_DATABASE_PREUPGRADE_VERIFY_ENABLED) {
+			_verify(new PreupgradeVerifyCompanyUsers());
+			_verify(new PreupgradeVerifyDatabaseCharacterSet());
+			_verify(new PreupgradeVerifyDatabasePrivileges());
+			_verify(new PreupgradeVerifyDatabaseState());
+			_verify(new PreupgradeVerifyProperties());
 
-		if (ListUtil.isNotEmpty(_exceptionMessages)) {
-			throw new VerifyException(
-				StringUtil.merge(
-					_exceptionMessages, StringPool.COMMA_AND_SPACE));
+			if (ListUtil.isNotEmpty(_exceptionMessages)) {
+				throw new VerifyException(
+					StringUtil.merge(
+						_exceptionMessages, StringPool.COMMA_AND_SPACE));
+			}
 		}
 	}
 
