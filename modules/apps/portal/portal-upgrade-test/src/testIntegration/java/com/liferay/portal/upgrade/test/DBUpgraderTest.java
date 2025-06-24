@@ -93,7 +93,7 @@ public class DBUpgraderTest {
 	}
 
 	@Test
-	public void testSkipPreupgradeVerification() throws Exception {
+	public void testDisablePreupgradeVerification() throws Exception {
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				VerifyProcess.class.getName(), LoggerTestUtil.INFO)) {
 
