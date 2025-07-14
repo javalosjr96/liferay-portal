@@ -739,6 +739,8 @@ public class LayoutsAdminDisplayContext {
 			}
 		).setParameter(
 			"selPlid", plid
+		).setParameter(
+			"privateLayout", isPrivateLayout()
 		).buildPortletURL();
 	}
 

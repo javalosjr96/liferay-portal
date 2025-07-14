@@ -9,8 +9,10 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
@@ -26,9 +28,12 @@ import java.util.List;
 public class LayoutPageTemplateStructureUpgradeProcess extends UpgradeProcess {
 
 	public LayoutPageTemplateStructureUpgradeProcess(
-		LayoutLocalService layoutLocalService) {
+		LayoutLocalService layoutLocalService, UserLocalService userLocalService) {
 
 		_layoutLocalService = layoutLocalService;
+
+		_userLocalService = userLocalService;
+
 	}
 
 	@Override
@@ -132,12 +137,23 @@ public class LayoutPageTemplateStructureUpgradeProcess extends UpgradeProcess {
 				continue;
 			}
 
+			long userId = layout.getUserId();
+
+			User user = _userLocalService.fetchUser(layout.getUserId());
+
+			if (user == null) {
+				userId =
+					_userLocalService.getGuestUserId(layout.getCompanyId());
+			}
+
 			_layoutLocalService.updateStatus(
-				layout.getUserId(), plid, WorkflowConstants.STATUS_APPROVED,
+				userId, plid, WorkflowConstants.STATUS_APPROVED,
 				serviceContext);
 		}
 	}
 
 	private final LayoutLocalService _layoutLocalService;
+
+	private final UserLocalService _userLocalService;
 
 }
