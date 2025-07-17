@@ -1,26 +1,18 @@
 /**
- * SPDX-FileCopyrightText: (c) 2024 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2025 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
 package com.liferay.layout.page.template.internal.upgrade.v5_1_1.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
-import com.liferay.fragment.constants.FragmentConstants;
-import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
 import com.liferay.fragment.service.FragmentEntryLocalService;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
-import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
-import com.liferay.layout.page.template.model.LayoutPageTemplateStructureRel;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureRelLocalService;
-import com.liferay.layout.test.util.LayoutTestUtil;
-import com.liferay.layout.util.structure.LayoutStructure;
-import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.cache.MultiVMPool;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
@@ -30,21 +22,16 @@ import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutConstants;
-import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.LayoutLocalService;
-import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.MapUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
@@ -109,10 +96,10 @@ public class LayoutPageTemplateStructureUpgradeProcessTest {
 				0, 0, WorkflowConstants.STATUS_APPROVED, new ServiceContext());
 
 		_db.runSQLTemplate(
-			"update LayoutPageTemplateStructure set classPK = plid;",
-			true);
+			"update LayoutPageTemplateStructure set classPK = plid;", true);
 
-		Layout layout = _layoutLocalService.fetchLayout(layoutPageTemplateEntry.getPlid());
+		Layout layout = _layoutLocalService.fetchLayout(
+			layoutPageTemplateEntry.getPlid());
 
 		layout.setStatus(WorkflowConstants.STATUS_DRAFT);
 
@@ -120,13 +107,15 @@ public class LayoutPageTemplateStructureUpgradeProcessTest {
 
 		layout.setUserId(0);
 
-		_layoutLocalService.updateLayout(layout);
+		layout = _layoutLocalService.updateLayout(layout);
 
 		_runUpgrade();
 
 		layout = _layoutLocalService.fetchLayout(layout.getPlid());
 
-		Assert.assertEquals(layout.getUserId(),_userLocalService.getGuestUserId(layout.getCompanyId()));
+		Assert.assertEquals(
+			layout.getStatusByUserId(),
+			_userLocalService.getGuestUserId(layout.getCompanyId()));
 	}
 
 	private static void _addClassPKColumn() throws Exception {
@@ -137,13 +126,13 @@ public class LayoutPageTemplateStructureUpgradeProcessTest {
 			DBInspector dbInspector = new DBInspector(connection);
 
 			if (!dbInspector.hasColumn(
-				"LayoutPageTemplateStructure", "classNameId") &&
+					"LayoutPageTemplateStructure", "classNameId") &&
 				!dbInspector.hasColumn(
 					"LayoutPageTemplateStructure", "classPK")) {
 
 				_db.runSQLTemplate(
 					"alter table LayoutPageTemplateStructure add classNameId " +
-					"LONG;",
+						"LONG;",
 					true);
 				_db.runSQLTemplate(
 					"alter table LayoutPageTemplateStructure add classPK LONG;",
@@ -169,17 +158,17 @@ public class LayoutPageTemplateStructureUpgradeProcessTest {
 			DBInspector dbInspector = new DBInspector(connection);
 
 			if (dbInspector.hasColumn(
-				"LayoutPageTemplateStructure", "classNameId") &&
+					"LayoutPageTemplateStructure", "classNameId") &&
 				dbInspector.hasColumn(
 					"LayoutPageTemplateStructure", "classPK")) {
 
 				_db.runSQLTemplate(
 					"alter table LayoutPageTemplateStructure drop column " +
-					"classNameId;",
+						"classNameId;",
 					true);
 				_db.runSQLTemplate(
 					"alter table LayoutPageTemplateStructure drop column " +
-					"classPK;",
+						"classPK;",
 					true);
 			}
 
@@ -191,7 +180,7 @@ public class LayoutPageTemplateStructureUpgradeProcessTest {
 
 	private void _runUpgrade() throws Exception {
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-			_CLASS_NAME, LoggerTestUtil.OFF)) {
+				_CLASS_NAME, LoggerTestUtil.OFF)) {
 
 			UpgradeProcess upgradeProcess = UpgradeTestUtil.getUpgradeStep(
 				_upgradeStepRegistrator, _CLASS_NAME);
@@ -202,7 +191,7 @@ public class LayoutPageTemplateStructureUpgradeProcessTest {
 
 	private static final String _CLASS_NAME =
 		"com.liferay.layout.page.template.internal.upgrade.v5_1_1." +
-		"LayoutPageTemplateStructureUpgradeProcess";
+			"LayoutPageTemplateStructureUpgradeProcess";
 
 	private static boolean _classPKColumnsAdded;
 	private static DB _db;
@@ -234,9 +223,6 @@ public class LayoutPageTemplateStructureUpgradeProcessTest {
 		_layoutPageTemplateStructureLocalService;
 
 	@Inject
-	private UserLocalService _userLocalService;
-
-	@Inject
 	private LayoutPageTemplateStructureRelLocalService
 		_layoutPageTemplateStructureRelLocalService;
 
@@ -245,5 +231,8 @@ public class LayoutPageTemplateStructureUpgradeProcessTest {
 
 	@Inject
 	private SegmentsExperienceLocalService _segmentsExperienceLocalService;
+
+	@Inject
+	private UserLocalService _userLocalService;
 
 }
