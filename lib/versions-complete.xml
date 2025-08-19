@@ -5344,18 +5344,6 @@
 				</licenses>
 			</library>
 			<library>
-				<file-name>com.liferay.shared.dependencies.netty.jar!nimbus-jose-jwt.jar</file-name>
-				<version>10.4</version>
-				<project-name>Nimbus JOSE+JWT</project-name>
-				<project-url>https://connect2id.com</project-url>
-				<licenses>
-					<license>
-						<license-name>The Apache Software License, Version 2.0</license-name>
-						<license-url>https://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
-					</license>
-				</licenses>
-			</library>
-			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!oauth2-oidc-sdk.jar</file-name>
 				<version>11.13</version>
 				<project-name>OAuth 2.0 SDK with OpenID Connect extensions</project-name>
