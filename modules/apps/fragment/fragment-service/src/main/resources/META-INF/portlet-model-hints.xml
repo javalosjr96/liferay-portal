@@ -66,7 +66,9 @@
 		<field name="createDate" type="Date" />
 		<field name="modifiedDate" type="Date" />
 		<field name="fragmentCollectionId" type="long" />
-		<field name="fragmentEntryKey" type="String" />
+		<field name="fragmentEntryKey" type="String">
+			<hint name="max-length">100</hint>
+		</field>
 		<field name="name" type="String">
 			<validator name="required" />
 		</field>
