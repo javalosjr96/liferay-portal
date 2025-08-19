@@ -60,7 +60,7 @@ create table FragmentEntry (
 	createDate DATE null,
 	modifiedDate DATE null,
 	fragmentCollectionId LONG,
-	fragmentEntryKey VARCHAR(75) null,
+	fragmentEntryKey VARCHAR(100) null,
 	name VARCHAR(75) null,
 	css TEXT null,
 	html TEXT null,

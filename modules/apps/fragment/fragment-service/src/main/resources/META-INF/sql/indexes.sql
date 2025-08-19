@@ -22,9 +22,9 @@ create index IX_14AA0B48 on FragmentEntry (groupId, fragmentCollectionId, head, 
 create index IX_18F9DFE on FragmentEntry (groupId, fragmentCollectionId, name[$COLUMN_LENGTH:75$]);
 create index IX_BE29E964 on FragmentEntry (groupId, fragmentCollectionId, status, name[$COLUMN_LENGTH:75$]);
 create index IX_BD1F4C5C on FragmentEntry (groupId, fragmentCollectionId, type_, status);
-create index IX_7F3F0EB3 on FragmentEntry (groupId, fragmentEntryKey[$COLUMN_LENGTH:75$]);
+create index IX_7F3F0EB3 on FragmentEntry (groupId, fragmentEntryKey[$COLUMN_LENGTH:100$]);
 create unique index IX_8DDC1989 on FragmentEntry (groupId, head, ctCollectionId, externalReferenceCode[$COLUMN_LENGTH:75$]);
-create unique index IX_C3F2A8E5 on FragmentEntry (groupId, head, ctCollectionId, fragmentEntryKey[$COLUMN_LENGTH:75$]);
+create unique index IX_C3F2A8E5 on FragmentEntry (groupId, head, ctCollectionId, fragmentEntryKey[$COLUMN_LENGTH:100$]);
 create unique index IX_A420787C on FragmentEntry (groupId, head, uuid_[$COLUMN_LENGTH:75$], ctCollectionId);
 create index IX_515CC759 on FragmentEntry (head, type_);
 create index IX_40CE21AD on FragmentEntry (type_);
