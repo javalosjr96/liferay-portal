@@ -264,6 +264,11 @@ public class FragmentServiceUpgradeStepRegistrator
 			"2.14.0", "2.15.0",
 			UpgradeProcessFactory.addColumns(
 				"FragmentCollection", "marketplace BOOLEAN"));
+
+		registry.register(
+			"2.15.0", "2.15.1",
+			UpgradeProcessFactory.alterColumnType(
+				"FragmentEntry", "fragmentEntryKey", "VARCHAR(100) null"));
 	}
 
 	@Reference
