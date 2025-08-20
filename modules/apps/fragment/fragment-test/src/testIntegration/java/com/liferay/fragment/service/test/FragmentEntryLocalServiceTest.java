@@ -602,8 +602,7 @@ public class FragmentEntryLocalServiceTest {
 	@Test
 	public void testFetchFragmentEntryByGroupIdAndFragmentEntryKey()
 		throws Exception {
-
-		String fragmentEntryKey = RandomTestUtil.randomString();
+		String fragmentEntryKey = RandomTestUtil.randomString(100);
 
 		FragmentEntry fragmentEntry =
 			_fragmentEntryLocalService.addFragmentEntry(
