@@ -19,7 +19,7 @@
 <aui:link cssClass="lfr-css-file" href="<%= HtmlUtil.escapeAttribute(themeDisplay.getClayCSSURL()) %>" id="liferayAUICSS" rel="stylesheet" senna="temporary" type="text/css" />
 
 <%
-	List<Portlet> portletList = null;
+List<Portlet> portletList = null;
 
 if (layoutTypePortlet != null) {
 	portletList = layoutTypePortlet.getAllPortlets();
