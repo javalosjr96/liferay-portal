@@ -19,10 +19,10 @@
 <aui:link cssClass="lfr-css-file" href="<%= HtmlUtil.escapeAttribute(themeDisplay.getClayCSSURL()) %>" id="liferayAUICSS" rel="stylesheet" senna="temporary" type="text/css" />
 
 <%
-PortletTreeSet portletTreeSet = null;
+	List<Portlet> portletList = null;
 
 if (layoutTypePortlet != null) {
-	portletTreeSet = new PortletTreeSet(layoutTypePortlet.getAllPortlets());
+	portletList = layoutTypePortlet.getAllPortlets();
 }
 
 if (layout != null) {
@@ -38,26 +38,26 @@ if (layout != null) {
 				continue;
 			}
 
-			portletTreeSet.add(portlet);
+			portletList.add(portlet);
 		}
 	}
 	else if ((layout.isTypeEmbedded() || layout.isTypePortlet()) && (themeDisplay.isStateMaximized() || themeDisplay.isStatePopUp() || (layout.isSystem() && Objects.equals(layout.getFriendlyURL(), PropsValues.CONTROL_PANEL_LAYOUT_FRIENDLY_URL)))) {
 		if (Validator.isNotNull(ppid)) {
 			Portlet portlet = PortletLocalServiceUtil.getPortletById(company.getCompanyId(), ppid);
 
-			if ((portlet != null) && !portletTreeSet.contains(portlet)) {
-				portletTreeSet.add(portlet);
+			if ((portlet != null) && !portletList.contains(portlet)) {
+				portletList.add(portlet);
 			}
 		}
 	}
 	else if (layout.isTypeControlPanel() || layout.isTypePanel()) {
-		portletTreeSet = new PortletTreeSet(layout.getEmbeddedPortlets());
+		portletList = layout.getEmbeddedPortlets();
 
 		if (Validator.isNotNull(ppid)) {
 			Portlet portlet = PortletLocalServiceUtil.getPortletById(company.getCompanyId(), ppid);
 
-			if ((portlet != null) && !portletTreeSet.contains(portlet)) {
-				portletTreeSet.add(portlet);
+			if ((portlet != null) && !portletList.contains(portlet)) {
+				portletList.add(portlet);
 			}
 		}
 	}
@@ -67,12 +67,12 @@ if (layout != null) {
 	if (Validator.isNotNull(portletResource)) {
 		Portlet portlet = PortletLocalServiceUtil.getPortletById(company.getCompanyId(), portletResource);
 
-		if ((portlet != null) && !portletTreeSet.contains(portlet)) {
-			portletTreeSet.add(portlet);
+		if ((portlet != null) && !portletList.contains(portlet)) {
+			portletList.add(portlet);
 		}
 	}
 
-	Iterator<Portlet> portletsIterator = portletTreeSet.iterator();
+	Iterator<Portlet> portletsIterator = portletList.iterator();
 
 	LayoutTypeAccessPolicy layoutTypeAccessPolicy = LayoutTypeAccessPolicyTracker.getLayoutTypeAccessPolicy(layout);
 
@@ -87,7 +87,7 @@ if (layout != null) {
 		}
 	}
 
-	request.setAttribute(WebKeys.LAYOUT_PORTLETS, portletTreeSet);
+	request.setAttribute(WebKeys.LAYOUT_PORTLETS, portletList);
 }
 %>
 
@@ -139,7 +139,7 @@ com.liferay.petra.string.StringBundler pageTopSB = OutputTag.getDataSB(request, 
 <%
 boolean portletHubRequired = false;
 
-for (Portlet portlet : portletTreeSet) {
+for (Portlet portlet : portletList) {
 	for (PortletDependency portletDependency : portlet.getPortletDependencies()) {
 		if (Objects.equals(portletDependency.getName(), "PortletHub") && Objects.equals(portletDependency.getScope(), "jakarta.portlet")) {
 			portletHubRequired = true;
@@ -178,11 +178,11 @@ for (Portlet portlet : portletTreeSet) {
 
 <%-- User Inputted Portlet CSS --%>
 
-<c:if test="<%= portletTreeSet != null %>">
+<c:if test="<%= portletList != null %>">
 	<aui:style senna="temporary" type="text/css">
 
 		<%
-		for (Portlet portlet : portletTreeSet) {
+		for (Portlet portlet : portletList) {
 			PortletPreferences portletPreferences = themeDisplay.getStrictLayoutPortletSetup(layout, portlet.getPortletId());
 
 			String portletSetupCss = portletPreferences.getValue("portletSetupCss", StringPool.BLANK);

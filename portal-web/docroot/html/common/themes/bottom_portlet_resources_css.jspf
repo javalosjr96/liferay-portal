@@ -5,10 +5,10 @@
  */
 --%>
 
-<c:if test="<%= !SetUtil.isEmpty(portletTreeSet) %>">
+<c:if test="<%= (portletList != null) && !portletList.isEmpty() %>">
 
 	<%
-	PortletRenderUtil.writeFooterCSSPaths(request, portletTreeSet, out);
+	PortletRenderUtil.writeFooterCSSPaths(request, portletList, out);
 	%>
 
 </c:if>
