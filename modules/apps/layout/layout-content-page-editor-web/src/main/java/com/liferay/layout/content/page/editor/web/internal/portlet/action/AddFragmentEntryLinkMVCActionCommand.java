@@ -68,8 +68,12 @@ public class AddFragmentEntryLinkMVCActionCommand
 		throws PortalException {
 
 		long groupId = ParamUtil.getLong(actionRequest, "groupId");
+
 		String fragmentEntryKey = ParamUtil.getString(
 			actionRequest, "fragmentEntryKey");
+
+		String fragmentRenderKey = ParamUtil.getString(
+			actionRequest, "fragmentRenderKey");
 
 		ServiceContext serviceContext = ServiceContextFactory.getInstance(
 			actionRequest);
@@ -79,7 +83,7 @@ public class AddFragmentEntryLinkMVCActionCommand
 				groupId, fragmentEntryKey, serviceContext.getLocale());
 
 		FragmentRenderer fragmentRenderer =
-			_fragmentRendererRegistry.getFragmentRenderer(fragmentEntryKey);
+			_fragmentRendererRegistry.getFragmentRenderer(fragmentRenderKey);
 
 		if ((fragmentEntry == null) && (fragmentRenderer == null)) {
 			throw new NoSuchEntryException();
@@ -113,7 +117,7 @@ public class AddFragmentEntryLinkMVCActionCommand
 			serviceContext.getPlid(), StringPool.BLANK, StringPool.BLANK,
 			StringPool.BLANK,
 			fragmentRenderer.getConfiguration(defaultFragmentRendererContext),
-			StringPool.BLANK, StringPool.BLANK, 0, fragmentEntryKey,
+			StringPool.BLANK, StringPool.BLANK, 0, fragmentRenderKey,
 			fragmentRenderer.getType(), serviceContext);
 	}
 

@@ -144,6 +144,11 @@ public class AddFragmentEntryLinksMVCActionCommand
 			String fragmentEntryKey = ParamUtil.getString(
 				actionRequest, "fragmentEntryKey");
 
+			if(fragmentEntryKey == null) {
+				 fragmentEntryKey = ParamUtil.getString(
+					actionRequest, "fragmentRenderKey");
+			}
+
 			FragmentComposition fragmentComposition =
 				_fragmentCollectionContributorRegistry.getFragmentComposition(
 					fragmentEntryKey);

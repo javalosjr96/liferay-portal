@@ -293,7 +293,7 @@ public class FragmentCollectionManager {
 					"fieldTypes",
 					_getFieldTypesJSONArray(fragmentRenderer.getTypeOptions())
 				).put(
-					"fragmentEntryKey", fragmentRenderer.getKey()
+					"fragmentRenderKey", fragmentRenderer.getKey()
 				).put(
 					"highlighted",
 					highlightedFragmentEntryKeys.contains(

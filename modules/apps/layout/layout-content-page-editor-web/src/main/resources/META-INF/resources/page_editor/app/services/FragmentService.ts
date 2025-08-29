@@ -92,12 +92,14 @@ export default {
 
 	addFragmentEntryLink({
 		fragmentEntryKey,
+		fragmentRenderKey,
 		groupId,
 		onNetworkStatus,
 		parentItemId,
 		position,
 		segmentsExperienceId,
 	}: {
+		fragmentRenderKey: string;
 		fragmentEntryKey: string;
 		groupId: string;
 		onNetworkStatus: OnNetworkStatus;
@@ -114,6 +116,7 @@ export default {
 			{
 				body: {
 					fragmentEntryKey,
+					fragmentRenderKey,
 					groupId,
 					parentItemId,
 					position,
@@ -126,6 +129,7 @@ export default {
 
 	addFragmentEntryLinks({
 		fragmentEntryKey,
+		fragmentRenderKey,
 		groupId,
 		onNetworkStatus,
 		parentItemId,
@@ -133,6 +137,7 @@ export default {
 		segmentsExperienceId,
 	}: {
 		fragmentEntryKey: string;
+		fragmentRenderKey: string;
 		groupId: string;
 		onNetworkStatus: OnNetworkStatus;
 		parentItemId: string;
@@ -147,6 +152,7 @@ export default {
 			config.addFragmentEntryLinksURL,
 			{
 				body: {
+					fragmentRenderKey,
 					fragmentEntryKey,
 					groupId,
 					parentItemId,
@@ -322,11 +328,13 @@ export default {
 
 	toggleFragmentHighlighted({
 		fragmentEntryKey,
+		fragmentRenderKey,
 		groupId = '0',
 		highlighted,
 		onNetworkStatus,
 	}: {
 		fragmentEntryKey: string;
+		fragmentRenderKey: string;
 		groupId?: string;
 		highlighted: boolean;
 		onNetworkStatus: OnNetworkStatus;
@@ -336,6 +344,7 @@ export default {
 			{
 				body: {
 					fragmentEntryKey,
+					fragmentRenderKey,
 					groupId,
 					highlighted,
 				},

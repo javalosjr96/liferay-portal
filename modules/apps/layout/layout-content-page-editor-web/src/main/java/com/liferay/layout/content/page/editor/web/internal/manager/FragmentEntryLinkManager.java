@@ -349,22 +349,6 @@ public class FragmentEntryLinkManager {
 						return fragmentEntry.getFragmentEntryKey();
 					}
 
-					String rendererKey = fragmentEntryLink.getRendererKey();
-
-					if (Validator.isNull(rendererKey)) {
-						rendererKey =
-							FragmentRendererConstants.
-								FRAGMENT_ENTRY_FRAGMENT_RENDERER_KEY;
-					}
-
-					FragmentRenderer fragmentRenderer =
-						_fragmentRendererRegistry.getFragmentRenderer(
-							rendererKey);
-
-					if (fragmentRenderer != null) {
-						return fragmentRenderer.getKey();
-					}
-
 					return StringPool.BLANK;
 				}
 			).put(
@@ -389,6 +373,27 @@ public class FragmentEntryLinkManager {
 					}
 
 					return FragmentConstants.getTypeLabel(fragmentEntryType);
+				}
+			).put(
+				"fragmentRenderKey",
+				() -> {
+					String rendererKey = fragmentEntryLink.getRendererKey();
+
+					if (Validator.isNull(rendererKey)) {
+						rendererKey =
+							FragmentRendererConstants.
+								FRAGMENT_ENTRY_FRAGMENT_RENDERER_KEY;
+					}
+
+					FragmentRenderer fragmentRenderer =
+						_fragmentRendererRegistry.getFragmentRenderer(
+							rendererKey);
+
+					if (fragmentRenderer != null) {
+						return fragmentRenderer.getKey();
+					}
+
+					return StringPool.BLANK;
 				}
 			).put(
 				"groupId",

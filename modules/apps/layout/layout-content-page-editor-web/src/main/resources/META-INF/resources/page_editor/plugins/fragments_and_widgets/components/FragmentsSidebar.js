@@ -116,6 +116,7 @@ const normalizeFragmentEntry = (fragmentEntry) => ({
 	data: {
 		fieldTypes: fragmentEntry.fieldTypes,
 		fragmentEntryKey: fragmentEntry.fragmentEntryKey,
+		fragmentRenderKey: fragmentEntry.fragmentRenderKey,
 		groupId: fragmentEntry.groupId,
 		type: fragmentEntry.type,
 	},

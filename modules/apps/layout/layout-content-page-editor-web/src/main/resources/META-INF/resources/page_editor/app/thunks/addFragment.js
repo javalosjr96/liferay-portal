@@ -8,6 +8,7 @@ import {FRAGMENT_ENTRY_TYPES} from '../config/constants/fragmentEntryTypes';
 import FragmentService from '../services/FragmentService';
 
 export default function addFragment({
+	fragmentRenderKey,
 	fragmentEntryKey,
 	groupId,
 	parentItemId,
@@ -17,6 +18,7 @@ export default function addFragment({
 }) {
 	return (dispatch, getState) => {
 		const params = {
+			fragmentRenderKey,
 			fragmentEntryKey,
 			groupId,
 			onNetworkStatus: dispatch,
