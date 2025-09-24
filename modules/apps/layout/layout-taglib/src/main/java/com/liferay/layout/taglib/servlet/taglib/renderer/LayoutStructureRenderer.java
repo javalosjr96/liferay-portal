@@ -677,14 +677,21 @@ public class LayoutStructureRenderer {
 			_renderLayoutStructureDisplayContext.getContainerLinkHref(
 				containerStyledLayoutStructureItem);
 
+		String target =
+			_renderLayoutStructureDisplayContext.getContainerLinkTarget(
+				containerStyledLayoutStructureItem);
+
 		if (Validator.isNotNull(containerLinkHref)) {
 			jspWriter.write("<a href=\"");
 			jspWriter.write(HtmlUtil.escapeAttribute(containerLinkHref));
-			jspWriter.write("\"style=\"color: inherit; text-decoration: ");
+
+			if (StringUtil.equalsIgnoreCase(target, "_blank")) {
+				jspWriter.write("\"rel=\"noopener noreferrer\"");
+			}
+
+			jspWriter.write("style=\"color: inherit; text-decoration: ");
 			jspWriter.write("none;\" target=\"");
-			jspWriter.write(
-				_renderLayoutStructureDisplayContext.getContainerLinkTarget(
-					containerStyledLayoutStructureItem));
+			jspWriter.write(target);
 			jspWriter.write("\">");
 		}
 
