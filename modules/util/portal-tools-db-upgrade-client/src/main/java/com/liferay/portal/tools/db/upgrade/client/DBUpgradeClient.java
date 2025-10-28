@@ -316,6 +316,9 @@ public class DBUpgradeClient {
 		catch (IOException ioException) {
 			ioException.printStackTrace();
 		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	private static Options _getOptions() {
@@ -801,7 +804,7 @@ public class DBUpgradeClient {
 		}
 	}
 
-	private void _verifyPortalUpgradeDatabaseProperties() throws IOException {
+	private void _verifyPortalUpgradeDatabaseProperties() throws Exception {
 		String value = _portalUpgradeDatabaseProperties.getProperty(
 			"jdbc.default.driverClassName");
 
@@ -816,7 +819,10 @@ public class DBUpgradeClient {
 		while (dataSource == null) {
 			System.out.print("[ ");
 
-			for (String databaseType : _DATABASE_TYPES) {
+			for (String databaseType :
+					BaseDBTypeScanner.getDBTypes(
+						_appServer.getPortalShieldedContainerLibDir())) {
+
 				System.out.print(databaseType + " ");
 			}
 
@@ -934,10 +940,6 @@ public class DBUpgradeClient {
 
 	private static final String[] _APP_SERVER_NAMES = {
 		"jboss", "tomcat", "weblogic", "wildfly"
-	};
-
-	private static final String[] _DATABASE_TYPES = {
-		"db2", "mariadb", "mysql", "oracle", "postgresql", "sqlserver"
 	};
 
 	private static final String _GOGO_SHELL_PREFIX = "g! ";
