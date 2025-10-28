@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2025 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -26,7 +26,7 @@ import java.util.jar.*;
  */
 public class BaseDBTypeScanner {
 
-	public static List<String> getDBTypes(File file) throws Exception {
+	public static String[] getDBTypes(File file) throws Exception {
 		List<URL> urls = new ArrayList<>();
 
 		try {
@@ -40,9 +40,9 @@ public class BaseDBTypeScanner {
 									return false;
 								}
 
-								return lowercaseName.contains("portal") ||
-									   lowercaseName.contains("com.liferay") ||
-									   lowercaseName.contains("log");
+								return lowercaseName.contains("com.liferay") ||
+									   lowercaseName.contains("log4j") ||
+									   lowercaseName.contains("portal");
 							}))) {
 
 				URI uri = jarFile.toURI();
@@ -73,7 +73,11 @@ public class BaseDBTypeScanner {
 			}
 		}
 
-		return dbTypes;
+		if(dbTypes.isEmpty()){
+			return CE_DATABASE_TYPES;
+		}
+
+		return dbTypes.toArray(new String[0]);
 	}
 
 	private static void _invokeGetDBType(
@@ -124,4 +128,6 @@ public class BaseDBTypeScanner {
 
 	private static final int _MAJOR = 1, _MINOR = 0;
 
+	private static final String[] CE_DATABASE_TYPES = {
+		"hypersonic", "mariadb", "mysql", "postgresql"};
 }

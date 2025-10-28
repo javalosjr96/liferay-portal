@@ -86,7 +86,7 @@ echo $$ > ${DB_UPGRADE_CLIENT_PID}
 # Run database upgrade client.
 #
 
-java -jar com.liferay.portal.tools.db.upgrade.client.jar "$@"
+java --add-opens java.base/java.lang=ALL-UNNAMED -jar com.liferay.portal.tools.db.upgrade.client.jar "$@"
 
 #
 # Clean up.
