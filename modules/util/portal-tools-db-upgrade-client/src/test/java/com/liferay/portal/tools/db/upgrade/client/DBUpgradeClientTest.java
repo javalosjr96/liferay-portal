@@ -245,9 +245,12 @@ public class DBUpgradeClientTest {
 		ReflectionTestUtil.setFieldValue(
 			_dbUpgradeClient, "_appServer", _mockAppServer);
 
+		String portalDaoDbJarName = ReflectionTestUtil.getFieldValue(
+			DBUpgradeClient.class, "_PORTAL_DAO_DB_JAR_NAME");
+
 		Path jarPath = _shieldedContainerLib.toPath(
 		).resolve(
-			"com.liferay.portal.dao.db.jar"
+			portalDaoDbJarName
 		);
 
 		Files.createDirectories(_shieldedContainerLib.toPath());
