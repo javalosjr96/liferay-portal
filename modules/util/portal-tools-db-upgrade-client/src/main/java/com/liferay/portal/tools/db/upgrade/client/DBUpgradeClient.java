@@ -316,9 +316,6 @@ public class DBUpgradeClient {
 		catch (IOException ioException) {
 			ioException.printStackTrace();
 		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
 	}
 
 	private static Options _getOptions() {
@@ -804,9 +801,7 @@ public class DBUpgradeClient {
 		}
 	}
 
-	private void _verifyPortalUpgradeDatabaseProperties() throws Exception {
-		String[] databaseTypes = BaseDBTypeScanner.getDBTypes(_appServer.getPortalShieldedContainerLibDir());
-
+	private void _verifyPortalUpgradeDatabaseProperties() throws IOException {
 		String value = _portalUpgradeDatabaseProperties.getProperty(
 			"jdbc.default.driverClassName");
 
@@ -821,7 +816,7 @@ public class DBUpgradeClient {
 		while (dataSource == null) {
 			System.out.print("[ ");
 
-			for (String databaseType : databaseTypes) {
+			for (String databaseType : BaseDBTypeScanner.getDBTypes(_appServer.getPortalShieldedContainerLibDir())) {
 				System.out.print(databaseType + " ");
 			}
 

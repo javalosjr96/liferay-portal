@@ -7,127 +7,53 @@ package com.liferay.portal.tools.db.upgrade.client;
 
 import java.io.File;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.net.URLClassLoader;
-
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
-import java.util.jar.*;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 
 /**
  * @author Jorge Avalos
  */
 public class BaseDBTypeScanner {
 
-	public static String[] getDBTypes(File file) throws Exception {
-		List<URL> urls = new ArrayList<>();
+	public static String[] getDBTypes(File file) {
+		Path portalDaoDBPath = Paths.get(
+			file.getAbsolutePath(), _PORTAL_DAO_DB_BUNDLE_NAME + ".jar");
 
-		try {
-			for (File jarFile :
-					Objects.requireNonNull(
-						file.listFiles(
-							(dir, name) -> {
-								String lowercaseName = name.toLowerCase();
+		try (JarFile jarFile = new JarFile(portalDaoDBPath.toFile())) {
+			Manifest manifest = jarFile.getManifest();
 
-								if (!lowercaseName.endsWith(".jar")) {
-									return false;
-								}
+			if (manifest != null) {
+				Attributes attributes = manifest.getMainAttributes();
 
-								return lowercaseName.contains("com.liferay") ||
-									   lowercaseName.contains("log4j") ||
-									   lowercaseName.contains("portal");
-							}))) {
+				if (Objects.equals(
+						attributes.getValue("Bundle-SymbolicName"),
+						_PORTAL_DAO_DB_BUNDLE_NAME)) {
 
-				URI uri = jarFile.toURI();
-
-				urls.add(uri.toURL());
-			}
-		}
-		catch (MalformedURLException malformedURLException) {
-			throw new MalformedURLException(
-				"Unable to convert shielded container lib jars to URLs");
-		}
-
-		List<String> dbTypes = new ArrayList<>();
-
-		try (URLClassLoader loader = new URLClassLoader(
-				urls.toArray(new URL[0]), ClassLoader.getSystemClassLoader())) {
-
-			Class<?> baseDB = loader.loadClass(_BASE_DB_CLASS);
-
-			for (URL url : urls) {
-				try (JarFile jarFile = new JarFile(url.getFile())) {
-					jarFile.stream(
-					).forEach(
-						entry -> _invokeGetDBType(
-							entry.getName(), loader, baseDB, dbTypes)
-					);
+					return _DXP_DATABASE_TYPES;
 				}
 			}
 		}
-
-		if(dbTypes.isEmpty()){
-			return CE_DATABASE_TYPES;
+		catch (Exception exception) {
+			return _CE_DATABASE_TYPES;
 		}
 
-		return dbTypes.toArray(new String[0]);
+		return _CE_DATABASE_TYPES;
 	}
 
-	private static void _invokeGetDBType(
-		String entry, ClassLoader cl, Class<?> baseDB, List<String> dbTypes) {
+	private static final String[] _CE_DATABASE_TYPES = {
+		"hypersonic", "mariadb", "mysql", "postgresql"
+	};
 
-		if (!entry.contains("dao/db")) {
-			return;
-		}
+	private static final String[] _DXP_DATABASE_TYPES = {
+		"db2", "mariadb", "mysql", "oracle", "postgresql", "sqlserver"
+	};
 
-		String className = entry.replace(
-			'/', '.'
-		).replace(
-			".class", ""
-		);
+	private static final String _PORTAL_DAO_DB_BUNDLE_NAME =
+		"com.liferay.portal.dao.db";
 
-		try {
-			Class<?> clazz = cl.loadClass(className);
-
-			if (!baseDB.isAssignableFrom(clazz) || (clazz == baseDB) ||
-				Modifier.isAbstract(clazz.getModifiers())) {
-
-				return;
-			}
-
-			Constructor<?> constructor = clazz.getDeclaredConstructor(
-				int.class, int.class);
-
-			constructor.setAccessible(true);
-
-			Object instance = constructor.newInstance(_MAJOR, _MINOR);
-
-			Method method = clazz.getMethod("getDBType");
-
-			if (!method.canAccess(instance)) {
-				method.setAccessible(true);
-			}
-
-			Object dbType = method.invoke(instance);
-
-			dbTypes.add(dbType.toString());
-		}
-		catch (Throwable ignored) {
-		}
-	}
-
-	private static final String _BASE_DB_CLASS =
-		"com.liferay.portal.dao.db.BaseDB";
-
-	private static final int _MAJOR = 1, _MINOR = 0;
-
-	private static final String[] CE_DATABASE_TYPES = {
-		"hypersonic", "mariadb", "mysql", "postgresql"};
 }
