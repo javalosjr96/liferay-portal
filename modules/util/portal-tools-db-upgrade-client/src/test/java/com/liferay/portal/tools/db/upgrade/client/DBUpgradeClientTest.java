@@ -184,7 +184,7 @@ public class DBUpgradeClientTest {
 		String[] answers = {
 			StringPool.BLANK, StringPool.BLANK, StringPool.BLANK, "invalidHost",
 			"localhost", "abc", "99999", StringPool.BLANK, StringPool.BLANK,
-			StringPool.BLANK, StringPool.BLANK
+			StringPool.BLANK, StringPool.BLANK, StringPool.BLANK
 		};
 
 		_dbUpgradeClient = _createDBUpgradeClient(answers);
@@ -255,9 +255,9 @@ public class DBUpgradeClientTest {
 
 		Files.createDirectories(_shieldedContainerLib.toPath());
 
-		Files.createFile(jarPath);
-
 		try {
+			Files.createFile(jarPath);
+
 			ReflectionTestUtil.invoke(
 				_dbUpgradeClient, "_verifyPortalUpgradeDatabaseProperties",
 				new Class<?>[0]);
