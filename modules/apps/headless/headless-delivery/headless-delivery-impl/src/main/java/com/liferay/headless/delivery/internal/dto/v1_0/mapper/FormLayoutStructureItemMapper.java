@@ -169,11 +169,13 @@ public class FormLayoutStructureItemMapper
 			};
 		}
 
-		if (!successMessageJSONObject.has("layout") &&
-			!successMessageJSONObject.has("displayPage")) {
-
+		if (!successMessageJSONObject.has("message")) {
 			MessageFormSubmissionResult messageFormSubmissionResult =
 				new MessageFormSubmissionResult();
+
+			messageFormSubmissionResult.setMessage(
+				() -> _toFragmentInlineValue(
+					successMessageJSONObject.getJSONObject("message")));
 
 			messageFormSubmissionResult.setNotificationText(
 				() -> {
@@ -194,15 +196,6 @@ public class FormLayoutStructureItemMapper
 					return successMessageJSONObject.getBoolean(
 						"showNotification");
 				});
-
-			if (successMessageJSONObject.has("message")) {
-				messageFormSubmissionResult.setMessage(
-					() -> _toFragmentInlineValue(
-						successMessageJSONObject.getJSONObject("message")));
-
-				messageFormSubmissionResult.setMessageType(
-					() -> MessageFormSubmissionResult.MessageType.EMBEDDED);
-			}
 
 			return messageFormSubmissionResult;
 		}

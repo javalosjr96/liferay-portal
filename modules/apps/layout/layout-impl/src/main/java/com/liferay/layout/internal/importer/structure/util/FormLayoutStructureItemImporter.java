@@ -7,7 +7,6 @@ package com.liferay.layout.internal.importer.structure.util;
 
 import com.liferay.headless.delivery.dto.v1_0.ContextReference;
 import com.liferay.headless.delivery.dto.v1_0.LocalizationConfig;
-import com.liferay.headless.delivery.dto.v1_0.MessageFormSubmissionResult;
 import com.liferay.headless.delivery.dto.v1_0.PageElement;
 import com.liferay.layout.converter.AlignConverter;
 import com.liferay.layout.converter.ContentDisplayConverter;
@@ -248,7 +247,7 @@ public class FormLayoutStructureItemImporter
 		return PageElement.Type.FORM;
 	}
 
-	private JSONObject _addNotificationConfig(
+	private JSONObject _addNotificationText(
 		JSONObject jsonObject,
 		Map<String, Object> formSuccessSubmissionResultMap) {
 
@@ -389,60 +388,13 @@ public class FormLayoutStructureItemImporter
 			return null;
 		}
 
-		String messageType = String.valueOf(
-			formSuccessSubmissionResultMap.get("messageType"));
-
-		if (formSuccessSubmissionResultMap.containsKey("message") ||
-			Objects.equals(
-				messageType,
-				MessageFormSubmissionResult.MessageType.EMBEDDED.getValue()) ||
-			Objects.equals(
-				messageType,
-				MessageFormSubmissionResult.MessageType.NONE.getValue())) {
-
-			JSONObject messageJSONObject = _getLocalizedValuesJSONObject(
-				"message", formSuccessSubmissionResultMap);
-
-			if (Objects.equals(
-					messageType,
-					MessageFormSubmissionResult.MessageType.NONE.getValue())) {
-
-				return JSONUtil.put(
-					"notificationText",
-					() -> {
-						if (messageJSONObject.length() > 0) {
-							return messageJSONObject;
-						}
-
-						return null;
-					}
-				).put(
-					"showNotification",
-					() -> {
-						if (!formSuccessSubmissionResultMap.containsKey(
-								"showNotification")) {
-
-							return null;
-						}
-
-						return GetterUtil.getBoolean(
-							formSuccessSubmissionResultMap.get(
-								"showNotification"));
-					}
-				).put(
-					"type", "none"
-				);
-			}
-
-			return JSONUtil.put(
-				"message",
-				() -> {
-					if (messageJSONObject.length() > 0) {
-						return messageJSONObject;
-					}
-
-					return null;
-				}
+		if (formSuccessSubmissionResultMap.containsKey("message")) {
+			return _addNotificationText(
+				JSONUtil.put(
+					"message",
+					_getLocalizedValuesJSONObject(
+						"message", formSuccessSubmissionResultMap)),
+				formSuccessSubmissionResultMap
 			).put(
 				"type", "embedded"
 			);
@@ -452,7 +404,7 @@ public class FormLayoutStructureItemImporter
 				(Map<String, Object>)formSuccessSubmissionResultMap.get(
 					"itemReference");
 
-			return _addNotificationConfig(
+			return _addNotificationText(
 				JSONUtil.put(
 					"layout",
 					getLayoutFromItemReferenceJSONObject(
@@ -463,9 +415,13 @@ public class FormLayoutStructureItemImporter
 			);
 		}
 		else if (formSuccessSubmissionResultMap.containsKey("mapping")) {
-			return toDisplayPageFormSubmissionResultJSONObject(
-				formSuccessSubmissionResultMap,
-				layoutStructureItemImporterContext);
+			JSONObject displayPageTemplateJSONObject =
+				toDisplayPageFormSubmissionResultJSONObject(
+					formSuccessSubmissionResultMap,
+					layoutStructureItemImporterContext);
+
+			return _addNotificationText(
+				displayPageTemplateJSONObject, formSuccessSubmissionResultMap);
 		}
 		else if (formSuccessSubmissionResultMap.containsKey("url")) {
 			return JSONUtil.put(
