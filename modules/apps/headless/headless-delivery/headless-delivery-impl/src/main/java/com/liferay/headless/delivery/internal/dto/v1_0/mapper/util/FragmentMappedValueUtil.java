@@ -11,7 +11,6 @@ import com.liferay.headless.delivery.dto.v1_0.ContextReference;
 import com.liferay.headless.delivery.dto.v1_0.Field;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalServiceUtil;
-import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
@@ -21,7 +20,6 @@ import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutServiceUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.regex.Matcher;
@@ -74,6 +72,58 @@ public class FragmentMappedValueUtil {
 		}
 
 		return false;
+	}
+
+	public static ClassFieldsReference
+		toDisplayPageTemplateClassFieldsReference(String displayPageId) {
+
+		final LayoutPageTemplateEntry layoutPageTemplateEntry;
+
+		long layoutPageTemplateId = _extractLayoutPageTemplateId(displayPageId);
+
+		try {
+			layoutPageTemplateEntry =
+				LayoutPageTemplateEntryLocalServiceUtil.
+					getLayoutPageTemplateEntry(layoutPageTemplateId);
+		}
+		catch (PortalException portalException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Item reference could not be set since no display page could " +
+						"be obtained",
+					portalException);
+			}
+
+			return null;
+		}
+
+		return new ClassFieldsReference() {
+			{
+				setClassName(() -> LayoutPageTemplateEntry.class.getName());
+				setFields(
+					() -> {
+						return new Field[] {
+							new Field() {
+								{
+									setFieldName(() -> "externalReferenceCode");
+									setFieldValue(
+										layoutPageTemplateEntry::
+											getExternalReferenceCode);
+								}
+							},
+							new Field() {
+								{
+									setFieldName(
+										() -> "layoutPageTemplateEntryKey");
+									setFieldValue(
+										layoutPageTemplateEntry::
+											getLayoutPageTemplateEntryKey);
+								}
+							}
+						};
+					});
+			}
+		};
 	}
 
 	public static Object toItemReference(JSONObject jsonObject) {
@@ -173,51 +223,6 @@ public class FragmentMappedValueUtil {
 		};
 	}
 
-	public static ClassFieldsReference toDisplayPageTemplateClassFieldsReference(
-		String displayPageId) {
-
-		final LayoutPageTemplateEntry layoutPageTemplateEntry;
-
-		long layoutPageTemplateId = _extractLayoutPageTemplateId(displayPageId);
-
-		try {
-			layoutPageTemplateEntry = LayoutPageTemplateEntryLocalServiceUtil.getLayoutPageTemplateEntry(layoutPageTemplateId);
-		}
-		catch (PortalException portalException) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(
-					"Item reference could not be set since no display page could " +
-					"be obtained",
-					portalException);
-			}
-
-			return null;
-		}
-
-		return new ClassFieldsReference() {
-			{
-				setClassName(() -> LayoutPageTemplateEntry.class.getName());
-				setFields(
-					() -> {
-						return new Field[] {
-							new Field() {
-								{
-									setFieldName(() -> "externalReferenceCode");
-									setFieldValue(layoutPageTemplateEntry::getExternalReferenceCode);
-								}
-							},
-							new Field() {
-								{
-									setFieldName(() -> "layoutPageTemplateEntryKey");
-									setFieldValue(layoutPageTemplateEntry::getLayoutPageTemplateEntryKey);
-								}
-							}
-						};
-					});
-			}
-		};
-	}
-
 	private static long _extractLayoutPageTemplateId(
 		String layoutPageTemplateUniqueId) {
 
@@ -228,9 +233,11 @@ public class FragmentMappedValueUtil {
 		try {
 			if (matcher.find()) {
 				String numberString = matcher.group(1);
+
 				return Integer.parseInt(numberString);
 			}
-		} catch (Exception e) {
+		}
+		catch (Exception e) {
 			return -1;
 		}
 

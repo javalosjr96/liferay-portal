@@ -253,8 +253,9 @@ public class FormLayoutStructureItemMapper
 					{
 						setItemReference(
 							() ->
-								FragmentMappedValueUtil.toDisplayPageTemplateClassFieldsReference(
-									displayPage));
+								FragmentMappedValueUtil.
+									toDisplayPageTemplateClassFieldsReference(
+										displayPage));
 					}
 				});
 
