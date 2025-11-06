@@ -605,7 +605,7 @@ components:
                     type: boolean
         ContentFieldValue:
             description:
-              # @review
+                # @review
                 Represents the value of a content field. Can contain different information types (e.g., geolocation,
                 documents, etc.).
             properties:

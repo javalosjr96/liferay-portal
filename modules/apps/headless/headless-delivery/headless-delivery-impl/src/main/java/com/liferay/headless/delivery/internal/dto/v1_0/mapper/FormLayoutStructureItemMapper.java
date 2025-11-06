@@ -7,10 +7,12 @@ package com.liferay.headless.delivery.internal.dto.v1_0.mapper;
 
 import com.liferay.headless.delivery.dto.v1_0.ClassTypeReference;
 import com.liferay.headless.delivery.dto.v1_0.ContextReference;
+import com.liferay.headless.delivery.dto.v1_0.DisplayPageTemplateFormSubmissionResult;
 import com.liferay.headless.delivery.dto.v1_0.FormConfig;
 import com.liferay.headless.delivery.dto.v1_0.FragmentInlineValue;
 import com.liferay.headless.delivery.dto.v1_0.Layout;
 import com.liferay.headless.delivery.dto.v1_0.LocalizationConfig;
+import com.liferay.headless.delivery.dto.v1_0.Mapping;
 import com.liferay.headless.delivery.dto.v1_0.MessageFormSubmissionResult;
 import com.liferay.headless.delivery.dto.v1_0.PageElement;
 import com.liferay.headless.delivery.dto.v1_0.PageFormDefinition;
@@ -127,7 +129,7 @@ public class FormLayoutStructureItemMapper
 		FormStyledLayoutStructureItem formStyledLayoutStructureItem) {
 
 		if (formStyledLayoutStructureItem.getFormConfig() ==
-				FormStyledLayoutStructureItem.FORM_CONFIG_OTHER_ITEM_TYPE) {
+			FormStyledLayoutStructureItem.FORM_CONFIG_OTHER_ITEM_TYPE) {
 
 			return new ClassTypeReference() {
 				{
@@ -157,51 +159,7 @@ public class FormLayoutStructureItemMapper
 			return null;
 		}
 
-		if (saveInlineContent && successMessageJSONObject.has("message")) {
-			return new MessageFormSubmissionResult() {
-				{
-					setMessage(
-						() -> _toFragmentInlineValue(
-							successMessageJSONObject.getJSONObject("message")));
-					setMessageType(() -> MessageType.EMBEDDED);
-				}
-			};
-		}
-
-		String type = successMessageJSONObject.getString("type");
-
-		if (saveInlineContent && Objects.equals(type, "none")) {
-			return new MessageFormSubmissionResult() {
-				{
-					setMessage(
-						() -> {
-							if (!successMessageJSONObject.has(
-									"notificationText")) {
-
-								return null;
-							}
-
-							return _toFragmentInlineValue(
-								successMessageJSONObject.getJSONObject(
-									"notificationText"));
-						});
-					setMessageType(() -> MessageType.NONE);
-					setShowNotification(
-						() -> {
-							if (!successMessageJSONObject.has(
-									"showNotification")) {
-
-								return null;
-							}
-
-							return successMessageJSONObject.getBoolean(
-								"showNotification");
-						});
-				}
-			};
-		}
-
-		if (saveInlineContent && successMessageJSONObject.has("url")) {
+		if (successMessageJSONObject.has("url")) {
 			return new URLFormSubmissionResult() {
 				{
 					setUrl(
@@ -211,29 +169,128 @@ public class FormLayoutStructureItemMapper
 			};
 		}
 
-		if (!saveMappingConfiguration ||
-			!successMessageJSONObject.has("layout")) {
+		if (!successMessageJSONObject.has("layout") &&
+			!successMessageJSONObject.has("displayPage")) {
 
-			return null;
+			MessageFormSubmissionResult messageFormSubmissionResult =
+				new MessageFormSubmissionResult();
+
+			messageFormSubmissionResult.setNotificationText(
+				() -> {
+					if (!successMessageJSONObject.has("notificationText")) {
+						return null;
+					}
+
+					return _toFragmentInlineValue(
+						successMessageJSONObject.getJSONObject(
+							"notificationText"));
+				});
+			messageFormSubmissionResult.setShowNotification(
+				() -> {
+					if (!successMessageJSONObject.has("showNotification")) {
+						return null;
+					}
+
+					return successMessageJSONObject.getBoolean(
+						"showNotification");
+				});
+
+			if (successMessageJSONObject.has("message")) {
+				messageFormSubmissionResult.setMessage(
+					() -> _toFragmentInlineValue(
+						successMessageJSONObject.getJSONObject("message")));
+
+				messageFormSubmissionResult.setMessageType(
+					() -> MessageFormSubmissionResult.MessageType.EMBEDDED);
+			}
+
+			return messageFormSubmissionResult;
 		}
 
-		JSONObject layoutJSONObject = successMessageJSONObject.getJSONObject(
-			"layout");
+		if (successMessageJSONObject.has("layout")) {
+			SitePageFormSubmissionResult sitePageFormSubmissionResult =
+				new SitePageFormSubmissionResult();
 
-		return new SitePageFormSubmissionResult() {
-			{
-				setItemReference(
-					() -> FragmentMappedValueUtil.toLayoutClassFieldsReference(
-						layoutJSONObject));
-			}
+			JSONObject layoutJSONObject =
+				successMessageJSONObject.getJSONObject("layout");
+
+			sitePageFormSubmissionResult.setItemReference(
+				() -> FragmentMappedValueUtil.toLayoutClassFieldsReference(
+					layoutJSONObject));
+
+			sitePageFormSubmissionResult.setNotificationText(
+				() -> {
+					if (!successMessageJSONObject.has("notificationText")) {
+						return null;
+					}
+
+					return _toFragmentInlineValue(
+						successMessageJSONObject.getJSONObject(
+							"notificationText"));
+				});
+			sitePageFormSubmissionResult.setShowNotification(
+				() -> {
+					if (!successMessageJSONObject.has("showNotification")) {
+						return null;
+					}
+
+					return successMessageJSONObject.getBoolean(
+						"showNotification");
+				});
+
+			return sitePageFormSubmissionResult;
+		}
+
+		if (successMessageJSONObject.has("displayPage")) {
+			DisplayPageTemplateFormSubmissionResult
+				displayPageFormSubmissionResult =
+				new DisplayPageTemplateFormSubmissionResult();
+
+			String displayPage = successMessageJSONObject.getString(
+				"displayPage");
+
+			displayPageFormSubmissionResult.setMapping(
+				() -> new Mapping() {
+					{
+						setItemReference(
+							() ->
+								FragmentMappedValueUtil.
+									toDisplayPageTemplateClassFieldsReference(
+										displayPage));
+					}
+				});
+
+			displayPageFormSubmissionResult.setNotificationText(
+				() -> {
+					if (!successMessageJSONObject.has("notificationText")) {
+						return null;
+					}
+
+					return _toFragmentInlineValue(
+						successMessageJSONObject.getJSONObject(
+							"notificationText"));
+				});
+			displayPageFormSubmissionResult.setShowNotification(
+				() -> {
+					if (!successMessageJSONObject.has("showNotification")) {
+						return null;
+					}
+
+					return successMessageJSONObject.getBoolean(
+						"showNotification");
+				});
+
+			return displayPageFormSubmissionResult;
 		};
+
+		return null;
 	}
 
 	private FormConfig.FormType _toFormType(
 		FormStyledLayoutStructureItem formStyledLayoutStructureItem) {
 
 		if (Objects.equals(
-				formStyledLayoutStructureItem.getFormType(), "multistep")) {
+			formStyledLayoutStructureItem.getFormType(), "multistep")) {
 
 			return FormConfig.FormType.MULTISTEP;
 		}
@@ -336,7 +393,7 @@ public class FormLayoutStructureItemMapper
 		return new LocalizationConfig() {
 			{
 				if (localizationConfigJSONObject.has(
-						"unlocalizedFieldsMessage")) {
+					"unlocalizedFieldsMessage")) {
 
 					setUnlocalizedFieldsMessage(
 						() -> _toFragmentInlineValue(
@@ -345,14 +402,14 @@ public class FormLayoutStructureItemMapper
 				}
 
 				if (localizationConfigJSONObject.has(
-						"unlocalizedFieldsState")) {
+					"unlocalizedFieldsState")) {
 
 					setUnlocalizedFieldsState(
 						() -> {
 							if (Objects.equals(
-									localizationConfigJSONObject.getString(
-										"unlocalizedFieldsState"),
-									"disabled")) {
+								localizationConfigJSONObject.getString(
+									"unlocalizedFieldsState"),
+								"disabled")) {
 
 								return LocalizationConfig.
 									UnlocalizedFieldsState.DISABLED;
