@@ -605,7 +605,7 @@ components:
                     type: boolean
         ContentFieldValue:
             description:
-                # @review
+              # @review
                 Represents the value of a content field. Can contain different information types (e.g., geolocation,
                 documents, etc.).
             properties:
@@ -1194,6 +1194,29 @@ components:
                     description:
                         The display page template's name.
                     type: string
+            type: object
+        DisplayPageTemplateFormSubmissionResult:
+            # @review
+            description:
+                Represents a definition of an submission result of type display page.
+            properties:
+                mapping:
+                    # @review
+                    description:
+                        The mapping of the display page submission result.
+                    properties:
+                        fieldKey:
+                            # @review
+                            description:
+                                The mapping's field key.
+                            type: string
+                    type: object
+                notificationText:
+                    $ref: "#/components/schemas/FragmentInlineValue"
+                    description:
+                        The localized text for the secondary notification pop-up.
+                showNotification:
+                    type: boolean
             type: object
         Document:
             description:
@@ -3400,6 +3423,10 @@ components:
                         The message form submission type (embedded, none).
                     enum: [Embedded, None]
                     type: string
+                notificationText:
+                    $ref: "#/components/schemas/FragmentInlineValue"
+                    description:
+                        The localized text for the secondary notification pop-up.
                 showNotification:
                     type: boolean
             type: object
@@ -3973,6 +4000,7 @@ components:
                             description:
                                 The definition for the success message of the form.
                             oneOf:
+                                -   $ref: "#/components/schemas/DisplayPageFormSubmissionResult"
                                 -   $ref: "#/components/schemas/MessageFormSubmissionResult"
                                 -   $ref: "#/components/schemas/SitePageFormSubmissionResult"
                                 -   $ref: "#/components/schemas/URLFormSubmissionResult"
@@ -5402,6 +5430,12 @@ components:
                     # @review
                     description:
                         The localized submission of page type.
+                notificationText:
+                    $ref: "#/components/schemas/FragmentInlineValue"
+                    description:
+                        The localized text for the secondary notification pop-up.
+                showNotification:
+                    type: boolean
             type: object
         SitePageNavigationMenuSettings:
             # @review
