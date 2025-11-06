@@ -251,7 +251,10 @@ public class FormLayoutStructureItemMapper
 			displayPageFormSubmissionResult.setMapping(
 				() -> new Mapping() {
 					{
-						setFieldKey(displayPage);
+						setItemReference(
+							() ->
+								FragmentMappedValueUtil.toDisplayPageTemplateClassFieldsReference(
+									displayPage));
 					}
 				});
 
