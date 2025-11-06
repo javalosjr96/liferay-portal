@@ -159,82 +159,9 @@ public class FormLayoutStructureItemMapper
 			return null;
 		}
 
-		if (successMessageJSONObject.has("url")) {
-			return new URLFormSubmissionResult() {
-				{
-					setUrl(
-						() -> _toFragmentInlineValue(
-							successMessageJSONObject.getJSONObject("url")));
-				}
-			};
-		}
+		String type = (String)successMessageJSONObject.get("type");
 
-		if (!successMessageJSONObject.has("message")) {
-			MessageFormSubmissionResult messageFormSubmissionResult =
-				new MessageFormSubmissionResult();
-
-			messageFormSubmissionResult.setMessage(
-				() -> _toFragmentInlineValue(
-					successMessageJSONObject.getJSONObject("message")));
-
-			messageFormSubmissionResult.setNotificationText(
-				() -> {
-					if (!successMessageJSONObject.has("notificationText")) {
-						return null;
-					}
-
-					return _toFragmentInlineValue(
-						successMessageJSONObject.getJSONObject(
-							"notificationText"));
-				});
-			messageFormSubmissionResult.setShowNotification(
-				() -> {
-					if (!successMessageJSONObject.has("showNotification")) {
-						return null;
-					}
-
-					return successMessageJSONObject.getBoolean(
-						"showNotification");
-				});
-
-			return messageFormSubmissionResult;
-		}
-
-		if (successMessageJSONObject.has("layout")) {
-			SitePageFormSubmissionResult sitePageFormSubmissionResult =
-				new SitePageFormSubmissionResult();
-
-			JSONObject layoutJSONObject =
-				successMessageJSONObject.getJSONObject("layout");
-
-			sitePageFormSubmissionResult.setItemReference(
-				() -> FragmentMappedValueUtil.toLayoutClassFieldsReference(
-					layoutJSONObject));
-
-			sitePageFormSubmissionResult.setNotificationText(
-				() -> {
-					if (!successMessageJSONObject.has("notificationText")) {
-						return null;
-					}
-
-					return _toFragmentInlineValue(
-						successMessageJSONObject.getJSONObject(
-							"notificationText"));
-				});
-			sitePageFormSubmissionResult.setShowNotification(
-				() -> {
-					if (!successMessageJSONObject.has("showNotification")) {
-						return null;
-					}
-
-					return successMessageJSONObject.getBoolean(
-						"showNotification");
-				});
-
-			return sitePageFormSubmissionResult;
-		}
-
-		if (successMessageJSONObject.has("displayPage")) {
+		if (Objects.equals(type, "displayPage")) {
 			DisplayPageTemplateFormSubmissionResult
 				displayPageTemplateFormSubmissionResult =
 					new DisplayPageTemplateFormSubmissionResult();
@@ -274,6 +201,96 @@ public class FormLayoutStructureItemMapper
 				});
 
 			return displayPageTemplateFormSubmissionResult;
+		}
+
+		if (Objects.equals(type, "embedded") || Objects.equals(type, "none")) {
+			MessageFormSubmissionResult messageFormSubmissionResult =
+				new MessageFormSubmissionResult();
+
+			messageFormSubmissionResult.setMessage(
+				() -> {
+					if (!successMessageJSONObject.has("message")) {
+						return null;
+					}
+
+					return _toFragmentInlineValue(
+						successMessageJSONObject.getJSONObject("message"));
+				});
+
+			messageFormSubmissionResult.setNotificationText(
+				() -> {
+					if (!successMessageJSONObject.has("notificationText")) {
+						return null;
+					}
+
+					return _toFragmentInlineValue(
+						successMessageJSONObject.getJSONObject(
+							"notificationText"));
+				});
+			messageFormSubmissionResult.setShowNotification(
+				() -> {
+					if (!successMessageJSONObject.has("showNotification")) {
+						return null;
+					}
+
+					return successMessageJSONObject.getBoolean(
+						"showNotification");
+				});
+
+			if (Objects.equals(type, "embedded")) {
+				messageFormSubmissionResult.setMessageType(
+					() -> MessageFormSubmissionResult.MessageType.EMBEDDED);
+			}
+			else {
+				messageFormSubmissionResult.setMessageType(
+					() -> MessageFormSubmissionResult.MessageType.NONE);
+			}
+
+			return messageFormSubmissionResult;
+		}
+
+		if (Objects.equals(type, "page")) {
+			SitePageFormSubmissionResult sitePageFormSubmissionResult =
+				new SitePageFormSubmissionResult();
+
+			JSONObject layoutJSONObject =
+				successMessageJSONObject.getJSONObject("layout");
+
+			sitePageFormSubmissionResult.setItemReference(
+				() -> FragmentMappedValueUtil.toLayoutClassFieldsReference(
+					layoutJSONObject));
+
+			sitePageFormSubmissionResult.setNotificationText(
+				() -> {
+					if (!successMessageJSONObject.has("notificationText")) {
+						return null;
+					}
+
+					return _toFragmentInlineValue(
+						successMessageJSONObject.getJSONObject(
+							"notificationText"));
+				});
+			sitePageFormSubmissionResult.setShowNotification(
+				() -> {
+					if (!successMessageJSONObject.has("showNotification")) {
+						return null;
+					}
+
+					return successMessageJSONObject.getBoolean(
+						"showNotification");
+				});
+
+			return sitePageFormSubmissionResult;
+		}
+
+		if (Objects.equals(type, "url")) {
+			return new URLFormSubmissionResult() {
+				{
+					setUrl(
+						() -> _toFragmentInlineValue(
+							successMessageJSONObject.getJSONObject("url")));
+				}
+			};
 		}
 
 		return null;

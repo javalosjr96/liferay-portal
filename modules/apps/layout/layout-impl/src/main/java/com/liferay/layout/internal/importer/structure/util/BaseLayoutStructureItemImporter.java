@@ -120,7 +120,6 @@ public abstract class BaseLayoutStructureItemImporter {
 			"itemReference");
 
 		String externalReferenceCode = null;
-		String layoutPageTemplteEntryKey = null;
 
 		List<Map<String, String>> fields =
 			(List<Map<String, String>>)itemReferenceMap.get("fields");
@@ -131,14 +130,9 @@ public abstract class BaseLayoutStructureItemImporter {
 			if (Objects.equals(key, "externalReferenceCode")) {
 				externalReferenceCode = field.get("fieldValue");
 			}
-			else if (Objects.equals(key, "layoutPageTemplateEntryKey")) {
-				layoutPageTemplteEntryKey = field.get("fieldValue");
-			}
 		}
 
-		if ((externalReferenceCode == null) ||
-			(layoutPageTemplteEntryKey == null)) {
-
+		if (externalReferenceCode == null) {
 			return null;
 		}
 

@@ -7,6 +7,7 @@ package com.liferay.layout.internal.importer.structure.util;
 
 import com.liferay.headless.delivery.dto.v1_0.ContextReference;
 import com.liferay.headless.delivery.dto.v1_0.LocalizationConfig;
+import com.liferay.headless.delivery.dto.v1_0.MessageFormSubmissionResult;
 import com.liferay.headless.delivery.dto.v1_0.PageElement;
 import com.liferay.layout.converter.AlignConverter;
 import com.liferay.layout.converter.ContentDisplayConverter;
@@ -389,15 +390,28 @@ public class FormLayoutStructureItemImporter
 		}
 
 		if (formSuccessSubmissionResultMap.containsKey("message")) {
-			return _addNotificationText(
+			JSONObject messageJSONObject = _addNotificationText(
 				JSONUtil.put(
 					"message",
 					_getLocalizedValuesJSONObject(
 						"message", formSuccessSubmissionResultMap)),
-				formSuccessSubmissionResultMap
-			).put(
-				"type", "embedded"
-			);
+				formSuccessSubmissionResultMap);
+
+			String messageType = String.valueOf(
+				formSuccessSubmissionResultMap.get("messageType"));
+
+			if (Objects.equals(
+					messageType,
+					MessageFormSubmissionResult.MessageType.EMBEDDED.
+						getValue())) {
+
+				messageJSONObject.put("type", "embedded");
+			}
+			else {
+				messageJSONObject.put("type", "none");
+			}
+
+			return messageJSONObject;
 		}
 		else if (formSuccessSubmissionResultMap.containsKey("itemReference")) {
 			Map<String, Object> itemReference =

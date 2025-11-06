@@ -79,7 +79,7 @@ public class FragmentMappedValueUtil {
 		toDisplayPageTemplateClassFieldsReference(
 			String displayPageTemplateUniqueId) {
 
-		final LayoutPageTemplateEntry layoutPageTemplateEntry;
+		LayoutPageTemplateEntry layoutPageTemplateEntry;
 
 		long layoutPageTemplateId = _extractLayoutPageTemplateId(
 			displayPageTemplateUniqueId);
@@ -109,8 +109,9 @@ public class FragmentMappedValueUtil {
 							{
 								setFieldName(() -> "externalReferenceCode");
 								setFieldValue(
-									layoutPageTemplateEntry::
-										getExternalReferenceCode);
+									() ->
+										layoutPageTemplateEntry.
+											getExternalReferenceCode());
 							}
 						}
 					});
