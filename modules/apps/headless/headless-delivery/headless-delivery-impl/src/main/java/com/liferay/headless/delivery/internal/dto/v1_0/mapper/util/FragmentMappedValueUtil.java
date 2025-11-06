@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutServiceUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -75,11 +76,13 @@ public class FragmentMappedValueUtil {
 	}
 
 	public static ClassFieldsReference
-	toDisplayPageTemplateClassFieldsReference(String displayPageTemplateUniqueId) {
+		toDisplayPageTemplateClassFieldsReference(
+			String displayPageTemplateUniqueId) {
 
 		final LayoutPageTemplateEntry layoutPageTemplateEntry;
 
-		long layoutPageTemplateId = _extractLayoutPageTemplateId(displayPageTemplateUniqueId);
+		long layoutPageTemplateId = _extractLayoutPageTemplateId(
+			displayPageTemplateUniqueId);
 
 		try {
 			layoutPageTemplateEntry =
@@ -89,8 +92,8 @@ public class FragmentMappedValueUtil {
 		catch (PortalException portalException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Item reference could not be set since no display page could " +
-					"be obtained",
+					"Item reference could not be set since no display page " +
+						"could be obtained",
 					portalException);
 			}
 
@@ -101,17 +104,15 @@ public class FragmentMappedValueUtil {
 			{
 				setClassName(() -> LayoutPageTemplateEntry.class.getName());
 				setFields(
-					() -> {
-						return new Field[] {
-							new Field() {
-								{
-									setFieldName(() -> "externalReferenceCode");
-									setFieldValue(
-										layoutPageTemplateEntry::
-											getExternalReferenceCode);
-								}
+					() -> new Field[] {
+						new Field() {
+							{
+								setFieldName(() -> "externalReferenceCode");
+								setFieldValue(
+									layoutPageTemplateEntry::
+										getExternalReferenceCode);
 							}
-						};
+						}
 					});
 			}
 		};
@@ -217,19 +218,12 @@ public class FragmentMappedValueUtil {
 	private static long _extractLayoutPageTemplateId(
 		String layoutPageTemplateUniqueId) {
 
-		Pattern pattern = Pattern.compile("(\\d+)");
+		Matcher matcher = _pattern.matcher(layoutPageTemplateUniqueId);
 
-		Matcher matcher = pattern.matcher(layoutPageTemplateUniqueId);
+		if (matcher.find()) {
+			String numberString = matcher.group(1);
 
-		try {
-			if (matcher.find()) {
-				String numberString = matcher.group(1);
-
-				return Integer.parseInt(numberString);
-			}
-		}
-		catch (Exception e) {
-			return -1;
+			return GetterUtil.getLong(numberString);
 		}
 
 		return -1;
@@ -296,7 +290,7 @@ public class FragmentMappedValueUtil {
 				_log.warn(
 					String.format(
 						"Item class PK could not be set since class PK %s " +
-						"could not be parsed to a long",
+							"could not be parsed to a long",
 						classPKString),
 					numberFormatException);
 			}
@@ -309,5 +303,7 @@ public class FragmentMappedValueUtil {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		FragmentMappedValueUtil.class);
+
+	private static final Pattern _pattern = Pattern.compile("(\\d+)");
 
 }
