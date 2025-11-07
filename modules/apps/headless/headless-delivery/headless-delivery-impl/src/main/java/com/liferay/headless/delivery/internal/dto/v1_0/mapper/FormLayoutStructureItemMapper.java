@@ -159,7 +159,7 @@ public class FormLayoutStructureItemMapper
 			return null;
 		}
 
-		String type = (String)successMessageJSONObject.get("type");
+String type = successMessageJSONObject.getString("type");
 
 		if (Objects.equals(type, "displayPage")) {
 			DisplayPageTemplateFormSubmissionResult
