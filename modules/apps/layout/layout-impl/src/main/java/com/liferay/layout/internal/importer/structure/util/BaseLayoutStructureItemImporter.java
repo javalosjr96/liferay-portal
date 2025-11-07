@@ -119,12 +119,11 @@ public abstract class BaseLayoutStructureItemImporter {
 		Map<String, Object> itemReferenceMap = (Map<String, Object>)mapping.get(
 			"itemReference");
 
-		if(itemReferenceMap != null) {
-
+		if (itemReferenceMap != null) {
 			String externalReferenceCode = null;
 
 			List<Map<String, String>> fields =
-				(List<Map<String, String>>) itemReferenceMap.get("fields");
+				(List<Map<String, String>>)itemReferenceMap.get("fields");
 
 			for (Map<String, String> field : fields) {
 				String key = field.get("fieldName");
@@ -164,8 +163,7 @@ public abstract class BaseLayoutStructureItemImporter {
 		}
 
 		return JSONUtil.put(
-			"displayPage",
-			ObjectEntry.class.getSimpleName() + "_displayPageURL"
+			"displayPage", ObjectEntry.class.getSimpleName() + "_displayPageURL"
 		).put(
 			"type", "displayPage"
 		);
