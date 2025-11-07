@@ -305,6 +305,5 @@ public class FragmentMappedValueUtil {
 	private static final Log _log = LogFactoryUtil.getLog(
 		FragmentMappedValueUtil.class);
 
-	private static final Pattern _pattern = Pattern.compile("(\\d+)");
-
+	private static final Pattern _pattern = Pattern.compile("_(\d+)$");
 }

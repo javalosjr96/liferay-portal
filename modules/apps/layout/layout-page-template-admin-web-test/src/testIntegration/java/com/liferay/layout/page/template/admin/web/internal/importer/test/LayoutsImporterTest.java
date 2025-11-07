@@ -505,10 +505,6 @@ public class LayoutsImporterTest {
 		_assertLayoutPageTemplateEntry(
 			fragmentEntry, fragmentEntryLink,
 			_getLayoutPageTemplateEntryKey(layoutsImporterResultEntries));
-
-		_assertLayoutPageTemplateEntry(
-			fragmentEntry, fragmentEntryLink,
-			_getLayoutPageTemplateEntryKey(layoutsImporterResultEntries));
 	}
 
 	@Test
@@ -2082,24 +2078,19 @@ public class LayoutsImporterTest {
 		JSONObject notificationTextJSONObject = JSONUtil.put(
 			String.valueOf(LocaleUtil.US), successMessage);
 
-		JSONObject formConfigJSONObject = JSONUtil.put(
+		JSONObject successMessageJSONObject = JSONUtil.put(
 			"notificationText", notificationTextJSONObject);
 
-		formConfigJSONObject.put(
-			"displayPage", "ObjectEntry_displayPageURL"
-		).put(
+		successMessageJSONObject.put(
 			"displayPage", "ObjectEntry_displayPageURL"
 		).put(
 			"showNotification", true
 		).put(
-			"successMessage", formConfigJSONObject
-		).put(
 			"type", "displayPage"
 		);
 
-		return formConfigJSONObject;
+		return JSONUtil.put("successMessage", successMessageJSONObject);
 	}
-
 	private String _read(String fileName) throws Exception {
 		return new String(
 			FileUtil.getBytes(getClass(), "dependencies/" + fileName));
