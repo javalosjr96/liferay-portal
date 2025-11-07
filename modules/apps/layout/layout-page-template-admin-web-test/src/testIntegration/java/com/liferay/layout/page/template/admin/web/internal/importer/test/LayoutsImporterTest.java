@@ -150,6 +150,7 @@ import org.junit.runner.RunWith;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
+import org.skyscreamer.jsonassert.JSONAssert;
 
 /**
  * @author Rubén Pulido
@@ -1732,15 +1733,14 @@ public class LayoutsImporterTest {
 		JSONObject successMessageJSONObject = _getSuccessMessageJSONObject(
 			_successMessage);
 
-		successMessageJSONObject = successMessageJSONObject.getJSONObject(
+		JSONObject expectedSuccessMessageJSONObject = successMessageJSONObject.getJSONObject(
 			"successMessage");
 
 		JSONObject actualSuccessMessageJSONObject =
 			formStyledLayoutStructureItem.getSuccessMessageJSONObject();
 
-		Assert.assertEquals(
-			String.valueOf(successMessageJSONObject),
-			String.valueOf(actualSuccessMessageJSONObject));
+		Assert.assertTrue(JSONUtil.equals(
+			expectedSuccessMessageJSONObject, actualSuccessMessageJSONObject));
 	}
 
 	private void _assertLayoutPageTemplateEntry(
