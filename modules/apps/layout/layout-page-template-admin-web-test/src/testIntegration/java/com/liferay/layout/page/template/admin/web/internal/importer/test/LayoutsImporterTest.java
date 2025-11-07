@@ -47,6 +47,7 @@ import com.liferay.layout.page.template.service.LayoutPageTemplateCollectionLoca
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureRelLocalService;
+import com.liferay.layout.page.template.service.LayoutPageTemplateStructureService;
 import com.liferay.layout.page.template.test.util.DisplayPageTemplateTestUtil;
 import com.liferay.layout.page.template.test.util.LayoutPageTemplateTestUtil;
 import com.liferay.layout.provider.LayoutStructureProvider;
@@ -54,6 +55,7 @@ import com.liferay.layout.test.util.ContentLayoutTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.layout.util.structure.ColumnLayoutStructureItem;
 import com.liferay.layout.util.structure.ContainerStyledLayoutStructureItem;
+import com.liferay.layout.util.structure.FormStyledLayoutStructureItem;
 import com.liferay.layout.util.structure.FragmentStyledLayoutStructureItem;
 import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.layout.util.structure.LayoutStructureItem;
@@ -133,6 +135,7 @@ import java.net.URL;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.zip.ZipEntry;
@@ -498,6 +501,10 @@ public class LayoutsImporterTest {
 			_layoutsImporter.importFile(
 				TestPropsValues.getUserId(), _group2.getGroupId(), 0, file,
 				LayoutsImportStrategy.DO_NOT_OVERWRITE, true);
+
+		_assertLayoutPageTemplateEntry(
+			fragmentEntry, fragmentEntryLink,
+			_getLayoutPageTemplateEntryKey(layoutsImporterResultEntries));
 
 		_assertLayoutPageTemplateEntry(
 			fragmentEntry, fragmentEntryLink,
@@ -1434,7 +1441,57 @@ public class LayoutsImporterTest {
 				_jsonFactory.createJSONObject(
 					fragmentEntryLink.getEditableValues())));
 
+			LayoutPageTemplateStructure layoutPageTemplateStructure =
+				_layoutPageTemplateStructureLocalService.
+					fetchLayoutPageTemplateStructure(
+						layoutPageTemplateEntry.getGroupId(), layoutPageTemplateEntry.getPlid());
+
+			LayoutStructure layoutStructure = LayoutStructure.of(
+				layoutPageTemplateStructure.getData(fragmentEntryLink.getSegmentsExperienceId()));
+
+			List<FormStyledLayoutStructureItem> formStyledLayoutStructureItems = layoutStructure.getFormStyledLayoutStructureItems();
+
+			FormStyledLayoutStructureItem formStyledLayoutStructureItem = formStyledLayoutStructureItems.get(0);
+
+			_successMessage = RandomTestUtil.randomString(5);
+
+			JSONObject successMessageJSONObject = _getSuccessMessageJSONObject(_successMessage);
+
+			layoutStructure.updateItemConfig(
+				successMessageJSONObject, formStyledLayoutStructureItem.getItemId());
+
+			_layoutPageTemplateStructureService.
+				updateLayoutPageTemplateStructureData(
+					layoutPageTemplateEntry.getGroupId(), layoutPageTemplateEntry.getPlid(),
+					fragmentEntryLink.getSegmentsExperienceId(), layoutStructure.toString());
+
+			fragmentEntryLinks =
+				_fragmentEntryLinkLocalService.getFragmentEntryLinksByPlid(
+					layoutPageTemplateEntry.getGroupId(),
+					layoutPageTemplateEntry.getPlid());
+
+			fragmentEntryLink = fragmentEntryLinks.get(0);
+
+
 		return fragmentEntryLink;
+	}
+
+
+
+	private JSONObject _getSuccessMessageJSONObject(String successMessage) {
+		JSONObject notificationTextJSONObject = JSONUtil.put(
+			String.valueOf(Locale.US), successMessage);
+
+		JSONObject formConfig = JSONUtil.put("notificationText", notificationTextJSONObject);
+
+		formConfig.put("showNotification", true);
+
+		formConfig.put("type", "displayPage");
+
+		formConfig.put("displayPage", "ObjectEntry_displayPageURL");
+
+		return JSONUtil.put(
+			"successMessage", formConfig);
 	}
 
 	private LayoutPageTemplateEntry _addLayoutPageTemplateEntry()
@@ -1675,6 +1732,30 @@ public class LayoutsImporterTest {
 					fragmentEntryLink.getEditableValues()),
 				_jsonFactory.createJSONObject(
 					curFragmentEntryLink.getEditableValues())));
+
+		LayoutPageTemplateStructure layoutPageTemplateStructure =
+			_layoutPageTemplateStructureLocalService.
+				fetchLayoutPageTemplateStructure(
+					layoutPageTemplateEntry.getGroupId(), layoutPageTemplateEntry.getPlid());
+
+		LayoutStructure layoutStructure = LayoutStructure.of(
+			layoutPageTemplateStructure.getData(curFragmentEntryLink.getSegmentsExperienceId()));
+
+		List<FormStyledLayoutStructureItem> formStyledLayoutStructureItems = layoutStructure.getFormStyledLayoutStructureItems();
+
+		FormStyledLayoutStructureItem formStyledLayoutStructureItem = formStyledLayoutStructureItems.get(0);
+
+		JSONObject successMessageJSONObject = _getSuccessMessageJSONObject(_successMessage);
+
+		successMessageJSONObject  = successMessageJSONObject.getJSONObject("successMessage");
+
+		String expectedSuccessMessage = successMessageJSONObject.toString();
+
+		JSONObject actualSuccessMessageJSONObject = formStyledLayoutStructureItem.getSuccessMessageJSONObject();
+
+		String actualSuccessMessage = actualSuccessMessageJSONObject.toString();
+
+		Assert.assertEquals(expectedSuccessMessage, actualSuccessMessage);
 	}
 
 	private void _assertLayoutPageTemplateEntry(
@@ -2298,6 +2379,8 @@ public class LayoutsImporterTest {
 			actualRowStyledLayoutStructureItem.getNumberOfColumns());
 	}
 
+	private String _successMessage;
+
 	private static final String _RESOURCES_PATH_DISPLAY_PAGE_TEMPLATES =
 		"com/liferay/layout/page/template/admin/web/internal/importer/test" +
 			"/dependencies/display-page-templates";
@@ -2398,5 +2481,9 @@ public class LayoutsImporterTest {
 
 	@Inject
 	private ZipWriterFactory _zipWriterFactory;
+
+	@Inject
+	private LayoutPageTemplateStructureService
+		_layoutPageTemplateStructureService;
 
 }
