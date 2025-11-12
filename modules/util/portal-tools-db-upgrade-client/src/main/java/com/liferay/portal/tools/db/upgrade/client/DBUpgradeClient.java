@@ -989,80 +989,97 @@ public class DBUpgradeClient {
 			_portalUpgradeExtProperties.getProperty("liferay.home"),
 			"portal-ext.properties");
 
-		System.out.println(
-			_portalUpgradeExtProperties.getProperty("liferay.home"));
-
 		_portalExtProperties = _readProperties(_portalExtPropertiesFile);
 
 		driverClassName = _portalExtProperties.getProperty(_JDBC_DRIVER_KEY);
 
-		System.out.println(driverClassName);
+		String password = _portalExtProperties.getProperty(_JDBC_PASSWORD_KEY);
 
-		if ((driverClassName != null) && !driverClassName.isEmpty()) {
-			_portalUpgradeDatabaseProperties.setProperty(
-				_JDBC_DRIVER_KEY, driverClassName);
+		String url = _portalExtProperties.getProperty(_JDBC_URL_KEY);
 
-			String password = _portalExtProperties.getProperty(
-				_JDBC_PASSWORD_KEY);
-			String url = _portalExtProperties.getProperty(_JDBC_URL_KEY);
-			String userName = _portalExtProperties.getProperty(_JDBC_URL_KEY);
+		String userName = _portalExtProperties.getProperty(_JDBC_USERNAME_KEY);
 
-			_portalUpgradeDatabaseProperties.setProperty(
-				_JDBC_PASSWORD_KEY, password);
-			_portalUpgradeDatabaseProperties.setProperty(_JDBC_URL_KEY, url);
-			_portalUpgradeDatabaseProperties.setProperty(
-				_JDBC_USERNAME_KEY, userName);
-		}
-		else {
-			String response = null;
+		String response = null;
 
-			Database dataSource = null;
+		Database dataSource = null;
 
-			while (dataSource == null) {
-				System.out.print("[ ");
+		while (dataSource == null) {
+			System.out.print("[ ");
 
-				for (String databaseType : _getDBTypes()) {
-					System.out.print(databaseType + " ");
-				}
-
-				System.out.println("]");
-
-				System.out.println("Please enter your database (mysql): ");
-
-				response = _consoleReader.readLine();
-
-				if (response.isEmpty()) {
-					response = "mysql";
-				}
-
-				dataSource = Database.getDatabase(response);
-
-				if (dataSource == null) {
-					System.err.println(
-						response + " is an unsupported database.");
-				}
+			for (String databaseType : _getDBTypes()) {
+				System.out.print(databaseType + " ");
 			}
 
-			System.out.println(
-				"Please enter your database JDBC driver class name (" +
-					dataSource.getClassName() + "): ");
+			System.out.println("]");
 
+			System.out.println("Please enter your database (mysql): ");
+
+			response = _consoleReader.readLine();
+
+			if (response.isEmpty()) {
+				response = "mysql";
+			}
+
+			dataSource = Database.getDatabase(response);
+
+			if (dataSource == null) {
+				System.err.println(response + " is an unsupported database.");
+			}
+		}
+
+		System.out.println(
+			"Please enter your database JDBC driver class name (" +
+				dataSource.getClassName() + "): ");
+
+		if ((driverClassName != null) && !driverClassName.isEmpty()) {
+			System.out.println(
+				"An existing database JDBC driver class name was found: (" +
+					driverClassName + ")");
+
+			System.out.println(
+				"Press Enter to use this existing driver, or enter a new one:");
+
+			response = _consoleReader.readLine();
+
+			if (!response.isEmpty()) {
+				dataSource.setClassName(driverClassName);
+			}
+		}
+		else {
 			response = _consoleReader.readLine();
 
 			if (!response.isEmpty()) {
 				dataSource.setClassName(response);
 			}
+		}
+
+		System.out.println(
+			"Please enter your database JDBC driver protocol (" +
+				dataSource.getProtocol() + "): ");
+
+		if ((url != null) && !url.isEmpty()) {
+			System.out.println(
+				"An existing database JDBC URL was found: (" + url + ")");
 
 			System.out.println(
-				"Please enter your database JDBC driver protocol (" +
-					dataSource.getProtocol() + "): ");
+				"Press Enter to use this existing URL or enter the JDBC driver protocol");
 
 			response = _consoleReader.readLine();
 
 			if (!response.isEmpty()) {
 				dataSource.setProtocol(response);
+				url = null;
 			}
+		}
+		else {
+			response = _consoleReader.readLine();
 
+			if (!response.isEmpty()) {
+				dataSource.setProtocol(response);
+			}
+		}
+
+		if (url == null) {
 			String host = _requestHost(
 				dataSource.getHost(), "Please enter your database host");
 
@@ -1087,23 +1104,56 @@ public class DBUpgradeClient {
 				dataSource.setSchemaName(response);
 			}
 
-			System.out.println("Please enter your database username: ");
+			url = dataSource.getURL();
+		}
 
-			String userName = _consoleReader.readLine();
+		System.out.println("Please enter your database username: ");
 
+		if ((userName != null) && !userName.isEmpty()) {
+			System.out.println(
+				"An existing database JDBC driver user name was found: (" +
+					userName + ")");
+
+			System.out.println(
+				"Press Enter to use this existing user, or enter a new one:");
+
+			response = _consoleReader.readLine();
+
+			if (!response.isEmpty()) {
+				userName = response;
+			}
+		}
+		else {
+			userName = _consoleReader.readLine();
+		}
+
+		if ((password != null) && !password.isEmpty()) {
+			System.out.println(
+				"An existing database JDBC driver password was found: (" +
+					password + ")");
+
+			System.out.println(
+				"Press Enter to use this existing user, or enter a new one:");
+
+			response = _consoleReader.readLine();
+
+			if (!response.isEmpty()) {
+				userName = response;
+			}
+		}
+		else {
 			System.out.println("Please enter your database password: ");
 
-			String password = _consoleReader.readLine('*');
-
-			_portalUpgradeDatabaseProperties.setProperty(
-				_JDBC_DRIVER_KEY, dataSource.getClassName());
-			_portalUpgradeDatabaseProperties.setProperty(
-				_JDBC_PASSWORD_KEY, password);
-			_portalUpgradeDatabaseProperties.setProperty(
-				_JDBC_URL_KEY, dataSource.getURL());
-			_portalUpgradeDatabaseProperties.setProperty(
-				_JDBC_USERNAME_KEY, userName);
+			password = _consoleReader.readLine('*');
 		}
+
+		_portalUpgradeDatabaseProperties.setProperty(
+			_JDBC_DRIVER_KEY, driverClassName);
+		_portalUpgradeDatabaseProperties.setProperty(
+			_JDBC_PASSWORD_KEY, password);
+		_portalUpgradeDatabaseProperties.setProperty(_JDBC_URL_KEY, url);
+		_portalUpgradeDatabaseProperties.setProperty(
+			_JDBC_USERNAME_KEY, userName);
 	}
 
 	private void _verifyPortalUpgradeExtProperties() throws IOException {
