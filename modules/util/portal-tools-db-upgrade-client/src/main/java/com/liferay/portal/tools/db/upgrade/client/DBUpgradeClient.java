@@ -943,12 +943,26 @@ public class DBUpgradeClient {
 	}
 
 	private void _verifyPortalUpgradeDatabaseProperties() throws IOException {
-		String value = _portalUpgradeDatabaseProperties.getProperty(
-			"jdbc.default.driverClassName");
+		String driverClassName = _portalUpgradeDatabaseProperties.getProperty(
+			_JDBC_DRIVER_KEY);
 
-		if ((value != null) && !value.isEmpty()) {
+		if ((driverClassName != null) && !driverClassName.isEmpty()) {
 			return;
 		}
+
+		_portalExtPropertiesFile = new File(
+			_portalUpgradeExtProperties.getProperty("liferay.home"),
+			"portal-ext.properties");
+
+		_portalExtProperties = _readProperties(_portalExtPropertiesFile);
+
+		driverClassName = _portalExtProperties.getProperty(_JDBC_DRIVER_KEY);
+
+		String password = _portalExtProperties.getProperty(_JDBC_PASSWORD_KEY);
+
+		String url = _portalExtProperties.getProperty(_JDBC_URL_KEY);
+
+		String userName = _portalExtProperties.getProperty(_JDBC_USERNAME_KEY);
 
 		String response = null;
 
@@ -982,62 +996,130 @@ public class DBUpgradeClient {
 			"Please enter your database JDBC driver class name (" +
 				dataSource.getClassName() + "): ");
 
-		response = _consoleReader.readLine();
+		if ((driverClassName != null) && !driverClassName.isEmpty()) {
+			System.out.println(
+				"An existing database JDBC driver class name was found: (" +
+					driverClassName + ")");
 
-		if (!response.isEmpty()) {
-			dataSource.setClassName(response);
+			System.out.println(
+				"Press Enter to use this existing driver, or enter a new one:");
+
+			response = _consoleReader.readLine();
+
+			if (!response.isEmpty()) {
+				dataSource.setClassName(driverClassName);
+			}
+		}
+		else {
+			response = _consoleReader.readLine();
+
+			if (!response.isEmpty()) {
+				dataSource.setClassName(response);
+			}
 		}
 
 		System.out.println(
 			"Please enter your database JDBC driver protocol (" +
 				dataSource.getProtocol() + "): ");
 
-		response = _consoleReader.readLine();
+		if ((url != null) && !url.isEmpty()) {
+			System.out.println(
+				"An existing database JDBC URL was found: (" + url + ")");
 
-		if (!response.isEmpty()) {
-			dataSource.setProtocol(response);
+			System.out.println(
+				"Press Enter to use this existing URL or enter the JDBC " +
+					"driver protocol");
+
+			response = _consoleReader.readLine();
+
+			if (!response.isEmpty()) {
+				dataSource.setProtocol(response);
+				url = null;
+			}
+		}
+		else {
+			response = _consoleReader.readLine();
+
+			if (!response.isEmpty()) {
+				dataSource.setProtocol(response);
+			}
 		}
 
-		String host = _requestHost(
-			dataSource.getHost(), "Please enter your database host");
+		if (url == null) {
+			String host = _requestHost(
+				dataSource.getHost(), "Please enter your database host");
 
-		if (host != null) {
-			dataSource.setHost(host);
-		}
+			if (host != null) {
+				dataSource.setHost(host);
+			}
 
-		Integer port = _requestPort(
-			dataSource.getPort(), "Please enter your database port");
+			Integer port = _requestPort(
+				dataSource.getPort(), "Please enter your database port");
 
-		if (port != null) {
-			dataSource.setPort(port);
-		}
+			if (port != null) {
+				dataSource.setPort(port);
+			}
 
-		System.out.println(
-			"Please enter your database name (" + dataSource.getSchemaName() +
-				"): ");
+			System.out.println(
+				"Please enter your database name (" +
+					dataSource.getSchemaName() + "): ");
 
-		response = _consoleReader.readLine();
+			response = _consoleReader.readLine();
 
-		if (!response.isEmpty()) {
-			dataSource.setSchemaName(response);
+			if (!response.isEmpty()) {
+				dataSource.setSchemaName(response);
+			}
+
+			url = dataSource.getURL();
 		}
 
 		System.out.println("Please enter your database username: ");
 
-		String userName = _consoleReader.readLine();
+		if ((userName != null) && !userName.isEmpty()) {
+			System.out.println(
+				"An existing database JDBC driver user name was found: (" +
+					userName + ")");
 
-		System.out.println("Please enter your database password: ");
+			System.out.println(
+				"Press Enter to use this existing user, or enter a new one:");
 
-		String password = _consoleReader.readLine('*');
+			response = _consoleReader.readLine();
+
+			if (!response.isEmpty()) {
+				userName = response;
+			}
+		}
+		else {
+			userName = _consoleReader.readLine();
+		}
+
+		if ((password != null) && !password.isEmpty()) {
+			System.out.println(
+				"An existing database JDBC driver password was found: (" +
+					password + ")");
+
+			System.out.println(
+				"Press Enter to use this existing user, or enter a new one:");
+
+			response = _consoleReader.readLine();
+
+			if (!response.isEmpty()) {
+				userName = response;
+			}
+		}
+		else {
+			System.out.println("Please enter your database password: ");
+
+			password = _consoleReader.readLine('*');
+		}
 
 		_portalUpgradeDatabaseProperties.setProperty(
-			"jdbc.default.driverClassName", dataSource.getClassName());
+			_JDBC_DRIVER_KEY, driverClassName);
 		_portalUpgradeDatabaseProperties.setProperty(
-			"jdbc.default.password", password);
+			_JDBC_PASSWORD_KEY, password);
+		_portalUpgradeDatabaseProperties.setProperty(_JDBC_URL_KEY, url);
 		_portalUpgradeDatabaseProperties.setProperty(
-			"jdbc.default.url", dataSource.getURL());
-		_portalUpgradeDatabaseProperties.setProperty(
-			"jdbc.default.username", userName);
+			_JDBC_USERNAME_KEY, userName);
 	}
 
 	private void _verifyPortalUpgradeExtProperties() throws IOException {
@@ -1099,6 +1181,15 @@ public class DBUpgradeClient {
 
 	private static final String _JAVA_HOME = System.getenv("JAVA_HOME");
 
+	private static final String _JDBC_DRIVER_KEY =
+		"jdbc.default.driverClassName";
+
+	private static final String _JDBC_PASSWORD_KEY = "jdbc.default.password";
+
+	private static final String _JDBC_URL_KEY = "jdbc.default.url";
+
+	private static final String _JDBC_USERNAME_KEY = "jdbc.default.username";
+
 	private static final Pattern _gogoShellAddressPattern = Pattern.compile(
 		"^([^\\:]+):([0-9]{1,5})$");
 	private static File _jarDir;
@@ -1140,6 +1231,8 @@ public class DBUpgradeClient {
 	private final FileOutputStream _fileOutputStream;
 	private List<String> _jvmOpts = new ArrayList<>();
 	private final File _logFile;
+	private Properties _portalExtProperties;
+	private File _portalExtPropertiesFile;
 	private final Properties _portalUpgradeDatabaseProperties;
 	private final File _portalUpgradeDatabasePropertiesFile;
 	private final Properties _portalUpgradeExtProperties;
