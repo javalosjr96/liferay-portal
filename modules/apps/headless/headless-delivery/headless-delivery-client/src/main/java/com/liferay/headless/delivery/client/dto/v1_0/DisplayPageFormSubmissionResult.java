@@ -6,7 +6,7 @@
 package com.liferay.headless.delivery.client.dto.v1_0;
 
 import com.liferay.headless.delivery.client.function.UnsafeSupplier;
-import com.liferay.headless.delivery.client.serdes.v1_0.DisplayPageTemplateFormSubmissionResultSerDes;
+import com.liferay.headless.delivery.client.serdes.v1_0.DisplayPageFormSubmissionResultSerDes;
 
 import jakarta.annotation.Generated;
 
@@ -19,11 +19,11 @@ import java.util.Objects;
  * @generated
  */
 @Generated("")
-public class DisplayPageTemplateFormSubmissionResult
+public class DisplayPageFormSubmissionResult
 	implements Cloneable, Serializable {
 
-	public static DisplayPageTemplateFormSubmissionResult toDTO(String json) {
-		return DisplayPageTemplateFormSubmissionResultSerDes.toDTO(json);
+	public static DisplayPageFormSubmissionResult toDTO(String json) {
+		return DisplayPageFormSubmissionResultSerDes.toDTO(json);
 	}
 
 	public Mapping getMapping() {
@@ -91,10 +91,10 @@ public class DisplayPageTemplateFormSubmissionResult
 	protected Boolean showNotification;
 
 	@Override
-	public DisplayPageTemplateFormSubmissionResult clone()
+	public DisplayPageFormSubmissionResult clone()
 		throws CloneNotSupportedException {
 
-		return (DisplayPageTemplateFormSubmissionResult)super.clone();
+		return (DisplayPageFormSubmissionResult)super.clone();
 	}
 
 	@Override
@@ -103,16 +103,15 @@ public class DisplayPageTemplateFormSubmissionResult
 			return true;
 		}
 
-		if (!(object instanceof DisplayPageTemplateFormSubmissionResult)) {
+		if (!(object instanceof DisplayPageFormSubmissionResult)) {
 			return false;
 		}
 
-		DisplayPageTemplateFormSubmissionResult
-			displayPageTemplateFormSubmissionResult =
-				(DisplayPageTemplateFormSubmissionResult)object;
+		DisplayPageFormSubmissionResult displayPageFormSubmissionResult =
+			(DisplayPageFormSubmissionResult)object;
 
 		return Objects.equals(
-			toString(), displayPageTemplateFormSubmissionResult.toString());
+			toString(), displayPageFormSubmissionResult.toString());
 	}
 
 	@Override
@@ -123,7 +122,7 @@ public class DisplayPageTemplateFormSubmissionResult
 	}
 
 	public String toString() {
-		return DisplayPageTemplateFormSubmissionResultSerDes.toJSON(this);
+		return DisplayPageFormSubmissionResultSerDes.toJSON(this);
 	}
 
 }

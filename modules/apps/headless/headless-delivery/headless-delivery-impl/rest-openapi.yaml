@@ -1147,6 +1147,29 @@ components:
                             type: string
                     type: object
             type: object
+        DisplayPageFormSubmissionResult:
+            # @review
+            description:
+                Represents a definition of a submission result of type display page template.
+            properties:
+                mapping:
+                    # @review
+                    description:
+                        The mapping of the display page template submission result.
+                    properties:
+                        fieldKey:
+                            # @review
+                            description:
+                                The mapping's field key.
+                            type: string
+                    type: object
+                notificationText:
+                    $ref: "#/components/schemas/FragmentInlineValue"
+                    description:
+                        The localized display page template form submission result's notification text.
+                showNotification:
+                    type: boolean
+            type: object
         DisplayPageTemplate:
             description:
                 Represents a Display Page template.
@@ -1194,29 +1217,6 @@ components:
                     description:
                         The display page template's name.
                     type: string
-            type: object
-        DisplayPageTemplateFormSubmissionResult:
-            # @review
-            description:
-                Represents a definition of a submission result of type display page template.
-            properties:
-                mapping:
-                    # @review
-                    description:
-                        The mapping of the display page template submission result.
-                    properties:
-                        fieldKey:
-                            # @review
-                            description:
-                                The mapping's field key.
-                            type: string
-                    type: object
-                notificationText:
-                    $ref: "#/components/schemas/FragmentInlineValue"
-                    description:
-                        The localized display page template form submission result's notification text.
-                showNotification:
-                    type: boolean
             type: object
         Document:
             description:
@@ -4000,7 +4000,7 @@ components:
                             description:
                                 The definition for the success message of the form.
                             oneOf:
-                                -   $ref: "#/components/schemas/DisplayPageTemplateFormSubmissionResult"
+                                -   $ref: "#/components/schemas/DisplayPageFormSubmissionResult"
                                 -   $ref: "#/components/schemas/MessageFormSubmissionResult"
                                 -   $ref: "#/components/schemas/SitePageFormSubmissionResult"
                                 -   $ref: "#/components/schemas/URLFormSubmissionResult"

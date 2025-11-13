@@ -7,7 +7,7 @@ package com.liferay.headless.delivery.internal.dto.v1_0.mapper;
 
 import com.liferay.headless.delivery.dto.v1_0.ClassTypeReference;
 import com.liferay.headless.delivery.dto.v1_0.ContextReference;
-import com.liferay.headless.delivery.dto.v1_0.DisplayPageTemplateFormSubmissionResult;
+import com.liferay.headless.delivery.dto.v1_0.DisplayPageFormSubmissionResult;
 import com.liferay.headless.delivery.dto.v1_0.FormConfig;
 import com.liferay.headless.delivery.dto.v1_0.FragmentInlineValue;
 import com.liferay.headless.delivery.dto.v1_0.Layout;
@@ -257,14 +257,14 @@ public class FormLayoutStructureItemMapper
 			}
 
 			if (Objects.equals(type, "displayPage")) {
-				DisplayPageTemplateFormSubmissionResult
-					displayPageTemplateFormSubmissionResult =
-						new DisplayPageTemplateFormSubmissionResult();
+				DisplayPageFormSubmissionResult
+					displayPageFormSubmissionResult =
+						new DisplayPageFormSubmissionResult();
 
 				String displayPage = successMessageJSONObject.getString(
 					"displayPage");
 
-				displayPageTemplateFormSubmissionResult.setMapping(
+				displayPageFormSubmissionResult.setMapping(
 					() -> new Mapping() {
 						{
 							setItemReference(
@@ -275,7 +275,7 @@ public class FormLayoutStructureItemMapper
 						}
 					});
 
-				displayPageTemplateFormSubmissionResult.setNotificationText(
+				displayPageFormSubmissionResult.setNotificationText(
 					() -> {
 						if (!successMessageJSONObject.has("notificationText")) {
 							return null;
@@ -285,7 +285,7 @@ public class FormLayoutStructureItemMapper
 							successMessageJSONObject.getJSONObject(
 								"notificationText"));
 					});
-				displayPageTemplateFormSubmissionResult.setShowNotification(
+				displayPageFormSubmissionResult.setShowNotification(
 					() -> {
 						if (!successMessageJSONObject.has("showNotification")) {
 							return null;
@@ -295,7 +295,7 @@ public class FormLayoutStructureItemMapper
 							"showNotification");
 					});
 
-				return displayPageTemplateFormSubmissionResult;
+				return displayPageFormSubmissionResult;
 			}
 		}
 

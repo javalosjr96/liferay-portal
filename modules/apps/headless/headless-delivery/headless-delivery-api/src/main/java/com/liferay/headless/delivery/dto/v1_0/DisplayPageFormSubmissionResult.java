@@ -37,22 +37,20 @@ import java.util.function.Supplier;
 @Generated("")
 @GraphQLName(
 	description = "Represents a definition of a submission result of type display page template.",
-	value = "DisplayPageTemplateFormSubmissionResult"
+	value = "DisplayPageFormSubmissionResult"
 )
 @JsonFilter("Liferay.Vulcan")
-@XmlRootElement(name = "DisplayPageTemplateFormSubmissionResult")
-public class DisplayPageTemplateFormSubmissionResult implements Serializable {
+@XmlRootElement(name = "DisplayPageFormSubmissionResult")
+public class DisplayPageFormSubmissionResult implements Serializable {
 
-	public static DisplayPageTemplateFormSubmissionResult toDTO(String json) {
+	public static DisplayPageFormSubmissionResult toDTO(String json) {
 		return ObjectMapperUtil.readValue(
-			DisplayPageTemplateFormSubmissionResult.class, json);
+			DisplayPageFormSubmissionResult.class, json);
 	}
 
-	public static DisplayPageTemplateFormSubmissionResult unsafeToDTO(
-		String json) {
-
+	public static DisplayPageFormSubmissionResult unsafeToDTO(String json) {
 		return ObjectMapperUtil.unsafeReadValue(
-			DisplayPageTemplateFormSubmissionResult.class, json);
+			DisplayPageFormSubmissionResult.class, json);
 	}
 
 	@io.swagger.v3.oas.annotations.media.Schema(
@@ -195,16 +193,15 @@ public class DisplayPageTemplateFormSubmissionResult implements Serializable {
 			return true;
 		}
 
-		if (!(object instanceof DisplayPageTemplateFormSubmissionResult)) {
+		if (!(object instanceof DisplayPageFormSubmissionResult)) {
 			return false;
 		}
 
-		DisplayPageTemplateFormSubmissionResult
-			displayPageTemplateFormSubmissionResult =
-				(DisplayPageTemplateFormSubmissionResult)object;
+		DisplayPageFormSubmissionResult displayPageFormSubmissionResult =
+			(DisplayPageFormSubmissionResult)object;
 
 		return Objects.equals(
-			toString(), displayPageTemplateFormSubmissionResult.toString());
+			toString(), displayPageFormSubmissionResult.toString());
 	}
 
 	@Override
@@ -262,7 +259,7 @@ public class DisplayPageTemplateFormSubmissionResult implements Serializable {
 
 	@io.swagger.v3.oas.annotations.media.Schema(
 		accessMode = io.swagger.v3.oas.annotations.media.Schema.AccessMode.READ_ONLY,
-		defaultValue = "com.liferay.headless.delivery.dto.v1_0.DisplayPageTemplateFormSubmissionResult",
+		defaultValue = "com.liferay.headless.delivery.dto.v1_0.DisplayPageFormSubmissionResult",
 		name = "x-class-name"
 	)
 	public String xClassName;

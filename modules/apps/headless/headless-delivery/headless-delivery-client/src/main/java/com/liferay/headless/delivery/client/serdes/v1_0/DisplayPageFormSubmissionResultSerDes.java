@@ -5,7 +5,7 @@
 
 package com.liferay.headless.delivery.client.serdes.v1_0;
 
-import com.liferay.headless.delivery.client.dto.v1_0.DisplayPageTemplateFormSubmissionResult;
+import com.liferay.headless.delivery.client.dto.v1_0.DisplayPageFormSubmissionResult;
 import com.liferay.headless.delivery.client.json.BaseJSONParser;
 
 import jakarta.annotation.Generated;
@@ -21,33 +21,28 @@ import java.util.TreeMap;
  * @generated
  */
 @Generated("")
-public class DisplayPageTemplateFormSubmissionResultSerDes {
+public class DisplayPageFormSubmissionResultSerDes {
 
-	public static DisplayPageTemplateFormSubmissionResult toDTO(String json) {
-		DisplayPageTemplateFormSubmissionResultJSONParser
-			displayPageTemplateFormSubmissionResultJSONParser =
-				new DisplayPageTemplateFormSubmissionResultJSONParser();
+	public static DisplayPageFormSubmissionResult toDTO(String json) {
+		DisplayPageFormSubmissionResultJSONParser
+			displayPageFormSubmissionResultJSONParser =
+				new DisplayPageFormSubmissionResultJSONParser();
 
-		return displayPageTemplateFormSubmissionResultJSONParser.parseToDTO(
-			json);
+		return displayPageFormSubmissionResultJSONParser.parseToDTO(json);
 	}
 
-	public static DisplayPageTemplateFormSubmissionResult[] toDTOs(
-		String json) {
+	public static DisplayPageFormSubmissionResult[] toDTOs(String json) {
+		DisplayPageFormSubmissionResultJSONParser
+			displayPageFormSubmissionResultJSONParser =
+				new DisplayPageFormSubmissionResultJSONParser();
 
-		DisplayPageTemplateFormSubmissionResultJSONParser
-			displayPageTemplateFormSubmissionResultJSONParser =
-				new DisplayPageTemplateFormSubmissionResultJSONParser();
-
-		return displayPageTemplateFormSubmissionResultJSONParser.parseToDTOs(
-			json);
+		return displayPageFormSubmissionResultJSONParser.parseToDTOs(json);
 	}
 
 	public static String toJSON(
-		DisplayPageTemplateFormSubmissionResult
-			displayPageTemplateFormSubmissionResult) {
+		DisplayPageFormSubmissionResult displayPageFormSubmissionResult) {
 
-		if (displayPageTemplateFormSubmissionResult == null) {
+		if (displayPageFormSubmissionResult == null) {
 			return "null";
 		}
 
@@ -55,7 +50,7 @@ public class DisplayPageTemplateFormSubmissionResultSerDes {
 
 		sb.append("{");
 
-		if (displayPageTemplateFormSubmissionResult.getMapping() != null) {
+		if (displayPageFormSubmissionResult.getMapping() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
@@ -63,13 +58,10 @@ public class DisplayPageTemplateFormSubmissionResultSerDes {
 			sb.append("\"mapping\": ");
 
 			sb.append(
-				String.valueOf(
-					displayPageTemplateFormSubmissionResult.getMapping()));
+				String.valueOf(displayPageFormSubmissionResult.getMapping()));
 		}
 
-		if (displayPageTemplateFormSubmissionResult.getNotificationText() !=
-				null) {
-
+		if (displayPageFormSubmissionResult.getNotificationText() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
@@ -78,21 +70,17 @@ public class DisplayPageTemplateFormSubmissionResultSerDes {
 
 			sb.append(
 				String.valueOf(
-					displayPageTemplateFormSubmissionResult.
-						getNotificationText()));
+					displayPageFormSubmissionResult.getNotificationText()));
 		}
 
-		if (displayPageTemplateFormSubmissionResult.getShowNotification() !=
-				null) {
-
+		if (displayPageFormSubmissionResult.getShowNotification() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
 			sb.append("\"showNotification\": ");
 
-			sb.append(
-				displayPageTemplateFormSubmissionResult.getShowNotification());
+			sb.append(displayPageFormSubmissionResult.getShowNotification());
 		}
 
 		sb.append("}");
@@ -101,76 +89,65 @@ public class DisplayPageTemplateFormSubmissionResultSerDes {
 	}
 
 	public static Map<String, Object> toMap(String json) {
-		DisplayPageTemplateFormSubmissionResultJSONParser
-			displayPageTemplateFormSubmissionResultJSONParser =
-				new DisplayPageTemplateFormSubmissionResultJSONParser();
+		DisplayPageFormSubmissionResultJSONParser
+			displayPageFormSubmissionResultJSONParser =
+				new DisplayPageFormSubmissionResultJSONParser();
 
-		return displayPageTemplateFormSubmissionResultJSONParser.parseToMap(
-			json);
+		return displayPageFormSubmissionResultJSONParser.parseToMap(json);
 	}
 
 	public static Map<String, String> toMap(
-		DisplayPageTemplateFormSubmissionResult
-			displayPageTemplateFormSubmissionResult) {
+		DisplayPageFormSubmissionResult displayPageFormSubmissionResult) {
 
-		if (displayPageTemplateFormSubmissionResult == null) {
+		if (displayPageFormSubmissionResult == null) {
 			return null;
 		}
 
 		Map<String, String> map = new TreeMap<>();
 
-		if (displayPageTemplateFormSubmissionResult.getMapping() == null) {
+		if (displayPageFormSubmissionResult.getMapping() == null) {
 			map.put("mapping", null);
 		}
 		else {
 			map.put(
 				"mapping",
-				String.valueOf(
-					displayPageTemplateFormSubmissionResult.getMapping()));
+				String.valueOf(displayPageFormSubmissionResult.getMapping()));
 		}
 
-		if (displayPageTemplateFormSubmissionResult.getNotificationText() ==
-				null) {
-
+		if (displayPageFormSubmissionResult.getNotificationText() == null) {
 			map.put("notificationText", null);
 		}
 		else {
 			map.put(
 				"notificationText",
 				String.valueOf(
-					displayPageTemplateFormSubmissionResult.
-						getNotificationText()));
+					displayPageFormSubmissionResult.getNotificationText()));
 		}
 
-		if (displayPageTemplateFormSubmissionResult.getShowNotification() ==
-				null) {
-
+		if (displayPageFormSubmissionResult.getShowNotification() == null) {
 			map.put("showNotification", null);
 		}
 		else {
 			map.put(
 				"showNotification",
 				String.valueOf(
-					displayPageTemplateFormSubmissionResult.
-						getShowNotification()));
+					displayPageFormSubmissionResult.getShowNotification()));
 		}
 
 		return map;
 	}
 
-	public static class DisplayPageTemplateFormSubmissionResultJSONParser
-		extends BaseJSONParser<DisplayPageTemplateFormSubmissionResult> {
+	public static class DisplayPageFormSubmissionResultJSONParser
+		extends BaseJSONParser<DisplayPageFormSubmissionResult> {
 
 		@Override
-		protected DisplayPageTemplateFormSubmissionResult createDTO() {
-			return new DisplayPageTemplateFormSubmissionResult();
+		protected DisplayPageFormSubmissionResult createDTO() {
+			return new DisplayPageFormSubmissionResult();
 		}
 
 		@Override
-		protected DisplayPageTemplateFormSubmissionResult[] createDTOArray(
-			int size) {
-
-			return new DisplayPageTemplateFormSubmissionResult[size];
+		protected DisplayPageFormSubmissionResult[] createDTOArray(int size) {
+			return new DisplayPageFormSubmissionResult[size];
 		}
 
 		@Override
@@ -190,26 +167,25 @@ public class DisplayPageTemplateFormSubmissionResultSerDes {
 
 		@Override
 		protected void setField(
-			DisplayPageTemplateFormSubmissionResult
-				displayPageTemplateFormSubmissionResult,
+			DisplayPageFormSubmissionResult displayPageFormSubmissionResult,
 			String jsonParserFieldName, Object jsonParserFieldValue) {
 
 			if (Objects.equals(jsonParserFieldName, "mapping")) {
 				if (jsonParserFieldValue != null) {
-					displayPageTemplateFormSubmissionResult.setMapping(
+					displayPageFormSubmissionResult.setMapping(
 						MappingSerDes.toDTO((String)jsonParserFieldValue));
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "notificationText")) {
 				if (jsonParserFieldValue != null) {
-					displayPageTemplateFormSubmissionResult.setNotificationText(
+					displayPageFormSubmissionResult.setNotificationText(
 						FragmentInlineValueSerDes.toDTO(
 							(String)jsonParserFieldValue));
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "showNotification")) {
 				if (jsonParserFieldValue != null) {
-					displayPageTemplateFormSubmissionResult.setShowNotification(
+					displayPageFormSubmissionResult.setShowNotification(
 						(Boolean)jsonParserFieldValue);
 				}
 			}
