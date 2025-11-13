@@ -476,6 +476,14 @@ public class DBUpgradeClient {
 		return new GogoShellClient(host, port);
 	}
 
+	private boolean _isEmpty(String value) {
+		if ((value == null) || value.isEmpty()) {
+			return true;
+		}
+
+		return false;
+	}
+
 	private boolean _isGTJDK8() {
 		String javaVersion = System.getProperty("java.version");
 
@@ -713,7 +721,7 @@ public class DBUpgradeClient {
 		String value = _appServerProperties.getProperty(
 			"server.detector.server.id");
 
-		if ((value == null) || value.isEmpty()) {
+		if (_isEmpty(value)) {
 			String response = null;
 
 			while (_appServer == null) {
@@ -948,14 +956,67 @@ public class DBUpgradeClient {
 							"portal-upgrade-ext.properties.");
 		}
 
-		String value = _portalUpgradeExtProperties.getProperty(
+		String driverClassName = _portalUpgradeExtProperties.getProperty(
 			"jdbc.default.driverClassName");
 
-		if ((value != null) && !value.isEmpty()) {
+		if (!_isEmpty(driverClassName)) {
 			return;
 		}
 
+		File portalExtPropertiesFile = new File(
+			_portalUpgradeExtProperties.getProperty("liferay.home"),
+			"portal-ext.properties");
+
+		Properties portalExtProperties = _readProperties(
+			portalExtPropertiesFile);
+
+		driverClassName = portalExtProperties.getProperty(
+			"jdbc.default.driverClassName");
+
+		String password = null;
+		String url = null;
+		String userName = null;
+
+		if (!_isEmpty(driverClassName)) {
+			password = portalExtProperties.getProperty("jdbc.default.password");
+			url = portalExtProperties.getProperty("jdbc.default.url");
+			userName = portalExtProperties.getProperty("jdbc.default.username");
+		}
+
 		String response = null;
+
+		if (!_isEmpty(driverClassName) && !_isEmpty(password) &&
+			!_isEmpty(url) && !_isEmpty(userName)) {
+
+			System.out.println(
+				"An existing database configuration was found in: " +
+					portalExtPropertiesFile.getAbsolutePath());
+			System.out.println(
+				"  jdbc.default.driverClassName=" + driverClassName);
+			System.out.println("  jdbc.default.url=" + url);
+			System.out.println("  jdbc.default.username=" + userName);
+			System.out.println(
+				"  jdbc.default.password=" + password.replaceAll(".", "*"));
+
+			System.out.println("\nUse existing JDBC properties (y/N):");
+
+			response = _consoleReader.readLine();
+
+			if (response.equalsIgnoreCase("y") ||
+				response.equalsIgnoreCase("yes")) {
+
+				_portalUpgradeExtProperties.setProperty(
+					"jdbc.default.driverClassName", driverClassName);
+				_portalUpgradeExtProperties.setProperty(
+					"jdbc.default.password", password);
+				_portalUpgradeExtProperties.setProperty(
+					"jdbc.default.url", url);
+				_portalUpgradeExtProperties.setProperty(
+					"jdbc.default.username", userName);
+
+				return;
+			}
+		}
 
 		Database dataSource = null;
 
@@ -1029,11 +1090,11 @@ public class DBUpgradeClient {
 
 		System.out.println("Please enter your database username: ");
 
-		String userName = _consoleReader.readLine();
+		userName = _consoleReader.readLine();
 
 		System.out.println("Please enter your database password: ");
 
-		String password = _consoleReader.readLine('*');
+		password = _consoleReader.readLine('*');
 
 		_portalUpgradeExtProperties.setProperty(
 			"jdbc.default.driverClassName", dataSource.getClassName());
@@ -1052,7 +1113,7 @@ public class DBUpgradeClient {
 
 		File baseDir = new File(".");
 
-		if ((value == null) || value.isEmpty()) {
+		if (_isEmpty(value)) {
 			File defaultLiferayHomeDir = new File(_jarDir, "../../");
 
 			String liferayHomeDirName = _requestDirName(
