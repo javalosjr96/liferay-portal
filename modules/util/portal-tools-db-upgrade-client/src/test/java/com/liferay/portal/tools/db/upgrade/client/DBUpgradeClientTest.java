@@ -324,15 +324,10 @@ public class DBUpgradeClientTest {
 
 		Assert.assertNotNull(properties);
 		Assert.assertEquals(
-			"com.mysql.cj.jdbc.Driver",
+			"org.postgresql.Driver",
 			properties.getProperty("jdbc.default.driverClassName"));
 		Assert.assertEquals(
-			StringBundler.concat(
-				"jdbc:mysql://localhost/lportal?characterEncoding=UTF-8",
-				"&dontTrackOpenResources=true",
-				"&holdResultsOpenOverStatementClose=true",
-				"&serverTimezone=GMT&useFastDateParsing=false",
-				"&useUnicode=true"),
+			"jdbc:postgresql://localhost:5432/lportal",
 			properties.getProperty("jdbc.default.url"));
 		Assert.assertEquals(
 			StringPool.BLANK, properties.getProperty("jdbc.default.username"));
@@ -370,15 +365,10 @@ public class DBUpgradeClientTest {
 
 		Assert.assertNotNull(properties);
 		Assert.assertEquals(
-			"com.mysql.cj.jdbc.Driver",
+			"org.postgresql.Driver",
 			properties.getProperty("jdbc.default.driverClassName"));
 		Assert.assertEquals(
-			StringBundler.concat(
-				"jdbc:mysql://localhost/lportal?characterEncoding=UTF-8",
-				"&dontTrackOpenResources=true",
-				"&holdResultsOpenOverStatementClose=true",
-				"&serverTimezone=GMT&useFastDateParsing=false",
-				"&useUnicode=true"),
+			"jdbc:postgresql://localhost:5432/lportal",
 			properties.getProperty("jdbc.default.url"));
 		Assert.assertEquals(
 			StringPool.BLANK, properties.getProperty("jdbc.default.username"));
@@ -427,15 +417,9 @@ public class DBUpgradeClientTest {
 
 			Assert.assertNotNull(properties);
 			Assert.assertEquals(
-				"com.mysql.cj.jdbc.Driver",
+				"org.postgresql.Driver",
 				properties.getProperty("jdbc.default.driverClassName"));
-			Assert.assertEquals(
-				StringBundler.concat(
-					"jdbc:mysql://localhost/lportal?characterEncoding=UTF-8",
-					"&dontTrackOpenResources=true",
-					"&holdResultsOpenOverStatementClose=true",
-					"&serverTimezone=GMT&useFastDateParsing=false",
-					"&useUnicode=true"),
+			Assert.assertEquals("jdbc:postgresql://localhost:5432/lportal",
 				properties.getProperty("jdbc.default.url"));
 			Assert.assertEquals(
 				StringPool.BLANK,
