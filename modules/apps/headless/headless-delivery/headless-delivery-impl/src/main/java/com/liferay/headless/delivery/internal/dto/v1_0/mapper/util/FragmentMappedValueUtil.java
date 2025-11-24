@@ -77,50 +77,48 @@ public class FragmentMappedValueUtil {
 	}
 
 	public static ClassFieldsReference toDisplayPageClassFieldsReference(
-		String displayPageTemplateId) {
+		String displayPage) {
 
-		if (StringUtil.startsWith(
-				displayPageTemplateId,
-				LayoutPageTemplateEntry.class.getSimpleName())) {
+		if (!StringUtil.startsWith(
+				displayPage, LayoutPageTemplateEntry.class.getSimpleName())) {
 
-			try {
-				Matcher matcher = _pattern.matcher(displayPageTemplateId);
+			return null;
+		}
 
-				if (matcher.find()) {
-					LayoutPageTemplateEntry layoutPageTemplateEntry =
-						LayoutPageTemplateEntryLocalServiceUtil.
-							getLayoutPageTemplateEntry(
-								GetterUtil.getLong(matcher.group(1)));
+		try {
+			Matcher matcher = _pattern.matcher(displayPage);
 
-					return new ClassFieldsReference() {
-						{
-							setClassName(
-								() -> LayoutPageTemplateEntry.class.getName());
-							setFields(
-								() -> new Field[] {
-									new Field() {
-										{
-											setFieldName(
-												() -> "externalReferenceCode");
-											setFieldValue(
-												layoutPageTemplateEntry::
-													getExternalReferenceCode);
-										}
-									}
-								});
-						}
-					};
-				}
-			}
-			catch (Exception exception) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"Item reference could not be set since no display " +
-							"page template could be obtained",
-						exception);
-				}
-
+			if (!matcher.find()) {
 				return null;
+			}
+
+			long layoutPageTemplateEntryId = GetterUtil.getLong(
+				matcher.group(1));
+
+			LayoutPageTemplateEntry layoutPageTemplateEntry =
+				LayoutPageTemplateEntryLocalServiceUtil.
+					getLayoutPageTemplateEntry(layoutPageTemplateEntryId);
+
+			Field field = new Field();
+
+			field.setFieldName(() -> "externalReferenceCode");
+			field.setFieldValue(
+				layoutPageTemplateEntry::getExternalReferenceCode);
+
+			ClassFieldsReference classFieldsReference =
+				new ClassFieldsReference();
+
+			classFieldsReference.setClassName(
+				LayoutPageTemplateEntry.class::getName);
+			classFieldsReference.setFields(() -> new Field[] {field});
+
+			return classFieldsReference;
+		}
+		catch (PortalException portalException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Could not obtain display page for item reference",
+					portalException);
 			}
 		}
 
@@ -170,58 +168,53 @@ public class FragmentMappedValueUtil {
 	public static ClassFieldsReference toLayoutClassFieldsReference(
 		JSONObject layoutJSONObject) {
 
-		final Layout layout;
-
 		try {
-			layout = LayoutServiceUtil.getLayout(
+			Layout layout = LayoutServiceUtil.getLayout(
 				layoutJSONObject.getLong("groupId"),
 				layoutJSONObject.getBoolean("privateLayout"),
 				layoutJSONObject.getLong("layoutId"));
+
+			ClassFieldsReference classFieldsReference =
+				new ClassFieldsReference();
+
+			classFieldsReference.setClassName(Layout.class::getName);
+
+			classFieldsReference.setFields(
+				() -> {
+					Group group = GroupLocalServiceUtil.getGroup(
+						layout.getGroupId());
+
+					Field friendlyURLField = new Field();
+
+					friendlyURLField.setFieldName(() -> "friendlyURL");
+					friendlyURLField.setFieldValue(layout::getFriendlyURL);
+
+					Field privatePageField = new Field();
+
+					privatePageField.setFieldName(() -> "privatePage");
+					privatePageField.setFieldValue(
+						() -> String.valueOf(layout.isPrivateLayout()));
+
+					Field siteKeyField = new Field();
+
+					siteKeyField.setFieldName(() -> "siteKey");
+					siteKeyField.setFieldValue(group::getGroupKey);
+
+					return new Field[] {
+						friendlyURLField, privatePageField, siteKeyField
+					};
+				});
+
+			return classFieldsReference;
 		}
 		catch (PortalException portalException) {
-			if (_log.isWarnEnabled()) {
+			if (_log.isWarnEnabled())
 				_log.warn(
-					"Item reference could not be set since no layout could " +
-						"be obtained",
+					"Could not obtain layout for item reference",
 					portalException);
-			}
-
-			return null;
 		}
 
-		return new ClassFieldsReference() {
-			{
-				setClassName(() -> Layout.class.getName());
-				setFields(
-					() -> {
-						Group group = GroupLocalServiceUtil.getGroup(
-							layout.getGroupId());
-
-						return new Field[] {
-							new Field() {
-								{
-									setFieldName(() -> "friendlyURL");
-									setFieldValue(layout::getFriendlyURL);
-								}
-							},
-							new Field() {
-								{
-									setFieldName(() -> "privatePage");
-									setFieldValue(
-										() -> String.valueOf(
-											layout.isPrivateLayout()));
-								}
-							},
-							new Field() {
-								{
-									setFieldName(() -> "siteKey");
-									setFieldValue(group::getGroupKey);
-								}
-							}
-						};
-					});
-			}
-		};
+		return null;
 	}
 
 	private static String _toItemClassName(JSONObject jsonObject) {
