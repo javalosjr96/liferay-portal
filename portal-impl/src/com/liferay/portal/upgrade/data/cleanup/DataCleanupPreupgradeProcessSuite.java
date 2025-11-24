@@ -86,6 +86,9 @@ public class DataCleanupPreupgradeProcessSuite {
 			new CompanyDataCleanupPreupgradeProcess();
 		DataCleanupPreupgradeProcess configurationDataCleanupPreupgradeProcess =
 			new ConfigurationDataCleanupPreupgradeProcess();
+		DataCleanupPreupgradeProcess
+			databaseCasingDataCleanupPreupgradeProcess =
+				new DatabaseCasingDataCleanupPreupgradeProcess();
 		DataCleanupPreupgradeProcess ddmDataCleanupPreupgradeProcess =
 			new DDMDataCleanupPreupgradeProcess();
 		DataCleanupPreupgradeProcess
@@ -120,15 +123,18 @@ public class DataCleanupPreupgradeProcessSuite {
 			<DataCleanupPreupgradeProcess, List<DataCleanupPreupgradeProcess>>
 				put(
 					analyticsMessageDataCleanupPreupgradeProcess,
-					DataCleanupPreupgradeProcess.dependsOn()
+					DataCleanupPreupgradeProcess.dependsOn(
+						databaseCasingDataCleanupPreupgradeProcess)
 			).put(
 				companyDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
 					analyticsMessageDataCleanupPreupgradeProcess,
+					databaseCasingDataCleanupPreupgradeProcess,
 					updateAllPrimaryKeysDataCleanupPreupgradeProcess)
 			).put(
 				configurationDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
+					databaseCasingDataCleanupPreupgradeProcess,
 					userDataCleanupPreupgradeProcess)
 			).put(
 				new CounterDataCleanupPreupgradeProcess(),
@@ -136,6 +142,7 @@ public class DataCleanupPreupgradeProcessSuite {
 					analyticsMessageDataCleanupPreupgradeProcess,
 					companyDataCleanupPreupgradeProcess,
 					configurationDataCleanupPreupgradeProcess,
+					databaseCasingDataCleanupPreupgradeProcess,
 					ddmDataCleanupPreupgradeProcess,
 					ddmStorageLinkDataCleanupPreupgradeProcess,
 					dlFileEntryDataCleanupPreupgradeProcess,
@@ -146,41 +153,53 @@ public class DataCleanupPreupgradeProcessSuite {
 					updateAllPrimaryKeysDataCleanupPreupgradeProcess,
 					userDataCleanupPreupgradeProcess)
 			).put(
+				databaseCasingDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn()
+			).put(
 				ddmDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
+					databaseCasingDataCleanupPreupgradeProcess,
 					groupDataCleanupPreupgradeProcess)
 			).put(
 				ddmStorageLinkDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
+					databaseCasingDataCleanupPreupgradeProcess,
 					ddmDataCleanupPreupgradeProcess,
 					dlFileEntryDataCleanupPreupgradeProcess,
 					journalDataCleanupPreupgradeProcess)
 			).put(
 				dlFileEntryDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
+					databaseCasingDataCleanupPreupgradeProcess,
 					groupDataCleanupPreupgradeProcess)
 			).put(
 				groupDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
+					databaseCasingDataCleanupPreupgradeProcess,
 					userDataCleanupPreupgradeProcess)
 			).put(
 				journalDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
+					databaseCasingDataCleanupPreupgradeProcess,
 					ddmDataCleanupPreupgradeProcess)
 			).put(
 				nullUnicodeContentDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
+					databaseCasingDataCleanupPreupgradeProcess,
 					ddmDataCleanupPreupgradeProcess)
 			).put(
 				quartzJobDetailsDataCleanupPreupgradeProcess,
-				DataCleanupPreupgradeProcess.dependsOn()
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseCasingDataCleanupPreupgradeProcess)
 			).put(
 				updateAllPrimaryKeysDataCleanupPreupgradeProcess,
-				DataCleanupPreupgradeProcess.dependsOn()
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseCasingDataCleanupPreupgradeProcess)
 			).put(
 				userDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
-					companyDataCleanupPreupgradeProcess)
+					companyDataCleanupPreupgradeProcess,
+					databaseCasingDataCleanupPreupgradeProcess)
 			).build();
 	}
 
