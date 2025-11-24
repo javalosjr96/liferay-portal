@@ -79,48 +79,48 @@ public class FragmentMappedValueUtil {
 	public static ClassFieldsReference toDisplayPageClassFieldsReference(
 		String displayPageTemplateId) {
 
-		if (StringUtil.startsWith(
+		if (!StringUtil.startsWith(
 				displayPageTemplateId,
 				LayoutPageTemplateEntry.class.getSimpleName())) {
 
-			try {
-				Matcher matcher = _pattern.matcher(displayPageTemplateId);
+			return null;
+		}
 
-				if (matcher.find()) {
-					LayoutPageTemplateEntry layoutPageTemplateEntry =
-						LayoutPageTemplateEntryLocalServiceUtil.
-							getLayoutPageTemplateEntry(
-								GetterUtil.getLong(matcher.group(1)));
+		Matcher matcher = _pattern.matcher(displayPageTemplateId);
 
-					return new ClassFieldsReference() {
-						{
-							setClassName(
-								() -> LayoutPageTemplateEntry.class.getName());
-							setFields(
-								() -> new Field[] {
-									new Field() {
-										{
-											setFieldName(
-												() -> "externalReferenceCode");
-											setFieldValue(
-												layoutPageTemplateEntry::
-													getExternalReferenceCode);
-										}
-									}
-								});
-						}
-					};
+		if (!matcher.find()) {
+			return null;
+		}
+
+		try {
+			LayoutPageTemplateEntry layoutPageTemplateEntry =
+				LayoutPageTemplateEntryLocalServiceUtil.
+					getLayoutPageTemplateEntry(
+						GetterUtil.getLong(matcher.group(1)));
+
+			return new ClassFieldsReference() {
+				{
+					setClassName(() -> LayoutPageTemplateEntry.class.getName());
+					setFields(
+						() -> new Field[] {
+							new Field() {
+								{
+									setFieldName(() -> "externalReferenceCode");
+									setFieldValue(
+										layoutPageTemplateEntry::
+											getExternalReferenceCode);
+								}
+							}
+						});
 				}
-			}
-			catch (Exception exception) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"Item reference could not be set since no display " +
-							"page template could be obtained",
-						exception);
-				}
-
-				return null;
+			};
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Item reference could not be set since no display page " +
+						"template could be obtained",
+					exception);
 			}
 		}
 
