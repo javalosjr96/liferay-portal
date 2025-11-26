@@ -9,29 +9,22 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.db.DBResourceUtil;
 import com.liferay.portal.kernel.dao.db.DBInspector;
-import com.liferay.portal.kernel.dao.db.DBManagerUtil;
-import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.upgrade.UpgradeException;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
-import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
-import java.sql.Statement;
 
-import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.function.UnaryOperator;
+import java.util.concurrent.ConcurrentSkipListMap;
 
 /**
  * @author Jorge Avalos
@@ -41,7 +34,7 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		Set<String> expectedTableNames = new HashSet<>();
+		Set<String> expectedTableNames = new TreeSet<>();
 
 		expectedTableNames.addAll(
 			DBResourceUtil.getServiceComponentModuleTableNames(connection));
@@ -77,7 +70,7 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 
 		DatabaseMetaData metaData = connection.getMetaData();
 
-		Map<String, Set<String>> actualColumnsMap = new TreeMap<>();
+		Map<String, Map<String, String>> actualColumnsMap = new TreeMap<>();
 
 		try (ResultSet resultSet = metaData.getColumns(
 				dbInspector.getCatalog(), dbInspector.getSchema(), "%", "%")) {
@@ -86,10 +79,11 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 				String tableName = resultSet.getString("TABLE_NAME");
 				String columnName = resultSet.getString("COLUMN_NAME");
 
-				Set<String> columns = actualColumnsMap.computeIfAbsent(
-					tableName, k -> new TreeSet<>());
+				Map<String, String> columns = actualColumnsMap.computeIfAbsent(
+					tableName,
+					k -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
 
-				columns.add(columnName);
+				columns.put(columnName, columnName);
 			}
 		}
 
@@ -97,100 +91,37 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 			expectedColumnDefinitionsMap, actualColumnsMap);
 	}
 
-	private TreeSet<String> _caseColumnNameList(List<String> columnsNamesList)
-		throws Exception {
-		if (ListUtil.isEmpty(columnsNamesList)) {
-			return new TreeSet<>();
-		}
-
-		TreeSet<String> casedColumnNames = new TreeSet<>();
-
-		UnaryOperator<String> casingStrategy = _getCasingStrategy(connection);
-
-		for (String line : columnsNamesList) {
-			if (Validator.isNotNull(line)) {
-				casedColumnNames.add(casingStrategy.apply(line));
-			}
-		}
-
-		return casedColumnNames;
-	}
-
-	private UnaryOperator<String> _getCasingStrategy(Connection connection)
-		throws Exception {
-		DBType dbType = DBManagerUtil.getDBType();
-
-		if (dbType == DBType.POSTGRESQL) {
-			return String::toLowerCase;
-		}
-		else if ((dbType == DBType.ORACLE) || (dbType == DBType.DB2)) {
-			return String::toUpperCase;
-		}
-		else if ((dbType == DBType.MYSQL) || (dbType == DBType.MARIADB)) {
-			return _getMySQLCasingVariable(connection);
-		}
-
-		return UnaryOperator.identity();
-	}
-
-	private UnaryOperator<String> _getMySQLCasingVariable(Connection connection)
-		throws Exception {
-
-		String sql = "SHOW VARIABLES LIKE 'lower_case_table_names'";
-
-		try (Statement stmt = connection.createStatement();
-			ResultSet resultSet = stmt.executeQuery(sql)) {
-
-			if (resultSet.next() && (resultSet.getInt(2) == 1)) {
-				return String::toLowerCase;
-			}
-		}
-
-		return UnaryOperator.identity();
-	}
-
 	private void _validateColumnNamesCasing(
 		Map<String, List<String>> expectedColumnDefinitionsMap,
-		Map<String, Set<String>> actualColumnsMap) {
+		Map<String, Map<String, String>> actualColumnsMap) {
 
 		expectedColumnDefinitionsMap.forEach(
 			(tableName, values) -> {
-				TreeSet<String> expectedColumnDefinitions = null;
-
-				try {
-					expectedColumnDefinitions = _caseColumnNameList(
-						values);
-				}
-				catch (Exception e) {
-					throw new RuntimeException(e);
-				}
-
-				Set<String> columnNames = actualColumnsMap.get(tableName);
+				Map<String, String> columnNames = actualColumnsMap.get(
+					tableName);
 
 				Map<String, String> invalidColumnCasingMap =
-					new LinkedHashMap<>();
+					new ConcurrentSkipListMap<>();
 
-				for (String columnDefinition : expectedColumnDefinitions) {
+				for (String columnDefinition : values) {
 					if (Validator.isNull(columnDefinition)) {
 						continue;
 					}
 
-					int spaceIndex = columnDefinition.indexOf(StringPool.SPACE);
-
 					String expectedColumnName =
-						(spaceIndex == -1) ? columnDefinition :
-							columnDefinition.substring(0, spaceIndex);
+						StringUtil.split(columnDefinition, StringPool.SPACE)[0];
 
-					for (String columnName : columnNames) {
-						if (StringUtil.equalsIgnoreCase(
-								columnName, expectedColumnName) &&
-							!columnName.equals(expectedColumnName)) {
+					String badColumnName = columnNames.get(expectedColumnName);
 
-							invalidColumnCasingMap.put(
-								columnName, columnDefinition);
+					if (badColumnName == null) {
+						continue;
+					}
 
-							break;
-						}
+					if (!badColumnName.equals(expectedColumnName)) {
+						invalidColumnCasingMap.put(
+							badColumnName, columnDefinition);
+
+						break;
 					}
 				}
 
@@ -204,8 +135,8 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 						try {
 							alterColumnUpgradeProcess.upgrade();
 						}
-						catch (UpgradeException e) {
-							throw new RuntimeException(e);
+						catch (UpgradeException upgradeException) {
+							throw new RuntimeException(upgradeException);
 						}
 					});
 			});
@@ -216,10 +147,10 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 			Map<String, String> existingDatabaseTableNames)
 		throws Exception {
 
-		UnaryOperator<String> casingStrategy = _getCasingStrategy(connection);
+		DBInspector dbInspector = new DBInspector(connection);
 
 		for (String expectedTableName : expectedTableNames) {
-			expectedTableName = casingStrategy.apply(expectedTableName);
+			expectedTableName = dbInspector.normalizeName(expectedTableName);
 
 			String actualTableName = existingDatabaseTableNames.get(
 				expectedTableName);
@@ -228,10 +159,7 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 				continue;
 			}
 
-			if (StringUtil.equalsIgnoreCase(
-					actualTableName, expectedTableName) &&
-				!actualTableName.equals(expectedTableName)) {
-
+			if (!actualTableName.equals(expectedTableName)) {
 				System.out.println(
 					StringBundler.concat(
 						"Incorrect Casing Found. Actual: ", actualTableName,
