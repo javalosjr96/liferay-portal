@@ -52,4 +52,18 @@ public class DataCleanupLoggingUtil {
 				" because ", cause));
 	}
 
+	public static void logAlter(
+		Log log, String tableName,
+		String cause) {
+
+		if (!log.isInfoEnabled()) {
+			return;
+		}
+
+		log.info(
+			StringBundler.concat(
+				"Table ", tableName,
+				 ", altered because ", cause));
+	}
+
 }
