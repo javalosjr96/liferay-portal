@@ -11,6 +11,7 @@ import com.liferay.portal.db.DBResourceUtil;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
@@ -30,11 +31,18 @@ import java.util.TreeSet;
 /**
  * @author Jorge Avalos
  */
-public class DatabaseCasingDataCleanupPreupgradeProcess
+public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess
 	extends DataCleanupPreupgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
+		DB db = DBManagerUtil.getDB();
+
+		if ((db.getDBType() != DBType.MARIADB) &&
+			(db.getDBType() != DBType.MYSQL) && (db.getDBType() != DBType.SQLSERVER)) {
+
+			return;
+		}
 		Set<String> expectedTableNames = new TreeSet<>();
 
 		expectedTableNames.addAll(
@@ -56,8 +64,6 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 		}
 
 		for (String expectedTableName : expectedTableNames) {
-			expectedTableName = dbInspector.normalizeName(expectedTableName);
-
 			String tableName = tableNames.get(expectedTableName);
 
 			if ((tableName == null) || tableName.equals(expectedTableName)) {
@@ -96,11 +102,16 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 				String tableName = resultSet.getString("TABLE_NAME");
 				String columnName = resultSet.getString("COLUMN_NAME");
 
-				Map<String, String> columns = columnsMap.computeIfAbsent(
-					tableName,
-					k -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
+				if(!expectedTableNames.contains(tableName)){
+					continue;
+				}
 
-				columns.put(columnName, columnName);
+				columnsMap.computeIfAbsent(
+					tableName,
+					k -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER)
+				).put(
+					columnName, columnName
+				);
 			}
 		}
 
@@ -110,18 +121,19 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 			String tableName = entry.getKey();
 			List<String> columnDefinitions = entry.getValue();
 
+			Map<String, String> columnNames = columnsMap.get(tableName);
+
 			_validateColumnNamesCasing(
 				dbInspector.normalizeName(tableName), columnDefinitions,
-				columnsMap);
+				columnNames);
 		}
 	}
 
 	private void _validateColumnNamesCasing(
 			String tableName, List<String> columnDefinitions,
-			Map<String, Map<String, String>> columnsMap)
+			Map<String, String> columnNames)
 		throws Exception {
 
-		Map<String, String> columnNames = columnsMap.get(tableName);
 
 		if ((columnNames == null) || columnNames.isEmpty()) {
 			return;
@@ -170,6 +182,6 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
-		DatabaseCasingDataCleanupPreupgradeProcess.class);
+		DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess.class);
 
 }

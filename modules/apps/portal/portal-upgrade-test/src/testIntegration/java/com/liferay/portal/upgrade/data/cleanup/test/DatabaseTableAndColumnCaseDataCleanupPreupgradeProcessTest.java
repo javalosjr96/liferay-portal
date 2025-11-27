@@ -22,7 +22,7 @@ import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
-import com.liferay.portal.upgrade.data.cleanup.DatabaseCasingDataCleanupPreupgradeProcess;
+import com.liferay.portal.upgrade.data.cleanup.DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -43,8 +43,8 @@ import org.junit.runner.RunWith;
  * @author Jorge Avalos
  */
 @RunWith(Arquillian.class)
-public class DatabaseCasingDataCleanupPreupgradeProcessTest
-	extends DatabaseCasingDataCleanupPreupgradeProcess {
+public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcessTest
+	extends DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess {
 
 	@ClassRule
 	@Rule
@@ -55,7 +55,9 @@ public class DatabaseCasingDataCleanupPreupgradeProcessTest
 	public static void assume() {
 		DBType dbType = DBManagerUtil.getDBType();
 
-		Assume.assumeTrue(dbType != DBType.HYPERSONIC);
+		Assume.assumeTrue(
+			(dbType == DBType.MYSQL) || (dbType == DBType.MARIADB) ||
+			(dbType == DBType.SQLSERVER));
 	}
 
 	@Before
@@ -80,8 +82,8 @@ public class DatabaseCasingDataCleanupPreupgradeProcessTest
 		String invalidTableName = "testTABLE";
 		String invalidColumnName = "testCOLUMN";
 
-		String testTableName = dbInspector.normalizeName("TestTable");
-		String testColumnName = dbInspector.normalizeName("testColumn");
+		String testTableName = "TestTable";
+		String testColumnName = "testColumn";
 
 		serviceComponent.setMvccVersion(0);
 		serviceComponent.setBuildNamespace("com.liferay.test.service.impl");
@@ -94,7 +96,7 @@ public class DatabaseCasingDataCleanupPreupgradeProcessTest
 
 		try (Connection connection = DataAccess.getConnection();
 			LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				DatabaseCasingDataCleanupPreupgradeProcess.class.getName(),
+				DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess.class.getName(),
 				LoggerTestUtil.INFO)) {
 
 			_addTestTable(invalidTableName, invalidColumnName);
@@ -157,32 +159,22 @@ public class DatabaseCasingDataCleanupPreupgradeProcessTest
 			String invalidTableName, String invalidColumnName)
 		throws Exception {
 
-		String testTableSQL;
-
 		DBType dbType = DBManagerUtil.getDBType();
 
-		if ((dbType == DBType.DB2) || (dbType == DBType.ORACLE) ||
-			(dbType == DBType.POSTGRESQL)) {
-
-			testTableSQL = StringBundler.concat(
-				"create table \"", invalidTableName, "\" (\"",
-				invalidColumnName, "\" LONG)");
-		}
-		else if ((dbType == DBType.MYSQL) || (dbType == DBType.MARIADB)) {
-			testTableSQL = StringBundler.concat(
-				"create table `", invalidTableName, "` (`", invalidColumnName,
-				"` LONG)");
-		}
-		else if (dbType == DBType.SQLSERVER) {
-			testTableSQL = StringBundler.concat(
-				"create table [", invalidTableName, "] ([", invalidColumnName,
-				"] LONG)");
+		if (dbType == DBType.SQLSERVER) {
+			DBPartitionUtil.forEachCompanyId(
+				companyId -> _db.runSQL(
+					StringBundler.concat(
+						"create table [", invalidTableName, "] ([",
+						invalidColumnName, "] LONG)")));
 		}
 		else {
-			return;
+			DBPartitionUtil.forEachCompanyId(
+				companyId -> _db.runSQL(
+					StringBundler.concat(
+						"create table `", invalidTableName, "` (`",
+						invalidColumnName, "` LONG)")));
 		}
-
-		DBPartitionUtil.forEachCompanyId(companyId -> _db.runSQL(testTableSQL));
 	}
 
 	private Connection _connection;
