@@ -59,7 +59,7 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 
 			String tableName = tableNames.get(expectedTableName);
 
-			if ((tableName == null) || !tableName.equals(expectedTableName)) {
+			if ((tableName == null) || tableName.equals(expectedTableName)) {
 				continue;
 			}
 
@@ -109,7 +109,7 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 			List<String> columnDefinitions = entry.getValue();
 
 			_validateColumnNamesCasing(
-				tableName, columnDefinitions, columnsMap);
+				dbInspector.normalizeName(tableName), columnDefinitions, columnsMap);
 		}
 	}
 
@@ -122,13 +122,15 @@ public class DatabaseCasingDataCleanupPreupgradeProcess
 
 		DB db = DBManagerUtil.getDB();
 
+		DBInspector dbInspector = new DBInspector(connection);
+
 		for (String columnDefinition : columnDefinitions) {
 			if (Validator.isNull(columnDefinition)) {
 				continue;
 			}
 
 			String expectedColumnName =
-				StringUtil.split(columnDefinition, StringPool.SPACE)[0];
+				StringUtil.split(dbInspector.normalizeName(columnDefinition), StringPool.SPACE)[0];
 
 			String columnName = columnNames.get(expectedColumnName);
 
