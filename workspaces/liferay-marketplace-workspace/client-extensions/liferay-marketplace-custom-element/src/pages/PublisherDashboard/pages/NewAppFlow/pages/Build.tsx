@@ -20,10 +20,12 @@ import {
 } from '../../../../../enums/Product';
 import i18n from '../../../../../i18n';
 import CloudResourceRequirements from '../components/CloudResourceRequirements';
-import {NewAppPackageVersionModal} from '../components/NewAppPackagesModal';
+import {NewAppPackageVersionModal} from '../components/NewAppPackagesModal/NewAppPackagesModal';
 import NewAppUploadAppPackagesComponent from '../components/NewAppUploadPackage';
 import {BUILD_UPLOAD_OPTIONS} from '../constants';
 import {ProductTypeOptions} from '../constants/productTypes';
+
+import '../ProvideAppBuildPage.scss';
 
 type ProductTypeOption = {
 	description: string;

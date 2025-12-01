@@ -195,14 +195,12 @@ public class LayoutLookAndFeelDisplayContext {
 
 		Layout selLayout = _layoutsAdminDisplayContext.getSelLayout();
 
-		if (Validator.isNotNull(
-				selLayout.getMasterLayoutPageTemplateEntryERC())) {
+		long masterLayoutPlid = selLayout.getMasterLayoutPlid();
 
+		if (masterLayoutPlid > 0) {
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				LayoutPageTemplateEntryLocalServiceUtil.
-					fetchLayoutPageTemplateEntryByExternalReferenceCode(
-						selLayout.getMasterLayoutPageTemplateEntryERC(),
-						selLayout.getGroupId());
+					fetchLayoutPageTemplateEntryByPlid(masterLayoutPlid);
 
 			if (layoutPageTemplateEntry != null) {
 				masterLayoutName = layoutPageTemplateEntry.getName();
@@ -370,18 +368,8 @@ public class LayoutLookAndFeelDisplayContext {
 
 		Layout selLayout = _layoutsAdminDisplayContext.getSelLayout();
 
-		if (Validator.isNotNull(
-				selLayout.getMasterLayoutPageTemplateEntryERC())) {
-
-			LayoutPageTemplateEntry layoutPageTemplateEntry =
-				LayoutPageTemplateEntryLocalServiceUtil.
-					fetchLayoutPageTemplateEntryByExternalReferenceCode(
-						selLayout.getMasterLayoutPageTemplateEntryERC(),
-						selLayout.getGroupId());
-
-			if (layoutPageTemplateEntry != null) {
-				hasMasterLayout = true;
-			}
+		if (selLayout.getMasterLayoutPlid() > 0) {
+			hasMasterLayout = true;
 		}
 
 		_hasMasterLayout = hasMasterLayout;

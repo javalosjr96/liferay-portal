@@ -9,8 +9,10 @@ import ClayForm, {ClayInput} from '@clayui/form';
 import ClayIcon from '@clayui/icon';
 import ClayLayout from '@clayui/layout';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
-import React, {useRef, useState} from 'react';
+import {EventSource} from 'eventsource';
+import React, {useEffect, useRef, useState} from 'react';
 
+import {createEventSource, postChatByExternalReferenceCodeMessage} from './api';
 import AIAssistantMessageBalloon from './components/AIAssistantMessageBalloon';
 import UserMessageBalloon from './components/UserMessageBalloon';
 
@@ -26,8 +28,10 @@ const AIAssistantChat: React.FC = () => {
 	const [isGenerating, setIsGenerating] = useState<boolean>(false);
 	const [messages, setMessages] = useState<message[]>([]);
 	const [message, setMessage] = useState<message>();
-	const triggerRef = useRef<HTMLButtonElement | null>(null);
+	const eventSourceRef = useRef<EventSource | null>(null);
+	const eventSourceReference = useRef<string | null>(null);
 	const messagesEndRef = useRef<HTMLDivElement | null>(null);
+	const triggerRef = useRef<HTMLButtonElement | null>(null);
 
 	function onSubmit(event: React.FormEvent<HTMLFormElement>) {
 		event.preventDefault();
@@ -46,33 +50,91 @@ const AIAssistantChat: React.FC = () => {
 
 		setIsGenerating(true);
 
-		setTimeout(() => {
-			setAIAssistantResponse();
-		}, 1000);
-	}
+		const contextElements = getContextElements();
 
-	function setAIAssistantResponse() {
-		if (!message?.text.trim()) {
-			return;
+		if (eventSourceReference.current) {
+			const content = contextElements['ObjectField_content_en_US'];
+			const title = contextElements['ObjectField_title'];
+
+			postChatByExternalReferenceCodeMessage(
+				content?.value,
+				eventSourceReference.current,
+				message.text,
+				title.value
+			);
 		}
-		setMessages((previousMessages) => {
-			setTimeout(() => {
-				messagesEndRef.current?.scrollIntoView({behavior: 'smooth'});
-			}, 0);
-
-			return [
-				...previousMessages,
-				{
-					sender: 'assistant',
-					text: 'I’ve generated the content for you! Check your editor.',
-				},
-			];
-		});
-
-		setMessage({sender: '', text: ''});
-
-		setIsGenerating(false);
 	}
+
+	function getContextElements() {
+		let form = document.querySelector('.lfr-main-form-container');
+
+		if (!form) {
+			form = document.querySelector('.lfr-layout-structure-item-form');
+		}
+
+		if (!form) {
+			return [];
+		}
+
+		return Array.from(
+			form.querySelectorAll('[name^="ObjectField_"]')
+		).reduce((inputs: any, element: any) => {
+			if (element.name) {
+				inputs[element.name] = element;
+			}
+
+			return inputs;
+		}, {});
+	}
+
+	function openAIAssistantChatConnection() {
+		eventSourceRef.current = createEventSource();
+
+		eventSourceRef.current.addEventListener(
+			'Chat Message Sent',
+			(event) => {
+				setMessages((previousMessages) => {
+					setTimeout(() => {
+						messagesEndRef.current?.scrollIntoView({
+							behavior: 'smooth',
+						});
+					}, 0);
+
+					const dataJSON = JSON.parse(event.data);
+
+					return [
+						...previousMessages,
+						{
+							sender: 'assistant',
+							text: dataJSON['data'],
+						},
+					];
+				});
+
+				setMessage({sender: '', text: ''});
+
+				setIsGenerating(false);
+			}
+		);
+
+		eventSourceRef.current.addEventListener('Subscribe', (event) => {
+			eventSourceReference.current = event.data;
+		});
+	}
+
+	function closeAIAssistantChatConnection() {
+		eventSourceRef.current?.close();
+
+		eventSourceRef.current = null;
+	}
+
+	useEffect(() => {
+		openAIAssistantChatConnection();
+
+		return () => {
+			closeAIAssistantChatConnection();
+		};
+	}, []);
 
 	return (
 		<ClayDropDown
@@ -92,7 +154,7 @@ const AIAssistantChat: React.FC = () => {
 			onActiveChange={setActive}
 			trigger={
 				<ClayButton
-					aria-label={Liferay.Language.get('cancel')}
+					aria-label={Liferay.Language.get('ai-assistant')}
 					borderless
 					className="text-primary"
 					displayType="secondary"

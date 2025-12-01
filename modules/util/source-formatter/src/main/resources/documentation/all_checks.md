@@ -234,6 +234,7 @@ JavaDefaultAdminScreenNameCheck | [Bug Prevention](bug_prevention_checks.md#bug-
 JavaDeprecatedJavadocCheck | [Javadoc](javadoc_checks.md#javadoc-checks) | .java | Checks if the `@deprecated` javadoc is pointing to the correct version. |
 JavaDeserializationSecurityCheck | [Security](security_checks.md#security-checks) | .java | Finds Java serialization vulnerabilities. |
 JavaDiamondOperatorCheck | [Miscellaneous](miscellaneous_checks.md#miscellaneous-checks) | .java | Finds cases where Diamond Operator is not used. |
+JavaDocumentAddCallsOrderCheck | [Styling](styling_checks.md#styling-checks) | .java | Sorts `add*` calls for type `Document`. |
 JavaDuplicateVariableCheck | [Miscellaneous](miscellaneous_checks.md#miscellaneous-checks) | .java | Finds variables where a variable with the same name already exists in an extended class. |
 [JavaElseStatementCheck](check/java_else_statement_check.md#javaelsestatementcheck) | [Miscellaneous](miscellaneous_checks.md#miscellaneous-checks) | .java | Finds unnecessary `else` statements (when the `if` statement ends with a `return` statement). |
 JavaEmptyLineAfterSuperCallCheck | [Miscellaneous](miscellaneous_checks.md#miscellaneous-checks) | .java | Finds missing empty line after a `super` call. |
@@ -439,6 +440,7 @@ PropertiesEmptyLinesCheck | [Styling](styling_checks.md#styling-checks) | .eslin
 PropertiesEnvironmentVariablesCheck | [Documentation](documentation_checks.md#documentation-checks) | .eslintignore, .prettierignore, or .properties | Verifies that the environment property in the documentation matches the property name. |
 PropertiesFeatureFlagsCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Generate feature flags in `portal.properties` file. |
 PropertiesImportedFilesContentCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Performs several checks on `imported-files.properties` file. |
+PropertiesJVMAttributesOrderCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Sorts JVM attributes. |
 PropertiesLanguageContractionsCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Finds contractions (such as `can't` or `you're`). |
 [PropertiesLanguageKeysCheck](check/properties_language_keys_check.md#propertieslanguagekeyscheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Checks that there is no HTML markup in language keys. |
 PropertiesLanguageKeysContextCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Checks if the language keys include a word of context to indicate specific meaning. |
@@ -513,6 +515,7 @@ TXTEmptyLinesCheck | [Styling](styling_checks.md#styling-checks) | .txt | Finds 
 TXTStylingCheck | [Styling](styling_checks.md#styling-checks) | .txt | Applies rules to enforce consistency in code style. |
 TernaryOperatorCheck | [Styling](styling_checks.md#styling-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Finds use of ternary operator in `java` files (use if statement instead). |
 TestClassCheck | [Naming Conventions](naming_conventions_checks.md#naming-conventions-checks) | .java | Checks that names of test classes follow naming conventions. |
+TestClassDBConnectionCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Finds cases of incorrect use of database connection. |
 TestClassMissingLiferayUnitTestRuleCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Finds missing LiferayUnitTestRule. |
 TextBlockCheck | [Styling](styling_checks.md#styling-checks) | .java | Finds usage of text block. |
 [ThreadContextClassLoaderCheck](check/thread_context_class_loader_check.md#threadcontextclassloadercheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Checks usage of `Thread.setContextClassLoader`. |

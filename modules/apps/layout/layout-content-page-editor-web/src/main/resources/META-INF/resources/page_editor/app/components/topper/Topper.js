@@ -13,7 +13,7 @@ import PropTypes from 'prop-types';
 import React, {useEffect} from 'react';
 
 import {getLayoutDataItemPropTypes} from '../../../prop_types/index';
-import {ITEM_INTERACTION_ORIGINS} from '../../config/constants/itemInteractionOrigins';
+import {ITEM_ACTIVATION_ORIGINS} from '../../config/constants/itemActivationOrigins';
 import {LAYOUT_DATA_ITEM_TYPES} from '../../config/constants/layoutDataItemTypes';
 import {config} from '../../config/index';
 import {useSetCollectionActiveItemContext} from '../../contexts/CollectionActiveItemContext';
@@ -21,8 +21,8 @@ import {useIsDisabledCollectionItem} from '../../contexts/CollectionItemContext'
 import {
 	useActivationOrigin,
 	useActiveItemIds,
+	useHighlightedItemIds,
 	useHoverItem,
-	useHoveringOrigin,
 	useIsActive,
 	useIsHovered,
 	useMultiSelectType,
@@ -100,22 +100,21 @@ function TopperContent({
 	children,
 	className,
 	isActive,
-	isHovered: initialIsHovered,
+	isHovered,
 	item,
 	itemElement,
 	multiSelectType,
 }) {
 	const activeItemIds = useActiveItemIds();
+	const highlightedItemIds = useHighlightedItemIds();
 	const canUpdatePageStructure = useSelector(selectCanUpdatePageStructure);
 	const commentsPanelId = config.sidebarPanelsMap?.comments?.sidebarPanelId;
 	const dispatch = useDispatch();
 	const editableProcessorUniqueId = useEditableProcessorUniqueId();
-	const hoveringOrigin = useHoveringOrigin();
 	const hoverItem = useHoverItem();
 	const {isOverTarget, targetPosition, targetRef} = useDropTarget(item);
 	const isMultiSelect = activeItemIds.length > 1;
 	const isKeyboardTarget = useIsMovementTarget();
-	const isRuleHover = hoveringOrigin === ITEM_INTERACTION_ORIGINS.rules;
 
 	const keyboardMovementPosition = useMovementTargetPosition();
 	const selectItem = useSelectItem();
@@ -125,8 +124,7 @@ function TopperContent({
 	const dropTargetPosition = targetPosition || keyboardMovementPosition;
 
 	const isHighlighted = isItemHighlighted(item, dropContainerId);
-	const isHighlightedFromRule = initialIsHovered && isRuleHover;
-	const isHovered = initialIsHovered && !isRuleHover;
+	const isHighlightedFromRule = highlightedItemIds?.includes(item.itemId);
 
 	const selectable =
 		!multiSelectType ||
@@ -158,7 +156,7 @@ function TopperContent({
 	const onDragBegin = () => {
 		if (!isActive) {
 			selectItem(item.itemId, {
-				origin: ITEM_INTERACTION_ORIGINS.layout,
+				origin: ITEM_ACTIVATION_ORIGINS.layout,
 			});
 		}
 	};
@@ -249,7 +247,7 @@ function TopperContent({
 				}
 
 				selectItem(item.itemId, {
-					origin: ITEM_INTERACTION_ORIGINS.layout,
+					origin: ITEM_ACTIVATION_ORIGINS.layout,
 				});
 			}}
 			onMouseLeave={(event) => {
@@ -261,7 +259,7 @@ function TopperContent({
 
 				if (isHovered) {
 					hoverItem(null, {
-						origin: ITEM_INTERACTION_ORIGINS.layout,
+						origin: ITEM_ACTIVATION_ORIGINS.layout,
 					});
 				}
 			}}
@@ -273,7 +271,7 @@ function TopperContent({
 				}
 
 				hoverItem(item.itemId, {
-					origin: ITEM_INTERACTION_ORIGINS.layout,
+					origin: ITEM_ACTIVATION_ORIGINS.layout,
 				});
 			}}
 			ref={(element) => {
@@ -379,7 +377,7 @@ function TopperInteractionFilter({itemElement, itemId}) {
 		if (
 			itemElement &&
 			(keyboardTargetId === itemId ||
-				(activationOrigin === ITEM_INTERACTION_ORIGINS.sidebar &&
+				(activationOrigin === ITEM_ACTIVATION_ORIGINS.sidebar &&
 					isMounted() &&
 					isActive))
 		) {

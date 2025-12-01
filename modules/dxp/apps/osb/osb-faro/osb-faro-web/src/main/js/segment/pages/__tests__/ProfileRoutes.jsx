@@ -1,5 +1,3 @@
-import * as API from 'shared/api';
-import * as data from 'test/data';
 import mockStore from 'test/mock-store';
 import React from 'react';
 import {BrowserRouter} from 'react-router-dom';
@@ -7,7 +5,6 @@ import {ChannelContext} from 'shared/context/channel';
 import {cleanup, render} from '@testing-library/react';
 import {mockChannelContext} from 'test/mock-channel-context';
 import {Provider} from 'react-redux';
-import {Segment} from 'shared/util/records';
 import {SegmentProfileRoutes} from '../ProfileRoutes';
 import {waitForLoadingToBeRemoved} from 'test/helpers';
 
@@ -31,12 +28,6 @@ describe('SegmentProfileRoutes', () => {
 
 	it('should render', async () => {
 		window.location = {pathname: '/'};
-
-		API.individualSegment.fetch.mockReturnValueOnce(
-			Promise.resolve({
-				segment: new Segment(data.mockSegment())
-			})
-		);
 
 		const {container} = render(
 			<Provider store={mockStore()}>

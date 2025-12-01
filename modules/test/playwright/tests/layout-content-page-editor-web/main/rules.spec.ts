@@ -442,7 +442,7 @@ test('Checks the accessibility of the rule modal by filling out a condition and 
 });
 
 test(
-	'Highlights fragments when a rule is hovered or focused, and scrolls to the fragment when the rule is clicked',
+	'Highlight and scroll to the fragments when the rule is clicked',
 	{
 		tag: '@LPD-70720',
 	},
@@ -469,8 +469,10 @@ test(
 			key: 'INPUTS-checkbox',
 		});
 
+		const submitButtonId = getRandomString();
+
 		const submitFragmentDefinition = getFragmentDefinition({
-			id: getRandomString(),
+			id: submitButtonId,
 			key: 'INPUTS-submit-button',
 		});
 
@@ -525,7 +527,7 @@ test(
 			name: ruleName,
 		});
 
-		// Hover the rule and check the highlighted fragments
+		// Click the rule and check the highlighted fragments
 
 		const rule = page.getByRole('menuitem').filter({hasText: ruleName});
 
@@ -535,42 +537,206 @@ test(
 
 		const highlightedClass = /highlighted-from-rule/;
 
-		await rule.hover();
+		await rule.click();
 
 		await expect(checkboxFragment).toHaveClass(highlightedClass);
 		await expect(headingFragment).toHaveClass(highlightedClass);
 		await expect(buttonFragment).not.toHaveClass(highlightedClass);
 
-		// Unhover the rule and check that the fragments are not highlighted
+		// Click in other part of the page and check that the fragments are not highlighted
 
-		await pageEditorPage.newRuleButton.hover();
+		await page.locator('body').click();
 
 		await expect(checkboxFragment).not.toHaveClass(highlightedClass);
 		await expect(headingFragment).not.toHaveClass(highlightedClass);
 		await expect(buttonFragment).not.toHaveClass(highlightedClass);
 
-		// Focus the rule and check the highlighted fragments
+		// Press the rule by keyboard and check the highlighted fragments
 
 		await rule.focus();
+		await page.keyboard.press('Enter');
 
 		await expect(checkboxFragment).toHaveClass(highlightedClass);
 		await expect(headingFragment).toHaveClass(highlightedClass);
 		await expect(buttonFragment).not.toHaveClass(highlightedClass);
 
-		await rule.focus();
+		await page.keyboard.press('Tab');
+		await page.keyboard.press('Tab');
+		await page.keyboard.press('Enter');
 
 		// Scroll when the rule is clicked
 
-		const beforeScroll = await page.evaluate(() => ({
-			y: window.scrollY,
-		}));
+		await page.evaluate(() => window.scrollTo(0, 0));
+
+		const beforeScrollY = await page.evaluate(() => window.scrollY);
 
 		await rule.click();
 
-		const afterScroll = await page.evaluate(() => ({
-			y: window.scrollY,
-		}));
+		const afterScrollY = await page.evaluate(() => window.scrollY);
 
-		expect(beforeScroll.y !== afterScroll.y).toBe(true);
+		expect(afterScrollY).not.toBe(beforeScrollY);
+
+		// Unhighlight the fragments when another fragment is selected
+
+		await pageEditorPage.selectFragment(submitButtonId);
+
+		await expect(checkboxFragment).not.toHaveClass(highlightedClass);
+		await expect(headingFragment).not.toHaveClass(highlightedClass);
+	}
+);
+
+test(
+	'Delete fragments from the conditions/actions of a rule and check the options in the Delete Referenced Fragments modal',
+	{
+		tag: '@LPD-71462',
+	},
+	async ({apiHelpers, page, pageEditorPage, pageManagementSite}) => {
+
+		// Create a page with a form and a heading
+
+		const objectDefinitionAPIClient =
+			await apiHelpers.buildRestClient(ObjectDefinitionAPI);
+
+		const {className: objectDefinitionClassName} = (
+			await objectDefinitionAPIClient.getObjectDefinitionByExternalReferenceCode(
+				getObjectERC('All Fields')
+			)
+		).body;
+
+		const checkboxId = getRandomString();
+
+		const checkboxDefinition = getFragmentDefinition({
+			fragmentConfig: {
+				inputFieldId: 'ObjectField_boolean',
+			},
+			id: checkboxId,
+			key: 'INPUTS-checkbox',
+		});
+
+		const headingId = getRandomString();
+
+		const headingFragmentDefinition = getFragmentDefinition({
+			id: headingId,
+			key: 'BASIC_COMPONENT-heading',
+		});
+
+		const formDefinition = getFormContainerDefinition({
+			id: getRandomString(),
+			objectDefinitionClassName,
+			pageElements: [checkboxDefinition],
+		});
+
+		const layout = await apiHelpers.headlessDelivery.createSitePage({
+			pageDefinition: getPageDefinition([
+				formDefinition,
+				headingFragmentDefinition,
+			]),
+			siteId: pageManagementSite.id,
+			title: getRandomString(),
+		});
+
+		await pageEditorPage.goto(layout, pageManagementSite.friendlyUrlPath);
+
+		// Add a rule with a condition when the checkbox is checked and an action to hide the heading
+
+		const ruleName = getRandomString();
+
+		const action = [
+			{label: 'Select Action', option: 'Hide'},
+			{label: 'Select Fragment for the Action', option: 'Heading'},
+		];
+
+		const condition = [
+			{
+				label: 'Select Item for the Condition',
+				option: 'Form Fragment',
+			},
+			{
+				label: 'Select Fragment for the Condition',
+				option: 'Checkbox',
+			},
+			{label: 'Select Type', option: 'Is Equal To'},
+			{label: 'Select Value', option: 'True'},
+		];
+
+		await pageEditorPage.addRule({
+			actions: [action],
+			conditions: [condition],
+			name: ruleName,
+		});
+
+		// Try to delete the heading and cancel the action
+
+		await pageEditorPage.deleteFragment(checkboxId);
+
+		await page.getByText('Cancel', {exact: true}).click();
+
+		await expect(page.locator('[data-name="Heading"]')).toBeAttached();
+
+		// Delete the heading (fragment in the action)
+
+		await pageEditorPage.deleteFragment(headingId);
+
+		await page.getByRole('button', {name: 'Delete'}).click();
+
+		await expect(page.locator('[data-name="Heading"]')).not.toBeAttached();
+
+		// Check that rule has been disabled
+
+		const rule = page.getByRole('menuitem').filter({hasText: ruleName});
+
+		await expect(
+			rule.locator('[data-title="Disabled Rule"]')
+		).toBeAttached();
+
+		await expect(rule.locator('.text-muted')).toHaveAttribute(
+			'aria-disabled',
+			'true'
+		);
+
+		// Delete the checkbox (fragment in the condition) and check the labels of the rule
+
+		await pageEditorPage.deleteFragment(checkboxId);
+
+		await page.getByRole('button', {name: 'Delete'}).click();
+
+		await expect(rule.getByText('Heading')).not.toBeAttached();
+		await expect(rule.getByText('Checkbox')).not.toBeAttached();
+
+		// Edit the rule and check that the deleted fragments are not in the selectors
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: page.getByRole('menuitem', {name: 'Edit'}),
+			trigger: page.getByLabel(`View ${ruleName} Options`),
+		});
+
+		await expect(
+			page.locator('input[value="No Options Available"]')
+		).toBeAttached();
+
+		const fragmentSelector = page.getByLabel(
+			'Select Fragment for the Action'
+		);
+
+		await expect(fragmentSelector).toHaveText('Select');
+
+		await fragmentSelector.click();
+
+		await expect(
+			page.getByRole('option', {name: 'Heading'})
+		).not.toBeAttached();
+
+		await page.getByText('Cancel', {exact: true}).click();
+
+		// Refresh the page and check that the rule is still disabled
+
+		await page.reload();
+
+		await pageEditorPage.goToSidebarTab('Page Rules');
+
+		await expect(
+			rule.locator('[data-title="Disabled Rule"]')
+		).toBeAttached();
 	}
 );

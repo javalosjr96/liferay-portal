@@ -357,6 +357,7 @@ function InputLocalized({
 						},
 					}}
 					data={translations?.[selectedLanguageId] || ''}
+					formInputEnabled={false}
 					key={selectedLanguageId}
 					onBlur={handleBlur}
 					onChange={handleChange}

@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.batch.engine.VulcanBatchEngineTaskItemDelegate;
+import com.liferay.portal.vulcan.fields.NestedFieldsContextThreadLocal;
 import com.liferay.portal.vulcan.util.GroupUtil;
 
 import jakarta.ws.rs.core.UriInfo;
@@ -141,6 +142,10 @@ public class VulcanBatchEngineTaskItemDelegateAdaptor<T>
 			Filter filter, Pagination pagination, Sort[] sorts,
 			Map<String, Serializable> parameters, String search)
 		throws Exception {
+
+		NestedFieldsContextThreadLocal.setNestedFieldsContext(
+			_vulcanBatchEngineTaskItemDelegate.customizeNestedFieldsContext(
+				NestedFieldsContextThreadLocal.getNestedFieldsContext()));
 
 		com.liferay.portal.vulcan.pagination.Page<T> page =
 			_vulcanBatchEngineTaskItemDelegate.read(

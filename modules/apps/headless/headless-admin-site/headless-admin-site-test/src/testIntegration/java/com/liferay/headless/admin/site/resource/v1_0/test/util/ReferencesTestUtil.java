@@ -13,7 +13,11 @@ import com.liferay.headless.admin.site.client.dto.v1_0.CollectionItemExternalRef
 import com.liferay.headless.admin.site.client.dto.v1_0.CollectionReference;
 import com.liferay.headless.admin.site.client.dto.v1_0.ItemExternalReference;
 import com.liferay.headless.admin.site.client.scope.Scope;
+import com.liferay.journal.model.JournalArticle;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.site.navigation.model.SiteNavigationMenu;
 
 import java.util.Map;
 
@@ -101,12 +105,46 @@ public class ReferencesTestUtil {
 				assetVocabulary.getGroupId(), scopeGroupId);
 		}
 
+		if (object instanceof FileEntry) {
+			FileEntry fileEntry = (FileEntry)object;
+
+			return _getItemExternalReference(
+				FileEntry.class.getName(), fileEntry.getExternalReferenceCode(),
+				fileEntry.getGroupId(), scopeGroupId);
+		}
+
+		if (object instanceof JournalArticle) {
+			JournalArticle journalArticle = (JournalArticle)object;
+
+			return _getItemExternalReference(
+				JournalArticle.class.getName(),
+				journalArticle.getExternalReferenceCode(),
+				journalArticle.getGroupId(), scopeGroupId);
+		}
+
+		if (object instanceof Layout) {
+			Layout layout = (Layout)object;
+
+			return _getItemExternalReference(
+				Layout.class.getName(), layout.getExternalReferenceCode(),
+				layout.getGroupId(), scopeGroupId);
+		}
+
 		if (object instanceof Map) {
 			Map<String, String> map = (Map<String, String>)object;
 
 			return _getItemExternalReference(
 				map.get("className"), map.get("externalReferenceCode"),
 				map.get("scopeExternalReferenceCode"));
+		}
+
+		if (object instanceof SiteNavigationMenu) {
+			SiteNavigationMenu siteNavigationMenu = (SiteNavigationMenu)object;
+
+			return _getItemExternalReference(
+				SiteNavigationMenu.class.getName(),
+				siteNavigationMenu.getExternalReferenceCode(),
+				siteNavigationMenu.getGroupId(), scopeGroupId);
 		}
 
 		return null;

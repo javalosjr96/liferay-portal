@@ -459,15 +459,13 @@ public class SiteResourceImpl extends BaseSiteResourceImpl {
 
 		Group group = _groupService.addGroup(
 			externalReferenceCode,
-			_getParentGroupId(
-				null, site.getParentSiteExternalReferenceCode(),
-				site.getParentSiteKey()),
+			_getParentGroupId(null, site.getParentSiteExternalReferenceCode()),
 			GroupConstants.DEFAULT_LIVE_GROUP_ID, _getNameMap(site),
 			_getDescriptionMap(site), _getType(site.getMembershipType()),
 			_getTypeSettings(site.getTypeSettings(), null),
 			_isManualMembership(site.getManualMembership()),
 			_getMembershipRestriction(site.getMembershipRestriction()),
-			site.getFriendlyUrlPath(), true, false, _isActive(site.getActive()),
+			_getFriendlyUrlPath(site), true, false, _isActive(site.getActive()),
 			serviceContext);
 
 		LiveUsers.joinGroup(
@@ -511,6 +509,18 @@ public class SiteResourceImpl extends BaseSiteResourceImpl {
 		).build();
 	}
 
+	private String _getFriendlyUrlPath(Site site) {
+		String friendlyUrlPath = site.getFriendlyUrlPath();
+
+		if (Validator.isNotNull(friendlyUrlPath) &&
+			!friendlyUrlPath.startsWith(StringPool.SLASH)) {
+
+			friendlyUrlPath = StringPool.SLASH + friendlyUrlPath;
+		}
+
+		return friendlyUrlPath;
+	}
+
 	private int _getMembershipRestriction(Integer membershipRestriction) {
 		if (membershipRestriction == null) {
 			return GroupConstants.DEFAULT_MEMBERSHIP_RESTRICTION;
@@ -530,25 +540,18 @@ public class SiteResourceImpl extends BaseSiteResourceImpl {
 	}
 
 	private long _getParentGroupId(
-		Group group, String parentSiteExternalReferenceCode,
-		String parentSiteKey) {
+		Group group, String parentSiteExternalReferenceCode) {
 
-		if (Validator.isNull(parentSiteExternalReferenceCode) &&
-			Validator.isNull(parentSiteKey)) {
-
+		if (Validator.isNull(parentSiteExternalReferenceCode)) {
 			return GroupConstants.DEFAULT_PARENT_GROUP_ID;
 		}
 
-		Group parentGroup = _groupLocalService.loadFetchGroup(
-			contextCompany.getCompanyId(), parentSiteKey);
-
-		if (parentGroup == null) {
-			parentGroup = _groupLocalService.fetchGroupByExternalReferenceCode(
+		Group parentGroup =
+			_groupLocalService.fetchGroupByExternalReferenceCode(
 				parentSiteExternalReferenceCode, contextCompany.getCompanyId());
 
-			if (parentGroup == null) {
-				return GroupConstants.DEFAULT_PARENT_GROUP_ID;
-			}
+		if (parentGroup == null) {
+			return GroupConstants.DEFAULT_PARENT_GROUP_ID;
 		}
 
 		if (!LazyReferencingThreadLocal.isEnabled()) {
@@ -761,15 +764,14 @@ public class SiteResourceImpl extends BaseSiteResourceImpl {
 			Group updatedGroup = _groupLocalService.updateGroup(
 				group.getGroupId(),
 				_getParentGroupId(
-					group, site.getParentSiteExternalReferenceCode(),
-					site.getParentSiteKey()),
+					group, site.getParentSiteExternalReferenceCode()),
 				_getNameMap(site), _getDescriptionMap(site),
 				_getType(site.getMembershipType()),
 				_getTypeSettings(
 					site.getTypeSettings(), group.getTypeSettingsProperties()),
 				_isManualMembership(site.getManualMembership()),
 				_getMembershipRestriction(site.getMembershipRestriction()),
-				site.getFriendlyUrlPath(), false, _isActive(site.getActive()),
+				_getFriendlyUrlPath(site), false, _isActive(site.getActive()),
 				_getServiceContext());
 
 			LiveUsers.joinGroup(

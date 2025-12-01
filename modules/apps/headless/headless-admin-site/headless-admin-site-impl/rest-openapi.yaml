@@ -442,7 +442,7 @@ components:
                             $ref: "#/components/schemas/Layout"
                             # @review
                             description:
-                                the container page element's layout.
+                                The container page element's layout.
                         name:
                             # @review
                             description:
@@ -835,13 +835,18 @@ components:
             allOf:
                 -   $ref: "#/components/schemas/PageElementDefinition"
                 -   properties:
-                        fragmentSettings:
+                        addNewFragmentEntries:
                             # @review
                             description:
-                                The drop zone page element's allowed or unallowed fragments.
-                            oneOf:
-                                -   $ref: "#/components/schemas/FragmentSettingsAllowed"
-                                -   $ref: "#/components/schemas/FragmentSettingsUnallowed"
+                                Whether to add new fragment entries automatically in the allowed fragments list.
+                            type: boolean
+                        allowedFragmentReferences:
+                            # @review
+                            description:
+                                A list of allowed fragment references.
+                            items:
+                                $ref: "#/components/schemas/FragmentReference"
+                            type: array
             # @review
             description:
                 Represent a page element definition of a drop zone.
@@ -1257,6 +1262,22 @@ components:
                         -   Text
                     type: string
             type: object
+        FragmentEditableElementValueFragmentLink:
+            # @review
+            description:
+                A fragment editable element value fragment link.
+            properties:
+                fragmentLink:
+                    $ref: "#/components/schemas/FragmentLink"
+                    # @review
+                    description:
+                        The fragment link of a fragment editable element value.
+                prefix:
+                    description:
+                        The fragment link prefix of a fragment editable element value.
+                    enum: [Email, None, Phone]
+                    type: string
+            type: object
         FragmentImage:
             # @review
             description:
@@ -1574,29 +1595,6 @@ components:
                         The fragment reference's type (DefaultFragmentReference, FragmentItemExternalReference).
                     enum: [DefaultFragmentReference, FragmentItemExternalReference]
                     type: string
-            type: object
-        FragmentSettingsAllowed:
-            # @review
-            description:
-                Represents the settings of allowed fragments in a page drop zone.
-            properties:
-                allowedFragmentItemExternalReferences:
-                    # @review
-                    description:
-                        A list of allowed fragments.
-                    items:
-                        $ref: "#/components/schemas/ItemExternalReference"
-                    type: array
-            type: object
-        FragmentSettingsUnallowed:
-            # @review
-            description:
-                Represents the settings of unallowed fragments in a page drop zone.
-            properties:
-                unallowedFragmentItemExternalReferences:
-                    items:
-                        $ref: "#/components/schemas/ItemExternalReference"
-                    type: array
             type: object
         FragmentStyle:
             # @review
@@ -2116,9 +2114,9 @@ components:
             description:
                 A value of a field of type item.
             properties:
-                item:
+                itemExternalReference:
                     $ref: "#/components/schemas/ItemExternalReference"
-                template:
+                templateReference:
                     $ref: "#/components/schemas/TemplateReference"
             type: object
         Layout:
@@ -2713,7 +2711,7 @@ components:
                 priority:
                     # @review
                     description:
-                        the experience's priority. It must be a unique value within the page specification. The default
+                        The experience's priority. It must be a unique value within the page specification. The default
                         experience will always be assigned priority 0. A priority higher than 0 will result in an
                         experience being active and a priority lower than 0 will result in an experience being inactive.
                     type: integer
@@ -3265,9 +3263,6 @@ components:
                     type: object
                 parentSiteExternalReferenceCode:
                     type: string
-                parentSiteKey:
-                    type: string
-                    writeOnly: true
                 templateKey:
                     type: string
                     writeOnly: true
@@ -3661,11 +3656,11 @@ components:
             allOf:
                 -   $ref: "#/components/schemas/FragmentEditableElementValue"
                 -   properties:
-                        fragmentLink:
-                            $ref: "#/components/schemas/FragmentLink"
+                        fragmentEditableElementValueFragmentLink:
+                            $ref: "#/components/schemas/FragmentEditableElementValueFragmentLink"
                             # @review
                             description:
-                                The fragment link of a text fragment editable element.
+                                The fragment link of a text fragment editable element value.
                         textFragmentValue:
                             $ref: "#/components/schemas/TextFragmentValue"
                             # @review

@@ -20,6 +20,7 @@ import com.liferay.bulk.rest.client.dto.v1_0.DefaultPermissionBulkAction;
 import com.liferay.bulk.rest.client.dto.v1_0.DeleteBulkAction;
 import com.liferay.bulk.rest.client.dto.v1_0.KeywordBulkAction;
 import com.liferay.bulk.rest.client.dto.v1_0.PermissionBulkAction;
+import com.liferay.bulk.rest.client.dto.v1_0.ResetPermissionBulkAction;
 import com.liferay.bulk.rest.client.dto.v1_0.SelectionScope;
 import com.liferay.bulk.rest.client.dto.v1_0.TaxonomyCategoryBulkAction;
 import com.liferay.bulk.rest.client.pagination.Page;
@@ -28,10 +29,18 @@ import com.liferay.bulk.rest.client.problem.Problem;
 import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.document.library.kernel.model.DLFileEntryTypeConstants;
+import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.layout.service.LayoutClassedModelUsageLocalService;
 import com.liferay.object.constants.ObjectDefinitionConstants;
+import com.liferay.object.constants.ObjectDefinitionSettingConstants;
 import com.liferay.object.constants.ObjectEntryFolderConstants;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.constants.ObjectFolderConstants;
+import com.liferay.object.definition.setting.builder.ObjectDefinitionSettingBuilder;
+import com.liferay.object.field.util.ObjectFieldUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectEntryFolder;
@@ -43,6 +52,8 @@ import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
 import com.liferay.object.service.ObjectEntryFolderLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.object.service.ObjectFolderLocalService;
+import com.liferay.object.test.util.ObjectDefinitionTestUtil;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -51,6 +62,7 @@ import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.Role;
@@ -60,6 +72,7 @@ import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.constants.TestDataConstants;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.RoleTestUtil;
@@ -79,7 +92,10 @@ import com.liferay.portal.test.rule.FeatureFlags;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portal.vulcan.util.LocalizedMapUtil;
+import com.liferay.site.cms.site.initializer.util.CMSDefaultPermissionUtil;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.Serializable;
 
@@ -160,6 +176,8 @@ public class BulkActionResourceTest extends BaseBulkActionResourceTestCase {
 			}
 		}
 
+		_cmsAdministratorRole = _getOrAddCMSAdministratorRole(
+			TestPropsValues.getCompanyId(), TestPropsValues.getUserId());
 		_cmsBasicWebContentObjectDefinition =
 			_objectDefinitionLocalService.
 				getObjectDefinitionByExternalReferenceCode(
@@ -185,6 +203,7 @@ public class BulkActionResourceTest extends BaseBulkActionResourceTestCase {
 		_testPostBulkActionWithTypeDelete();
 		_testPostBulkActionWithTypeKeyword();
 		_testPostBulkActionWithTypePermission();
+		_testPostBulkActionWithTypeResetPermission();
 		_testPostBulkActionWithTypeTaxonomyCategory();
 	}
 
@@ -325,6 +344,21 @@ public class BulkActionResourceTest extends BaseBulkActionResourceTestCase {
 				_LANGUAGE_ID, RandomTestUtil.randomString()
 			).build()
 		).build();
+	}
+
+	private Role _getOrAddCMSAdministratorRole(long companyId, long userId)
+		throws Exception {
+
+		Role role = _roleLocalService.fetchRole(
+			companyId, RoleConstants.CMS_ADMINISTRATOR);
+
+		if (role != null) {
+			return role;
+		}
+
+		return _roleLocalService.addRole(
+			null, userId, null, 0, RoleConstants.CMS_ADMINISTRATOR, null, null,
+			RoleConstants.TYPE_REGULAR, null, null);
 	}
 
 	private boolean _isCMSSiteInitialized() throws Exception {
@@ -828,12 +862,74 @@ public class BulkActionResourceTest extends BaseBulkActionResourceTestCase {
 		_roleLocalService.addGroupRole(
 			testGroup.getGroupId(), role.getRoleId());
 
-		ObjectEntry objectEntry = ObjectEntryTestUtil.addObjectEntry(
-			_depotEntry2.getGroupId(), _cmsBasicWebContentObjectDefinition,
-			_getObjectEntryValues());
+		ObjectEntryFolder objectEntryFolder1 =
+			_objectEntryFolderLocalService.
+				getObjectEntryFolderByExternalReferenceCode(
+					ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS,
+					_depotEntry2.getGroupId(), _depotEntry2.getCompanyId());
+
+		ObjectEntry objectEntry1 = _objectEntryLocalService.addObjectEntry(
+			_depotEntry2.getGroupId(), _depotEntry2.getUserId(),
+			_cmsBasicWebContentObjectDefinition.getObjectDefinitionId(),
+			objectEntryFolder1.getObjectEntryFolderId(), "en_US",
+			_getObjectEntryValues(),
+			ServiceContextTestUtil.getServiceContext());
+
+		ObjectFolder objectFolder =
+			_objectFolderLocalService.getObjectFolderByExternalReferenceCode(
+				ObjectFolderConstants.
+					EXTERNAL_REFERENCE_CODE_CONTENT_STRUCTURES,
+				TestPropsValues.getCompanyId());
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.addCustomObjectDefinition(
+				null, TestPropsValues.getUserId(),
+				objectFolder.getObjectFolderId(), null, false, true, false,
+				true, true, false, false, false, false, null,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				ObjectDefinitionTestUtil.getRandomName(), null, null,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				true, ObjectDefinitionConstants.SCOPE_DEPOT,
+				ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
+				Collections.singletonList(
+					new ObjectDefinitionSettingBuilder(
+					).name(
+						ObjectDefinitionSettingConstants.NAME_ACCEPT_ALL_GROUPS
+					).value(
+						StringPool.TRUE
+					).build()),
+				ListUtil.fromArray(
+					ObjectFieldUtil.createObjectField(
+						ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+						ObjectFieldConstants.DB_TYPE_STRING,
+						RandomTestUtil.randomString(), "text")),
+				Collections.emptyList());
+
+		objectDefinition =
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				TestPropsValues.getUserId(),
+				objectDefinition.getObjectDefinitionId());
+
+		ObjectEntryFolder objectEntryFolder2 =
+			_objectEntryFolderLocalService.addObjectEntryFolder(
+				RandomTestUtil.randomString(), _depotEntry2.getGroupId(),
+				_depotEntry2.getUserId(),
+				objectEntryFolder1.getObjectEntryFolderId(), "",
+				HashMapBuilder.put(
+					LocaleUtil.ENGLISH, RandomTestUtil.randomString()
+				).build(),
+				RandomTestUtil.randomString(),
+				ServiceContextTestUtil.getServiceContext());
+
+		ObjectEntry objectEntry2 = _objectEntryLocalService.addObjectEntry(
+			_depotEntry2.getGroupId(), _depotEntry2.getUserId(),
+			objectDefinition.getObjectDefinitionId(),
+			objectEntryFolder2.getObjectEntryFolderId(), "en_US",
+			_getObjectEntryValues(),
+			ServiceContextTestUtil.getServiceContext());
 
 		permissionBulkAction.setBulkActionItems(
-			_toBulkActionItems(objectEntry));
+			_toBulkActionItems(objectEntry1, objectEntry2));
 
 		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
@@ -855,12 +951,284 @@ public class BulkActionResourceTest extends BaseBulkActionResourceTestCase {
 
 		ResourcePermission resourcePermission =
 			_resourcePermissionLocalService.getResourcePermission(
-				_depotEntry2.getCompanyId(), objectEntry.getModelClassName(),
+				_depotEntry2.getCompanyId(), objectEntry1.getModelClassName(),
 				ResourceConstants.SCOPE_INDIVIDUAL,
-				String.valueOf(objectEntry.getObjectEntryId()),
+				String.valueOf(objectEntry1.getObjectEntryId()),
 				role.getRoleId());
 
 		Assert.assertTrue(resourcePermission.hasActionId(ActionKeys.VIEW));
+
+		resourcePermission =
+			_resourcePermissionLocalService.getResourcePermission(
+				_depotEntry2.getCompanyId(), objectEntry2.getModelClassName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(objectEntry2.getObjectEntryId()),
+				role.getRoleId());
+
+		Assert.assertTrue(resourcePermission.hasActionId(ActionKeys.VIEW));
+	}
+
+	private void _testPostBulkActionWithTypeResetPermission() throws Exception {
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext();
+
+		DepotEntry depotEntry = _depotEntryLocalService.addDepotEntry(
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), StringUtil.randomString()
+			).build(),
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), StringUtil.randomString()
+			).build(),
+			DepotConstants.TYPE_SPACE, serviceContext);
+
+		Group group = depotEntry.getGroup();
+
+		ObjectEntryFolder objectEntryFolder1 =
+			_objectEntryFolderLocalService.
+				getObjectEntryFolderByExternalReferenceCode(
+					ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS,
+					group.getGroupId(), depotEntry.getCompanyId());
+
+		ObjectEntryFolder objectEntryFolder2 =
+			_objectEntryFolderLocalService.addObjectEntryFolder(
+				RandomTestUtil.randomString(), group.getGroupId(),
+				group.getCreatorUserId(),
+				objectEntryFolder1.getObjectEntryFolderId(), "",
+				HashMapBuilder.put(
+					LocaleUtil.ENGLISH, RandomTestUtil.randomString()
+				).build(),
+				RandomTestUtil.randomString(), serviceContext);
+
+		JSONObject jsonObject = CMSDefaultPermissionUtil.getJSONObject(
+			objectEntryFolder2.getCompanyId(), objectEntryFolder2.getUserId(),
+			objectEntryFolder2.getExternalReferenceCode(),
+			objectEntryFolder2.getModelClassName(), _filterFactory);
+
+		jsonObject.put(
+			ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS,
+			JSONUtil.put(
+				RoleConstants.CMS_ADMINISTRATOR,
+				JSONUtil.putAll(ActionKeys.UPDATE, ActionKeys.VIEW))
+		).put(
+			ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES,
+			JSONUtil.put(
+				RoleConstants.CMS_ADMINISTRATOR,
+				JSONUtil.putAll(ActionKeys.DELETE, ActionKeys.PERMISSIONS))
+		).put(
+			"OBJECT_ENTRY_FOLDERS",
+			JSONUtil.put(
+				RoleConstants.CMS_ADMINISTRATOR,
+				JSONUtil.putAll(ActionKeys.ADD_ENTRY, ActionKeys.SUBSCRIBE))
+		);
+
+		ObjectEntry objectEntry1 = CMSDefaultPermissionUtil.fetchObjectEntry(
+			objectEntryFolder2.getCompanyId(), objectEntryFolder2.getUserId(),
+			objectEntryFolder2.getExternalReferenceCode(),
+			objectEntryFolder2.getModelClassName(), _filterFactory);
+
+		CMSDefaultPermissionUtil.addOrUpdateObjectEntry(
+			objectEntry1.getExternalReferenceCode(),
+			objectEntryFolder2.getCompanyId(), objectEntryFolder2.getUserId(),
+			objectEntryFolder2.getExternalReferenceCode(),
+			objectEntryFolder2.getModelClassName(), jsonObject,
+			objectEntryFolder2.getGroupId(), objectEntryFolder2.getTreePath());
+
+		ObjectDefinition objectDefinition1 =
+			_objectDefinitionLocalService.
+				getObjectDefinitionByExternalReferenceCode(
+					"L_CMS_BASIC_WEB_CONTENT",
+					objectEntryFolder2.getCompanyId());
+
+		serviceContext.setAttribute(
+			"friendlyUrlMap", new HashMap<String, String>());
+
+		ObjectEntry objectEntry2 = _objectEntryLocalService.addObjectEntry(
+			depotEntry.getGroupId(), depotEntry.getUserId(),
+			objectDefinition1.getObjectDefinitionId(),
+			objectEntryFolder2.getObjectEntryFolderId(), "en_US",
+			HashMapBuilder.<String, Serializable>put(
+				"title_i18n",
+				HashMapBuilder.put(
+					"en_US", RandomTestUtil.randomString()
+				).build()
+			).build(),
+			serviceContext);
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			objectEntry2.getCompanyId(), objectEntry2.getModelClassName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(objectEntry2.getPrimaryKeyObj()),
+			_cmsAdministratorRole.getRoleId(),
+			new String[] {ActionKeys.DELETE});
+
+		ObjectEntryFolder objectEntryFolder3 =
+			_objectEntryFolderLocalService.addObjectEntryFolder(
+				RandomTestUtil.randomString(), group.getGroupId(),
+				group.getCreatorUserId(),
+				objectEntryFolder2.getObjectEntryFolderId(), "",
+				HashMapBuilder.put(
+					LocaleUtil.ENGLISH, RandomTestUtil.randomString()
+				).build(),
+				RandomTestUtil.randomString(), serviceContext);
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			objectEntryFolder3.getCompanyId(),
+			objectEntryFolder3.getModelClassName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(objectEntryFolder3.getPrimaryKeyObj()),
+			_cmsAdministratorRole.getRoleId(),
+			new String[] {ActionKeys.DELETE});
+
+		ResetPermissionBulkAction resetPermissionBulkAction =
+			new ResetPermissionBulkAction();
+
+		resetPermissionBulkAction.setBulkActionItems(
+			new BulkActionItem[] {
+				_toBulkActionItem(
+					objectEntry2.getModelClassName(), objectEntry2),
+				_toBulkActionItem(objectEntryFolder3)
+			});
+
+		resetPermissionBulkAction.setType(
+			ResetPermissionBulkAction.Type.RESET_PERMISSION_BULK_ACTION);
+
+		_postBulkAction(resetPermissionBulkAction);
+
+		ResourcePermission resourcePermission =
+			_resourcePermissionLocalService.getResourcePermission(
+				objectEntry2.getCompanyId(), objectEntry2.getModelClassName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(objectEntry2.getObjectEntryId()),
+				_cmsAdministratorRole.getRoleId());
+
+		Assert.assertFalse(resourcePermission.hasActionId(ActionKeys.DELETE));
+		Assert.assertTrue(resourcePermission.hasActionId(ActionKeys.UPDATE));
+		Assert.assertTrue(resourcePermission.hasActionId(ActionKeys.VIEW));
+
+		resourcePermission =
+			_resourcePermissionLocalService.getResourcePermission(
+				objectEntryFolder3.getCompanyId(),
+				objectEntryFolder3.getModelClassName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(objectEntryFolder3.getObjectEntryFolderId()),
+				_cmsAdministratorRole.getRoleId());
+
+		Assert.assertTrue(resourcePermission.hasActionId(ActionKeys.ADD_ENTRY));
+		Assert.assertFalse(resourcePermission.hasActionId(ActionKeys.DELETE));
+		Assert.assertTrue(resourcePermission.hasActionId(ActionKeys.SUBSCRIBE));
+
+		ObjectDefinition objectDefinition2 =
+			_objectDefinitionLocalService.
+				getObjectDefinitionByExternalReferenceCode(
+					"L_CMS_BASIC_DOCUMENT", objectEntryFolder2.getCompanyId());
+
+		DLFileEntry dlFileEntry = _dlFileEntryLocalService.addFileEntry(
+			null, TestPropsValues.getUserId(), depotEntry.getGroupId(),
+			depotEntry.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			RandomTestUtil.randomString(), null, RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(), null, null,
+			DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_BASIC_DOCUMENT, null,
+			null, new ByteArrayInputStream(TestDataConstants.TEST_BYTE_ARRAY),
+			TestDataConstants.TEST_BYTE_ARRAY.length, null, null, null,
+			serviceContext);
+
+		objectEntryFolder1 =
+			_objectEntryFolderLocalService.
+				getObjectEntryFolderByExternalReferenceCode(
+					ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES,
+					group.getGroupId(), depotEntry.getCompanyId());
+
+		objectEntryFolder2 =
+			_objectEntryFolderLocalService.updateObjectEntryFolder(
+				objectEntryFolder2.getUserId(),
+				objectEntryFolder2.getObjectEntryFolderId(),
+				objectEntryFolder1.getObjectEntryFolderId(), "",
+				HashMapBuilder.put(
+					LocaleUtil.ENGLISH, RandomTestUtil.randomString()
+				).build(),
+				RandomTestUtil.randomString(), serviceContext);
+
+		objectEntry1 = CMSDefaultPermissionUtil.fetchObjectEntry(
+			objectEntryFolder2.getCompanyId(), objectEntryFolder2.getUserId(),
+			objectEntryFolder2.getExternalReferenceCode(),
+			objectEntryFolder2.getModelClassName(), _filterFactory);
+
+		CMSDefaultPermissionUtil.addOrUpdateObjectEntry(
+			objectEntry1.getExternalReferenceCode(),
+			objectEntryFolder2.getCompanyId(), objectEntryFolder2.getUserId(),
+			objectEntryFolder2.getExternalReferenceCode(),
+			objectEntryFolder2.getModelClassName(), jsonObject,
+			objectEntryFolder2.getGroupId(), objectEntryFolder2.getTreePath());
+
+		ObjectEntry objectEntry3 = _objectEntryLocalService.addObjectEntry(
+			depotEntry.getGroupId(), depotEntry.getUserId(),
+			objectDefinition2.getObjectDefinitionId(),
+			objectEntryFolder2.getObjectEntryFolderId(), "en_US",
+			HashMapBuilder.<String, Serializable>put(
+				"file", dlFileEntry.getFileEntryId()
+			).put(
+				"title_i18n",
+				HashMapBuilder.put(
+					"en_US", RandomTestUtil.randomString()
+				).build()
+			).build(),
+			serviceContext);
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			objectEntry3.getCompanyId(), objectEntry3.getModelClassName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(objectEntry3.getPrimaryKeyObj()),
+			_cmsAdministratorRole.getRoleId(), new String[] {ActionKeys.VIEW});
+
+		ObjectEntryFolder objectEntryFolder4 =
+			_objectEntryFolderLocalService.addObjectEntryFolder(
+				RandomTestUtil.randomString(), group.getGroupId(),
+				group.getCreatorUserId(),
+				objectEntryFolder2.getObjectEntryFolderId(), "",
+				HashMapBuilder.put(
+					LocaleUtil.ENGLISH, RandomTestUtil.randomString()
+				).build(),
+				RandomTestUtil.randomString(), serviceContext);
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			objectEntryFolder4.getCompanyId(),
+			objectEntryFolder4.getModelClassName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(objectEntryFolder4.getObjectEntryFolderId()),
+			_cmsAdministratorRole.getRoleId(), new String[] {ActionKeys.VIEW});
+
+		resetPermissionBulkAction.setBulkActionItems(
+			new BulkActionItem[] {
+				_toBulkActionItem(
+					objectEntry3.getModelClassName(), objectEntry3),
+				_toBulkActionItem(objectEntryFolder4)
+			});
+
+		_postBulkAction(resetPermissionBulkAction);
+
+		resourcePermission =
+			_resourcePermissionLocalService.getResourcePermission(
+				objectEntry3.getCompanyId(), objectEntry3.getModelClassName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(objectEntry3.getObjectEntryId()),
+				_cmsAdministratorRole.getRoleId());
+
+		Assert.assertTrue(resourcePermission.hasActionId(ActionKeys.DELETE));
+		Assert.assertTrue(
+			resourcePermission.hasActionId(ActionKeys.PERMISSIONS));
+		Assert.assertFalse(resourcePermission.hasActionId(ActionKeys.VIEW));
+
+		resourcePermission =
+			_resourcePermissionLocalService.getResourcePermission(
+				objectEntryFolder4.getCompanyId(),
+				objectEntryFolder4.getModelClassName(),
+				ResourceConstants.SCOPE_INDIVIDUAL,
+				String.valueOf(objectEntryFolder4.getObjectEntryFolderId()),
+				_cmsAdministratorRole.getRoleId());
+
+		Assert.assertTrue(resourcePermission.hasActionId(ActionKeys.ADD_ENTRY));
+		Assert.assertFalse(resourcePermission.hasActionId(ActionKeys.DELETE));
+		Assert.assertTrue(resourcePermission.hasActionId(ActionKeys.SUBSCRIBE));
 	}
 
 	private void _testPostBulkActionWithTypeTaxonomyCategory()
@@ -941,21 +1309,23 @@ public class BulkActionResourceTest extends BaseBulkActionResourceTestCase {
 		};
 	}
 
-	private BulkActionItem[] _toBulkActionItems(ObjectEntry objectEntry)
+	private BulkActionItem[] _toBulkActionItems(ObjectEntry... objectEntries)
 		throws Exception {
 
-		return new BulkActionItem[] {
-			new BulkActionItem() {
+		return TransformUtil.transform(
+			objectEntries,
+			objectEntry -> new BulkActionItem() {
 				{
 					setClassExternalReferenceCode(
-						objectEntry.getExternalReferenceCode());
+						objectEntry::getExternalReferenceCode);
 					setClassName(
-						_cmsBasicWebContentObjectDefinition.getClassName());
-					setClassPK(objectEntry.getObjectEntryId());
-					setName(objectEntry.getTitleValue());
+						() ->
+							_cmsBasicWebContentObjectDefinition.getClassName());
+					setClassPK(objectEntry::getObjectEntryId);
+					setName(objectEntry::getTitleValue);
 				}
-			}
-		};
+			},
+			BulkActionItem.class);
 	}
 
 	private void _waitForFinish(long bulkActionTaskId) throws Exception {
@@ -994,6 +1364,7 @@ public class BulkActionResourceTest extends BaseBulkActionResourceTestCase {
 	@Inject
 	private BatchEngineUnitReader _batchEngineUnitReader;
 
+	private Role _cmsAdministratorRole;
 	private ObjectDefinition _cmsBasicWebContentObjectDefinition;
 	private ObjectDefinition _cmsBulkActionTaskObjectDefinition;
 	private DepotEntry _depotEntry1;
@@ -1001,6 +1372,9 @@ public class BulkActionResourceTest extends BaseBulkActionResourceTestCase {
 
 	@Inject
 	private DepotEntryLocalService _depotEntryLocalService;
+
+	@Inject
+	private DLFileEntryLocalService _dlFileEntryLocalService;
 
 	@Inject(
 		filter = "filter.factory.key=" + ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT

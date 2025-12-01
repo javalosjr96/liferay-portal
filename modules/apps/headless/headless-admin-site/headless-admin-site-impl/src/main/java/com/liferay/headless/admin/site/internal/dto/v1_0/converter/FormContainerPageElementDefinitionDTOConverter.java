@@ -15,14 +15,15 @@ import com.liferay.headless.admin.site.dto.v1_0.FormContainerReference;
 import com.liferay.headless.admin.site.dto.v1_0.FragmentInlineValue;
 import com.liferay.headless.admin.site.dto.v1_0.ItemExternalReference;
 import com.liferay.headless.admin.site.dto.v1_0.LocalizationConfig;
+import com.liferay.headless.admin.site.dto.v1_0.PageElementDefinition;
 import com.liferay.headless.admin.site.dto.v1_0.SitePageFormContainerSubmissionResult;
 import com.liferay.headless.admin.site.dto.v1_0.StayInPageFormContainerSubmissionResult;
 import com.liferay.headless.admin.site.dto.v1_0.SuccessFormContainerSubmissionResult;
 import com.liferay.headless.admin.site.dto.v1_0.SuccessNotificationMessage;
 import com.liferay.headless.admin.site.dto.v1_0.URLFormContainerSubmissionResult;
+import com.liferay.headless.admin.site.internal.dto.v1_0.util.ContainerLayoutUtil;
 import com.liferay.headless.admin.site.internal.dto.v1_0.util.FragmentViewportUtil;
 import com.liferay.headless.admin.site.internal.dto.v1_0.util.ItemScopeUtil;
-import com.liferay.headless.admin.site.internal.dto.v1_0.util.LayoutUtil;
 import com.liferay.headless.admin.site.internal.dto.v1_0.util.LocalizedValueUtil;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
@@ -108,10 +109,12 @@ public class FormContainerPageElementDefinitionDTOConverter
 		formContainerPageElementDefinition.setIndexed(
 			formStyledLayoutStructureItem::isIndexed);
 		formContainerPageElementDefinition.setLayout(
-			() -> LayoutUtil.toLayout(
+			() -> ContainerLayoutUtil.toLayout(
 				formStyledLayoutStructureItem.getItemConfigJSONObject()));
 		formContainerPageElementDefinition.setName(
 			formStyledLayoutStructureItem::getName);
+		formContainerPageElementDefinition.setType(
+			PageElementDefinition.Type.FORM_CONTAINER);
 
 		return formContainerPageElementDefinition;
 	}

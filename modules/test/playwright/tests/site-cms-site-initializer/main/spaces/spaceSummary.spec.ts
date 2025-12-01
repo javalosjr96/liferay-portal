@@ -21,6 +21,53 @@ const test = mergeTests(
 );
 
 test(
+	'Opens in Gallery View by default for files',
+	{tag: '@LPD-72056'},
+	async ({apiHelpers, page, spaceSummaryPage}) => {
+		const applicationName = 'cms/basic-documents';
+		const spaceName = 'Default';
+
+		const file1Title = `title ${getRandomString()}`;
+
+		const objectEntry = await apiHelpers.objectEntry.postObjectEntry(
+			{
+				file: {
+					fileBase64: 'R0lGODlhAQABAAAAACw=',
+					name: `file_${getRandomString()}.png`,
+				},
+				objectEntryFolderExternalReferenceCode: 'L_FILES',
+				title: file1Title,
+			},
+			applicationName,
+			spaceName
+		);
+
+		try {
+			await spaceSummaryPage.goto(spaceName);
+			await spaceSummaryPage.viewAllFilesLink.click();
+
+			await expect(
+				page.getByRole('combobox', {name: 'Gallery View Selected'})
+			).toBeVisible();
+
+			await expect(
+				spaceSummaryPage.galleryPreview.getByText(
+					'No Preview Available'
+				)
+			).toBeVisible();
+
+			expect(page.getByText(file1Title)).toBeVisible();
+		}
+		finally {
+			await apiHelpers.objectEntry.deleteObjectEntry(
+				applicationName,
+				String(objectEntry.id)
+			);
+		}
+	}
+);
+
+test(
 	'Can access to View All Files page',
 	{tag: '@LPD-62706'},
 	async ({page, spaceSummaryPage}) => {

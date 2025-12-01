@@ -196,6 +196,7 @@ PropertiesBuildIncludeDirsCheck | .eslintignore, .prettierignore, or .properties
 PropertiesDefaultAdminScreenNameCheck | .eslintignore, .prettierignore, or .properties | Checks that we do not use `default.admin.screen.name`. |
 PropertiesFeatureFlagsCheck | .eslintignore, .prettierignore, or .properties | Generate feature flags in `portal.properties` file. |
 PropertiesImportedFilesContentCheck | .eslintignore, .prettierignore, or .properties | Performs several checks on `imported-files.properties` file. |
+PropertiesJVMAttributesOrderCheck | .eslintignore, .prettierignore, or .properties | Sorts JVM attributes. |
 [PropertiesLanguageKeysCheck](check/properties_language_keys_check.md#propertieslanguagekeyscheck) | .eslintignore, .prettierignore, or .properties | Checks that there is no HTML markup in language keys. |
 PropertiesLanguageKeysContextCheck | .eslintignore, .prettierignore, or .properties | Checks if the language keys include a word of context to indicate specific meaning. |
 PropertiesLiferayPluginPackageFileCheck | .eslintignore, .prettierignore, or .properties | Performs several checks on `liferay-plugin-package.properties` file. |
@@ -226,6 +227,7 @@ SystemEventCheck | .java | Finds missing or redundant usage of @SystemEvent for 
 TLDTypeCheck | .tld | Ensures the fully qualified name is used for types in `.tld` file. |
 TSConfigFileCheck | .ts or .tsx | Performs several checks on `ts.config` file. |
 TSSpecFileLocationCheck | .ts or .tsx | Checks that `*.spec.ts` file should be inside a folder that contains a `config.ts`. |
+TestClassDBConnectionCheck | .java | Finds cases of incorrect use of database connection. |
 TestClassMissingLiferayUnitTestRuleCheck | .java | Finds missing LiferayUnitTestRule. |
 [ThreadContextClassLoaderCheck](check/thread_context_class_loader_check.md#threadcontextclassloadercheck) | .java | Checks usage of `Thread.setContextClassLoader`. |
 TransactionalTestRuleCheck | .java | Finds usage of `TransactionalTestRule` in `*StagedModelDataHandlerTest`. |

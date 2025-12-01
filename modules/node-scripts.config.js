@@ -10,7 +10,7 @@
  */
 
 module.exports = {
-	hash: '3376d42d13d8630667f9513e698ede6a03d258f50f3cfb83ca1e537b8103db57',
+	hash: '8eed4a8c86d4a756e5a87f1ebb3604572a9102ece36c3aa215881b50f19a2e6b',
 	imports: {
 		'@liferay/accessibility-menu-web': [],
 		'@liferay/accessibility-settings-state-web': [],
@@ -62,6 +62,7 @@ module.exports = {
 		'@liferay/cookies-banner-web': [],
 		'@liferay/cookies-sample-web': [],
 		'@liferay/dialect-theme': [],
+		'@liferay/digital-sales-room-web': [],
 		'@liferay/digital-signature-web': [],
 		'@liferay/dispatch-web': [],
 		'@liferay/document-library-opener-google-drive-web': [],
@@ -109,7 +110,6 @@ module.exports = {
 			'uuid',
 			'react-flow-renderer',
 			'react-helmet',
-			'react-router-dom',
 			'graphiql',
 			'graphiql/graphiql.css',
 			'axe-core',

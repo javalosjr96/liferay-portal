@@ -55,32 +55,41 @@ public class TextFragmentEditableElementValue
 	}
 
 	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "The fragment link of a text fragment editable element."
+		description = "The fragment link of a text fragment editable element value."
 	)
 	@Valid
-	public FragmentLink getFragmentLink() {
-		if (_fragmentLinkSupplier != null) {
-			fragmentLink = _fragmentLinkSupplier.get();
+	public FragmentEditableElementValueFragmentLink
+		getFragmentEditableElementValueFragmentLink() {
 
-			_fragmentLinkSupplier = null;
+		if (_fragmentEditableElementValueFragmentLinkSupplier != null) {
+			fragmentEditableElementValueFragmentLink =
+				_fragmentEditableElementValueFragmentLinkSupplier.get();
+
+			_fragmentEditableElementValueFragmentLinkSupplier = null;
 		}
 
-		return fragmentLink;
+		return fragmentEditableElementValueFragmentLink;
 	}
 
-	public void setFragmentLink(FragmentLink fragmentLink) {
-		this.fragmentLink = fragmentLink;
+	public void setFragmentEditableElementValueFragmentLink(
+		FragmentEditableElementValueFragmentLink
+			fragmentEditableElementValueFragmentLink) {
 
-		_fragmentLinkSupplier = null;
+		this.fragmentEditableElementValueFragmentLink =
+			fragmentEditableElementValueFragmentLink;
+
+		_fragmentEditableElementValueFragmentLinkSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setFragmentLink(
-		UnsafeSupplier<FragmentLink, Exception> fragmentLinkUnsafeSupplier) {
+	public void setFragmentEditableElementValueFragmentLink(
+		UnsafeSupplier<FragmentEditableElementValueFragmentLink, Exception>
+			fragmentEditableElementValueFragmentLinkUnsafeSupplier) {
 
-		_fragmentLinkSupplier = () -> {
+		_fragmentEditableElementValueFragmentLinkSupplier = () -> {
 			try {
-				return fragmentLinkUnsafeSupplier.get();
+				return fragmentEditableElementValueFragmentLinkUnsafeSupplier.
+					get();
 			}
 			catch (RuntimeException runtimeException) {
 				throw runtimeException;
@@ -92,13 +101,15 @@ public class TextFragmentEditableElementValue
 	}
 
 	@GraphQLField(
-		description = "The fragment link of a text fragment editable element."
+		description = "The fragment link of a text fragment editable element value."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected FragmentLink fragmentLink;
+	protected FragmentEditableElementValueFragmentLink
+		fragmentEditableElementValueFragmentLink;
 
 	@JsonIgnore
-	private Supplier<FragmentLink> _fragmentLinkSupplier;
+	private Supplier<FragmentEditableElementValueFragmentLink>
+		_fragmentEditableElementValueFragmentLinkSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The fragment editable element's text."
@@ -174,16 +185,18 @@ public class TextFragmentEditableElementValue
 
 		sb.append("{");
 
-		FragmentLink fragmentLink = getFragmentLink();
+		FragmentEditableElementValueFragmentLink
+			fragmentEditableElementValueFragmentLink =
+				getFragmentEditableElementValueFragmentLink();
 
-		if (fragmentLink != null) {
+		if (fragmentEditableElementValueFragmentLink != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"fragmentLink\": ");
+			sb.append("\"fragmentEditableElementValueFragmentLink\": ");
 
-			sb.append(String.valueOf(fragmentLink));
+			sb.append(String.valueOf(fragmentEditableElementValueFragmentLink));
 		}
 
 		TextFragmentValue textFragmentValue = getTextFragmentValue();

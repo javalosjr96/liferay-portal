@@ -9,21 +9,19 @@ import ClayDropDown from '@clayui/drop-down';
 import ClayIcon from '@clayui/icon';
 import ClayLabel from '@clayui/label';
 import ClayList from '@clayui/list';
+import {useEventListener} from '@liferay/frontend-js-react-web';
 import classNames from 'classnames';
 import {openToast} from 'frontend-js-components-web';
 import {sub} from 'frontend-js-web';
 import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
 
-import {ITEM_INTERACTION_ORIGINS} from '../../../app/config/constants/itemInteractionOrigins';
 import {LIST_ITEM_TYPES} from '../../../app/config/constants/listItemTypes';
 import {useDispatch, useSelector} from '../../../app/contexts/StoreContext';
-import {
-	useHoverMultipleItems,
-	useKeyboardNavigation,
-} from '../../../app/js-index';
+import {useHighlightItems, useKeyboardNavigation} from '../../../app/js-index';
 import selectLayoutDataItemLabel from '../../../app/selectors/selectLayoutDataItemLabel';
 import deleteRule from '../../../app/thunks/deleteRule';
 import updateRule from '../../../app/thunks/updateRule';
+import {isLayoutDataItemDeleted} from '../../../app/utils/isLayoutDataItemDeleted';
 import useActionValues, {
 	ActionValues,
 } from '../../../app/utils/useActionValues';
@@ -31,6 +29,8 @@ import useConditionValues, {
 	ConditionValues,
 } from '../../../app/utils/useConditionValues';
 import {Rule} from '../../../types/Rule';
+import {Action as ActionType} from './Action';
+import {Condition as ConditionType} from './Condition';
 import RulesModal from './RulesModal';
 
 const MAX_RULES = 20;
@@ -47,6 +47,28 @@ export default function RulesList({
 	const [savedRuleId, setSavedRuleId] = useState<string | null>(null);
 
 	const dispatch = useDispatch();
+	const highlightItems = useHighlightItems();
+
+	const onUnhighlightItems = (event: Event) => {
+		const target = event.target as HTMLElement;
+
+		if (!target.classList.contains('page-editor__rule')) {
+			highlightItems([]);
+		}
+	};
+
+	useEventListener(
+		'keydown',
+		(event) => {
+			const {key} = event as KeyboardEvent;
+
+			if (key === 'Enter') {
+				onUnhighlightItems(event);
+			}
+		},
+		false,
+		document
+	);
 
 	const onCreateRule = () => setModalVisible(true);
 
@@ -144,10 +166,11 @@ function RuleItem({
 	savedRuleId: string | null;
 	setSavedRuleId: (id: string | null) => void;
 }) {
-	const hoverMultipleItems = useHoverMultipleItems();
+	const highlightItems = useHighlightItems();
 	const {isTarget, setElement} = useKeyboardNavigation({
 		type: LIST_ITEM_TYPES.listItem,
 	});
+	const layoutData = useSelector((state) => state.layoutData);
 	const [triggerElement, setTriggerElement] =
 		useState<HTMLButtonElement | null>(null);
 
@@ -183,30 +206,27 @@ function RuleItem({
 	}, [dispatch, name, rule]);
 
 	const items = useSelector((state) =>
-		Object.values(state.layoutData.items).map((item) => ({
-			label: selectLayoutDataItemLabel(state, item),
-			value: item.itemId,
-		}))
+		Object.values(state.layoutData.items)
+			.filter(
+				(item) =>
+					!isLayoutDataItemDeleted(state.layoutData, item.itemId)
+			)
+			.map((item) => ({
+				label: selectLayoutDataItemLabel(state, item),
+				value: item.itemId,
+			}))
 	);
 
 	const conditions = useConditionValues({...rule, items});
 	const actions = useActionValues({...rule, items});
 
-	const hoveredItemIds = useMemo(() => {
-		const actionsItemIds = rule.actions.map(({itemId}) => itemId);
-		const conditionsItemIds = rule.conditions.map(({field}) => field);
+	const ruleItemIds = useMemo(
+		() => getRuleItemIds(rule.actions, rule.conditions),
+		[rule.actions, rule.conditions]
+	);
 
-		return [...actionsItemIds, ...conditionsItemIds];
-	}, [rule.actions, rule.conditions]);
-
-	const onHighlightItems = () => {
-		hoverMultipleItems(hoveredItemIds, {
-			origin: ITEM_INTERACTION_ORIGINS.rules,
-		});
-	};
-
-	const onUnhighlightItems = () => {
-		hoverMultipleItems([]);
+	const onHighlightItems = async () => {
+		highlightItems(ruleItemIds);
 	};
 
 	const onScroll = () => {
@@ -219,24 +239,35 @@ function RuleItem({
 		});
 	};
 
+	const isRuleDisabled = ruleItemIds.some((id) =>
+		isLayoutDataItemDeleted(layoutData, id)
+	);
+
 	return (
 		<ClayList.Item
 			aria-description={Liferay.Language.get(
 				'press-enter-or-space-to-scroll-to-the-first-fragment-under-this-rule'
 			)}
-			aria-label={getRuleAriaLabel(rule.name, conditions, actions)}
+			aria-label={getRuleAriaLabel(
+				rule.name,
+				conditions,
+				actions,
+				isRuleDisabled
+			)}
 			className="p-2 page-editor__rule"
 			key={rule.id}
-			onBlurCapture={onUnhighlightItems}
-			onClick={onScroll}
-			onFocusCapture={onHighlightItems}
-			onKeyDown={({key}) => {
+			onClick={async () => {
+				await onHighlightItems();
+
+				onScroll();
+			}}
+			onKeyDown={async ({key}) => {
 				if (key === 'Enter' || key === ' ') {
+					await onHighlightItems();
+
 					onScroll();
 				}
 			}}
-			onMouseLeave={onUnhighlightItems}
-			onMouseOver={onHighlightItems}
 			ref={setElement}
 			role="menuitem"
 			tabIndex={isTarget ? 0 : -1}
@@ -291,6 +322,16 @@ function RuleItem({
 							onDoubleClick={() => setEditing(true)}
 						>
 							{name}
+
+							{isRuleDisabled ? (
+								<ClayIcon
+									className="lfr-tooltip-scope ml-2 text-warning"
+									data-title={Liferay.Language.get(
+										'disabled-rule'
+									)}
+									symbol="warning-full"
+								/>
+							) : null}
 						</span>
 					)}
 
@@ -305,7 +346,10 @@ function RuleItem({
 								)}
 								borderless
 								displayType="secondary"
-								onClick={(event) => event.stopPropagation()}
+								onClick={(event) => {
+									event.stopPropagation();
+									highlightItems([]);
+								}}
 								ref={setTriggerElement}
 								size="sm"
 								symbol="ellipsis-v"
@@ -341,7 +385,11 @@ function RuleItem({
 				</div>
 			</ClayList.ItemField>
 
-			<ClayList.ItemField className="mt-3" expand>
+			<ClayList.ItemField
+				aria-disabled={isRuleDisabled || undefined}
+				className={classNames('mt-3', {'text-muted': isRuleDisabled})}
+				expand
+			>
 				<p
 					aria-hidden="true"
 					className="align-items-center c-gap-2 d-flex flex-wrap"
@@ -380,9 +428,11 @@ function Condition({
 				{condition.prefix}
 			</span>
 
-			<ClayLabel className="m-0" displayType="secondary">
-				{condition.type}
-			</ClayLabel>
+			{condition.type ? (
+				<ClayLabel className="m-0" displayType="secondary">
+					{condition.type}
+				</ClayLabel>
+			) : null}
 
 			{condition.condition}
 
@@ -404,9 +454,11 @@ function Action({action}: {action: ActionValues}) {
 
 			<span className="font-weight-semi-bold">{action.type}</span>
 
-			<ClayLabel className="m-0" displayType="secondary">
-				{action.item}
-			</ClayLabel>
+			{action.item ? (
+				<ClayLabel className="m-0" displayType="secondary">
+					{action.item}
+				</ClayLabel>
+			) : null}
 		</>
 	);
 }
@@ -414,7 +466,8 @@ function Action({action}: {action: ActionValues}) {
 function getRuleAriaLabel(
 	name: string,
 	conditions: ConditionValues[],
-	actions: ActionValues[]
+	actions: ActionValues[],
+	disabled: boolean
 ) {
 	const conditionsDescription = conditions
 		.map((condition) => condition.description)
@@ -424,5 +477,23 @@ function getRuleAriaLabel(
 		.map((action) => action.description)
 		.join(' ');
 
-	return `${name}: ${conditionsDescription} ${actionsDescription}`;
+	return `${name}${disabled ? ` ${Liferay.Language.get('disabled-rule')}` : ''}: ${conditionsDescription} ${actionsDescription}`;
+}
+
+function getRuleItemIds(actions: ActionType[], conditions: ConditionType[]) {
+	const ruleItemIds = new Set<string>();
+
+	for (const {itemId} of actions) {
+		if (itemId) {
+			ruleItemIds.add(itemId);
+		}
+	}
+
+	for (const {field, type} of conditions) {
+		if (field && type === 'form') {
+			ruleItemIds.add(field);
+		}
+	}
+
+	return [...ruleItemIds];
 }

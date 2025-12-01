@@ -33,11 +33,15 @@ export {useActiveItemIds} from './contexts/ControlsContext';
 
 // @ts-ignore
 
-export {useHoveringOrigin} from './contexts/ControlsContext';
+export {useHighlightedItemIds} from './contexts/ControlsContext';
 
 // @ts-ignore
 
-export {useHoverMultipleItems} from './contexts/ControlsContext';
+export {useHighlightItems} from './contexts/ControlsContext';
+
+// @ts-ignore
+
+export {useHoveringOrigin} from './contexts/ControlsContext';
 
 // @ts-ignore
 

@@ -225,6 +225,7 @@ public class SiteResourceTest extends BaseSiteResourceTestCase {
 		_testPostSiteSuccessMembershipTypeRestricted();
 		_testPostSiteSuccessSiteInitializer();
 		_testPostSiteSuccessSiteTemplate();
+		_testPostSiteWithFriendlyURLMissingSlash();
 		_testPostSiteWithLocalizedDescription();
 		_testPostSiteWithLocalizedName();
 		_testPostSiteWithNondefaultLocales();
@@ -813,7 +814,8 @@ public class SiteResourceTest extends BaseSiteResourceTestCase {
 
 		Site randomSite = randomSite();
 
-		randomSite.setParentSiteKey(parentSite.getKey());
+		randomSite.setParentSiteExternalReferenceCode(
+			parentSite.getExternalReferenceCode());
 
 		Site postSite = _testPostSiteSuccess(randomSite);
 
@@ -822,23 +824,6 @@ public class SiteResourceTest extends BaseSiteResourceTestCase {
 			TestPropsValues.getCompanyId());
 
 		Group parentGroup = group.getParentGroup();
-
-		Assert.assertEquals(parentSite.getKey(), parentGroup.getGroupKey());
-
-		parentSite = _testPostSite_addSite(randomSite());
-
-		randomSite = randomSite();
-
-		randomSite.setParentSiteExternalReferenceCode(
-			parentSite.getExternalReferenceCode());
-
-		postSite = _testPostSiteSuccess(randomSite);
-
-		group = _groupLocalService.fetchGroupByExternalReferenceCode(
-			postSite.getExternalReferenceCode(),
-			TestPropsValues.getCompanyId());
-
-		parentGroup = group.getParentGroup();
 
 		Assert.assertEquals(
 			parentSite.getExternalReferenceCode(),
@@ -927,6 +912,20 @@ public class SiteResourceTest extends BaseSiteResourceTestCase {
 		Assert.assertEquals(
 			layoutSetPrototype.getLayoutSetPrototypeId(),
 			publicLayoutSet.getLayoutSetPrototypeId());
+	}
+
+	private void _testPostSiteWithFriendlyURLMissingSlash() throws Exception {
+		Site site = randomSite();
+
+		String friendlyUrlPath = StringUtil.toLowerCase(
+			RandomTestUtil.randomString());
+
+		site.setFriendlyUrlPath(friendlyUrlPath);
+
+		site = _testPostSite_addSite(site);
+
+		Assert.assertEquals(
+			StringPool.SLASH + friendlyUrlPath, site.getFriendlyUrlPath());
 	}
 
 	private void _testPostSiteWithLocalizedDescription() throws Exception {

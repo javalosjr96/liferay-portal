@@ -12,13 +12,14 @@ import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
 import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
+import {getRandomInt} from '../../../utils/getRandomInt';
 import getRandomString from '../../../utils/getRandomString';
 import performLogin, {
 	performLogout,
 	userData,
 } from '../../../utils/performLogin';
-import {PORTLET_URLS} from '../../../utils/portletUrls';
 import {waitForAlert} from '../../../utils/waitForAlert';
+import {structureBuilderPagesTest} from '../structure-builder/fixtures/structureBuilderPagesTest';
 import {cmsPagesTest} from './fixtures/cmsPagesTest';
 
 const test = mergeTests(
@@ -27,7 +28,8 @@ const test = mergeTests(
 	featureFlagsTest({
 		'LPD-17564': {enabled: true},
 	}),
-	loginTest()
+	loginTest(),
+	structureBuilderPagesTest
 );
 
 test(
@@ -600,22 +602,8 @@ test(
 				spaceName
 			);
 
-			await test.step('Create an user and add to the Space', async () => {
-				user = await apiHelpers.headlessAdminUser.postUserAccount();
-
-				userData[user.alternateName] = {
-					name: user.givenName,
-					password: 'test',
-					surname: user.familyName,
-				};
-
-				await spaceSummaryPage.goto(spaceName);
-
-				await spaceSummaryPage.addUserOrUserGroup(user.name, 'users');
-			});
-
 			await test.step('Go to All Assets and open the Info Panel Categorization Tab', async () => {
-				await page.goto(PORTLET_URLS.cmsAll);
+				await assetsPage.gotoAll();
 
 				await assetsPage.execItemAction({
 					action: 'Show Details',
@@ -664,12 +652,26 @@ test(
 				await expect(categoryLabel).toBeAttached();
 			});
 
+			await test.step('Create an user and add to the Space', async () => {
+				user = await apiHelpers.headlessAdminUser.postUserAccount();
+
+				userData[user.alternateName] = {
+					name: user.givenName,
+					password: 'test',
+					surname: user.familyName,
+				};
+
+				await spaceSummaryPage.goto(spaceName);
+
+				await spaceSummaryPage.addUserOrUserGroup(user.name, 'users');
+			});
+
 			await test.step('Login as a space member and go to Info Panel Categorization tab', async () => {
 				await performLogout(page);
 
 				await performLogin(page, user.alternateName);
 
-				await page.goto(PORTLET_URLS.cmsAll);
+				await assetsPage.gotoAll();
 
 				await expect(assetsPage.getItem(file1Title)).toBeVisible();
 
@@ -1131,7 +1133,7 @@ test(
 					spaceName
 				);
 
-				await page.goto(PORTLET_URLS.cmsAll);
+				await assetsPage.gotoAll();
 			});
 
 			await test.step('Select the asset, open the Side Panel and then expire the asset', async () => {
@@ -1196,7 +1198,7 @@ test(
 				'Default'
 			);
 
-			await page.goto(PORTLET_URLS.cmsAll);
+			await assetsPage.gotoAll();
 
 			await assetsPage.execItemAction({
 				action: 'Show Details',
@@ -1618,6 +1620,47 @@ test(
 				String(objectEntryFile.id)
 			);
 		}
+	}
+);
+
+test(
+	'Info panel shows title with content structure',
+	{tag: '@LPD-69788'},
+	async ({assetsPage, contentsPage, page, structureBuilderPage}) => {
+		const structureLabel = `StructureName${getRandomInt()}`;
+		const title = getRandomString();
+
+		await test.step('Create a content structure', async () => {
+			await structureBuilderPage.createStructureFromData({
+				label: structureLabel,
+				page: structureBuilderPage,
+			});
+		});
+
+		await test.step('Navigate to All Assets and create a new content', async () => {
+			await assetsPage.gotoAll();
+
+			await assetsPage.createContent(structureLabel);
+
+			await expect(
+				page.getByRole('heading', {name: `Edit ${structureLabel}`})
+			).toBeVisible();
+
+			await page.getByPlaceholder(`New ${structureLabel}`).fill(title);
+
+			await contentsPage.saveContent();
+		});
+
+		await test.step('Open Info Panel and assert that title is not empty', async () => {
+			await assetsPage.execItemAction({
+				action: 'Show Details',
+				filter: structureLabel,
+			});
+
+			await expect(
+				page.getByRole('heading', {name: title})
+			).toBeVisible();
+		});
 	}
 );
 

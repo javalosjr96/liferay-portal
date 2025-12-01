@@ -33,6 +33,7 @@ test('Add a new tag', {tag: '@LPD-51250'}, async ({page, tagsPage}) => {
 	await checkAccessibility({
 		page,
 		selectors: ['.categorization-section'],
+		selectorsToExclude: ['.management-bar-wrapper'],
 	});
 
 	await tagsPage.deleteTag(tagName);
@@ -164,11 +165,11 @@ test(
 
 		await expect(tag).toBeVisible();
 
-		await expect(
-			page
-				.locator('[data-testid="visualization-mode-table"]')
-				.getByText('Default')
-		).toBeVisible();
+		const tagRow = page
+			.locator('.fds tbody tr')
+			.filter({has: page.getByText(name)});
+
+		await expect(tagRow.getByRole('cell', {name: 'Default'})).toBeVisible();
 
 		await tagsPage.deleteTag(name);
 	}
@@ -223,6 +224,7 @@ test('Bulk Merge tags', {tag: '@LPD-43388'}, async ({page, tagsPage}) => {
 	await checkAccessibility({
 		page,
 		selectors: ['.merge-tags'],
+		selectorsToExclude: ['.management-bar-wrapper'],
 	});
 
 	await page

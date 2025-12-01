@@ -5,102 +5,76 @@
 
 package com.liferay.headless.admin.site.internal.dto.v1_0.util;
 
-import com.liferay.headless.admin.site.dto.v1_0.Layout;
-import com.liferay.layout.converter.AlignConverter;
-import com.liferay.layout.converter.ContentDisplayConverter;
-import com.liferay.layout.converter.FlexWrapConverter;
-import com.liferay.layout.converter.JustifyConverter;
-import com.liferay.layout.util.constants.StyledLayoutStructureConstants;
+import com.liferay.headless.admin.site.internal.util.LogUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
-import com.liferay.portal.kernel.util.GetterUtil;
-import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.Validator;
-
-import java.util.Objects;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.vulcan.scope.Scope;
 
 /**
- * @author Mikel Lorza
+ * @author Lourdes Fernández Besada
  */
 public class LayoutUtil {
 
-	public static Layout toLayout(JSONObject jsonObject) {
-		if (JSONUtil.isEmpty(jsonObject) ||
-			((jsonObject.getString("align", null) == null) &&
-			 (jsonObject.getString("flexWrap", null) == null) &&
-			 (jsonObject.getString("justify", null) == null) &&
-			 (jsonObject.getString("widthType", null) == null))) {
+	public static Layout fetchLayoutByExternalReferenceCode(
+		long companyId, String externalReferenceCode, Scope scope,
+		long scopeGroupId) {
 
-			return null;
+		Layout layout = null;
+
+		Long groupId = ItemScopeUtil.getGroupId(companyId, scope, scopeGroupId);
+
+		if (groupId != null) {
+			layout = LayoutLocalServiceUtil.fetchLayoutByExternalReferenceCode(
+				externalReferenceCode, groupId);
 		}
 
-		return new Layout() {
-			{
-				setAlign(
-					() -> {
-						String align = jsonObject.getString("align", null);
+		if (layout == null) {
+			LogUtil.logOptionalReference(
+				Layout.class.getName(), externalReferenceCode, scope,
+				scopeGroupId);
+		}
 
-						if (Validator.isNull(align)) {
-							return null;
-						}
+		return layout;
+	}
 
-						return Align.create(
-							AlignConverter.convertToExternalValue(align));
-					});
-				setContentDisplay(
-					() -> {
-						String contentDisplay = jsonObject.getString(
-							"contentDisplay", null);
+	public static JSONObject getMappedLayoutJSONObject(
+			long companyId, String externalReferenceCode, Scope scope,
+			long scopeGroupId)
+		throws PortalException {
 
-						if (Validator.isNull(contentDisplay)) {
-							return null;
-						}
+		Layout layout = fetchLayoutByExternalReferenceCode(
+			companyId, externalReferenceCode, scope, scopeGroupId);
 
-						return ContentDisplay.create(
-							ContentDisplayConverter.convertToExternalValue(
-								GetterUtil.getString(contentDisplay)));
-					});
-				setFlexWrap(
-					() -> {
-						String flexWrap = jsonObject.getString(
-							"flexWrap", null);
+		if (layout == null) {
+			return JSONUtil.put(
+				"externalReferenceCode", externalReferenceCode
+			).put(
+				"scopeExternalReferenceCode",
+				ItemScopeUtil.getItemScopeExternalReferenceCode(
+					scope, scopeGroupId)
+			);
+		}
 
-						if (Validator.isNull(flexWrap)) {
-							return null;
-						}
-
-						return FlexWrap.create(
-							FlexWrapConverter.convertToExternalValue(flexWrap));
-					});
-				setJustify(
-					() -> {
-						String justify = jsonObject.getString("justify", null);
-
-						if (Validator.isNull(justify)) {
-							return null;
-						}
-
-						return Justify.create(
-							JustifyConverter.convertToExternalValue(justify));
-					});
-				setWidthType(
-					() -> {
-						String widthType = jsonObject.getString(
-							"widthType", null);
-
-						if (Validator.isNull(widthType) ||
-							Objects.equals(
-								widthType,
-								StyledLayoutStructureConstants.WIDTH_TYPE)) {
-
-							return null;
-						}
-
-						return WidthType.create(
-							StringUtil.upperCaseFirstLetter(widthType));
-					});
-			}
-		};
+		return JSONUtil.put(
+			"externalReferenceCode", externalReferenceCode
+		).put(
+			"groupId", String.valueOf(layout.getGroupId())
+		).put(
+			"layoutId", String.valueOf(layout.getLayoutId())
+		).put(
+			"layoutUuid", layout.getUuid()
+		).put(
+			"privateLayout", layout.isPrivateLayout()
+		).put(
+			"scopeExternalReferenceCode",
+			ItemScopeUtil.getItemScopeExternalReferenceCode(scope, scopeGroupId)
+		).put(
+			"title", layout.getName(LocaleUtil.getMostRelevantLocale())
+		);
 	}
 
 }

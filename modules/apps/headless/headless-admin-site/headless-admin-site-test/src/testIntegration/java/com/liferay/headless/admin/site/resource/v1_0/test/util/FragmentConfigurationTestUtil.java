@@ -78,13 +78,25 @@ public class FragmentConfigurationTestUtil {
 		).put(
 			"checkbox", "string"
 		).put(
+			"collectionPalette", "object"
+		).put(
 			"collectionSelector", "object"
 		).put(
+			"colorPicker", "string"
+		).put(
+			"itemSelector", "object"
+		).put(
 			"length", "string"
+		).put(
+			"navigationMenuSelector", "object"
 		).put(
 			"select", "string"
 		).put(
 			"text", "string"
+		).put(
+			"url", "object"
+		).put(
+			"videoSelector", "object"
 		).build();
 
 }

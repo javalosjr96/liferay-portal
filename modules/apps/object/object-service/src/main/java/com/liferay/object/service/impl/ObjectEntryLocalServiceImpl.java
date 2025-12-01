@@ -101,6 +101,7 @@ import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionLocalizationTable
 import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionTable;
 import com.liferay.object.petra.sql.dsl.DynamicObjectDefinitionTableUtil;
 import com.liferay.object.petra.sql.dsl.DynamicObjectRelationshipMappingTable;
+import com.liferay.object.petra.sql.dsl.DynamicObjectRelationshipMappingTableFactory;
 import com.liferay.object.related.models.ObjectRelatedModelsProvider;
 import com.liferay.object.related.models.ObjectRelatedModelsProviderRegistry;
 import com.liferay.object.relationship.util.ObjectRelationshipUtil;
@@ -1997,6 +1998,39 @@ public class ObjectEntryLocalServiceImpl
 			assetLinkEntryIds, priority, null);
 	}
 
+	@Indexable(type = IndexableType.REINDEX)
+	@Override
+	public ObjectEntry updateModifiedDate(long objectEntryId, Date modifiedDate)
+		throws PortalException {
+
+		ObjectEntry objectEntry = objectEntryPersistence.findByPrimaryKey(
+			objectEntryId);
+
+		objectEntry.setModifiedDate(modifiedDate);
+
+		objectEntry = objectEntryPersistence.update(objectEntry);
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionPersistence.findByPrimaryKey(
+				objectEntry.getObjectDefinitionId());
+
+		if (!objectDefinition.isEnableObjectEntryVersioning()) {
+			return objectEntry;
+		}
+
+		int objectEntryVersionsCount =
+			_objectEntryVersionLocalService.getObjectEntryVersionsCount(
+				objectEntry.getObjectEntryId());
+
+		if (objectEntryVersionsCount > 0) {
+			_objectEntryVersionLocalService.
+				updateLatestObjectEntryVersionModifiedDate(
+					modifiedDate, objectEntry.getObjectEntryId());
+		}
+
+		return objectEntry;
+	}
+
 	@Override
 	public ObjectEntry updateObjectEntry(
 			long userId, long objectEntryId, long objectEntryFolderId,
@@ -2206,11 +2240,11 @@ public class ObjectEntryLocalServiceImpl
 		if ((status == WorkflowConstants.STATUS_EXPIRED) ||
 			originalObjectEntry.isDraft() || originalObjectEntry.isPending()) {
 
-			List<ObjectEntryVersion> objectEntryVersions =
-				_objectEntryVersionLocalService.getObjectEntryVersions(
+			int count =
+				_objectEntryVersionLocalService.getObjectEntryVersionsCount(
 					objectEntry.getObjectEntryId());
 
-			if (!objectEntryVersions.isEmpty()) {
+			if (count > 0) {
 				_updateLatestObjectEntryVersion(objectDefinition, objectEntry);
 			}
 		}
@@ -2650,6 +2684,10 @@ public class ObjectEntryLocalServiceImpl
 
 			long primaryKey = GetterUtil.getLong(
 				values.get(objectField.getName()));
+
+			if (primaryKey == 0) {
+				continue;
+			}
 
 			String objectRelationshipERCObjectFieldName =
 				ObjectFieldSettingUtil.getValue(
@@ -3553,22 +3591,11 @@ public class ObjectEntryLocalServiceImpl
 				objectRelationship.getType(),
 				ObjectRelationshipConstants.TYPE_MANY_TO_MANY)) {
 
-			String pkObjectFieldDBColumnName =
-				objectDefinition.getPKObjectFieldDBColumnName();
-			String relatedPKObjectFieldDBColumnName =
-				relatedObjectDefinition.getPKObjectFieldDBColumnName();
-
-			if (objectRelationship.isSelf()) {
-				pkObjectFieldDBColumnName += "1";
-				relatedPKObjectFieldDBColumnName += "2";
-			}
-
 			DynamicObjectRelationshipMappingTable
 				dynamicObjectRelationshipMappingTable =
-					new DynamicObjectRelationshipMappingTable(
-						pkObjectFieldDBColumnName,
-						relatedPKObjectFieldDBColumnName,
-						objectRelationship.getDBTableName());
+					DynamicObjectRelationshipMappingTableFactory.create(
+						objectRelationship.getDBTableName(), objectDefinition,
+						relatedObjectDefinition);
 
 			joinStep = joinStep.innerJoinON(
 				dynamicObjectRelationshipMappingTable,
@@ -4009,18 +4036,11 @@ public class ObjectEntryLocalServiceImpl
 		ObjectDefinition objectDefinition2 =
 			_objectDefinitionPersistence.fetchByPrimaryKey(objectDefinitionId2);
 
-		Map<String, String> pkObjectFieldDBColumnNames =
-			ObjectRelationshipUtil.getPKObjectFieldDBColumnNames(
-				objectDefinition1, objectDefinition2, reverse);
-
 		DynamicObjectRelationshipMappingTable
 			dynamicObjectRelationshipMappingTable =
-				new DynamicObjectRelationshipMappingTable(
-					pkObjectFieldDBColumnNames.get(
-						"pkObjectFieldDBColumnName1"),
-					pkObjectFieldDBColumnNames.get(
-						"pkObjectFieldDBColumnName2"),
-					objectRelationship.getDBTableName());
+				DynamicObjectRelationshipMappingTableFactory.create(
+					objectRelationship.getDBTableName(), objectDefinition1,
+					objectDefinition2, reverse);
 
 		Column<DynamicObjectRelationshipMappingTable, Long> primaryKeyColumn1 =
 			dynamicObjectRelationshipMappingTable.getPrimaryKeyColumn1();
@@ -6842,10 +6862,8 @@ public class ObjectEntryLocalServiceImpl
 			_objectScopeProviderRegistry.getObjectScopeProvider(scope);
 
 		if (!objectScopeProvider.isValidGroupId(groupId)) {
-			throw new ObjectEntryGroupIdException(
-				StringBundler.concat(
-					"Group ID ", groupId, " is not valid for scope \"", scope,
-					"\""));
+			throw new ObjectEntryGroupIdException.InvalidGroupIdForScope(
+				groupId, scope);
 		}
 
 		if (!StringUtil.equals(scope, ObjectDefinitionConstants.SCOPE_DEPOT) ||

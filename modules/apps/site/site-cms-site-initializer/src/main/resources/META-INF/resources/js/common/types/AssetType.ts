@@ -27,6 +27,7 @@ export interface IAssetObjectEntry {
 	creator: any;
 	dateCreated: string;
 	dateModified: string;
+	displayDate: string;
 	expirationDate: string;
 	externalReferenceCode: string;
 	file?: IAssetFile;
@@ -87,6 +88,7 @@ export interface ISearchAssetTypeInformation {
 	externalReferenceCode?: string | null;
 	icon?: string | null;
 	id?: number | null;
+	objectEntryFolderExternalReferenceCode?: string | null;
 	title?: string | null;
 	title_i18n?:
 		| {
