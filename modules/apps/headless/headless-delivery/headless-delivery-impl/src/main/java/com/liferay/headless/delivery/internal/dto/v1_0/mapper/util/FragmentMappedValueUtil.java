@@ -93,33 +93,32 @@ public class FragmentMappedValueUtil {
 		}
 
 		try {
+			long entryId = GetterUtil.getLong(matcher.group(1));
+
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				LayoutPageTemplateEntryLocalServiceUtil.
-					getLayoutPageTemplateEntry(
-						GetterUtil.getLong(matcher.group(1)));
+					getLayoutPageTemplateEntry(entryId);
 
-			return new ClassFieldsReference() {
-				{
-					setClassName(() -> LayoutPageTemplateEntry.class.getName());
-					setFields(
-						() -> new Field[] {
-							new Field() {
-								{
-									setFieldName(() -> "externalReferenceCode");
-									setFieldValue(
-										layoutPageTemplateEntry::
-											getExternalReferenceCode);
-								}
-							}
-						});
-				}
-			};
+			Field field = new Field();
+
+			field.setFieldName(() -> "externalReferenceCode");
+			field.setFieldValue(
+				layoutPageTemplateEntry::getExternalReferenceCode);
+
+			ClassFieldsReference classFieldsReference =
+				new ClassFieldsReference();
+
+			classFieldsReference.setClassName(
+				LayoutPageTemplateEntry.class::getName);
+			classFieldsReference.setFields(() -> new Field[] {field});
+
+			return classFieldsReference;
 		}
 		catch (Exception exception) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Item reference could not be set since no display page " +
-						"template could be obtained",
+					"Item reference could not be set: " +
+						exception.getMessage(),
 					exception);
 			}
 		}
