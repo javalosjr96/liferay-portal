@@ -93,11 +93,10 @@ public class FragmentMappedValueUtil {
 		}
 
 		try {
-			long entryId = GetterUtil.getLong(matcher.group(1));
-
 			LayoutPageTemplateEntry layoutPageTemplateEntry =
 				LayoutPageTemplateEntryLocalServiceUtil.
-					getLayoutPageTemplateEntry(entryId);
+					getLayoutPageTemplateEntry(
+						GetterUtil.getLong(matcher.group(1)));
 
 			Field field = new Field();
 
