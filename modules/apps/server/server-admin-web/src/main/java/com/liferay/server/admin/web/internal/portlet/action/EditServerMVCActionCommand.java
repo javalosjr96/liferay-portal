@@ -10,6 +10,7 @@ import com.liferay.change.tracking.constants.CTConstants;
 import com.liferay.change.tracking.model.CTCollectionModel;
 import com.liferay.change.tracking.service.CTCollectionLocalService;
 import com.liferay.configuration.admin.constants.ConfigurationAdminPortletKeys;
+import com.liferay.data.cleanup.DataCleanup;
 import com.liferay.document.library.kernel.document.conversion.DocumentConversion;
 import com.liferay.document.library.kernel.model.DLProcessorConstants;
 import com.liferay.document.library.kernel.processor.AudioProcessor;
@@ -17,6 +18,7 @@ import com.liferay.document.library.kernel.processor.DLProcessor;
 import com.liferay.document.library.kernel.processor.PDFProcessor;
 import com.liferay.document.library.kernel.processor.VideoProcessor;
 import com.liferay.document.library.kernel.store.Store;
+import com.liferay.data.cleanup.util.DataCleanupUtil;
 import com.liferay.document.library.preview.processor.BasePreviewableDLProcessor;
 import com.liferay.image.Ghostscript;
 import com.liferay.image.ImageMagick;
@@ -129,6 +131,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Level;
 
@@ -282,6 +285,19 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 		}
 		else if (cmd.equals("verifyMembershipPolicies")) {
 			_verifyMembershipPolicies();
+		}
+		else {
+			List<DataCleanup> systemCleanups = DataCleanupUtil.getSystemDataCleanups();
+
+			Map<String, DataCleanup> systemCleanupsMap = systemCleanups.stream()
+				.collect(Collectors.toMap(
+					DataCleanup::getLabel,
+					cleanup -> cleanup
+				));
+
+			DataCleanup dataCleanup = systemCleanupsMap.get(cmd);
+
+			dataCleanup.cleanup();
 		}
 
 		sendRedirect(actionRequest, actionResponse, redirect);

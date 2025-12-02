@@ -15,6 +15,7 @@ dependencies {
 	compileOnly group: "org.osgi", name: "org.osgi.service.component.annotations", version: "1.4.0"
 	compileOnly group: "org.osgi", name: "osgi.core", version: "6.0.0"
 	compileOnly project(":apps:application-list:application-list-api")
+	compileOnly project(":apps:data-cleanup:data-cleanup-api")
 	compileOnly project(":apps:captcha:captcha-api")
 	compileOnly project(":apps:captcha:captcha-taglib")
 	compileOnly project(":apps:change-tracking:change-tracking-api")

@@ -18,6 +18,9 @@ taglib uri="http://liferay.com/tld/ui" prefix="liferay-ui" %><%@
 taglib uri="http://liferay.com/tld/util" prefix="liferay-util" %>
 
 <%@ page import="com.liferay.captcha.util.CaptchaUtil" %><%@
+page import="java.util.List" %><%@
+page import="com.liferay.data.cleanup.util.DataCleanupUtil" %><%@
+page import="com.liferay.data.cleanup.DataCleanup" %><%@
 page import="com.liferay.document.library.kernel.document.conversion.DocumentConversionUtil" %><%@
 page import="com.liferay.document.library.kernel.model.DLFileEntry" %><%@
 page import="com.liferay.document.library.kernel.model.DLFileVersion" %><%@
