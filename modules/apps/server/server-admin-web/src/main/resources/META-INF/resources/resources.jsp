@@ -27,11 +27,11 @@ Runtime runtime = Runtime.getRuntime();
 
 long totalMemory = runtime.totalMemory();
 
+request.setAttribute("systemDataCleanups", DataCleanupUtil.getSystemDataCleanups());
 
-List<DataCleanup> systemCleanups = DataCleanupUtil.getSystemDataCleanups();
+List<DataCleanup> moduleDataCleanups = DataCleanupUtil.getModuleDataCleanups();
 
-request.setAttribute("systemCleanups", systemCleanups);
-
+request.setAttribute("moduleDataCleanups", moduleDataCleanups);
 
 long usedMemory = totalMemory - runtime.freeMemory();
 %>
@@ -206,54 +206,38 @@ long usedMemory = totalMemory - runtime.freeMemory();
 				</li>
 			</ul>
 		</aui:fieldset>
-
-		<aui:fieldset collapsed="<%= false %>" collapsible="<%= true %>" label="clean-up-actions">
 			<ul class="list-group system-action-group">
-				<c:forEach var="systemCleanup" items="${systemCleanups}">
+					<aui:fieldset collapsed="<%= false %>" collapsible="<%= true %>" label="system-cleanup-actions">
+									<li class="list-group-item list-group-item-flex">
+										<div class="autofit-col autofit-col-expand">
+											<p class="list-group-title text-truncate">
+												<liferay-ui:message key="execute-all-system-cleanup-actions" />
+
+												<span aria-label="<%= LanguageUtil.get(request, "execute-all-system-cleanup-actions") %>" class="lfr-portal-tooltip" tabindex="0" title="<%= LanguageUtil.get(request, "execute-all-system-cleanup-actions") %>">
+													<clay:icon
+														symbol="question-circle-full"
+													/>
+												</span>
+											</p>
+										</div>
+
+										<div class="autofit-col">
+											<aui:button cssClass="save-server-button" data-cmd="runAllSystemDataCleanups" value="execute" />
+										</div>
+									</li>
+				<c:forEach items="${systemDataCleanups}" var="systemDataCleanup">
 							<li class="list-group-item list-group-item-flex">
 								<div class="autofit-col autofit-col-expand">
 									<p class="list-group-title text-truncate">
-										<%-- Use the DataCleanup object's key to display the message --%>
-										<liferay-ui:message key="${systemCleanup.label}" />
-
-										<%-- Construct the help text key by appending "-help" to the primary key --%>
-										<c:set var="helpKey" value="${systemCleanup.label}-help" />
-
-							<span aria-label="<%= LanguageUtil.get(request, "new-label-here") %>" class="lfr-portal-tooltip" tabindex="0" title="<%= LanguageUtil.get(request, "new-lebel-here") %>">
-								<clay:icon
-									symbol="question-circle-full"
-								/>
-							</span>
+										<liferay-ui:message key="${systemDataCleanup.label}" />
 									</p>
 								</div>
 
 								<div class="autofit-col">
-									<%-- Use the DataCleanup object's command to set the data-cmd attribute --%>
-									<aui:button
-										cssClass="save-server-button"
-										data-cmd="${systemCleanup.label}"
-										value="execute"
-									/>
+									<aui:button cssClass="save-server-button" data-cmd="${systemDataCleanup.label}" value="execute" />
 								</div>
 							</li>
 						</c:forEach>
-				<li class="list-group-item list-group-item-flex">
-					<div class="autofit-col autofit-col-expand">
-						<p class="list-group-title text-truncate">
-							<liferay-ui:message key="reset-preview-and-thumbnail-files-for-documents-and-media" />
-
-							<span aria-label="<%= LanguageUtil.get(request, "reset-preview-and-thumbnail-files-for-documents-and-media-help") %>" class="lfr-portal-tooltip" tabindex="0" title="<%= LanguageUtil.get(request, "reset-preview-and-thumbnail-files-for-documents-and-media-help") %>">
-								<clay:icon
-									symbol="question-circle-full"
-								/>
-							</span>
-						</p>
-					</div>
-
-					<div class="autofit-col">
-						<aui:button cssClass="save-server-button" data-cmd="dlDeletePreviews" value="execute" />
-					</div>
-				</li>
 				<li class="list-group-item list-group-item-flex">
 					<div class="autofit-col autofit-col-expand">
 						<p class="list-group-title text-truncate">
@@ -307,6 +291,43 @@ long usedMemory = totalMemory - runtime.freeMemory();
 				</li>
 			</ul>
 		</aui:fieldset>
+
+	<c:if test="<%= moduleDataCleanups != null && !moduleDataCleanups.isEmpty() %>">
+		<li class="list-group-item list-group-item-flex">
+			<div class="autofit-col autofit-col-expand">
+				<p class="list-group-title text-truncate">
+					<liferay-ui:message key="execute-all-module-cleanup-actions" />
+
+					<span aria-label="<%= LanguageUtil.get(request, "execute-all-module-cleanup-actions") %>" class="lfr-portal-tooltip" tabindex="0" title="<%= LanguageUtil.get(request, "execute-all-module-cleanup-actions") %>">
+						<clay:icon
+							symbol="question-circle-full"
+						/>
+					</span>
+				</p>
+			</div>
+
+			<div class="autofit-col">
+				<aui:button cssClass="save-server-button" data-cmd="runAllModuleDataCleanups" value="execute" />
+			</div>
+		</li>
+
+		<aui:fieldset collapsed="<%= false %>" collapsible="<%= true %>" label="module-cleanup-actions">
+					<ul class="list-group system-action-group">
+						<c:forEach items="${moduleDataCleanups}" var="moduleDataCleanup">
+									<li class="list-group-item list-group-item-flex">
+										<div class="autofit-col autofit-col-expand">
+											<p class="list-group-title text-truncate">
+												<liferay-ui:message key="${moduleDataCleanup.label}" />
+											</p>
+										</div>
+
+										<div class="autofit-col">
+											<aui:button cssClass="save-server-button" data-cmd="${moduleDataCleanup.label}" value="execute" />
+										</div>
+									</li>
+								</c:forEach>
+				</aui:fieldset>
+		</c:if>
 
 		<aui:fieldset collapsed="<%= false %>" collapsible="<%= true %>" label="regeneration-actions">
 			<ul class="list-group system-action-group">
