@@ -13,7 +13,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
  * @author Preston Crary
  */
 @ExtendedObjectClassDefinition(
-	category = "upgrades", liferayLearnMessageKey = "general",
+	category = "upgrades", liferayLearnMessageKey = "general", generateUI = false,
 	liferayLearnMessageResource = "data-cleanup"
 )
 @Meta.OCD(

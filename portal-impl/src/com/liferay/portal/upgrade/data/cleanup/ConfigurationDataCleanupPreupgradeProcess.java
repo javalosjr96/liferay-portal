@@ -82,6 +82,11 @@ public class ConfigurationDataCleanupPreupgradeProcess
 						configurationId, dbInspector, "groupId", "Group_",
 						groupId, preparedStatement2);
 				}
+				else
+				{
+					preparedStatement2.setString(1, "test");
+					preparedStatement2.addBatch();
+				}
 			}
 
 			preparedStatement2.executeBatch();

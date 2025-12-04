@@ -131,7 +131,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.logging.log4j.Level;
 
@@ -287,23 +286,43 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 			_verifyMembershipPolicies();
 		}
 		else {
-			List<DataCleanup> systemCleanups =
+			List<DataCleanup> systemDataCleanups =
 				DataCleanupUtil.getSystemDataCleanups();
 
-			if (cmd.equals("systemCleanup")) {
-				for (DataCleanup dataCleanup : systemCleanups) {
-					dataCleanup.cleanup();
+			if (cmd.equals("executeAllSystemDataCleanups")) {
+				for (DataCleanup systemDataCleanup : systemDataCleanups) {
+					systemDataCleanup.cleanup();
+				}
+
+				_cleanUpAddToPagePermissions(actionRequest);
+				_cleanUpLayoutRevisionPortletPreferences();
+				_cleanUpOrphanedPortletPreferences();
+			}
+
+			List<DataCleanup> moduleDataCleanups =
+				DataCleanupUtil.getModuleDataCleanups();
+
+			if (cmd.equals("executeAllModuleDataCleanups")) {
+				for (DataCleanup moduleDataCleanup : moduleDataCleanups) {
+					moduleDataCleanup.cleanup();
 				}
 			}
 
-			Map<String, DataCleanup> systemCleanupsMap = systemCleanups.stream(
-			).collect(
-				Collectors.toMap(DataCleanup::getLabel, cleanup -> cleanup)
-			);
+			Map<String, DataCleanup> dataCleanupsMap = new HashMap<>();
 
-			DataCleanup dataCleanup = systemCleanupsMap.get(cmd);
+			for (DataCleanup dataCleanup : systemDataCleanups) {
+				dataCleanupsMap.put(dataCleanup.getLabel(), dataCleanup);
+			}
 
-			dataCleanup.cleanup();
+			moduleDataCleanups.forEach(
+				moduleDataCleanup -> dataCleanupsMap.put(
+					moduleDataCleanup.getLabel(), moduleDataCleanup));
+
+			DataCleanup dataCleanup = dataCleanupsMap.get(cmd);
+
+			if (dataCleanup != null) {
+				dataCleanup.cleanup();
+			}
 		}
 
 		sendRedirect(actionRequest, actionResponse, redirect);

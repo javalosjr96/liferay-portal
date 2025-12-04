@@ -23,9 +23,6 @@ public class ShoppingUpgradeProcess extends BaseUpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		_deleteFromShoppingItem("smallImage");
-		_deleteFromShoppingItem("mediumImage");
-		_deleteFromShoppingItem("largeImage");
 
 		removePortletData(
 			new String[] {"com.liferay.shopping.web"}, new String[] {"34"},

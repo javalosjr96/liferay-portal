@@ -29,9 +29,7 @@ long totalMemory = runtime.totalMemory();
 
 request.setAttribute("systemDataCleanups", DataCleanupUtil.getSystemDataCleanups());
 
-List<DataCleanup> moduleDataCleanups = DataCleanupUtil.getModuleDataCleanups();
-
-request.setAttribute("moduleDataCleanups", moduleDataCleanups);
+request.setAttribute("moduleDataCleanups", DataCleanupUtil.getModuleDataCleanups());
 
 long usedMemory = totalMemory - runtime.freeMemory();
 %>
@@ -206,38 +204,58 @@ long usedMemory = totalMemory - runtime.freeMemory();
 				</li>
 			</ul>
 		</aui:fieldset>
+
+		<aui:fieldset collapsed="<%= false %>" collapsible="<%= true %>" label="system-cleanup-actions">
 			<ul class="list-group system-action-group">
-					<aui:fieldset collapsed="<%= false %>" collapsible="<%= true %>" label="system-cleanup-actions">
-									<li class="list-group-item list-group-item-flex">
-										<div class="autofit-col autofit-col-expand">
-											<p class="list-group-title text-truncate">
-												<liferay-ui:message key="execute-all-system-cleanup-actions" />
+				<li class="list-group-item list-group-item-flex">
+					<div class="autofit-col autofit-col-expand">
+						<p class="list-group-title text-truncate">
+							<liferay-ui:message key="execute-all-system-cleanup-actions" />
 
-												<span aria-label="<%= LanguageUtil.get(request, "execute-all-system-cleanup-actions") %>" class="lfr-portal-tooltip" tabindex="0" title="<%= LanguageUtil.get(request, "execute-all-system-cleanup-actions") %>">
-													<clay:icon
-														symbol="question-circle-full"
-													/>
-												</span>
-											</p>
-										</div>
+							<span aria-label="<%= LanguageUtil.get(request, "execute-all-system-cleanup-actions") %>" class="lfr-portal-tooltip" tabindex="0" title="<%= LanguageUtil.get(request, "execute-all-system-cleanup-actions") %>">
+								<clay:icon
+									symbol="question-circle-full"
+								/>
+							</span>
+						</p>
+					</div>
 
-										<div class="autofit-col">
-											<aui:button cssClass="save-server-button" data-cmd="runAllSystemDataCleanups" value="execute" />
-										</div>
-									</li>
+					<div class="autofit-col">
+						<aui:button cssClass="save-server-button" data-cmd="executeAllSystemDataCleanups" value="execute" />
+					</div>
+				</li>
+
 				<c:forEach items="${systemDataCleanups}" var="systemDataCleanup">
-							<li class="list-group-item list-group-item-flex">
-								<div class="autofit-col autofit-col-expand">
-									<p class="list-group-title text-truncate">
-										<liferay-ui:message key="${systemDataCleanup.label}" />
-									</p>
-								</div>
+					<li class="list-group-item list-group-item-flex">
+						<div class="autofit-col autofit-col-expand">
+							<p class="list-group-title text-truncate">
+								<liferay-ui:message key="${systemDataCleanup.label}" />
+							</p>
+						</div>
 
-								<div class="autofit-col">
-									<aui:button cssClass="save-server-button" data-cmd="${systemDataCleanup.label}" value="execute" />
-								</div>
-							</li>
-						</c:forEach>
+						<div class="autofit-col">
+							<aui:button cssClass="save-server-button" data-cmd="${systemDataCleanup.label}" value="execute" />
+						</div>
+					</li>
+				</c:forEach>
+
+				<li class="list-group-item list-group-item-flex">
+					<div class="autofit-col autofit-col-expand">
+						<p class="list-group-title text-truncate">
+							<liferay-ui:message key="reset-preview-and-thumbnail-files-for-documents-and-media" />
+
+							<span aria-label="<%= LanguageUtil.get(request, "reset-preview-and-thumbnail-files-for-documents-and-media-help") %>" class="lfr-portal-tooltip" tabindex="0" title="<%= LanguageUtil.get(request, "reset-preview-and-thumbnail-files-for-documents-and-media-help") %>">
+								<clay:icon
+									symbol="question-circle-full"
+								/>
+							</span>
+						</p>
+					</div>
+
+					<div class="autofit-col">
+						<aui:button cssClass="save-server-button" data-cmd="dlDeletePreviews" value="execute" />
+					</div>
+				</li>
 				<li class="list-group-item list-group-item-flex">
 					<div class="autofit-col autofit-col-expand">
 						<p class="list-group-title text-truncate">
@@ -292,41 +310,36 @@ long usedMemory = totalMemory - runtime.freeMemory();
 			</ul>
 		</aui:fieldset>
 
-	<c:if test="<%= moduleDataCleanups != null && !moduleDataCleanups.isEmpty() %>">
-		<li class="list-group-item list-group-item-flex">
-			<div class="autofit-col autofit-col-expand">
-				<p class="list-group-title text-truncate">
-					<liferay-ui:message key="execute-all-module-cleanup-actions" />
+		<c:if test="${!empty moduleDataCleanups}">
+			<aui:fieldset collapsed="<%= false %>" collapsible="<%= true %>" label="module-cleanup-actions">
+				<ul class="list-group system-action-group">
+					<li class="list-group-item list-group-item-flex">
+						<div class="autofit-col autofit-col-expand">
+							<p class="list-group-title text-truncate">
+								<liferay-ui:message key="execute-all-module-cleanup-actions" />
+							</p>
+						</div>
 
-					<span aria-label="<%= LanguageUtil.get(request, "execute-all-module-cleanup-actions") %>" class="lfr-portal-tooltip" tabindex="0" title="<%= LanguageUtil.get(request, "execute-all-module-cleanup-actions") %>">
-						<clay:icon
-							symbol="question-circle-full"
-						/>
-					</span>
-				</p>
-			</div>
+						<div class="autofit-col">
+							<aui:button cssClass="save-server-button" data-cmd="executeAllModuleDataCleanups" value="execute" />
+						</div>
+					</li>
 
-			<div class="autofit-col">
-				<aui:button cssClass="save-server-button" data-cmd="runAllModuleDataCleanups" value="execute" />
-			</div>
-		</li>
+					<c:forEach items="${moduleDataCleanups}" var="moduleDataCleanup">
+						<li class="list-group-item list-group-item-flex">
+							<div class="autofit-col autofit-col-expand">
+								<p class="list-group-title text-truncate">
+									<liferay-ui:message key="${moduleDataCleanup.label}" />
+								</p>
+							</div>
 
-		<aui:fieldset collapsed="<%= false %>" collapsible="<%= true %>" label="module-cleanup-actions">
-					<ul class="list-group system-action-group">
-						<c:forEach items="${moduleDataCleanups}" var="moduleDataCleanup">
-									<li class="list-group-item list-group-item-flex">
-										<div class="autofit-col autofit-col-expand">
-											<p class="list-group-title text-truncate">
-												<liferay-ui:message key="${moduleDataCleanup.label}" />
-											</p>
-										</div>
-
-										<div class="autofit-col">
-											<aui:button cssClass="save-server-button" data-cmd="${moduleDataCleanup.label}" value="execute" />
-										</div>
-									</li>
-								</c:forEach>
-				</aui:fieldset>
+							<div class="autofit-col">
+								<aui:button cssClass="save-server-button" data-cmd="${moduleDataCleanup.label}" value="execute" />
+							</div>
+						</li>
+					</c:forEach>
+				</ul>
+			</aui:fieldset>
 		</c:if>
 
 		<aui:fieldset collapsed="<%= false %>" collapsible="<%= true %>" label="regeneration-actions">

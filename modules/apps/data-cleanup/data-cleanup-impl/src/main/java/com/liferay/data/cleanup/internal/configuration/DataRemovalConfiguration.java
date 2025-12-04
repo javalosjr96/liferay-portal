@@ -12,7 +12,7 @@ import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClass
 /**
  * @author Kevin Lee
  */
-@ExtendedObjectClassDefinition(category = "upgrades")
+@ExtendedObjectClassDefinition(category = "upgrades", generateUI = false)
 @Meta.OCD(
 	id = "com.liferay.data.cleanup.internal.configuration.DataRemovalConfiguration",
 	name = "data-removal-configuration-name"

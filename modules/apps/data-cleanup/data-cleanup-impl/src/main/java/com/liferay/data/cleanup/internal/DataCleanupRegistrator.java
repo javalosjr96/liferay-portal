@@ -138,9 +138,8 @@ public class DataCleanupRegistrator {
 
 		Release release = _releaseLocalService.fetchRelease(servletContextName);
 
-		if (release != null) {
-			_registerDataCleanup(dataCleanup);
-		}
+		_registerDataCleanup(dataCleanup);
+
 	}
 
 	private void _registerModuleDataCleanups() {
@@ -528,7 +527,7 @@ public class DataCleanupRegistrator {
 			DDMDataCleanupPreupgradeProcess.class, "remove-ddm-orphan-data"
 		).put(
 			DDMStorageLinkDataCleanupPreupgradeProcess.class,
-			"remove-ddmstoragelink-orphan-data"
+			"remove-ddm-storage-link-orphan-data"
 		).put(
 			DLFileEntryDataCleanupPreupgradeProcess.class,
 			"remove-dl-file-entry-orphan-data"
