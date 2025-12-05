@@ -289,39 +289,19 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 			List<DataCleanup> systemDataCleanups =
 				DataCleanupUtil.getSystemDataCleanups();
 
-			if (cmd.equals("executeAllSystemDataCleanups")) {
-				for (DataCleanup systemDataCleanup : systemDataCleanups) {
+			for (DataCleanup systemDataCleanup : systemDataCleanups) {
+				if (cmd.equals(systemDataCleanup.getLabel())) {
 					systemDataCleanup.cleanup();
 				}
-
-				_cleanUpAddToPagePermissions(actionRequest);
-				_cleanUpLayoutRevisionPortletPreferences();
-				_cleanUpOrphanedPortletPreferences();
 			}
 
 			List<DataCleanup> moduleDataCleanups =
 				DataCleanupUtil.getModuleDataCleanups();
 
-			if (cmd.equals("executeAllModuleDataCleanups")) {
-				for (DataCleanup moduleDataCleanup : moduleDataCleanups) {
+			for (DataCleanup moduleDataCleanup : moduleDataCleanups) {
+				if (cmd.equals(moduleDataCleanup.getLabel())) {
 					moduleDataCleanup.cleanup();
 				}
-			}
-
-			Map<String, DataCleanup> dataCleanupsMap = new HashMap<>();
-
-			for (DataCleanup dataCleanup : systemDataCleanups) {
-				dataCleanupsMap.put(dataCleanup.getLabel(), dataCleanup);
-			}
-
-			moduleDataCleanups.forEach(
-				moduleDataCleanup -> dataCleanupsMap.put(
-					moduleDataCleanup.getLabel(), moduleDataCleanup));
-
-			DataCleanup dataCleanup = dataCleanupsMap.get(cmd);
-
-			if (dataCleanup != null) {
-				dataCleanup.cleanup();
 			}
 		}
 
