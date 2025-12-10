@@ -286,21 +286,7 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 			_verifyMembershipPolicies();
 		}
 		else {
-			for (DataCleanup moduleDataCleanup :
-					DataCleanupUtil.getModuleDataCleanups()) {
-
-				if (cmd.equals(moduleDataCleanup.getLabel())) {
-					moduleDataCleanup.cleanup();
-				}
-			}
-
-			for (DataCleanup systemDataCleanup :
-					DataCleanupUtil.getSystemDataCleanups()) {
-
-				if (cmd.equals(systemDataCleanup.getLabel())) {
-					systemDataCleanup.cleanup();
-				}
-			}
+			_processDataCleanups(cmd);
 		}
 
 		sendRedirect(actionRequest, actionResponse, redirect);
@@ -679,6 +665,28 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 			if (orphan) {
 				_portletPreferencesLocalService.deletePortletPreferences(
 					portletPreferences.getPortletPreferencesId());
+			}
+		}
+	}
+
+	private void _processDataCleanups(String cmd) throws Exception {
+		for (DataCleanup moduleDataCleanup :
+				DataCleanupUtil.getModuleDataCleanups()) {
+
+			if (cmd.equals(moduleDataCleanup.getLabel())) {
+				moduleDataCleanup.cleanup();
+
+				return;
+			}
+		}
+
+		for (DataCleanup systemDataCleanup :
+				DataCleanupUtil.getSystemDataCleanups()) {
+
+			if (cmd.equals(systemDataCleanup.getLabel())) {
+				systemDataCleanup.cleanup();
+
+				return;
 			}
 		}
 	}
