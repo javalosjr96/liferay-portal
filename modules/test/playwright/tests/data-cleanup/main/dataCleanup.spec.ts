@@ -1,7 +1,7 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
- * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
- */
+* SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+* SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+*/
 
 import {expect, mergeTests} from '@playwright/test';
 
@@ -11,74 +11,108 @@ import {loginTest} from '../../../fixtures/loginTest';
 
 export const test = mergeTests(
 	loginTest(),
-    applicationsMenuPageTest,
-    serverAdministrationPageTest
-);
+	applicationsMenuPageTest,
+	serverAdministrationPageTest
+	);
 
+test('execute all system cleanup actions', async ({ page, applicationsMenuPage }) => {
+	await applicationsMenuPage.goToServerAdministration();
+
+	const cleanupPanel = page.locator('.card, .panel',
+	{ has: page.getByText('System Cleanup Actions') }).last();
+	const panelHeader = cleanupPanel.getByRole('button',
+	{ name: /System Cleanup Actions/i });
+
+	if (await panelHeader.getAttribute('aria-expanded') === 'false') {
+	await panelHeader.click();
+	await expect(panelHeader).toHaveAttribute('aria-expanded', 'true');
+	}
+
+	const executeButtons = cleanupPanel.getByRole('button', { name: 'Execute' });
+	const count = await executeButtons.count();
+
+	for (let i = 0; i < count; i++) {
+
+		const button = executeButtons.nth(i);
+
+		await button.click();
+
+		const successMessage =
+		page.getByText('Success:Your request completed successfully.').first();
+
+		await expect(successMessage).toBeVisible();
+	}
+});
 
 test('execute all module cleanup actions', async ({ page, applicationsMenuPage,serverAdministrationPage }) => {
-  await applicationsMenuPage.goToServerAdministration();
+	await applicationsMenuPage.goToServerAdministration();
 
 	const script = `
 		import com.liferay.portal.kernel.service.ReleaseLocalServiceUtil
 		import com.liferay.portal.kernel.model.Release
 
 		String[] _SERVLET_CONTEXT_NAMES = {
-			"com.liferay.amazon.rankings.web",
-			"com.liferay.document.library.file.rank.service",
-			"com.liferay.chat.service", "com.liferay.currency.converter.web",
-			"com.liferay.dictionary.web", "com.liferay.directory.web",
-			"com.liferay.frontend.image.editor.web", "com.liferay.google.maps.web",
-			"com.liferay.hello.velocity.web", "com.liferay.hello.world.web",
-			"com.liferay.html.preview.service", "com.liferay.invitation.web",
-			"com.liferay.loan.calculator.web", "com.liferay.mail.reader.service",
-			"com.liferay.network.utilities.web", "com.liferay.oauth.service",
-			"com.liferay.password.generator.web",
-			"com.liferay.portal.security.wedeploy.auth.service",
-			"com.liferay.quick.note.web", "com.liferay.recent.documents.web",
-			"com.liferay.shopping.service", "com.liferay.social.activity.web",
-			"com.liferay.social.group.statistics.web",
-			"com.liferay.social.privatemessaging.service",
-			"com.liferay.social.requests.web",
-			"com.liferay.social.user.statistics.web",
-			"com.liferay.softwarecatalog.service", "com.liferay.translator.web",
-			"com.liferay.twitter.service", "com.liferay.unit.converter.web",
-			"com.liferay.weather.web", "com.liferay.web.form.web",
-			"com.liferay.web.proxy.web", "com.liferay.wysiwyg.web",
-			"com.liferay.xsl.content.web", "com.liferay.youtube.web",
-			"opensocial-portlet"
-			};
+		"com.liferay.amazon.rankings.web",
+		"com.liferay.document.library.file.rank.service",
+		"com.liferay.chat.service", "com.liferay.currency.converter.web",
+		"com.liferay.dictionary.web", "com.liferay.directory.web",
+		"com.liferay.frontend.image.editor.web", "com.liferay.google.maps.web",
+		"com.liferay.hello.velocity.web", "com.liferay.hello.world.web",
+		"com.liferay.html.preview.service", "com.liferay.invitation.web",
+		"com.liferay.loan.calculator.web", "com.liferay.mail.reader.service",
+		"com.liferay.network.utilities.web", "com.liferay.oauth.service",
+		"com.liferay.password.generator.web",
+		"com.liferay.portal.security.wedeploy.auth.service",
+		"com.liferay.quick.note.web", "com.liferay.recent.documents.web",
+		"com.liferay.shopping.service", "com.liferay.social.activity.web",
+		"com.liferay.social.group.statistics.web",
+		"com.liferay.social.privatemessaging.service",
+		"com.liferay.social.requests.web",
+		"com.liferay.social.user.statistics.web",
+		"com.liferay.softwarecatalog.service", "com.liferay.translator.web",
+		"com.liferay.twitter.service", "com.liferay.unit.converter.web",
+		"com.liferay.weather.web", "com.liferay.web.form.web",
+		"com.liferay.web.proxy.web", "com.liferay.wysiwyg.web",
+		"com.liferay.xsl.content.web", "com.liferay.youtube.web",
+		"opensocial-portlet"
+		};
 
 		for(String servletContextName : SERVLET_CONTEXT_NAMES) {
-			Release release = ReleaseLocalServiceUtil.fetchRelease(servletContextName);
+		Release release = ReleaseLocalServiceUtil.fetchRelease(servletContextName);
 
-			if(release == null){
-				ReleaseLocalServiceUtil.addRelease(servletContextName,"1.0.0");
-				}
-			}
-`;
+		if(release == null){
+		ReleaseLocalServiceUtil.addRelease(servletContextName,"1.0.0");
+		}
+		}
+	`;
 
-  await serverAdministrationPage.executeScript(script);
+	await serverAdministrationPage.executeScript(script);
 
-  await applicationsMenuPage.goToServerAdministration();
+	await applicationsMenuPage.goToServerAdministration();
 
-  const cleanupPanel = page.locator('.card, .panel', { has: page.getByText('Module Cleanup Actions') }).last();
-  const panelHeader = cleanupPanel.getByRole('button', { name: /Module Cleanup Actions/i });
+	const cleanupPanel = page.locator('.card, .panel',
+		{ has: page.getByText('Module Cleanup Actions') }).last();
 
-  if (await panelHeader.getAttribute('aria-expanded') === 'false') {
-    await panelHeader.click();
-    await expect(panelHeader).toHaveAttribute('aria-expanded', 'true');
-  }
+	const panelHeader = cleanupPanel.getByRole('button',
+		{ name: /Module Cleanup Actions/i });
 
-	const executeButtons = cleanupPanel.getByRole('button', { name: 'Execute' });
+	if (await panelHeader.getAttribute('aria-expanded') === 'false') {
+		await panelHeader.click();
+		await expect(panelHeader).toHaveAttribute('aria-expanded', 'true');
+	}
+
+	const executeButtons = cleanupPanel.getByRole('button',
+		{ name: 'Execute' });
 
 	const count = await executeButtons.count();
 
-  for (let i = 0; i < count; i++) {
-    const button = executeButtons.nth(i);
-    await button.click();
-    const successMessage = page.getByText('Success:Your request completed successfully.').first();
-    await expect(successMessage).toBeVisible();
+	for (let i = 0; i < count; i++) {
+		const button = executeButtons.nth(i);
+		await button.click();
 
-  }
+		const successMessage =
+		page.getByText('Success:Your request completed successfully.').first();
+
+		await expect(successMessage).toBeVisible();
+	}
 });
