@@ -7,369 +7,78 @@ import {expect, mergeTests} from '@playwright/test';
 
 import {applicationsMenuPageTest} from '../../../fixtures/applicationsMenuPageTest';
 import {serverAdministrationPageTest} from '../../../fixtures/serverAdministrationPageTest';
+import {loginTest} from '../../../fixtures/loginTest';
 
 export const test = mergeTests(
-	applicationsMenuPageTest,
-	serverAdministrationPageTest
+	loginTest(),
+    applicationsMenuPageTest,
+    serverAdministrationPageTest
 );
 
-test('Execute Remove Class Name Orphan Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove Class Name Orphan Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
 
-test('Execute Remove DL Preview Change Tracking Store Content Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page.getByRole('row').filter({
-		hasText: 'Remove DL Preview Change Tracking Store Content Data',
-	});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+test('execute all module cleanup actions', async ({ page, applicationsMenuPage,serverAdministrationPage }) => {
+  await applicationsMenuPage.goToServerAdministration();
 
-test('Execute Remove expired journal articles cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove expired journal articles.'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+	const script = `
+		import com.liferay.portal.kernel.service.ReleaseLocalServiceUtil
+		import com.liferay.portal.kernel.model.Release
 
-test('Execute Remove Layout Classed Model Usage Orphan Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove Layout Classed Model Usage Orphan Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+		String[] _SERVLET_CONTEXT_NAMES = {
+			"com.liferay.amazon.rankings.web",
+			"com.liferay.document.library.file.rank.service",
+			"com.liferay.chat.service", "com.liferay.currency.converter.web",
+			"com.liferay.dictionary.web", "com.liferay.directory.web",
+			"com.liferay.frontend.image.editor.web", "com.liferay.google.maps.web",
+			"com.liferay.hello.velocity.web", "com.liferay.hello.world.web",
+			"com.liferay.html.preview.service", "com.liferay.invitation.web",
+			"com.liferay.loan.calculator.web", "com.liferay.mail.reader.service",
+			"com.liferay.network.utilities.web", "com.liferay.oauth.service",
+			"com.liferay.password.generator.web",
+			"com.liferay.portal.security.wedeploy.auth.service",
+			"com.liferay.quick.note.web", "com.liferay.recent.documents.web",
+			"com.liferay.shopping.service", "com.liferay.social.activity.web",
+			"com.liferay.social.group.statistics.web",
+			"com.liferay.social.privatemessaging.service",
+			"com.liferay.social.requests.web",
+			"com.liferay.social.user.statistics.web",
+			"com.liferay.softwarecatalog.service", "com.liferay.translator.web",
+			"com.liferay.twitter.service", "com.liferay.unit.converter.web",
+			"com.liferay.weather.web", "com.liferay.web.form.web",
+			"com.liferay.web.proxy.web", "com.liferay.wysiwyg.web",
+			"com.liferay.xsl.content.web", "com.liferay.youtube.web",
+			"opensocial-portlet"
+			};
 
-test('Execute Remove Publications Older Than 6 months cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove Publications Older Than 6 months'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+		for(String servletContextName : SERVLET_CONTEXT_NAMES) {
+			Release release = ReleaseLocalServiceUtil.fetchRelease(servletContextName);
 
-test('Execute Remove Published Change Tracking Store Content Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page.getByRole('row').filter({
-		hasText: 'Remove Published Change Tracking Store Content Data',
-	});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+			if(release == null){
+				ReleaseLocalServiceUtil.addRelease(servletContextName,"1.0.0");
+				}
+			}
+`;
 
-test('Execute Remove Service Component Orphan Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove Service Component Orphan Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+  await serverAdministrationPage.executeScript(script);
 
-test('Execute Remove Widget Settings from Converted Widget Pages to Content Pages cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page.getByRole('row').filter({
-		hasText:
-			'Remove Widget Settings from Converted Widget Pages to Content Pages',
-	});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+  await applicationsMenuPage.goToServerAdministration();
 
-test('Execute Remove Quartz Job Details Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove Quartz Job Details Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+  const cleanupPanel = page.locator('.card, .panel', { has: page.getByText('Module Cleanup Actions') }).last();
+  const panelHeader = cleanupPanel.getByRole('button', { name: /Module Cleanup Actions/i });
 
-test('Execute Remove Analytics Message Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove Analytics Message Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+  if (await panelHeader.getAttribute('aria-expanded') === 'false') {
+    await panelHeader.click();
+    await expect(panelHeader).toHaveAttribute('aria-expanded', 'true');
+  }
 
-test('Execute Remove Company Orphan Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove Company Orphan Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+	const executeButtons = cleanupPanel.getByRole('button', { name: 'Execute' });
 
-test('Execute Remove User Orphan Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove User Orphan Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+	const count = await executeButtons.count();
 
-test('Execute Remove Configuration Orphan Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove Configuration Orphan Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
+  for (let i = 0; i < count; i++) {
+    const button = executeButtons.nth(i);
+    await button.click();
+    const successMessage = page.getByText('Success:Your request completed successfully.').first();
+    await expect(successMessage).toBeVisible();
 
-test('Execute Remove Group Orphan Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove Group Orphan Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
-
-test('Execute Remove DDM Orphan Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove DDM Orphan Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
-
-test('Execute Remove DL File Entry Orphan Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove DL File Entry Orphan Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
-
-test('Execute Remove Journal Orphan Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove Journal Orphan Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
-
-test('Execute Remove Null Unicode Content Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove Null Unicode Content Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
-
-test('Execute Remove DDM Storage Link Orphan Data cleanup action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Remove DDM Storage Link Orphan Data'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
-
-test('Execute Fix Counter Values action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Fix Counter Values'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
-
-test('Execute Reset preview and thumbnail files for documents and media action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page.getByRole('row').filter({
-		hasText: 'Reset preview and thumbnail files for documents and media.',
-	});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
-
-test('Execute Clean up permissions action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Clean up permissions.'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
-
-test('Execute Clean up orphaned page revision portlet preferences action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page.getByRole('row').filter({
-		hasText: 'Clean up orphaned page revision portlet preferences.',
-	});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
-});
-
-test('Execute Clean up orphaned theme portlet preferences action', async ({
-	applicationsMenuPage,
-	page,
-}) => {
-	await applicationsMenuPage.goToServerAdministration();
-	const actionRow = page
-		.getByRole('row')
-		.filter({hasText: 'Clean up orphaned theme portlet preferences.'});
-	await actionRow.getByRole('button', {name: 'Execute'}).click();
-	await expect(
-		page.getByText('Success:Your request completed successfully.')
-	).toBeVisible();
-	await applicationsMenuPage.goToServerAdministration();
+  }
 });

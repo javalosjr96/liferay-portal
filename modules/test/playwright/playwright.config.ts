@@ -171,6 +171,7 @@ import {config as customerConfig} from './tests/workspaces/liferay-customer-work
 import {config as commerceWorkspaceConfig} from './tests/workspaces/liferay-workspace-commerce/main/config';
 import {config as jethr0Config} from './tests/workspaces/liferay-workspace-jethr0/main/config';
 import {config as marketplaceConfig} from './tests/workspaces/liferay-workspace-marketplace/main/config';
+import {config as dataCleanupConfig} from './tests/data-cleanup/main/config'
 
 const setupProjects = [
 	pageManagementSiteConfig,
@@ -322,6 +323,7 @@ export default defineConfig({
 		rolesAdminWebConfig,
 		rolesSelectorWebConfig,
 		rssWebConfig,
+		dataCleanupConfig,
 		samlWebConfig,
 		scimConfiguraitonWebConfig,
 		searchExperiencesWebConfig,

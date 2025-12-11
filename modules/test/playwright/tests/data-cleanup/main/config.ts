@@ -4,8 +4,8 @@
  */
 
 export const config = {
-	name: 'data-cleanup-impl.main',
-	testDir: 'tests/data-cleanup-impl/main',
+	name: 'data-cleanup.main',
+	testDir: 'tests/data-cleanup/main',
 	use: {
 		testIdAttribute: 'data-qa-id',
 	},
