@@ -82,6 +82,8 @@ public class DataRemovalExecutor {
 			_configurationAdmin, _persistenceManager,
 			DataRemovalConfiguration.class.getName());
 
+
+
 		_removeModuleData(
 			dataRemovalConfiguration::removeDLPreviewCTSContentData,
 			"com.liferay.change.tracking.service",
