@@ -74,7 +74,6 @@ test('execute all module cleanup actions', async ({ page, applicationsMenuPage,s
        }
     `;
 
-    try {
 		await serverAdministrationPage.executeScript(addReleasesScript);
 
 		//Reset Data Cleanup Registrator Component
@@ -127,24 +126,7 @@ test('execute all module cleanup actions', async ({ page, applicationsMenuPage,s
 		//Find Module Cleanup Actions Panel
 
 		await executeCleanupActions(page, 'Module Cleanup Actions');
-	}
-	finally {
-		const deleteReleasesScript = `
-			import com.liferay.portal.kernel.service.ReleaseLocalServiceUtil
-			import com.liferay.portal.kernel.model.Release
 
-			def servletContextNames = ${JSON.stringify(SERVLET_CONTEXT_NAMES)}
-
-			for (String servletContextName : servletContextNames) {
-			Release release = ReleaseLocalServiceUtil.fetchRelease(servletContextName);
-
-			if (release != null) {
-			ReleaseLocalServiceUtil.deleteRelease(release);
-			}}
-		`;
-
-		await serverAdministrationPage.executeScript(deleteReleasesScript);
-		}
 });
 
 
