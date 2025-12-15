@@ -35,6 +35,7 @@ export class ServerAdministrationPage {
 	}
 
 	async executeScript(script: string) {
+		await this.scriptLink.waitFor({ state: 'visible' });
 		await this.scriptLink.click();
 		await this.scriptBox.click();
 		await this.scriptBox.press('Control+a');
