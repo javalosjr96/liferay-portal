@@ -448,9 +448,6 @@ public class DataCleanupRegistrator {
 
 				}));
 
-
-
-		
 		_registerDataCleanup(
 			DataCleanupAdapter.create(
 				"remove-widget-layout-type-settings",

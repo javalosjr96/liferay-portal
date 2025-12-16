@@ -6,13 +6,9 @@
 package com.liferay.data.cleanup;
 
 import com.liferay.petra.function.UnsafeRunnable;
-import com.liferay.portal.kernel.service.ReleaseLocalServiceUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.verify.VerifyProcess;
-
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * @author Maríano Álvaro Sáiz
@@ -40,8 +36,6 @@ public class DataCleanupAdapter {
 
 		return new DataCleanup() {
 
-			private Boolean isActive = true;
-
 			@Override
 			public String getLabel() {
 				return label;
@@ -58,18 +52,20 @@ public class DataCleanupAdapter {
 			}
 
 			@Override
-			protected void doCleanup() throws Exception {
-				unsafeRunnable.run();
-				if (StringUtil.equals(getType(), MODULE_DATA_CLEANUP)) {
-					isActive = false;
-				}
-
-			}
-
-			@Override
 			public Boolean isActive() {
 				return isActive;
 			}
+
+			@Override
+			protected void doCleanup() throws Exception {
+				unsafeRunnable.run();
+
+				if (StringUtil.equals(getType(), MODULE_DATA_CLEANUP)) {
+					isActive = false;
+				}
+			}
+
+			private Boolean isActive = true;
 
 		};
 	}

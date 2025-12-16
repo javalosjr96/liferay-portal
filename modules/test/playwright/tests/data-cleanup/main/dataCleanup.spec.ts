@@ -16,6 +16,8 @@ export const test = mergeTests(
 	);
 
 test('execute all system cleanup actions', async ({ page, applicationsMenuPage }) => {
+	test.setTimeout(90000);
+
 	//Go to Server Admin Page
 
 	await applicationsMenuPage.goToServerAdministration();
@@ -36,7 +38,8 @@ test('execute all module cleanup actions', async ({ page, applicationsMenuPage,s
 	const SERVLET_CONTEXT_NAMES = [
 		   "com.liferay.amazon.rankings.web",
 		   "com.liferay.document.library.file.rank.service",
-		   "com.liferay.chat.service"
+		   "com.liferay.chat.service", "com.liferay.currency.converter.web",
+		   "com.liferay.dictionary.web", "com.liferay.directory.web"
 		   ];
 
     const addReleasesScript = `
@@ -45,15 +48,16 @@ test('execute all module cleanup actions', async ({ page, applicationsMenuPage,s
 
        def servletContextNames = ${JSON.stringify(SERVLET_CONTEXT_NAMES)}
 
-       for(String servletContextName : servletContextNames) {
-       Release release = ReleaseLocalServiceUtil.fetchRelease(servletContextName);
+       for (String servletContextName : servletContextNames) {
+		   Release release = ReleaseLocalServiceUtil.fetchRelease(servletContextName);
 
-       if (release == null) {
-       ReleaseLocalServiceUtil.addRelease(servletContextName,"1.0.0");
-       }
-       }
-    `;
+		   if (release == null) {
+			   ReleaseLocalServiceUtil.addRelease(servletContextName,"1.0.0");
+			   }
+		   }
+	   `;
 
+    try {
 		await serverAdministrationPage.executeScript(addReleasesScript);
 
 		//Reset Data Cleanup Registrator Component
@@ -91,27 +95,47 @@ test('execute all module cleanup actions', async ({ page, applicationsMenuPage,s
 						componentDescriptionDTO);
 
 				promise.getValue();
-
-			} finally {
-				if (serviceReference != null) {
-					bundleContext.ungetService(serviceReference)
 				}
-			}
+				finally {
+					if (serviceReference != null) {
+						bundleContext.ungetService(serviceReference)
+					}
+				}
 		`;
 
 		await serverAdministrationPage.executeScript(resetDataCleanupRegistratorScript);
 
 		await applicationsMenuPage.goToServerAdministration();
 
-		//Find Module Cleanup Actions Panel
+		//Execute Module Cleanup Actions
 
 		await executeCleanupActions(page, 'Module Cleanup Actions');
+		}
+		finally {
 
+		//Remove module releases
+
+			const deleteReleasesScript = `
+				import com.liferay.portal.kernel.service.ReleaseLocalServiceUtil
+				import com.liferay.portal.kernel.model.Release
+
+				def servletContextNames = ${JSON.stringify(SERVLET_CONTEXT_NAMES)}
+
+				for (String servletContextName : servletContextNames) {
+					Release release = ReleaseLocalServiceUtil.fetchRelease(servletContextName);
+
+					if (release != null) {
+						ReleaseLocalServiceUtil.deleteRelease(release);
+					}
+				}
+			`;
+		await serverAdministrationPage.executeScript(deleteReleasesScript);
+		}
 });
 
 
 
-async function executeCleanupActions(page: Page, panelName: string) {
+async function executeCleanupActions(page, panelName: string) {
 	//Find Cleanup Actions Panel
 
 	const cleanupPanel = page.locator('.card, .panel',
