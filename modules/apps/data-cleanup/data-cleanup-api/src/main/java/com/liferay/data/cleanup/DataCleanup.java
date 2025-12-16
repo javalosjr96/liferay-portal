@@ -19,7 +19,6 @@ public abstract class DataCleanup {
 	public void cleanup() throws Exception {
 		doCleanup();
 
-		CacheRegistryUtil.clear();
 	}
 
 	public abstract String getLabel();
@@ -29,5 +28,7 @@ public abstract class DataCleanup {
 	public abstract String getType();
 
 	protected abstract void doCleanup() throws Exception;
+
+	public abstract Boolean isActive();
 
 }

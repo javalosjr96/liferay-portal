@@ -36,27 +36,7 @@ test('execute all module cleanup actions', async ({ page, applicationsMenuPage,s
 	const SERVLET_CONTEXT_NAMES = [
 		   "com.liferay.amazon.rankings.web",
 		   "com.liferay.document.library.file.rank.service",
-		   "com.liferay.chat.service", "com.liferay.currency.converter.web",
-		   "com.liferay.dictionary.web", "com.liferay.directory.web",
-		   "com.liferay.frontend.image.editor.web", "com.liferay.google.maps.web",
-		   "com.liferay.hello.velocity.web", "com.liferay.hello.world.web",
-		   "com.liferay.html.preview.service", "com.liferay.invitation.web",
-		   "com.liferay.loan.calculator.web", "com.liferay.mail.reader.service",
-		   "com.liferay.network.utilities.web", "com.liferay.oauth.service",
-		   "com.liferay.password.generator.web",
-		   "com.liferay.portal.security.wedeploy.auth.service",
-		   "com.liferay.quick.note.web", "com.liferay.recent.documents.web",
-		   "com.liferay.shopping.service", "com.liferay.social.activity.web",
-		   "com.liferay.social.group.statistics.web",
-		   "com.liferay.social.privatemessaging.service",
-		   "com.liferay.social.requests.web",
-		   "com.liferay.social.user.statistics.web",
-		   "com.liferay.softwarecatalog.service", "com.liferay.translator.web",
-		   "com.liferay.twitter.service", "com.liferay.unit.converter.web",
-		   "com.liferay.weather.web", "com.liferay.web.form.web",
-		   "com.liferay.web.proxy.web", "com.liferay.wysiwyg.web",
-		   "com.liferay.xsl.content.web", "com.liferay.youtube.web",
-		   "opensocial-portlet"
+		   "com.liferay.chat.service"
 		   ];
 
     const addReleasesScript = `
