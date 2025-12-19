@@ -42,14 +42,14 @@ public class DataCleanupAdapter {
 	}
 
 	private static DataCleanup _create(
-		String toolTip, String label, String servletContextName, String type,
-		UnsafeRunnable<Exception> unsafeRunnable) {
+		String description, String label, String servletContextName,
+		String type, UnsafeRunnable<Exception> unsafeRunnable) {
 
 		return new DataCleanup() {
 
 			@Override
 			public String getDescription() {
-				return toolTip;
+				return description;
 			}
 
 			@Override
