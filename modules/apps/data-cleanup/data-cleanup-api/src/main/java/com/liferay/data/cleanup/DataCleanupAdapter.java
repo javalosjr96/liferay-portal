@@ -15,25 +15,42 @@ import com.liferay.portal.verify.VerifyProcess;
 public class DataCleanupAdapter {
 
 	public static DataCleanup create(
+		String helpLabel, String label, String servletContextName, String type,
+		UpgradeProcess upgradeProcess) {
+
+		return _create(
+			helpLabel, label, servletContextName, type,
+			upgradeProcess::upgrade);
+	}
+
+	public static DataCleanup create(
 		String label, String servletContextName, String type,
 		UpgradeProcess upgradeProcess) {
 
 		return _create(
-			label, servletContextName, type, upgradeProcess::upgrade);
+			label + "-help", label, servletContextName, type,
+			upgradeProcess::upgrade);
 	}
 
 	public static DataCleanup create(
 		String label, String servletContextName, String type,
 		VerifyProcess verifyProcess) {
 
-		return _create(label, servletContextName, type, verifyProcess::verify);
+		return _create(
+			label + "-help", label, servletContextName, type,
+			verifyProcess::verify);
 	}
 
 	private static DataCleanup _create(
-		String label, String servletContextName, String type,
+		String helpLabel, String label, String servletContextName, String type,
 		UnsafeRunnable<Exception> unsafeRunnable) {
 
 		return new DataCleanup() {
+
+			@Override
+			public String getHelpLabel() {
+				return helpLabel;
+			}
 
 			@Override
 			public String getLabel() {

@@ -31,6 +31,8 @@ public abstract class DataCleanup {
 		}
 	}
 
+	public abstract String getHelpLabel();
+
 	public abstract String getLabel();
 
 	public abstract String getServletContextName();
