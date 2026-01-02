@@ -81,15 +81,6 @@ public class DataCleanupPreupgradeProcessSuite {
 			// Recreate missing primary keys so that later upgrade processes can
 			// use them
 
-			new DataCleanupPreupgradeProcess() {
-
-				@Override
-				protected void doUpgrade() throws Exception {
-					PrimaryKeyUpdaterUtil.updateAllPrimaryKeys();
-				}
-
-			},
-
 			// Company, then user, then group, and then the rest for optimal
 			// performance since cleaning companies will remove its users,
 			// groups, and related data
