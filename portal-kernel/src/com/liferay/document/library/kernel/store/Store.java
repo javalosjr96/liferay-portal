@@ -50,6 +50,8 @@ public interface Store {
 	public void deleteDirectory(
 		long companyId, long repositoryId, String dirName);
 
+	public default void deleteCompany(long companyId) {}
+
 	/**
 	 * Deletes a file at a particular version.
 	 *

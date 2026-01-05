@@ -38,6 +38,13 @@ public class LenientStore implements Store {
 	}
 
 	@Override
+	public void deleteCompany(
+		long companyId) {
+
+		_store.deleteCompany(companyId);
+	}
+
+	@Override
 	public void deleteFile(
 		long companyId, long repositoryId, String fileName,
 		String versionLabel) {
