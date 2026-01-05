@@ -39,6 +39,9 @@ public interface Store {
 			String versionLabel, InputStream inputStream)
 		throws PortalException;
 
+	public default void deleteCompany(long companyId) {
+	}
+
 	/**
 	 * Deletes a directory.
 	 *
@@ -49,8 +52,6 @@ public interface Store {
 	 */
 	public void deleteDirectory(
 		long companyId, Long repositoryId, String dirName);
-
-	public default void deleteCompany(long companyId) {}
 
 	/**
 	 * Deletes a file at a particular version.

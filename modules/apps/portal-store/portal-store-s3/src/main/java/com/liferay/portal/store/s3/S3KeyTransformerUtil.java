@@ -24,7 +24,7 @@ public class S3KeyTransformerUtil {
 	public static String getFileKey(
 		long companyId, Long repositoryId, String fileName) {
 
-		if(Validator.isNull(repositoryId)){
+		if (Validator.isNull(repositoryId)) {
 			return String.valueOf(companyId);
 		}
 

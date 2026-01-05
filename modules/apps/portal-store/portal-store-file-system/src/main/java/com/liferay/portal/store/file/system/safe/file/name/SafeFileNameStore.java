@@ -43,6 +43,11 @@ public class SafeFileNameStore implements Store {
 	}
 
 	@Override
+	public void deleteCompany(long companyId) {
+		_store.deleteCompany(companyId);
+	}
+
+	@Override
 	public void deleteDirectory(
 		long companyId, Long repositoryId, String dirName) {
 
@@ -54,14 +59,6 @@ public class SafeFileNameStore implements Store {
 
 		_store.deleteDirectory(companyId, repositoryId, safeDirName);
 	}
-
-	@Override
-	public void deleteCompany(
-		long companyId) {
-
-		_store.deleteCompany(companyId);
-	}
-
 
 	@Override
 	public void deleteFile(

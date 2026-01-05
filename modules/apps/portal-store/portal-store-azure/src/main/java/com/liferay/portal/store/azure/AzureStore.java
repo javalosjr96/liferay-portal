@@ -101,7 +101,7 @@ public class AzureStore implements Store {
 
 	@Override
 	public void deleteCompany(long companyId) {
-		deleteDirectory(companyId,null,"");
+		deleteDirectory(companyId, null, "");
 	}
 
 	@Override
@@ -359,6 +359,7 @@ public class AzureStore implements Store {
 		StringBundler sb = new StringBundler(7);
 
 		sb.append(companyId);
+
 		if (Validator.isNull(repositoryId)) {
 			return sb.toString();
 		}

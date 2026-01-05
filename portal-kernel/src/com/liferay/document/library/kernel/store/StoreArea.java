@@ -182,7 +182,7 @@ public enum StoreArea {
 			_namespace, StringPool.SLASH, String.valueOf(companyId));
 	}
 
-	public String getPath(long companyId,Long repositoryId, String... path) {
+	public String getPath(long companyId, Long repositoryId, String... path) {
 		StringBundler sb = new StringBundler(
 			5 + (ArrayUtil.getLength(path) * 2));
 
@@ -192,12 +192,13 @@ public enum StoreArea {
 		}
 
 		sb.append(String.valueOf(companyId));
+
 		if (Validator.isNull(repositoryId)) {
-		return sb.toString();
+			return sb.toString();
 		}
+
 		sb.append(StringPool.SLASH);
 		sb.append(repositoryId);
-
 
 		if (ArrayUtil.isNotEmpty(path)) {
 			sb.append(StringPool.SLASH);

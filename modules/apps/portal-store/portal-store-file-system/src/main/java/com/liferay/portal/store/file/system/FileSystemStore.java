@@ -67,12 +67,6 @@ public class FileSystemStore implements Store {
 	}
 
 	@Override
-	public void deleteCompany(long companyId) {
-		deleteDirectory(companyId,null,null);
-	}
-
-
-	@Override
 	public void addFile(
 		long companyId, long repositoryId, String fileName, String versionLabel,
 		InputStream inputStream) {
@@ -91,6 +85,11 @@ public class FileSystemStore implements Store {
 		catch (IOException ioException) {
 			throw new SystemException(ioException);
 		}
+	}
+
+	@Override
+	public void deleteCompany(long companyId) {
+		deleteDirectory(companyId, null, null);
 	}
 
 	@Override
@@ -317,9 +316,8 @@ public class FileSystemStore implements Store {
 	protected File getRepositoryDir(long companyId, Long repositoryId) {
 		File repositoryDir = null;
 
-		if(Validator.isNull(repositoryId)) {
-			repositoryDir = new File(
-				_rootDir, String.valueOf(companyId));
+		if (Validator.isNull(repositoryId)) {
+			repositoryDir = new File(_rootDir, String.valueOf(companyId));
 		}
 		else {
 			repositoryDir = new File(
