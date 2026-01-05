@@ -111,7 +111,7 @@ public class GCSStore implements Store {
 
 	@Override
 	public void deleteDirectory(
-		long companyId, long repositoryId, String dirName) {
+		long companyId, Long repositoryId, String dirName) {
 
 		String path = _getDirectoryKey(companyId, repositoryId, dirName);
 
@@ -311,13 +311,13 @@ public class GCSStore implements Store {
 	}
 
 	private String _getDirectoryKey(
-		long companyId, long repositoryId, String folderName) {
+		long companyId, Long repositoryId, String folderName) {
 
 		return _getFileKey(companyId, repositoryId, folderName);
 	}
 
 	private String _getFileKey(
-		long companyId, long repositoryId, String fileName) {
+		long companyId, Long repositoryId, String fileName) {
 
 		return StoreArea.getCurrentStoreAreaPath(
 			companyId, repositoryId, fileName);
@@ -639,7 +639,7 @@ public class GCSStore implements Store {
 
 		@Override
 		public boolean copyDirectory(
-			long companyId, long repositoryId, String dirName,
+			long companyId, Long repositoryId, String dirName,
 			StoreArea[] sourceStoreAreas, StoreArea destinationStoreArea) {
 
 			try {

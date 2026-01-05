@@ -8,6 +8,7 @@ package com.liferay.portal.store.s3;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.util.Validator;
 
 /**
  * @author Edward C. Han
@@ -15,13 +16,17 @@ import com.liferay.petra.string.StringPool;
 public class S3KeyTransformerUtil {
 
 	public static String getDirectoryKey(
-		long companyId, long repositoryId, String folderName) {
+		long companyId, Long repositoryId, String folderName) {
 
 		return getFileKey(companyId, repositoryId, folderName);
 	}
 
 	public static String getFileKey(
-		long companyId, long repositoryId, String fileName) {
+		long companyId, Long repositoryId, String fileName) {
+
+		if(Validator.isNull(repositoryId)){
+			return String.valueOf(companyId);
+		}
 
 		return StringBundler.concat(
 			companyId, StringPool.SLASH, repositoryId,

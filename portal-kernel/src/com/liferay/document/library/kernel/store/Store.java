@@ -48,7 +48,7 @@ public interface Store {
 	 * @param dirName the directory's name
 	 */
 	public void deleteDirectory(
-		long companyId, long repositoryId, String dirName);
+		long companyId, Long repositoryId, String dirName);
 
 	public default void deleteCompany(long companyId) {}
 

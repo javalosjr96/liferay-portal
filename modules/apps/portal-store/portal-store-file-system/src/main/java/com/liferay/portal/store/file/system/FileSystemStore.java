@@ -68,19 +68,7 @@ public class FileSystemStore implements Store {
 
 	@Override
 	public void deleteCompany(long companyId) {
-		File dirNameDir = null;
-
-		dirNameDir = getRepositoryDir(companyId, null);
-
-		if (!dirNameDir.exists()) {
-			return;
-		}
-
-		File parentFile = dirNameDir.getParentFile();
-
-		FileUtil.deltree(dirNameDir);
-
-		_deleteEmptyAncestors(parentFile);
+		deleteDirectory(companyId,null,null);
 	}
 
 
@@ -107,7 +95,7 @@ public class FileSystemStore implements Store {
 
 	@Override
 	public void deleteDirectory(
-		long companyId, long repositoryId, String dirName) {
+		long companyId, Long repositoryId, String dirName) {
 
 		File dirNameDir = null;
 
@@ -329,13 +317,13 @@ public class FileSystemStore implements Store {
 	protected File getRepositoryDir(long companyId, Long repositoryId) {
 		File repositoryDir = null;
 
-		if(Validator.isNotNull(repositoryId)) {
+		if(Validator.isNull(repositoryId)) {
 			repositoryDir = new File(
-				_rootDir, companyId + StringPool.SLASH + repositoryId);
+				_rootDir, String.valueOf(companyId));
 		}
 		else {
 			repositoryDir = new File(
-				_rootDir, String.valueOf(companyId));
+				_rootDir, companyId + StringPool.SLASH + repositoryId);
 		}
 
 		if (!repositoryDir.exists()) {

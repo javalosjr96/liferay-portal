@@ -100,60 +100,13 @@ public class AzureStore implements Store {
 	}
 
 	@Override
-	public void deleteCompany(
-		long companyId) {
-
-		BlobBatchClient blobBatchClient = new BlobBatchClientBuilder(
-			_blobContainerClient.getServiceClient()
-		).buildClient();
-
-		ListBlobsOptions listBlobsOptions = new ListBlobsOptions();
-
-		listBlobsOptions.setMaxResultsPerPage(256);
-		listBlobsOptions.setPrefix(
-			_getPrefix(companyId,null,""));
-
-		PagedIterable<BlobItem> pagedIterable = _blobContainerClient.listBlobs(
-			listBlobsOptions, null);
-
-		for (PagedResponse<BlobItem> pagedResponse :
-			pagedIterable.iterableByPage()) {
-
-			BlobBatch blobBatch = blobBatchClient.getBlobBatch();
-
-			List<BlobItem> blobItems = pagedResponse.getValue();
-
-			List<Response<Void>> responses = new ArrayList<>(blobItems.size());
-
-			blobItems.forEach(
-				blobItem -> responses.add(
-					blobBatch.deleteBlob(
-						_blobContainerClient.getBlobContainerName(),
-						blobItem.getName())));
-
-			if (!blobItems.isEmpty()) {
-				blobBatchClient.submitBatchWithResponse(
-					blobBatch, false, null, Context.NONE);
-			}
-
-			for (Response<Void> response : responses) {
-				if (response.getStatusCode() < 400) {
-					continue;
-				}
-
-				HttpRequest httpRequest = response.getRequest();
-
-				_log.error(
-					StringBundler.concat(
-						"Unable to delete ", httpRequest.getUrl(),
-						" due to status code ", response.getStatusCode()));
-			}
-		}
+	public void deleteCompany(long companyId) {
+		deleteDirectory(companyId,null,"");
 	}
 
 	@Override
 	public void deleteDirectory(
-		long companyId, long repositoryId, String dirName) {
+		long companyId, Long repositoryId, String dirName) {
 
 		BlobBatchClient blobBatchClient = new BlobBatchClientBuilder(
 			_blobContainerClient.getServiceClient()
@@ -406,10 +359,12 @@ public class AzureStore implements Store {
 		StringBundler sb = new StringBundler(7);
 
 		sb.append(companyId);
-		if (Validator.isNotNull(repositoryId)) {
-			sb.append(StringPool.SLASH);
-			sb.append(repositoryId);
+		if (Validator.isNull(repositoryId)) {
+			return sb.toString();
 		}
+
+		sb.append(StringPool.SLASH);
+		sb.append(repositoryId);
 
 		if (!liferayPath.isEmpty()) {
 			sb.append(StringPool.SLASH);
