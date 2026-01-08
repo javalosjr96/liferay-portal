@@ -12,8 +12,12 @@ import com.liferay.document.library.kernel.exception.NoSuchFileException;
 import com.liferay.document.library.kernel.store.Store;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 
 import java.io.InputStream;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
 
 import java.util.Arrays;
 import java.util.List;
@@ -40,6 +44,18 @@ public class DBStore implements Store {
 
 		_dlContentLocalService.addContent(
 			companyId, repositoryId, fileName, versionLabel, inputStream);
+	}
+
+	@Override
+	public void deleteCompany(long companyId) throws Exception {
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				"delete from DLContent where companyId = ?")) {
+
+			preparedStatement.setLong(1, companyId);
+
+			preparedStatement.executeUpdate();
+		}
 	}
 
 	@Override
