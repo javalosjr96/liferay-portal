@@ -31,7 +31,7 @@ public class LenientStore implements Store {
 	}
 
 	@Override
-	public void deleteCompany(long companyId) {
+	public void deleteCompany(long companyId) throws Exception{
 		_store.deleteCompany(companyId);
 	}
 

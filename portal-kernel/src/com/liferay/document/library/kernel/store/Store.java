@@ -44,7 +44,7 @@ public interface Store {
 	 *
 	 * @param companyId the primary key of the company
 	 */
-	public default void deleteCompany(long companyId) {
+	public default void deleteCompany(long companyId) throws Exception{
 	}
 
 	/**
