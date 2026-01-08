@@ -88,7 +88,7 @@ public class FileSystemStore implements Store {
 	}
 
 	@Override
-	public void deleteCompany(long companyId) throws Exception{
+	public void deleteCompany(long companyId) throws Exception {
 		File companyDir = new File(_rootDir, String.valueOf(companyId));
 
 		if (!companyDir.exists()) {
