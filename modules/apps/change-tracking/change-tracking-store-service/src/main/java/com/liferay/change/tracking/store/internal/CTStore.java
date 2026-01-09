@@ -14,6 +14,7 @@ import com.liferay.document.library.kernel.store.Store;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -62,6 +63,22 @@ public class CTStore implements Store {
 				companyId, repositoryId, fileName, versionLabel, _storeType,
 				inputStream);
 		}
+	}
+
+	@Override
+	public void deleteCompany(long companyId) throws PortalException {
+		_store.deleteCompany(companyId);
+
+		ActionableDynamicQuery actionableDynamicQuery =
+			_ctsContentLocalService.getActionableDynamicQuery();
+
+		actionableDynamicQuery.setCompanyId(companyId);
+
+		actionableDynamicQuery.setPerformActionMethod(
+			(CTSContent ctsContent) -> _ctsContentLocalService.deleteCTSContent(
+				ctsContent));
+
+		actionableDynamicQuery.performActions();
 	}
 
 	@Override
