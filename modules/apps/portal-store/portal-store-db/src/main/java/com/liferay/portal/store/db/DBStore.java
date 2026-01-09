@@ -12,6 +12,9 @@ import com.liferay.document.library.kernel.exception.NoSuchFileException;
 import com.liferay.document.library.kernel.store.Store;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.exception.PortalException;
 
 import java.io.InputStream;
 
@@ -40,6 +43,22 @@ public class DBStore implements Store {
 
 		_dlContentLocalService.addContent(
 			companyId, repositoryId, fileName, versionLabel, inputStream);
+	}
+
+	@Override
+	public void deleteCompany(long companyId) throws PortalException {
+		ActionableDynamicQuery actionableDynamicQuery =
+			_dlContentLocalService.getActionableDynamicQuery();
+
+		actionableDynamicQuery.setAddCriteriaMethod(
+			dynamicQuery -> dynamicQuery.add(
+				RestrictionsFactoryUtil.eq("companyId", companyId)));
+
+		actionableDynamicQuery.setPerformActionMethod(
+			(DLContent dlContent) -> _dlContentLocalService.deleteDLContent(
+				dlContent));
+
+		actionableDynamicQuery.performActions();
 	}
 
 	@Override
