@@ -194,49 +194,67 @@ public class S3Store implements Store {
 	}
 
 	@Override
+	public void deleteCompany(
+		long companyId) {
+		try {
+			List<S3Object> s3Objects = _getS3Objects(
+			String.valueOf(companyId));
+
+			_deleteObjects(s3Objects);
+		}
+		catch (CompletionException completionException) {
+			throw _toSystemException(completionException.getCause());
+		}
+	}
+
+	@Override
 	public void deleteDirectory(
 		long companyId, long repositoryId, String dirName) {
 
 		try {
-			List<ObjectIdentifier> objectIdentifiers = new ArrayList<>(
-				_DELETE_MAX);
-
 			List<S3Object> s3Objects = _getS3Objects(
 				S3KeyTransformerUtil.getDirectoryKey(
 					companyId, repositoryId, dirName));
 
-			Iterator<S3Object> iterator = s3Objects.iterator();
-
-			while (iterator.hasNext()) {
-				for (int i = 0; i < _DELETE_MAX; i++) {
-					if (iterator.hasNext()) {
-						S3Object s3Object = iterator.next();
-
-						objectIdentifiers.add(
-							ObjectIdentifier.builder(
-							).key(
-								s3Object.key()
-							).build());
-					}
-				}
-
-				CompletableFuture<DeleteObjectsResponse> completableFuture =
-					_s3AsyncClient.deleteObjects(
-						deleteObjectsRequestBuilder ->
-							deleteObjectsRequestBuilder.bucket(
-								_s3StoreConfiguration.bucketName()
-							).delete(
-								deleteBuilder -> deleteBuilder.objects(
-									objectIdentifiers)
-							));
-
-				completableFuture.join();
-
-				objectIdentifiers.clear();
-			}
+			_deleteObjects(s3Objects);
 		}
 		catch (CompletionException completionException) {
 			throw _toSystemException(completionException.getCause());
+		}
+	}
+
+	public void _deleteObjects(List<S3Object> s3Objects) {
+		List<ObjectIdentifier> objectIdentifiers = new ArrayList<>(
+			_DELETE_MAX);
+
+		Iterator<S3Object> iterator = s3Objects.iterator();
+
+		while (iterator.hasNext()) {
+			for (int i = 0; i < _DELETE_MAX; i++) {
+				if (iterator.hasNext()) {
+					S3Object s3Object = iterator.next();
+
+					objectIdentifiers.add(
+						ObjectIdentifier.builder(
+						).key(
+							s3Object.key()
+						).build());
+				}
+			}
+
+			CompletableFuture<DeleteObjectsResponse> completableFuture =
+				_s3AsyncClient.deleteObjects(
+					deleteObjectsRequestBuilder ->
+						deleteObjectsRequestBuilder.bucket(
+							_s3StoreConfiguration.bucketName()
+						).delete(
+							deleteBuilder -> deleteBuilder.objects(
+								objectIdentifiers)
+						));
+
+			completableFuture.join();
+
+			objectIdentifiers.clear();
 		}
 	}
 
