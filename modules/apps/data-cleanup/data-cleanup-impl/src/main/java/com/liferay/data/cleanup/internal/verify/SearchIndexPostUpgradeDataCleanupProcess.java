@@ -8,6 +8,7 @@ package com.liferay.data.cleanup.internal.verify;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.search.index.IndexInformation;
 import com.liferay.portal.search.index.IndexNameBuilder;
@@ -29,15 +30,11 @@ public class SearchIndexPostUpgradeDataCleanupProcess
 
 		_pattern = Pattern.compile(
 			"^" + Pattern.quote(indexNameBuilder.getIndexNamePrefix()) +
-				"(\\d+)");
+				"(\\d+).*");
 	}
 
 	@Override
 	public void cleanUp() throws Exception {
-		if ((_indexInformation == null) || (_pattern == null)) {
-			return;
-		}
-
 		long[] companyIds = PortalInstancePool.getCompanyIds();
 
 		Arrays.sort(companyIds);
@@ -57,7 +54,9 @@ public class SearchIndexPostUpgradeDataCleanupProcess
 
 			long companyId = GetterUtil.getLong(matcher.group(1));
 
-			if (Arrays.binarySearch(companyIds, companyId) < 0) {
+			if ((companyId != CompanyConstants.SYSTEM) &&
+				(Arrays.binarySearch(companyIds, companyId) < 0)) {
+
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						"Found orphan index from deleted company: " +
