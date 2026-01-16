@@ -8,7 +8,6 @@ package com.liferay.data.cleanup.internal.verify;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.search.index.IndexInformation;
 import com.liferay.portal.search.index.IndexNameBuilder;
@@ -27,54 +26,42 @@ public class SearchIndexPostUpgradeDataCleanupProcess
 		IndexInformation indexInformation, IndexNameBuilder indexNameBuilder) {
 
 		_indexInformation = indexInformation;
-		_indexNameBuilder = indexNameBuilder;
+
+		_pattern = Pattern.compile(
+			"^" + Pattern.quote(indexNameBuilder.getIndexNamePrefix()) +
+				"(\\d+)");
 	}
 
 	@Override
 	public void cleanUp() throws Exception {
-		if (_indexNameBuilder == null) {
+		if ((_indexInformation == null) || (_pattern == null)) {
 			return;
 		}
 
-		if (_indexInformation != null) {
-			long[] companyIds = PortalInstancePool.getCompanyIds();
+		long[] companyIds = PortalInstancePool.getCompanyIds();
 
-			Arrays.sort(companyIds);
+		Arrays.sort(companyIds);
 
-			String[] indexNames = _indexInformation.getIndexNames();
+		String[] indexNames = _indexInformation.getIndexNames();
 
-			Pattern pattern = Pattern.compile(
-				"^" + Pattern.quote(_indexNameBuilder.getIndexNamePrefix()) +
-					"(\\d+)");
+		for (String indexName : indexNames) {
+			if (indexName == null) {
+				continue;
+			}
 
-			for (String indexName : indexNames) {
-				if (indexName == null) {
-					continue;
-				}
+			Matcher matcher = _pattern.matcher(indexName);
 
-				Matcher matcher = pattern.matcher(indexName);
+			if (!matcher.find()) {
+				continue;
+			}
 
-				if (matcher.find()) {
-					long searchIndexCompanyId = GetterUtil.getLong(
-						matcher.group(1));
+			long companyId = GetterUtil.getLong(matcher.group(1));
 
-					if (searchIndexCompanyId == 0) {
-						_log.error(
-							"Unable to parse company ID from search index: " +
-								indexName);
-
-						continue;
-					}
-
-					if (Arrays.binarySearch(companyIds, searchIndexCompanyId) <
-							0) {
-
-						if (_log.isWarnEnabled()) {
-							_log.warn(
-									"Found orphan index from deleted company: " +
-									indexName);
-						}
-					}
+			if (Arrays.binarySearch(companyIds, companyId) < 0) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Found orphan index from deleted company: " +
+							indexName);
 				}
 			}
 		}
@@ -84,6 +71,6 @@ public class SearchIndexPostUpgradeDataCleanupProcess
 		SearchIndexPostUpgradeDataCleanupProcess.class);
 
 	private final IndexInformation _indexInformation;
-	private final IndexNameBuilder _indexNameBuilder;
+	private final Pattern _pattern;
 
 }

@@ -8,7 +8,6 @@ package com.liferay.data.cleanup.internal.verify;
 import com.liferay.portal.kernel.dependency.manager.DependencyManagerSyncUtil;
 import com.liferay.portal.kernel.module.framework.ModuleServiceLifecycle;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
-import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ServiceComponentLocalService;
 import com.liferay.portal.kernel.util.ClassUtil;
@@ -77,9 +76,6 @@ public class PostUpgradeDataCleanupVerifyProcess extends VerifyProcess {
 
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
-
-	@Reference
-	private CompanyLocalService _companyLocalService;
 
 	@Reference
 	private IndexInformation _indexInformation;
