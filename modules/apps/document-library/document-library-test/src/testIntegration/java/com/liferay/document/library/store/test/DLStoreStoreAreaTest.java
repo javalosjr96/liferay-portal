@@ -117,6 +117,20 @@ public class DLStoreStoreAreaTest {
 	}
 
 	@Test
+	public void testDeleteCompany() throws Exception {
+		String fileName = StringUtil.randomString();
+
+		_addFile(fileName, Store.VERSION_DEFAULT);
+
+		DLStoreUtil.deleteCompany(TestPropsValues.getCompanyId());
+
+		Assert.assertFalse(
+			DLStoreUtil.hasFile(
+				TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
+				fileName, Store.VERSION_DEFAULT));
+	}
+
+	@Test
 	public void testDeleteDirectory() throws Exception {
 		String fileName = StringUtil.randomString();
 
