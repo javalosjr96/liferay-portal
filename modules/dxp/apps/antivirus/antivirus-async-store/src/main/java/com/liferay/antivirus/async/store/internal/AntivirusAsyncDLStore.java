@@ -157,6 +157,10 @@ public class AntivirusAsyncDLStore implements DLStore {
 	}
 
 	@Override
+	public void deleteCompany(long companyId) {
+	}
+
+	@Override
 	public void deleteDirectory(
 		long companyId, long repositoryId, String dirName) {
 
