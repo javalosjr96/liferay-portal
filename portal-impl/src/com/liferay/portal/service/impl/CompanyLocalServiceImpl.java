@@ -6,6 +6,7 @@
 package com.liferay.portal.service.impl;
 
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
+import com.liferay.document.library.kernel.store.DLStoreUtil;
 import com.liferay.expando.kernel.model.ExpandoColumn;
 import com.liferay.expando.kernel.model.ExpandoTable;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
@@ -1636,6 +1637,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			TransactionCommitCallbackUtil.registerCallback(
 				() -> {
 					_clearCache(companyId);
+
+					DLStoreUtil.deleteCompany(companyId);
 
 					PortalInstances.removeCompany(company.getCompanyId());
 
