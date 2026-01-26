@@ -50,6 +50,13 @@ public class StoreAreaAwareStoreWrapper implements Store {
 	}
 
 	@Override
+	public void deleteCompany(long companyId) throws PortalException {
+		Store store = _storeSupplier.get();
+
+		store.deleteCompany(companyId);
+	}
+
+	@Override
 	public void deleteDirectory(
 		long companyId, long repositoryId, String dirName) {
 

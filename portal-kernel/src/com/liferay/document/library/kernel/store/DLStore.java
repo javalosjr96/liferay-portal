@@ -38,6 +38,8 @@ public interface DLStore {
 			String fromVersionLabel, String toVersionLabel)
 		throws PortalException;
 
+	public void deleteCompany(long companyId) throws PortalException;
+
 	public void deleteDirectory(
 			long companyId, long repositoryId, String dirName)
 		throws PortalException;
