@@ -140,6 +140,44 @@ public class IBMS3Store implements Store {
 	}
 
 	@Override
+	public void deleteCompany(long companyId) {
+		try {
+			String[] keys = new String[_DELETE_MAX];
+
+			List<S3ObjectSummary> s3ObjectSummaries = _getS3ObjectSummaries(
+				String.valueOf(companyId));
+
+			Iterator<S3ObjectSummary> iterator = s3ObjectSummaries.iterator();
+
+			while (iterator.hasNext()) {
+				DeleteObjectsRequest deleteObjectsRequest =
+					new DeleteObjectsRequest(
+						_s3StoreConfiguration.bucketName());
+
+				for (int i = 0; i < keys.length; i++) {
+					if (iterator.hasNext()) {
+						S3ObjectSummary s3ObjectSummary = iterator.next();
+
+						keys[i] = s3ObjectSummary.getKey();
+					}
+					else {
+						keys = Arrays.copyOfRange(keys, 0, i);
+
+						break;
+					}
+				}
+
+				deleteObjectsRequest.withKeys(keys);
+
+				_amazonS3.deleteObjects(deleteObjectsRequest);
+			}
+		}
+		catch (AmazonClientException amazonClientException) {
+			throw _transform(amazonClientException);
+		}
+	}
+
+	@Override
 	public void deleteDirectory(
 		long companyId, long repositoryId, String dirName) {
 

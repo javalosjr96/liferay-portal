@@ -69,19 +69,6 @@ public class CTStore implements Store {
 	@Override
 	public void deleteCompany(long companyId) throws PortalException {
 		_store.deleteCompany(companyId);
-
-		ActionableDynamicQuery actionableDynamicQuery =
-			_ctsContentLocalService.getActionableDynamicQuery();
-
-		actionableDynamicQuery.setAddCriteriaMethod(
-			dynamicQuery -> dynamicQuery.add(
-				RestrictionsFactoryUtil.eq("companyId", companyId)));
-
-		actionableDynamicQuery.setPerformActionMethod(
-			(CTSContent ctsContent) -> _ctsContentLocalService.deleteCTSContent(
-				ctsContent));
-
-		actionableDynamicQuery.performActions();
 	}
 
 	@Override
