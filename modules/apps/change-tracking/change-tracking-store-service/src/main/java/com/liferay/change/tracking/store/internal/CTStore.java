@@ -23,7 +23,9 @@ import java.io.InputStream;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -130,6 +132,40 @@ public class CTStore implements Store {
 			_ctsContentLocalService.deleteCTSContent(
 				companyId, repositoryId, fileName, versionLabel, _storeType);
 		}
+	}
+
+	@Override
+	public long[] getCompanyIds() throws PortalException {
+		Set<Long> companyIdsSet = new HashSet<>();
+
+		try (Connection connection = DataAccess.getConnection();
+			Statement statement = connection.createStatement();
+			ResultSet resultSet = statement.executeQuery(
+				"select distinct companyId from CTSContent where companyId > " +
+					"0")) {
+
+			while (resultSet.next()) {
+				companyIdsSet.add(resultSet.getLong("companyId"));
+			}
+		}
+		catch (SQLException sqlException) {
+			throw new PortalException(sqlException);
+		}
+
+		for (long storeCompanyId : _store.getCompanyIds()) {
+			companyIdsSet.add(storeCompanyId);
+		}
+
+		long[] companyIds = new long[companyIdsSet.size()];
+		int index = 0;
+
+		for (Long id : companyIdsSet) {
+			companyIds[index++] = id;
+		}
+
+		Arrays.sort(companyIds);
+
+		return companyIds;
 	}
 
 	@Override

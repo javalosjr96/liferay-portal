@@ -156,6 +156,23 @@ public abstract class BaseStoreTestCase {
 	}
 
 	@Test
+	public void testGetCompanyIds() throws Exception {
+		String fileName = RandomTestUtil.randomString();
+
+		_store.addFile(
+			_companyId, _repositoryId, fileName, Store.VERSION_DEFAULT,
+			new UnsyncByteArrayInputStream(DATA_VERSION));
+
+		Assert.assertArrayEquals(
+			new long[] {_companyId}, _store.getCompanyIds());
+
+		_store.deleteFile(
+			_companyId, _repositoryId, fileName, Store.VERSION_DEFAULT);
+
+		Assert.assertArrayEquals(new long[0], _store.getCompanyIds());
+	}
+
+	@Test
 	public void testGetFileAsStream() throws Exception {
 		String fileName = RandomTestUtil.randomString();
 
