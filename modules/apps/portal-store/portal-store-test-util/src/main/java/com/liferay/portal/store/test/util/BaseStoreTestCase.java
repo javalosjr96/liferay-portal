@@ -158,7 +158,7 @@ public abstract class BaseStoreTestCase {
 	}
 
 	@Test
-	public void testGetCompany() throws Exception {
+	public void testGetCompanyIds() throws Exception {
 		Assert.assertArrayEquals(
 			PortalInstancePool.getCompanyIds(), _store.getCompanyIds());
 	}
