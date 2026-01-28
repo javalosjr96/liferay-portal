@@ -27,6 +27,12 @@ public enum StoreArea {
 
 	DELETED("_deleted"), LIVE(StringPool.BLANK), NEW("_new");
 
+	public static String getCurrentStoreAreaPath(long companyId) {
+		StoreArea storeArea = _storeAreaThreadLocal.get();
+
+		return storeArea.getPath(companyId);
+	}
+
 	public static String getCurrentStoreAreaPath(
 		long companyId, long repositoryId, String... path) {
 

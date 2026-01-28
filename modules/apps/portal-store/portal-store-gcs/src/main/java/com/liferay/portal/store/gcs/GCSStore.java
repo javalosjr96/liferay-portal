@@ -110,48 +110,15 @@ public class GCSStore implements Store {
 	}
 
 	@Override
+	public void deleteCompany(long companyId) {
+		_deleteObjects(StoreArea.getCurrentStoreAreaPath(companyId));
+	}
+
+	@Override
 	public void deleteDirectory(
 		long companyId, long repositoryId, String dirName) {
 
-		String path = _getDirectoryKey(companyId, repositoryId, dirName);
-
-		try {
-			Page<Blob> blobPage = _gcsStore.list(
-				_gcsStoreConfiguration.bucketName(),
-				Storage.BlobListOption.pageSize(_PAGE_SIZE),
-				Storage.BlobListOption.prefix(path));
-
-			Iterable<Blob> blobs = blobPage.iterateAll();
-
-			List<StorageBatchResult<Boolean>> results = new ArrayList<>();
-
-			StorageBatch storageBatch = _gcsStore.batch();
-
-			try {
-				blobs.forEach(
-					blob -> results.add(_deleteBlob(blob, storageBatch)));
-			}
-			finally {
-				if (!results.isEmpty()) {
-					storageBatch.submit();
-
-					for (StorageBatchResult<Boolean> result : results) {
-						if ((result == null) || !result.get()) {
-							_log.error(
-								StringBundler.concat(
-									"Error deleting objects in bucket ",
-									_gcsStoreConfiguration.bucketName(), " at ",
-									path));
-
-							break;
-						}
-					}
-				}
-			}
-		}
-		catch (StorageException storageException) {
-			_log.error("Unable to delete " + path, storageException);
-		}
+		_deleteObjects(_getDirectoryKey(companyId, repositoryId, dirName));
 	}
 
 	@Override
@@ -298,6 +265,46 @@ public class GCSStore implements Store {
 
 		return storageBatch.delete(
 			blob.getBlobId(), _decryptStorageBlobSourceOption);
+	}
+
+	private void _deleteObjects(String path) {
+		try {
+			Page<Blob> blobPage = _gcsStore.list(
+				_gcsStoreConfiguration.bucketName(),
+				Storage.BlobListOption.pageSize(_PAGE_SIZE),
+				Storage.BlobListOption.prefix(path));
+
+			Iterable<Blob> blobs = blobPage.iterateAll();
+
+			List<StorageBatchResult<Boolean>> results = new ArrayList<>();
+
+			StorageBatch storageBatch = _gcsStore.batch();
+
+			try {
+				blobs.forEach(
+					blob -> results.add(_deleteBlob(blob, storageBatch)));
+			}
+			finally {
+				if (!results.isEmpty()) {
+					storageBatch.submit();
+
+					for (StorageBatchResult<Boolean> result : results) {
+						if ((result == null) || !result.get()) {
+							_log.error(
+								StringBundler.concat(
+									"Error deleting objects in bucket ",
+									_gcsStoreConfiguration.bucketName(), " at ",
+									path));
+
+							break;
+						}
+					}
+				}
+			}
+		}
+		catch (StorageException storageException) {
+			_log.error("Unable to delete " + path, storageException);
+		}
 	}
 
 	private BucketInfo _getBucketInfo() {
