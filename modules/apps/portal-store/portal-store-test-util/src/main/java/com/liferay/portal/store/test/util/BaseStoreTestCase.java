@@ -9,6 +9,7 @@ import com.liferay.document.library.kernel.exception.NoSuchFileException;
 import com.liferay.document.library.kernel.store.Store;
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 
@@ -153,6 +154,12 @@ public abstract class BaseStoreTestCase {
 				_companyId, _repositoryId, fileName, Store.VERSION_DEFAULT));
 		Assert.assertTrue(
 			_store.hasFile(_companyId, _repositoryId, fileName, "1.1"));
+	}
+
+	@Test
+	public void testGetCompanyIds() throws Exception {
+		Assert.assertArrayEquals(
+			PortalInstancePool.getCompanyIds(), _store.getCompanyIds());
 	}
 
 	@Test
