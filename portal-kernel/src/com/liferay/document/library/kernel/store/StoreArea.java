@@ -27,20 +27,18 @@ public enum StoreArea {
 
 	DELETED("_deleted"), LIVE(StringPool.BLANK), NEW("_new");
 
+	public static String getCompanyStoreAreaPath(long companyId) {
+		StoreArea storeArea = _storeAreaThreadLocal.get();
+
+		return storeArea.getPath(companyId);
+	}
+
 	public static String getCurrentStoreAreaPath(
 		long companyId, long repositoryId, String... path) {
 
 		StoreArea storeArea = _storeAreaThreadLocal.get();
 
 		return storeArea.getPath(companyId, repositoryId, path);
-	}
-
-	public static String getCompanyStoreAreaPath(
-		long companyId) {
-
-		StoreArea storeArea = _storeAreaThreadLocal.get();
-
-		return storeArea.getPath(companyId);
 	}
 
 	public static <E extends Exception> String[] mergeWithStoreAreas(

@@ -198,6 +198,11 @@ public class AntivirusAsyncDLStore implements DLStore {
 	}
 
 	@Override
+	public long[] getCompanyIds() {
+		return _store.getCompanyIds();
+	}
+
+	@Override
 	public InputStream getFileAsStream(
 			long companyId, long repositoryId, String fileName,
 			String versionLabel)
