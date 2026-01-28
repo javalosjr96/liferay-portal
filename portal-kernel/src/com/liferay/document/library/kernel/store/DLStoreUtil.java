@@ -166,6 +166,17 @@ public class DLStoreUtil {
 	}
 
 	/**
+	 * Returns all the company ids from the store.
+	 *
+	 * @return A list of unique company IDs.
+	 */
+	public static long[] getCompanyIds() throws PortalException {
+		DLStore dlStore = _getDLStore();
+
+		return dlStore.getCompanyIds();
+	}
+
+	/**
 	 * Returns the file as an {@link InputStream} object.
 	 *
 	 * <p>

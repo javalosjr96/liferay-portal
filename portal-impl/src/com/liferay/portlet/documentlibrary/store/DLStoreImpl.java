@@ -180,6 +180,11 @@ public class DLStoreImpl implements DLStore {
 	}
 
 	@Override
+	public long[] getCompanyIds() throws PortalException {
+		return _wrappedStore.getCompanyIds();
+	}
+
+	@Override
 	public InputStream getFileAsStream(
 			long companyId, long repositoryId, String fileName,
 			String versionLabel)

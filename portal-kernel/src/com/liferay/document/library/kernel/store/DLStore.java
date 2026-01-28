@@ -52,6 +52,8 @@ public interface DLStore {
 			String versionLabel)
 		throws PortalException;
 
+	public long[] getCompanyIds() throws PortalException;
+
 	public InputStream getFileAsStream(
 			long companyId, long repositoryId, String fileName,
 			String versionLabel)
