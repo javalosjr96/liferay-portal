@@ -13,6 +13,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -20,6 +21,7 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.store.file.system.configuration.FileSystemStoreConfiguration;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -54,6 +56,8 @@ public class FileSystemStore implements Store {
 		_rootDir = rootDir;
 
 		_rootDir.mkdirs();
+
+		System.out.println(_rootDir.getAbsolutePath());
 
 		try {
 			FileUtil.write(
@@ -144,6 +148,42 @@ public class FileSystemStore implements Store {
 		fileNameVersionFile.delete();
 
 		_deleteEmptyAncestors(parentFile);
+	}
+
+	@Override
+	public long[] getCompanyIds() {
+		File[] companyDirs = _rootDir.listFiles(
+			new FileFilter() {
+
+				@Override
+				public boolean accept(File file) {
+					if (file.isDirectory() &&
+						file.getName(
+						).matches(
+							"^\\d+$"
+						)) {
+
+						return true;
+					}
+
+					return false;
+				}
+
+			});
+
+		if (ArrayUtil.isEmpty(companyDirs)) {
+			return new long[0];
+		}
+
+		long[] companyIds = new long[companyDirs.length];
+
+		for (int i = 0; i < companyDirs.length; i++) {
+			companyIds[i] = GetterUtil.getLong(companyDirs[i].getName());
+		}
+
+		Arrays.sort(companyIds);
+
+		return companyIds;
 	}
 
 	@Override

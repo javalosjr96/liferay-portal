@@ -14,8 +14,6 @@ import com.liferay.document.library.kernel.store.Store;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
-import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
-import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -115,6 +113,11 @@ public class CTStore implements Store {
 			_ctsContentLocalService.deleteCTSContent(
 				companyId, repositoryId, fileName, versionLabel, _storeType);
 		}
+	}
+
+	@Override
+	public long[] getCompanyIds() {
+		return _store.getCompanyIds();
 	}
 
 	@Override

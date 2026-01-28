@@ -11,6 +11,7 @@ import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
+import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.FileUtil;
@@ -108,6 +109,12 @@ public class FileSystemStoreTest extends BaseStoreTestCase {
 				Paths.get(_rootDir + "-target"), Paths.get(_rootDir),
 				StandardCopyOption.REPLACE_EXISTING);
 		}
+	}
+
+	@Test
+	public void testGetCompanyIds() throws Exception {
+		Assert.assertArrayEquals(
+			_store.getCompanyIds(), PortalInstancePool.getCompanyIds());
 	}
 
 	@Override
