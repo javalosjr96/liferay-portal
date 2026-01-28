@@ -28,6 +28,7 @@ import com.liferay.petra.string.StringUtil;
 import com.liferay.portal.change.tracking.store.CTStoreFactory;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -515,6 +516,14 @@ public class CTStoreTest {
 
 		_assertNoSuchCTSContent(fileName);
 		_assertNoSuchFile(fileName);
+	}
+
+	@Test
+	public void testGetCompanyIds() throws Exception {
+		Assert.assertArrayEquals(
+			PortalInstancePool.getCompanyIds(), _getCompanyIds());
+
+		_assertMethods(_GET_COMPANY_IDS_METHOD);
 	}
 
 	@Test
@@ -1071,6 +1080,10 @@ public class CTStoreTest {
 			_companyId, _REPOSITORY_ID, fileName, version);
 	}
 
+	private long[] _getCompanyIds() throws Exception {
+		return _ctStore.getCompanyIds();
+	}
+
 	private void _publish(CTCollection ctCollection) throws Exception {
 		try (SafeCloseable safeCloseable =
 				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
@@ -1304,6 +1317,8 @@ public class CTStoreTest {
 
 	private static final Method _DELETE_FILE_METHOD;
 
+	private static final Method _GET_COMPANY_IDS_METHOD;
+
 	private static final Method _GET_FILE_AS_STREAM_METHOD;
 
 	private static final Method _GET_FILE_NAMES;
@@ -1358,6 +1373,8 @@ public class CTStoreTest {
 
 			_DELETE_DIRECTORY_METHOD = Store.class.getMethod(
 				"deleteDirectory", long.class, long.class, String.class);
+
+			_GET_COMPANY_IDS_METHOD = Store.class.getMethod("getCompanyIds");
 
 			_DELETE_FILE_METHOD = Store.class.getMethod(
 				"deleteFile", long.class, long.class, String.class,
