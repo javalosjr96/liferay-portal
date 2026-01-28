@@ -35,6 +35,14 @@ public enum StoreArea {
 		return storeArea.getPath(companyId, repositoryId, path);
 	}
 
+	public static String getCompanyStoreAreaPath(
+		long companyId) {
+
+		StoreArea storeArea = _storeAreaThreadLocal.get();
+
+		return storeArea.getPath(companyId);
+	}
+
 	public static <E extends Exception> String[] mergeWithStoreAreas(
 			UnsafeSupplier<String[], E> unsafeSupplier, StoreArea... storeAreas)
 		throws E {
