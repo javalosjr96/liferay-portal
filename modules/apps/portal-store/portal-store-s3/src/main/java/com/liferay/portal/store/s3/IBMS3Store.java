@@ -21,6 +21,8 @@ import com.ibm.cloud.objectstorage.services.s3.model.DeleteObjectsRequest;
 import com.ibm.cloud.objectstorage.services.s3.model.GetObjectMetadataRequest;
 import com.ibm.cloud.objectstorage.services.s3.model.GetObjectRequest;
 import com.ibm.cloud.objectstorage.services.s3.model.ListObjectsRequest;
+import com.ibm.cloud.objectstorage.services.s3.model.ListObjectsV2Request;
+import com.ibm.cloud.objectstorage.services.s3.model.ListObjectsV2Result;
 import com.ibm.cloud.objectstorage.services.s3.model.ObjectListing;
 import com.ibm.cloud.objectstorage.services.s3.model.ObjectMetadata;
 import com.ibm.cloud.objectstorage.services.s3.model.PutObjectRequest;
@@ -46,6 +48,7 @@ import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.FileUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.store.s3.configuration.S3StoreConfiguration;
 
@@ -56,9 +59,11 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -168,6 +173,49 @@ public class IBMS3Store implements Store {
 		catch (AmazonClientException amazonClientException) {
 			throw _transform(amazonClientException);
 		}
+	}
+
+	public long[] getCompanyIds() {
+		Set<Long> companyIdsSet = new HashSet<>();
+
+		try {
+			ListObjectsV2Request request = new ListObjectsV2Request(
+			).withBucketName(
+				_s3StoreConfiguration.bucketName()
+			).withDelimiter(
+				"/"
+			);
+
+			ListObjectsV2Result result;
+
+			do {
+				result = _amazonS3.listObjectsV2(request);
+
+				for (String folderName : result.getCommonPrefixes()) {
+					if (folderName.endsWith("/")) {
+						folderName = folderName.substring(
+							0, folderName.length() - 1);
+					}
+
+					companyIdsSet.add(GetterUtil.getLong(folderName));
+				}
+
+				request.setContinuationToken(result.getNextContinuationToken());
+			}
+			while (result.isTruncated());
+		}
+		catch (AmazonClientException amazonClientException) {
+			throw _transform(amazonClientException);
+		}
+
+		long[] companyIds = new long[companyIdsSet.size()];
+		int i = 0;
+
+		for (Long id : companyIdsSet) {
+			companyIds[i++] = id;
+		}
+
+		return companyIds;
 	}
 
 	@Override
