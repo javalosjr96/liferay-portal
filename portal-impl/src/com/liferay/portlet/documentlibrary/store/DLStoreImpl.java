@@ -180,7 +180,7 @@ public class DLStoreImpl implements DLStore {
 	}
 
 	@Override
-	public long[] getCompanyIds() {
+	public long[] getCompanyIds() throws PortalException {
 		return _wrappedStore.getCompanyIds();
 	}
 

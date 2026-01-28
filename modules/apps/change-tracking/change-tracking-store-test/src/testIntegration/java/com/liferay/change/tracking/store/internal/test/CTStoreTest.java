@@ -1375,7 +1375,7 @@ public class CTStoreTest {
 				"deleteDirectory", long.class, long.class, String.class);
 
 			_GET_COMPANY_IDS_METHOD = Store.class.getMethod(
-				"deleteCompany", long.class);
+				"getCompanyIds", Arrays.class);
 
 			_DELETE_FILE_METHOD = Store.class.getMethod(
 				"deleteFile", long.class, long.class, String.class,
