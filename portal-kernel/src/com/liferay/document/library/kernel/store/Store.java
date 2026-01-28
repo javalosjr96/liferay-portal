@@ -75,7 +75,7 @@ public interface Store {
 	 * Returns all company IDs currently present in the store.
 	 * @return A list of unique company IDs.
 	 */
-	public default long[] getCompanyIds() {
+	public default long[] getCompanyIds() throws PortalException {
 		return new long[0];
 	}
 
