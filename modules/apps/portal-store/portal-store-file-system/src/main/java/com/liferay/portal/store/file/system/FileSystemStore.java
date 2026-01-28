@@ -155,11 +155,16 @@ public class FileSystemStore implements Store {
 
 				@Override
 				public boolean accept(File file) {
-					return file.isDirectory() &&
-						   file.getName(
-						   ).matches(
-							   "^\\d+$"
-						   );
+					if (file.isDirectory() &&
+						file.getName(
+						).matches(
+							"^\\d+$"
+						)) {
+
+						return true;
+					}
+
+					return false;
 				}
 
 			});

@@ -50,13 +50,6 @@ public class StoreAreaAwareStoreWrapper implements Store {
 	}
 
 	@Override
-	public long[] getCompanyIds() throws PortalException {
-		Store store = _storeSupplier.get();
-
-		return store.getCompanyIds();
-	}
-
-	@Override
 	public void deleteCompany(long companyId) throws PortalException {
 		Store store = _storeSupplier.get();
 
@@ -117,6 +110,13 @@ public class StoreAreaAwareStoreWrapper implements Store {
 		else {
 			store.deleteFile(companyId, repositoryId, fileName, versionLabel);
 		}
+	}
+
+	@Override
+	public long[] getCompanyIds() throws PortalException {
+		Store store = _storeSupplier.get();
+
+		return store.getCompanyIds();
 	}
 
 	@Override

@@ -198,7 +198,7 @@ public class AntivirusAsyncDLStore implements DLStore {
 	}
 
 	@Override
-	public long[] getCompanyIds() {
+	public long[] getCompanyIds() throws PortalException {
 		return _store.getCompanyIds();
 	}
 

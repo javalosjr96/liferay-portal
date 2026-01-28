@@ -521,7 +521,7 @@ public class CTStoreTest {
 	@Test
 	public void testGetCompanyIds() throws Exception {
 		Assert.assertArrayEquals(
-			PortalInstancePool.getCompanyIds(),  _getCompanyIds());
+			PortalInstancePool.getCompanyIds(), _getCompanyIds());
 
 		_assertMethods(_GET_COMPANY_IDS_METHOD);
 	}
@@ -1374,8 +1374,7 @@ public class CTStoreTest {
 			_DELETE_DIRECTORY_METHOD = Store.class.getMethod(
 				"deleteDirectory", long.class, long.class, String.class);
 
-			_GET_COMPANY_IDS_METHOD = Store.class.getMethod(
-				"getCompanyIds", Arrays.class);
+			_GET_COMPANY_IDS_METHOD = Store.class.getMethod("getCompanyIds");
 
 			_DELETE_FILE_METHOD = Store.class.getMethod(
 				"deleteFile", long.class, long.class, String.class,
