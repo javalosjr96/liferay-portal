@@ -12,6 +12,7 @@ import com.liferay.document.library.kernel.exception.NoSuchFileException;
 import com.liferay.document.library.kernel.store.Store;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -21,8 +22,15 @@ import com.liferay.portal.kernel.util.PropsValues;
 
 import java.io.InputStream;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -86,6 +94,36 @@ public class DBStore implements Store {
 
 		_dlContentLocalService.deleteContent(
 			companyId, repositoryId, fileName, versionLabel);
+	}
+
+	@Override
+	public long[] getCompanyIds() throws PortalException {
+		Set<Long> companyIdsSet = new HashSet<>();
+
+		try (Connection connection = DataAccess.getConnection();
+			Statement statement = connection.createStatement();
+			ResultSet resultSet = statement.executeQuery(
+				"select distinct companyId from DLContent where companyId > " +
+					"0")) {
+
+			while (resultSet.next()) {
+				companyIdsSet.add(resultSet.getLong("companyId"));
+			}
+		}
+		catch (SQLException sqlException) {
+			throw new PortalException(sqlException);
+		}
+
+		long[] companyIds = new long[companyIdsSet.size()];
+		int index = 0;
+
+		for (Long id : companyIdsSet) {
+			companyIds[index++] = id;
+		}
+
+		Arrays.sort(companyIds);
+
+		return companyIds;
 	}
 
 	@Override
