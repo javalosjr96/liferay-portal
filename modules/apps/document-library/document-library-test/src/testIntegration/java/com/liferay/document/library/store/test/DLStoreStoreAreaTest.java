@@ -128,6 +128,10 @@ public class DLStoreStoreAreaTest {
 			DLStoreUtil.hasFile(
 				TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
 				fileName, Store.VERSION_DEFAULT));
+
+		StoreArea.withStoreArea(
+			StoreArea.DELETED,
+			() -> _assertHasStoreFile(fileName, Store.VERSION_DEFAULT));
 	}
 
 	@Test
