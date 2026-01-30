@@ -24,6 +24,10 @@ public interface StoreAreaProcessor {
 
 	public boolean copy(String sourceFileName, String destinationFileName);
 
+	public boolean copyCompany(
+		long companyId, StoreArea[] sourceStoreAreas,
+		StoreArea destinationStoreArea);
+
 	public boolean copyDirectory(
 		long companyId, long repositoryId, String dirName,
 		StoreArea[] sourceStoreAreas, StoreArea destinationStoreArea);

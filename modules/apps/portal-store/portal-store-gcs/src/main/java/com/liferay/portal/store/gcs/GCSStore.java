@@ -38,6 +38,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -330,6 +331,22 @@ public class GCSStore implements Store {
 			companyId, repositoryId, fileName);
 	}
 
+	private String[] _getFilePaths(long companyId) {
+		List<String> filePaths = new ArrayList<>();
+
+		Bucket bucket = _gcsStore.get(_gcsStoreConfiguration.bucketName());
+
+		String path = StoreArea.getCurrentStoreAreaPath(companyId);
+
+		Page<Blob> blobPage = bucket.list(Storage.BlobListOption.prefix(path));
+
+		Iterable<Blob> blobs = blobPage.iterateAll();
+
+		blobs.forEach(blob -> filePaths.add(blob.getName()));
+
+		return filePaths.toArray(new String[0]);
+	}
+
 	private String[] _getFilePaths(
 		long companyId, long repositoryId, String dirName) {
 
@@ -494,7 +511,7 @@ public class GCSStore implements Store {
 		String startOffset, StoreArea storeArea,
 		TemporalAmount temporalAmount) {
 
-		if (!FeatureFlagManagerUtil.isEnabled("LPS-174816")) {
+		if (!FeatureFlagManagerUtil.isEnabled(companyId, "LPS-174816")) {
 			return StringPool.BLANK;
 		}
 
@@ -615,7 +632,9 @@ public class GCSStore implements Store {
 		@Override
 		public boolean copy(String sourceFileName, String destinationFileName) {
 			try {
-				if (!FeatureFlagManagerUtil.isEnabled("LPS-174816")) {
+				if (!FeatureFlagManagerUtil.isEnabled(
+						CompanyThreadLocal.getCompanyId(), "LPS-174816")) {
+
 					return true;
 				}
 
@@ -645,12 +664,49 @@ public class GCSStore implements Store {
 		}
 
 		@Override
+		public boolean copyCompany(
+			long companyId, StoreArea[] sourceStoreAreas,
+			StoreArea destinationStoreArea) {
+
+			try {
+				if (!FeatureFlagManagerUtil.isEnabled(
+						companyId, "LPS-174816")) {
+
+					return true;
+				}
+
+				for (StoreArea sourceStoreArea : sourceStoreAreas) {
+					String[] filePaths = StoreArea.withStoreArea(
+						sourceStoreArea, () -> _getFilePaths(companyId));
+
+					for (String filePath : filePaths) {
+						copy(
+							filePath,
+							sourceStoreArea.relocate(
+								filePath, destinationStoreArea));
+					}
+				}
+
+				return true;
+			}
+			catch (StorageException storageException) {
+				if (_log.isInfoEnabled()) {
+					_log.info(storageException);
+				}
+
+				return false;
+			}
+		}
+
+		@Override
 		public boolean copyDirectory(
 			long companyId, long repositoryId, String dirName,
 			StoreArea[] sourceStoreAreas, StoreArea destinationStoreArea) {
 
 			try {
-				if (!FeatureFlagManagerUtil.isEnabled("LPS-174816")) {
+				if (!FeatureFlagManagerUtil.isEnabled(
+						companyId, "LPS-174816")) {
+
 					return true;
 				}
 

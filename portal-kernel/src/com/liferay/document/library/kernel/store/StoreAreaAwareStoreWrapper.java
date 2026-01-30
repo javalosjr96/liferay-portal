@@ -53,7 +53,21 @@ public class StoreAreaAwareStoreWrapper implements Store {
 	public void deleteCompany(long companyId) throws PortalException {
 		Store store = _storeSupplier.get();
 
-		store.deleteCompany(companyId);
+		if (_isStoreAreaSupported(companyId)) {
+			StoreAreaProcessor storeAreaProcessor =
+				_storeAreaProcessorSupplier.get();
+
+			if (storeAreaProcessor.copyCompany(
+					companyId, _SOURCE_STORE_AREAS, StoreArea.DELETED)) {
+
+				StoreArea.runWithStoreAreas(
+					() -> store.deleteCompany(companyId), StoreArea.LIVE,
+					StoreArea.NEW);
+			}
+		}
+		else {
+			store.deleteCompany(companyId);
+		}
 	}
 
 	@Override
