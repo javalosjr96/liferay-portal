@@ -184,8 +184,16 @@ public enum StoreArea {
 	}
 
 	public String getPath(long companyId) {
-		return StringBundler.concat(
-			_namespace, StringPool.SLASH, String.valueOf(companyId));
+		StringBundler sb = new StringBundler(3);
+
+		if (Validator.isNotNull(_namespace)) {
+			sb.append(_namespace);
+			sb.append(StringPool.SLASH);
+		}
+
+		sb.append(String.valueOf(companyId));
+
+		return sb.toString();
 	}
 
 	public String getPath(long companyId, long repositoryId, String... path) {
