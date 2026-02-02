@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import java.io.InputStream;
 
@@ -68,6 +69,10 @@ public class CTStore implements Store {
 	@Override
 	public void deleteCompany(long companyId) throws PortalException {
 		_store.deleteCompany(companyId);
+
+		if (PropsValues.DATABASE_PARTITION_ENABLED) {
+			return;
+		}
 
 		ActionableDynamicQuery actionableDynamicQuery =
 			_ctsContentLocalService.getActionableDynamicQuery();
