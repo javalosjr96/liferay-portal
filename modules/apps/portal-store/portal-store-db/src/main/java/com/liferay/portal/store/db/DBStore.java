@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import java.io.InputStream;
 
@@ -55,6 +56,10 @@ public class DBStore implements Store {
 
 	@Override
 	public void deleteCompany(long companyId) throws PortalException {
+		if (PropsValues.DATABASE_PARTITION_ENABLED) {
+			return;
+		}
+
 		ActionableDynamicQuery actionableDynamicQuery =
 			_dlContentLocalService.getActionableDynamicQuery();
 
