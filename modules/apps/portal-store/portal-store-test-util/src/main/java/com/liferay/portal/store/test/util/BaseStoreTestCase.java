@@ -70,7 +70,7 @@ public abstract class BaseStoreTestCase {
 			_companyId, repositoryId, fileName2, Store.VERSION_DEFAULT,
 			new UnsyncByteArrayInputStream(DATA_VERSION));
 
-		_store.deleteCompany(_companyId);
+		_store.deleteDirectory(_companyId);
 
 		Assert.assertFalse(
 			_store.hasFile(

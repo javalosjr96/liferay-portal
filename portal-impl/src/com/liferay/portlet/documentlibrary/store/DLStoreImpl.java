@@ -123,8 +123,8 @@ public class DLStoreImpl implements DLStore {
 	}
 
 	@Override
-	public void deleteCompany(long companyId) throws PortalException {
-		_wrappedStore.deleteCompany(companyId);
+	public void deleteDirectory(long companyId) throws PortalException {
+		_wrappedStore.deleteDirectory(companyId);
 	}
 
 	@Override

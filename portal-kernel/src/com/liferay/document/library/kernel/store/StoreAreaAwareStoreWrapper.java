@@ -50,7 +50,7 @@ public class StoreAreaAwareStoreWrapper implements Store {
 	}
 
 	@Override
-	public void deleteCompany(long companyId) throws PortalException {
+	public void deleteDirectory(long companyId) throws PortalException {
 		Store store = _storeSupplier.get();
 
 		if (_isStoreAreaSupported(companyId)) {
@@ -61,12 +61,12 @@ public class StoreAreaAwareStoreWrapper implements Store {
 					companyId, _SOURCE_STORE_AREAS, StoreArea.DELETED)) {
 
 				StoreArea.runWithStoreAreas(
-					() -> store.deleteCompany(companyId), StoreArea.LIVE,
+					() -> store.deleteDirectory(companyId), StoreArea.LIVE,
 					StoreArea.NEW);
 			}
 		}
 		else {
-			store.deleteCompany(companyId);
+			store.deleteDirectory(companyId);
 		}
 	}
 

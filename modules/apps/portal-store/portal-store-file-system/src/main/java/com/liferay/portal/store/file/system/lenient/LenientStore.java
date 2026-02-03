@@ -31,8 +31,8 @@ public class LenientStore implements Store {
 	}
 
 	@Override
-	public void deleteCompany(long companyId) throws PortalException {
-		_store.deleteCompany(companyId);
+	public void deleteDirectory(long companyId) throws PortalException {
+		_store.deleteDirectory(companyId);
 	}
 
 	@Override

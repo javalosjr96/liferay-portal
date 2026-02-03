@@ -105,10 +105,10 @@ public class DLStoreUtil {
 	 *
 	 * @param companyId the primary key of the company
 	 */
-	public static void deleteCompany(long companyId) throws PortalException {
+	public static void deleteDirectory(long companyId) throws PortalException {
 		DLStore dlStore = _getDLStore();
 
-		dlStore.deleteCompany(companyId);
+		dlStore.deleteDirectory(companyId);
 	}
 
 	/**

@@ -47,7 +47,7 @@ public class DBStore implements Store {
 	}
 
 	@Override
-	public void deleteCompany(long companyId) throws PortalException {
+	public void deleteDirectory(long companyId) throws PortalException {
 		if (PropsValues.DATABASE_PARTITION_ENABLED) {
 			return;
 		}

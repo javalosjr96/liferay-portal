@@ -157,8 +157,8 @@ public class AntivirusAsyncDLStore implements DLStore {
 	}
 
 	@Override
-	public void deleteCompany(long companyId) throws PortalException {
-		_store.deleteCompany(companyId);
+	public void deleteDirectory(long companyId) throws PortalException {
+		_store.deleteDirectory(companyId);
 	}
 
 	@Override

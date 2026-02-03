@@ -1638,7 +1638,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 				() -> {
 					_clearCache(companyId);
 
-					DLStoreUtil.deleteCompany(companyId);
+					DLStoreUtil.deleteDirectory(companyId);
 
 					PortalInstances.removeCompany(company.getCompanyId());
 

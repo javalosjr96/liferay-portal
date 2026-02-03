@@ -100,7 +100,7 @@ public class AzureStore implements Store {
 	}
 
 	@Override
-	public void deleteCompany(long companyId) {
+	public void deleteDirectory(long companyId) {
 		_deleteBlob(companyId + StringPool.SLASH);
 	}
 

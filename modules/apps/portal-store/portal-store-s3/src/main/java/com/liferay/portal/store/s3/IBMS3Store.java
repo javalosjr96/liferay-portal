@@ -140,7 +140,7 @@ public class IBMS3Store implements Store {
 	}
 
 	@Override
-	public void deleteCompany(long companyId) {
+	public void deleteDirectory(long companyId) {
 		_deleteObjects(S3KeyTransformerUtil.getDirectoryKey(companyId));
 	}
 

@@ -210,7 +210,7 @@ public class CTStoreTest {
 
 		_addFiles("testDir1/testFile1:v1", "testDir2/testDir3/testFile2:v1,v2");
 
-		_deleteCompany();
+		_deleteDirectory();
 
 		_assertMethods(_DELETE_COMPANY_METHOD);
 
@@ -224,7 +224,7 @@ public class CTStoreTest {
 			_ctCollections[0],
 			() -> {
 				_addCTFile(fileName, _DATA_1);
-				_deleteCompany();
+				_deleteDirectory();
 
 				_assertMethods(_HAS_FILE_METHOD, _DELETE_COMPANY_METHOD);
 				_assertNoSuchCTSContent(fileName);
@@ -1045,10 +1045,6 @@ public class CTStoreTest {
 			0, CTStoreTest.class.getName(), null);
 	}
 
-	private void _deleteCompany() throws Exception {
-		_ctStore.deleteCompany(_companyId);
-	}
-
 	private void _deleteCTDirectory(String dirName) {
 		_ctStore.deleteDirectory(_companyId, _REPOSITORY_ID, dirName);
 	}
@@ -1060,6 +1056,10 @@ public class CTStoreTest {
 	private void _deleteCTSContent(String fileName, String version) {
 		_ctsContentLocalService.deleteCTSContent(
 			_companyId, _REPOSITORY_ID, fileName, version, _STORE_TYPE);
+	}
+
+	private void _deleteDirectory() throws Exception {
+		_ctStore.deleteDirectory(_companyId);
 	}
 
 	private void _deleteDirectory(String dirName) {
@@ -1354,7 +1354,7 @@ public class CTStoreTest {
 				InputStream.class);
 
 			_DELETE_COMPANY_METHOD = Store.class.getMethod(
-				"deleteCompany", long.class);
+				"deleteDirectory", long.class);
 
 			_DELETE_DIRECTORY_METHOD = Store.class.getMethod(
 				"deleteDirectory", long.class, long.class, String.class);

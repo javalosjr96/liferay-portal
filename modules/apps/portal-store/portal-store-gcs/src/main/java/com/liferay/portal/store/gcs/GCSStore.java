@@ -111,7 +111,7 @@ public class GCSStore implements Store {
 	}
 
 	@Override
-	public void deleteCompany(long companyId) {
+	public void deleteDirectory(long companyId) {
 		_deleteObjects(StoreArea.getCurrentStoreAreaPath(companyId));
 	}
 
