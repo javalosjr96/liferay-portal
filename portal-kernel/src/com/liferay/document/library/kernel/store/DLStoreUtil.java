@@ -101,17 +101,6 @@ public class DLStoreUtil {
 	}
 
 	/**
-	 * Deletes all the company's data from the store.
-	 *
-	 * @param companyId the primary key of the company
-	 */
-	public static void deleteDirectory(long companyId) throws PortalException {
-		DLStore dlStore = _getDLStore();
-
-		dlStore.deleteDirectory(companyId);
-	}
-
-	/**
 	 * Deletes a directory.
 	 *
 	 * @param companyId the primary key of the company
