@@ -15,17 +15,16 @@ import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.util.PortalUtil;
-import com.liferay.portal.kernel.util.PropsValues;
 
 import java.io.InputStream;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -71,18 +70,16 @@ public class CTStore implements Store {
 	}
 
 	@Override
-	public void deleteDirectory(long companyId)
-		throws PortalException {
+	public void deleteDirectory(long companyId) throws PortalException {
 		_store.deleteDirectory(companyId);
 
-		try(Connection connection = DataAccess.getConnection();
+		try (Connection connection = DataAccess.getConnection();
 			PreparedStatement preparedStatement = connection.prepareStatement(
-				"delete from CTStore where companyId = ?")){
+				"delete from CTSContent where companyId = ?")) {
 
-			preparedStatement.setLong(1,companyId);
+			preparedStatement.setLong(1, companyId);
 
 			preparedStatement.executeUpdate();
-
 		}
 		catch (SQLException sqlException) {
 			throw new PortalException(sqlException);

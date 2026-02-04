@@ -12,12 +12,14 @@ import com.liferay.document.library.kernel.exception.NoSuchFileException;
 import com.liferay.document.library.kernel.store.Store;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
-import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.util.PropsValues;
 
 import java.io.InputStream;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 
 import java.util.Arrays;
 import java.util.List;
@@ -48,22 +50,17 @@ public class DBStore implements Store {
 
 	@Override
 	public void deleteDirectory(long companyId) throws PortalException {
-		if (PropsValues.DATABASE_PARTITION_ENABLED) {
-			return;
+		try (Connection connection = DataAccess.getConnection();
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				"delete from DLContent where companyId = ?")) {
+
+			preparedStatement.setLong(1, companyId);
+
+			preparedStatement.executeUpdate();
 		}
-
-		ActionableDynamicQuery actionableDynamicQuery =
-			_dlContentLocalService.getActionableDynamicQuery();
-
-		actionableDynamicQuery.setAddCriteriaMethod(
-			dynamicQuery -> dynamicQuery.add(
-				RestrictionsFactoryUtil.eq("companyId", companyId)));
-
-		actionableDynamicQuery.setPerformActionMethod(
-			(DLContent dlContent) -> _dlContentLocalService.deleteDLContent(
-				dlContent));
-
-		actionableDynamicQuery.performActions();
+		catch (SQLException sqlException) {
+			throw new PortalException(sqlException);
+		}
 	}
 
 	@Override
