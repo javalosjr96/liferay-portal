@@ -71,6 +71,14 @@ public interface Store {
 		String versionLabel);
 
 	/**
+	 * Returns all company IDs currently present in the store.
+	 * @return A list of unique company IDs.
+	 */
+	public default long[] getCompanyIds() throws PortalException {
+		return new long[0];
+	}
+
+	/**
 	 * Returns the file as an {@link InputStream} object.
 	 *
 	 * @param  companyId the primary key of the company
