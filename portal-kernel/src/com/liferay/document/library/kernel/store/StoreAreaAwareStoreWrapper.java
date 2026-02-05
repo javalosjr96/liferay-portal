@@ -132,8 +132,8 @@ public class StoreAreaAwareStoreWrapper implements Store {
 		Store store = _storeSupplier.get();
 
 		long[] companyIds = StoreArea.tryGetWithStoreAreas(
-			store::getCompanyIds,
-			Objects::nonNull, null, StoreArea.LIVE, StoreArea.NEW);
+			store::getCompanyIds, Objects::nonNull, null, StoreArea.LIVE,
+			StoreArea.NEW);
 
 		ArrayUtil.unique(companyIds);
 
