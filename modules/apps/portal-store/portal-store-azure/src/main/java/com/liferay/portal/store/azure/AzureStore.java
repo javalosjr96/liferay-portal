@@ -49,9 +49,11 @@ import java.io.UncheckedIOException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -122,6 +124,40 @@ public class AzureStore implements Store {
 		if (blobClient.exists()) {
 			blobClient.delete();
 		}
+	}
+
+	public long[] getCompanyIds() throws PortalException {
+		Set<Long> companyIdsSet = new HashSet<>();
+
+		try {
+			PagedIterable<BlobItem> blobs =
+				_blobContainerClient.listBlobsByHierarchy("/");
+
+			for (BlobItem blobItem : blobs) {
+				if (Boolean.TRUE.equals(blobItem.isPrefix())) {
+					String folderName = blobItem.getName();
+
+					if (folderName.endsWith("/")) {
+						folderName = folderName.substring(
+							0, folderName.length() - 1);
+					}
+
+					companyIdsSet.add(GetterUtil.getLong(folderName));
+				}
+			}
+		}
+		catch (Exception exception) {
+			throw new PortalException(exception);
+		}
+
+		long[] companyIds = new long[companyIdsSet.size()];
+		int i = 0;
+
+		for (Long id : companyIdsSet) {
+			companyIds[i++] = id;
+		}
+
+		return companyIds;
 	}
 
 	@Override
