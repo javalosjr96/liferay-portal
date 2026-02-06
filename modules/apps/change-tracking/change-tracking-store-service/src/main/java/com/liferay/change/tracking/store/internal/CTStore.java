@@ -15,10 +15,14 @@ import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
+import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 
@@ -29,6 +33,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -135,6 +140,30 @@ public class CTStore implements Store {
 			_ctsContentLocalService.deleteCTSContent(
 				companyId, repositoryId, fileName, versionLabel, _storeType);
 		}
+	}
+
+	@Override
+	public long[] getCompanyIds() throws PortalException {
+		DynamicQuery dynamicQuery = _ctsContentLocalService.dynamicQuery();
+
+		dynamicQuery.setProjection(
+			ProjectionFactoryUtil.distinct(
+				ProjectionFactoryUtil.property("companyId")));
+
+		dynamicQuery.add(RestrictionsFactoryUtil.gt("companyId", 0L));
+
+		List<Long> companyIds = _ctsContentLocalService.dynamicQuery(
+			dynamicQuery);
+
+		for (long storeCompanyId : _store.getCompanyIds()) {
+			companyIds.add(storeCompanyId);
+		}
+
+		ListUtil.unique(companyIds);
+
+		ListUtil.sort(companyIds);
+
+		return ArrayUtil.toLongArray(companyIds);
 	}
 
 	@Override
