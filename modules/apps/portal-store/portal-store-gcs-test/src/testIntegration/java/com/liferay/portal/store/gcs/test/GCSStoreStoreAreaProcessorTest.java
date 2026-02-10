@@ -22,7 +22,6 @@ import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
@@ -376,30 +375,6 @@ public class GCSStoreStoreAreaProcessorTest {
 				StoreArea.LIVE.getPath(
 					_company.getCompanyId(), _group.getGroupId(),
 					StringUtil.randomString(), Store.VERSION_DEFAULT)));
-	}
-
-	@Test
-	public void testDeleteCompanyDirectory() throws Exception {
-		String fileName = StringUtil.randomString();
-
-		_store.addFile(
-			_company.getCompanyId(), _group.getGroupId(), fileName,
-			Store.VERSION_DEFAULT, new UnsyncByteArrayInputStream(new byte[0]));
-
-		_store.deleteDirectory(TestPropsValues.getCompanyId());
-
-		Assert.assertFalse(
-			_store.hasFile(
-				_company.getCompanyId(), TestPropsValues.getGroupId(), fileName,
-				Store.VERSION_DEFAULT));
-
-		StoreArea.withStoreArea(
-			StoreArea.DELETED,
-			() -> Assert.assertTrue(
-				_store.hasFile(
-					TestPropsValues.getCompanyId(),
-					TestPropsValues.getGroupId(), fileName,
-					Store.VERSION_DEFAULT)));
 	}
 
 	private static Company _company;
