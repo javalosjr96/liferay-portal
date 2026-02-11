@@ -12,15 +12,12 @@ import com.liferay.document.library.kernel.store.StoreAreaAwareStoreWrapper;
 import com.liferay.document.library.kernel.store.StoreAreaProcessor;
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.string.StringBundler;
-import com.liferay.petra.string.StringPool;
-import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.AssumeTestRule;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
-import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
@@ -29,17 +26,12 @@ import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Assume;
-import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-
-import org.osgi.service.cm.Configuration;
-import org.osgi.service.cm.ConfigurationAdmin;
 
 /**
  * @author Jorge Avalos
@@ -91,18 +83,13 @@ public class GCStoreStoreAreaAwareStoreWrapperTest {
 						company.getCompanyId(), company.getGroupId(), fileName,
 						Store.VERSION_DEFAULT)));
 		}
-		catch (Exception exception) {
+		finally {
 			_companyLocalService.deleteCompany(company);
 		}
 	}
 
 	@Inject
 	private static CompanyLocalService _companyLocalService;
-
-	private static Configuration _configuration;
-
-	@Inject
-	private static ConfigurationAdmin _configurationAdmin;
 
 	private static final Snapshot<StoreAreaProcessor>
 		_storeAreaProcessorSnapshot = new Snapshot<>(
