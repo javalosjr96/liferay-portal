@@ -65,44 +65,6 @@ public class GCStoreStoreAreaAwareStoreWrapperTest {
 			dlStoreImpl.equals(gcsStoreClassName));
 	}
 
-	@BeforeClass
-	public static void setUpClass() throws Exception {
-		_configuration = _configurationAdmin.getConfiguration(
-			"com.liferay.portal.store.gcs.configuration.GCSStoreConfiguration",
-			StringPool.QUESTION);
-
-		ConfigurationTestUtil.saveConfiguration(
-			_configuration,
-			HashMapDictionaryBuilder.<String, Object>put(
-				"aes256Key", ""
-			).put(
-				"bucketName", "test"
-			).put(
-				"initialRetryDelay", "400"
-			).put(
-				"initialRPCTimeout", "120000"
-			).put(
-				"maxRetryAttempts", "5"
-			).put(
-				"maxRetryDelay", "10000"
-			).put(
-				"maxRPCTimeout", "600000"
-			).put(
-				"retryDelayMultiplier", "1.5"
-			).put(
-				"retryJitter", "false"
-			).put(
-				"rpcTimeoutMultiplier", "1.0"
-			).put(
-				"serviceAccountKey", ""
-			).build());
-	}
-
-	@AfterClass
-	public static void tearDownClass() throws Exception {
-		ConfigurationTestUtil.deleteConfiguration(_configuration);
-	}
-
 	@Test
 	public void testDeleteCompanyDirectory() throws Exception {
 		String fileName = StringUtil.randomString();
