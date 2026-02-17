@@ -146,6 +146,7 @@ public class DataCleanupPreupgradeProcessSuite {
 			).put(
 				configurationDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
+					companyDataCleanupPreupgradeProcess,
 					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
 					userDataCleanupPreupgradeProcess)
 			).put(
