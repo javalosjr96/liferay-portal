@@ -111,7 +111,7 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 	public void testGroupScopedPortableKeyConfiguration() throws Exception {
 		_testGroupScopedConfiguration(
 			ExtendedObjectClassDefinition.Scope.GROUP.getPortablePropertyKey(),
-			RandomTestUtil.randomLong());
+			RandomTestUtil.randomString());
 	}
 
 	@Test
@@ -236,8 +236,7 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 			() -> _checkConfigurationNotExists(),
 			() -> _checkConfigurationNotExists(),
 			unsupportedOperationException -> Assert.assertEquals(
-				"Portlet-instance scoped configuration files do not support " +
-					"database partitioning",
+				"Scope PORTLET_INSTANCE does not support database partition",
 				unsupportedOperationException.getMessage()),
 			false);
 	}
@@ -264,6 +263,18 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 					_TEST_VALUE_1, StringPool.QUOTE);
 
 				if (dictionaryKey != null) {
+					if (dictionaryKey.equals(
+							ExtendedObjectClassDefinition.Scope.GROUP.
+								getPropertyKey())) {
+
+						content = StringBundler.concat(
+							content, StringPool.RETURN_NEW_LINE,
+							ExtendedObjectClassDefinition.Scope.COMPANY.
+								getPropertyKey(),
+							StringPool.EQUAL,
+							_convertDictionaryValue(COMPANY_IDS[1]));
+					}
+
 					content = StringBundler.concat(
 						content, StringPool.RETURN_NEW_LINE, dictionaryKey,
 						StringPool.EQUAL,
