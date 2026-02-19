@@ -47,6 +47,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -211,12 +212,9 @@ public class IBMS3Store implements Store {
 			throw new PortalException(exception);
 		}
 
-		long[] companyIds = new long[companyIdsSet.size()];
-		int i = 0;
+		long[] companyIds = ArrayUtil.toLongArray(companyIdsSet);
 
-		for (Long id : companyIdsSet) {
-			companyIds[i++] = id;
-		}
+		Arrays.sort(companyIds);
 
 		return companyIds;
 	}
