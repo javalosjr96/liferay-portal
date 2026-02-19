@@ -8,6 +8,7 @@ package com.liferay.document.library.kernel.store;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
+import com.liferay.portal.kernel.instance.PortalInstancePool;
 
 import java.io.InputStream;
 
@@ -201,6 +202,20 @@ public class StoreAreaAwareStoreWrapper implements Store {
 		return store.hasFile(companyId, repositoryId, fileName, versionLabel);
 	}
 
+	@Override
+	public void verifyCompanyStores() throws PortalException {
+		Store store = _storeSupplier.get();
+
+		if (_isStoreAreaSupported(PortalInstancePool.getDefaultCompanyId())) {
+			for (StoreArea storeArea : _STORE_AREAS) {
+				StoreArea.withStoreArea(storeArea, store::verifyCompanyStores);
+			}
+		}
+		else {
+			store.verifyCompanyStores();
+		}
+	}
+
 	private String[] _getFileNames(
 		long companyId, long repositoryId, String dirName,
 		StoreArea... storeAreas) {
@@ -256,6 +271,10 @@ public class StoreAreaAwareStoreWrapper implements Store {
 
 	private static final StoreArea[] _SOURCE_STORE_AREAS = {
 		StoreArea.LIVE, StoreArea.NEW
+	};
+
+	private static final StoreArea[] _STORE_AREAS = {
+		StoreArea.DELETED, StoreArea.LIVE, StoreArea.NEW
 	};
 
 	private final Supplier<StoreAreaProcessor> _storeAreaProcessorSupplier;
