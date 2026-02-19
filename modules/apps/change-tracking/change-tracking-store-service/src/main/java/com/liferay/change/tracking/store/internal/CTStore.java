@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.util.PropsValues;
 
 import java.io.InputStream;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -151,16 +152,16 @@ public class CTStore implements Store {
 
 		dynamicQuery.add(RestrictionsFactoryUtil.gt("companyId", 0L));
 
-		List<Long> companyIds = _ctsContentLocalService.dynamicQuery(
-			dynamicQuery);
+		List<Long> companyIds = new ArrayList<>(
+			_ctsContentLocalService.dynamicQuery(dynamicQuery));
 
 		for (long storeCompanyId : _store.getCompanyIds()) {
 			companyIds.add(storeCompanyId);
 		}
 
-		ListUtil.unique(companyIds);
+		companyIds = ListUtil.unique(companyIds);
 
-		ListUtil.sort(companyIds);
+		companyIds = ListUtil.sort(companyIds);
 
 		return ArrayUtil.toLongArray(companyIds);
 	}
