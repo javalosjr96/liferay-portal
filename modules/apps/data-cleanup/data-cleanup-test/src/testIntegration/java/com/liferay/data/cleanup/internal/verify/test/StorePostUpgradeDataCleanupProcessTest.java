@@ -40,7 +40,9 @@ public class StorePostUpgradeDataCleanupProcessTest
 					messages.contains(
 						StringBundler.concat(
 							"Found orphan store from deleted company ",
-							company.getCompanyId(), ".")));
+							company.getCompanyId(),
+							". Manual analysis and deletion of this store is ",
+							"recommended.")));
 			},
 			() -> _companyLocalService.deleteCompany(company),
 			() -> PortalInstances.removeCompany(company.getCompanyId()));
