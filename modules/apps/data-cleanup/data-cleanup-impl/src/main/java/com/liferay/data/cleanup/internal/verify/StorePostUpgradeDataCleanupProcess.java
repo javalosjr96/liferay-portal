@@ -33,10 +33,9 @@ public class StorePostUpgradeDataCleanupProcess
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						StringBundler.concat(
-							"Found orphan store from deleted company ",
-							storeCompanyId,
-							". Manual analysis and deletion of this store is ",
-							"recommended."));
+							"Store ", storeCompanyId,
+							" belongs to deleted company ", storeCompanyId,
+							". Remove it if it is not used anywhere else."));
 				}
 			}
 		}
