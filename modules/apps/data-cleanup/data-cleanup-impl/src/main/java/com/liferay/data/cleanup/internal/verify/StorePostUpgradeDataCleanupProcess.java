@@ -30,8 +30,8 @@ public class StorePostUpgradeDataCleanupProcess
 
 		for (long storeCompanyId : _store.getCompanyIds()) {
 			if (Arrays.binarySearch(companyIds, storeCompanyId) < 0) {
-				if (_log.isInfoEnabled()) {
-					_log.info(
+				if (_log.isWarnEnabled()) {
+					_log.warn(
 						StringBundler.concat(
 							"Found orphan store from deleted company ",
 							storeCompanyId,
