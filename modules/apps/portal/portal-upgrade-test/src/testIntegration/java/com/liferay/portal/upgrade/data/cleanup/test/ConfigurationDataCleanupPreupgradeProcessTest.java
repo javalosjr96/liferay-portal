@@ -21,6 +21,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeException;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.test.log.LogCapture;
@@ -76,15 +77,24 @@ public class ConfigurationDataCleanupPreupgradeProcessTest
 
 	@Test
 	public void testUpgrade() throws Exception {
-		_test(0, _getNonexistentCompanyId(), "companyId", "Company");
+		_testUpgrade(
+			0L, _getNonexistentCompanyId(), "companyId", null, null, "Company");
 
-		_test(
+		_testUpgrade(
 			TestPropsValues.getCompanyId(), _getNonexistentCompanyId(),
-			"companyId", "Company");
+			"companyId", null, null, "Company");
 
-		_test(
+		_testUpgrade(
+			TestPropsValues.getCompanyId(), _getNonexistentCompanyId(),
+			"companyId", TestPropsValues.getGroupId(), "groupId", "Company");
+
+		_testUpgrade(
 			TestPropsValues.getGroupId(), _getNonexistentGroupId(), "groupId",
-			"Group_");
+			null, null, "Group_");
+
+		_testUpgrade(
+			TestPropsValues.getGroupId(), _getNonexistentGroupId(), "groupId",
+			TestPropsValues.getCompanyId(), "companyId", "Group_");
 
 		long companyId = _getNonexistentCompanyId();
 
@@ -96,35 +106,13 @@ public class ConfigurationDataCleanupPreupgradeProcessTest
 				"insert into Company (mvccVersion, companyId) values (0 ," +
 					companyId + ")");
 
-			_test(
-				TestPropsValues.getCompanyId(), companyId, "companyId",
-				"Company");
+			_testUpgrade(
+				TestPropsValues.getCompanyId(), companyId, "companyId", null,
+				null, "Company");
 		}
 		finally {
 			runSQL("delete from Company where companyId = " + companyId);
 		}
-	}
-
-	@Test
-	public void testUpgradeWithExistentCompanyAndNonexistentGroup()
-		throws Exception {
-
-		long nonexistentGroupId = _getNonexistentGroupId();
-
-		_testUpgradeWithCombinedScope(
-			TestPropsValues.getCompanyId(), nonexistentGroupId, "groupId",
-			nonexistentGroupId, "Group_", "groupId");
-	}
-
-	@Test
-	public void testUpgradeWithNonexistentCompanyAndExistentGroup()
-		throws Exception {
-
-		long nonexistentCompanyId = _getNonexistentCompanyId();
-
-		_testUpgradeWithCombinedScope(
-			nonexistentCompanyId, TestPropsValues.getGroupId(), "companyId",
-			nonexistentCompanyId, "Company", "companyId");
 	}
 
 	@Test
@@ -209,9 +197,10 @@ public class ConfigurationDataCleanupPreupgradeProcessTest
 		}
 	}
 
-	private void _test(
-			long existentPrimaryKey, long nonexistentPrimaryKey,
-			String primaryKeyColumnName, String tableName)
+	private void _testUpgrade(
+			Long existentPrimaryKey, Long nonexistentPrimaryKey,
+			String primaryKeyColumnName, Long secondaryKey,
+			String secondaryKeyColumnName, String tableName)
 		throws Exception {
 
 		String existentConfigurationId = null;
@@ -221,27 +210,57 @@ public class ConfigurationDataCleanupPreupgradeProcessTest
 				ConfigurationDataCleanupPreupgradeProcess.class.getName(),
 				LoggerTestUtil.INFO)) {
 
+			HashMapDictionary<String, Object> existentDictionary;
+			HashMapDictionary<String, Object> nonexistentDictionary;
+
+			if ((secondaryKey != null) && (secondaryKeyColumnName != null)) {
+				existentDictionary =
+					HashMapDictionaryBuilder.<String, Object>put(
+						primaryKeyColumnName, existentPrimaryKey
+					).put(
+						secondaryKeyColumnName, secondaryKey
+					).build();
+
+				nonexistentDictionary =
+					HashMapDictionaryBuilder.<String, Object>put(
+						primaryKeyColumnName, nonexistentPrimaryKey
+					).put(
+						secondaryKeyColumnName, secondaryKey
+					).build();
+			}
+			else {
+				existentDictionary =
+					HashMapDictionaryBuilder.<String, Object>put(
+						primaryKeyColumnName, existentPrimaryKey
+					).build();
+
+				nonexistentDictionary =
+					HashMapDictionaryBuilder.<String, Object>put(
+						primaryKeyColumnName, nonexistentPrimaryKey
+					).build();
+			}
+
 			existentConfigurationId =
 				ConfigurationTestUtil.createFactoryConfiguration(
 					ConfigurationDataCleanupPreupgradeProcessTest.class.
 						getName(),
-					HashMapDictionaryBuilder.<String, Object>put(
-						primaryKeyColumnName, existentPrimaryKey
-					).build());
+					existentDictionary);
+
 			nonexistentConfigurationId =
 				ConfigurationTestUtil.createFactoryConfiguration(
 					ConfigurationDataCleanupPreupgradeProcessTest.class.
 						getName(),
-					HashMapDictionaryBuilder.<String, Object>put(
-						primaryKeyColumnName, nonexistentPrimaryKey
-					).build());
+					nonexistentDictionary);
 
 			upgrade();
 
 			List<String> messages = logCapture.getMessages();
 
+			String logContext =
+				messages.toString() + CompanyThreadLocal.getCompanyId();
+
 			Assert.assertFalse(
-				messages.toString() + CompanyThreadLocal.getCompanyId(),
+				logContext,
 				messages.contains(
 					StringBundler.concat(
 						"Table Configuration_, 1 row deleted because ",
@@ -252,7 +271,7 @@ public class ConfigurationDataCleanupPreupgradeProcessTest
 						_dbInspector.normalizeName(primaryKeyColumnName))));
 
 			Assert.assertTrue(
-				messages.toString() + CompanyThreadLocal.getCompanyId(),
+				logContext,
 				messages.contains(
 					StringBundler.concat(
 						"Table Configuration_, 1 row deleted because ",
@@ -263,48 +282,15 @@ public class ConfigurationDataCleanupPreupgradeProcessTest
 						_dbInspector.normalizeName(primaryKeyColumnName))));
 		}
 		finally {
-			ConfigurationTestUtil.deleteConfiguration(existentConfigurationId);
-			ConfigurationTestUtil.deleteConfiguration(
-				nonexistentConfigurationId);
-		}
-	}
+			if (existentConfigurationId != null) {
+				ConfigurationTestUtil.deleteConfiguration(
+					existentConfigurationId);
+			}
 
-	private void _testUpgradeWithCombinedScope(
-			long companyId, long groupId, String expectedScope,
-			long nonexistentId, String expectedTableName,
-			String expectedColumnName)
-		throws Exception {
-
-		String configurationId = null;
-
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				ConfigurationDataCleanupPreupgradeProcess.class.getName(),
-				LoggerTestUtil.INFO)) {
-
-			configurationId = ConfigurationTestUtil.createFactoryConfiguration(
-				ConfigurationDataCleanupPreupgradeProcessTest.class.getName(),
-				HashMapDictionaryBuilder.<String, Object>put(
-					"companyId", companyId
-				).put(
-					"groupId", groupId
-				).build());
-
-			upgrade();
-
-			List<String> messages = logCapture.getMessages();
-
-			Assert.assertTrue(
-				messages.toString() + CompanyThreadLocal.getCompanyId(),
-				messages.contains(
-					StringBundler.concat(
-						"Table Configuration_, 1 row deleted because ",
-						configurationId, " has scope ", expectedScope, " ",
-						nonexistentId, " that was not found in ",
-						_dbInspector.normalizeName(expectedTableName), ".",
-						_dbInspector.normalizeName(expectedColumnName))));
-		}
-		finally {
-			ConfigurationTestUtil.deleteConfiguration(configurationId);
+			if (nonexistentConfigurationId != null) {
+				ConfigurationTestUtil.deleteConfiguration(
+					nonexistentConfigurationId);
+			}
 		}
 	}
 
