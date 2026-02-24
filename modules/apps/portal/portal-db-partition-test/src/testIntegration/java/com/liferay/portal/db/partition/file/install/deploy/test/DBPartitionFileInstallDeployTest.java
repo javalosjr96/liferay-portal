@@ -18,7 +18,12 @@ import com.liferay.portal.db.partition.test.util.BaseDBPartitionTestCase;
 import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.file.install.FileInstaller;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
+import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 
@@ -109,9 +114,11 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 
 	@Test
 	public void testGroupScopedPortableKeyConfiguration() throws Exception {
+
+		Group group = GroupLocalServiceUtil.getGroup(TestPropsValues.getGroupId());
+
 		_testGroupScopedConfiguration(
-			ExtendedObjectClassDefinition.Scope.GROUP.getPortablePropertyKey(),
-			RandomTestUtil.randomLong());
+			ExtendedObjectClassDefinition.Scope.GROUP.getPortablePropertyKey(), TestPropsValues.COMPANY_WEB_ID + "--" + group.getGroupKey());
 	}
 
 	@Test
