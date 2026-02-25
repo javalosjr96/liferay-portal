@@ -19,10 +19,8 @@ import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.file.install.FileInstaller;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.test.util.TestPropsUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
 import com.liferay.portal.kernel.util.PropsValues;
@@ -83,6 +81,8 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 		}
 
 		_dataSource = InfrastructureUtil.getDataSource();
+
+		_group = GroupTestUtil.addGroup();
 	}
 
 	@AfterClass
@@ -107,18 +107,38 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 
 	@Test
 	public void testGroupScopedConfiguration() throws Exception {
-		_testGroupScopedConfiguration(
+		_testScopedConfiguration(
 			ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(),
-			RandomTestUtil.randomLong());
+			_group.getGroupId(),
+			() -> _checkConfigurationExists(COMPANY_IDS[1], _TEST_VALUE_1),
+			() -> _checkConfigurationExists(COMPANY_IDS[1], _TEST_VALUE_2),
+			unsupportedOperationException -> Assert.fail(), true);
 	}
 
 	@Test
 	public void testGroupScopedPortableKeyConfiguration() throws Exception {
+		_testScopedConfiguration(
+			ExtendedObjectClassDefinition.Scope.GROUP.getPortablePropertyKey(),
+			TestPropsValues.COMPANY_WEB_ID + "--" + _group.getGroupKey(),
+			() -> _checkConfigurationExists(
+				TestPropsValues.getCompanyId(), _TEST_VALUE_1),
+			() -> _checkConfigurationExists(
+				TestPropsValues.getCompanyId(), _TEST_VALUE_2),
+			unsupportedOperationException -> Assert.fail(), true);
+	}
 
-		Group group = GroupLocalServiceUtil.getGroup(TestPropsValues.getGroupId());
-
-		_testGroupScopedConfiguration(
-			ExtendedObjectClassDefinition.Scope.GROUP.getPortablePropertyKey(), TestPropsValues.COMPANY_WEB_ID + "--" + group.getGroupKey());
+	@Test
+	public void testInvalidGroupScopedConfiguration() throws Exception {
+		_testScopedConfiguration(
+			ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(),
+			_group.getGroupId(), () -> _checkConfigurationNotExists(),
+			() -> _checkConfigurationNotExists(),
+			unsupportedOperationException -> Assert.assertEquals(
+				"Unable to process group scoped configuration " +
+					_CONFIGURATION_FACTORY_PID.concat(".config") +
+						" because required property \"companyId\" is missing",
+				unsupportedOperationException.getMessage()),
+			false);
 	}
 
 	@Test
@@ -219,21 +239,6 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 			unsupportedOperationException -> Assert.fail(), true);
 	}
 
-	private void _testGroupScopedConfiguration(
-			String dictionaryKey, Object dictionaryValue)
-		throws Exception {
-
-		_testScopedConfiguration(
-			dictionaryKey, dictionaryValue,
-			() -> _checkConfigurationNotExists(),
-			() -> _checkConfigurationNotExists(),
-			unsupportedOperationException -> Assert.assertEquals(
-				"Group scoped configuration files do not support database " +
-					"partitioning",
-				unsupportedOperationException.getMessage()),
-			false);
-	}
-
 	private void _testPortletInstanceScopedConfiguration(
 			String dictionaryKey, Object dictionaryValue)
 		throws Exception {
@@ -270,6 +275,19 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 					_TEST_VALUE_1, StringPool.QUOTE);
 
 				if (dictionaryKey != null) {
+					if (dictionaryKey.equals(
+							ExtendedObjectClassDefinition.Scope.GROUP.
+								getPropertyKey()) &&
+						supportedConfiguration) {
+
+						content = StringBundler.concat(
+							content, StringPool.RETURN_NEW_LINE,
+							ExtendedObjectClassDefinition.Scope.COMPANY.
+								getPropertyKey(),
+							StringPool.EQUAL,
+							_convertDictionaryValue(COMPANY_IDS[1]));
+					}
+
 					content = StringBundler.concat(
 						content, StringPool.RETURN_NEW_LINE, dictionaryKey,
 						StringPool.EQUAL,
@@ -299,6 +317,19 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 					_TEST_VALUE_2, StringPool.QUOTE);
 
 				if (dictionaryKey != null) {
+					if (dictionaryKey.equals(
+							ExtendedObjectClassDefinition.Scope.GROUP.
+								getPropertyKey()) &&
+						supportedConfiguration) {
+
+						content = StringBundler.concat(
+							content, StringPool.RETURN_NEW_LINE,
+							ExtendedObjectClassDefinition.Scope.COMPANY.
+								getPropertyKey(),
+							StringPool.EQUAL,
+							_convertDictionaryValue(COMPANY_IDS[1]));
+					}
+
 					content = StringBundler.concat(
 						content, StringPool.RETURN_NEW_LINE, dictionaryKey,
 						StringPool.EQUAL,
@@ -361,5 +392,6 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 
 	private static DataSource _dataSource;
 	private static FileInstaller _fileInstaller;
+	private static Group _group;
 
 }
