@@ -257,7 +257,7 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 			String dictionaryKey, Object dictionaryValue,
 			UnsafeRunnable<Exception> addValidatorRunnable,
 			UnsafeRunnable<Exception> updateValidatorRunnable,
-			UnsafeConsumer<UnsupportedOperationException, Exception>
+			UnsafeConsumer<IllegalArgumentException, Exception>
 				exceptionValidatorConsumer,
 			boolean supportedConfiguration)
 		throws Exception {
@@ -302,11 +302,8 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 					Assert.fail();
 				}
 			}
-			catch (UnsupportedOperationException
-						unsupportedOperationException) {
-
-				exceptionValidatorConsumer.accept(
-					unsupportedOperationException);
+			catch (IllegalArgumentException illegalArgumentException) {
+				exceptionValidatorConsumer.accept(illegalArgumentException);
 			}
 
 			addValidatorRunnable.run();
@@ -344,11 +341,8 @@ public class DBPartitionFileInstallDeployTest extends BaseDBPartitionTestCase {
 					Assert.fail();
 				}
 			}
-			catch (UnsupportedOperationException
-						unsupportedOperationException) {
-
-				exceptionValidatorConsumer.accept(
-					unsupportedOperationException);
+			catch (IllegalArgumentException illegalArgumentException) {
+				exceptionValidatorConsumer.accept(illegalArgumentException);
 			}
 
 			updateValidatorRunnable.run();
