@@ -6,6 +6,7 @@
 package com.liferay.portal.upgrade.data.cleanup.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.configuration.admin.web.internal.configuration.persistence.listener.ConfigurationImportGlobalConfigurationModelListener;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -234,16 +235,21 @@ public class ConfigurationDataCleanupPreupgradeProcessTest
 					).build();
 			}
 
-			existentConfigurationId =
-				ConfigurationTestUtil.createFactoryConfiguration(
-					ConfigurationDataCleanupPreupgradeProcessTest.class.
-						getName(),
-					existentDictionary);
-			nonexistentConfigurationId =
-				ConfigurationTestUtil.createFactoryConfiguration(
-					ConfigurationDataCleanupPreupgradeProcessTest.class.
-						getName(),
-					nonexistentDictionary);
+			try (LogCapture logCapture2 = LoggerTestUtil.configureLog4JLogger(
+				ConfigurationImportGlobalConfigurationModelListener.class.getName(),
+				LoggerTestUtil.ERROR)) {
+
+				existentConfigurationId =
+					ConfigurationTestUtil.createFactoryConfiguration(
+						ConfigurationDataCleanupPreupgradeProcessTest.class.
+							getName(),
+						existentDictionary);
+				nonexistentConfigurationId =
+					ConfigurationTestUtil.createFactoryConfiguration(
+						ConfigurationDataCleanupPreupgradeProcessTest.class.
+							getName(),
+						nonexistentDictionary);
+			}
 
 			upgrade();
 
