@@ -10,7 +10,9 @@ import com.liferay.document.library.kernel.store.Store;
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 
@@ -30,14 +32,24 @@ import org.junit.Test;
 public abstract class BaseStoreTestCase {
 
 	@Before
-	public void setUp() {
+	public void setUp() throws PortalException {
 		_companyId = RandomTestUtil.nextLong();
 		_repositoryId = RandomTestUtil.nextLong();
+
 		_store = getStore();
+
+		_store.addFile(
+			TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
+			_TEMP_FILE_NAME, Store.VERSION_DEFAULT,
+			new UnsyncByteArrayInputStream(new byte[0]));
 	}
 
 	@After
 	public void tearDown() throws PortalException {
+		_store.deleteFile(
+			TestPropsValues.getCompanyId(), TestPropsValues.getGroupId(),
+			_TEMP_FILE_NAME, Store.VERSION_DEFAULT);
+
 		_store.deleteDirectory(_companyId);
 	}
 
@@ -170,8 +182,8 @@ public abstract class BaseStoreTestCase {
 		_store.deleteFile(
 			_companyId, _repositoryId, fileName, Store.VERSION_DEFAULT);
 
-		Assert.assertFalse(
-			ArrayUtil.contains(_store.getCompanyIds(), _companyId));
+		Assert.assertArrayEquals(
+			PortalInstancePool.getCompanyIds(), _store.getCompanyIds());
 	}
 
 	@Test
@@ -419,6 +431,8 @@ public abstract class BaseStoreTestCase {
 		new byte[BaseStoreTestCase._DATA_SIZE];
 
 	private static final int _DATA_SIZE = 1024 * 65;
+
+	private static final String _TEMP_FILE_NAME = RandomTestUtil.randomString();
 
 	static {
 		for (int i = 0; i < _DATA_SIZE; i++) {

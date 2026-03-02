@@ -135,7 +135,7 @@ public class StoreAreaAwareStoreWrapper implements Store {
 		if (_isStoreAreaSupported(PortalInstancePool.getDefaultCompanyId())) {
 			long[] companyIds = StoreArea.tryGetWithStoreAreas(
 				store::getCompanyIds, Objects::nonNull, null, StoreArea.LIVE,
-				StoreArea.NEW);
+				StoreArea.NEW, StoreArea.DELETED);
 
 			companyIds = ArrayUtil.unique(companyIds);
 
