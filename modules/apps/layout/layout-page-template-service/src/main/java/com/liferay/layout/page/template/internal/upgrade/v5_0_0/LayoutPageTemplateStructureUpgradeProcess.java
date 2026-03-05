@@ -22,7 +22,8 @@ public class LayoutPageTemplateStructureUpgradeProcess extends UpgradeProcess {
 	@Override
 	protected void doUpgrade() throws Exception {
 		try (PreparedStatement deletePreparedStatement =
-				connection.prepareStatement(
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection,
 					"delete from LayoutPageTemplateStructure where " +
 						"ctCollectionId = ? and " +
 							"layoutPageTemplateStructureId = ?");

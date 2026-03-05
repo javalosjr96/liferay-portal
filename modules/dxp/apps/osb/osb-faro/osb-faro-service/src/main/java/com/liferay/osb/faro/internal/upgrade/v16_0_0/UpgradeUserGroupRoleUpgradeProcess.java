@@ -5,6 +5,7 @@
 
 package com.liferay.osb.faro.internal.upgrade.v16_0_0;
 
+import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.model.RoleConstants;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 
@@ -21,8 +22,8 @@ public class UpgradeUserGroupRoleUpgradeProcess extends UpgradeProcess {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select roleId from Role_ where name in (?, ?, ?)");
 			PreparedStatement updatePreparedStatement =
-				connection.prepareStatement(
-					"delete from UserGroupRole where roleId = ?")) {
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection, "delete from UserGroupRole where roleId = ?")) {
 
 			preparedStatement.setString(1, RoleConstants.SITE_ADMINISTRATOR);
 			preparedStatement.setString(2, RoleConstants.SITE_MEMBER);

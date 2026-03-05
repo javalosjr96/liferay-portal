@@ -6,6 +6,7 @@
 package com.liferay.portal.upgrade.v7_0_5;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -48,9 +49,11 @@ public class UpgradePortalPreferences extends UpgradeProcess {
 
 		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
 				sql);
-			PreparedStatement preparedStatement2 = connection.prepareStatement(
-				"update PortalPreferences set preferences = ? where " +
-					"portalPreferencesId = ?");
+			PreparedStatement preparedStatement2 =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection,
+					"update PortalPreferences set preferences = ? where " +
+						"portalPreferencesId = ?");
 			ResultSet resultSet = preparedStatement1.executeQuery()) {
 
 			while (resultSet.next()) {

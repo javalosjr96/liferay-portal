@@ -7,6 +7,7 @@ package com.liferay.osb.faro.internal.upgrade.v10_0_0;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.model.RoleConstants;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
@@ -62,7 +63,8 @@ public class UpgradeFaroProjectUpgradeProcess extends UpgradeProcess {
 					"OSBFaro_FaroUser.groupId where OSBFaro_FaroUser.roleId = ",
 					"?"));
 			PreparedStatement updatePreparedStatement =
-				connection.prepareStatement(
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection,
 					"update OSBFaro_FaroProject set " +
 						"incidentReportEmailAddresses = ? where " +
 							"faroProjectId = ?")) {

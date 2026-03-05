@@ -24,8 +24,10 @@ public class UpgradeAccount extends UpgradeProcess {
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				"update ListType set type_ = ? where type_ = ?")) {
+		try (PreparedStatement preparedStatement =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection,
+					"update ListType set type_ = ? where type_ = ?")) {
 
 			for (String typeName :
 					new String[] {

@@ -54,12 +54,13 @@ public abstract class UpgradePortletSettings extends UpgradeProcess {
 			selectPreparedStatement.setString(2, portletId);
 
 			try (PreparedStatement insertPreparedStatement =
-					connection.prepareStatement(
+					AutoBatchPreparedStatementUtil.autoBatch(
+						connection,
 						StringBundler.concat(
 							"insert into PortletPreferences (",
-							"mvccVersion, ctCollectionId, ownerType, plid, ",
-							"portletPreferencesId, ownerId, portletId) values ",
-							"(0, 0, ?, ?, ?, ?, ?)"));
+							"mvccVersion, ctCollectionId, ",
+							"portletPreferencesId, ownerId, ownerType, plid, ",
+							"portletId) values (0, 0, ?, ?, ?, ?, ?)"));
 				ResultSet resultSet = selectPreparedStatement.executeQuery()) {
 
 				while (resultSet.next()) {

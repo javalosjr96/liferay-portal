@@ -8,6 +8,7 @@ package com.liferay.layout.page.template.internal.upgrade.v1_1_1;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.dao.orm.common.SQLTransformer;
+import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
@@ -33,7 +34,8 @@ public class LayoutPageTemplateEntryUpgradeProcess extends UpgradeProcess {
 					"select count(*) from LayoutPageTemplateEntry where " +
 						"groupId = ? and name = ?");
 			PreparedStatement deletePreparedStatement =
-				connection.prepareStatement(
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection,
 					"delete from LayoutPageTemplateEntry where groupId <> ? " +
 						"and layoutPageTemplateCollectionId <> 0 and type_ = " +
 							"? and layoutPrototypeId = ?");
@@ -47,7 +49,8 @@ public class LayoutPageTemplateEntryUpgradeProcess extends UpgradeProcess {
 							"groupId in (select groupId from Group_ where ",
 							"site = [$FALSE$])")));
 			PreparedStatement updatePreparedStatement =
-				connection.prepareStatement(
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection,
 					"update LayoutPageTemplateEntry set groupId = ? , " +
 						"layoutPageTemplateCollectionId = 0, name = ? where " +
 							"layoutPageTemplateEntryId = ?")) {

@@ -521,14 +521,20 @@ public class UpgradeJournal extends BaseUpgradePortletPreferences {
 				"select companyId, privateLayout, layoutId, portletId from " +
 					"JournalContentSearch where JournalContentSearch.groupId " +
 						"= ? and JournalContentSearch.articleId = ?");
-			PreparedStatement preparedStatement3 = connection.prepareStatement(
-				"delete from JournalContentSearch where " +
-					"JournalContentSearch.groupId = ? and " +
-						"JournalContentSearch.articleId = ?");
-			PreparedStatement preparedStatement4 = connection.prepareStatement(
-				"insert into JournalContentSearch(contentSearchId, " +
-					"companyId, groupId, privateLayout, layoutId, portletId, " +
-						"articleId) values (?, ?, ?, ?, ?, ?, ?)")) {
+			PreparedStatement preparedStatement3 =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection,
+					"delete from JournalContentSearch where " +
+						"JournalContentSearch.groupId = ? and " +
+							"JournalContentSearch.articleId = ?");
+			PreparedStatement preparedStatement4 =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection,
+					StringBundler.concat(
+						"insert into JournalContentSearch(contentSearchId, ",
+						"companyId, groupId, privateLayout, layoutId, ",
+						"portletId, articleId) values (?, ?, ?, ?, ?, ?, ",
+						"?)"))) {
 
 			preparedStatement1.setLong(1, groupId);
 			preparedStatement1.setString(2, portletId);
