@@ -408,12 +408,14 @@ public class ReleaseManagerImpl implements ReleaseManager {
 					release.setVerified(false);
 				}
 				catch (Exception exception) {
+					Exception exception1 = new Exception(bundleSymbolicName);
+
 					release = _releaseLocalService.addRelease(
 						bundleSymbolicName, "0.0.0");
 
 					release.setState(ReleaseConstants.STATE_UPGRADE_FAILURE);
 
-					ReflectionUtil.throwException(exception);
+					ReflectionUtil.throwException(exception1);
 				}
 				finally {
 					release = _releaseLocalService.updateRelease(release);
