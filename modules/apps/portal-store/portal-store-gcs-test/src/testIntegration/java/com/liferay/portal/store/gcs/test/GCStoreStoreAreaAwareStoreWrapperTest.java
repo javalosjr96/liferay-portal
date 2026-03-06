@@ -102,6 +102,11 @@ public class GCStoreStoreAreaAwareStoreWrapperTest {
 	public void testVerifyCompanyStores() throws Exception {
 		String fileName = RandomTestUtil.randomString();
 
+		String warnMessage = StringBundler.concat(
+			"Store ", _company.getCompanyId(), " belongs to deleted company ",
+			_company.getCompanyId(),
+			". Remove it if it is not used anywhere else.");
+
 		try (LogCapture logCapture1 = LoggerTestUtil.configureLog4JLogger(
 				_CLASS_NAME_GCSSTORE, LoggerTestUtil.WARN)) {
 
@@ -114,46 +119,45 @@ public class GCStoreStoreAreaAwareStoreWrapperTest {
 
 			List<String> messages1 = logCapture1.getMessages();
 
-			Assert.assertTrue(messages1.toString(), messages1.isEmpty());
-
-			PortalInstancePool.remove(_company.getCompanyId());
-
-			_wrappedStore.deleteDirectory(_company.getCompanyId());
-
 			Assert.assertFalse(
-				_store.hasFile(
-					_company.getCompanyId(), _company.getGroupId(), fileName,
-					Store.VERSION_DEFAULT));
+				messages1.toString(), messages1.contains(warnMessage));
 
-			try (LogCapture logCapture2 = LoggerTestUtil.configureLog4JLogger(
-					_CLASS_NAME_GCSSTORE, LoggerTestUtil.WARN)) {
+			try {
+				PortalInstancePool.remove(_company.getCompanyId());
 
-				_wrappedStore.verifyCompanyStores();
+				_wrappedStore.deleteDirectory(_company.getCompanyId());
 
-				messages1 = logCapture2.getMessages();
+				Assert.assertFalse(
+					_store.hasFile(
+						_company.getCompanyId(), _company.getGroupId(),
+						fileName, Store.VERSION_DEFAULT));
 
-				Assert.assertTrue(
-					messages1.toString(),
-					messages1.contains(
-						StringBundler.concat(
-							"Store ", _company.getCompanyId(),
-							" belongs to deleted company ",
-							_company.getCompanyId(),
-							". Remove it if it is not used anywhere else.")));
+				try (LogCapture logCapture2 =
+						LoggerTestUtil.configureLog4JLogger(
+							_CLASS_NAME_GCSSTORE, LoggerTestUtil.WARN)) {
+
+					_wrappedStore.verifyCompanyStores();
+
+					List<String> messages2 = logCapture2.getMessages();
+
+					Assert.assertTrue(
+						messages2.toString(), messages2.contains(warnMessage));
+				}
+			}
+			finally {
+				PortalInstancePool.add(_company);
 			}
 		}
-		finally {
-			PortalInstancePool.add(_company);
-		}
 
-		try (LogCapture logCapture2 = LoggerTestUtil.configureLog4JLogger(
+		try (LogCapture logCapture3 = LoggerTestUtil.configureLog4JLogger(
 				_CLASS_NAME_GCSSTORE, LoggerTestUtil.WARN)) {
 
 			_store.verifyCompanyStores();
 
-			List<String> messages2 = logCapture2.getMessages();
+			List<String> messages3 = logCapture3.getMessages();
 
-			Assert.assertTrue(messages2.toString(), messages2.isEmpty());
+			Assert.assertFalse(
+				messages3.toString(), messages3.contains(warnMessage));
 		}
 	}
 

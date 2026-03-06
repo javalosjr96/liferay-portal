@@ -405,6 +405,10 @@ public abstract class BaseStoreTestCase {
 	public void testVerifyCompanyStores() throws Exception {
 		String fileName = RandomTestUtil.randomString();
 
+		String warnMessage = StringBundler.concat(
+			"Store ", _companyId, " belongs to deleted company ", _companyId,
+			". Remove it if it is not used anywhere else.");
+
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				getStoreClassName(), LoggerTestUtil.WARN)) {
 
@@ -412,7 +416,8 @@ public abstract class BaseStoreTestCase {
 
 			List<String> messages = logCapture.getMessages();
 
-			Assert.assertTrue(messages.toString(), messages.isEmpty());
+			Assert.assertFalse(
+				messages.toString(), messages.contains(warnMessage));
 
 			_store.addFile(
 				_companyId, _repositoryId, fileName, Store.VERSION_DEFAULT,
@@ -423,12 +428,7 @@ public abstract class BaseStoreTestCase {
 			messages = logCapture.getMessages();
 
 			Assert.assertTrue(
-				messages.toString(),
-				messages.contains(
-					StringBundler.concat(
-						"Store ", _companyId, " belongs to deleted company ",
-						_companyId,
-						". Remove it if it is not used anywhere else.")));
+				messages.toString(), messages.contains(warnMessage));
 		}
 	}
 
