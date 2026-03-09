@@ -13,6 +13,8 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.util.PropsKeys;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
@@ -32,10 +34,6 @@ import org.junit.Test;
  * @author Preston Crary
  */
 public abstract class BaseStoreTestCase {
-
-	public String getStoreClassName() {
-		return "";
-	}
 
 	@Before
 	public void setUp() throws PortalException {
@@ -445,6 +443,10 @@ public abstract class BaseStoreTestCase {
 	}
 
 	protected abstract Store getStore();
+
+	protected String getStoreClassName() {
+		return PropsUtil.get(PropsKeys.DL_STORE_IMPL);
+	}
 
 	protected static final byte[] DATA_VERSION =
 		new byte[BaseStoreTestCase._DATA_SIZE];
