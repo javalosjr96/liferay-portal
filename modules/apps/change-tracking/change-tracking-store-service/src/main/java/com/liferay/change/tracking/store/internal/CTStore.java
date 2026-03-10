@@ -347,26 +347,24 @@ public class CTStore implements Store {
 	public void verifyCompanyStores() throws PortalException {
 		_store.verifyCompanyStores();
 
+		if (PropsValues.DATABASE_PARTITION_ENABLED) {
+			return;
+		}
+
 		long[] existingCompanyIds = PortalInstancePool.getCompanyIds();
 
 		Arrays.sort(existingCompanyIds);
 
-		Set<Long> storeCompanyIds = new HashSet<>();
+		DynamicQuery dynamicQuery = _ctsContentLocalService.dynamicQuery();
 
-		_companyLocalService.forEachCompany(
-			company -> {
-				DynamicQuery dynamicQuery =
-					_ctsContentLocalService.dynamicQuery();
+		dynamicQuery.setProjection(
+			ProjectionFactoryUtil.distinct(
+				ProjectionFactoryUtil.property("companyId")));
 
-				dynamicQuery.setProjection(
-					ProjectionFactoryUtil.distinct(
-						ProjectionFactoryUtil.property("companyId")));
+		dynamicQuery.add(RestrictionsFactoryUtil.gt("companyId", 0L));
 
-				dynamicQuery.add(RestrictionsFactoryUtil.gt("companyId", 0L));
-
-				storeCompanyIds.addAll(
-					_ctsContentLocalService.dynamicQuery(dynamicQuery));
-			});
+		Set<Long> storeCompanyIds = new HashSet<>(
+			_ctsContentLocalService.dynamicQuery(dynamicQuery));
 
 		for (long storeCompanyId : storeCompanyIds) {
 			if (Arrays.binarySearch(existingCompanyIds, storeCompanyId) < 0) {

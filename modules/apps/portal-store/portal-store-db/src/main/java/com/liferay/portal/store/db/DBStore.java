@@ -189,6 +189,10 @@ public class DBStore implements Store {
 
 	@Override
 	public void verifyCompanyStores() {
+		if (PropsValues.DATABASE_PARTITION_ENABLED) {
+			return;
+		}
+
 		long[] companyIds = PortalInstancePool.getCompanyIds();
 
 		Arrays.sort(companyIds);
