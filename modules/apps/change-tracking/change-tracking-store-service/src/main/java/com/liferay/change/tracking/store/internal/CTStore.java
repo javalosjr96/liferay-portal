@@ -13,18 +13,11 @@ import com.liferay.change.tracking.store.service.CTSContentLocalService;
 import com.liferay.document.library.kernel.store.Store;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.dao.orm.ActionableDynamicQuery;
-import com.liferay.portal.kernel.dao.orm.DynamicQuery;
-import com.liferay.portal.kernel.dao.orm.ProjectionFactoryUtil;
-import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
-import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsValues;
@@ -45,12 +38,10 @@ import java.util.Set;
 public class CTStore implements Store {
 
 	public CTStore(
-		CompanyLocalService companyLocalService,
 		CTEntryLocalService ctEntryLocalService,
 		CTSContentLocalService ctsContentLocalService, Store store,
 		String storeType) {
 
-		_companyLocalService = companyLocalService;
 		_ctEntryLocalService = ctEntryLocalService;
 		_ctsContentLocalService = ctsContentLocalService;
 		_store = store;
@@ -346,37 +337,6 @@ public class CTStore implements Store {
 	@Override
 	public void verifyCompanyStores() throws PortalException {
 		_store.verifyCompanyStores();
-
-		if (PropsValues.DATABASE_PARTITION_ENABLED) {
-			return;
-		}
-
-		long[] existingCompanyIds = PortalInstancePool.getCompanyIds();
-
-		Arrays.sort(existingCompanyIds);
-
-		DynamicQuery dynamicQuery = _ctsContentLocalService.dynamicQuery();
-
-		dynamicQuery.setProjection(
-			ProjectionFactoryUtil.distinct(
-				ProjectionFactoryUtil.property("companyId")));
-
-		dynamicQuery.add(RestrictionsFactoryUtil.gt("companyId", 0L));
-
-		Set<Long> storeCompanyIds = new HashSet<>(
-			_ctsContentLocalService.dynamicQuery(dynamicQuery));
-
-		for (long storeCompanyId : storeCompanyIds) {
-			if (Arrays.binarySearch(existingCompanyIds, storeCompanyId) < 0) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						StringBundler.concat(
-							"Store ", storeCompanyId,
-							" belongs to deleted company ", storeCompanyId,
-							". Remove it if it is not used anywhere else."));
-				}
-			}
-		}
 	}
 
 	private void _ensureCTSContentIsLoaded(
@@ -463,9 +423,6 @@ public class CTStore implements Store {
 		return stringArray;
 	}
 
-	private static final Log _log = LogFactoryUtil.getLog(CTStore.class);
-
-	private final CompanyLocalService _companyLocalService;
 	private final CTEntryLocalService _ctEntryLocalService;
 	private final CTSContentLocalService _ctsContentLocalService;
 	private final Store _store;

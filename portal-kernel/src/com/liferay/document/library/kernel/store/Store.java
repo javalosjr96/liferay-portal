@@ -127,6 +127,7 @@ public interface Store {
 	/**
 	 * Verifies that all company stores belong to existing companies.
 	 */
-	public void verifyCompanyStores() throws PortalException;
+	public default void verifyCompanyStores() throws PortalException {
+	}
 
 }
