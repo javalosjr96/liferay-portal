@@ -37,12 +37,10 @@ import java.time.Instant;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -422,18 +420,57 @@ public class S3Store implements Store {
 	public void verifyCompanyStores() {
 		long[] companyIds = PortalInstancePool.getCompanyIds();
 
-		Arrays.sort(companyIds);
+		String continuationToken = null;
 
-		for (long storeCompanyId : _getCompanyIds()) {
-			if (Arrays.binarySearch(companyIds, storeCompanyId) < 0) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						StringBundler.concat(
-							"Store ", storeCompanyId,
-							" belongs to deleted company ", storeCompanyId,
-							". Remove it if it is not used anywhere else."));
+		try {
+			do {
+				String currentToken = continuationToken;
+
+				CompletableFuture<ListObjectsV2Response> future =
+					_s3AsyncClient.listObjectsV2(
+						builder -> builder.bucket(
+							_s3StoreConfiguration.bucketName()
+						).delimiter(
+							"/"
+						).continuationToken(
+							currentToken
+						));
+
+				ListObjectsV2Response response = future.join();
+
+				List<CommonPrefix> prefixes = response.commonPrefixes();
+
+				for (CommonPrefix prefix : prefixes) {
+					String folderName = prefix.prefix();
+
+					if (folderName.endsWith("/")) {
+						folderName = folderName.substring(
+							0, folderName.length() - 1);
+					}
+
+					if (Validator.isNumber(folderName)) {
+						long storeCompanyId = GetterUtil.getLong(folderName);
+
+						if (ArrayUtil.contains(companyIds, storeCompanyId)) {
+							if (_log.isWarnEnabled()) {
+								_log.warn(
+									StringBundler.concat(
+										"Store ", storeCompanyId,
+										" belongs to deleted company ",
+										storeCompanyId,
+										". Remove it if it is not used ",
+										"anywhere else."));
+							}
+						}
+					}
 				}
+
+				continuationToken = response.nextContinuationToken();
 			}
+			while (continuationToken != null);
+		}
+		catch (CompletionException completionException) {
+			throw _toSystemException(completionException.getCause());
 		}
 	}
 
@@ -600,56 +637,6 @@ public class S3Store implements Store {
 		catch (CompletionException completionException) {
 			throw _toSystemException(completionException.getCause());
 		}
-	}
-
-	private long[] _getCompanyIds() {
-		Set<Long> companyIdsSet = new HashSet<>();
-		String continuationToken = null;
-
-		try {
-			do {
-				String currentToken = continuationToken;
-
-				CompletableFuture<ListObjectsV2Response> future =
-					_s3AsyncClient.listObjectsV2(
-						builder -> builder.bucket(
-							_s3StoreConfiguration.bucketName()
-						).delimiter(
-							"/"
-						).continuationToken(
-							currentToken
-						));
-
-				ListObjectsV2Response response = future.join();
-
-				List<CommonPrefix> prefixes = response.commonPrefixes();
-
-				for (CommonPrefix prefix : prefixes) {
-					String folderName = prefix.prefix();
-
-					if (folderName.endsWith("/")) {
-						folderName = folderName.substring(
-							0, folderName.length() - 1);
-					}
-
-					if (Validator.isNumber(folderName)) {
-						companyIdsSet.add(GetterUtil.getLong(folderName));
-					}
-				}
-
-				continuationToken = response.nextContinuationToken();
-			}
-			while (continuationToken != null);
-		}
-		catch (CompletionException completionException) {
-			throw _toSystemException(completionException.getCause());
-		}
-
-		long[] companyIds = ArrayUtil.toLongArray(companyIdsSet);
-
-		Arrays.sort(companyIds);
-
-		return companyIds;
 	}
 
 	private String _getHeadVersionLabel(
