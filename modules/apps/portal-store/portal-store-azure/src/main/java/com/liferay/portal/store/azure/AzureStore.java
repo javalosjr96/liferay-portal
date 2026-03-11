@@ -49,13 +49,10 @@ import java.io.InputStream;
 import java.io.UncheckedIOException;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -249,18 +246,39 @@ public class AzureStore implements Store {
 	public void verifyCompanyStores() throws PortalException {
 		long[] companyIds = PortalInstancePool.getCompanyIds();
 
-		Arrays.sort(companyIds);
+		try {
+			PagedIterable<BlobItem> blobs =
+				_blobContainerClient.listBlobsByHierarchy("");
 
-		for (long storeCompanyId : _getCompanyIds()) {
-			if (Arrays.binarySearch(companyIds, storeCompanyId) < 0) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						StringBundler.concat(
-							"Store ", storeCompanyId,
-							" belongs to deleted company ", storeCompanyId,
-							". Remove it if it is not used anywhere else."));
+			for (BlobItem blobItem : blobs) {
+				if (Boolean.TRUE.equals(blobItem.isPrefix())) {
+					String folderName = blobItem.getName();
+
+					if (folderName.endsWith("/")) {
+						folderName = folderName.substring(
+							0, folderName.length() - 1);
+					}
+
+					if (Validator.isNumber(folderName)) {
+						long storeCompanyId = GetterUtil.getLong(folderName);
+
+						if (ArrayUtil.contains(companyIds, storeCompanyId)) {
+							if (_log.isWarnEnabled()) {
+								_log.warn(
+									StringBundler.concat(
+										"Store ", storeCompanyId,
+										" belongs to deleted company ",
+										storeCompanyId,
+										". Remove it if it is not used ",
+										"anywhere else."));
+							}
+						}
+					}
 				}
 			}
+		}
+		catch (Exception exception) {
+			throw new PortalException(exception);
 		}
 	}
 
@@ -399,39 +417,6 @@ public class AzureStore implements Store {
 		}
 
 		return sb.toString();
-	}
-
-	private long[] _getCompanyIds() throws PortalException {
-		Set<Long> companyIdsSet = new HashSet<>();
-
-		try {
-			PagedIterable<BlobItem> blobs =
-				_blobContainerClient.listBlobsByHierarchy("");
-
-			for (BlobItem blobItem : blobs) {
-				if (Boolean.TRUE.equals(blobItem.isPrefix())) {
-					String folderName = blobItem.getName();
-
-					if (folderName.endsWith("/")) {
-						folderName = folderName.substring(
-							0, folderName.length() - 1);
-					}
-
-					if (Validator.isNumber(folderName)) {
-						companyIdsSet.add(GetterUtil.getLong(folderName));
-					}
-				}
-			}
-		}
-		catch (Exception exception) {
-			throw new PortalException(exception);
-		}
-
-		long[] companyIds = ArrayUtil.toLongArray(companyIdsSet);
-
-		Arrays.sort(companyIds);
-
-		return companyIds;
 	}
 
 	private String _getFileName(

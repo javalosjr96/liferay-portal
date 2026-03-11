@@ -25,7 +25,6 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.store.file.system.configuration.FileSystemStoreConfiguration;
 
 import java.io.File;
-import java.io.FileFilter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -256,12 +255,26 @@ public class FileSystemStore implements Store {
 
 	@Override
 	public void verifyCompanyStores() {
+		File[] storeDirs = _rootDir.listFiles(
+			file ->
+				file.isDirectory() &&
+				file.getName(
+				).matches(
+					"^\\d+$"
+				));
+
+		if (storeDirs == null) {
+			return;
+		}
+
 		long[] companyIds = PortalInstancePool.getCompanyIds();
 
-		Arrays.sort(companyIds);
+		for (File storeDir : storeDirs) {
+			long storeCompanyId = GetterUtil.getLong(storeDir.getName());
 
-		for (long storeCompanyId : _getCompanyIds()) {
-			if (Arrays.binarySearch(companyIds, storeCompanyId) < 0) {
+			if ((storeCompanyId != 0) &&
+				!ArrayUtil.contains(companyIds, storeCompanyId)) {
+
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						StringBundler.concat(
@@ -363,47 +376,6 @@ public class FileSystemStore implements Store {
 
 			file = file.getParentFile();
 		}
-	}
-
-	private long[] _getCompanyIds() {
-		File[] companyDirs = _rootDir.listFiles(
-			new FileFilter() {
-
-				@Override
-				public boolean accept(File file) {
-					if (file.isDirectory() &&
-						file.getName(
-						).matches(
-							"^\\d+$"
-						)) {
-
-						long id = GetterUtil.getLong(file.getName());
-
-						if (id != 0) {
-							return true;
-						}
-
-						return false;
-					}
-
-					return false;
-				}
-
-			});
-
-		if (ArrayUtil.isEmpty(companyDirs)) {
-			return new long[0];
-		}
-
-		long[] companyIds = new long[companyDirs.length];
-
-		for (int i = 0; i < companyDirs.length; i++) {
-			companyIds[i] = GetterUtil.getLong(companyDirs[i].getName());
-		}
-
-		Arrays.sort(companyIds);
-
-		return companyIds;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
