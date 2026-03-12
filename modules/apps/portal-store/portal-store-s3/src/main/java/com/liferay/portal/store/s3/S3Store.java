@@ -431,7 +431,7 @@ public class S3Store implements Store {
 						builder -> builder.bucket(
 							_s3StoreConfiguration.bucketName()
 						).delimiter(
-							"/"
+							StringPool.SLASH
 						).continuationToken(
 							currentToken
 						));
@@ -443,7 +443,7 @@ public class S3Store implements Store {
 				for (CommonPrefix prefix : prefixes) {
 					String folderName = prefix.prefix();
 
-					if (folderName.endsWith("/")) {
+					if (folderName.endsWith(StringPool.SLASH)) {
 						folderName = folderName.substring(
 							0, folderName.length() - 1);
 					}

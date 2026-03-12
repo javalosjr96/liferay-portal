@@ -357,7 +357,7 @@ public class IBMS3Store implements Store {
 				).withBucketName(
 					_s3StoreConfiguration.bucketName()
 				).withDelimiter(
-					"/"
+					StringPool.SLASH
 				).withContinuationToken(
 					continuationToken
 				);
@@ -367,7 +367,7 @@ public class IBMS3Store implements Store {
 				List<String> prefixes = result.getCommonPrefixes();
 
 				for (String folderName : prefixes) {
-					if (folderName.endsWith("/")) {
+					if (folderName.endsWith(StringPool.SLASH)) {
 						folderName = folderName.substring(
 							0, folderName.length() - 1);
 					}

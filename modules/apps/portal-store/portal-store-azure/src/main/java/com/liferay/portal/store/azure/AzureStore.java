@@ -254,7 +254,7 @@ public class AzureStore implements Store {
 				if (Boolean.TRUE.equals(blobItem.isPrefix())) {
 					String folderName = blobItem.getName();
 
-					if (folderName.endsWith("/")) {
+					if (folderName.endsWith(StringPool.SLASH)) {
 						folderName = folderName.substring(
 							0, folderName.length() - 1);
 					}

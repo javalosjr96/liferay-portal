@@ -244,7 +244,7 @@ public class GCSStore implements Store {
 					name = StringUtil.removeSubstring(name, prefix);
 				}
 
-				if (name.endsWith("/")) {
+				if (name.endsWith(StringPool.SLASH)) {
 					String folderName = name.substring(0, name.length() - 1);
 
 					if (Validator.isNumber(folderName)) {
