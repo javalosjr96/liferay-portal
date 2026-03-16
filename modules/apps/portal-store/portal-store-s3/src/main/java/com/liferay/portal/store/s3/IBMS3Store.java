@@ -372,21 +372,22 @@ public class IBMS3Store implements Store {
 							0, folderName.length() - 1);
 					}
 
-					if (Validator.isNumber(folderName)) {
-						long storeCompanyId = GetterUtil.getLong(folderName);
+					if (!Validator.isNumber(folderName)) {
+						continue;
+					}
 
-						if (!ArrayUtil.contains(companyIds, storeCompanyId)) {
-							if (_log.isWarnEnabled()) {
-								_log.warn(
-									StringBundler.concat(
-										"Manually remove unused store ",
-										storeCompanyId,
-										" that belongs to company ",
-										storeCompanyId,
-										" if it is no longer used anywhere ",
-										"else"));
-							}
-						}
+					long storeCompanyId = GetterUtil.getLong(folderName);
+
+					if (ArrayUtil.contains(companyIds, storeCompanyId)) {
+						continue;
+					}
+
+					if (_log.isWarnEnabled()) {
+						_log.warn(
+							StringBundler.concat(
+								"Manually remove unused store ", storeCompanyId,
+								" that belongs to company ", storeCompanyId,
+								" if it is no longer used anywhere else"));
 					}
 				}
 
