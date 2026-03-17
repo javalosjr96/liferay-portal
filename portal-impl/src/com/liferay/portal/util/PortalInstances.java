@@ -453,19 +453,22 @@ public class PortalInstances {
 				return 0;
 			}
 
-			CompanyThreadLocal.setCompanyId(virtualHost.getCompanyId());
+			try (SafeCloseable safeCloseable =
+					 CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						 virtualHost.getCompanyId())) {
 
-			if (virtualHost.getLayoutSetId() != 0) {
-				_setAttributes(virtualHost, httpServletRequest);
+				if (virtualHost.getLayoutSetId() != 0) {
+					_setAttributes(virtualHost, httpServletRequest);
+				}
+
+				return virtualHost.getCompanyId();
+			}
+		}
+			catch (Exception exception) {
+				_log.error(exception);
 			}
 
-			return virtualHost.getCompanyId();
-		}
-		catch (Exception exception) {
-			_log.error(exception);
-		}
-
-		return 0;
+			return 0;
 	}
 
 	private static long _getCompanyIdByVirtualHosts(
