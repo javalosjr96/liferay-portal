@@ -158,11 +158,15 @@ public class PortalInstances {
 		if (_log.isDebugEnabled()) {
 			_log.debug("Set company ID " + companyId);
 		}
-
-		httpServletRequest.setAttribute(
-			WebKeys.COMPANY_ID, Long.valueOf(companyId));
+		if (CompanyThreadLocal.getCompanyId() == CompanyConstants.SYSTEM) {
+			httpServletRequest.setAttribute(
+				WebKeys.COMPANY_ID, Long.valueOf(companyId));
 
 		CompanyThreadLocal.setCompanyId(companyId);
+	}
+        else if (CompanyThreadLocal.getCompanyId()  != companyId) {
+		throw new IllegalStateException("CompanyId was already set by:" + CompanyThreadLocal.getCompanyId() + " Request CompanyId: " + companyId);
+	}
 
 		if (Validator.isNotNull(PropsValues.VIRTUAL_HOSTS_DEFAULT_SITE_NAME) &&
 			(httpServletRequest.getAttribute(WebKeys.VIRTUAL_HOST_LAYOUT_SET) ==
