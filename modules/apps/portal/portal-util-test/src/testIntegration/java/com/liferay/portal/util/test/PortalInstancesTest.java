@@ -151,6 +151,36 @@ public class PortalInstancesTest {
 	}
 
 	@Test
+	public void testGetCompanyIdThrowsUnsupportedOperationException()
+		throws Exception {
+
+		Company company = CompanyTestUtil.addCompany();
+
+		MockHttpServletRequest mockHttpServletRequest =
+			new MockHttpServletRequest();
+
+		mockHttpServletRequest.setAttribute(
+			WebKeys.COMPANY_ID, _company.getCompanyId());
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					company.getCompanyId())) {
+
+			_assertGetCompanyId(false, mockHttpServletRequest);
+
+			Assert.fail();
+		}
+		catch (UnsupportedOperationException unsupportedOperationException) {
+			Assert.assertEquals(
+				"CompanyThreadLocal modification is not allowed",
+				unsupportedOperationException.getMessage());
+		}
+		finally {
+			_companyLocalService.deleteCompany(company);
+		}
+	}
+
+	@Test
 	public void testGetVirtualHostLanguageId() throws Exception {
 		Group group = GroupTestUtil.addGroupToCompany(_company.getCompanyId());
 
