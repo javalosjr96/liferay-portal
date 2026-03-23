@@ -19,7 +19,9 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ReleaseConstants;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.upgrade.PortalUpgradeProcess;
 
 import java.sql.Connection;
@@ -68,6 +70,11 @@ public class PreupgradeVerifyDatabaseState extends PreupgradeVerifyProcess {
 		}
 
 		super.verify();
+
+		if (ListUtil.isNotEmpty(_verifyMessages)) {
+			throw new VerifyException(
+				StringUtil.merge(_verifyMessages, StringPool.COMMA_AND_SPACE));
+		}
 	}
 
 	@Override
@@ -119,12 +126,14 @@ public class PreupgradeVerifyDatabaseState extends PreupgradeVerifyProcess {
 				dbInspector, missingTableNames);
 
 			if (!missingTableNames.isEmpty()) {
-				throw new VerifyException(
-					"Missing tables detected: " +
+				_verifyMessages.add(
+					StringBundler.concat(
+						"Missing tables detected: ",
 						new TreeSet<>(
 							TransformUtil.transform(
-								missingTableNames,
-								dbInspector::normalizeName)));
+								missingTableNames, dbInspector::normalizeName)),
+						" in company ",
+						CompanyThreadLocal.getNonsystemCompanyId()));
 			}
 
 			Set<String> databaseViewNames = new TreeSet<>(
@@ -135,7 +144,7 @@ public class PreupgradeVerifyDatabaseState extends PreupgradeVerifyProcess {
 			viewNames.removeAll(databaseViewNames);
 
 			if (!viewNames.isEmpty()) {
-				throw new VerifyException(
+				_verifyMessages.add(
 					StringBundler.concat(
 						"Missing views detected: ", new TreeSet<>(viewNames),
 						" in company ",
@@ -162,7 +171,7 @@ public class PreupgradeVerifyDatabaseState extends PreupgradeVerifyProcess {
 		previousUpgradeStaleTableNames.retainAll(targetVersionNewTableNames);
 
 		if (!previousUpgradeStaleTableNames.isEmpty()) {
-			throw new VerifyException(
+			_verifyMessages.add(
 				"Stale tables from a previous upgrade detected: " +
 					new TreeSet<>(previousUpgradeStaleTableNames));
 		}
@@ -215,26 +224,33 @@ public class PreupgradeVerifyDatabaseState extends PreupgradeVerifyProcess {
 			columnDefinitionsMap,
 			entry -> {
 				for (String columnDefinition : entry.getValue()) {
-					int index = columnDefinition.indexOf(StringPool.SPACE);
+					if (dbInspector.hasTable(entry.getKey())) {
+						int index = columnDefinition.indexOf(StringPool.SPACE);
 
-					String columnName = columnDefinition.substring(0, index);
-					String columnType = columnDefinition.substring(index + 1);
+						String columnName = columnDefinition.substring(
+							0, index);
 
-					if (!dbInspector.hasColumn(entry.getKey(), columnName)) {
-						missingColumnNames.computeIfAbsent(
-							entry.getKey(), tableName -> new ArrayList<>()
-						).add(
-							columnName
-						);
-					}
-					else if (!dbInspector.hasColumnType(
-								entry.getKey(), columnName, columnType)) {
+						String columnType = columnDefinition.substring(
+							index + 1);
 
-						mismatchedColumnDefinitionsMap.computeIfAbsent(
-							entry.getKey(), tableName -> new ArrayList<>()
-						).add(
-							columnDefinition
-						);
+						if (!dbInspector.hasColumn(
+								entry.getKey(), columnName)) {
+
+							missingColumnNames.computeIfAbsent(
+								entry.getKey(), tableName -> new ArrayList<>()
+							).add(
+								columnName
+							);
+						}
+						else if (!dbInspector.hasColumnType(
+									entry.getKey(), columnName, columnType)) {
+
+							mismatchedColumnDefinitionsMap.computeIfAbsent(
+								entry.getKey(), tableName -> new ArrayList<>()
+							).add(
+								columnDefinition
+							);
+						}
 					}
 				}
 			},
@@ -290,7 +306,7 @@ public class PreupgradeVerifyDatabaseState extends PreupgradeVerifyProcess {
 		}
 
 		if (sb.length() != 0) {
-			throw new VerifyException(sb.toString());
+			_verifyMessages.add(sb.toString());
 		}
 	}
 
@@ -298,5 +314,6 @@ public class PreupgradeVerifyDatabaseState extends PreupgradeVerifyProcess {
 		PreupgradeVerifyDatabaseState.class);
 
 	private final Set<String> _falsePositive74UpgradeDroppedTableNames;
+	private final List<String> _verifyMessages = new ArrayList<>();
 
 }
