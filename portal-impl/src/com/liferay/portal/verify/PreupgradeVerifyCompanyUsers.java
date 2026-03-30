@@ -9,6 +9,8 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.dao.orm.common.SQLTransformer;
 import com.liferay.portal.events.StartupHelperUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
@@ -39,6 +41,10 @@ public class PreupgradeVerifyCompanyUsers extends PreupgradeVerifyProcess {
 			});
 
 		if (ListUtil.isNotEmpty(_verifyMessages)) {
+			for (String verifyMessage : _verifyMessages) {
+				_log.error(verifyMessage);
+			}
+
 			throw new VerifyException(
 				StringUtil.merge(_verifyMessages, StringPool.COMMA_AND_SPACE));
 		}
@@ -113,6 +119,9 @@ public class PreupgradeVerifyCompanyUsers extends PreupgradeVerifyProcess {
 			}
 		}
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		PreupgradeVerifyCompanyUsers.class);
 
 	private final List<String> _verifyMessages = new ArrayList<>();
 

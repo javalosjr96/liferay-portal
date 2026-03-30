@@ -125,6 +125,10 @@ public class PreupgradeVerifyStoreFileSystemStructure
 		}
 
 		if (ListUtil.isNotEmpty(_verifyMessages)) {
+			for (String verifyMessage : _verifyMessages) {
+				_log.error(verifyMessage);
+			}
+
 			throw new VerifyException(
 				StringUtil.merge(_verifyMessages, StringPool.COMMA_AND_SPACE));
 		}
