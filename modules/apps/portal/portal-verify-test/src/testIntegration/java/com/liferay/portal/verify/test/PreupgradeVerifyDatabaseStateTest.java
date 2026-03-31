@@ -88,6 +88,9 @@ public class PreupgradeVerifyDatabaseStateTest
 			_safeCloseable = CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 				PortalInstancePool.getDefaultCompanyId());
 		}
+
+		_logCapture = LoggerTestUtil.configureLog4JLogger(
+			PreupgradeVerifyDatabaseState.class.getName(), LoggerTestUtil.OFF);
 	}
 
 	@AfterClass
@@ -97,6 +100,8 @@ public class PreupgradeVerifyDatabaseStateTest
 				connection, _currentSchemaVersion);
 		}
 		finally {
+			_logCapture.close();
+
 			if (_safeCloseable != null) {
 				_safeCloseable.close();
 			}
@@ -518,6 +523,7 @@ public class PreupgradeVerifyDatabaseStateTest
 	private static final Version _TEST_SCHEMA_VERSION = new Version(0, 0, 0);
 
 	private static Version _currentSchemaVersion;
+	private static LogCapture _logCapture;
 	private static SafeCloseable _safeCloseable;
 
 	@Inject

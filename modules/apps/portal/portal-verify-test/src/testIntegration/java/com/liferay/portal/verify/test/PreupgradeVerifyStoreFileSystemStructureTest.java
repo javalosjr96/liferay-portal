@@ -37,7 +37,6 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -225,39 +224,24 @@ public class PreupgradeVerifyStoreFileSystemStructureTest
 	}
 
 	private void _assertLogCapture(
-		LogCapture logCapture, String... expectedLogEntryMessages) {
+		LogCapture logCapture, Set<String> expectedMessages) {
 
 		List<LogEntry> logEntries = logCapture.getLogEntries();
 
-		if (expectedLogEntryMessages == null) {
+		if (expectedMessages == null) {
 			Assert.assertEquals(logEntries.toString(), 0, logEntries.size());
 
 			return;
 		}
 
-		if (expectedLogEntryMessages.length == 1) {
-			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
-
-			LogEntry logEntry = logEntries.get(0);
-
-			Assert.assertEquals(
-				expectedLogEntryMessages[0], logEntry.getMessage());
-
-			return;
-		}
-
 		Assert.assertEquals(
-			logEntries.toString(), expectedLogEntryMessages.length,
-			logEntries.size());
+			logEntries.toString(), expectedMessages.size(), logEntries.size());
 
 		Set<String> verifyMessages = new HashSet<>();
 
 		for (LogEntry entry : logEntries) {
 			verifyMessages.add(entry.getMessage());
 		}
-
-		Set<String> expectedMessages = new HashSet<>(
-			Arrays.asList(expectedLogEntryMessages));
 
 		Assert.assertEquals(
 			verifyMessages.toString(), expectedMessages, verifyMessages);
@@ -280,7 +264,7 @@ public class PreupgradeVerifyStoreFileSystemStructureTest
 
 	private void _testVerify(
 			boolean advancedFileSystemStore, String expectedExceptionMessage,
-			String... expectedLogEntryMessage)
+			String... expectedLogEntryMessages)
 		throws Exception {
 
 		String dlStoreImpl = ReflectionTestUtil.getAndSetFieldValue(
@@ -292,13 +276,19 @@ public class PreupgradeVerifyStoreFileSystemStructureTest
 			PreupgradeVerifyStoreFileSystemStructure.class.getName(),
 			LoggerTestUtil.ERROR);
 
+		Set<String> expectedMessages = new HashSet<>();
+
+		if (expectedLogEntryMessages != null) {
+			expectedMessages.addAll(Set.of(expectedLogEntryMessages));
+		}
+
 		try {
 			testVerify();
 
-			_assertLogCapture(logCapture, expectedLogEntryMessage);
+			_assertLogCapture(logCapture, expectedMessages);
 
 			if ((expectedExceptionMessage != null) ||
-				(expectedLogEntryMessage != null)) {
+				(expectedLogEntryMessages != null)) {
 
 				Assert.fail();
 			}
@@ -317,7 +307,9 @@ public class PreupgradeVerifyStoreFileSystemStructureTest
 			Assert.assertEquals(
 				expectedExceptionMessage, exception.getMessage());
 
-			_assertLogCapture(logCapture, expectedLogEntryMessage);
+			expectedMessages.add(expectedExceptionMessage);
+
+			_assertLogCapture(logCapture, expectedMessages);
 		}
 		finally {
 			logCapture.close();

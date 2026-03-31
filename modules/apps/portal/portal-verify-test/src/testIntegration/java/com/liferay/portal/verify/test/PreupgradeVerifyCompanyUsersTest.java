@@ -19,13 +19,18 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.verify.PreupgradeVerifyCompanyUsers;
 import com.liferay.portal.verify.VerifyProcess;
 import com.liferay.portal.verify.test.util.BaseVerifyProcessTestCase;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -63,14 +68,13 @@ public class PreupgradeVerifyCompanyUsersTest
 
 	@Test
 	public void testVerifyCompanyUsers() throws Exception {
+		DB db = DBManagerUtil.getDB();
+		LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+			PreupgradeVerifyCompanyUsers.class.getName(), LoggerTestUtil.ERROR);
 		Role role = _roleLocalService.getRole(
 			_companyId, RoleConstants.ADMINISTRATOR);
-
-		List<User> users = _userLocalService.getRoleUsers(role.getRoleId());
-
-		DB db = DBManagerUtil.getDB();
-
 		User user = _userLocalService.getGuestUser(_companyId);
+		List<User> users = _userLocalService.getRoleUsers(role.getRoleId());
 
 		try {
 			_userLocalService.deleteRoleUsers(role.getRoleId(), users);
@@ -85,11 +89,24 @@ public class PreupgradeVerifyCompanyUsersTest
 			Assert.fail();
 		}
 		catch (Exception exception) {
+			Set<String> expectedMessages = Set.of(
+				"No admin user found for company " + _companyId,
+				"No guest user found for company " + _companyId);
+
+			List<LogEntry> logEntries = logCapture.getLogEntries();
+
 			Assert.assertEquals(
-				StringBundler.concat(
-					"No admin user found for company ", _companyId,
-					", No guest user found for company ", _companyId),
-				exception.getMessage());
+				logEntries.toString(), expectedMessages.size(),
+				logEntries.size());
+
+			Set<String> verifyMessages = new HashSet<>();
+
+			for (LogEntry entry : logEntries) {
+				verifyMessages.add(entry.getMessage());
+			}
+
+			Assert.assertEquals(
+				verifyMessages.toString(), expectedMessages, verifyMessages);
 		}
 		finally {
 			_userLocalService.addRoleUsers(role.getRoleId(), users);
