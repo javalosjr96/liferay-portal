@@ -32,7 +32,6 @@ dependencies {
 	compileInclude group: "org.codehaus.woodstox", name: "stax2-api", version: "4.2.1"
 	compileInclude group: "org.ow2.asm", name: "asm", version: "9.7"
 	compileInclude group: "org.reactivestreams", name: "reactive-streams", version: "1.0.4"
-
 	compileOnly group: "com.liferay", name: "biz.aQute.bnd.annotation", version: "4.2.0.LIFERAY-PATCHED-2"
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
 	compileOnly group: "io.netty", name: "netty-buffer", version: "4.1.125.Final"
