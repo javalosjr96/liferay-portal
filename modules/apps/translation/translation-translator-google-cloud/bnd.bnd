@@ -39,4 +39,6 @@ Import-Package:\
 	!sun.security.x509.*,\
 	\
 	*
--fixupmessages "Classes found in the wrong directory"; restrict:=error; is:=warning
+-fixupmessages: \
+	"Classes found in the wrong directory"; restrict:=error; is:=warning,\
+	"Exporting an empty package...";is:=warning
