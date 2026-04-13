@@ -4410,6 +4410,18 @@
 				</licenses>
 			</library>
 			<library>
+				<file-name>com.liferay.portal.vulcan.impl.jar!classgraph.jar</file-name>
+				<version>4.8.179</version>
+				<project-name>ClassGraph</project-name>
+				<project-url>https://github.com/classgraph/classgraph</project-url>
+				<licenses>
+					<license>
+						<license-name>The MIT License (MIT)</license-name>
+						<license-url>http://opensource.org/licenses/MIT</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
 				<file-name>com.liferay.portal.vulcan.impl.jar!classmate.jar</file-name>
 				<version>1.4.0</version>
 				<project-name>ClassMate</project-name>
@@ -4529,6 +4541,18 @@
 				</licenses>
 			</library>
 			<library>
+				<file-name>com.liferay.portal.vulcan.impl.jar!jackson-datatype-jsr310.jar</file-name>
+				<version>2.18.6</version>
+				<project-name>Jackson datatype: JSR310</project-name>
+				<project-url>https://github.com/FasterXML/jackson-modules-java8/jackson-datatype-jsr310</project-url>
+				<licenses>
+					<license>
+						<license-name>The Apache Software License, Version 2.0</license-name>
+						<license-url>http://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
+					</license>
+				</licenses>
+			</library>
+			<library>
 				<file-name>com.liferay.portal.vulcan.impl.jar!jackson-jaxrs-xml-provider.jar</file-name>
 				<version>2.18.6</version>
 				<project-name>Jackson-JAXRS: XML</project-name>
@@ -4602,34 +4626,37 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.vulcan.impl.jar!swagger-core.jar</file-name>
-				<version>2.0.6</version>
+				<version>2.2.28</version>
 				<project-name>swagger-core</project-name>
+				<project-url>https://github.com/swagger-api/swagger-core/modules/swagger-core</project-url>
 				<licenses>
 					<license>
-						<license-name>Apache License 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0.html</license-url>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
 					</license>
 				</licenses>
 			</library>
 			<library>
 				<file-name>com.liferay.portal.vulcan.impl.jar!swagger-integration.jar</file-name>
-				<version>2.0.6</version>
+				<version>2.2.28</version>
 				<project-name>swagger-integration</project-name>
+				<project-url>https://github.com/swagger-api/swagger-core/modules/swagger-integration</project-url>
 				<licenses>
 					<license>
-						<license-name>Apache License 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0.html</license-url>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
 					</license>
 				</licenses>
 			</library>
 			<library>
 				<file-name>com.liferay.portal.vulcan.impl.jar!swagger-jaxrs2.jar</file-name>
-				<version>2.0.6</version>
+				<version>2.2.28</version>
 				<project-name>swagger-jaxrs2</project-name>
+				<project-url>https://github.com/swagger-api/swagger-core/modules/swagger-jaxrs2</project-url>
 				<licenses>
 					<license>
-						<license-name>Apache License 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0.html</license-url>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
 					</license>
 				</licenses>
 			</library>
@@ -5323,7 +5350,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-buffer.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Buffer</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5335,7 +5362,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-codec-dns.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Codec/DNS</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5347,7 +5374,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-codec-http.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Codec/HTTP</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5359,7 +5386,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-codec-http2.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Codec/HTTP2</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5371,7 +5398,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-codec-socks.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Codec/Socks</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5383,7 +5410,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-codec.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Codec</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5395,7 +5422,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-common.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Common</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5407,7 +5434,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-handler-proxy.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Handler/Proxy</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5419,7 +5446,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-handler.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Handler</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5431,7 +5458,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-resolver-dns-classes-macos.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Resolver/DNS/Classes/MacOS</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5443,7 +5470,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-resolver-dns-native-macos.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Resolver/DNS/Native/MacOS</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5455,7 +5482,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-resolver-dns.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Resolver/DNS</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5467,7 +5494,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-resolver.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Resolver</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5503,7 +5530,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport-classes-epoll.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Transport/Classes/Epoll</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5515,7 +5542,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport-classes-kqueue.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Transport/Classes/KQueue</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5527,7 +5554,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport-native-epoll.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Transport/Native/Epoll</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5539,7 +5566,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport-native-kqueue.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Transport/Native/KQueue</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5551,7 +5578,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport-native-unix-common.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Transport/Native/Unix/Common</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5563,7 +5590,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport.jar</file-name>
-				<version>4.1.125.Final</version>
+				<version>4.1.132.Final</version>
 				<project-name>Netty/Transport</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -5811,23 +5838,25 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.swagger.jar!swagger-annotations.jar</file-name>
-				<version>2.0.5</version>
+				<version>2.2.28</version>
 				<project-name>swagger-annotations</project-name>
+				<project-url>https://github.com/swagger-api/swagger-core/modules/swagger-annotations</project-url>
 				<licenses>
 					<license>
-						<license-name>Apache License 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0.html</license-url>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
 					</license>
 				</licenses>
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.swagger.jar!swagger-models.jar</file-name>
-				<version>2.0.6</version>
+				<version>2.2.28</version>
 				<project-name>swagger-models</project-name>
+				<project-url>https://github.com/swagger-api/swagger-core/modules/swagger-models</project-url>
 				<licenses>
 					<license>
-						<license-name>Apache License 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0.html</license-url>
+						<license-name>Apache License, Version 2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0</license-url>
 					</license>
 				</licenses>
 			</library>
