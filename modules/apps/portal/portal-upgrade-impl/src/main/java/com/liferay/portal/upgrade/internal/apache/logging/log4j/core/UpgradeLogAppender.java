@@ -7,6 +7,8 @@ package com.liferay.portal.upgrade.internal.apache.logging.log4j.core;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.events.StartupHelperUtil;
+import com.liferay.portal.kernel.dao.db.DB;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DuplicateUniqueFinderRowsCleaner;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -15,6 +17,7 @@ import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProce
 import com.liferay.portal.kernel.upgrade.data.cleanup.util.OrphanReferencesDataCleanupUtil;
 import com.liferay.portal.kernel.util.PortalClassLoaderUtil;
 import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.upgrade.internal.monitor.UpgradeMonitorThread;
 import com.liferay.portal.upgrade.internal.recorder.UpgradeRecorder;
 import com.liferay.portal.upgrade.internal.report.UpgradeReport;
 
@@ -137,6 +140,14 @@ public class UpgradeLogAppender implements Appender {
 		}
 
 		_rootLogger.addAppender(this);
+
+		DB db = DBManagerUtil.getDB();
+
+		if (db != null) {
+			_upgradeMonitorThread = new UpgradeMonitorThread(db);
+
+			_upgradeMonitorThread.start();
+		}
 	}
 
 	@Override
@@ -151,6 +162,10 @@ public class UpgradeLogAppender implements Appender {
 
 				_upgradeReport = null;
 			}
+		}
+
+		if (_upgradeMonitorThread != null) {
+			_upgradeMonitorThread.close();
 		}
 
 		_started = false;
@@ -191,6 +206,7 @@ public class UpgradeLogAppender implements Appender {
 		(Logger)LogManager.getRootLogger();
 
 	private volatile boolean _started;
+	private volatile UpgradeMonitorThread _upgradeMonitorThread;
 
 	@Reference
 	private volatile UpgradeRecorder _upgradeRecorder;

@@ -27,6 +27,7 @@ public class JavaVerifyUpgradeConnectionCheck extends BaseFileCheck {
 			fileName.endsWith("Test.java") ||
 			fileName.endsWith("UpgradeExecutor.java") ||
 			fileName.endsWith("UpgradeTableListener.java") ||
+			fileName.endsWith("UpgradeMonitorThread.java") ||
 			content.contains("Callable<Void>")) {
 
 			return content;

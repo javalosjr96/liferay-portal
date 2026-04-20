@@ -123,10 +123,9 @@ public class MySQLDB extends BaseDB {
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				while (resultSet.next()) {
 					String id = String.valueOf(resultSet.getLong("ID"));
-					long duration =
-						resultSet.getLong("duration_seconds") * 1000;
-					String queryText = resultSet.getString("query_text");
-					String schemaName = resultSet.getString("schema_name");
+					long duration = resultSet.getLong("duration") * 1000;
+					String query = resultSet.getString("query");
+					String schemaName = resultSet.getString("schemaName");
 
 					String state = resultSet.getString("state");
 
@@ -139,8 +138,7 @@ public class MySQLDB extends BaseDB {
 
 					activeQueries.add(
 						new RunningQuery(
-							duration, id, locked, queryText, schemaName,
-							state));
+							duration, id, locked, query, schemaName, state));
 				}
 			}
 		}
@@ -367,8 +365,8 @@ public class MySQLDB extends BaseDB {
 	};
 
 	private static final String _POLLER_QUERY = StringBundler.concat(
-		"select p.id, p.db as schema_name, p.time as duration_seconds, ",
-		"coalesce(t.trx_state, p.state) as state, p.info as query_text from ",
+		"select p.id, p.db as schemaName, p.time as duration, ",
+		"coalesce(t.trx_state, p.state) as state, p.info as query from ",
 		"information_schema.processlist p left join ",
 		"information_schema.innodb_trx t on p.id = t.trx_mysql_thread_id ",
 		"where p.command != 'Sleep' and p.info is not null and p.id != ",
