@@ -15,6 +15,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -82,6 +83,10 @@ public interface DB {
 			Connection connection, String tableName, String columnName)
 		throws IOException, SQLException;
 
+	public default List<RunningQuery> getActiveQueries() throws Exception {
+		return Collections.emptyList();
+	}
+
 	public String getCharacterSet(Connection connection) throws SQLException;
 
 	public DBType getDBType();
@@ -104,6 +109,10 @@ public interface DB {
 	public int getMinorVersion();
 
 	public default String getNewUuidFunctionName() {
+		return null;
+	}
+
+	public default String getPollerQuery() {
 		return null;
 	}
 
@@ -239,5 +248,52 @@ public interface DB {
 			Connection connection, String tableName,
 			String[] primaryKeyColumnNames)
 		throws Exception;
+
+	public class RunningQuery {
+
+		public RunningQuery(
+			long duration, String id, boolean locked, String query,
+			String schema, String status) {
+
+			_duration = duration;
+			_id = id;
+			_locked = locked;
+			_query = query;
+			_schema = schema;
+			_status = status;
+		}
+
+		public long getDuration() {
+			return _duration;
+		}
+
+		public String getId() {
+			return _id;
+		}
+
+		public String getQuery() {
+			return _query;
+		}
+
+		public String getSchema() {
+			return _schema;
+		}
+
+		public String getStatus() {
+			return _status;
+		}
+
+		public boolean isLocked() {
+			return _locked;
+		}
+
+		private final long _duration;
+		private final String _id;
+		private final boolean _locked;
+		private final String _query;
+		private final String _schema;
+		private final String _status;
+
+	}
 
 }
