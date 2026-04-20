@@ -83,7 +83,9 @@ public interface DB {
 			Connection connection, String tableName, String columnName)
 		throws IOException, SQLException;
 
-	public default List<RunningQuery> getActiveQueries() throws Exception {
+	public default List<RunningQuery> getActiveQueries(Connection connection)
+		throws Exception {
+
 		return Collections.emptyList();
 	}
 
@@ -253,14 +255,14 @@ public interface DB {
 
 		public RunningQuery(
 			long duration, String id, boolean locked, String query,
-			String schema, String status) {
+			String schema, String state) {
 
 			_duration = duration;
 			_id = id;
 			_locked = locked;
 			_query = query;
 			_schema = schema;
-			_status = status;
+			_state = state;
 		}
 
 		public long getDuration() {
@@ -279,8 +281,8 @@ public interface DB {
 			return _schema;
 		}
 
-		public String getStatus() {
-			return _status;
+		public String getState() {
+			return _state;
 		}
 
 		public boolean isLocked() {
@@ -292,7 +294,7 @@ public interface DB {
 		private final boolean _locked;
 		private final String _query;
 		private final String _schema;
-		private final String _status;
+		private final String _state;
 
 	}
 
