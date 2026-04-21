@@ -474,6 +474,7 @@ public class PortalContextLoaderListener extends ContextLoaderListener {
 			StartupHelperUtil.setUpgrading(true);
 
 			DBUpgrader.startUpgradeLogAppender();
+			DBUpgrader.startDBMonitorThread();
 
 			try {
 				DBUpgrader.upgradePortal();
