@@ -29,6 +29,7 @@ import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 /**
@@ -107,6 +108,51 @@ public class MySQLDB extends BaseDB {
 		template = StringUtil.replace(template, "\\'", "''");
 
 		return template;
+	}
+
+	@Override
+	public List<RunningQuery> getActiveQueries(Connection connection)
+		throws Exception {
+
+		List<RunningQuery> activeQueries = new ArrayList<>();
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				_ACTIVE_QUERIES_SQL)) {
+
+			preparedStatement.setQueryTimeout(10);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					String id = String.valueOf(resultSet.getLong("ID"));
+					String query = resultSet.getString("query");
+					String schemaName = resultSet.getString("schemaName");
+
+					long duration = resultSet.getLong("duration");
+
+					duration = TimeUnit.SECONDS.toMillis(duration);
+
+					String state = resultSet.getString("state");
+
+					state = (state != null) ? state : "UNKNOWN";
+
+					boolean locked = state.toLowerCase(
+					).contains(
+						"lock"
+					);
+
+					activeQueries.add(
+						new RunningQuery(
+							duration, id, locked, query, schemaName, state));
+				}
+			}
+		}
+
+		return activeQueries;
+	}
+
+	@Override
+	public String getActiveQueriesSQL() {
+		return _ACTIVE_QUERIES_SQL;
 	}
 
 	@Override
@@ -314,6 +360,14 @@ public class MySQLDB extends BaseDB {
 			return sb.toString();
 		}
 	}
+
+	private static final String _ACTIVE_QUERIES_SQL = StringBundler.concat(
+		"select p.id, p.db as schemaName, p.time as duration, ",
+		"coalesce(t.trx_state, p.state) as state, p.info as query from ",
+		"information_schema.processlist p left join ",
+		"information_schema.innodb_trx t on p.id = t.trx_mysql_thread_id ",
+		"where p.command != 'Sleep' and p.info is not null and p.id != ",
+		"connection_id()");
 
 	private static final String[] _MYSQL = {
 		"##", "1", "0", "'1970-01-01'", "now()", " longblob", " longblob",
