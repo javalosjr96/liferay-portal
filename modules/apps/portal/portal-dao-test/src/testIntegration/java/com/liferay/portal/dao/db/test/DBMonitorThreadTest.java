@@ -72,7 +72,7 @@ public class DBMonitorThreadTest {
 	}
 
 	@Test
-	public void testGetActiveQueries_DetectsDatabaseLocks() throws Exception {
+	public void testGetActiveQueries() throws Exception {
 		CountDownLatch countDownLatch = new CountDownLatch(1);
 
 		_connection = DataAccess.getConnection();
