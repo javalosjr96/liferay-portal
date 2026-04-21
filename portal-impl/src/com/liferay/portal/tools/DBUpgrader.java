@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
 import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.db.DBMonitorThread;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.dependency.manager.DependencyManagerSyncUtil;
@@ -182,7 +183,10 @@ public class DBUpgrader {
 					StartupHelperUtil.setUpgrading(true);
 
 					startUpgradeLogAppender();
+					startDBMonitorThread();
 				});
+
+			startDBMonitorThread();
 
 			StartupHelperUtil.printPatchLevel();
 
@@ -209,6 +213,8 @@ public class DBUpgrader {
 			StartupHelperUtil.setUpgrading(false);
 
 			stopUpgradeLogAppender();
+
+			stopDBMonitorThread();
 		}
 		finally {
 			System.out.println(
@@ -218,6 +224,22 @@ public class DBUpgrader {
 		}
 
 		System.out.println("Exiting DBUpgrader#main(String[]).");
+	}
+
+	public static synchronized void startDBMonitorThread() {
+		if (_dbMonitorThread != null) {
+			return;
+		}
+
+		DB db = DBManagerUtil.getDB();
+
+		if ((db != null) && PropsValues.UPGRADE_QUERY_MONITOR_ENABLED &&
+			(db.getActiveQueriesSQL() != null)) {
+
+			_dbMonitorThread = new DBMonitorThread(db);
+
+			_dbMonitorThread.start();
+		}
 	}
 
 	public static void startUpgradeLogAppender() {
@@ -245,6 +267,14 @@ public class DBUpgrader {
 		serviceLatch.openOn(
 			() -> {
 			});
+	}
+
+	public static void stopDBMonitorThread() {
+		if (_dbMonitorThread != null) {
+			_dbMonitorThread.close();
+
+			_dbMonitorThread = null;
+		}
 	}
 
 	public static void stopUpgradeLogAppender() {
@@ -346,6 +376,7 @@ public class DBUpgrader {
 
 		if (!StartupHelperUtil.isRunOnPortalUpgradeVerifiers()) {
 			stopUpgradeLogAppender();
+			stopDBMonitorThread();
 
 			return;
 		}
@@ -366,6 +397,7 @@ public class DBUpgrader {
 
 			if (verifyProcess == null) {
 				stopUpgradeLogAppender();
+				stopDBMonitorThread();
 
 				if (_log.isWarnEnabled()) {
 					_log.warn(
@@ -411,6 +443,7 @@ public class DBUpgrader {
 					StartupHelperUtil.setUpgrading(false);
 
 					stopUpgradeLogAppender();
+					stopDBMonitorThread();
 
 					System.exit(1);
 				}
@@ -432,6 +465,7 @@ public class DBUpgrader {
 					StartupHelperUtil.setUpgrading(false);
 
 					stopUpgradeLogAppender();
+					stopDBMonitorThread();
 
 					throw exception;
 				}
@@ -626,6 +660,7 @@ public class DBUpgrader {
 	private static final Log _log = LogFactoryUtil.getLog(DBUpgrader.class);
 
 	private static volatile Appender _appender;
+	private static volatile DBMonitorThread _dbMonitorThread;
 	private static volatile ServiceRegistration<?> _serviceRegistration;
 	private static volatile StopWatch _stopWatch;
 	private static volatile boolean _upgradeClient;
