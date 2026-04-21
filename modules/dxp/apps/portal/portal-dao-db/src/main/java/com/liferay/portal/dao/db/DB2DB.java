@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Alexander Chow
@@ -206,6 +207,49 @@ public class DB2DB extends BaseDB {
 		template = StringUtil.replace(template, "\\n", "'||CHR(10)||'");
 
 		return template;
+	}
+
+	@Override
+	public List<RunningQuery> getActiveQueries(Connection connection)
+		throws Exception {
+
+		List<RunningQuery> activeQueries = new ArrayList<>();
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				_ACTIVE_QUERIES_SQL)) {
+
+			preparedStatement.setQueryTimeout(10);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					String id = String.valueOf(resultSet.getLong("ID"));
+					String query = resultSet.getString("query");
+					String schemaName = resultSet.getString("schemaName");
+
+					long duration = resultSet.getLong("duration");
+
+					duration = TimeUnit.SECONDS.toMillis(duration);
+
+					String state = resultSet.getString("state");
+
+					state = (state != null) ? state : "UNKNOWN";
+
+					boolean locked = StringUtil.equalsIgnoreCase(
+						state, "lockwait");
+
+					activeQueries.add(
+						new RunningQuery(
+							duration, id, locked, query, schemaName, state));
+				}
+			}
+		}
+
+		return activeQueries;
+	}
+
+	@Override
+	public String getActiveQueriesSQL() {
+		return _ACTIVE_QUERIES_SQL;
 	}
 
 	@Override
@@ -652,6 +696,17 @@ public class DB2DB extends BaseDB {
 
 		return content;
 	}
+
+	private static final String _ACTIVE_QUERIES_SQL = StringBundler.concat(
+		"select a.agent_id as ID, current_server as schemaName, a.appl_status ",
+		"as state, timestampdiff(2, char(current timestamp - ",
+		"u.uow_start_time)) as duration, cast(act.stmt_text as varchar(1000)) ",
+		"as query from sysibmadm.applications a join ",
+		"table(sysproc.mon_get_unit_of_work(null, -2)) as u on a.agent_id = ",
+		"u.application_handle left join table(sysproc.mon_get_activity(null, ",
+		"-2)) as act on a.agent_id = act.application_handle where ",
+		"a.appl_status in ('UOWEXEC', 'LOCKWAIT') and a.agent_id != ",
+		"mon_get_application_handle()");
 
 	private static final String[] _DB2 = {
 		"--", "1", "0", "'1970-01-01-00.00.00.000000'", "current timestamp",
