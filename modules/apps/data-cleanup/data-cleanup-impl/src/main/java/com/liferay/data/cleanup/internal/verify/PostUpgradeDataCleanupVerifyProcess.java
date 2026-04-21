@@ -46,6 +46,7 @@ public class PostUpgradeDataCleanupVerifyProcess extends VerifyProcess {
 				}
 				finally {
 					DBUpgrader.stopUpgradeLogAppender();
+					DBUpgrader.stopDBMonitorThread();
 				}
 
 				return null;
