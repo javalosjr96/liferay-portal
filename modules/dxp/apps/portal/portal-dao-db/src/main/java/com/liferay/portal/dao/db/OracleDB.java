@@ -137,38 +137,13 @@ public class OracleDB extends BaseDB {
 	}
 
 	@Override
-	public String getCharacterSet(Connection connection) throws SQLException {
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				"select value from nls_database_parameters where parameter " +
-					"in ('NLS_CHARACTERSET')")) {
-
-			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-				if (resultSet.next()) {
-					return resultSet.getString("value");
-				}
-			}
-		}
-
-		return StringPool.BLANK;
-	}
-
-	private static final String _ACTIVE_QUERIES_SQL = StringBundler.concat(
-		"select s.sid as ID, s.schemaname as schemaName, ",
-		"s.last_call_et as duration, s.status, s.event as state, ",
-		"cast(q.sql_fulltext as varchar2(1000)) as query ",
-		"from v$session s ",
-		"left join v$sql q on s.sql_id = q.sql_id ",
-		"where s.status = 'ACTIVE' and s.type = 'USER' and ",
-		"s.audsid != sys_context('userenv', 'sessionid')");
-
-	@Override
 	public List<RunningQuery> getActiveQueries(Connection connection)
 		throws Exception {
 
 		List<RunningQuery> activeQueries = new ArrayList<>();
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-			_ACTIVE_QUERIES_SQL)) {
+				_ACTIVE_QUERIES_SQL)) {
 
 			preparedStatement.setQueryTimeout(10);
 
@@ -186,11 +161,15 @@ public class OracleDB extends BaseDB {
 
 					state = (state != null) ? state : "UNKNOWN";
 
-					String stateLowerCase = state.toLowerCase();
+					String stateLowerCase = StringUtil.lowerCase(state);
 
-					boolean locked =
-						stateLowerCase.contains("enq:") ||
-						stateLowerCase.contains("library cache");
+					boolean locked = false;
+
+					if (stateLowerCase.contains("enq:") ||
+						stateLowerCase.contains("library cache")) {
+
+						locked = true;
+					}
 
 					activeQueries.add(
 						new RunningQuery(
@@ -200,6 +179,22 @@ public class OracleDB extends BaseDB {
 		}
 
 		return activeQueries;
+	}
+
+	@Override
+	public String getCharacterSet(Connection connection) throws SQLException {
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				"select value from nls_database_parameters where parameter " +
+					"in ('NLS_CHARACTERSET')")) {
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					return resultSet.getString("value");
+				}
+			}
+		}
+
+		return StringPool.BLANK;
 	}
 
 	@Override
@@ -586,6 +581,13 @@ public class OracleDB extends BaseDB {
 			return sb.toString();
 		}
 	}
+
+	private static final String _ACTIVE_QUERIES_SQL = StringBundler.concat(
+		"select s.sid as ID, s.schemaname as schemaName, s.last_call_et as ",
+		"duration, s.status, s.event as state, cast(q.sql_fulltext as ",
+		"varchar2(1000)) as query from v$session s left join v$sql q on ",
+		"s.sql_id q.sql_id where s.status = 'ACTIVE' and s.type = 'USER' = ",
+		"and s.audsid != sys_context('userenv', 'sessionid')");
 
 	private static final String[] _ORACLE = {
 		"--", "1", "0",

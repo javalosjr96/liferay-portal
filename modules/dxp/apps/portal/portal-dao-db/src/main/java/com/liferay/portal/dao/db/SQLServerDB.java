@@ -105,36 +105,13 @@ public class SQLServerDB extends BaseDB {
 	}
 
 	@Override
-	public String getCharacterSet(Connection connection) throws SQLException {
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				"select serverproperty('collation') as collation")) {
-
-			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-				if (resultSet.next()) {
-					return resultSet.getString("collation");
-				}
-			}
-		}
-
-		return StringPool.BLANK;
-	}
-
-	private static final String _ACTIVE_QUERIES_SQL = StringBundler.concat(
-		"select r.session_id as ID, db_name(r.database_id) as schemaName, ",
-		"r.total_elapsed_time / 1000 as duration, r.status as state, ",
-		"r.wait_type as waitType, t.text as query ",
-		"from sys.dm_exec_requests r ",
-		"cross apply sys.dm_exec_sql_text(r.sql_handle) t ",
-		"where r.session_id <> @@spid and r.session_id >= 50");
-
-	@Override
 	public List<RunningQuery> getActiveQueries(Connection connection)
 		throws Exception {
 
 		List<RunningQuery> activeQueries = new ArrayList<>();
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
-			_ACTIVE_QUERIES_SQL)) {
+				_ACTIVE_QUERIES_SQL)) {
 
 			preparedStatement.setQueryTimeout(10);
 
@@ -154,9 +131,16 @@ public class SQLServerDB extends BaseDB {
 					state = (waitType != null) ? waitType : state;
 					state = (state != null) ? state : "UNKNOWN";
 
-					boolean locked =
-						(waitType != null) &&
-						waitType.toUpperCase().startsWith("LCK_");
+					boolean locked = false;
+
+					if ((waitType != null) &&
+						waitType.toUpperCase(
+						).startsWith(
+							"LCK_"
+						)) {
+
+						locked = true;
+					}
 
 					activeQueries.add(
 						new RunningQuery(
@@ -166,6 +150,21 @@ public class SQLServerDB extends BaseDB {
 		}
 
 		return activeQueries;
+	}
+
+	@Override
+	public String getCharacterSet(Connection connection) throws SQLException {
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				"select serverproperty('collation') as collation")) {
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				if (resultSet.next()) {
+					return resultSet.getString("collation");
+				}
+			}
+		}
+
+		return StringPool.BLANK;
 	}
 
 	@Override
@@ -631,6 +630,13 @@ public class SQLServerDB extends BaseDB {
 				"alter table ", tableName, " drop constraint ",
 				defaultConstraintName));
 	}
+
+	private static final String _ACTIVE_QUERIES_SQL = StringBundler.concat(
+		"select r.session_id as ID, db_name(r.database_id) as schemaName, ",
+		"r.total_elapsed_time / 1000 as duration, r.status as state, ",
+		"r.wait_type as waitType, t.text as query from sys.dm_exec_requests r ",
+		"cross apply sys.dm_exec_sql_text(r.sql_handle) t where r.session_id ",
+		"<> @@spid and r.session_id >= 50");
 
 	private static final String[] _SQL_SERVER = {
 		"--", "1", "0", "'19700101'", "GetDate()", " image", " image",
