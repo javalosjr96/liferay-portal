@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -78,6 +79,56 @@ public class PostgreSQLDB extends BaseDB {
 		template = reword(template);
 
 		return template;
+	}
+
+	@Override
+	public List<RunningQuery> getActiveQueries(Connection connection)
+		throws Exception {
+
+		List<RunningQuery> activeQueries = new ArrayList<>();
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				_ACTIVE_QUERIES_SQL)) {
+
+			preparedStatement.setQueryTimeout(10);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					String id = String.valueOf(resultSet.getLong("ID"));
+					String query = resultSet.getString("query");
+					String schemaName = resultSet.getString("schemaName");
+
+					long duration = resultSet.getLong("duration");
+
+					duration = TimeUnit.SECONDS.toMillis(duration);
+
+					String state = resultSet.getString("state");
+
+					state = (state != null) ? state : "UNKNOWN";
+
+					String waitEventType = resultSet.getString("waitEventType");
+
+					boolean locked = false;
+
+					if ((waitEventType != null) &&
+						StringUtil.equalsIgnoreCase(waitEventType, "lock")) {
+
+						locked = true;
+					}
+
+					activeQueries.add(
+						new RunningQuery(
+							duration, id, locked, query, schemaName, state));
+				}
+			}
+		}
+
+		return activeQueries;
+	}
+
+	@Override
+	public String getActiveQueriesSQL() {
+		return _ACTIVE_QUERIES_SQL;
 	}
 
 	@Override
@@ -507,6 +558,12 @@ public class PostgreSQLDB extends BaseDB {
 
 		runSQL(connection, sb.toString());
 	}
+
+	private static final String _ACTIVE_QUERIES_SQL = StringBundler.concat(
+		"select pid as ID, datname as schemaName, extract(epoch from (now() - ",
+		"query_start)) as duration, state, wait_event_type as waitEventType, ",
+		"query from pg_stat_activity where state != 'idle' and pid != ",
+		"pg_backend_pid()");
 
 	private static final String[] _POSTGRESQL = {
 		"--", "true", "false", "'01/01/1970'", "current_timestamp", " oid",
