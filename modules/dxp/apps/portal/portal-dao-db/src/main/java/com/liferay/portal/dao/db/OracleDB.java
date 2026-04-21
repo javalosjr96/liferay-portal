@@ -35,6 +35,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -149,6 +150,56 @@ public class OracleDB extends BaseDB {
 		}
 
 		return StringPool.BLANK;
+	}
+
+	private static final String _ACTIVE_QUERIES_SQL = StringBundler.concat(
+		"select s.sid as ID, s.schemaname as schemaName, ",
+		"s.last_call_et as duration, s.status, s.event as state, ",
+		"cast(q.sql_fulltext as varchar2(1000)) as query ",
+		"from v$session s ",
+		"left join v$sql q on s.sql_id = q.sql_id ",
+		"where s.status = 'ACTIVE' and s.type = 'USER' and ",
+		"s.audsid != sys_context('userenv', 'sessionid')");
+
+	@Override
+	public List<RunningQuery> getActiveQueries(Connection connection)
+		throws Exception {
+
+		List<RunningQuery> activeQueries = new ArrayList<>();
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+			_ACTIVE_QUERIES_SQL)) {
+
+			preparedStatement.setQueryTimeout(10);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					String id = String.valueOf(resultSet.getLong("ID"));
+					String query = resultSet.getString("query");
+					String schemaName = resultSet.getString("schemaName");
+
+					long duration = resultSet.getLong("duration");
+
+					duration = TimeUnit.SECONDS.toMillis(duration);
+
+					String state = resultSet.getString("state");
+
+					state = (state != null) ? state : "UNKNOWN";
+
+					String stateLowerCase = state.toLowerCase();
+
+					boolean locked =
+						stateLowerCase.contains("enq:") ||
+						stateLowerCase.contains("library cache");
+
+					activeQueries.add(
+						new RunningQuery(
+							duration, id, locked, query, schemaName, state));
+				}
+			}
+		}
+
+		return activeQueries;
 	}
 
 	@Override
