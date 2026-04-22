@@ -2383,10 +2383,6 @@ public class PropsValues {
 		GetterUtil.getBoolean(
 			PropsUtil.get(PropsKeys.UPGRADE_LOG_CONTEXT_ENABLED));
 
-	public static final boolean UPGRADE_QUERY_MONITOR_ENABLED =
-		GetterUtil.getBoolean(
-			PropsUtil.get(PropsKeys.UPGRADE_QUERY_MONITOR_ENABLED), true);
-
 	public static final long UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD =
 		GetterUtil.getLong(
 			PropsUtil.get(PropsKeys.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD),

@@ -6,6 +6,7 @@
 package com.liferay.portal.dao.db.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DB;
@@ -17,10 +18,11 @@ import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.AssumeTestRule;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ObjectValuePair;
-import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -34,9 +36,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -649,109 +650,103 @@ public class DBTest {
 	public void testGetLockedQueries() throws Exception {
 		Assume.assumeTrue(db.getDBType() == DBType.MYSQL);
 
-		long originalThreshold =
-			PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD;
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD", 0L)) {
 
-		db.runSQL(
-			"create table testTable (id int primary key, data VARCHAR(50))");
+			try {
+				db.runSQL(
+					"create table testTable (id int primary key, data " +
+						"VARCHAR(50))");
 
-		try {
-			db.runSQL("insert into testTable (id, data) values (1, '')");
+				db.runSQL("insert into testTable (id, data) values (1, '')");
 
-			ReflectionTestUtil.setFieldValue(
-				PropsValues.class, "UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD", 0L);
+				try (Connection lockingConnection =
+						DataAccess.getConnection()) {
 
-			CountDownLatch latchStarted = new CountDownLatch(1);
+					lockingConnection.setAutoCommit(false);
 
-			try (Connection connection2 = DataAccess.getConnection()) {
-				AtomicReference<Throwable> threadError =
-					new AtomicReference<>();
+					FutureTask<Void> futureTask = null;
 
-				connection2.setAutoCommit(false);
+					try (Statement statement1 =
+							lockingConnection.createStatement()) {
 
-				Thread thread = null;
+						statement1.executeUpdate(
+							"update testTable set data='locked' where id=1");
 
-				try (Statement statement1 = connection2.createStatement()) {
-					statement1.executeUpdate(
-						"update testTable set data='locked' where id=1");
+						futureTask = new FutureTask<>(
+							() -> {
+								try (Statement statement2 =
+										connection.createStatement()) {
 
-					thread = new Thread(
-						() -> {
-							try (Statement statement2 =
-									connection.createStatement()) {
+									statement2.executeUpdate(
+										"update testTable set data='waiting' " +
+											"where id=1");
+								}
 
-								latchStarted.countDown();
-								statement2.executeUpdate(
-									"update testTable set data='waiting' " +
-										"where id=1");
-							}
-							catch (Throwable throwable) {
-								threadError.set(throwable);
-							}
-						});
+								return null;
+							});
 
-					thread.start();
+						Thread thread = new Thread(
+							futureTask, "testGetLockedQueries-waiter");
 
-					Assert.assertTrue(latchStarted.await(5, TimeUnit.SECONDS));
+						thread.setDaemon(true);
+						thread.start();
 
-					Thread.sleep(1000);
+						boolean locked = false;
 
-					List<DB.RunningQuery> lockedQueries = db.getLockedQueries(
-						connection2);
+						long endTime = System.currentTimeMillis() + 5000;
 
-					boolean locked = false;
+						while (!locked &&
+							   (System.currentTimeMillis() < endTime)) {
 
-					if (lockedQueries != null) {
-						for (DB.RunningQuery lockedQuery : lockedQueries) {
-							if ((lockedQuery.getQuery() != null) &&
-								lockedQuery.getQuery(
-								).contains(
-									"waiting"
-								)) {
+							List<DB.RunningQuery> lockedQueries =
+								db.getLockedQueries(lockingConnection);
 
-								locked = true;
-
-								Assert.assertNotNull(lockedQuery.getId());
-								Assert.assertNotNull(lockedQuery.getSchema());
-								Assert.assertTrue(
-									lockedQuery.getDuration() >= 0);
-
-								String actualState = lockedQuery.getState();
-
-								Assert.assertNotNull(actualState);
-								Assert.assertTrue(
-									actualState,
-									actualState.toUpperCase(
+							for (DB.RunningQuery lockedQuery : lockedQueries) {
+								if ((lockedQuery.getQuery() != null) &&
+									lockedQuery.getQuery(
 									).contains(
-										"LOCK"
-									));
+										"waiting"
+									)) {
+
+									locked = true;
+
+									Assert.assertNotNull(lockedQuery.getId());
+									Assert.assertNotNull(
+										lockedQuery.getSchema());
+									Assert.assertTrue(
+										lockedQuery.getDuration() >= 0);
+
+									String actualState = lockedQuery.getState();
+
+									Assert.assertNotNull(actualState);
+									Assert.assertTrue(
+										actualState,
+										StringUtil.containsIgnoreCase(
+											actualState, "LOCK"));
+								}
+							}
+
+							if (!locked) {
+								Thread.sleep(200);
 							}
 						}
+
+						Assert.assertTrue(locked);
 					}
+					finally {
+						lockingConnection.rollback();
 
-					Assert.assertTrue(locked);
-				}
-				finally {
-					connection2.rollback();
-
-					if (thread != null) {
-						thread.join(5000);
+						if (futureTask != null) {
+							futureTask.get(5, TimeUnit.SECONDS);
+						}
 					}
-				}
-
-				Throwable throwable = threadError.get();
-
-				if (throwable != null) {
-					Assert.fail(String.valueOf(throwable));
 				}
 			}
-		}
-		finally {
-			ReflectionTestUtil.setFieldValue(
-				PropsValues.class, "UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD",
-				originalThreshold);
-
-			db.runSQL("drop table if exists testTable");
+			finally {
+				db.runSQL("drop table if exists testTable");
+			}
 		}
 	}
 

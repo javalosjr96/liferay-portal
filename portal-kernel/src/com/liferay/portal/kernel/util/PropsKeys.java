@@ -2721,9 +2721,6 @@ public interface PropsKeys {
 	public static final String UPGRADE_LOG_CONTEXT_ENABLED =
 		"upgrade.log.context.enabled";
 
-	public static final String UPGRADE_QUERY_MONITOR_ENABLED =
-		"upgrade.query.monitor.enabled";
-
 	public static final String UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD =
 		"upgrade.query.monitor.lock.threshold";
 

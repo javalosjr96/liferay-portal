@@ -153,23 +153,23 @@ public class MySQLDB extends BaseDB {
 
 	@Override
 	public List<RunningQuery> getLockedQueries(Connection connection)
-		throws Exception {
+		throws SQLException {
 
 		List<RunningQuery> lockedQueries = new ArrayList<>();
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				_LOCKED_QUERIES_SQL)) {
 
-			preparedStatement.setQueryTimeout(10);
+			preparedStatement.setQueryTimeout(POLLING_TIMEOUT_SECONDS);
 
-			long threshold = TimeUnit.MILLISECONDS.toSeconds(
-				PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD);
+			long threshold = (long)Math.ceil(
+				PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD / 1000.0);
 
 			preparedStatement.setLong(1, threshold);
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				while (resultSet.next()) {
-					String id = String.valueOf(resultSet.getLong("ID"));
+					String id = String.valueOf(resultSet.getLong("id"));
 					String query = resultSet.getString("query");
 					String schemaName = resultSet.getString("schemaName");
 
@@ -355,7 +355,7 @@ public class MySQLDB extends BaseDB {
 	}
 
 	private static final String _LOCKED_QUERIES_SQL = StringBundler.concat(
-		"select p.id as ID, p.db as schemaName, p.time as duration, ",
+		"select p.id as id, p.db as schemaName, p.time as duration, ",
 		"coalesce(t.trx_state, p.state) as state, p.info as query from ",
 		"information_schema.processlist p left join ",
 		"information_schema.innodb_trx t on p.id = t.trx_mysql_thread_id ",

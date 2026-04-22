@@ -29,6 +29,8 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface DB {
 
+	public static final int POLLING_TIMEOUT_SECONDS = 10;
+
 	public static final int SQL_SIZE_NONE = -1;
 
 	public static final int SQL_VARCHAR_MAX_SIZE = Integer.MAX_VALUE;
@@ -101,7 +103,7 @@ public interface DB {
 		throws SQLException;
 
 	public default List<RunningQuery> getLockedQueries(Connection connection)
-		throws Exception {
+		throws SQLException {
 
 		return Collections.emptyList();
 	}
@@ -247,7 +249,7 @@ public interface DB {
 			String[] primaryKeyColumnNames)
 		throws Exception;
 
-	public class RunningQuery {
+	public static class RunningQuery {
 
 		public RunningQuery(
 			long duration, String id, String query, String schema,
