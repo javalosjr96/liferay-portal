@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.SyncThrowableThread;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.AssumeTestRule;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
@@ -36,8 +37,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -666,7 +665,7 @@ public class DBTest {
 
 					lockingConnection.setAutoCommit(false);
 
-					FutureTask<Void> futureTask = null;
+					SyncThrowableThread<Void> syncThrowableThread = null;
 
 					try (Statement statement1 =
 							lockingConnection.createStatement()) {
@@ -674,7 +673,7 @@ public class DBTest {
 						statement1.executeUpdate(
 							"update testTable set data='locked' where id=1");
 
-						futureTask = new FutureTask<>(
+						syncThrowableThread = new SyncThrowableThread<>(
 							() -> {
 								try (Statement statement2 =
 										connection.createStatement()) {
@@ -687,10 +686,8 @@ public class DBTest {
 								return null;
 							});
 
-						Thread thread = new Thread(futureTask);
-
-						thread.setDaemon(true);
-						thread.start();
+						syncThrowableThread.setDaemon(true);
+						syncThrowableThread.start();
 
 						boolean locked = false;
 
@@ -738,8 +735,8 @@ public class DBTest {
 					finally {
 						lockingConnection.rollback();
 
-						if (futureTask != null) {
-							futureTask.get(5, TimeUnit.SECONDS);
+						if (syncThrowableThread != null) {
+							syncThrowableThread.sync();
 						}
 					}
 				}

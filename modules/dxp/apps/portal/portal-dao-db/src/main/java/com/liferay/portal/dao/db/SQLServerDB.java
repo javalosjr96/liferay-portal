@@ -587,6 +587,8 @@ public class SQLServerDB extends BaseDB {
 				defaultConstraintName));
 	}
 
+	// SQL Server reserves session_id < 50 for internal sessions.
+
 	private static final String _LOCKED_QUERIES_SQL = StringBundler.concat(
 		"select r.session_id as id, db_name(r.database_id) as schemaName, ",
 		"r.total_elapsed_time / 1000 as duration, 'LOCK WAIT: ' + ",
