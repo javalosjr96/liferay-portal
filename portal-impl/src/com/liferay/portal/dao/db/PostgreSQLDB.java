@@ -12,6 +12,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.db.Index;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -27,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -127,6 +129,42 @@ public class PostgreSQLDB extends BaseDB {
 		}
 
 		return indexes;
+	}
+
+	@Override
+	public List<RunningQuery> getLockedQueries(Connection connection)
+		throws SQLException {
+
+		List<RunningQuery> lockedQueries = new ArrayList<>();
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				_LOCKED_QUERIES_SQL)) {
+
+			preparedStatement.setQueryTimeout(_MONITOR_QUERY_TIMEOUT_SECONDS);
+
+			long threshold = (long)Math.ceil(
+				PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD / 1000.0);
+
+			preparedStatement.setLong(1, threshold);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					String id = String.valueOf(resultSet.getLong("id"));
+					String query = resultSet.getString("query");
+					String schema = resultSet.getString("schemaName");
+
+					long duration = TimeUnit.SECONDS.toMillis(
+						resultSet.getLong("duration"));
+
+					String state = resultSet.getString("state");
+
+					lockedQueries.add(
+						new RunningQuery(duration, id, query, schema, state));
+				}
+			}
+		}
+
+		return lockedQueries;
 	}
 
 	@Override
@@ -507,6 +545,16 @@ public class PostgreSQLDB extends BaseDB {
 
 		runSQL(connection, sb.toString());
 	}
+
+	private static final String _LOCKED_QUERIES_SQL = StringBundler.concat(
+		"select pid as id, datname as schemaName, cast(extract(epoch from ",
+		"(now() - query_start)) as bigint) as duration, wait_event_type || ",
+		"': ' || coalesce(wait_event, '-') as state, query from ",
+		"pg_stat_activity where state != 'idle' and pid != pg_backend_pid() ",
+		"and wait_event_type = 'Lock' and extract(epoch from (now() - ",
+		"query_start)) >= ?");
+
+	private static final int _MONITOR_QUERY_TIMEOUT_SECONDS = 10;
 
 	private static final String[] _POSTGRESQL = {
 		"--", "true", "false", "'01/01/1970'", "current_timestamp", " oid",

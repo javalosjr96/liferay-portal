@@ -648,7 +648,7 @@ public class DBTest {
 
 	@Test
 	public void testGetLockedQueries() throws Exception {
-		Assume.assumeTrue(db.getDBType() == DBType.MYSQL);
+		Assume.assumeTrue(db.getDBType() != DBType.HYPERSONIC);
 
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
@@ -722,7 +722,7 @@ public class DBTest {
 									Assert.assertTrue(
 										actualState,
 										StringUtil.containsIgnoreCase(
-											actualState, "LOCK WAIT"));
+											actualState, "lock"));
 
 									break;
 								}
@@ -745,7 +745,7 @@ public class DBTest {
 				}
 			}
 			finally {
-				db.runSQL("drop table if exists testTable");
+				db.runSQL("DROP_TABLE_IF_EXISTS(testTable)");
 			}
 		}
 	}
