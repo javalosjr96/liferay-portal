@@ -724,6 +724,8 @@ public class DBTest {
 										actualState,
 										StringUtil.containsIgnoreCase(
 											actualState, "LOCK WAIT"));
+
+									break;
 								}
 							}
 

@@ -29,8 +29,6 @@ import org.osgi.annotation.versioning.ProviderType;
 @ProviderType
 public interface DB {
 
-	public static final int MONITOR_QUERY_TIMEOUT_SECONDS = 10;
-
 	public static final int SQL_SIZE_NONE = -1;
 
 	public static final int SQL_VARCHAR_MAX_SIZE = Integer.MAX_VALUE;
