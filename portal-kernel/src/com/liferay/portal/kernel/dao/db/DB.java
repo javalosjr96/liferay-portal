@@ -8,16 +8,21 @@ package com.liferay.portal.kernel.dao.db;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.util.ObjectValuePair;
+import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.IOException;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.naming.NamingException;
 
@@ -28,6 +33,8 @@ import org.osgi.annotation.versioning.ProviderType;
  */
 @ProviderType
 public interface DB {
+
+	public static final int MONITOR_QUERY_TIMEOUT_SECONDS = 10;
 
 	public static final int SQL_SIZE_NONE = -1;
 
@@ -103,7 +110,46 @@ public interface DB {
 	public default List<RunningQuery> getLockedQueries(Connection connection)
 		throws SQLException {
 
-		return Collections.emptyList();
+		String sql = getLockedQueriesSQL();
+
+		if (Validator.isNull(sql)) {
+			return Collections.emptyList();
+		}
+
+		List<RunningQuery> lockedQueries = new ArrayList<>();
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
+
+			preparedStatement.setQueryTimeout(MONITOR_QUERY_TIMEOUT_SECONDS);
+
+			long threshold = (long)Math.ceil(
+				PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD / 1000.0);
+
+			preparedStatement.setLong(1, threshold);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					String id = String.valueOf(resultSet.getLong("id"));
+					String query = resultSet.getString("query");
+					String schema = resultSet.getString("schemaName");
+
+					long duration = TimeUnit.SECONDS.toMillis(
+						resultSet.getLong("duration"));
+
+					String state = resultSet.getString("state");
+
+					lockedQueries.add(
+						new RunningQuery(duration, id, query, schema, state));
+				}
+			}
+		}
+
+		return lockedQueries;
+	}
+
+	public default String getLockedQueriesSQL() {
+		return null;
 	}
 
 	public int getMajorVersion();
