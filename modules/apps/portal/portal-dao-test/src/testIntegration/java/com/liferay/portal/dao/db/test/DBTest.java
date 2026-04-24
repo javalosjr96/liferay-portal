@@ -650,113 +650,18 @@ public class DBTest {
 
 	@Test
 	public void testGetLockedQueries() throws Exception {
-		try (SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD", 0L)) {
+		DBType dbType = db.getDBType();
 
-			try {
-				db.runSQL(
-					"create table testTable (id int primary key, data " +
-						"varchar(50))");
+		String expectedStateSubstring = "lock";
 
-				db.runSQL("insert into testTable (id, data) values (1, '')");
-
-				try (Connection lockingConnection =
-						DataAccess.getConnection()) {
-
-					lockingConnection.setAutoCommit(false);
-
-					FutureTask<Void> futureTask = null;
-
-					try (Statement statement1 =
-							lockingConnection.createStatement()) {
-
-						statement1.executeUpdate(
-							"update testTable set data='locked' where id=1");
-
-						futureTask = new FutureTask<>(
-							() -> {
-								try (Statement statement2 =
-										connection.createStatement()) {
-
-									statement2.executeUpdate(
-										"update testTable set data='waiting' " +
-											"where id=1");
-								}
-
-								return null;
-							});
-
-						Thread thread = new Thread(futureTask);
-
-						thread.setDaemon(true);
-						thread.start();
-
-						boolean locked = false;
-
-						long endTime = System.currentTimeMillis() + 5000;
-
-						while (!locked &&
-							   (System.currentTimeMillis() < endTime)) {
-
-							List<DB.RunningQuery> lockedQueries =
-								db.getLockedQueries(lockingConnection);
-
-							for (DB.RunningQuery lockedQuery : lockedQueries) {
-								String query = lockedQuery.getQuery();
-
-								if ((query != null) &&
-									query.contains("waiting")) {
-
-									locked = true;
-
-									Assert.assertNotNull(lockedQuery.getId());
-									Assert.assertNotNull(
-										lockedQuery.getSchema());
-									Assert.assertTrue(
-										lockedQuery.getDuration() >= 0);
-
-									String actualState = lockedQuery.getState();
-
-									Assert.assertNotNull(actualState);
-									Assert.assertTrue(
-										actualState,
-										StringUtil.containsIgnoreCase(
-											actualState,
-											_getExpectedLockStateSubstring(
-												db.getDBType())));
-
-									break;
-								}
-							}
-
-							if (!locked) {
-								Thread.sleep(200);
-							}
-						}
-
-						Assert.assertTrue(locked);
-					}
-					finally {
-						try {
-							lockingConnection.rollback();
-
-							if (futureTask != null) {
-								futureTask.get(5, TimeUnit.SECONDS);
-							}
-						}
-						catch (Exception exception) {
-							_log.error(
-								"Unable to clean up locked-query test",
-								exception);
-						}
-					}
-				}
-			}
-			finally {
-				db.runSQL("drop table if exists testTable");
-			}
+		if (dbType == DBType.DB2) {
+			expectedStateSubstring = "LOCKWAIT";
 		}
+		else if (dbType == DBType.SQLSERVER) {
+			expectedStateSubstring = "LCK_";
+		}
+
+		doTestGetLockedQueries(expectedStateSubstring);
 	}
 
 	@Test
@@ -1052,6 +957,117 @@ public class DBTest {
 		addIndex(TABLE_NAME_1, columnNames, false);
 	}
 
+	protected void doTestGetLockedQueries(String expectedStateSubstring)
+		throws Exception {
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD", 0L)) {
+
+			try {
+				db.runSQL(
+					"create table testTable (id int primary key, data " +
+						"varchar(50))");
+
+				db.runSQL("insert into testTable (id, data) values (1, '')");
+
+				try (Connection lockingConnection =
+						DataAccess.getConnection()) {
+
+					lockingConnection.setAutoCommit(false);
+
+					FutureTask<Void> futureTask = null;
+
+					try (Statement statement1 =
+							lockingConnection.createStatement()) {
+
+						statement1.executeUpdate(
+							"update testTable set data='locked' where id=1");
+
+						futureTask = new FutureTask<>(
+							() -> {
+								try (Statement statement2 =
+										connection.createStatement()) {
+
+									statement2.executeUpdate(
+										"update testTable set data='waiting' " +
+											"where id=1");
+								}
+
+								return null;
+							});
+
+						Thread thread = new Thread(futureTask);
+
+						thread.setDaemon(true);
+						thread.start();
+
+						boolean locked = false;
+
+						long endTime = System.currentTimeMillis() + 5000;
+
+						while (!locked &&
+							   (System.currentTimeMillis() < endTime)) {
+
+							List<DB.RunningQuery> lockedQueries =
+								db.getLockedQueries(lockingConnection);
+
+							for (DB.RunningQuery lockedQuery : lockedQueries) {
+								String query = lockedQuery.getQuery();
+
+								if ((query != null) &&
+									query.contains("waiting")) {
+
+									locked = true;
+
+									Assert.assertNotNull(lockedQuery.getId());
+									Assert.assertNotNull(
+										lockedQuery.getSchema());
+									Assert.assertTrue(
+										lockedQuery.getDuration() >= 0);
+
+									String actualState = lockedQuery.getState();
+
+									Assert.assertNotNull(actualState);
+									Assert.assertTrue(
+										actualState,
+										StringUtil.containsIgnoreCase(
+											actualState,
+											expectedStateSubstring));
+
+									break;
+								}
+							}
+
+							if (!locked) {
+								Thread.sleep(200);
+							}
+						}
+
+						Assert.assertTrue(locked);
+					}
+					finally {
+						try {
+							lockingConnection.rollback();
+
+							if (futureTask != null) {
+								futureTask.get(5, TimeUnit.SECONDS);
+							}
+						}
+						catch (Exception exception) {
+							_log.error(
+								"Unable to clean up locked-query test",
+								exception);
+						}
+					}
+				}
+			}
+			finally {
+				db.runSQL("drop table if exists testTable");
+			}
+		}
+	}
+
 	protected static final String INDEX_NAME = "IX_TEMP";
 
 	protected static final String TABLE_NAME_1 = "DBTest1";
@@ -1071,22 +1087,6 @@ public class DBTest {
 				"SBLOB, typeString STRING null, typeText TEXT null, ",
 				"typeVarchar VARCHAR(75) null, typeVarcharDefault VARCHAR(10) ",
 				"default 'testValue' not null)"));
-	}
-
-	private String _getExpectedLockStateSubstring(DBType dbType) {
-		if (dbType == DBType.DB2) {
-			return "LOCKWAIT";
-		}
-
-		if (dbType == DBType.ORACLE) {
-			return "enq:";
-		}
-
-		if (dbType == DBType.SQLSERVER) {
-			return "LCK_";
-		}
-
-		return "lock";
 	}
 
 	private List<IndexMetadata> _getIndexMetadatas(

@@ -38,6 +38,12 @@ public class OracleDBTest extends DBTest {
 	}
 
 	@Test
+	@Override
+	public void testGetLockedQueries() throws Exception {
+		doTestGetLockedQueries("enq:");
+	}
+
+	@Test
 	public void testGetIndexMetadatasWithLockedStatisticsTable()
 		throws Exception {
 
