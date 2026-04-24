@@ -34,12 +34,6 @@ public class PostgreSQLDBTest extends DBTest {
 	}
 
 	@Test
-	@Override
-	public void testGetLockedQueries() throws Exception {
-		doTestGetLockedQueries("lock");
-	}
-
-	@Test
 	public void testGetAndAddIndexWithLeftClause() throws Exception {
 		addIndex(new String[] {_INDEX_COLUMN_NAME_LEFT_CLAUSE});
 
@@ -63,6 +57,12 @@ public class PostgreSQLDBTest extends DBTest {
 
 		_assertIndexMetadatas(
 			db.getIndexMetadatas(connection, TABLE_NAME_1, null, false));
+	}
+
+	@Override
+	@Test
+	public void testGetLockedQueries() throws Exception {
+		doTestGetLockedQueries("lock");
 	}
 
 	private void _assertIndexMetadatas(List<IndexMetadata> indexMetadatas)

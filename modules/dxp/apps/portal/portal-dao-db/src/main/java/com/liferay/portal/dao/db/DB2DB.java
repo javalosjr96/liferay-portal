@@ -18,7 +18,6 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -37,7 +36,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 /**
  * @author Alexander Chow
@@ -226,39 +224,8 @@ public class DB2DB extends BaseDB {
 	}
 
 	@Override
-	public List<RunningQuery> getLockedQueries(Connection connection)
-		throws SQLException {
-
-		List<RunningQuery> lockedQueries = new ArrayList<>();
-
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				_LOCKED_QUERIES_SQL)) {
-
-			preparedStatement.setQueryTimeout(_MONITOR_QUERY_TIMEOUT_SECONDS);
-
-			long threshold = (long)Math.ceil(
-				PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD / 1000.0);
-
-			preparedStatement.setLong(1, threshold);
-
-			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-				while (resultSet.next()) {
-					String id = String.valueOf(resultSet.getLong("id"));
-					String query = resultSet.getString("query");
-					String schema = resultSet.getString("schemaName");
-
-					long duration = TimeUnit.SECONDS.toMillis(
-						resultSet.getLong("duration"));
-
-					String state = resultSet.getString("state");
-
-					lockedQueries.add(
-						new RunningQuery(duration, id, query, schema, state));
-				}
-			}
-		}
-
-		return lockedQueries;
+	public String getLockedQueriesSQL() {
+		return _LOCKED_QUERIES_SQL;
 	}
 
 	@Override
@@ -709,8 +676,6 @@ public class DB2DB extends BaseDB {
 		"a.appl_status in ('UOWEXEC', 'LOCKWAIT') and a.agent_id != ",
 		"mon_get_application_handle() and timestampdiff(2, char(current ",
 		"timestamp - u.uow_start_time)) >= ?");
-
-	private static final int _MONITOR_QUERY_TIMEOUT_SECONDS = 10;
 
 	private static final int _SQL_STRING_SIZE = 4000;
 

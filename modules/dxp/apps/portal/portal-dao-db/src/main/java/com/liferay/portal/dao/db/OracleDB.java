@@ -19,7 +19,6 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -36,7 +35,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -198,39 +196,8 @@ public class OracleDB extends BaseDB {
 	}
 
 	@Override
-	public List<RunningQuery> getLockedQueries(Connection connection)
-		throws SQLException {
-
-		List<RunningQuery> lockedQueries = new ArrayList<>();
-
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				_LOCKED_QUERIES_SQL)) {
-
-			preparedStatement.setQueryTimeout(_MONITOR_QUERY_TIMEOUT_SECONDS);
-
-			long threshold = (long)Math.ceil(
-				PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD / 1000.0);
-
-			preparedStatement.setLong(1, threshold);
-
-			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-				while (resultSet.next()) {
-					String id = String.valueOf(resultSet.getLong("id"));
-					String query = resultSet.getString("query");
-					String schema = resultSet.getString("schemaName");
-
-					long duration = TimeUnit.SECONDS.toMillis(
-						resultSet.getLong("duration"));
-
-					String state = resultSet.getString("state");
-
-					lockedQueries.add(
-						new RunningQuery(duration, id, query, schema, state));
-				}
-			}
-		}
-
-		return lockedQueries;
+	public String getLockedQueriesSQL() {
+		return _LOCKED_QUERIES_SQL;
 	}
 
 	@Override
@@ -581,8 +548,6 @@ public class OracleDB extends BaseDB {
 		"where s.status = 'ACTIVE' and s.type = 'USER' and s.audsid != ",
 		"sys_context('USERENV', 'SESSIONID') and (s.event like 'enq:%' or ",
 		"s.event like '%library cache%') and s.last_call_et >= ?");
-
-	private static final int _MONITOR_QUERY_TIMEOUT_SECONDS = 10;
 
 	private static final String[] _ORACLE = {
 		"--", "1", "0",

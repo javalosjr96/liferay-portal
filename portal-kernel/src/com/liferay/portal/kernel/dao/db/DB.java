@@ -7,17 +7,23 @@ package com.liferay.portal.kernel.dao.db;
 
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.ObjectValuePair;
+import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.io.IOException;
 
 import java.sql.Connection;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import javax.naming.NamingException;
 
@@ -103,7 +109,46 @@ public interface DB {
 	public default List<RunningQuery> getLockedQueries(Connection connection)
 		throws SQLException {
 
-		return Collections.emptyList();
+		String sql = getLockedQueriesSQL();
+
+		if (Validator.isBlank(sql)) {
+			return Collections.emptyList();
+		}
+
+		List<RunningQuery> lockedQueries = new ArrayList<>();
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
+
+			preparedStatement.setQueryTimeout(10);
+
+			long threshold = (long)Math.ceil(
+				PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD / 1000.0);
+
+			preparedStatement.setLong(1, threshold);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					String id = String.valueOf(resultSet.getLong("id"));
+					String query = resultSet.getString("query");
+					String schema = resultSet.getString("schemaName");
+
+					long duration = TimeUnit.SECONDS.toMillis(
+						resultSet.getLong("duration"));
+
+					String state = resultSet.getString("state");
+
+					lockedQueries.add(
+						new RunningQuery(duration, id, query, schema, state));
+				}
+			}
+		}
+
+		return lockedQueries;
+	}
+
+	public default String getLockedQueriesSQL() {
+		return StringPool.BLANK;
 	}
 
 	public int getMajorVersion();
