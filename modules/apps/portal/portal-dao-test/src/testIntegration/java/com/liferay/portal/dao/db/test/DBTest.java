@@ -650,8 +650,6 @@ public class DBTest {
 
 	@Test
 	public void testGetLockedQueries() throws Exception {
-		Assume.assumeTrue(db.getDBType() == DBType.MYSQL);
-
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD", 0L)) {
@@ -724,7 +722,9 @@ public class DBTest {
 									Assert.assertTrue(
 										actualState,
 										StringUtil.containsIgnoreCase(
-											actualState, "LOCK WAIT"));
+											actualState,
+											_getExpectedLockStateSubstring(
+												db.getDBType())));
 
 									break;
 								}
@@ -1071,6 +1071,22 @@ public class DBTest {
 				"SBLOB, typeString STRING null, typeText TEXT null, ",
 				"typeVarchar VARCHAR(75) null, typeVarcharDefault VARCHAR(10) ",
 				"default 'testValue' not null)"));
+	}
+
+	private String _getExpectedLockStateSubstring(DBType dbType) {
+		if (dbType == DBType.DB2) {
+			return "LOCKWAIT";
+		}
+
+		if (dbType == DBType.ORACLE) {
+			return "enq:";
+		}
+
+		if (dbType == DBType.SQLSERVER) {
+			return "LCK_";
+		}
+
+		return "lock";
 	}
 
 	private List<IndexMetadata> _getIndexMetadatas(
