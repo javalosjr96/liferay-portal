@@ -550,8 +550,8 @@ public class PostgreSQLDB extends BaseDB {
 		"select pid as id, datname as schemaName, cast(extract(epoch from ",
 		"(now() - query_start)) as bigint) as duration, wait_event_type as ",
 		"state, query from pg_stat_activity where state != 'idle' and pid != ",
-		"pg_backend_pid() and wait_event_type = 'Lock' and extract(epoch ",
-		"from (now() - query_start)) >= ?");
+		"pg_backend_pid() and wait_event_type = 'Lock' and extract(epoch from ",
+		"(now() - query_start)) >= ?");
 
 	private static final int _MONITOR_QUERY_TIMEOUT_SECONDS = 10;
 
