@@ -964,106 +964,91 @@ public class DBTest {
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD", 0L)) {
 
-			try {
-				db.runSQL(
-					"create table testTable (id int primary key, data " +
-						"varchar(50))");
+			db.runSQL(
+				"insert into " + TABLE_NAME_1 +
+					" (id, notNilColumn) values (1, '1')");
 
-				db.runSQL("insert into testTable (id, data) values (1, '')");
+			try (Connection lockingConnection = DataAccess.getConnection()) {
+				lockingConnection.setAutoCommit(false);
 
-				try (Connection lockingConnection =
-						DataAccess.getConnection()) {
+				FutureTask<Void> futureTask = null;
 
-					lockingConnection.setAutoCommit(false);
+				try (Statement statement1 =
+						lockingConnection.createStatement()) {
 
-					FutureTask<Void> futureTask = null;
+					statement1.executeUpdate(
+						"update " + TABLE_NAME_1 +
+							" set nilColumn='locked' where id=1");
 
-					try (Statement statement1 =
-							lockingConnection.createStatement()) {
+					futureTask = new FutureTask<>(
+						() -> {
+							try (Statement statement2 =
+									connection.createStatement()) {
 
-						statement1.executeUpdate(
-							"update testTable set data='locked' where id=1");
-
-						futureTask = new FutureTask<>(
-							() -> {
-								try (Statement statement2 =
-										connection.createStatement()) {
-
-									statement2.executeUpdate(
-										"update testTable set data='waiting' " +
-											"where id=1");
-								}
-
-								return null;
-							});
-
-						Thread thread = new Thread(futureTask);
-
-						thread.setDaemon(true);
-						thread.start();
-
-						boolean locked = false;
-
-						long endTime = System.currentTimeMillis() + 5000;
-
-						while (!locked &&
-							   (System.currentTimeMillis() < endTime)) {
-
-							List<DB.RunningQuery> lockedQueries =
-								db.getLockedQueries(lockingConnection);
-
-							for (DB.RunningQuery lockedQuery : lockedQueries) {
-								String query = lockedQuery.getQuery();
-
-								if ((query != null) &&
-									query.contains("waiting")) {
-
-									locked = true;
-
-									Assert.assertNotNull(lockedQuery.getId());
-									Assert.assertNotNull(
-										lockedQuery.getSchema());
-									Assert.assertTrue(
-										lockedQuery.getDuration() >= 0);
-
-									String actualState = lockedQuery.getState();
-
-									Assert.assertNotNull(actualState);
-									Assert.assertTrue(
-										actualState,
-										StringUtil.containsIgnoreCase(
-											actualState,
-											expectedStateSubstring));
-
-									break;
-								}
+								statement2.executeUpdate(
+									"update " + TABLE_NAME_1 +
+										" set nilColumn='waiting' where id=1");
 							}
 
-							if (!locked) {
-								Thread.sleep(200);
+							return null;
+						});
+
+					Thread thread = new Thread(futureTask);
+
+					thread.setDaemon(true);
+					thread.start();
+
+					boolean locked = false;
+
+					long endTime = System.currentTimeMillis() + 5000;
+
+					while (!locked && (System.currentTimeMillis() < endTime)) {
+						List<DB.RunningQuery> lockedQueries =
+							db.getLockedQueries(lockingConnection);
+
+						for (DB.RunningQuery lockedQuery : lockedQueries) {
+							String query = lockedQuery.getQuery();
+
+							if ((query != null) && query.contains("waiting")) {
+								locked = true;
+
+								Assert.assertNotNull(lockedQuery.getId());
+								Assert.assertNotNull(lockedQuery.getSchema());
+								Assert.assertTrue(
+									lockedQuery.getDuration() >= 0);
+
+								String actualState = lockedQuery.getState();
+
+								Assert.assertNotNull(actualState);
+								Assert.assertTrue(
+									actualState,
+									StringUtil.containsIgnoreCase(
+										actualState, expectedStateSubstring));
+
+								break;
 							}
 						}
 
-						Assert.assertTrue(locked);
+						if (!locked) {
+							Thread.sleep(200);
+						}
 					}
-					finally {
-						try {
-							lockingConnection.rollback();
 
-							if (futureTask != null) {
-								futureTask.get(5, TimeUnit.SECONDS);
-							}
+					Assert.assertTrue(locked);
+				}
+				finally {
+					try {
+						lockingConnection.rollback();
+
+						if (futureTask != null) {
+							futureTask.get(5, TimeUnit.SECONDS);
 						}
-						catch (Exception exception) {
-							_log.error(
-								"Unable to clean up locked-query test",
-								exception);
-						}
+					}
+					catch (Exception exception) {
+						_log.error(
+							"Unable to clean up locked-query test", exception);
 					}
 				}
-			}
-			finally {
-				db.runSQL("drop table if exists testTable");
 			}
 		}
 	}
