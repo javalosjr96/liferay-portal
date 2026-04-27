@@ -225,6 +225,11 @@ public class MySQLDB extends BaseDB {
 	}
 
 	@Override
+	protected String getLongRunningQueriesSQL() {
+		return _LONG_RUNNING_QUERIES_SQL;
+	}
+
+	@Override
 	protected int[] getSQLTypes() {
 		return _SQL_TYPES;
 	}
@@ -328,6 +333,16 @@ public class MySQLDB extends BaseDB {
 		"where p.command != 'Sleep' and p.info is not null and p.id != ",
 		"connection_id() and ((t.trx_state = 'LOCK WAIT' or p.state like ",
 		"'%lock%') and p.time >= ?)");
+
+	private static final String _LONG_RUNNING_QUERIES_SQL =
+		StringBundler.concat(
+			"select p.id as id, p.db as schemaName, p.time as duration, ",
+			"coalesce(t.trx_state, p.state) as state, p.info as query from ",
+			"information_schema.processlist p left join ",
+			"information_schema.innodb_trx t on p.id = t.trx_mysql_thread_id ",
+			"where p.command != 'Sleep' and p.info is not null and p.id != ",
+			"connection_id() and lower(coalesce(t.trx_state, p.state, '')) ",
+			"not like '%lock%' and p.time >= ?");
 
 	private static final String[] _MYSQL = {
 		"##", "1", "0", "'1970-01-01'", "now()", " longblob", " longblob",

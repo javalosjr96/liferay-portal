@@ -550,36 +550,18 @@ public abstract class BaseDB implements DB {
 	public List<RunningQuery> getLockedQueries(Connection connection)
 		throws SQLException {
 
-		List<RunningQuery> lockedQueries = new ArrayList<>();
+		return _getQueries(
+			connection, getLockedQueriesSQL(),
+			PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD);
+	}
 
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				getLockedQueriesSQL())) {
+	@Override
+	public List<RunningQuery> getLongRunningQueries(Connection connection)
+		throws SQLException {
 
-			preparedStatement.setQueryTimeout(MONITOR_QUERY_TIMEOUT_SECONDS);
-
-			long threshold = (long)Math.ceil(
-				PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD / 1000.0);
-
-			preparedStatement.setLong(1, threshold);
-
-			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-				while (resultSet.next()) {
-					String id = String.valueOf(resultSet.getLong("id"));
-					String query = resultSet.getString("query");
-					String schema = resultSet.getString("schemaName");
-
-					long duration = TimeUnit.SECONDS.toMillis(
-						resultSet.getLong("duration"));
-
-					String state = resultSet.getString("state");
-
-					lockedQueries.add(
-						new RunningQuery(duration, id, query, schema, state));
-				}
-			}
-		}
-
-		return lockedQueries;
+		return _getQueries(
+			connection, getLongRunningQueriesSQL(),
+			PropsValues.UPGRADE_QUERY_MONITOR_LONG_RUNNING_THRESHOLD);
 	}
 
 	@Override
@@ -1549,6 +1531,10 @@ public abstract class BaseDB implements DB {
 		return null;
 	}
 
+	protected String getLongRunningQueriesSQL() {
+		return null;
+	}
+
 	protected String getRenameTableSQL(
 		String oldTableName, String newTableName) {
 
@@ -1784,6 +1770,41 @@ public abstract class BaseDB implements DB {
 		}
 
 		return primaryKeys;
+	}
+
+	private List<RunningQuery> _getQueries(
+			Connection connection, String sql, long thresholdMillis)
+		throws SQLException {
+
+		List<RunningQuery> queries = new ArrayList<>();
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
+
+			preparedStatement.setQueryTimeout(MONITOR_QUERY_TIMEOUT_SECONDS);
+
+			long threshold = (long)Math.ceil(thresholdMillis / 1000.0);
+
+			preparedStatement.setLong(1, threshold);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					String id = String.valueOf(resultSet.getLong("id"));
+					String query = resultSet.getString("query");
+					String schema = resultSet.getString("schemaName");
+
+					long duration = TimeUnit.SECONDS.toMillis(
+						resultSet.getLong("duration"));
+
+					String state = resultSet.getString("state");
+
+					queries.add(
+						new RunningQuery(duration, id, query, schema, state));
+				}
+			}
+		}
+
+		return queries;
 	}
 
 	private boolean _isSkipIndexOperation(

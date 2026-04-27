@@ -69,6 +69,13 @@ public class HypersonicDB extends BaseDB {
 	}
 
 	@Override
+	public List<RunningQuery> getLongRunningQueries(Connection connection)
+		throws SQLException {
+
+		return Collections.emptyList();
+	}
+
+	@Override
 	public String getPopulateSQL(String databaseName, String sqlContent) {
 		return StringPool.BLANK;
 	}

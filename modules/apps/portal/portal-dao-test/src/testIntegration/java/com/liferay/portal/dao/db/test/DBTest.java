@@ -752,6 +752,91 @@ public class DBTest {
 	}
 
 	@Test
+	public void testGetLongRunningQueries() throws Exception {
+		String longRunningQueriesSQL = ReflectionTestUtil.invoke(
+			db, "getLongRunningQueriesSQL", new Class<?>[0]);
+
+		Assume.assumeNotNull(longRunningQueriesSQL);
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"UPGRADE_QUERY_MONITOR_LONG_RUNNING_THRESHOLD", 0L)) {
+
+			FutureTask<Void> futureTask = new FutureTask<>(
+				() -> {
+					try (Connection sleepConnection =
+							DataAccess.getConnection()) {
+
+						try (Statement statement =
+								sleepConnection.createStatement()) {
+
+							statement.executeQuery("select sleep(3)");
+						}
+					}
+
+					return null;
+				});
+
+			Thread thread = new Thread(futureTask);
+
+			thread.setDaemon(true);
+			thread.start();
+
+			try {
+				boolean longRunning = false;
+
+				long endTime = System.currentTimeMillis() + 5000;
+
+				while (!longRunning && (System.currentTimeMillis() < endTime)) {
+					List<DB.RunningQuery> longRunningQueries =
+						db.getLongRunningQueries(connection);
+
+					for (DB.RunningQuery longRunningQuery :
+							longRunningQueries) {
+
+						String query = longRunningQuery.getQuery();
+
+						if ((query != null) &&
+							StringUtil.containsIgnoreCase(query, "sleep")) {
+
+							longRunning = true;
+
+							Assert.assertNotNull(longRunningQuery.getId());
+							Assert.assertNotNull(longRunningQuery.getSchema());
+							Assert.assertTrue(
+								longRunningQuery.getDuration() >= 0);
+
+							String actualState = longRunningQuery.getState();
+
+							Assert.assertNotNull(actualState);
+							Assert.assertFalse(
+								actualState,
+								StringUtil.containsIgnoreCase(
+									actualState, "lock"));
+
+							break;
+						}
+					}
+
+					if (!longRunning) {
+						Thread.sleep(200);
+					}
+				}
+
+				Assert.assertTrue(longRunning);
+			}
+			finally {
+				try {
+					futureTask.get(5, TimeUnit.SECONDS);
+				}
+				catch (Exception exception) {
+					_log.error(exception);
+				}
+			}
+		}
+	}
+
+	@Test
 	public void testGetPrimaryKeyColumnNames() throws Exception {
 		db.runSQL(_SQL_CREATE_TABLE_2);
 
