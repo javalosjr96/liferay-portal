@@ -108,6 +108,13 @@ public interface DB {
 		return Collections.emptyList();
 	}
 
+	public default List<RunningQuery> getLongRunningQueries(
+			Connection connection)
+		throws SQLException {
+
+		return Collections.emptyList();
+	}
+
 	public int getMajorVersion();
 
 	public int getMinorVersion();
