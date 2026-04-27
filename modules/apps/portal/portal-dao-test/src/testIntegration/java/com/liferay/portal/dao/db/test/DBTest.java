@@ -753,10 +753,9 @@ public class DBTest {
 
 	@Test
 	public void testGetLongRunningQueries() throws Exception {
-		String longRunningQueriesSQL = ReflectionTestUtil.invoke(
-			db, "getLongRunningQueriesSQL", new Class<?>[0]);
-
-		Assume.assumeNotNull(longRunningQueriesSQL);
+		Assume.assumeTrue(
+			(db.getDBType() == DBType.MARIADB) ||
+			(db.getDBType() == DBType.MYSQL));
 
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(

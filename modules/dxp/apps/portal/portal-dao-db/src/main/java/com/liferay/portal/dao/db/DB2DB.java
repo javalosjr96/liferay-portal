@@ -438,6 +438,11 @@ public class DB2DB extends BaseDB {
 	}
 
 	@Override
+	protected String getLongRunningQueriesSQL() {
+		return _LONG_RUNNING_QUERIES_SQL;
+	}
+
+	@Override
 	protected String getRenameTableSQL(
 		String oldTableName, String newTableName) {
 
@@ -671,6 +676,20 @@ public class DB2DB extends BaseDB {
 		"as bigint) as duration, 'LOCK WAIT' as state, coalesce(stmt_text, ",
 		"'') as query from sysibmadm.mon_lockwaits where ",
 		"lock_wait_elapsed_time >= ?");
+
+	private static final String _LONG_RUNNING_QUERIES_SQL =
+		StringBundler.concat(
+			"select cast(a.agent_id as varchar(20)) as id, ",
+			"coalesce(a.db_name, '') as schemaName, cast(timestampdiff(2, ",
+			"char(current timestamp - u.uow_start_time)) as bigint) as ",
+			"duration, a.appl_status as state, cast(act.stmt_text as ",
+			"varchar(1000)) as query from sysibmadm.applications a join ",
+			"table(sysproc.mon_get_unit_of_work(null, -2)) as u on a.agent_id ",
+			"= u.application_handle left join table(",
+			"sysproc.mon_get_activity(null, -2)) as act on a.agent_id = ",
+			"act.application_handle where a.appl_status = 'UOWEXEC' and ",
+			"a.agent_id <> mon_get_application_handle() and timestampdiff(2, ",
+			"char(current timestamp - u.uow_start_time)) >= ?");
 
 	private static final int _SQL_STRING_SIZE = 4000;
 
