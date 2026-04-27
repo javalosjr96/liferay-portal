@@ -2727,6 +2727,9 @@ public interface PropsKeys {
 	public static final String UPGRADE_LOG_PROGRESS_INTERVAL =
 		"upgrade.log.progress.interval";
 
+	public static final String UPGRADE_QUERY_MONITOR_ENABLED =
+		"upgrade.query.monitor.enabled";
+
 	public static final String UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD =
 		"upgrade.query.monitor.lock.threshold";
 

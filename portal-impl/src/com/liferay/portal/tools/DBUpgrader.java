@@ -49,6 +49,7 @@ import com.liferay.portal.transaction.TransactionsUtil;
 import com.liferay.portal.upgrade.PortalUpgradeProcess;
 import com.liferay.portal.upgrade.data.cleanup.DataCleanupPreupgradeProcessSuite;
 import com.liferay.portal.upgrade.log.UpgradeLogContext;
+import com.liferay.portal.upgrade.monitor.UpgradeQueryMonitor;
 import com.liferay.portal.util.InitUtil;
 import com.liferay.portal.util.PortalClassPathUtil;
 import com.liferay.portal.verify.PreupgradeVerifyProcessSuite;
@@ -249,10 +250,20 @@ public class DBUpgrader {
 		serviceLatch.openOn(
 			() -> {
 			});
+
+		_upgradeQueryMonitor = new UpgradeQueryMonitor();
+
+		_upgradeQueryMonitor.start();
 	}
 
 	public static void stopUpgradeLogAppender() {
 		UpgradeLogProgressTracker.stop();
+
+		if (_upgradeQueryMonitor != null) {
+			_upgradeQueryMonitor.stop();
+
+			_upgradeQueryMonitor = null;
+		}
 
 		if ((_appender != null) && _appender.isStarted()) {
 			_stopWatch.stop();
@@ -636,5 +647,6 @@ public class DBUpgrader {
 	private static volatile StopWatch _stopWatch;
 	private static volatile boolean _upgradeClient;
 	private static Boolean _upgradeDatabaseAutoRun;
+	private static volatile UpgradeQueryMonitor _upgradeQueryMonitor;
 
 }
