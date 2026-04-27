@@ -29,7 +29,6 @@ import java.sql.Types;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 
 /**
@@ -152,42 +151,6 @@ public class MySQLDB extends BaseDB {
 	}
 
 	@Override
-	public List<RunningQuery> getLockedQueries(Connection connection)
-		throws SQLException {
-
-		List<RunningQuery> lockedQueries = new ArrayList<>();
-
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				_LOCKED_QUERIES_SQL)) {
-
-			preparedStatement.setQueryTimeout(MONITOR_QUERY_TIMEOUT_SECONDS);
-
-			long threshold = (long)Math.ceil(
-				PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD / 1000.0);
-
-			preparedStatement.setLong(1, threshold);
-
-			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-				while (resultSet.next()) {
-					String id = String.valueOf(resultSet.getLong("id"));
-					String query = resultSet.getString("query");
-					String schema = resultSet.getString("schemaName");
-
-					long duration = TimeUnit.SECONDS.toMillis(
-						resultSet.getLong("duration"));
-
-					String state = resultSet.getString("state");
-
-					lockedQueries.add(
-						new RunningQuery(duration, id, query, schema, state));
-				}
-			}
-		}
-
-		return lockedQueries;
-	}
-
-	@Override
 	public String getNewUuidFunctionName() {
 		return "UUID()";
 	}
@@ -254,6 +217,11 @@ public class MySQLDB extends BaseDB {
 		}
 
 		runSQL(connection, sb.toString());
+	}
+
+	@Override
+	protected String getLockedQueriesSQL() {
+		return _LOCKED_QUERIES_SQL;
 	}
 
 	@Override

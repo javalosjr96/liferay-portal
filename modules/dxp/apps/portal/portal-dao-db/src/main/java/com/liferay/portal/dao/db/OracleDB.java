@@ -377,6 +377,11 @@ public class OracleDB extends BaseDB {
 	}
 
 	@Override
+	protected String getLockedQueriesSQL() {
+		return _LOCKED_QUERIES_SQL;
+	}
+
+	@Override
 	protected String getRenameTableSQL(
 		String oldTableName, String newTableName) {
 
@@ -535,6 +540,14 @@ public class OracleDB extends BaseDB {
 			return sb.toString();
 		}
 	}
+
+	private static final String _LOCKED_QUERIES_SQL = StringBundler.concat(
+		"select to_char(s.sid) as id, s.username as schemaName, cast((sysdate ",
+		"- s.sql_exec_start) * 86400 as number(19)) as duration, s.event as ",
+		"state, q.sql_text as query from v$session s left join v$sql q on ",
+		"s.sql_id = q.sql_id and s.sql_child_number = q.child_number where ",
+		"s.blocking_session is not null and s.sid <> sys_context('userenv', ",
+		"'sid') and (sysdate - s.sql_exec_start) * 86400 >= ?");
 
 	private static final String[] _ORACLE = {
 		"--", "1", "0",

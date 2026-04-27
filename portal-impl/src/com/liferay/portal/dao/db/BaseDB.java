@@ -46,6 +46,7 @@ import java.io.InputStream;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -60,6 +61,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -542,6 +544,42 @@ public abstract class BaseDB implements DB {
 		return databaseMetaData.getIndexInfo(
 			dbInspector.getCatalog(), dbInspector.getSchema(), tableName,
 			onlyUnique, false);
+	}
+
+	@Override
+	public List<RunningQuery> getLockedQueries(Connection connection)
+		throws SQLException {
+
+		List<RunningQuery> lockedQueries = new ArrayList<>();
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				getLockedQueriesSQL())) {
+
+			preparedStatement.setQueryTimeout(MONITOR_QUERY_TIMEOUT_SECONDS);
+
+			long threshold = (long)Math.ceil(
+				PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD / 1000.0);
+
+			preparedStatement.setLong(1, threshold);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					String id = String.valueOf(resultSet.getLong("id"));
+					String query = resultSet.getString("query");
+					String schema = resultSet.getString("schemaName");
+
+					long duration = TimeUnit.SECONDS.toMillis(
+						resultSet.getLong("duration"));
+
+					String state = resultSet.getString("state");
+
+					lockedQueries.add(
+						new RunningQuery(duration, id, query, schema, state));
+				}
+			}
+		}
+
+		return lockedQueries;
 	}
 
 	@Override
@@ -1505,6 +1543,10 @@ public abstract class BaseDB implements DB {
 
 	protected String getIndexColumnName(String indexColumnName) {
 		return indexColumnName;
+	}
+
+	protected String getLockedQueriesSQL() {
+		return null;
 	}
 
 	protected String getRenameTableSQL(

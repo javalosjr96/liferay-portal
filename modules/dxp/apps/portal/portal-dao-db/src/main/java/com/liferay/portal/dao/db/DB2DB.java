@@ -433,6 +433,11 @@ public class DB2DB extends BaseDB {
 	}
 
 	@Override
+	protected String getLockedQueriesSQL() {
+		return _LOCKED_QUERIES_SQL;
+	}
+
+	@Override
 	protected String getRenameTableSQL(
 		String oldTableName, String newTableName) {
 
@@ -659,6 +664,13 @@ public class DB2DB extends BaseDB {
 		" double", " integer", " bigint", " varchar(4000)", " clob(2G)",
 		" varchar", " generated always as identity", "commit"
 	};
+
+	private static final String _LOCKED_QUERIES_SQL = StringBundler.concat(
+		"select cast(req_application_handle as varchar(20)) as id, ",
+		"coalesce(tab_schema, '') as schemaName, cast(lock_wait_elapsed_time ",
+		"as bigint) as duration, 'LOCK WAIT' as state, coalesce(stmt_text, ",
+		"'') as query from sysibmadm.mon_lockwaits where ",
+		"lock_wait_elapsed_time >= ?");
 
 	private static final int _SQL_STRING_SIZE = 4000;
 

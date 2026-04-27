@@ -17,8 +17,11 @@ import com.liferay.portal.kernel.util.Validator;
 import java.io.IOException;
 
 import java.sql.Connection;
+import java.sql.SQLException;
 import java.sql.Types;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -56,6 +59,13 @@ public class HypersonicDB extends BaseDB {
 		}
 
 		return defaultValue;
+	}
+
+	@Override
+	public List<RunningQuery> getLockedQueries(Connection connection)
+		throws SQLException {
+
+		return Collections.emptyList();
 	}
 
 	@Override

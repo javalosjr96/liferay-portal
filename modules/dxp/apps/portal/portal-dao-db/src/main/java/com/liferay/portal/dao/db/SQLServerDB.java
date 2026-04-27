@@ -446,6 +446,11 @@ public class SQLServerDB extends BaseDB {
 	}
 
 	@Override
+	protected String getLockedQueriesSQL() {
+		return _LOCKED_QUERIES_SQL;
+	}
+
+	@Override
 	protected String getRenameTableSQL(
 		String oldTableName, String newTableName) {
 
@@ -581,6 +586,15 @@ public class SQLServerDB extends BaseDB {
 				"alter table ", tableName, " drop constraint ",
 				defaultConstraintName));
 	}
+
+	private static final String _LOCKED_QUERIES_SQL = StringBundler.concat(
+		"select cast(r.session_id as varchar(20)) as id, db_name(",
+		"r.database_id) as schemaName, cast(r.total_elapsed_time / 1000 as ",
+		"bigint) as duration, coalesce(r.wait_type, '') + ' BLOCKED_BY:' + ",
+		"cast(r.blocking_session_id as varchar(10)) as state, cast(t.text as ",
+		"varchar(4000)) as query from sys.dm_exec_requests r cross apply ",
+		"sys.dm_exec_sql_text(r.sql_handle) t where r.blocking_session_id <> ",
+		"0 and r.session_id <> @@spid and r.total_elapsed_time / 1000 >= ?");
 
 	private static final String[] _SQL_SERVER = {
 		"--", "1", "0", "'19700101'", "GetDate()", " image", " image",

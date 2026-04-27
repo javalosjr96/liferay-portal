@@ -331,6 +331,11 @@ public class PostgreSQLDB extends BaseDB {
 	}
 
 	@Override
+	protected String getLockedQueriesSQL() {
+		return _LOCKED_QUERIES_SQL;
+	}
+
+	@Override
 	protected int[] getSQLTypes() {
 		return _SQL_TYPES;
 	}
@@ -507,6 +512,14 @@ public class PostgreSQLDB extends BaseDB {
 
 		runSQL(connection, sb.toString());
 	}
+
+	private static final String _LOCKED_QUERIES_SQL = StringBundler.concat(
+		"select pid as id, datname as schemaName, cast(extract(epoch from ",
+		"(clock_timestamp() - query_start)) as bigint) as duration, coalesce(",
+		"wait_event_type || ':' || wait_event, state) as state, query from ",
+		"pg_stat_activity where wait_event_type = 'Lock' and state = 'active' ",
+		"and pid <> pg_backend_pid() and extract(epoch from (clock_timestamp",
+		"() - query_start)) >= ?");
 
 	private static final String[] _POSTGRESQL = {
 		"--", "true", "false", "'01/01/1970'", "current_timestamp", " oid",

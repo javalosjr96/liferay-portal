@@ -650,7 +650,10 @@ public class DBTest {
 
 	@Test
 	public void testGetLockedQueries() throws Exception {
-		Assume.assumeTrue(db.getDBType() == DBType.MYSQL);
+		String lockedQueriesSQL = ReflectionTestUtil.invoke(
+			db, "getLockedQueriesSQL", new Class<?>[0]);
+
+		Assume.assumeNotNull(lockedQueriesSQL);
 
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
@@ -715,7 +718,11 @@ public class DBTest {
 								Assert.assertTrue(
 									actualState,
 									StringUtil.containsIgnoreCase(
-										actualState, "LOCK WAIT"));
+										actualState, "LOCK") ||
+									StringUtil.containsIgnoreCase(
+										actualState, "BLOCK") ||
+									StringUtil.containsIgnoreCase(
+										actualState, "WAIT"));
 
 								break;
 							}
