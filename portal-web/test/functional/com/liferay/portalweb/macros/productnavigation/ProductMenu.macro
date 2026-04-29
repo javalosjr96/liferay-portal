@@ -83,15 +83,33 @@ definition {
 
 	@summary = "Default summary"
 	macro gotoPortlet(site = null, portlet = null, category = null) {
-		if (IsElementNotPresent(locator1 = "ProductMenu#TOGGLE")) {
-			ApplicationsMenu.gotoSite(site = ${site});
+		if (IsElementPresent(locator1 = "ApplicationsMenu#TOGGLE")) {
+			if (isSet(site)) {
+				ApplicationsMenu.gotoSite(site = ${site});
+
+				ApplicationsMenu.gotoPortlet(
+					category = ${category},
+					panel = "Site Administration",
+					portlet = ${portlet});
+			}
+			else {
+				ApplicationsMenu.gotoPortlet(
+					category = ${category},
+					panel = "Control Panel",
+					portlet = ${portlet});
+			}
 		}
+		else {
+			if (IsElementNotPresent(locator1 = "ProductMenu#TOGGLE")) {
+				ApplicationsMenu.gotoSite(site = ${site});
+			}
 
-		ProductMenuHelper.openProductMenu();
+			ProductMenuHelper.openProductMenu();
 
-		ProductMenuHelper.expandCategory(category = ${category});
+			ProductMenuHelper.expandCategory(category = ${category});
 
-		ProductMenuHelper.gotoPortlet(portlet = ${portlet});
+			ProductMenuHelper.gotoPortlet(portlet = ${portlet});
+		}
 	}
 
 	@summary = "Default summary"
