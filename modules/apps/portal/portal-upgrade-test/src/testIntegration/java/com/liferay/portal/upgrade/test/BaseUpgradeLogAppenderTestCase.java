@@ -561,8 +561,8 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 		_appender.start();
 
 		try {
-			long currentRow = 50000L;
-			long totalRows = 200000L;
+			long currentRow = RandomTestUtil.nextLong();
+			long totalRows = RandomTestUtil.nextLong();
 
 			String upgradeProcessClassName =
 				"com.liferay.test.SampleUpgradeProcess";
