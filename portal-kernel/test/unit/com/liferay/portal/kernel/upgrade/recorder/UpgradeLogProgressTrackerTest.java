@@ -67,7 +67,7 @@ public class UpgradeLogProgressTrackerTest {
 	public void testBaseDBProcessGetConnectionCallsWrap() throws Exception {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			MockedStatic<UpgradeLogProgressTracker>
 				upgradeLogProgressTrackerMockedStatic = Mockito.mockStatic(
 					UpgradeLogProgressTracker.class,
@@ -106,7 +106,7 @@ public class UpgradeLogProgressTrackerTest {
 	public void testBuildCountSQLForSelect() throws Exception {
 		Assert.assertEquals(
 			"select count(1) from (select * from Foo) tempCountTable_",
-			_invokeBuildCountSQL("select * from Foo"));
+			_invokeBuildCountSQL(_SELECT_FROM_FOO));
 	}
 
 	@Test
@@ -151,7 +151,7 @@ public class UpgradeLogProgressTrackerTest {
 	public void testClearParametersResetsUnsafeFlag() throws Exception {
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true)) {
+					_UPGRADE_LOG_PROGRESS_ENABLED, true)) {
 
 			UpgradeLogProgressTracker.start();
 
@@ -223,16 +223,16 @@ public class UpgradeLogProgressTrackerTest {
 
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", 1L)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, 1L)) {
 
 			UpgradeLogProgressTracker.start();
 
 			try {
 				String upgradeProcessClassName =
-					"com.liferay.test.SampleUpgradeProcess";
+					_UPGRADE_PROCESS_CLASS_NAME;
 
 				ResultSet resultSet = _mockResultSet();
 
@@ -278,10 +278,10 @@ public class UpgradeLogProgressTrackerTest {
 
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", Long.MAX_VALUE)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, Long.MAX_VALUE)) {
 
 			UpgradeLogProgressTracker.start();
 
@@ -289,7 +289,7 @@ public class UpgradeLogProgressTrackerTest {
 				ResultSet resultSet = _mockResultSet();
 
 				ResultSet wrappedResultSet = _wrapResultSet(
-					"com.liferay.test.SampleUpgradeProcess", resultSet);
+					_UPGRADE_PROCESS_CLASS_NAME, resultSet);
 
 				Assert.assertTrue(wrappedResultSet.next());
 
@@ -313,10 +313,10 @@ public class UpgradeLogProgressTrackerTest {
 
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", 1L)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, 1L)) {
 
 			UpgradeLogProgressTracker.start();
 
@@ -390,13 +390,13 @@ public class UpgradeLogProgressTrackerTest {
 	public void testCountQueryAppliesTenSecondTimeout() throws Exception {
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true)) {
+					_UPGRADE_LOG_PROGRESS_ENABLED, true)) {
 
 			UpgradeLogProgressTracker.start();
 
 			try {
 				PreparedStatement[] statements = _setUpPreparedMirror(
-					"select * from Foo");
+					_SELECT_FROM_FOO);
 
 				PreparedStatement countMockPreparedStatement = statements[0];
 				PreparedStatement wrappedPreparedStatement = statements[1];
@@ -435,7 +435,7 @@ public class UpgradeLogProgressTrackerTest {
 	public void testCountQueryDoesNotPolluteSqlRecorder() throws Exception {
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable thresholdSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD", 0L)) {
@@ -454,7 +454,7 @@ public class UpgradeLogProgressTrackerTest {
 					PreparedStatement.class);
 
 				Mockito.when(
-					underlyingConnection.prepareStatement("select * from Foo")
+					underlyingConnection.prepareStatement(_SELECT_FROM_FOO)
 				).thenReturn(
 					mainPreparedStatement
 				);
@@ -483,16 +483,16 @@ public class UpgradeLogProgressTrackerTest {
 				Connection recorderWrappedConnection =
 					UpgradeSQLRecorder.getConnectionWrapper(
 						underlyingConnection,
-						"com.liferay.test.SampleUpgradeProcess");
+						_UPGRADE_PROCESS_CLASS_NAME);
 
 				Connection trackerWrappedConnection =
 					UpgradeLogProgressTracker.wrap(
 						recorderWrappedConnection,
-						"com.liferay.test.SampleUpgradeProcess");
+						_UPGRADE_PROCESS_CLASS_NAME);
 
 				PreparedStatement wrappedPreparedStatement =
 					trackerWrappedConnection.prepareStatement(
-						"select * from Foo");
+						_SELECT_FROM_FOO);
 
 				wrappedPreparedStatement.executeQuery();
 
@@ -527,10 +527,10 @@ public class UpgradeLogProgressTrackerTest {
 	public void testCountQueryFailureDegrades() throws Exception {
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", 1L)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, 1L)) {
 
 			Log log = _getLog();
 
@@ -538,7 +538,7 @@ public class UpgradeLogProgressTrackerTest {
 
 			try {
 				PreparedStatement[] statements = _setUpPreparedMirror(
-					"select * from Foo");
+					_SELECT_FROM_FOO);
 
 				PreparedStatement countMockPreparedStatement = statements[0];
 
@@ -589,10 +589,10 @@ public class UpgradeLogProgressTrackerTest {
 
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", 1L)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, 1L)) {
 
 			UpgradeLogProgressTracker.start();
 
@@ -609,7 +609,7 @@ public class UpgradeLogProgressTrackerTest {
 				);
 
 				ResultSet wrappedResultSet = _wrapResultSet(
-					"com.liferay.test.SampleUpgradeProcess", resultSet);
+					_UPGRADE_PROCESS_CLASS_NAME, resultSet);
 
 				Assert.assertEquals(
 					columnValue, wrappedResultSet.getString(columnName));
@@ -630,16 +630,16 @@ public class UpgradeLogProgressTrackerTest {
 	public void testNestedResultSets() throws Exception {
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", 1L)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, 1L)) {
 
 			UpgradeLogProgressTracker.start();
 
 			try {
 				String upgradeProcessClassName =
-					"com.liferay.test.SampleUpgradeProcess";
+					_UPGRADE_PROCESS_CLASS_NAME;
 
 				ResultSet innerResultSet = _mockResultSet();
 				ResultSet outerResultSet = _mockResultSet();
@@ -732,10 +732,10 @@ public class UpgradeLogProgressTrackerTest {
 
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", Long.MAX_VALUE)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, Long.MAX_VALUE)) {
 
 			UpgradeLogProgressTracker.start();
 
@@ -743,7 +743,7 @@ public class UpgradeLogProgressTrackerTest {
 				ResultSet resultSet = _mockResultSet();
 
 				String upgradeProcessClassName =
-					"com.liferay.test.SampleUpgradeProcess";
+					_UPGRADE_PROCESS_CLASS_NAME;
 
 				ResultSet wrappedResultSet = _wrapResultSet(
 					upgradeProcessClassName, resultSet);
@@ -768,10 +768,10 @@ public class UpgradeLogProgressTrackerTest {
 
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", 1L)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, 1L)) {
 
 			UpgradeLogProgressTracker.start();
 
@@ -785,7 +785,7 @@ public class UpgradeLogProgressTrackerTest {
 				);
 
 				String upgradeProcessClassName =
-					"com.liferay.test.SampleUpgradeProcess";
+					_UPGRADE_PROCESS_CLASS_NAME;
 
 				ResultSet wrappedResultSet = _wrapResultSet(
 					upgradeProcessClassName, resultSet);
@@ -817,10 +817,10 @@ public class UpgradeLogProgressTrackerTest {
 	public void testNextLogReachesLogger() throws Exception {
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", 1L)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, 1L)) {
 
 			try {
 				UpgradeLogProgressTracker.start();
@@ -835,7 +835,7 @@ public class UpgradeLogProgressTrackerTest {
 					ResultSet resultSet = _mockResultSet();
 
 					String upgradeProcessClassName =
-						"com.liferay.test.SampleUpgradeProcess";
+						_UPGRADE_PROCESS_CLASS_NAME;
 
 					ResultSet wrappedResultSet = _wrapResultSet(
 						upgradeProcessClassName, resultSet);
@@ -874,16 +874,16 @@ public class UpgradeLogProgressTrackerTest {
 
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", 1L)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, 1L)) {
 
 			UpgradeLogProgressTracker.start();
 
 			try {
 				String upgradeProcessClassName =
-					"com.liferay.test.SampleUpgradeProcess";
+					_UPGRADE_PROCESS_CLASS_NAME;
 
 				ResultSet resultSet = _mockResultSet();
 
@@ -924,16 +924,16 @@ public class UpgradeLogProgressTrackerTest {
 
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", 1L)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, 1L)) {
 
 			UpgradeLogProgressTracker.start();
 
 			try {
 				String upgradeProcessClassName =
-					"com.liferay.test.SampleUpgradeProcess";
+					_UPGRADE_PROCESS_CLASS_NAME;
 
 				ResultSet resultSet = _mockResultSet();
 
@@ -978,10 +978,10 @@ public class UpgradeLogProgressTrackerTest {
 	public void testNextLogsWithTotalAndPercentage() throws Exception {
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", 1L)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, 1L)) {
 
 			Log log = _getLog();
 
@@ -989,7 +989,7 @@ public class UpgradeLogProgressTrackerTest {
 
 			try {
 				PreparedStatement[] statements = _setUpPreparedMirror(
-					"select * from Foo");
+					_SELECT_FROM_FOO);
 
 				PreparedStatement countMockPreparedStatement = statements[0];
 				PreparedStatement wrappedPreparedStatement = statements[1];
@@ -1058,7 +1058,7 @@ public class UpgradeLogProgressTrackerTest {
 	public void testParameterMirroringWhitelist() throws Exception {
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true)) {
+					_UPGRADE_LOG_PROGRESS_ENABLED, true)) {
 
 			UpgradeLogProgressTracker.start();
 
@@ -1118,7 +1118,7 @@ public class UpgradeLogProgressTrackerTest {
 	public void testStartClearsRegistry() throws Exception {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", false)) {
+					_UPGRADE_LOG_PROGRESS_ENABLED, false)) {
 
 			Map<String, Long> lastKnownProgresses =
 				ReflectionTestUtil.getFieldValue(
@@ -1140,7 +1140,7 @@ public class UpgradeLogProgressTrackerTest {
 	public void testStartWarnsWhenEnabled() throws Exception {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				UpgradeLogProgressTracker.class.getName(),
 				LoggerTestUtil.WARN)) {
@@ -1171,10 +1171,10 @@ public class UpgradeLogProgressTrackerTest {
 	public void testStatementCloseFinishesTrackedResultSets() throws Exception {
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true);
+					_UPGRADE_LOG_PROGRESS_ENABLED, true);
 			SafeCloseable intervalSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_INTERVAL", 1L)) {
+					_UPGRADE_LOG_PROGRESS_INTERVAL, 1L)) {
 
 			UpgradeLogProgressTracker.start();
 
@@ -1182,7 +1182,7 @@ public class UpgradeLogProgressTrackerTest {
 				ResultSet resultSet = _mockResultSet();
 
 				ResultSet wrappedResultSet = _wrapResultSet(
-					"com.liferay.test.SampleUpgradeProcess", resultSet);
+					_UPGRADE_PROCESS_CLASS_NAME, resultSet);
 
 				ReflectionTestUtil.setFieldValue(
 					ProxyUtil.getInvocationHandler(wrappedResultSet),
@@ -1216,13 +1216,13 @@ public class UpgradeLogProgressTrackerTest {
 	public void testStatementConfigSettersNotMirrored() throws Exception {
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true)) {
+					_UPGRADE_LOG_PROGRESS_ENABLED, true)) {
 
 			UpgradeLogProgressTracker.start();
 
 			try {
 				PreparedStatement[] statements = _setUpPreparedMirror(
-					"select * from Foo");
+					_SELECT_FROM_FOO);
 
 				PreparedStatement countMockPreparedStatement = statements[0];
 
@@ -1260,7 +1260,7 @@ public class UpgradeLogProgressTrackerTest {
 	public void testUnsafeStreamSetterSkipsCount() throws Exception {
 		try (SafeCloseable enabledSafeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true)) {
+					_UPGRADE_LOG_PROGRESS_ENABLED, true)) {
 
 			UpgradeLogProgressTracker.start();
 
@@ -1306,7 +1306,7 @@ public class UpgradeLogProgressTrackerTest {
 	public void testWrapDisabled() throws Exception {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", false)) {
+					_UPGRADE_LOG_PROGRESS_ENABLED, false)) {
 
 			UpgradeLogProgressTracker.start();
 
@@ -1314,7 +1314,7 @@ public class UpgradeLogProgressTrackerTest {
 				Connection connection = Mockito.mock(Connection.class);
 
 				Connection wrappedConnection = UpgradeLogProgressTracker.wrap(
-					connection, "com.liferay.test.SampleUpgradeProcess");
+					connection, _UPGRADE_PROCESS_CLASS_NAME);
 
 				Assert.assertSame(connection, wrappedConnection);
 			}
@@ -1328,7 +1328,7 @@ public class UpgradeLogProgressTrackerTest {
 	public void testWrapEnabled() throws Exception {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_LOG_PROGRESS_ENABLED", true)) {
+					_UPGRADE_LOG_PROGRESS_ENABLED, true)) {
 
 			try {
 				UpgradeLogProgressTracker.start();
@@ -1336,7 +1336,7 @@ public class UpgradeLogProgressTrackerTest {
 				Connection connection = Mockito.mock(Connection.class);
 
 				Connection wrappedConnection = UpgradeLogProgressTracker.wrap(
-					connection, "com.liferay.test.SampleUpgradeProcess");
+					connection, _UPGRADE_PROCESS_CLASS_NAME);
 
 				Assert.assertNotSame(connection, wrappedConnection);
 
@@ -1495,7 +1495,7 @@ public class UpgradeLogProgressTrackerTest {
 		);
 
 		Connection wrappedConnection = UpgradeLogProgressTracker.wrap(
-			connection, "com.liferay.test.SampleUpgradeProcess");
+			connection, _UPGRADE_PROCESS_CLASS_NAME);
 
 		PreparedStatement wrappedPreparedStatement =
 			wrappedConnection.prepareStatement(sql);
@@ -1531,6 +1531,17 @@ public class UpgradeLogProgressTrackerTest {
 
 		return wrappedStatement.executeQuery("select 1");
 	}
+
+	private static final String _SELECT_FROM_FOO = "select * from Foo";
+
+	private static final String _UPGRADE_LOG_PROGRESS_ENABLED =
+		"UPGRADE_LOG_PROGRESS_ENABLED";
+
+	private static final String _UPGRADE_LOG_PROGRESS_INTERVAL =
+		"UPGRADE_LOG_PROGRESS_INTERVAL";
+
+	private static final String _UPGRADE_PROCESS_CLASS_NAME =
+		"com.liferay.test.SampleUpgradeProcess";
 
 	private Log _originalLog;
 
