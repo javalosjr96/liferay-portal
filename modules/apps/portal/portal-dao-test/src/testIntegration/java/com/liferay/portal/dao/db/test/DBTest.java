@@ -663,18 +663,21 @@ public class DBTest {
 					"UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD", 0L);
 			Connection lockingConnection = DataAccess.getConnection();
 
-			Statement statement1 = lockingConnection.createStatement()) {
+			Statement lockingStatement =
+				lockingConnection.createStatement()) {
 
 			lockingConnection.setAutoCommit(false);
 
-			statement1.executeUpdate(
+			lockingStatement.executeUpdate(
 				"update " + TABLE_NAME_1 +
 					" set nilColumn = 'locked' where id = 1");
 
 			futureTask = new FutureTask<>(
 				() -> {
-					try (Statement statement2 = connection.createStatement()) {
-						statement2.executeUpdate(
+					try (Statement waitingStatement =
+							connection.createStatement()) {
+
+						waitingStatement.executeUpdate(
 							"update " + TABLE_NAME_1 +
 								" set nilColumn = 'waiting' where id = 1");
 					}
