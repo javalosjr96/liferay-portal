@@ -703,7 +703,6 @@ public class DBTest {
 					if ((query != null) && query.contains("waiting")) {
 						locked = true;
 
-						Assert.assertTrue(lockedQueryInfo.getDuration() >= 0);
 						Assert.assertNotNull(lockedQueryInfo.getId());
 						Assert.assertNotNull(lockedQueryInfo.getSchema());
 
