@@ -159,8 +159,8 @@ public class MySQLDB extends BaseDB {
 		List<QueryInfo> lockedQueryInfos = new ArrayList<>();
 
 		String sql = StringBundler.concat(
-			"select p.id as id, p.db as schemaName, p.time as duration, ",
-			"coalesce(t.trx_state, p.state) as state, p.info as query from ",
+			"select p.id, p.db, p.time, p.info, ",
+			"coalesce(t.trx_state, p.state) as state from ",
 			"information_schema.processlist p left join ",
 			"information_schema.innodb_trx t on p.id = t.trx_mysql_thread_id ",
 			"where p.command != 'Sleep' and p.info is not null and p.id != ",
@@ -180,10 +180,10 @@ public class MySQLDB extends BaseDB {
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				while (resultSet.next()) {
 					long duration = TimeUnit.SECONDS.toMillis(
-						resultSet.getLong("duration"));
+						resultSet.getLong("time"));
 					String id = resultSet.getString("id");
-					String query = resultSet.getString("query");
-					String schema = resultSet.getString("schemaName");
+					String query = resultSet.getString("info");
+					String schema = resultSet.getString("db");
 					String state = resultSet.getString("state");
 
 					lockedQueryInfos.add(
