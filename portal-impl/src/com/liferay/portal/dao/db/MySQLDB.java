@@ -160,7 +160,7 @@ public class MySQLDB extends BaseDB {
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				_LOCKED_QUERY_INFOS_SQL)) {
 
-			preparedStatement.setQueryTimeout(MONITOR_QUERY_TIMEOUT_SECONDS);
+			preparedStatement.setQueryTimeout(_MONITOR_QUERY_TIMEOUT_SECONDS);
 
 			long threshold = (long)Math.ceil(
 				PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD / 1000.0);
@@ -169,13 +169,11 @@ public class MySQLDB extends BaseDB {
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
 				while (resultSet.next()) {
+					long duration = TimeUnit.SECONDS.toMillis(
+						resultSet.getLong("duration"));
 					String id = resultSet.getString("id");
 					String query = resultSet.getString("query");
 					String schema = resultSet.getString("schemaName");
-
-					long duration = TimeUnit.SECONDS.toMillis(
-						resultSet.getLong("duration"));
-
 					String state = resultSet.getString("state");
 
 					lockedQueryInfos.add(
@@ -360,6 +358,8 @@ public class MySQLDB extends BaseDB {
 		"where p.command != 'Sleep' and p.info is not null and p.id != ",
 		"connection_id() and ((t.trx_state = 'LOCK WAIT' or p.state like ",
 		"'%lock%') and p.time >= ?)");
+
+	private static final int _MONITOR_QUERY_TIMEOUT_SECONDS = 10;
 
 	private static final String[] _MYSQL = {
 		"##", "1", "0", "'1970-01-01'", "now()", " longblob", " longblob",
