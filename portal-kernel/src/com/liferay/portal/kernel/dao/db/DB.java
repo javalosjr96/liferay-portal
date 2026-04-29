@@ -247,45 +247,4 @@ public interface DB {
 			String[] primaryKeyColumnNames)
 		throws Exception;
 
-	public static class QueryInfo {
-
-		public QueryInfo(
-			long duration, String id, String query, String schema,
-			String state) {
-
-			_duration = duration;
-			_id = id;
-			_query = query;
-			_schema = schema;
-			_state = state;
-		}
-
-		public long getDuration() {
-			return _duration;
-		}
-
-		public String getId() {
-			return _id;
-		}
-
-		public String getQuery() {
-			return _query;
-		}
-
-		public String getSchema() {
-			return _schema;
-		}
-
-		public String getState() {
-			return _state;
-		}
-
-		private final long _duration;
-		private final String _id;
-		private final String _query;
-		private final String _schema;
-		private final String _state;
-
-	}
-
 }

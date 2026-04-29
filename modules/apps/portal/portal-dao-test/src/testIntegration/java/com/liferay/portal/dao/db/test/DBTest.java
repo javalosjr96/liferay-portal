@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
+import com.liferay.portal.kernel.dao.db.QueryInfo;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -696,7 +697,7 @@ public class DBTest {
 			long endTime = System.currentTimeMillis() + 5000;
 
 			while (!locked && (System.currentTimeMillis() < endTime)) {
-				for (DB.QueryInfo lockedQueryInfo :
+				for (QueryInfo lockedQueryInfo :
 						db.getLockedQueryInfos(lockingConnection)) {
 
 					String query = lockedQueryInfo.getQuery();
