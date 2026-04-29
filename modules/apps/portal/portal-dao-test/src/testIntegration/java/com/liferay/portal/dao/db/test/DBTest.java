@@ -16,8 +16,6 @@ import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
 import com.liferay.portal.kernel.dao.db.QueryInfo;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.AssumeTestRule;
@@ -728,12 +726,7 @@ public class DBTest {
 		}
 		finally {
 			if (futureTask != null) {
-				try {
-					futureTask.get(5, TimeUnit.SECONDS);
-				}
-				catch (Exception exception) {
-					_log.error(exception);
-				}
+				futureTask.get(5, TimeUnit.SECONDS);
 			}
 		}
 	}
@@ -1091,7 +1084,5 @@ public class DBTest {
 	private static final String _TABLE_NAME_2 = "DBTest2";
 
 	private static final String _TABLE_NAME_3 = "DBTest3";
-
-	private static final Log _log = LogFactoryUtil.getLog(DBTest.class);
 
 }
