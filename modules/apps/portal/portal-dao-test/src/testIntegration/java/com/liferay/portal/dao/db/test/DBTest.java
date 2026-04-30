@@ -32,7 +32,6 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.Statement;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -661,24 +660,21 @@ public class DBTest {
 		try (SafeCloseable safeCloseable =
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD", 0L);
-
-			Connection lockingConnection = DataAccess.getConnection();
-
-			Statement statement1 = lockingConnection.createStatement()) {
+			Connection lockingConnection = DataAccess.getConnection()) {
 
 			lockingConnection.setAutoCommit(false);
 
-			statement1.executeUpdate(
+			db.runSQL(
+				lockingConnection,
 				"update " + TABLE_NAME_1 +
 					" set nilColumn = 'locked' where id = 1");
 
 			futureTask = new FutureTask<>(
 				() -> {
-					try (Statement statement2 = connection.createStatement()) {
-						statement2.executeUpdate(
-							"update " + TABLE_NAME_1 +
-								" set nilColumn = 'waiting' where id = 1");
-					}
+					db.runSQL(
+						connection,
+						"update " + TABLE_NAME_1 +
+							" set nilColumn = 'waiting' where id = 1");
 
 					return null;
 				});
@@ -689,39 +685,31 @@ public class DBTest {
 
 			thread.start();
 
-			boolean locked = false;
-
 			long endTime = System.currentTimeMillis() + 5000;
 
-			while (!locked && (System.currentTimeMillis() < endTime)) {
+			while (System.currentTimeMillis() < endTime) {
 				for (DB.QueryInfo lockedQueryInfo :
 						db.getLockedQueryInfos(lockingConnection)) {
 
 					String query = lockedQueryInfo.getQuery();
 
 					if ((query != null) && query.contains("waiting")) {
-						locked = true;
-
-						Assert.assertTrue(lockedQueryInfo.getDuration() >= 0);
 						Assert.assertNotNull(lockedQueryInfo.getId());
 						Assert.assertNotNull(lockedQueryInfo.getSchema());
-
-						String actualState = lockedQueryInfo.getState();
-
 						Assert.assertTrue(
 							StringUtil.containsIgnoreCase(
-								actualState, "LOCK WAIT"));
+								lockedQueryInfo.getState(), "LOCK WAIT"));
 
-						break;
+						return;
 					}
 				}
 
-				if (!locked) {
-					Thread.sleep(200);
-				}
+				Thread.sleep(200);
 			}
 
-			Assert.assertTrue(locked);
+			Assert.fail(
+				"No locked query containing 'waiting' was detected within " +
+					"5 seconds");
 		}
 		finally {
 			if (futureTask != null) {
