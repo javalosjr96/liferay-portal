@@ -649,7 +649,11 @@ public class DBTest {
 
 	@Test
 	public void testGetLockedQueryInfos() throws Exception {
-		Assume.assumeTrue(db.getDBType() == DBType.MYSQL);
+		DBType dbType = db.getDBType();
+
+		Assume.assumeTrue(
+			(dbType == DBType.DB2) || (dbType == DBType.MARIADB) ||
+			(dbType == DBType.MYSQL) || (dbType == DBType.SQLSERVER));
 
 		db.runSQL(
 			"insert into " + TABLE_NAME_1 +
@@ -696,9 +700,25 @@ public class DBTest {
 					if ((query != null) && query.contains("waiting")) {
 						Assert.assertNotNull(lockedQueryInfo.getId());
 						Assert.assertNotNull(lockedQueryInfo.getSchema());
-						Assert.assertTrue(
-							StringUtil.containsIgnoreCase(
-								lockedQueryInfo.getState(), "LOCK WAIT"));
+
+						String upperCaseState = StringUtil.toUpperCase(
+							lockedQueryInfo.getState());
+
+						if (dbType == DBType.DB2) {
+							Assert.assertTrue(
+								upperCaseState.equals("LOCKWAIT") ||
+								upperCaseState.equals("UOWEXEC"));
+						}
+						else if ((dbType == DBType.MARIADB) ||
+								 (dbType == DBType.MYSQL)) {
+
+							Assert.assertTrue(
+								upperCaseState.contains("LOCK WAIT"));
+						}
+						else if (dbType == DBType.SQLSERVER) {
+							Assert.assertTrue(
+								upperCaseState.startsWith("LCK_"));
+						}
 
 						return;
 					}

@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author Alexander Chow
@@ -221,6 +223,53 @@ public class DB2DB extends BaseDB {
 		}
 
 		return StringPool.BLANK;
+	}
+
+	@Override
+	public List<QueryInfo> getLockedQueryInfos(Connection connection)
+		throws SQLException {
+
+		List<QueryInfo> lockedQueryInfos = new ArrayList<>();
+
+		String sql = StringBundler.concat(
+			"select timestampdiff(2, char(current timestamp - ",
+			"unit_of_work.uow_start_time)) as duration, ",
+			"sysibmadm.applications.agent_id as id, cast(activity.stmt_text ",
+			"as varchar(1000)) as query, sysibmadm.applications.db_name as ",
+			"schema_, sysibmadm.applications.appl_status as state from ",
+			"sysibmadm.applications join table(sysproc.mon_get_unit_of_work(",
+			"null, -2)) as unit_of_work on sysibmadm.applications.agent_id = ",
+			"unit_of_work.application_handle left join table(",
+			"sysproc.mon_get_activity(null, -2)) as activity on ",
+			"sysibmadm.applications.agent_id = activity.application_handle ",
+			"where sysibmadm.applications.agent_id != ",
+			"mon_get_application_handle() and ",
+			"sysibmadm.applications.appl_status in ('LOCKWAIT', 'UOWEXEC') ",
+			"and timestampdiff(2, char(current timestamp - ",
+			"unit_of_work.uow_start_time)) >= ?");
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				sql)) {
+
+			preparedStatement.setLong(
+				1, PropsValues.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD / 1000);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				while (resultSet.next()) {
+					long duration = TimeUnit.SECONDS.toMillis(
+						resultSet.getLong("duration"));
+					String id = resultSet.getString("id");
+					String query = resultSet.getString("query");
+					String schema = resultSet.getString("schema_");
+					String state = resultSet.getString("state");
+
+					lockedQueryInfos.add(
+						new QueryInfo(duration, id, query, schema, state));
+				}
+			}
+		}
+
+		return lockedQueryInfos;
 	}
 
 	@Override
