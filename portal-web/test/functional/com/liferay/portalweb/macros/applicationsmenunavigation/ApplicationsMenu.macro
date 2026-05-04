@@ -37,6 +37,12 @@ definition {
 				key_panel = ${panel},
 				locator1 = "ApplicationsMenu#PANEL_TITLE");
 		}
+
+		if (IsElementPresent(locator1 = "ProductMenu#PRODUCT_MENU_CLOSED")) {
+			Click(locator1 = "ProductMenu#TOGGLE");
+
+			WaitForElementPresent(locator1 = "ProductMenu#PRODUCT_MENU_OPENED");
+		}
 	}
 
 	@summary = "Default summary"
