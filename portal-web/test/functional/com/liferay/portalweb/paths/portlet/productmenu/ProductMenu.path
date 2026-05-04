@@ -32,22 +32,22 @@
 </tr>
 <tr>
 	<td>TOGGLE</td>
-	<td>//*[@data-qa-id='productMenu']</td>
+	<td>//button[@data-qa-id='sideNavigationToggler']</td>
 	<td></td>
 </tr>
 <tr>
 	<td>PRODUCT_MENU_BODY</td>
-	<td>//*[@data-qa-id='productMenuBody'] | //*[@data-qa-id='sideNavigation']</td>
+	<td>//*[@data-qa-id='sideNavigation']</td>
 	<td></td>
 </tr>
 <tr>
 	<td>PRODUCT_MENU_OPENED</td>
-	<td>//*[contains(@id,'sidenavSliderId') and contains(@class,'open') and not(contains(@class,'sidenav-transition')) and not(contains(@class,'closed'))]</td>
+	<td>//*[@data-qa-id='sideNavigation' and contains(@class,'c-slideout-show')]</td>
 	<td></td>
 </tr>
 <tr>
 	<td>PRODUCT_MENU_CLOSED</td>
-	<td>//*[contains(@id,'sidenavSliderId') and contains(@class,'closed') and not(contains(@class,'sidenav-transition')) and not(contains(@class,'open'))]</td>
+	<td>//*[@data-qa-id='sideNavigation' and not(contains(@class,'c-slideout-show'))]</td>
 	<td></td>
 </tr>
 <tr>
