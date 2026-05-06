@@ -103,9 +103,11 @@ public class UpgradeQueryMonitor {
 			}
 		}
 		catch (SQLTimeoutException sqlTimeoutException) {
-			if (!Thread.currentThread().isInterrupted() &&
-				_log.isWarnEnabled()) {
+			if (Thread.currentThread().isInterrupted()) {
+				return;
+			}
 
+			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"Unable to monitor upgrade query execution status due to " +
 						"a timeout; monitoring will be disabled for the " +
@@ -117,9 +119,11 @@ public class UpgradeQueryMonitor {
 			throw new RuntimeException(sqlTimeoutException);
 		}
 		catch (SQLException sqlException) {
-			if (!Thread.currentThread().isInterrupted() &&
-				_log.isWarnEnabled()) {
+			if (Thread.currentThread().isInterrupted()) {
+				return;
+			}
 
+			if (_log.isWarnEnabled()) {
 				_log.warn(
 					"Unable to monitor upgrade query execution status; " +
 						"monitoring will be disabled for the remainder of " +
