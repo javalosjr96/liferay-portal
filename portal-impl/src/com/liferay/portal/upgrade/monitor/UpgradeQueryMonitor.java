@@ -97,11 +97,10 @@ public class UpgradeQueryMonitor {
 		catch (SQLTimeoutException sqlTimeoutException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					StringBundler.concat(
-						"Timeout executing query to monitor upgrade query ",
-						"execution status. Monitoring will be disabled for ",
-						"this remaining upgrade execution. Please check ",
-						"database resource usage."),
+					"Unable to monitor upgrade query execution status due to " +
+						"a timeout; monitoring will be disabled for the " +
+							"remainder of this upgrade — check database " +
+								"resource usage.",
 					sqlTimeoutException);
 			}
 
@@ -110,12 +109,10 @@ public class UpgradeQueryMonitor {
 		catch (SQLException sqlException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					StringBundler.concat(
-						"Unable to execute query to monitor upgrade query ",
-						"execution status. Monitoring will be disabled for ",
-						"this remaining upgrade execution. Please check ",
-						"database permissions for execution of the monitor ",
-						"query."),
+					"Unable to monitor upgrade query execution status; " +
+						"monitoring will be disabled for the remainder of " +
+							"this upgrade — check database permissions for " +
+								"execution of the monitor query.",
 					sqlException);
 			}
 
@@ -123,9 +120,9 @@ public class UpgradeQueryMonitor {
 		}
 	}
 
-	private static final long _POLLING_INTERVAL_SECONDS = 60L;
+	private static final long _POLLING_INTERVAL_SECONDS = 60;
 
-	private static final long _SHUTDOWN_TIMEOUT_SECONDS = 5L;
+	private static final long _SHUTDOWN_TIMEOUT_SECONDS = 5;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		UpgradeQueryMonitor.class);
