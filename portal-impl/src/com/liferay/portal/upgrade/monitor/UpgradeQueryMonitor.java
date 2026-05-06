@@ -1,0 +1,135 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.portal.upgrade.monitor;
+
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.dao.db.DB;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.InfrastructureUtil;
+import com.liferay.portal.kernel.util.NamedThreadFactory;
+import com.liferay.portal.kernel.util.PropsValues;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.SQLTimeoutException;
+
+import java.util.List;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+
+import javax.sql.DataSource;
+
+/**
+ * @author Jorge Avalos
+ */
+public class UpgradeQueryMonitor {
+
+	public static synchronized void start() {
+		if (!PropsValues.UPGRADE_QUERY_MONITOR_ENABLED ||
+			(_scheduledExecutorService != null)) {
+
+			return;
+		}
+
+		_scheduledExecutorService = Executors.newSingleThreadScheduledExecutor(
+			new NamedThreadFactory(
+				"Liferay Upgrade Query Monitor", Thread.NORM_PRIORITY, null));
+
+		_scheduledExecutorService.scheduleWithFixedDelay(
+			UpgradeQueryMonitor::_poll, _POLLING_INTERVAL_SECONDS,
+			_POLLING_INTERVAL_SECONDS, TimeUnit.SECONDS);
+	}
+
+	public static synchronized void stop() {
+		if (_scheduledExecutorService == null) {
+			return;
+		}
+
+		_scheduledExecutorService.shutdownNow();
+
+		try {
+			_scheduledExecutorService.awaitTermination(
+				_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+		}
+		catch (InterruptedException interruptedException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(interruptedException);
+			}
+
+			Thread.currentThread(
+			).interrupt();
+		}
+
+		_scheduledExecutorService = null;
+	}
+
+	private static void _poll() {
+		DataSource dataSource = InfrastructureUtil.getDataSource();
+
+		if (dataSource == null) {
+			return;
+		}
+
+		try (Connection connection = dataSource.getConnection()) {
+			DB db = DBManagerUtil.getDB();
+
+			List<DB.QueryInfo> lockedQueryInfos = db.getLockedQueryInfos(
+				connection);
+
+			for (DB.QueryInfo lockedQueryInfo : lockedQueryInfos) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						StringBundler.concat(
+							"Query \"", lockedQueryInfo.getQuery(),
+							"\" has been locked for ",
+							TimeUnit.MILLISECONDS.toSeconds(
+								lockedQueryInfo.getDuration()),
+							" seconds"));
+				}
+			}
+		}
+		catch (SQLTimeoutException sqlTimeoutException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"Timeout executing query to monitor upgrade query ",
+						"execution status. Monitoring will be disabled for ",
+						"this remaining upgrade execution. Please check ",
+						"database resource usage."),
+					sqlTimeoutException);
+			}
+
+			throw new RuntimeException(sqlTimeoutException);
+		}
+		catch (SQLException sqlException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					StringBundler.concat(
+						"Unable to execute query to monitor upgrade query ",
+						"execution status. Monitoring will be disabled for ",
+						"this remaining upgrade execution. Please check ",
+						"database permissions for execution of the monitor ",
+						"query."),
+					sqlException);
+			}
+
+			throw new RuntimeException(sqlException);
+		}
+	}
+
+	private static final long _POLLING_INTERVAL_SECONDS = 60L;
+
+	private static final long _SHUTDOWN_TIMEOUT_SECONDS = 5L;
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		UpgradeQueryMonitor.class);
+
+	private static ScheduledExecutorService _scheduledExecutorService;
+
+}
