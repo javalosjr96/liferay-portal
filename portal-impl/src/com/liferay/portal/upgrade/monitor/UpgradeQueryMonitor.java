@@ -42,9 +42,8 @@ public class UpgradeQueryMonitor {
 				"Liferay Upgrade Query Monitor", Thread.NORM_PRIORITY, null));
 
 		_scheduledExecutorService.scheduleWithFixedDelay(
-			UpgradeQueryMonitor::_poll,
-			PropsValues.UPGRADE_QUERY_MONITOR_INTERVAL,
-			PropsValues.UPGRADE_QUERY_MONITOR_INTERVAL, TimeUnit.MILLISECONDS);
+			UpgradeQueryMonitor::_poll, _POLLING_INTERVAL_SECONDS,
+			_POLLING_INTERVAL_SECONDS, TimeUnit.SECONDS);
 	}
 
 	public static synchronized void stop() {
@@ -132,6 +131,8 @@ public class UpgradeQueryMonitor {
 			throw new RuntimeException(sqlException);
 		}
 	}
+
+	private static final long _POLLING_INTERVAL_SECONDS = 60;
 
 	private static final long _SHUTDOWN_TIMEOUT_SECONDS = 5;
 

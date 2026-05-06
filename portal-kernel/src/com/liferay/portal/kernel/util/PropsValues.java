@@ -2400,10 +2400,6 @@ public class PropsValues {
 		GetterUtil.getBoolean(
 			PropsUtil.get(PropsKeys.UPGRADE_QUERY_MONITOR_ENABLED), true);
 
-	public static final long UPGRADE_QUERY_MONITOR_INTERVAL =
-		GetterUtil.getLong(
-			PropsUtil.get(PropsKeys.UPGRADE_QUERY_MONITOR_INTERVAL), 60000);
-
 	public static final long UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD =
 		GetterUtil.getLong(
 			PropsUtil.get(PropsKeys.UPGRADE_QUERY_MONITOR_LOCK_THRESHOLD),
