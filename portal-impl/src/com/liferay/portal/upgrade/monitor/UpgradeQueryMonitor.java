@@ -54,8 +54,16 @@ public class UpgradeQueryMonitor {
 		_scheduledExecutorService.shutdownNow();
 
 		try {
-			_scheduledExecutorService.awaitTermination(
-				_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+			if (!_scheduledExecutorService.awaitTermination(
+					_SHUTDOWN_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						StringBundler.concat(
+							"Upgrade query monitor did not terminate within ",
+							_SHUTDOWN_TIMEOUT_SECONDS, " seconds."));
+				}
+			}
 		}
 		catch (InterruptedException interruptedException) {
 			if (_log.isDebugEnabled()) {
