@@ -150,7 +150,7 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 			StartupHelperUtil.class, "_newRelease", true);
 
 		_updatePortalRelease(
-			new Version(1, 0, 0), ReleaseInfo.RELEASE_7_1_0_BUILD_NUMBER);
+			ReleaseInfo.RELEASE_7_1_0_BUILD_NUMBER, new Version(1, 0, 0));
 
 		_upgradeReportLogger = (Logger)LogManager.getLogger(
 			"com.liferay.portal.upgrade.internal.report.UpgradeReport");
@@ -532,10 +532,10 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 		_appender.start();
 
 		LogEvent logEvent = Log4jLogEvent.newBuilder(
-		).setLoggerName(
-			"Warn"
 		).setLevel(
 			Level.WARN
+		).setLoggerName(
+			"Warn"
 		).setMessage(
 			new SimpleMessage("Warning")
 		).build();
@@ -1046,9 +1046,9 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 				_appender.stop();
 
 				_assertUpgradeReportDirectoryWriteProtected(
-					logCapture, reportDir, "upgrade_report.txt");
+					reportDir, logCapture, "upgrade_report.txt");
 				_assertUpgradeReportDirectoryWriteProtected(
-					logCapture, reportDir, "upgrade_report_diagnostics.txt");
+					reportDir, logCapture, "upgrade_report_diagnostics.txt");
 			}
 		}
 		finally {
@@ -1118,12 +1118,12 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 			StartupHelperUtil.class, "_newRelease", _originalNewRelease);
 
 		_updatePortalRelease(
-			PortalUpgradeProcess.getLatestSchemaVersion(),
-			ReleaseInfo.getBuildNumber());
+			ReleaseInfo.getBuildNumber(),
+			PortalUpgradeProcess.getLatestSchemaVersion());
 	}
 
 	private static void _updatePortalRelease(
-			Version schemaVersion, int buildNumber)
+			int buildNumber, Version schemaVersion)
 		throws Exception {
 
 		try (Connection connection = DataAccess.getConnection();
@@ -1241,7 +1241,7 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 	}
 
 	private void _assertUpgradeReportDirectoryWriteProtected(
-			LogCapture logCapture, File reportDir, String reportFileName)
+			File reportDir, LogCapture logCapture, String reportFileName)
 		throws Exception {
 
 		File reportFile = new File(reportDir, reportFileName);
@@ -1282,9 +1282,7 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 		int index = _getLogContent().indexOf(
 			"INFO - Upgrade report generated in " + file.getAbsolutePath());
 
-		String substringLogContextContent = _getLogContent().substring(index);
-
-		Matcher matcher = pattern.matcher(substringLogContextContent);
+		Matcher matcher = pattern.matcher(_getLogContent().substring(index));
 
 		Assert.assertTrue(matcher.matches());
 
@@ -1453,10 +1451,10 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 		@Override
 		protected void doUpgrade() throws Exception {
 			LogEvent logEvent = Log4jLogEvent.newBuilder(
-			).setLoggerName(
-				TestDataCleanupPreupgradeProcess.class.getName()
 			).setLevel(
 				Level.WARN
+			).setLoggerName(
+				TestDataCleanupPreupgradeProcess.class.getName()
 			).setMessage(
 				new SimpleMessage(_CLEANUP_WARNING_MESSAGE)
 			).build();
@@ -1464,10 +1462,10 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 			_appender.append(logEvent);
 
 			logEvent = Log4jLogEvent.newBuilder(
-			).setLoggerName(
-				TestDataCleanupPreupgradeProcess.class.getName()
 			).setLevel(
 				Level.INFO
+			).setLoggerName(
+				TestDataCleanupPreupgradeProcess.class.getName()
 			).setMessage(
 				new SimpleMessage(_CLEANUP_INFO_MESSAGE)
 			).build();
@@ -1489,10 +1487,10 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 		@Override
 		protected void doUpgrade() throws Exception {
 			LogEvent logEvent = Log4jLogEvent.newBuilder(
-			).setLoggerName(
-				DuplicateUniqueFinderRowsCleaner.class.getName()
 			).setLevel(
 				Level.INFO
+			).setLoggerName(
+				DuplicateUniqueFinderRowsCleaner.class.getName()
 			).setMessage(
 				new SimpleMessage(_DELETE_DUPLICATES_FINDER_WARNING_MESSAGE)
 			).build();

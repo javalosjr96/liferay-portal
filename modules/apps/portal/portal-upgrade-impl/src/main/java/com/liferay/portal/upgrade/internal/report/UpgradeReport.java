@@ -199,9 +199,8 @@ public class UpgradeReport {
 
 		List<MessagesPrinter> messagesPrinters = new ArrayList<>();
 
-		List<Map.Entry<String, Map<String, Integer>>> list = new ArrayList<>();
-
-		list.addAll(map1.entrySet());
+		List<Map.Entry<String, Map<String, Integer>>> list = new ArrayList<>(
+			map1.entrySet());
 
 		ListUtil.sort(
 			list,
