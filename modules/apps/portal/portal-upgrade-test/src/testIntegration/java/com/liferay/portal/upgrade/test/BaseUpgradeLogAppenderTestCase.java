@@ -388,7 +388,8 @@ public abstract class BaseUpgradeLogAppenderTestCase {
 						Thread.sleep(5 * Time.SECOND);
 					}
 					catch (InterruptedException interruptedException) {
-						Thread.currentThread().interrupt();
+						Thread.currentThread(
+						).interrupt();
 					}
 
 					return 0L;

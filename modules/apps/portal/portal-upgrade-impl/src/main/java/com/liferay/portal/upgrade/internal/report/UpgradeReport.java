@@ -115,6 +115,7 @@ public class UpgradeReport {
 
 		_executionDateString = _getExecutionDateString();
 		_executionTimeString = _getExecutionTimeString();
+
 		_rootDir = _getRootDir();
 
 		Map<String, Object> reportData = _getReportData(upgradeRecorder);
