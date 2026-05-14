@@ -455,12 +455,15 @@ public class UpgradeQueryMonitorTest {
 			Collections.emptyList()
 		);
 
+		List<LogEntry> logEntries = logCapture.getLogEntries();
+
+		int sizeBeforePoll = logEntries.size();
+
 		ReflectionTestUtil.invoke(
 			UpgradeQueryMonitor.class, "_poll", new Class<?>[0]);
 
-		List<LogEntry> logEntries = logCapture.getLogEntries();
-
-		Assert.assertTrue(logEntries.isEmpty());
+		Assert.assertEquals(
+			logEntries.toString(), sizeBeforePoll, logEntries.size());
 	}
 
 	private void _testPollWithOneLongRunningQuery(
@@ -479,14 +482,17 @@ public class UpgradeQueryMonitorTest {
 					RandomTestUtil.randomString()))
 		);
 
+		List<LogEntry> logEntries = logCapture.getLogEntries();
+
+		int sizeBeforePoll = logEntries.size();
+
 		ReflectionTestUtil.invoke(
 			UpgradeQueryMonitor.class, "_poll", new Class<?>[0]);
 
-		List<LogEntry> logEntries = logCapture.getLogEntries();
+		Assert.assertEquals(
+			logEntries.toString(), sizeBeforePoll + 1, logEntries.size());
 
-		Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
-
-		LogEntry logEntry = logEntries.get(0);
+		LogEntry logEntry = logEntries.get(sizeBeforePoll);
 
 		Assert.assertEquals(
 			StringBundler.concat(
