@@ -131,7 +131,7 @@ public final class UpgradeQueryMonitor {
 						StringBundler.concat(
 							"Long-running query \"",
 							longRunningQueryInfo.getQuery(),
-							"\" has been running for ",
+							"\" with ID ", id, " has been running for ",
 							TimeUnit.MILLISECONDS.toSeconds(
 								longRunningQueryInfo.getDuration()),
 							" seconds"));
