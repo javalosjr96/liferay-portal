@@ -424,24 +424,24 @@ public class UpgradeQueryMonitorTest {
 
 		Assert.assertEquals(
 			StringBundler.concat(
-				"Long-running query \"", query1,
-				"\" has been running for 630 seconds"),
+				"Long-running query \"", query1, "\" with ID ", id1,
+				" has been running for 630 seconds"),
 			logEntry1.getMessage());
 
 		LogEntry logEntry2 = logEntries.get(sizeBeforePoll + 1);
 
 		Assert.assertEquals(
 			StringBundler.concat(
-				"Long-running query \"", query2,
-				"\" has been running for 720 seconds"),
+				"Long-running query \"", query2, "\" with ID ", id2,
+				" has been running for 720 seconds"),
 			logEntry2.getMessage());
 
 		LogEntry logEntry3 = logEntries.get(sizeBeforePoll + 2);
 
 		Assert.assertEquals(
 			StringBundler.concat(
-				"Long-running query \"", query3,
-				"\" has been running for 810 seconds"),
+				"Long-running query \"", query3, "\" with ID ", id3,
+				" has been running for 810 seconds"),
 			logEntry3.getMessage());
 	}
 
@@ -490,8 +490,8 @@ public class UpgradeQueryMonitorTest {
 
 		Assert.assertEquals(
 			StringBundler.concat(
-				"Long-running query \"", query,
-				"\" has been running for 630 seconds"),
+				"Long-running query \"", query, "\" with ID ", id,
+				" has been running for 630 seconds"),
 			logEntry.getMessage());
 		Assert.assertEquals("INFO", logEntry.getPriority());
 	}
