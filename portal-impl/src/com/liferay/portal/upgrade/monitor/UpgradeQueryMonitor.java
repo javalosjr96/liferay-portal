@@ -17,7 +17,9 @@ import com.liferay.portal.kernel.util.PropsValues;
 
 import java.sql.Connection;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -75,6 +77,8 @@ public final class UpgradeQueryMonitor {
 		}
 
 		_scheduledExecutorService = null;
+
+		_loggedLongRunningQueryIds.clear();
 	}
 
 	private static void _poll() {
@@ -99,6 +103,28 @@ public final class UpgradeQueryMonitor {
 							" has been running for ",
 							TimeUnit.MILLISECONDS.toSeconds(
 								lockedQueryInfo.getDuration()),
+							" seconds"));
+				}
+			}
+
+			List<DB.QueryInfo> longRunningQueryInfos =
+				db.getLongRunningQueryInfos(connection);
+
+			for (DB.QueryInfo longRunningQueryInfo : longRunningQueryInfos) {
+				if (!_loggedLongRunningQueryIds.add(
+						longRunningQueryInfo.getId())) {
+
+					continue;
+				}
+
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						StringBundler.concat(
+							"Long-running query \"",
+							longRunningQueryInfo.getQuery(),
+							"\" has been running for ",
+							TimeUnit.MILLISECONDS.toSeconds(
+								longRunningQueryInfo.getDuration()),
 							" seconds"));
 				}
 			}
@@ -133,6 +159,9 @@ public final class UpgradeQueryMonitor {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		UpgradeQueryMonitor.class);
+
+	private static final Set<String> _loggedLongRunningQueryIds =
+		new HashSet<>();
 
 	private static ScheduledExecutorService _scheduledExecutorService;
 

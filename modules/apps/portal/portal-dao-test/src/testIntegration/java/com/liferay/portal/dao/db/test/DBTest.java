@@ -737,11 +737,13 @@ public class DBTest {
 			futureTask = new FutureTask<>(
 				() -> {
 					try (Connection backgroundConnection =
-							DataAccess.getConnection();
-						Statement statement =
-							backgroundConnection.createStatement()) {
+							DataAccess.getConnection()) {
 
-						statement.execute(slowQuery);
+						try (Statement statement =
+								backgroundConnection.createStatement()) {
+
+							statement.execute(slowQuery);
+						}
 					}
 
 					return null;
