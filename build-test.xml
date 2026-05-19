@@ -15993,6 +15993,17 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 						docker exec ${database.host} /bin/bash /tmp/import-database.sh
 					]]>
 				</execute>
+
+				<if>
+					<equals arg1="${database.type}" arg2="oracle" />
+					<then>
+						<sql classpath="${test.app.server.lib.portal.dir}/${jdbc.oracle.driver}" driver="oracle.jdbc.OracleDriver" onerror="continue" password="${oracle.admin.password}" url="${database.oracle.url}" userid="${oracle.admin.user}">
+							<![CDATA[
+							grant dba to ${database.username}
+							]]>
+						</sql>
+					</then>
+				</if>
 			</then>
 			<else>
 				<if>
@@ -16133,6 +16144,12 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 								<arg value="dumpfile=${database.type}.dmp" />
 								<arg value="table_exists_action=replace" />
 							</exec>
+
+							<sql classpath="${test.app.server.lib.portal.dir}/${jdbc.oracle.driver}" driver="oracle.jdbc.OracleDriver" onerror="continue" password="${oracle.admin.password}" url="${database.oracle.url}" userid="${oracle.admin.user}">
+								<![CDATA[
+								grant dba to ${database.username}
+								]]>
+							</sql>
 
 							<delete file="${data.pump.dir}/${database.type}.dmp" />
 						</then>
