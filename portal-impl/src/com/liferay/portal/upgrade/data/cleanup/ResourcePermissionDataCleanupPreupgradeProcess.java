@@ -19,6 +19,10 @@ import com.liferay.portal.security.permission.ResourceActionsImpl;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -51,12 +55,16 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 				ResourceActionsImpl resourceActionsImpl =
 					new ResourceActionsImpl();
 
+				String compositeModelNameSeparatorString =
+					resourceActionsImpl.getCompositeModelNameSeparator();
+
+				Map<String, List<String>> tableNames = new HashMap<>();
+
 				while (resultSet.next()) {
 					String name = resultSet.getString("name");
 
 					String[] classNames = StringUtil.split(
-						name,
-						resourceActionsImpl.getCompositeModelNameSeparator());
+						name, compositeModelNameSeparatorString);
 
 					String tableName = null;
 
@@ -96,11 +104,26 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 
 					if (!dbInspector.hasTable(tableName)) {
 						if (_log.isWarnEnabled()) {
-							_log.warn("Table " + tableName + " does not exist");
+							_log.warn(
+								"Table \"" + tableName + "\" does not exist");
 						}
 
 						continue;
 					}
+
+					List<String> names = tableNames.computeIfAbsent(
+						tableName, key -> new ArrayList<>());
+
+					names.add(name);
+				}
+
+				List<DataCleanupPreupgradeProcess> tableCleanupProcesses =
+					new ArrayList<>();
+
+				for (Map.Entry<String, List<String>> entry :
+						tableNames.entrySet()) {
+
+					String tableName = entry.getKey();
 
 					String primaryKeyColumnName = "resourcePrimKey";
 
@@ -116,22 +139,56 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 					if (primaryKeyColumnName == null) {
 						if (_log.isWarnEnabled()) {
 							_log.warn(
-								"Skipping table " + tableName +
-									" because it does not have a primary key");
+								"Table \"" + tableName +
+									"\" has no primary key column");
 						}
 
 						continue;
 					}
 
-					upgrade(
+					List<String> names = entry.getValue();
+
+					String additionalWhereClause = null;
+
+					if (names.size() == 1) {
+						additionalWhereClause = StringBundler.concat(
+							"[$SOURCE_TABLE_ALIAS$].scope = ",
+							ResourceConstants.SCOPE_INDIVIDUAL,
+							" and [$SOURCE_TABLE_ALIAS$].name = '",
+							names.get(0), "'");
+					}
+					else {
+						StringBundler joinedNamesSB = new StringBundler(
+							(names.size() * 2) - 1);
+
+						for (int i = 0; i < names.size(); i++) {
+							if (i > 0) {
+								joinedNamesSB.append(", ");
+							}
+
+							joinedNamesSB.append("'");
+							joinedNamesSB.append(names.get(i));
+							joinedNamesSB.append("'");
+						}
+
+						additionalWhereClause = StringBundler.concat(
+							"[$SOURCE_TABLE_ALIAS$].scope = ",
+							ResourceConstants.SCOPE_INDIVIDUAL,
+							" and [$SOURCE_TABLE_ALIAS$].name in (",
+							joinedNamesSB, ")");
+					}
+
+					tableCleanupProcesses.add(
 						new TableOrphanReferencesDataCleanupPreupgradeProcess(
-							null,
-							StringBundler.concat(
-								"[$SOURCE_TABLE_ALIAS$].scope = ",
-								ResourceConstants.SCOPE_INDIVIDUAL, " and ",
-								"[$SOURCE_TABLE_ALIAS$].name = '", name, "'"),
-							"primKeyId", "ResourcePermission",
-							primaryKeyColumnName, tableName));
+							null, additionalWhereClause, "primKeyId",
+							"ResourcePermission", primaryKeyColumnName,
+							tableName));
+				}
+
+				for (DataCleanupPreupgradeProcess tableCleanupProcess :
+						tableCleanupProcesses) {
+
+					upgrade(tableCleanupProcess);
 				}
 			}
 		}
