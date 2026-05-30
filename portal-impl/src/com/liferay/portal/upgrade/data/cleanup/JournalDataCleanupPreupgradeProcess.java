@@ -7,7 +7,8 @@ package com.liferay.portal.upgrade.data.cleanup;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
-import com.liferay.portal.kernel.upgrade.data.cleanup.FilterableAllTablesOrphanReferencesDataCleanupPreupgradeProcess;
+import com.liferay.portal.kernel.upgrade.data.cleanup.MultiFilterableAllTablesOrphanReferencesDataCleanupPreupgradeProcess;
+import com.liferay.portal.kernel.upgrade.data.cleanup.MultiFilterableAllTablesOrphanReferencesDataCleanupPreupgradeProcess.FilterConfig;
 import com.liferay.portal.kernel.upgrade.data.cleanup.TableOrphanReferencesDataCleanupPreupgradeProcess;
 
 /**
@@ -19,21 +20,21 @@ public class JournalDataCleanupPreupgradeProcess
 	@Override
 	protected void doUpgrade() throws Exception {
 		upgrade(
-			new FilterableAllTablesOrphanReferencesDataCleanupPreupgradeProcess(
-				StringBundler.concat(
-					"[$SOURCE_TABLE_ALIAS$].classNameId = (select classNameId ",
-					"from ClassName_ where value = 'com.liferay.journal.model.",
-					"JournalArticle')"),
-				new String[] {"classNameId"}, "classPK",
-				new String[] {"resourcePrimKey", "id_"}, "JournalArticle"));
-		upgrade(
-			new FilterableAllTablesOrphanReferencesDataCleanupPreupgradeProcess(
-				StringBundler.concat(
-					"[$SOURCE_TABLE_ALIAS$].classNameId = (select classNameId ",
-					"from ClassName_ where value = 'com.liferay.journal.model.",
-					"JournalFeed')"),
-				new String[] {"classNameId"}, "classPK", new String[] {"id_"},
-				"JournalFeed"));
+			new MultiFilterableAllTablesOrphanReferencesDataCleanupPreupgradeProcess(
+				new FilterConfig(
+					StringBundler.concat(
+						"[$SOURCE_TABLE_ALIAS$].classNameId = (select classNameId ",
+						"from ClassName_ where value = 'com.liferay.journal.",
+						"model.JournalArticle')"),
+					new String[] {"classNameId"}, "classPK",
+					new String[] {"resourcePrimKey", "id_"}, "JournalArticle"),
+				new FilterConfig(
+					StringBundler.concat(
+						"[$SOURCE_TABLE_ALIAS$].classNameId = (select classNameId ",
+						"from ClassName_ where value = 'com.liferay.journal.",
+						"model.JournalFeed')"),
+					new String[] {"classNameId"}, "classPK",
+					new String[] {"id_"}, "JournalFeed")));
 		upgrade(
 			new TableOrphanReferencesDataCleanupPreupgradeProcess(
 				null, null, "articlePK", "JournalArticleLocalization", "id_",
