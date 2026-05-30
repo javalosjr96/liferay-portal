@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -94,10 +95,75 @@ public class DDMDataCleanupPreupgradeProcess
 	private DataCleanupPreupgradeProcess
 		_getDDMFieldDataCleanupPreupgradeProcess() {
 
-		return new DataCleanupPreupgradeProcess(
-			new TableOrphanReferencesDataCleanupPreupgradeProcess(
-				null, null, "fieldId", "DDMFieldAttribute", "fieldId",
-				"DDMField"));
+		return new DataCleanupPreupgradeProcess() {
+
+			@Override
+			protected void doUpgrade() throws Exception {
+				DBInspector dbInspector = new DBInspector(connection);
+
+				String ddmFieldAttributeTableName = dbInspector.normalizeName(
+					"DDMFieldAttribute");
+				String ddmFieldTableName = dbInspector.normalizeName("DDMField");
+
+				if (!dbInspector.hasTable(ddmFieldAttributeTableName) ||
+					!dbInspector.hasTable(ddmFieldTableName)) {
+
+					return;
+				}
+
+				List<Long> orphanIds = new ArrayList<>();
+
+				try (PreparedStatement preparedStatement =
+						connection.prepareStatement(
+							StringBundler.concat(
+								"select distinct fieldId from ",
+								ddmFieldAttributeTableName,
+								" where fieldId != 0 and fieldId is not null",
+								" and fieldId not in (select fieldId from ",
+								ddmFieldTableName, ")"));
+					 ResultSet resultSet = preparedStatement.executeQuery()) {
+
+					while (resultSet.next()) {
+						orphanIds.add(resultSet.getLong(1));
+					}
+				}
+
+				if (orphanIds.isEmpty()) {
+					return;
+				}
+
+				for (int i = 0; i < orphanIds.size(); i += _BATCH_SIZE) {
+					int end = Math.min(i + _BATCH_SIZE, orphanIds.size());
+
+					List<String> batchStrings = new ArrayList<>(end - i);
+
+					for (int j = i; j < end; j++) {
+						batchStrings.add(String.valueOf(orphanIds.get(j)));
+					}
+
+					try (PreparedStatement preparedStatement =
+							connection.prepareStatement(
+								StringBundler.concat(
+									"delete from ", ddmFieldAttributeTableName,
+									" where fieldId in (",
+									String.join(
+										StringPool.COMMA_AND_SPACE, batchStrings),
+									")"))) {
+
+						int deleted = preparedStatement.executeUpdate();
+
+						if (deleted > 0) {
+							DataCleanupLoggingUtil.logDelete(
+								_log, deleted, ddmFieldAttributeTableName,
+								StringBundler.concat(
+									"fieldId was not found in fieldId from table ",
+									ddmFieldTableName));
+						}
+					}
+				}
+			}
+
+		};
 	}
 
 	private DataCleanupPreupgradeProcess
@@ -146,13 +212,91 @@ public class DDMDataCleanupPreupgradeProcess
 	private DataCleanupPreupgradeProcess
 		_getDDMStructureVersionDataCleanupPreupgradeProcess() {
 
-		return new DataCleanupPreupgradeProcess(
-			new TableOrphanReferencesDataCleanupPreupgradeProcess(
-				null, null, "structureVersionId", "DDMField",
-				"structureVersionId", "DDMStructureVersion"),
-			new TableOrphanReferencesDataCleanupPreupgradeProcess(
-				null, null, "structureVersionId", "DDMStructureLayout",
-				"structureVersionId", "DDMStructureVersion"));
+		return new DataCleanupPreupgradeProcess() {
+
+			@Override
+			protected void doUpgrade() throws Exception {
+				_cleanUpOrphans(
+					"structureVersionId", "DDMField",
+					"structureVersionId", "DDMStructureVersion");
+				_cleanUpOrphans(
+					"structureVersionId", "DDMStructureLayout",
+					"structureVersionId", "DDMStructureVersion");
+			}
+
+			private void _cleanUpOrphans(
+					String sourceColumnName, String sourceTableName,
+					String targetColumnName, String targetTableName)
+				throws Exception {
+
+				DBInspector dbInspector = new DBInspector(connection);
+
+				String normalizedSourceTableName = dbInspector.normalizeName(
+					sourceTableName);
+				String normalizedTargetTableName = dbInspector.normalizeName(
+					targetTableName);
+
+				if (!dbInspector.hasTable(normalizedSourceTableName) ||
+					!dbInspector.hasTable(normalizedTargetTableName)) {
+
+					return;
+				}
+
+				List<Long> orphanIds = new ArrayList<>();
+
+				try (PreparedStatement preparedStatement =
+						connection.prepareStatement(
+							StringBundler.concat(
+								"select distinct ", sourceColumnName, " from ",
+								normalizedSourceTableName, " where ",
+								sourceColumnName, " != 0 and ", sourceColumnName,
+								" is not null and ", sourceColumnName,
+								" not in (select ", targetColumnName, " from ",
+								normalizedTargetTableName, ")"));
+					 ResultSet resultSet = preparedStatement.executeQuery()) {
+
+					while (resultSet.next()) {
+						orphanIds.add(resultSet.getLong(1));
+					}
+				}
+
+				if (orphanIds.isEmpty()) {
+					return;
+				}
+
+				for (int i = 0; i < orphanIds.size(); i += _BATCH_SIZE) {
+					int end = Math.min(i + _BATCH_SIZE, orphanIds.size());
+
+					List<String> batchStrings = new ArrayList<>(end - i);
+
+					for (int j = i; j < end; j++) {
+						batchStrings.add(String.valueOf(orphanIds.get(j)));
+					}
+
+					try (PreparedStatement preparedStatement =
+							connection.prepareStatement(
+								StringBundler.concat(
+									"delete from ", normalizedSourceTableName,
+									" where ", sourceColumnName, " in (",
+									String.join(
+										StringPool.COMMA_AND_SPACE, batchStrings),
+									")"))) {
+
+						int deleted = preparedStatement.executeUpdate();
+
+						if (deleted > 0) {
+							DataCleanupLoggingUtil.logDelete(
+								_log, deleted, normalizedSourceTableName,
+								StringBundler.concat(
+									sourceColumnName,
+									" was not found in ", targetColumnName,
+									" from table ", normalizedTargetTableName));
+						}
+					}
+				}
+			}
+
+		};
 	}
 
 	private DataCleanupPreupgradeProcess
@@ -250,11 +394,13 @@ public class DDMDataCleanupPreupgradeProcess
 					ResultSet resultSet = preparedStatement.executeQuery()) {
 
 					while (resultSet.next()) {
-						structureKeysMap.computeIfAbsent(
-							resultSet.getLong("groupId"), key -> new HashSet<>()
-						).add(
-							resultSet.getString("structureKey")
-						);
+						Set<String> structureKeys =
+							structureKeysMap.computeIfAbsent(
+								resultSet.getLong("groupId"),
+								key -> new HashSet<>());
+
+						structureKeys.add(
+							resultSet.getString("structureKey"));
 					}
 				}
 
@@ -376,6 +522,8 @@ public class DDMDataCleanupPreupgradeProcess
 
 		};
 	}
+
+	private static final int _BATCH_SIZE = 1000;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		DDMDataCleanupPreupgradeProcess.class);
