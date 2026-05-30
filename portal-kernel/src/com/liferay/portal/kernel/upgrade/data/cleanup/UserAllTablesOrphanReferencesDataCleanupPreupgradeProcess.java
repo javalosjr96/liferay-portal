@@ -5,7 +5,6 @@
 
 package com.liferay.portal.kernel.upgrade.data.cleanup;
 
-import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DB;
@@ -18,18 +17,19 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.upgrade.data.cleanup.util.DataCleanupLoggingUtil;
-import com.liferay.portal.kernel.upgrade.data.cleanup.util.OrphanReferencesDataCleanupUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Luis Ortiz
@@ -47,126 +47,167 @@ public class UserAllTablesOrphanReferencesDataCleanupPreupgradeProcess
 			String[] targetColumnNames, String targetTableName)
 		throws Exception {
 
-		DBInspector dbInspector = new DBInspector(connection);
+		// Phase 1: collect distinct source userIds
 
-		if (!dbInspector.hasColumn(sourceTableName, "companyId")) {
+		List<Long> tableUserIds = new ArrayList<>();
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"select distinct ", sourceColumnName, " from ",
+					sourceTableName, " where ", sourceColumnName,
+					" is not null and ", sourceColumnName, " != 0"));
+			ResultSet resultSet = preparedStatement.executeQuery()) {
+
+			while (resultSet.next()) {
+				tableUserIds.add(resultSet.getLong(1));
+			}
+		}
+
+		if (tableUserIds.isEmpty()) {
 			return;
 		}
 
-		DB db = DBManagerUtil.getDB();
+		// Phase 2: find orphans via Java set difference (User_ loaded once)
 
-		List<SafeCloseable> safeCloseables =
-			OrphanReferencesDataCleanupUtil.addTemporaryIndexes(
-				new String[] {sourceColumnName}, connection, db,
-				sourceTableName);
+		Set<Long> validUserIds = _getValidUserIds(
+			connection, targetColumnNames[0], targetTableName);
 
-		safeCloseables.addAll(
-			OrphanReferencesDataCleanupUtil.addTemporaryIndexes(
-				targetColumnNames, connection, db, targetTableName));
+		List<Long> orphanIds = new ArrayList<>();
 
-		try (PreparedStatement preparedStatement1 = connection.prepareStatement(
-				StringBundler.concat(
-					"select ",
-					OrphanReferencesDataCleanupUtil.getSourceTableAlias(),
-					StringPool.PERIOD, sourceColumnName, ", ",
-					OrphanReferencesDataCleanupUtil.getSourceTableAlias(),
-					".companyId, count(1) as count from ", sourceTableName, " ",
-					OrphanReferencesDataCleanupUtil.getSourceTableAlias(),
-					OrphanReferencesDataCleanupUtil.getWhereClause(
-						connection, null, null, sourceColumnName,
-						sourceTableName, targetColumnNames, targetTableName),
-					" group by ",
-					OrphanReferencesDataCleanupUtil.getSourceTableAlias(),
-					StringPool.PERIOD, sourceColumnName, ", ",
-					OrphanReferencesDataCleanupUtil.getSourceTableAlias(),
-					".companyId"));
-			PreparedStatement preparedStatement2 =
-				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
-					connection,
-					StringBundler.concat(
-						"delete from ", sourceTableName, " where ",
-						sourceColumnName, " = ? and companyId = ?"));
-			PreparedStatement preparedStatement3 =
-				AutoBatchPreparedStatementUtil.concurrentAutoBatch(
-					connection,
-					StringBundler.concat(
-						"update ", sourceTableName, " set ", sourceColumnName,
-						" = ? where ", sourceColumnName,
-						" = ? and companyId = ?"));
-			ResultSet resultSet = preparedStatement1.executeQuery()) {
+		for (long userId : tableUserIds) {
+			if (!validUserIds.contains(userId)) {
+				orphanIds.add(userId);
+			}
+		}
 
-			boolean partOfUniqueIndex = _isPartOfUniqueIndex(
-				connection, sourceColumnName, sourceTableName);
+		if (orphanIds.isEmpty()) {
+			return;
+		}
 
-			while (resultSet.next()) {
-				long companyId = resultSet.getLong("companyId");
-				long count = resultSet.getLong("count");
-				long userId = resultSet.getLong(sourceColumnName);
+		// Phase 3: process orphans in batches
 
-				if (_deleteTableNames.contains(sourceTableName) ||
-					partOfUniqueIndex) {
+		boolean partOfUniqueIndex = _isPartOfUniqueIndex(
+			connection, sourceColumnName, sourceTableName);
 
-					preparedStatement2.setLong(1, userId);
-					preparedStatement2.setLong(2, companyId);
+		for (int i = 0; i < orphanIds.size(); i += _BATCH_SIZE) {
+			int end = Math.min(i + _BATCH_SIZE, orphanIds.size());
 
-					preparedStatement2.addBatch();
+			List<String> batchStrings = new ArrayList<>(end - i);
 
-					DataCleanupLoggingUtil.logDelete(
-						_log, count, sourceTableName,
+			for (int j = i; j < end; j++) {
+				batchStrings.add(String.valueOf(orphanIds.get(j)));
+			}
+
+			try (PreparedStatement preparedStatement1 =
+					connection.prepareStatement(
+						StringBundler.concat(
+							"select distinct ", sourceColumnName,
+							", companyId from ", sourceTableName, " where ",
+							sourceColumnName, " in (",
+							String.join(
+								StringPool.COMMA_AND_SPACE, batchStrings),
+							")"));
+				PreparedStatement preparedStatement2 =
+					AutoBatchPreparedStatementUtil.concurrentAutoBatch(
+						connection,
+						StringBundler.concat(
+							"delete from ", sourceTableName, " where ",
+							sourceColumnName, " = ? and companyId = ?"));
+				PreparedStatement preparedStatement3 =
+					AutoBatchPreparedStatementUtil.concurrentAutoBatch(
+						connection,
+						StringBundler.concat(
+							"update ", sourceTableName, " set ",
+							sourceColumnName, " = ? where ", sourceColumnName,
+							" = ? and companyId = ?"));
+				ResultSet resultSet = preparedStatement1.executeQuery()) {
+
+				while (resultSet.next()) {
+					long companyId = resultSet.getLong("companyId");
+					long userId = resultSet.getLong(sourceColumnName);
+
+					if (_deleteTableNames.contains(sourceTableName) ||
+						partOfUniqueIndex) {
+
+						preparedStatement2.setLong(1, userId);
+						preparedStatement2.setLong(2, companyId);
+
+						preparedStatement2.addBatch();
+
+						DataCleanupLoggingUtil.logDelete(
+							_log, 1, sourceTableName,
+							StringBundler.concat(
+								sourceColumnName, StringPool.SPACE, userId,
+								" was not found in column",
+								(targetColumnNames.length > 1) ? "s " : " ",
+								String.join(", ", targetColumnNames),
+								" from table ", targetTableName));
+
+						continue;
+					}
+
+					long newUserId = _getAdminUserId(connection, companyId);
+
+					if (newUserId == 0) {
+						continue;
+					}
+
+					preparedStatement3.setLong(1, newUserId);
+					preparedStatement3.setLong(2, userId);
+					preparedStatement3.setLong(3, companyId);
+
+					preparedStatement3.addBatch();
+
+					DataCleanupLoggingUtil.logUpdate(
+						_log, 1, sourceTableName, sourceColumnName, newUserId,
 						StringBundler.concat(
 							sourceColumnName, StringPool.SPACE, userId,
 							" was not found in column",
 							(targetColumnNames.length > 1) ? "s " : " ",
 							String.join(", ", targetColumnNames),
 							" from table ", targetTableName));
-
-					continue;
 				}
 
-				long newUserId = _getAdminUserId(connection, companyId);
+				preparedStatement2.executeBatch();
 
-				if (newUserId == 0) {
-					continue;
-				}
-
-				preparedStatement3.setLong(1, newUserId);
-
-				preparedStatement3.setLong(2, userId);
-				preparedStatement3.setLong(3, companyId);
-
-				preparedStatement3.addBatch();
-
-				DataCleanupLoggingUtil.logUpdate(
-					_log, count, sourceTableName, sourceColumnName, newUserId,
-					StringBundler.concat(
-						sourceColumnName, StringPool.SPACE, userId,
-						" was not found in column",
-						(targetColumnNames.length > 1) ? "s " : " ",
-						String.join(", ", targetColumnNames), " from table ",
-						targetTableName));
-			}
-
-			preparedStatement2.executeBatch();
-
-			preparedStatement3.executeBatch();
-		}
-		finally {
-			for (SafeCloseable safeCloseable : safeCloseables) {
-				safeCloseable.close();
+				preparedStatement3.executeBatch();
 			}
 		}
+	}
+
+	@Override
+	protected boolean shouldSkipSourceTable(
+			DBInspector dbInspector, String sourceTableName)
+		throws Exception {
+
+		return !dbInspector.hasColumn(sourceTableName, "companyId");
 	}
 
 	private long _getAdminUserId(Connection connection, long companyId)
 		throws Exception {
 
-		if (_adminUserIds.containsKey(companyId)) {
-			return _adminUserIds.get(companyId);
+		Long cachedUserId = _adminUserIds.get(companyId);
+
+		if (cachedUserId != null) {
+			return cachedUserId;
 		}
 
-		DBInspector dbInspector = new DBInspector(connection);
+		Boolean hasUserTypeColumn = _hasUserTypeColumn;
 
-		boolean hasColumn = dbInspector.hasColumn("User_", "type_");
+		if (hasUserTypeColumn == null) {
+			synchronized (this) {
+				if (_hasUserTypeColumn == null) {
+					DBInspector dbInspector = new DBInspector(connection);
+
+					_hasUserTypeColumn = dbInspector.hasColumn(
+						"User_", "type_");
+				}
+
+				hasUserTypeColumn = _hasUserTypeColumn;
+			}
+		}
+
+		boolean hasColumn = hasUserTypeColumn;
 
 		StringBundler sb = new StringBundler(6);
 
@@ -201,15 +242,44 @@ public class UserAllTablesOrphanReferencesDataCleanupPreupgradeProcess
 				else {
 					if (_log.isWarnEnabled()) {
 						_log.warn(
-							"No admin user found for company " + companyId);
+							"Unable to find admin user for company " +
+								companyId);
 					}
 				}
 
-				_adminUserIds.put(companyId, userId);
+				_adminUserIds.putIfAbsent(companyId, userId);
 
 				return userId;
 			}
 		}
+	}
+
+	private Set<Long> _getValidUserIds(
+			Connection connection, String targetColumnName,
+			String targetTableName)
+		throws Exception {
+
+		Set<Long> validUserIds = _validUserIdsByConnection.get(connection);
+
+		if (validUserIds != null) {
+			return validUserIds;
+		}
+
+		validUserIds = new HashSet<>();
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"select ", targetColumnName, " from ", targetTableName));
+			ResultSet resultSet = preparedStatement.executeQuery()) {
+
+			while (resultSet.next()) {
+				validUserIds.add(resultSet.getLong(1));
+			}
+		}
+
+		_validUserIdsByConnection.putIfAbsent(connection, validUserIds);
+
+		return _validUserIdsByConnection.get(connection);
 	}
 
 	private boolean _isPartOfUniqueIndex(
@@ -217,20 +287,35 @@ public class UserAllTablesOrphanReferencesDataCleanupPreupgradeProcess
 			String sourceTableName)
 		throws Exception {
 
+		Boolean partOfUniqueIndex = _isPartOfUniqueIndexCache.get(
+			sourceTableName);
+
+		if (partOfUniqueIndex != null) {
+			return partOfUniqueIndex;
+		}
+
 		DB db = DBManagerUtil.getDB();
 
 		List<IndexMetadata> indexes = db.getIndexMetadatas(
 			connection, sourceTableName, sourceColumnName, true);
 
 		if (!indexes.isEmpty()) {
+			_isPartOfUniqueIndexCache.put(sourceTableName, true);
+
 			return true;
 		}
 
 		String[] columnNames = db.getPrimaryKeyColumnNames(
 			connection, sourceTableName);
 
-		return ArrayUtil.contains(columnNames, sourceColumnName);
+		boolean result = ArrayUtil.contains(columnNames, sourceColumnName);
+
+		_isPartOfUniqueIndexCache.put(sourceTableName, result);
+
+		return result;
 	}
+
+	private static final int _BATCH_SIZE = 1000;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		UserAllTablesOrphanReferencesDataCleanupPreupgradeProcess.class);
@@ -249,6 +334,11 @@ public class UserAllTablesOrphanReferencesDataCleanupPreupgradeProcess
 		}
 	};
 
-	private final Map<Long, Long> _adminUserIds = new HashMap<>();
+	private final Map<Long, Long> _adminUserIds = new ConcurrentHashMap<>();
+	private volatile Boolean _hasUserTypeColumn;
+	private final Map<String, Boolean> _isPartOfUniqueIndexCache =
+		new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<Connection, Set<Long>>
+		_validUserIdsByConnection = new ConcurrentHashMap<>();
 
 }

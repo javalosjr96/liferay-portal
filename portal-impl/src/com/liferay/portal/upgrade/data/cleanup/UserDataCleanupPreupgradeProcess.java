@@ -6,6 +6,8 @@
 package com.liferay.portal.upgrade.data.cleanup;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
@@ -22,9 +24,11 @@ public class UserDataCleanupPreupgradeProcess
 
 	@Override
 	protected void doUpgrade() throws Exception {
-		upgrade(
+		_upgradeWithTiming(
+			"UserAllTables",
 			new UserAllTablesOrphanReferencesDataCleanupPreupgradeProcess());
-		upgrade(
+		_upgradeWithTiming(
+			"FilterableAllTables",
 			new FilterableAllTablesOrphanReferencesDataCleanupPreupgradeProcess(
 				StringBundler.concat(
 					"[$SOURCE_TABLE_ALIAS$].classNameId = (select classNameId ",
@@ -32,19 +36,22 @@ public class UserDataCleanupPreupgradeProcess
 					"')"),
 				new String[] {"classNameId"}, "classPK",
 				new String[] {"userId"}, "User_"));
-		upgrade(
+		_upgradeWithTiming(
+			"PortalPreferences",
 			new TableOrphanReferencesDataCleanupPreupgradeProcess(
 				null,
 				"[$SOURCE_TABLE_ALIAS$].ownerType = " +
 					PortletKeys.PREFS_OWNER_TYPE_USER,
 				"ownerId", "PortalPreferences", "userId", "User_"));
-		upgrade(
+		_upgradeWithTiming(
+			"PortletPreferences",
 			new TableOrphanReferencesDataCleanupPreupgradeProcess(
 				null,
 				"[$SOURCE_TABLE_ALIAS$].ownerType = " +
 					PortletKeys.PREFS_OWNER_TYPE_USER,
 				"ownerId", "PortletPreferences", "userId", "User_"));
-		upgrade(
+		_upgradeWithTiming(
+			"ResourcePermission",
 			new TableOrphanReferencesDataCleanupPreupgradeProcess(
 				null,
 				StringBundler.concat(
@@ -54,5 +61,25 @@ public class UserDataCleanupPreupgradeProcess
 					"'"),
 				"primKeyId", "ResourcePermission", "userId", "User_"));
 	}
+
+	private void _upgradeWithTiming(
+			String label, DataCleanupPreupgradeProcess process)
+		throws Exception {
+
+		long start = System.currentTimeMillis();
+
+		upgrade(process);
+
+		if (_log.isInfoEnabled()) {
+			_log.info(
+				StringBundler.concat(
+					"UserDataCleanupPreupgradeProcess/", label,
+					" completed in ", System.currentTimeMillis() - start,
+					" ms"));
+		}
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		UserDataCleanupPreupgradeProcess.class);
 
 }
