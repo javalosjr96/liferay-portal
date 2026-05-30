@@ -5,8 +5,10 @@
 
 package com.liferay.portal.kernel.upgrade.data.cleanup;
 
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.db.DBInspector;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -58,7 +60,7 @@ public abstract class BaseAllTablesOrphanReferencesDataCleanupPreupgradeProcess
 			  dbInspector.hasView(targetTableName))) {
 
 			if (_log.isDebugEnabled()) {
-				_log.debug("Table " + targetTableName + " does not exist");
+				_log.debug("Table \"" + targetTableName + "\" does not exist");
 			}
 
 			return;
@@ -97,61 +99,93 @@ public abstract class BaseAllTablesOrphanReferencesDataCleanupPreupgradeProcess
 		Set<String> liferayTableNames = DBResourceUtil.getLiferayTableNames(
 			connection);
 
-		processConcurrently(
-			tableNames.toArray(new String[0]),
-			sourceTableName -> {
-				if (excludedTableNames.contains(sourceTableName) ||
-					!dbInspector.hasColumn(sourceTableName, sourceColumnName)) {
+		boolean[] numericTargetColumns = new boolean[targetColumnNames.length];
 
-					return;
-				}
+		for (int i = 0; i < targetColumnNames.length; i++) {
+			numericTargetColumns[i] = dbInspector.isNumeric(
+				targetTableName, targetColumnNames[i]);
+		}
 
-				boolean compatibleTypes = true;
+		List<SafeCloseable> safeCloseables =
+			OrphanReferencesDataCleanupUtil.addTemporaryIndexes(
+				targetColumnNames, connection, DBManagerUtil.getDB(),
+				targetTableName);
 
-				boolean numericSourceColumn = dbInspector.isNumeric(
-					sourceTableName, sourceColumnName);
+		skipTargetIndexes = true;
 
-				for (String targetColumnName : targetColumnNames) {
-					boolean numericTargetColumn = dbInspector.isNumeric(
-						targetTableName, targetColumnName);
+		try {
+			processConcurrently(
+				tableNames.toArray(new String[0]),
+				sourceTableName -> {
+					if (excludedTableNames.contains(sourceTableName) ||
+						!dbInspector.hasColumn(
+							sourceTableName, sourceColumnName) ||
+						shouldSkipSourceTable(dbInspector, sourceTableName)) {
 
-					if (numericSourceColumn != numericTargetColumn) {
-						String message = StringBundler.concat(
-							"Table ", sourceTableName, " and column ",
-							sourceColumnName,
-							" has an incompatible type with table ",
-							targetTableName, " and column ", targetColumnName);
+						return;
+					}
 
-						compatibleTypes = false;
+					boolean compatibleTypes = true;
 
-						if (!dbInspector.isObjectTable(sourceTableName) &&
-							!liferayTableNames.contains(sourceTableName)) {
+					boolean numericSourceColumn = dbInspector.isNumeric(
+						sourceTableName, sourceColumnName);
 
-							if (_log.isDebugEnabled()) {
-								_log.debug(message);
+					for (int i = 0; i < targetColumnNames.length; i++) {
+						if (numericSourceColumn != numericTargetColumns[i]) {
+							String message = StringBundler.concat(
+								"Table ", sourceTableName, " and column ",
+								sourceColumnName,
+								" has an incompatible type with table ",
+								targetTableName, " and column ",
+								targetColumnNames[i]);
+
+							compatibleTypes = false;
+
+							if (!dbInspector.isObjectTable(sourceTableName) &&
+								!liferayTableNames.contains(sourceTableName)) {
+
+								if (_log.isDebugEnabled()) {
+									_log.debug(message);
+								}
+
+								break;
+							}
+
+							if (_log.isWarnEnabled()) {
+								_log.warn(message);
 							}
 
 							break;
 						}
-
-						if (_log.isWarnEnabled()) {
-							_log.warn(message);
-						}
-
-						break;
 					}
-				}
 
-				if (!compatibleTypes) {
-					return;
-				}
+					if (!compatibleTypes) {
+						return;
+					}
 
-				cleanUp(
-					sourceColumnName, sourceTableName, targetColumnNames,
-					targetTableName);
-			},
-			null);
+					cleanUp(
+						sourceColumnName, sourceTableName, targetColumnNames,
+						targetTableName);
+				},
+				null);
+		}
+		finally {
+			skipTargetIndexes = false;
+
+			for (SafeCloseable safeCloseable : safeCloseables) {
+				safeCloseable.close();
+			}
+		}
 	}
+
+	protected boolean shouldSkipSourceTable(
+			DBInspector dbInspector, String sourceTableName)
+		throws Exception {
+
+		return false;
+	}
+
+	protected volatile boolean skipTargetIndexes;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		BaseAllTablesOrphanReferencesDataCleanupPreupgradeProcess.class);

@@ -7,11 +7,14 @@ package com.liferay.portal.upgrade.data.cleanup;
 
 import com.liferay.portal.db.index.PrimaryKeyUpdaterUtil;
 import com.liferay.portal.events.StartupHelperUtil;
+import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ReleaseConstants;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
+import com.liferay.portal.kernel.upgrade.data.cleanup.util.OrphanReferencesDataCleanupUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.LoggingTimer;
@@ -20,8 +23,14 @@ import com.liferay.portal.upgrade.PortalUpgradeProcess;
 
 import java.sql.Connection;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 /**
  * @author Luis Ortiz
@@ -40,29 +49,85 @@ public class DataCleanupPreupgradeProcessSuite {
 		}
 
 		try (LoggingTimer loggingTimer = new LoggingTimer()) {
-			List<DataCleanupPreupgradeProcess> dataCleanupPreupgradeProcesses =
-				getSortedDataCleanupPreupgradeProcesses();
+			DBInspector.beginSchemaSnapshot();
 
-			for (DataCleanupPreupgradeProcess dataCleanupPreupgradeProcess :
-					dataCleanupPreupgradeProcesses) {
+			try {
+				List<List<DataCleanupPreupgradeProcess>> waves =
+					getWavedDataCleanupPreupgradeProcesses();
 
-				Class<?> clazz = dataCleanupPreupgradeProcess.getClass();
+				for (List<DataCleanupPreupgradeProcess> wave : waves) {
+					if (wave.size() == 1) {
+						DataCleanupPreupgradeProcess process = wave.get(0);
 
-				if (ArrayUtil.contains(
-						PropsValues.
-							UPGRADE_DATABASE_PREUPGRADE_DATA_CLEANUP_BLACKLIST,
-						clazz.getName())) {
+						_runProcess(process);
 
-					if (_log.isInfoEnabled()) {
-						_log.info(
-							"Skipping blacklisted data cleanup process: " +
-								clazz.getName());
+						continue;
 					}
 
-					continue;
-				}
+					ExecutorService executorService =
+						Executors.newFixedThreadPool(wave.size());
 
-				dataCleanupPreupgradeProcess.upgrade();
+					try {
+						List<Future<Void>> futures = new ArrayList<>();
+
+						for (DataCleanupPreupgradeProcess process : wave) {
+							Future<Void> future = executorService.submit(
+								(Callable<Void>)() -> {
+									_runProcess(process);
+
+									return null;
+								});
+
+							futures.add(future);
+						}
+
+						List<Exception> exceptions = new ArrayList<>();
+
+						for (Future<Void> future : futures) {
+							try {
+								future.get();
+							}
+							catch (ExecutionException executionException) {
+								Throwable causeThrowable =
+									executionException.getCause();
+
+								if (causeThrowable instanceof Exception) {
+									exceptions.add((Exception)causeThrowable);
+								}
+								else {
+									exceptions.add(
+										new RuntimeException(causeThrowable));
+								}
+							}
+							catch (InterruptedException interruptedException) {
+								Thread currentThread = Thread.currentThread();
+
+								currentThread.interrupt();
+
+								exceptions.add(
+									new RuntimeException(interruptedException));
+							}
+						}
+
+						if (!exceptions.isEmpty()) {
+							Exception exception = exceptions.get(0);
+
+							for (int i = 1; i < exceptions.size(); i++) {
+								exception.addSuppressed(exceptions.get(i));
+							}
+
+							throw exception;
+						}
+					}
+					finally {
+						executorService.shutdownNow();
+					}
+				}
+			}
+			finally {
+				DBInspector.clearSchemaSnapshot();
+				DBResourceUtil.clearLiferayTableNamesCache();
+				OrphanReferencesDataCleanupUtil.clearIndexCache();
 			}
 		}
 	}
@@ -72,6 +137,14 @@ public class DataCleanupPreupgradeProcessSuite {
 
 		return DataCleanupPreupgradeProcess.
 			getSortedDataCleanupPreupgradeProcesses(
+				_dataCleanupPreupgradeProcessesMap);
+	}
+
+	public List<List<DataCleanupPreupgradeProcess>>
+		getWavedDataCleanupPreupgradeProcesses() {
+
+		return DataCleanupPreupgradeProcess.
+			getWavedDataCleanupPreupgradeProcesses(
 				_dataCleanupPreupgradeProcessesMap);
 	}
 
@@ -157,6 +230,16 @@ public class DataCleanupPreupgradeProcessSuite {
 				DataCleanupPreupgradeProcess.dependsOn(
 					userDataCleanupPreupgradeProcess)
 			).put(
+				dlFileEntryDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					groupDataCleanupPreupgradeProcess)
+			).put(
+				journalDataCleanupPreupgradeProcess,
+				DataCleanupPreupgradeProcess.dependsOn(
+					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
+					ddmDataCleanupPreupgradeProcess)
+			).put(
 				new CounterDataCleanupPreupgradeProcess(),
 				DataCleanupPreupgradeProcess.dependsOn(
 					analyticsMessageDataCleanupPreupgradeProcess,
@@ -168,9 +251,9 @@ public class DataCleanupPreupgradeProcessSuite {
 					ddmStorageLinkDataCleanupPreupgradeProcess,
 					dlFileEntryDataCleanupPreupgradeProcess,
 					groupDataCleanupPreupgradeProcess,
+					illegalCharactersContentDataCleanupPreupgradeProcess,
 					journalDataCleanupPreupgradeProcess,
 					layoutDataCleanupPreupgradeProcess,
-					illegalCharactersContentDataCleanupPreupgradeProcess,
 					portalPreferencesDataCleanupPreupgradeProcess,
 					portletPreferencesDataCleanupPreupgradeProcess,
 					quartzJobDetailsDataCleanupPreupgradeProcess,
@@ -194,22 +277,12 @@ public class DataCleanupPreupgradeProcessSuite {
 					dlFileEntryDataCleanupPreupgradeProcess,
 					journalDataCleanupPreupgradeProcess)
 			).put(
-				dlFileEntryDataCleanupPreupgradeProcess,
-				DataCleanupPreupgradeProcess.dependsOn(
-					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
-					groupDataCleanupPreupgradeProcess)
-			).put(
 				groupDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
 					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
 					userDataCleanupPreupgradeProcess)
 			).put(
 				illegalCharactersContentDataCleanupPreupgradeProcess,
-				DataCleanupPreupgradeProcess.dependsOn(
-					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
-					ddmDataCleanupPreupgradeProcess)
-			).put(
-				journalDataCleanupPreupgradeProcess,
 				DataCleanupPreupgradeProcess.dependsOn(
 					databaseTableAndColumnCaseDataCleanupPreupgradeProcess,
 					ddmDataCleanupPreupgradeProcess)
@@ -245,9 +318,9 @@ public class DataCleanupPreupgradeProcessSuite {
 					ddmStorageLinkDataCleanupPreupgradeProcess,
 					dlFileEntryDataCleanupPreupgradeProcess,
 					groupDataCleanupPreupgradeProcess,
+					illegalCharactersContentDataCleanupPreupgradeProcess,
 					journalDataCleanupPreupgradeProcess,
 					layoutDataCleanupPreupgradeProcess,
-					illegalCharactersContentDataCleanupPreupgradeProcess,
 					portalPreferencesDataCleanupPreupgradeProcess,
 					portletPreferencesDataCleanupPreupgradeProcess,
 					quartzJobDetailsDataCleanupPreupgradeProcess,
@@ -269,6 +342,36 @@ public class DataCleanupPreupgradeProcessSuite {
 					companyDataCleanupPreupgradeProcess,
 					databaseTableAndColumnCaseDataCleanupPreupgradeProcess)
 			).build();
+	}
+
+	private void _runProcess(
+			DataCleanupPreupgradeProcess dataCleanupPreupgradeProcess)
+		throws Exception {
+
+		Class<?> clazz = dataCleanupPreupgradeProcess.getClass();
+
+		if (ArrayUtil.contains(
+				PropsValues.UPGRADE_DATABASE_PREUPGRADE_DATA_CLEANUP_BLACKLIST,
+				clazz.getName())) {
+
+			if (_log.isInfoEnabled()) {
+				_log.info(
+					"Skipping blacklisted data cleanup process: " +
+						clazz.getName());
+			}
+
+			return;
+		}
+
+		String processName = clazz.getSimpleName();
+
+		if (processName.isEmpty()) {
+			processName = clazz.getName();
+		}
+
+		try (LoggingTimer processLoggingTimer = new LoggingTimer(processName)) {
+			dataCleanupPreupgradeProcess.upgrade();
+		}
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
