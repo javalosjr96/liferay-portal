@@ -168,10 +168,12 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 			List<Long> orphanIds = new ArrayList<>();
 
 			String sqlString = StringBundler.concat(
-				"select distinct primKeyId from ResourcePermission where ",
-				"primKeyId != 0 and primKeyId is not null and ",
-				namesClauseString, " and primKeyId not in (select ",
-				primaryKeyColumnName, " from ", tableName, ")");
+				"select distinct ResourcePermission.primKeyId from ",
+				"ResourcePermission where ResourcePermission.primKeyId != 0 ",
+				"and ResourcePermission.primKeyId is not null and ",
+				namesClauseString, " and not exists (select 1 from ", tableName,
+				" where ", tableName, ".", primaryKeyColumnName,
+				" = ResourcePermission.primKeyId)");
 
 			try (PreparedStatement preparedStatement =
 					connection.prepareStatement(sqlString)) {
