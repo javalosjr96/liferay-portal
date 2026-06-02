@@ -6,19 +6,24 @@
 package com.liferay.portal.upgrade.data.cleanup;
 
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
-import com.liferay.portal.kernel.upgrade.data.cleanup.TableOrphanReferencesDataCleanupPreupgradeProcess;
+import com.liferay.portal.kernel.upgrade.data.cleanup.util.DataCleanupLoggingUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.permission.ResourceActionsImpl;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -40,6 +45,8 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 		Set<String> liferayTableNames = DBResourceUtil.getLiferayTableNames(
 			connection);
 
+		Map<String, List<String>> tableNames = new HashMap<>();
+
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select distinct name from ResourcePermission where name " +
 					"like 'com.liferay.%' and primKeyId != 0 and primKeyId " +
@@ -51,12 +58,14 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 				ResourceActionsImpl resourceActionsImpl =
 					new ResourceActionsImpl();
 
+				String compositeModelNameSeparator =
+					resourceActionsImpl.getCompositeModelNameSeparator();
+
 				while (resultSet.next()) {
 					String name = resultSet.getString("name");
 
 					String[] classNames = StringUtil.split(
-						name,
-						resourceActionsImpl.getCompositeModelNameSeparator());
+						name, compositeModelNameSeparator);
 
 					String tableName = null;
 
@@ -96,46 +105,118 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 
 					if (!dbInspector.hasTable(tableName)) {
 						if (_log.isWarnEnabled()) {
-							_log.warn("Table " + tableName + " does not exist");
-						}
-
-						continue;
-					}
-
-					String primaryKeyColumnName = "resourcePrimKey";
-
-					if (!dbInspector.hasColumn(
-							tableName, primaryKeyColumnName)) {
-
-						primaryKeyColumnName =
-							DataCleanupPreupgradeProcessUtil.
-								getPrimaryKeyColumnName(
-									connection, dbInspector, tableName);
-					}
-
-					if (primaryKeyColumnName == null) {
-						if (_log.isWarnEnabled()) {
 							_log.warn(
-								"Skipping table " + tableName +
-									" because it does not have a primary key");
+								"Unable to find table \"" + tableName + "\"");
 						}
 
 						continue;
 					}
 
-					upgrade(
-						new TableOrphanReferencesDataCleanupPreupgradeProcess(
-							null,
+					List<String> names = tableNames.computeIfAbsent(
+						tableName, key -> new ArrayList<>());
+
+					names.add(name);
+				}
+			}
+		}
+
+		for (Map.Entry<String, List<String>> entry : tableNames.entrySet()) {
+			String tableName = entry.getKey();
+
+			String primaryKeyColumnName = "resourcePrimKey";
+
+			if (!dbInspector.hasColumn(tableName, primaryKeyColumnName)) {
+				primaryKeyColumnName =
+					DataCleanupPreupgradeProcessUtil.getPrimaryKeyColumnName(
+						connection, dbInspector, tableName);
+			}
+
+			if (primaryKeyColumnName == null) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Unable to find primary key column for table \"" +
+							tableName + "\"");
+				}
+
+				continue;
+			}
+
+			List<String> names = entry.getValue();
+
+			String namesClause;
+
+			if (names.size() == 1) {
+				namesClause = StringBundler.concat(
+					"scope = ", ResourceConstants.SCOPE_INDIVIDUAL,
+					" and name = '", names.get(0), "'");
+			}
+			else {
+				List<String> quotedNames = new ArrayList<>(names.size());
+
+				for (String name : names) {
+					quotedNames.add(StringBundler.concat("'", name, "'"));
+				}
+
+				namesClause = StringBundler.concat(
+					"scope = ", ResourceConstants.SCOPE_INDIVIDUAL,
+					" and name in (",
+					String.join(StringPool.COMMA_AND_SPACE, quotedNames), ")");
+			}
+
+			List<Long> orphanIds = new ArrayList<>();
+
+			String sql = StringBundler.concat(
+				"select distinct primKeyId from ResourcePermission where ",
+				"primKeyId != 0 and primKeyId is not null and ", namesClause,
+				" and primKeyId not in (select ", primaryKeyColumnName,
+				" from ", tableName, ")");
+
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(sql)) {
+
+				ResultSet resultSet = preparedStatement.executeQuery();
+
+				while (resultSet.next()) {
+					orphanIds.add(resultSet.getLong("primKeyId"));
+				}
+			}
+
+			if (orphanIds.isEmpty()) {
+				continue;
+			}
+
+			for (int i = 0; i < orphanIds.size(); i += _BATCH_SIZE) {
+				int end = Math.min(i + _BATCH_SIZE, orphanIds.size());
+
+				List<String> batchIds = new ArrayList<>(end - i);
+
+				for (int j = i; j < end; j++) {
+					batchIds.add(String.valueOf(orphanIds.get(j)));
+				}
+
+				try (PreparedStatement preparedStatement =
+						connection.prepareStatement(
 							StringBundler.concat(
-								"[$SOURCE_TABLE_ALIAS$].scope = ",
-								ResourceConstants.SCOPE_INDIVIDUAL, " and ",
-								"[$SOURCE_TABLE_ALIAS$].name = '", name, "'"),
-							"primKeyId", "ResourcePermission",
-							primaryKeyColumnName, tableName));
+								"delete from ResourcePermission where ",
+								"primKeyId in (",
+								String.join(
+									StringPool.COMMA_AND_SPACE, batchIds),
+								") and ", namesClause))) {
+
+					int deleted = preparedStatement.executeUpdate();
+
+					DataCleanupLoggingUtil.logDelete(
+						_log, deleted, "ResourcePermission",
+						StringBundler.concat(
+							"primKeyId was not found in column ",
+							primaryKeyColumnName, " from table \"", tableName,
+							"\""));
 				}
 			}
 		}
 	}
+
+	private static final int _BATCH_SIZE = 1000;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ResourcePermissionDataCleanupPreupgradeProcess.class);
