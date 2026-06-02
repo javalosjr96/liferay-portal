@@ -72,17 +72,27 @@ public class UpgradePortletPreferences
 			return PortletPreferencesFactoryUtil.toXML(portletPreferences);
 		}
 
-		Group group = _groups.computeIfAbsent(
-			groupId, key -> _groupLocalService.fetchGroup(key));
+		if (!_groups.containsKey(groupId)) {
+			_groups.put(groupId, _groupLocalService.fetchGroup(groupId));
+		}
+
+		Group group = _groups.get(groupId);
 
 		if (group == null) {
 			return PortletPreferencesFactoryUtil.toXML(portletPreferences);
 		}
 
-		JournalArticle journalArticle = _journalArticles.computeIfAbsent(
-			groupId + StringPool.POUND + articleId,
-			key -> _journalArticleLocalService.fetchArticle(
-				groupId, articleId));
+		String journalArticleCacheKey =
+			groupId + StringPool.POUND + articleId;
+
+		if (!_journalArticles.containsKey(journalArticleCacheKey)) {
+			_journalArticles.put(
+				journalArticleCacheKey,
+				_journalArticleLocalService.fetchArticle(groupId, articleId));
+		}
+
+		JournalArticle journalArticle = _journalArticles.get(
+			journalArticleCacheKey);
 
 		if (journalArticle == null) {
 			return PortletPreferencesFactoryUtil.toXML(portletPreferences);
@@ -117,17 +127,15 @@ public class UpgradePortletPreferences
 		String ddmTemplateCacheKey =
 			ddmTemplateGroupId + StringPool.POUND + ddmTemplateKey;
 
-		DDMTemplate ddmTemplate = _ddmTemplates.get(ddmTemplateCacheKey);
-
-		if (ddmTemplate == null) {
-			ddmTemplate = _ddmTemplateLocalService.fetchTemplate(
-				ddmTemplateGroupId, _ddmStructureClassNameId, ddmTemplateKey,
-				true);
-
-			if (ddmTemplate != null) {
-				_ddmTemplates.put(ddmTemplateCacheKey, ddmTemplate);
-			}
+		if (!_ddmTemplates.containsKey(ddmTemplateCacheKey)) {
+			_ddmTemplates.put(
+				ddmTemplateCacheKey,
+				_ddmTemplateLocalService.fetchTemplate(
+					ddmTemplateGroupId, _ddmStructureClassNameId,
+					ddmTemplateKey, true));
 		}
+
+		DDMTemplate ddmTemplate = _ddmTemplates.get(ddmTemplateCacheKey);
 
 		if (ddmTemplate == null) {
 			return PortletPreferencesFactoryUtil.toXML(portletPreferences);
