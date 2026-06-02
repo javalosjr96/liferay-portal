@@ -7,7 +7,10 @@ package com.liferay.portal.upgrade.data.cleanup;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
+import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -120,6 +123,10 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 			}
 		}
 
+		DB db = DBManagerUtil.getDB();
+
+		DBType dbType = db.getDBType();
+
 		for (Map.Entry<String, List<String>> entry :
 				classNamesByTableName.entrySet()) {
 
@@ -165,15 +172,34 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 					String.join(StringPool.COMMA_AND_SPACE, quotedNames), ")");
 			}
 
-			List<Long> orphanIds = new ArrayList<>();
+			String sqlString;
 
-			String sqlString = StringBundler.concat(
-				"select distinct ResourcePermission.primKeyId from ",
-				"ResourcePermission where ResourcePermission.primKeyId != 0 ",
-				"and ResourcePermission.primKeyId is not null and ",
-				namesClauseString, " and not exists (select 1 from ", tableName,
-				" where ", tableName, ".", primaryKeyColumnName,
-				" = ResourcePermission.primKeyId)");
+			if ((dbType == DBType.MARIADB) || (dbType == DBType.MYSQL)) {
+				String aliasTableName = StringBundler.concat(
+					tableName, StringPool.UNDERLINE, primaryKeyColumnName);
+
+				sqlString = StringBundler.concat(
+					"select distinct ResourcePermission.primKeyId from ",
+					"ResourcePermission left join ", tableName,
+					StringPool.SPACE, aliasTableName, " on ", aliasTableName,
+					StringPool.PERIOD, primaryKeyColumnName,
+					" = ResourcePermission.primKeyId where ",
+					"ResourcePermission.primKeyId is not null and ",
+					"ResourcePermission.primKeyId != 0 and ", namesClauseString,
+					" and ", aliasTableName, StringPool.PERIOD,
+					primaryKeyColumnName, " is null");
+			}
+			else {
+				sqlString = StringBundler.concat(
+					"select distinct ResourcePermission.primKeyId from ",
+					"ResourcePermission where ResourcePermission.primKeyId is ",
+					"not null and ResourcePermission.primKeyId != 0 and ",
+					namesClauseString, " and not exists (select 1 from ",
+					tableName, " where ", tableName, StringPool.PERIOD,
+					primaryKeyColumnName, " = ResourcePermission.primKeyId)");
+			}
+
+			List<Long> orphanIds = new ArrayList<>();
 
 			try (PreparedStatement preparedStatement =
 					connection.prepareStatement(sqlString)) {
