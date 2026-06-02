@@ -65,10 +65,10 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 					resourceActionsImpl.getCompositeModelNameSeparator();
 
 				while (resultSet.next()) {
-					String nameString = resultSet.getString("name");
+					String name = resultSet.getString("name");
 
 					String[] classNames = StringUtil.split(
-						nameString, compositeModelNameSeparator);
+						name, compositeModelNameSeparator);
 
 					String tableName = null;
 
@@ -98,7 +98,7 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 						if (_log.isDebugEnabled()) {
 							_log.debug(
 								StringBundler.concat(
-									"Skipping class name ", nameString,
+									"Skipping class name ", name,
 									" because its associated table was not ",
 									"found or it does not belong to Liferay"));
 						}
@@ -118,7 +118,7 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 					List<String> names = classNamesByTableName.computeIfAbsent(
 						tableName, key -> new ArrayList<>());
 
-					names.add(nameString);
+					names.add(name);
 				}
 			}
 		}
@@ -152,57 +152,57 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 
 			List<String> names = entry.getValue();
 
-			String namesClauseString;
+			String namesClause;
 
 			if (names.size() == 1) {
-				namesClauseString = StringBundler.concat(
+				namesClause = StringBundler.concat(
 					"scope = ", ResourceConstants.SCOPE_INDIVIDUAL,
 					" and name = '", names.get(0), "'");
 			}
 			else {
 				List<String> quotedNames = new ArrayList<>(names.size());
 
-				for (String nameString : names) {
-					quotedNames.add(StringBundler.concat("'", nameString, "'"));
+				for (String name : names) {
+					quotedNames.add(StringBundler.concat("'", name, "'"));
 				}
 
-				namesClauseString = StringBundler.concat(
+				namesClause = StringBundler.concat(
 					"scope = ", ResourceConstants.SCOPE_INDIVIDUAL,
 					" and name in (",
 					String.join(StringPool.COMMA_AND_SPACE, quotedNames), ")");
 			}
 
-			String sqlString;
+			String sql;
 
 			if ((dbType == DBType.MARIADB) || (dbType == DBType.MYSQL)) {
 				String aliasTableName = StringBundler.concat(
 					tableName, StringPool.UNDERLINE, primaryKeyColumnName);
 
-				sqlString = StringBundler.concat(
+				sql = StringBundler.concat(
 					"select distinct ResourcePermission.primKeyId from ",
 					"ResourcePermission left join ", tableName,
 					StringPool.SPACE, aliasTableName, " on ", aliasTableName,
 					StringPool.PERIOD, primaryKeyColumnName,
 					" = ResourcePermission.primKeyId where ",
 					"ResourcePermission.primKeyId is not null and ",
-					"ResourcePermission.primKeyId != 0 and ", namesClauseString,
+					"ResourcePermission.primKeyId != 0 and ", namesClause,
 					" and ", aliasTableName, StringPool.PERIOD,
 					primaryKeyColumnName, " is null");
 			}
 			else {
-				sqlString = StringBundler.concat(
+				sql = StringBundler.concat(
 					"select distinct ResourcePermission.primKeyId from ",
 					"ResourcePermission where ResourcePermission.primKeyId is ",
 					"not null and ResourcePermission.primKeyId != 0 and ",
-					namesClauseString, " and not exists (select 1 from ",
-					tableName, " where ", tableName, StringPool.PERIOD,
+					namesClause, " and not exists (select 1 from ", tableName,
+					" where ", tableName, StringPool.PERIOD,
 					primaryKeyColumnName, " = ResourcePermission.primKeyId)");
 			}
 
 			List<Long> orphanIds = new ArrayList<>();
 
 			try (PreparedStatement preparedStatement =
-					connection.prepareStatement(sqlString)) {
+					connection.prepareStatement(sql)) {
 
 				try (ResultSet resultSet = preparedStatement.executeQuery()) {
 					while (resultSet.next()) {
@@ -233,7 +233,7 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 								"primKeyId in (",
 								String.join(
 									StringPool.COMMA_AND_SPACE, batchIds),
-								") and ", namesClauseString))) {
+								") and ", namesClause))) {
 
 					totalDeleted += preparedStatement.executeUpdate();
 				}
