@@ -321,6 +321,7 @@ public class CounterDataCleanupPreupgradeProcess
 
 		if (!dbInspector.isNumeric(tableName, columnName)) {
 			DB db = DBManagerUtil.getDB();
+
 			DBType dbType = db.getDBType();
 
 			if (dbType == DBType.DB2) {
