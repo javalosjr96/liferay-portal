@@ -21,10 +21,10 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
 /**
  * @author Luis Ortiz
@@ -45,7 +45,7 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 		Set<String> liferayTableNames = DBResourceUtil.getLiferayTableNames(
 			connection);
 
-		Map<String, List<String>> classNamesByTableName = new HashMap<>();
+		Map<String, List<String>> classNamesByTableName = new TreeMap<>();
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select distinct name from ResourcePermission where name " +
@@ -187,6 +187,8 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 				continue;
 			}
 
+			int totalDeleted = 0;
+
 			for (int i = 0; i < orphanIds.size(); i += _BATCH_SIZE) {
 				int end = Math.min(i + _BATCH_SIZE, orphanIds.size());
 
@@ -205,16 +207,15 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 									StringPool.COMMA_AND_SPACE, batchIds),
 								") and ", namesClauseString))) {
 
-					int deleted = preparedStatement.executeUpdate();
-
-					DataCleanupLoggingUtil.logDelete(
-						_log, deleted, "ResourcePermission",
-						StringBundler.concat(
-							"primKeyId was not found in column ",
-							primaryKeyColumnName, " from table \"", tableName,
-							"\""));
+					totalDeleted += preparedStatement.executeUpdate();
 				}
 			}
+
+			DataCleanupLoggingUtil.logDelete(
+				_log, totalDeleted, "ResourcePermission",
+				StringBundler.concat(
+					"primKeyId was not found in column ", primaryKeyColumnName,
+					" from table \"", tableName, "\""));
 		}
 	}
 
