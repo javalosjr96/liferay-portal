@@ -45,7 +45,7 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 		Set<String> liferayTableNames = DBResourceUtil.getLiferayTableNames(
 			connection);
 
-		Map<String, List<String>> tableNames = new HashMap<>();
+		Map<String, List<String>> classNamesByTableName = new HashMap<>();
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select distinct name from ResourcePermission where name " +
@@ -62,10 +62,10 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 					resourceActionsImpl.getCompositeModelNameSeparator();
 
 				while (resultSet.next()) {
-					String name = resultSet.getString("name");
+					String nameString = resultSet.getString("name");
 
 					String[] classNames = StringUtil.split(
-						name, compositeModelNameSeparator);
+						nameString, compositeModelNameSeparator);
 
 					String tableName = null;
 
@@ -95,7 +95,7 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 						if (_log.isDebugEnabled()) {
 							_log.debug(
 								StringBundler.concat(
-									"Skipping class name ", name,
+									"Skipping class name ", nameString,
 									" because its associated table was not ",
 									"found or it does not belong to Liferay"));
 						}
@@ -112,15 +112,17 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 						continue;
 					}
 
-					List<String> names = tableNames.computeIfAbsent(
+					List<String> names = classNamesByTableName.computeIfAbsent(
 						tableName, key -> new ArrayList<>());
 
-					names.add(name);
+					names.add(nameString);
 				}
 			}
 		}
 
-		for (Map.Entry<String, List<String>> entry : tableNames.entrySet()) {
+		for (Map.Entry<String, List<String>> entry :
+				classNamesByTableName.entrySet()) {
+
 			String tableName = entry.getKey();
 
 			String primaryKeyColumnName = "resourcePrimKey";
@@ -143,21 +145,21 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 
 			List<String> names = entry.getValue();
 
-			String namesClause;
+			String namesClauseString;
 
 			if (names.size() == 1) {
-				namesClause = StringBundler.concat(
+				namesClauseString = StringBundler.concat(
 					"scope = ", ResourceConstants.SCOPE_INDIVIDUAL,
 					" and name = '", names.get(0), "'");
 			}
 			else {
 				List<String> quotedNames = new ArrayList<>(names.size());
 
-				for (String name : names) {
-					quotedNames.add(StringBundler.concat("'", name, "'"));
+				for (String nameString : names) {
+					quotedNames.add(StringBundler.concat("'", nameString, "'"));
 				}
 
-				namesClause = StringBundler.concat(
+				namesClauseString = StringBundler.concat(
 					"scope = ", ResourceConstants.SCOPE_INDIVIDUAL,
 					" and name in (",
 					String.join(StringPool.COMMA_AND_SPACE, quotedNames), ")");
@@ -165,19 +167,19 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 
 			List<Long> orphanIds = new ArrayList<>();
 
-			String sql = StringBundler.concat(
+			String sqlString = StringBundler.concat(
 				"select distinct primKeyId from ResourcePermission where ",
-				"primKeyId != 0 and primKeyId is not null and ", namesClause,
-				" and primKeyId not in (select ", primaryKeyColumnName,
-				" from ", tableName, ")");
+				"primKeyId != 0 and primKeyId is not null and ",
+				namesClauseString, " and primKeyId not in (select ",
+				primaryKeyColumnName, " from ", tableName, ")");
 
 			try (PreparedStatement preparedStatement =
-					connection.prepareStatement(sql)) {
+					connection.prepareStatement(sqlString)) {
 
-				ResultSet resultSet = preparedStatement.executeQuery();
-
-				while (resultSet.next()) {
-					orphanIds.add(resultSet.getLong("primKeyId"));
+				try (ResultSet resultSet = preparedStatement.executeQuery()) {
+					while (resultSet.next()) {
+						orphanIds.add(resultSet.getLong("primKeyId"));
+					}
 				}
 			}
 
@@ -201,7 +203,7 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 								"primKeyId in (",
 								String.join(
 									StringPool.COMMA_AND_SPACE, batchIds),
-								") and ", namesClause))) {
+								") and ", namesClauseString))) {
 
 					int deleted = preparedStatement.executeUpdate();
 
