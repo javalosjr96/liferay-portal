@@ -21,10 +21,10 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
 
+import jakarta.portlet.PortletPreferences;
+
 import java.util.HashMap;
 import java.util.Map;
-
-import jakarta.portlet.PortletPreferences;
 
 /**
  * @author Mikel Lorza
@@ -82,8 +82,7 @@ public class UpgradePortletPreferences
 			return PortletPreferencesFactoryUtil.toXML(portletPreferences);
 		}
 
-		String journalArticleCacheKey =
-			groupId + StringPool.POUND + articleId;
+		String journalArticleCacheKey = groupId + StringPool.POUND + articleId;
 
 		if (!_journalArticles.containsKey(journalArticleCacheKey)) {
 			_journalArticles.put(
