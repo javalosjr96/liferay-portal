@@ -10,6 +10,7 @@ import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
 import com.liferay.journal.constants.JournalContentPortletKeys;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleLocalService;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactoryUtil;
@@ -19,6 +20,9 @@ import com.liferay.portal.kernel.upgrade.BasePortletPreferencesUpgradeProcess;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
+
+import java.util.HashMap;
+import java.util.Map;
 
 import jakarta.portlet.PortletPreferences;
 
@@ -68,14 +72,17 @@ public class UpgradePortletPreferences
 			return PortletPreferencesFactoryUtil.toXML(portletPreferences);
 		}
 
-		Group group = _groupLocalService.fetchGroup(groupId);
+		Group group = _groups.computeIfAbsent(
+			groupId, key -> _groupLocalService.fetchGroup(key));
 
 		if (group == null) {
 			return PortletPreferencesFactoryUtil.toXML(portletPreferences);
 		}
 
-		JournalArticle journalArticle =
-			_journalArticleLocalService.fetchArticle(groupId, articleId);
+		JournalArticle journalArticle = _journalArticles.computeIfAbsent(
+			groupId + StringPool.POUND + articleId,
+			key -> _journalArticleLocalService.fetchArticle(
+				groupId, articleId));
 
 		if (journalArticle == null) {
 			return PortletPreferencesFactoryUtil.toXML(portletPreferences);
@@ -107,8 +114,20 @@ public class UpgradePortletPreferences
 			}
 		}
 
-		DDMTemplate ddmTemplate = _ddmTemplateLocalService.fetchTemplate(
-			ddmTemplateGroupId, _ddmStructureClassNameId, ddmTemplateKey, true);
+		String ddmTemplateCacheKey =
+			ddmTemplateGroupId + StringPool.POUND + ddmTemplateKey;
+
+		DDMTemplate ddmTemplate = _ddmTemplates.get(ddmTemplateCacheKey);
+
+		if (ddmTemplate == null) {
+			ddmTemplate = _ddmTemplateLocalService.fetchTemplate(
+				ddmTemplateGroupId, _ddmStructureClassNameId, ddmTemplateKey,
+				true);
+
+			if (ddmTemplate != null) {
+				_ddmTemplates.put(ddmTemplateCacheKey, ddmTemplate);
+			}
+		}
 
 		if (ddmTemplate == null) {
 			return PortletPreferencesFactoryUtil.toXML(portletPreferences);
@@ -124,8 +143,12 @@ public class UpgradePortletPreferences
 
 	private final long _ddmStructureClassNameId;
 	private final DDMTemplateLocalService _ddmTemplateLocalService;
+	private final Map<String, DDMTemplate> _ddmTemplates = new HashMap<>();
 	private final GroupLocalService _groupLocalService;
+	private final Map<Long, Group> _groups = new HashMap<>();
 	private final JournalArticleLocalService _journalArticleLocalService;
+	private final Map<String, JournalArticle> _journalArticles =
+		new HashMap<>();
 	private final LayoutLocalService _layoutLocalService;
 	private final Portal _portal;
 
