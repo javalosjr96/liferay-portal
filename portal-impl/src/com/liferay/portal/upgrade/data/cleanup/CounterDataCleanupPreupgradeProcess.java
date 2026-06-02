@@ -321,7 +321,6 @@ public class CounterDataCleanupPreupgradeProcess
 
 		if (!dbInspector.isNumeric(tableName, columnName)) {
 			DB db = DBManagerUtil.getDB();
-
 			DBType dbType = db.getDBType();
 
 			if (dbType == DBType.DB2) {
@@ -331,7 +330,7 @@ public class CounterDataCleanupPreupgradeProcess
 								"select max(cast(", columnName,
 								" as bigint)) as ", columnName, " from ",
 								tableName, " where regexp_like(", columnName,
-								", '^[0-9]+$')"));
+								", '^[0-9]{1,18}$')"));
 
 					ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -354,7 +353,7 @@ public class CounterDataCleanupPreupgradeProcess
 								"select max(cast(", columnName,
 								" as unsigned)) as ", columnName, " from ",
 								tableName, " where ", columnName,
-								" regexp '^[0-9]+$'"));
+								" regexp '^[0-9]{1,18}$'"));
 
 					ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -376,7 +375,8 @@ public class CounterDataCleanupPreupgradeProcess
 							StringBundler.concat(
 								"select max(to_number(", columnName, ")) as ",
 								columnName, " from ", tableName, " where ",
-								"regexp_like(", columnName, ", '^[0-9]+$')"));
+								"regexp_like(", columnName,
+								", '^[0-9]{1,18}$')"));
 
 					ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -399,7 +399,7 @@ public class CounterDataCleanupPreupgradeProcess
 								"select max(cast(", columnName,
 								" as bigint)) as ", columnName, " from ",
 								tableName, " where ", columnName,
-								" ~ '^[0-9]+$'"));
+								" ~ '^[0-9]{1,18}$'"));
 
 					ResultSet resultSet = preparedStatement.executeQuery()) {
 
