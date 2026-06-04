@@ -13,8 +13,10 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ReleaseConstants;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.LoggingTimer;
+import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.upgrade.PortalUpgradeProcess;
 
@@ -66,8 +68,24 @@ public class DataCleanupPreupgradeProcessSuite {
 			if (maxWaveSize > 1) {
 				AtomicInteger threadCount = new AtomicInteger();
 
+				int availableProcessors = Runtime.getRuntime(
+				).availableProcessors();
+
+				int maximumPoolSize = GetterUtil.getInteger(
+					PropsUtil.get("jdbc.default.maximumPoolSize"));
+
+				int poolSize;
+
+				if (maximumPoolSize > 0) {
+					poolSize = Math.max(
+						1, (int)(0.9 * maximumPoolSize) / availableProcessors);
+				}
+				else {
+					poolSize = availableProcessors;
+				}
+
 				executorService = Executors.newFixedThreadPool(
-					maxWaveSize,
+					Math.min(maxWaveSize, poolSize),
 					runnable -> {
 						Thread thread = new Thread(runnable);
 
@@ -110,8 +128,8 @@ public class DataCleanupPreupgradeProcessSuite {
 							future.get();
 						}
 						catch (ExecutionException executionException) {
-							for (Future<Void> f : futures) {
-								f.cancel(true);
+							for (Future<Void> future : futures) {
+								future.cancel(true);
 							}
 
 							Throwable throwable = executionException.getCause();
@@ -131,8 +149,8 @@ public class DataCleanupPreupgradeProcessSuite {
 									new RuntimeException(throwable);
 						}
 						catch (InterruptedException interruptedException) {
-							for (Future<Void> f : futures) {
-								f.cancel(true);
+							for (Future<Void> future : futures) {
+								future.cancel(true);
 							}
 
 							Thread currentThread = Thread.currentThread();

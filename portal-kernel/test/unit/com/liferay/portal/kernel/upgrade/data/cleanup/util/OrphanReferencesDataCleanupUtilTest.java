@@ -21,14 +21,14 @@ import org.mockito.Mockito;
 /**
  * @author Jorge Avalos
  */
-public class OrphanReferencesDeadlockRetryTest {
+public class OrphanReferencesDataCleanupUtilTest {
 
 	@Test
 	public void testExecuteDeleteRetriesOnDeadlock() throws Exception {
-		AtomicInteger callCount = new AtomicInteger();
-
 		PreparedStatement preparedStatement = Mockito.mock(
 			PreparedStatement.class);
+
+		AtomicInteger callCount = new AtomicInteger();
 
 		Mockito.doAnswer(
 			invocation -> {

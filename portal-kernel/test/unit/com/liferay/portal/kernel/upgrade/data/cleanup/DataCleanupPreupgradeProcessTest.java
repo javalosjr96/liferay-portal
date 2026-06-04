@@ -16,7 +16,7 @@ import org.junit.Test;
 /**
  * @author Jorge Avalos
  */
-public class DataCleanupPreupgradeProcessWaveTest {
+public class DataCleanupPreupgradeProcessTest {
 
 	@Test
 	public void testCircularDependencyThrows() {
