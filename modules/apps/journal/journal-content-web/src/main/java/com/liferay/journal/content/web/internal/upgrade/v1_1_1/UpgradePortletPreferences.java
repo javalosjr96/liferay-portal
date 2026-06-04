@@ -48,6 +48,18 @@ public class UpgradePortletPreferences
 	}
 
 	@Override
+	protected void doUpgrade() throws Exception {
+		try {
+			super.doUpgrade();
+		}
+		finally {
+			_ddmTemplates.clear();
+			_groups.clear();
+			_journalArticles.clear();
+		}
+	}
+
+	@Override
 	protected String[] getPortletIds() {
 		return new String[] {
 			JournalContentPortletKeys.JOURNAL_CONTENT + "_INSTANCE_%"
