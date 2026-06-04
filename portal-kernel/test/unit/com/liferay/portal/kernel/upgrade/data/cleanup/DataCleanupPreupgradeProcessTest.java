@@ -16,7 +16,7 @@ import org.junit.Test;
 /**
  * @author Jorge Avalos
  */
-public class DataCleanupPreupgradeProcessWaveTest {
+public class DataCleanupPreupgradeProcessTest {
 
 	@Test
 	public void testCircularDependencyThrows() {
@@ -37,7 +37,7 @@ public class DataCleanupPreupgradeProcessWaveTest {
 			DataCleanupPreupgradeProcess.getWavedDataCleanupPreupgradeProcesses(
 				map);
 
-			Assert.fail("Expected RuntimeException for circular dependency");
+			Assert.fail();
 		}
 		catch (RuntimeException runtimeException) {
 			Assert.assertEquals(

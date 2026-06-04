@@ -21,14 +21,14 @@ import org.mockito.Mockito;
 /**
  * @author Jorge Avalos
  */
-public class OrphanReferencesDeadlockRetryTest {
+public class OrphanReferencesDataCleanupUtilTest {
 
 	@Test
 	public void testExecuteDeleteRetriesOnDeadlock() throws Exception {
-		AtomicInteger callCount = new AtomicInteger();
-
 		PreparedStatement preparedStatement = Mockito.mock(
 			PreparedStatement.class);
+
+		AtomicInteger callCount = new AtomicInteger();
 
 		Mockito.doAnswer(
 			invocation -> {
@@ -83,11 +83,9 @@ public class OrphanReferencesDeadlockRetryTest {
 				new Class<?>[] {Connection.class, String.class}, connection,
 				"delete from foo where bar is null");
 
-			Assert.fail("Expected SQLException after max retries");
+			Assert.fail();
 		}
 		catch (Exception exception) {
-			Assert.assertSame(SQLException.class, exception.getClass());
-
 			SQLException sqlException = (SQLException)exception;
 
 			Assert.assertEquals("40001", sqlException.getSQLState());
@@ -130,11 +128,9 @@ public class OrphanReferencesDeadlockRetryTest {
 				new Class<?>[] {Connection.class, String.class}, connection,
 				"delete from foo where bar is null");
 
-			Assert.fail("Expected SQLException for non-deadlock error");
+			Assert.fail();
 		}
 		catch (Exception exception) {
-			Assert.assertSame(SQLException.class, exception.getClass());
-
 			SQLException sqlException = (SQLException)exception;
 
 			Assert.assertEquals("23000", sqlException.getSQLState());
