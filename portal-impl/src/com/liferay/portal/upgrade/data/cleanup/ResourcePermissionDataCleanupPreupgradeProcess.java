@@ -48,7 +48,7 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 		Set<String> liferayTableNames = DBResourceUtil.getLiferayTableNames(
 			connection);
 
-		Map<String, List<String>> classNamesByTableName = new TreeMap<>();
+		Map<String, List<String>> namesByTableName = new TreeMap<>();
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				"select distinct name from ResourcePermission where name " +
@@ -114,7 +114,7 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 						continue;
 					}
 
-					List<String> names = classNamesByTableName.computeIfAbsent(
+					List<String> names = namesByTableName.computeIfAbsent(
 						tableName, key -> new ArrayList<>());
 
 					names.add(name);
@@ -127,7 +127,7 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 		DBType dbType = db.getDBType();
 
 		for (Map.Entry<String, List<String>> entry :
-				classNamesByTableName.entrySet()) {
+				namesByTableName.entrySet()) {
 
 			String tableName = entry.getKey();
 
