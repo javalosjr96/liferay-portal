@@ -108,8 +108,7 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 
 					if (!dbInspector.hasTable(tableName)) {
 						if (_log.isWarnEnabled()) {
-							_log.warn(
-								"Unable to find table \"" + tableName + "\"");
+							_log.warn("Table " + tableName + " does not exist");
 						}
 
 						continue;
@@ -143,8 +142,8 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 			if (primaryKeyColumnName == null) {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
-						"Unable to find primary key column for table \"" +
-							tableName + "\"");
+						"Skipping table " + tableName +
+							" because it does not have a primary key");
 				}
 
 				continue;
