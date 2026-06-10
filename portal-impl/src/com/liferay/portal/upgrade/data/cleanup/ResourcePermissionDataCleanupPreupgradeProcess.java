@@ -169,8 +169,8 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 						"[$SOURCE_TABLE_ALIAS$].scope = ",
 						ResourceConstants.SCOPE_INDIVIDUAL, " and ",
 						namesCondition),
-					"primKeyId", "ResourcePermission",
-					primaryKeyColumnName, tableName));
+					"primKeyId", "ResourcePermission", primaryKeyColumnName,
+					tableName));
 		}
 	}
 
