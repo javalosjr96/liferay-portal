@@ -7,16 +7,13 @@ package com.liferay.portal.upgrade.data.cleanup;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
-import com.liferay.portal.kernel.dao.db.DBManagerUtil;
-import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
-import com.liferay.portal.kernel.upgrade.data.cleanup.util.DataCleanupLoggingUtil;
+import com.liferay.portal.kernel.upgrade.data.cleanup.TableOrphanReferencesDataCleanupPreupgradeProcess;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.security.permission.ResourceActionsImpl;
 
@@ -122,10 +119,6 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 			}
 		}
 
-		DB db = DBManagerUtil.getDB();
-
-		DBType dbType = db.getDBType();
-
 		for (Map.Entry<String, List<String>> entry :
 				namesByTableName.entrySet()) {
 
@@ -151,12 +144,11 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 
 			List<String> names = entry.getValue();
 
-			String namesClause;
+			String namesCondition;
 
 			if (names.size() == 1) {
-				namesClause = StringBundler.concat(
-					"scope = ", ResourceConstants.SCOPE_INDIVIDUAL,
-					" and name = '", names.get(0), "'");
+				namesCondition = StringBundler.concat(
+					"[$SOURCE_TABLE_ALIAS$].name = '", names.get(0), "'");
 			}
 			else {
 				List<String> quotedNames = new ArrayList<>(names.size());
@@ -165,88 +157,22 @@ public class ResourcePermissionDataCleanupPreupgradeProcess
 					quotedNames.add(StringBundler.concat("'", name, "'"));
 				}
 
-				namesClause = StringBundler.concat(
-					"scope = ", ResourceConstants.SCOPE_INDIVIDUAL,
-					" and name in (",
+				namesCondition = StringBundler.concat(
+					"[$SOURCE_TABLE_ALIAS$].name in (",
 					String.join(StringPool.COMMA_AND_SPACE, quotedNames), ")");
 			}
 
-			String sql;
-
-			if ((dbType == DBType.MARIADB) || (dbType == DBType.MYSQL)) {
-				String aliasTableName = StringBundler.concat(
-					tableName, StringPool.UNDERLINE, primaryKeyColumnName);
-
-				sql = StringBundler.concat(
-					"select distinct ResourcePermission.primKeyId from ",
-					"ResourcePermission left join ", tableName,
-					StringPool.SPACE, aliasTableName, " on ", aliasTableName,
-					StringPool.PERIOD, primaryKeyColumnName,
-					" = ResourcePermission.primKeyId where ",
-					"ResourcePermission.primKeyId is not null and ",
-					"ResourcePermission.primKeyId != 0 and ", namesClause,
-					" and ", aliasTableName, StringPool.PERIOD,
-					primaryKeyColumnName, " is null");
-			}
-			else {
-				sql = StringBundler.concat(
-					"select distinct ResourcePermission.primKeyId from ",
-					"ResourcePermission where ResourcePermission.primKeyId is ",
-					"not null and ResourcePermission.primKeyId != 0 and ",
-					namesClause, " and not exists (select 1 from ", tableName,
-					" where ", tableName, StringPool.PERIOD,
-					primaryKeyColumnName, " = ResourcePermission.primKeyId)");
-			}
-
-			List<Long> orphanIds = new ArrayList<>();
-
-			try (PreparedStatement preparedStatement =
-					connection.prepareStatement(sql)) {
-
-				try (ResultSet resultSet = preparedStatement.executeQuery()) {
-					while (resultSet.next()) {
-						orphanIds.add(resultSet.getLong("primKeyId"));
-					}
-				}
-			}
-
-			if (orphanIds.isEmpty()) {
-				continue;
-			}
-
-			int totalDeleted = 0;
-
-			for (int i = 0; i < orphanIds.size(); i += _BATCH_SIZE) {
-				int end = Math.min(i + _BATCH_SIZE, orphanIds.size());
-
-				List<String> batchIds = new ArrayList<>(end - i);
-
-				for (int j = i; j < end; j++) {
-					batchIds.add(String.valueOf(orphanIds.get(j)));
-				}
-
-				try (PreparedStatement preparedStatement =
-						connection.prepareStatement(
-							StringBundler.concat(
-								"delete from ResourcePermission where ",
-								"primKeyId in (",
-								String.join(
-									StringPool.COMMA_AND_SPACE, batchIds),
-								") and ", namesClause))) {
-
-					totalDeleted += preparedStatement.executeUpdate();
-				}
-			}
-
-			DataCleanupLoggingUtil.logDelete(
-				_log, totalDeleted, "ResourcePermission",
-				StringBundler.concat(
-					"primKeyId was not found in column ", primaryKeyColumnName,
-					" from table \"", tableName, "\""));
+			upgrade(
+				new TableOrphanReferencesDataCleanupPreupgradeProcess(
+					null,
+					StringBundler.concat(
+						"[$SOURCE_TABLE_ALIAS$].scope = ",
+						ResourceConstants.SCOPE_INDIVIDUAL, " and ",
+						namesCondition),
+					"primKeyId", "ResourcePermission",
+					primaryKeyColumnName, tableName));
 		}
 	}
-
-	private static final int _BATCH_SIZE = 1000;
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ResourcePermissionDataCleanupPreupgradeProcess.class);
