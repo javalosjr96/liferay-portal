@@ -68,8 +68,9 @@ public class DataCleanupPreupgradeProcessSuite {
 			if (maxWaveSize > 1) {
 				AtomicInteger threadCount = new AtomicInteger();
 
-				int availableProcessors = Runtime.getRuntime(
-				).availableProcessors();
+				Runtime runtime = Runtime.getRuntime();
+
+				int availableProcessors = runtime.availableProcessors();
 
 				int maximumPoolSize = GetterUtil.getInteger(
 					PropsUtil.get("jdbc.default.maximumPoolSize"));
