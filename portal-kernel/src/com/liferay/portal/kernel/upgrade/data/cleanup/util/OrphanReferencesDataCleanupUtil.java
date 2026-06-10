@@ -445,14 +445,19 @@ public class OrphanReferencesDataCleanupUtil {
 		return sb.toString();
 	}
 
+	private static final int _DELETE_DEADLOCK_RETRY_WAIT = 500;
+
+	private static final int _DELETE_MAX_DEADLOCK_RETRIES = 3;
+
+	private static final String _SOURCE_TABLE_ALIAS = "s";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		OrphanReferencesDataCleanupUtil.class);
+
 	private static final Map<String, String> _deadlockProperties =
 		Collections.singletonMap(
 			SQLStateAcceptor.SQLSTATE,
 			SQLStateAcceptor.SQLSTATE_TRANSACTION_ROLLBACK);
-
-	private static final int _DELETE_DEADLOCK_RETRY_WAIT = 500;
-
-	private static final int _DELETE_MAX_DEADLOCK_RETRIES = 3;
 
 	private static final List<String> _excludedTableNames = new ArrayList<>(
 		Arrays.asList(
@@ -462,10 +467,5 @@ public class OrphanReferencesDataCleanupUtil {
 		new ArrayList<>();
 
 	private static final RetryAcceptor _retryAcceptor = new SQLStateAcceptor();
-
-	private static final String _SOURCE_TABLE_ALIAS = "s";
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		OrphanReferencesDataCleanupUtil.class);
 
 }

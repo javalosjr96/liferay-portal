@@ -37,7 +37,7 @@ public class DataCleanupPreupgradeProcessTest {
 			DataCleanupPreupgradeProcess.getWavedDataCleanupPreupgradeProcesses(
 				map);
 
-			Assert.fail("Expected RuntimeException for circular dependency");
+			Assert.fail();
 		}
 		catch (RuntimeException runtimeException) {
 			Assert.assertEquals(

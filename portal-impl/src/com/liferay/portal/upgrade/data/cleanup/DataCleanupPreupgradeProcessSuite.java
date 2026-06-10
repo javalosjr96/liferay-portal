@@ -173,8 +173,8 @@ public class DataCleanupPreupgradeProcessSuite {
 
 							if (_log.isWarnEnabled()) {
 								_log.warn(
-									"Some data cleanup threads did not " +
-										"terminate gracefully");
+									"Unable to terminate some data cleanup " +
+										"threads gracefully");
 							}
 						}
 					}
