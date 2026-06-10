@@ -120,7 +120,7 @@ public class CounterDataCleanupPreupgradeProcess
 
 				if (!dbInspector.hasTable(tableName)) {
 					if (_log.isWarnEnabled()) {
-						_log.warn("Table \"" + tableName + "\" does not exist");
+						_log.warn("Table " + tableName + " does not exist");
 					}
 
 					continue;
@@ -308,10 +308,10 @@ public class CounterDataCleanupPreupgradeProcess
 	}
 
 	private String _getLogMessage(
-		String counterName, long counterValue, String tableName) {
+		String counterName, long countervalue, String tableName) {
 
 		return StringBundler.concat(
-			"Counter ", counterName, " has been reset to value ", counterValue,
+			"Counter ", counterName, " has been reset to value ", countervalue,
 			(tableName != null) ? " due to table " + tableName : "");
 	}
 
@@ -324,105 +324,11 @@ public class CounterDataCleanupPreupgradeProcess
 
 			DBType dbType = db.getDBType();
 
-			if (dbType == DBType.DB2) {
+			String sql = _getMaxValueSQL(columnName, dbType, tableName);
+
+			if (sql != null) {
 				try (PreparedStatement preparedStatement =
-						connection.prepareStatement(
-							StringBundler.concat(
-								"select max(cast(", columnName,
-								" as bigint)) as ", columnName, " from ",
-								tableName, " where regexp_like(", columnName,
-								", '^[0-9]{1,18}$')"));
-
-					ResultSet resultSet = preparedStatement.executeQuery()) {
-
-					if (resultSet.next()) {
-						long maxValue = resultSet.getLong(columnName);
-
-						if (!resultSet.wasNull()) {
-							return maxValue;
-						}
-					}
-				}
-
-				return 0L;
-			}
-
-			if ((dbType == DBType.MARIADB) || (dbType == DBType.MYSQL)) {
-				try (PreparedStatement preparedStatement =
-						connection.prepareStatement(
-							StringBundler.concat(
-								"select max(cast(", columnName,
-								" as unsigned)) as ", columnName, " from ",
-								tableName, " where ", columnName,
-								" regexp '^[0-9]{1,18}$'"));
-
-					ResultSet resultSet = preparedStatement.executeQuery()) {
-
-					if (resultSet.next()) {
-						long maxValue = resultSet.getLong(columnName);
-
-						if (!resultSet.wasNull()) {
-							return maxValue;
-						}
-					}
-				}
-
-				return 0L;
-			}
-
-			if (dbType == DBType.ORACLE) {
-				try (PreparedStatement preparedStatement =
-						connection.prepareStatement(
-							StringBundler.concat(
-								"select max(to_number(", columnName, ")) as ",
-								columnName, " from ", tableName, " where ",
-								"regexp_like(", columnName,
-								", '^[0-9]{1,18}$')"));
-
-					ResultSet resultSet = preparedStatement.executeQuery()) {
-
-					if (resultSet.next()) {
-						long maxValue = resultSet.getLong(columnName);
-
-						if (!resultSet.wasNull()) {
-							return maxValue;
-						}
-					}
-				}
-
-				return 0L;
-			}
-
-			if (dbType == DBType.POSTGRESQL) {
-				try (PreparedStatement preparedStatement =
-						connection.prepareStatement(
-							StringBundler.concat(
-								"select max(cast(", columnName,
-								" as bigint)) as ", columnName, " from ",
-								tableName, " where ", columnName,
-								" ~ '^[0-9]{1,18}$'"));
-
-					ResultSet resultSet = preparedStatement.executeQuery()) {
-
-					if (resultSet.next()) {
-						long maxValue = resultSet.getLong(columnName);
-
-						if (!resultSet.wasNull()) {
-							return maxValue;
-						}
-					}
-				}
-
-				return 0L;
-			}
-
-			if (dbType == DBType.SQLSERVER) {
-				try (PreparedStatement preparedStatement =
-						connection.prepareStatement(
-							StringBundler.concat(
-								"select max(try_cast(", columnName,
-								" as bigint)) as ", columnName, " from ",
-								tableName));
+						connection.prepareStatement(sql);
 
 					ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -448,13 +354,13 @@ public class CounterDataCleanupPreupgradeProcess
 				ResultSet resultSet = preparedStatement.executeQuery()) {
 
 				while (resultSet.next()) {
-					String valueString = resultSet.getString(columnName);
+					String value = resultSet.getString(columnName);
 
 					try {
-						long value = Long.parseLong(valueString);
+						long valueLong = Long.parseLong(value);
 
-						if (value > maxValue) {
-							maxValue = value;
+						if (valueLong > maxValue) {
+							maxValue = valueLong;
 						}
 					}
 					catch (NumberFormatException numberFormatException) {
@@ -481,6 +387,46 @@ public class CounterDataCleanupPreupgradeProcess
 		}
 
 		return 0L;
+	}
+
+	private String _getMaxValueSQL(
+		String columnName, DBType dbType, String tableName) {
+
+		if (dbType == DBType.DB2) {
+			return StringBundler.concat(
+				"select max(cast(", columnName, " as bigint)) as ", columnName,
+				" from ", tableName, " where regexp_like(", columnName,
+				", '^[0-9]{1,18}$')");
+		}
+
+		if ((dbType == DBType.MARIADB) || (dbType == DBType.MYSQL)) {
+			return StringBundler.concat(
+				"select max(cast(", columnName, " as unsigned)) as ", columnName,
+				" from ", tableName, " where ", columnName,
+				" regexp '^[0-9]{1,18}$'");
+		}
+
+		if (dbType == DBType.ORACLE) {
+			return StringBundler.concat(
+				"select max(to_number(", columnName, ")) as ", columnName,
+				" from ", tableName, " where regexp_like(", columnName,
+				", '^[0-9]{1,18}$')");
+		}
+
+		if (dbType == DBType.POSTGRESQL) {
+			return StringBundler.concat(
+				"select max(cast(", columnName, " as bigint)) as ", columnName,
+				" from ", tableName, " where ", columnName,
+				" ~ '^[0-9]{1,18}$'");
+		}
+
+		if (dbType == DBType.SQLSERVER) {
+			return StringBundler.concat(
+				"select max(try_cast(", columnName, " as bigint)) as ",
+				columnName, " from ", tableName);
+		}
+
+		return null;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
