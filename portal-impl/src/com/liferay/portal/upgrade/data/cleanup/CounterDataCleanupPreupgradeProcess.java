@@ -322,9 +322,7 @@ public class CounterDataCleanupPreupgradeProcess
 		if (!dbInspector.isNumeric(tableName, columnName)) {
 			DB db = DBManagerUtil.getDB();
 
-			DBType dbType = db.getDBType();
-
-			String sql = _getMaxValueSQL(columnName, dbType, tableName);
+			String sql = _getMaxValueSQL(columnName, db.getDBType(), tableName);
 
 			if (sql != null) {
 				try (PreparedStatement preparedStatement =
@@ -401,8 +399,8 @@ public class CounterDataCleanupPreupgradeProcess
 
 		if ((dbType == DBType.MARIADB) || (dbType == DBType.MYSQL)) {
 			return StringBundler.concat(
-				"select max(cast(", columnName, " as unsigned)) as ", columnName,
-				" from ", tableName, " where ", columnName,
+				"select max(cast(", columnName, " as unsigned)) as ",
+				columnName, " from ", tableName, " where ", columnName,
 				" regexp '^[0-9]{1,18}$'");
 		}
 
