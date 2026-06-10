@@ -224,7 +224,7 @@ public class CounterDataCleanupPreupgradeProcess
 		throws Exception {
 
 		if (!dbInspector.hasTable("Layout")) {
-			_log.error("Table \"Layout\" does not exist");
+			_log.error("Table Layout does not exist");
 
 			return;
 		}
