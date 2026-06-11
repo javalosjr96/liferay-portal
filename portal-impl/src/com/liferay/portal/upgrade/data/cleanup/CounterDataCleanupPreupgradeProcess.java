@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -23,6 +24,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
@@ -162,21 +164,26 @@ public class CounterDataCleanupPreupgradeProcess
 					return;
 				}
 
-				String columnName =
-					DataCleanupPreupgradeProcessUtil.getPrimaryKeyColumnName(
-						connection, dbInspector, tableName);
+				try (Connection threadConnection =
+						DataAccess.getConnection()) {
 
-				if ((columnName == null) ||
-					!dbInspector.isNumeric(tableName, columnName)) {
+					String columnName =
+						DataCleanupPreupgradeProcessUtil.
+							getPrimaryKeyColumnName(
+								threadConnection, dbInspector, tableName);
 
-					return;
-				}
+					if ((columnName == null) ||
+						!dbInspector.isNumeric(tableName, columnName)) {
 
-				long maxValue = _getMaxValue(
-					columnName, dbInspector, tableName);
+						return;
+					}
 
-				if (maxValue > 0) {
-					tableMaxValues.put(tableName, maxValue);
+					long maxValue = _getMaxValue(
+						columnName, dbInspector, tableName, threadConnection);
+
+					if (maxValue > 0) {
+						tableMaxValues.put(tableName, maxValue);
+					}
 				}
 			},
 			null);
@@ -316,7 +323,8 @@ public class CounterDataCleanupPreupgradeProcess
 	}
 
 	private long _getMaxValue(
-			String columnName, DBInspector dbInspector, String tableName)
+			String columnName, DBInspector dbInspector, String tableName,
+			Connection threadConnection)
 		throws Exception {
 
 		if (!dbInspector.isNumeric(tableName, columnName)) {
@@ -326,7 +334,7 @@ public class CounterDataCleanupPreupgradeProcess
 
 			if (sql != null) {
 				try (PreparedStatement preparedStatement =
-						connection.prepareStatement(sql);
+						threadConnection.prepareStatement(sql);
 
 					ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -345,7 +353,7 @@ public class CounterDataCleanupPreupgradeProcess
 			long maxValue = 0;
 
 			try (PreparedStatement preparedStatement =
-					connection.prepareStatement(
+					threadConnection.prepareStatement(
 						StringBundler.concat(
 							"select ", columnName, " from ", tableName));
 
@@ -372,10 +380,11 @@ public class CounterDataCleanupPreupgradeProcess
 			return maxValue;
 		}
 
-		try (PreparedStatement preparedStatement = connection.prepareStatement(
-				StringBundler.concat(
-					"select max(", columnName, ") as ", columnName, " from ",
-					tableName));
+		try (PreparedStatement preparedStatement =
+				threadConnection.prepareStatement(
+					StringBundler.concat(
+						"select max(", columnName, ") as ", columnName,
+						" from ", tableName));
 
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
