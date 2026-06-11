@@ -81,8 +81,7 @@ public class DataCleanupPreupgradeProcessSuite {
 					poolSize = Math.max(
 						1,
 						Math.min(
-							availableProcessors,
-							(int)(0.9 * maximumPoolSize)));
+							availableProcessors, (int)(0.9 * maximumPoolSize)));
 				}
 				else {
 					poolSize = availableProcessors;
