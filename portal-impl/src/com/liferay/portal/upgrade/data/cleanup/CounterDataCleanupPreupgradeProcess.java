@@ -14,7 +14,6 @@ import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
-import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -164,9 +163,7 @@ public class CounterDataCleanupPreupgradeProcess
 					return;
 				}
 
-				try (Connection threadConnection =
-						DataAccess.getConnection()) {
-
+				try (Connection threadConnection = getConnection()) {
 					String columnName =
 						DataCleanupPreupgradeProcessUtil.
 							getPrimaryKeyColumnName(
