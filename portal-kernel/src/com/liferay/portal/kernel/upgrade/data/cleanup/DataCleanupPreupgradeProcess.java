@@ -5,6 +5,7 @@
 
 package com.liferay.portal.kernel.upgrade.data.cleanup;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.upgrade.UpgradeException;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -116,11 +117,20 @@ public class DataCleanupPreupgradeProcess extends UpgradeProcess {
 						if (!dataCleanupPreupgradeProcessesMap.containsKey(
 								dependency)) {
 
+							Class<?> dependencyClass = dependency.getClass();
+
+							String dependencyClassName =
+								dependencyClass.getName();
+
+							DataCleanupPreupgradeProcess keyProcess =
+								entry.getKey();
+
+							Class<?> keyClass = keyProcess.getClass();
+
 							throw new IllegalStateException(
-								"Missing dependency " +
-									dependency.getClass().getName() +
-										" required by " +
-											entry.getKey().getClass().getName());
+								StringBundler.concat(
+									"Missing dependency ", dependencyClassName,
+									" required by ", keyClass.getName()));
 						}
 					}
 				}
