@@ -70,17 +70,19 @@ public class DDMFieldAttributeUpgradeProcess extends UpgradeProcess {
 
 			String selectSQL = StringBundler.concat(
 				"select DDMFieldAttribute.ctCollectionId, DDMFieldAttribute.",
-				"fieldAttributeId, DDMFieldAttribute.companyId, DDMFieldAttribute.",
-				"largeAttributeValue, DDMFieldAttribute.smallAttributeValue from ",
-				"DDMStructure inner join DDMStructureVersion on DDMStructure.",
-				"ctCollectionId = DDMStructureVersion.ctCollectionId and ",
-				"DDMStructure.structureId = DDMStructureVersion.structureId inner ",
-				"join DDMField on DDMStructureVersion.ctCollectionId = DDMField.",
+				"fieldAttributeId, DDMFieldAttribute.companyId, ",
+				"DDMFieldAttribute.largeAttributeValue, DDMFieldAttribute.",
+				"smallAttributeValue from DDMStructure inner join ",
+				"DDMStructureVersion on DDMStructure.ctCollectionId = ",
+				"DDMStructureVersion.ctCollectionId and DDMStructure.",
+				"structureId = DDMStructureVersion.structureId inner join ",
+				"DDMField on DDMStructureVersion.ctCollectionId = DDMField.",
 				"ctCollectionId and DDMStructureVersion.structureVersionId = ",
 				"DDMField.structureVersionId inner join DDMFieldAttribute on ",
-				"DDMField.ctCollectionId = DDMFieldAttribute.ctCollectionId and ",
-				"DDMField.fieldId = DDMFieldAttribute.fieldId where DDMStructure.",
-				"classNameId = ? and DDMField.fieldType = 'rich_text'");
+				"DDMField.ctCollectionId = DDMFieldAttribute.ctCollectionId ",
+				"and DDMField.fieldId = DDMFieldAttribute.fieldId where ",
+				"DDMStructure.classNameId = ? and DDMField.fieldType = ",
+				"'rich_text'");
 
 			String updateSQL =
 				"update DDMFieldAttribute set largeAttributeValue = ?, " +
