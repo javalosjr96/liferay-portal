@@ -101,6 +101,30 @@ public class DataCleanupPreupgradeProcess extends UpgradeProcess {
 			}
 
 			if (wave.isEmpty()) {
+				for (Map.Entry
+						<DataCleanupPreupgradeProcess,
+						 List<DataCleanupPreupgradeProcess>> entry :
+							dataCleanupPreupgradeProcessesMap.entrySet()) {
+
+					if (completed.contains(entry.getKey())) {
+						continue;
+					}
+
+					for (DataCleanupPreupgradeProcess dependency :
+							entry.getValue()) {
+
+						if (!dataCleanupPreupgradeProcessesMap.containsKey(
+								dependency)) {
+
+							throw new IllegalStateException(
+								"Missing dependency " +
+									dependency.getClass().getName() +
+										" required by " +
+											entry.getKey().getClass().getName());
+						}
+					}
+				}
+
 				throw new RuntimeException("Circular dependency");
 			}
 
