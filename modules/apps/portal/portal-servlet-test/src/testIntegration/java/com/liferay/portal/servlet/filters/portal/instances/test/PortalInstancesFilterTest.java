@@ -81,7 +81,7 @@ public class PortalInstancesFilterTest {
 			MockHttpServletResponse mockHttpServletResponse =
 				new MockHttpServletResponse();
 
-			_portalInstancesFilter.doFilterTry(
+			Object object = _portalInstancesFilter.doFilterTry(
 				mockHttpServletRequest, mockHttpServletResponse);
 
 			Assert.assertEquals(
@@ -89,7 +89,7 @@ public class PortalInstancesFilterTest {
 				(long)CompanyThreadLocal.getCompanyId());
 
 			_portalInstancesFilter.doFilterFinally(
-				mockHttpServletRequest, mockHttpServletResponse, null);
+				mockHttpServletRequest, mockHttpServletResponse, object);
 
 			Assert.assertEquals(
 				CompanyConstants.SYSTEM,
