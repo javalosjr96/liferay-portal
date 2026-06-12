@@ -10,16 +10,20 @@ import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.NoSuchVirtualHostException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.LayoutSet;
 import com.liferay.portal.kernel.model.VirtualHost;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.service.LayoutSetLocalService;
 import com.liferay.portal.kernel.service.LayoutSetLocalServiceUtil;
 import com.liferay.portal.kernel.service.VirtualHostLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -58,16 +62,34 @@ public class PortalInstancesFilterTest {
 
 	@Test
 	public void testDoFilterFinally() throws Exception {
-		String hostName = StringUtil.toLowerCase(RandomTestUtil.randomString());
+		String hostNameA = StringUtil.toLowerCase(
+			RandomTestUtil.randomString());
 
 		_layoutSetLocalService.updateVirtualHosts(
 			TestPropsValues.getGroupId(), false,
 			TreeMapBuilder.put(
-				hostName, StringPool.BLANK
+				hostNameA, StringPool.BLANK
 			).build());
 
-		VirtualHost virtualHost = _virtualHostLocalService.getVirtualHost(
-			hostName);
+		VirtualHost virtualHostA = _virtualHostLocalService.getVirtualHost(
+			hostNameA);
+
+		Company company = CompanyTestUtil.addCompany(true);
+
+		Group group = GroupLocalServiceUtil.getGroup(
+			company.getCompanyId(), GroupConstants.GUEST);
+
+		String hostNameB = StringUtil.toLowerCase(
+			RandomTestUtil.randomString());
+
+		_layoutSetLocalService.updateVirtualHosts(
+			group.getGroupId(), false,
+			TreeMapBuilder.put(
+				hostNameB, StringPool.BLANK
+			).build());
+
+		VirtualHost virtualHostB = _virtualHostLocalService.getVirtualHost(
+			hostNameB);
 
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
@@ -76,27 +98,38 @@ public class PortalInstancesFilterTest {
 			MockHttpServletRequest mockHttpServletRequest =
 				new MockHttpServletRequest();
 
-			mockHttpServletRequest.addHeader("Host", hostName);
-
-			MockHttpServletResponse mockHttpServletResponse =
-				new MockHttpServletResponse();
+			mockHttpServletRequest.addHeader("Host", hostNameA);
 
 			Object object = _portalInstancesFilter.doFilterTry(
-				mockHttpServletRequest, mockHttpServletResponse);
+				mockHttpServletRequest, new MockHttpServletResponse());
 
 			Assert.assertEquals(
-				virtualHost.getCompanyId(),
+				virtualHostA.getCompanyId(),
 				(long)CompanyThreadLocal.getCompanyId());
 
 			_portalInstancesFilter.doFilterFinally(
-				mockHttpServletRequest, mockHttpServletResponse, object);
+				mockHttpServletRequest, new MockHttpServletResponse(), object);
 
 			Assert.assertEquals(
 				CompanyConstants.SYSTEM,
 				(long)CompanyThreadLocal.getCompanyId());
+
+			mockHttpServletRequest = new MockHttpServletRequest();
+
+			mockHttpServletRequest.addHeader("Host", hostNameB);
+
+			_portalInstancesFilter.doFilterTry(
+				mockHttpServletRequest, new MockHttpServletResponse());
+
+			Assert.assertEquals(
+				virtualHostB.getCompanyId(),
+				(long)CompanyThreadLocal.getCompanyId());
 		}
 		finally {
-			_virtualHostLocalService.deleteVirtualHost(virtualHost);
+			_virtualHostLocalService.deleteVirtualHost(virtualHostA);
+			_virtualHostLocalService.deleteVirtualHost(virtualHostB);
+
+			CompanyLocalServiceUtil.deleteCompany(company);
 		}
 	}
 
