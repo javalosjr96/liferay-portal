@@ -57,6 +57,50 @@ public class PortalInstancesFilterTest {
 		new LiferayIntegrationTestRule();
 
 	@Test
+	public void testDoFilterFinally() throws Exception {
+		String hostName = StringUtil.toLowerCase(RandomTestUtil.randomString());
+
+		_layoutSetLocalService.updateVirtualHosts(
+			TestPropsValues.getGroupId(), false,
+			TreeMapBuilder.put(
+				hostName, StringPool.BLANK
+			).build());
+
+		VirtualHost virtualHost = _virtualHostLocalService.getVirtualHost(
+			hostName);
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					CompanyConstants.SYSTEM)) {
+
+			MockHttpServletRequest mockHttpServletRequest =
+				new MockHttpServletRequest();
+
+			mockHttpServletRequest.addHeader("Host", hostName);
+
+			MockHttpServletResponse mockHttpServletResponse =
+				new MockHttpServletResponse();
+
+			_portalInstancesFilter.doFilterTry(
+				mockHttpServletRequest, mockHttpServletResponse);
+
+			Assert.assertEquals(
+				virtualHost.getCompanyId(),
+				(long)CompanyThreadLocal.getCompanyId());
+
+			_portalInstancesFilter.doFilterFinally(
+				mockHttpServletRequest, mockHttpServletResponse, null);
+
+			Assert.assertEquals(
+				CompanyConstants.SYSTEM,
+				(long)CompanyThreadLocal.getCompanyId());
+		}
+		finally {
+			_virtualHostLocalService.deleteVirtualHost(virtualHost);
+		}
+	}
+
+	@Test
 	public void testExistingVirtualHost() throws Exception {
 		String hostName = StringUtil.toLowerCase(RandomTestUtil.randomString());
 

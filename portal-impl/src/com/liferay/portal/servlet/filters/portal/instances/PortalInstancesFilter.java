@@ -5,11 +5,12 @@
 
 package com.liferay.portal.servlet.filters.portal.instances;
 
+import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.portal.kernel.exception.NoSuchVirtualHostException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.servlet.BaseFilter;
-import com.liferay.portal.kernel.servlet.TryFilter;
+import com.liferay.portal.kernel.servlet.TryFinallyFilter;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.WebKeys;
@@ -28,7 +29,21 @@ import jakarta.servlet.http.HttpServletResponse;
  *
  * @author Jorge Díaz
  */
-public class PortalInstancesFilter extends BaseFilter implements TryFilter {
+public class PortalInstancesFilter
+	extends BaseFilter implements TryFinallyFilter {
+
+	@Override
+	public void doFilterFinally(
+		HttpServletRequest httpServletRequest,
+		HttpServletResponse httpServletResponse, Object object) {
+
+		// A downstream filter may throw before ThreadLocalFilter clears the
+		// request's short lived thread locals, since this filter runs first in
+		// the chain. Clear them here so the company ID set in doFilterTry does
+		// not leak onto the pooled worker thread and poison later requests.
+
+		CentralizedThreadLocal.clearShortLivedCentralizedThreadLocals();
+	}
 
 	@Override
 	public Object doFilterTry(
