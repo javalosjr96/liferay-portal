@@ -62,34 +62,34 @@ public class PortalInstancesFilterTest {
 
 	@Test
 	public void testDoFilterFinally() throws Exception {
-		String hostNameA = StringUtil.toLowerCase(
+		String hostName1 = StringUtil.toLowerCase(
 			RandomTestUtil.randomString());
 
 		_layoutSetLocalService.updateVirtualHosts(
 			TestPropsValues.getGroupId(), false,
 			TreeMapBuilder.put(
-				hostNameA, StringPool.BLANK
+				hostName1, StringPool.BLANK
 			).build());
 
-		VirtualHost virtualHostA = _virtualHostLocalService.getVirtualHost(
-			hostNameA);
+		VirtualHost virtualHost1 = _virtualHostLocalService.getVirtualHost(
+			hostName1);
 
 		Company company = CompanyTestUtil.addCompany(true);
 
 		Group group = GroupLocalServiceUtil.getGroup(
 			company.getCompanyId(), GroupConstants.GUEST);
 
-		String hostNameB = StringUtil.toLowerCase(
+		String hostName2 = StringUtil.toLowerCase(
 			RandomTestUtil.randomString());
 
 		_layoutSetLocalService.updateVirtualHosts(
 			group.getGroupId(), false,
 			TreeMapBuilder.put(
-				hostNameB, StringPool.BLANK
+				hostName2, StringPool.BLANK
 			).build());
 
-		VirtualHost virtualHostB = _virtualHostLocalService.getVirtualHost(
-			hostNameB);
+		VirtualHost virtualHost2 = _virtualHostLocalService.getVirtualHost(
+			hostName2);
 
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
@@ -98,13 +98,13 @@ public class PortalInstancesFilterTest {
 			MockHttpServletRequest mockHttpServletRequest =
 				new MockHttpServletRequest();
 
-			mockHttpServletRequest.addHeader("Host", hostNameA);
+			mockHttpServletRequest.addHeader("Host", hostName1);
 
 			Object object = _portalInstancesFilter.doFilterTry(
 				mockHttpServletRequest, new MockHttpServletResponse());
 
 			Assert.assertEquals(
-				virtualHostA.getCompanyId(),
+				virtualHost1.getCompanyId(),
 				(long)CompanyThreadLocal.getCompanyId());
 
 			_portalInstancesFilter.doFilterFinally(
@@ -116,18 +116,18 @@ public class PortalInstancesFilterTest {
 
 			mockHttpServletRequest = new MockHttpServletRequest();
 
-			mockHttpServletRequest.addHeader("Host", hostNameB);
+			mockHttpServletRequest.addHeader("Host", hostName2);
 
 			_portalInstancesFilter.doFilterTry(
 				mockHttpServletRequest, new MockHttpServletResponse());
 
 			Assert.assertEquals(
-				virtualHostB.getCompanyId(),
+				virtualHost2.getCompanyId(),
 				(long)CompanyThreadLocal.getCompanyId());
 		}
 		finally {
-			_virtualHostLocalService.deleteVirtualHost(virtualHostA);
-			_virtualHostLocalService.deleteVirtualHost(virtualHostB);
+			_virtualHostLocalService.deleteVirtualHost(virtualHost1);
+			_virtualHostLocalService.deleteVirtualHost(virtualHost2);
 
 			CompanyLocalServiceUtil.deleteCompany(company);
 		}
