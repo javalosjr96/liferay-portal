@@ -37,11 +37,6 @@ public class PortalInstancesFilter
 		HttpServletRequest httpServletRequest,
 		HttpServletResponse httpServletResponse, Object object) {
 
-		// A downstream filter may throw before ThreadLocalFilter clears the
-		// request's short lived thread locals, since this filter runs first in
-		// the chain. Clear them here so the company ID set in doFilterTry does
-		// not leak onto the pooled worker thread and poison later requests.
-
 		CentralizedThreadLocal.clearShortLivedCentralizedThreadLocals();
 	}
 
