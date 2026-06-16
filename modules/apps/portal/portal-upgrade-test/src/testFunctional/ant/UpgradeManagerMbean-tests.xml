@@ -1,0 +1,165 @@
+<?xml version="1.0"?>
+
+<project basedir="." name="portal-upgrade-test-mbean" xmlns:antelope="antlib:ise.antelope.tasks">
+	<import file="util/build-test-upgrade-manager.xml" />
+
+	<macrodef name="assert-mbean-output">
+		<attribute name="expected.result" default="" />
+		<attribute name="expected.string" default="" />
+		<attribute name="expected.type" default="" />
+		<sequential>
+			<loadfile property="mbean.attributes.output" srcFile="${user.dir}/mbean-attributes-output.txt" />
+
+			<if>
+				<not>
+					<equals arg1="@{expected.string}" arg2="" />
+				</not>
+				<then>
+					<if>
+						<not>
+							<contains string="${mbean.attributes.output}" substring="@{expected.string}" />
+						</not>
+						<then>
+							<echo>${mbean.attributes.output}</echo>
+							<fail message="Expected string not present in the mBean file" />
+						</then>
+					</if>
+				</then>
+			</if>
+
+			<if>
+				<not>
+					<equals arg1="@{expected.type}" arg2="" />
+				</not>
+				<then>
+					<if>
+						<not>
+							<contains string="${mbean.attributes.output}" substring="Type: @{expected.type}" />
+						</not>
+						<then>
+							<echo>${mbean.attributes.output}</echo>
+							<fail message="Expected upgrade type not present in the mBean file" />
+						</then>
+					</if>
+				</then>
+			</if>
+
+			<if>
+				<not>
+					<equals arg1="@{expected.result}" arg2="" />
+				</not>
+				<then>
+					<if>
+						<not>
+							<contains string="${mbean.attributes.output}" substring="Result: @{expected.result}" />
+						</not>
+						<then>
+							<echo>${mbean.attributes.output}</echo>
+							<fail message="Expected upgrade result not present in the mBean file" />
+						</then>
+					</if>
+				</then>
+			</if>
+		</sequential>
+	</macrodef>
+
+	<target name="test-check-mbean-during-upgrade-is-running">
+		<property name="custom.startup.log.message" value="Started web bundles" />
+		<property name="data.archive.type" value="data-archive-portal" />
+		<property name="portal.version" value="7.4.13" />
+		<property name="skip.get.testcase.database.properties" value="true" />
+
+		<antcall target="rebuild-legacy-database" />
+
+		<prepare-custom-properties custom.properties="upgrade.database.auto.run=true" />
+
+		<antcall target="start-app-server-check-mbean-attributes" />
+
+		<assert-mbean-output expected.result="running" expected.type="pending" />
+	</target>
+
+	<target name="test-check-mbean-failed-upgrade">
+		<property name="custom.mysql.sql.statement" value="ALTER TABLE FragmentComposition DROP description;" />
+		<property name="custom.startup.log.message" value="Upgrade report generated" />
+		<property name="data.archive.type" value="data-archive-portal" />
+		<property name="portal.version" value="7.4.13" />
+		<property name="skip.get.testcase.database.properties" value="true" />
+
+		<antcall target="rebuild-legacy-database" />
+
+		<prepare-custom-properties custom.properties="upgrade.database.auto.run=true" />
+		<prepare-custom-properties custom.properties="upgrade.report.enabled=true" />
+
+		<antcall target="start-app-server-check-mbean-attributes" />
+
+		<assert-mbean-output expected.result="failure" expected.type="major" />
+	</target>
+
+	<target name="test-check-mbean-successful-upgrade">
+		<property name="custom.startup.log.message" value="Upgrade report generated" />
+		<property name="data.archive.type" value="data-archive-portal" />
+		<property name="portal.version" value="7.4.13" />
+		<property name="skip.get.testcase.database.properties" value="true" />
+
+		<antcall target="rebuild-legacy-database" />
+
+		<prepare-custom-properties custom.properties="upgrade.database.auto.run=true" />
+		<prepare-custom-properties custom.properties="upgrade.report.enabled=true" />
+
+		<antcall target="start-app-server-check-mbean-attributes" />
+
+		<assert-mbean-output expected.result="success" expected.type="major" />
+	</target>
+
+	<target name="test-check-mbean-warning-upgrade">
+		<property name="custom.startup.log.message" value="Upgrade report generated" />
+
+		<ant antfile="${basedir}/../../../../../../util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml"
+		     inheritAll="true"
+		     target="force-indexes-sql-failure" />
+
+		<prepare-custom-properties custom.properties="upgrade.database.auto.run=true" />
+		<prepare-custom-properties custom.properties="upgrade.report.enabled=true" />
+
+		<antcall target="start-app-server-check-mbean-attributes" />
+
+		<assert-mbean-output expected.result="success" expected.type="major" />
+	</target>
+
+	<target name="test-check-mbean-when-auto-upgrade-is-disabled">
+		<antcall target="start-app-server-check-mbean-attributes" />
+
+		<assert-mbean-output expected.string="Not Registered" />
+	</target>
+
+	<target name="test-check-mbean-when-upgrade-have-warn-and-error">
+		<property name="custom.mysql.sql.statement" value="ALTER TABLE FragmentComposition DROP description;" />
+		<property name="custom.startup.log.message" value="Upgrade report generated" />
+		<property name="data.archive.type" value="data-archive-portal" />
+		<property name="portal.version" value="7.4.13" />
+		<property name="skip.get.testcase.database.properties" value="true" />
+
+		<antcall target="rebuild-legacy-database" />
+
+		<ant antfile="${basedir}/../../../../../../util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml"
+		     inheritAll="true"
+		     target="force-indexes-sql-failure" />
+
+		<prepare-custom-properties custom.properties="upgrade.database.auto.run=true" />
+		<prepare-custom-properties custom.properties="upgrade.report.enabled=true" />
+
+		<antcall target="start-app-server-check-mbean-attributes" />
+
+		<assert-mbean-output expected.result="failure" expected.type="major" />
+	</target>
+
+	<target name="test-check-mbean-when-upgrade-its-not-executed">
+		<property name="custom.startup.log.message" value="upgrade finished with result" />
+
+		<prepare-custom-properties custom.properties="upgrade.database.auto.run=true" />
+
+		<antcall target="start-app-server-check-mbean-attributes" />
+
+		<assert-mbean-output expected.result="success" expected.type="major" />
+	</target>
+</project>
