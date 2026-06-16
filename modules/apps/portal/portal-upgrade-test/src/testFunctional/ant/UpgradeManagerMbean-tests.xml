@@ -4,11 +4,14 @@
 	<import file="util/build-test-upgrade-manager.xml" />
 
 	<macrodef name="assert-mbean-output">
-		<attribute name="expected.result" default="" />
-		<attribute name="expected.string" default="" />
-		<attribute name="expected.type" default="" />
+		<attribute default="" name="expected.result" />
+		<attribute default="" name="expected.string" />
+		<attribute default="" name="expected.type" />
 		<sequential>
-			<loadfile property="mbean.attributes.output" srcFile="${user.dir}/mbean-attributes-output.txt" />
+			<loadfile
+				property="mbean.attributes.output"
+				srcFile="${user.dir}/mbean-attributes-output.txt"
+			/>
 
 			<if>
 				<not>
@@ -114,9 +117,7 @@
 	<target name="test-check-mbean-warning-upgrade">
 		<property name="custom.startup.log.message" value="Upgrade report generated" />
 
-		<ant antfile="${basedir}/../../../../../../util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml"
-		     inheritAll="true"
-		     target="force-indexes-sql-failure" />
+		<ant antfile="${basedir}/../../../../../../util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml" inheritAll="true" target="force-indexes-sql-failure" />
 
 		<prepare-custom-properties custom.properties="upgrade.database.auto.run=true" />
 		<prepare-custom-properties custom.properties="upgrade.report.enabled=true" />
@@ -141,9 +142,7 @@
 
 		<antcall target="rebuild-legacy-database" />
 
-		<ant antfile="${basedir}/../../../../../../util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml"
-		     inheritAll="true"
-		     target="force-indexes-sql-failure" />
+		<ant antfile="${basedir}/../../../../../../util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml" inheritAll="true" target="force-indexes-sql-failure" />
 
 		<prepare-custom-properties custom.properties="upgrade.database.auto.run=true" />
 		<prepare-custom-properties custom.properties="upgrade.report.enabled=true" />
