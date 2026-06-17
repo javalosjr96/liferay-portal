@@ -3748,7 +3748,10 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
 
 									<if>
-										<equals arg1="${playwright.project.name}" arg2="smoke" />
+										<or>
+											<equals arg1="${playwright.project.name}" arg2="smoke.main" />
+											<contains string="${playwright.project.name}" substring="upgrade" />
+										</or>
 										<then>
 											<ant dir="portal-kernel" inheritAll="false" target="test-class">
 												<property name="test.class" value="PortalLogAssertorTest" />
