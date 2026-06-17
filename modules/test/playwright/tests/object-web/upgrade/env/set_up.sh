@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e -x
+
 CURRENT_DIR_NAME=$(dirname ${BASH_SOURCE[0]})
 
 echo CURRENT_DIR_NAME=${CURRENT_DIR_NAME}
@@ -20,6 +22,8 @@ function main {
 		rebuild-legacy-database
 
 	ant -f build-test.xml upgrade-legacy-database
+
+	assert_clean_upgrade_log
 
 	default_set_up
 }
