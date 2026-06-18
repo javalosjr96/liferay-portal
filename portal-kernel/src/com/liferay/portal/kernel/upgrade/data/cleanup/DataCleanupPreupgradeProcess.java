@@ -117,25 +117,22 @@ public class DataCleanupPreupgradeProcess extends UpgradeProcess {
 						if (!dataCleanupPreupgradeProcessesMap.containsKey(
 								dependency)) {
 
-							Class<?> dependencyClass = dependency.getClass();
-
-							String dependencyClassName =
-								dependencyClass.getName();
+							Class<?> clazz = dependency.getClass();
 
 							DataCleanupPreupgradeProcess keyProcess =
 								entry.getKey();
 
-							Class<?> keyClass = keyProcess.getClass();
+							Class<?> keyClazz = keyProcess.getClass();
 
 							throw new IllegalStateException(
 								StringBundler.concat(
-									"Missing dependency ", dependencyClassName,
-									" required by ", keyClass.getName()));
+									"Missing dependency ", clazz.getName(),
+									" required by ", keyClazz.getName()));
 						}
 					}
 				}
 
-				throw new RuntimeException("Circular dependency");
+				throw new IllegalStateException("Circular dependency");
 			}
 
 			completed.addAll(wave);

@@ -24,7 +24,43 @@ import org.mockito.Mockito;
 public class OrphanReferencesDataCleanupUtilTest {
 
 	@Test
-	public void testExecuteDeleteRetriesOnDeadlock() throws Exception {
+	public void testExecuteDeleteWithoutRetry() throws Exception {
+		PreparedStatement preparedStatement = Mockito.mock(
+			PreparedStatement.class);
+
+		Mockito.doThrow(
+			new SQLException("Constraint violation", "23000")
+		).when(
+			preparedStatement
+		).executeUpdate();
+
+		Connection connection = Mockito.mock(Connection.class);
+
+		Mockito.when(
+			connection.prepareStatement(Mockito.anyString())
+		).thenReturn(
+			preparedStatement
+		);
+
+		try {
+			ReflectionTestUtil.invoke(
+				OrphanReferencesDataCleanupUtil.class, "_executeDelete",
+				new Class<?>[] {Connection.class, String.class}, connection,
+				"delete from foo where bar is null");
+
+			Assert.fail();
+		}
+		catch (SQLException sqlException) {
+			Assert.assertEquals("23000", sqlException.getSQLState());
+		}
+
+		Mockito.verify(
+			preparedStatement, Mockito.times(1)
+		).executeUpdate();
+	}
+
+	@Test
+	public void testExecuteDeleteWithRetry() throws Exception {
 		PreparedStatement preparedStatement = Mockito.mock(
 			PreparedStatement.class);
 
@@ -56,10 +92,14 @@ public class OrphanReferencesDataCleanupUtilTest {
 			"delete from foo where bar is null");
 
 		Assert.assertEquals(2, callCount.get());
+
+		Mockito.verify(
+			preparedStatement, Mockito.times(2)
+		).executeUpdate();
 	}
 
 	@Test
-	public void testExecuteDeleteThrowsAfterMaxRetries() throws Exception {
+	public void testExecuteDeleteWithRetryExhausted() throws Exception {
 		PreparedStatement preparedStatement = Mockito.mock(
 			PreparedStatement.class);
 
@@ -85,9 +125,7 @@ public class OrphanReferencesDataCleanupUtilTest {
 
 			Assert.fail();
 		}
-		catch (Exception exception) {
-			SQLException sqlException = (SQLException)exception;
-
+		catch (SQLException sqlException) {
 			Assert.assertEquals("40001", sqlException.getSQLState());
 		}
 
@@ -98,46 +136,6 @@ public class OrphanReferencesDataCleanupUtilTest {
 
 		Mockito.verify(
 			preparedStatement, Mockito.times(expectedAttempts)
-		).executeUpdate();
-	}
-
-	@Test
-	public void testExecuteDeleteThrowsImmediatelyOnNondeadlockError()
-		throws Exception {
-
-		PreparedStatement preparedStatement = Mockito.mock(
-			PreparedStatement.class);
-
-		Mockito.doThrow(
-			new SQLException("Constraint violation", "23000")
-		).when(
-			preparedStatement
-		).executeUpdate();
-
-		Connection connection = Mockito.mock(Connection.class);
-
-		Mockito.when(
-			connection.prepareStatement(Mockito.anyString())
-		).thenReturn(
-			preparedStatement
-		);
-
-		try {
-			ReflectionTestUtil.invoke(
-				OrphanReferencesDataCleanupUtil.class, "_executeDelete",
-				new Class<?>[] {Connection.class, String.class}, connection,
-				"delete from foo where bar is null");
-
-			Assert.fail();
-		}
-		catch (Exception exception) {
-			SQLException sqlException = (SQLException)exception;
-
-			Assert.assertEquals("23000", sqlException.getSQLState());
-		}
-
-		Mockito.verify(
-			preparedStatement, Mockito.times(1)
 		).executeUpdate();
 	}
 

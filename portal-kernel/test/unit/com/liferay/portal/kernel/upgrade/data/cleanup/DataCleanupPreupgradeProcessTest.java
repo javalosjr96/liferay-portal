@@ -19,18 +19,20 @@ import org.junit.Test;
 public class DataCleanupPreupgradeProcessTest {
 
 	@Test
-	public void testCircularDependencyThrows() {
-		DataCleanupPreupgradeProcess a = _newProcess();
-		DataCleanupPreupgradeProcess b = _newProcess();
+	public void testGetWavedDataCleanupPreupgradeProcessesWithCircularDependency() {
+		DataCleanupPreupgradeProcess process1 = _newProcess();
+		DataCleanupPreupgradeProcess process2 = _newProcess();
 
 		Map<DataCleanupPreupgradeProcess, List<DataCleanupPreupgradeProcess>>
 			map =
 				LinkedHashMapBuilder.
 					<DataCleanupPreupgradeProcess,
 					 List<DataCleanupPreupgradeProcess>>put(
-						a, DataCleanupPreupgradeProcess.dependsOn(b)
+						process1,
+						DataCleanupPreupgradeProcess.dependsOn(process2)
 					).put(
-						b, DataCleanupPreupgradeProcess.dependsOn(a)
+						process2,
+						DataCleanupPreupgradeProcess.dependsOn(process1)
 					).build();
 
 		try {
@@ -39,31 +41,35 @@ public class DataCleanupPreupgradeProcessTest {
 
 			Assert.fail();
 		}
-		catch (RuntimeException runtimeException) {
+		catch (IllegalStateException illegalStateException) {
 			Assert.assertEquals(
-				"Circular dependency", runtimeException.getMessage());
+				"Circular dependency", illegalStateException.getMessage());
 		}
 	}
 
 	@Test
-	public void testDiamondProducesThreeWaves() {
-		DataCleanupPreupgradeProcess a = _newProcess();
-		DataCleanupPreupgradeProcess b = _newProcess();
-		DataCleanupPreupgradeProcess c = _newProcess();
-		DataCleanupPreupgradeProcess d = _newProcess();
+	public void testGetWavedDataCleanupPreupgradeProcessesWithDiamondDependency() {
+		DataCleanupPreupgradeProcess process1 = _newProcess();
+		DataCleanupPreupgradeProcess process2 = _newProcess();
+		DataCleanupPreupgradeProcess process3 = _newProcess();
+		DataCleanupPreupgradeProcess process4 = _newProcess();
 
 		Map<DataCleanupPreupgradeProcess, List<DataCleanupPreupgradeProcess>>
 			map =
 				LinkedHashMapBuilder.
 					<DataCleanupPreupgradeProcess,
 					 List<DataCleanupPreupgradeProcess>>put(
-						a, DataCleanupPreupgradeProcess.dependsOn()
+						process1, DataCleanupPreupgradeProcess.dependsOn()
 					).put(
-						b, DataCleanupPreupgradeProcess.dependsOn(a)
+						process2,
+						DataCleanupPreupgradeProcess.dependsOn(process1)
 					).put(
-						c, DataCleanupPreupgradeProcess.dependsOn(a)
+						process3,
+						DataCleanupPreupgradeProcess.dependsOn(process1)
 					).put(
-						d, DataCleanupPreupgradeProcess.dependsOn(b, c)
+						process4,
+						DataCleanupPreupgradeProcess.dependsOn(
+							process2, process3)
 					).build();
 
 		List<List<DataCleanupPreupgradeProcess>> waves =
@@ -75,22 +81,22 @@ public class DataCleanupPreupgradeProcessTest {
 		List<DataCleanupPreupgradeProcess> wave1 = waves.get(0);
 
 		Assert.assertEquals(wave1.toString(), 1, wave1.size());
-		Assert.assertSame(a, wave1.get(0));
+		Assert.assertSame(process1, wave1.get(0));
 
 		List<DataCleanupPreupgradeProcess> wave2 = waves.get(1);
 
 		Assert.assertEquals(wave2.toString(), 2, wave2.size());
-		Assert.assertTrue(wave2.contains(b));
-		Assert.assertTrue(wave2.contains(c));
+		Assert.assertTrue(wave2.contains(process2));
+		Assert.assertTrue(wave2.contains(process3));
 
 		List<DataCleanupPreupgradeProcess> wave3 = waves.get(2);
 
 		Assert.assertEquals(wave3.toString(), 1, wave3.size());
-		Assert.assertSame(d, wave3.get(0));
+		Assert.assertSame(process4, wave3.get(0));
 	}
 
 	@Test
-	public void testIndependentProcessesFormSingleWave() {
+	public void testGetWavedDataCleanupPreupgradeProcessesWithNoDependencies() {
 		Map<DataCleanupPreupgradeProcess, List<DataCleanupPreupgradeProcess>>
 			map =
 				LinkedHashMapBuilder.
@@ -115,21 +121,23 @@ public class DataCleanupPreupgradeProcessTest {
 	}
 
 	@Test
-	public void testLinearChainProducesOneWavePerProcess() {
-		DataCleanupPreupgradeProcess a = _newProcess();
-		DataCleanupPreupgradeProcess b = _newProcess();
-		DataCleanupPreupgradeProcess c = _newProcess();
+	public void testGetWavedDataCleanupPreupgradeProcessesWithLinearChain() {
+		DataCleanupPreupgradeProcess process1 = _newProcess();
+		DataCleanupPreupgradeProcess process2 = _newProcess();
+		DataCleanupPreupgradeProcess process3 = _newProcess();
 
 		Map<DataCleanupPreupgradeProcess, List<DataCleanupPreupgradeProcess>>
 			map =
 				LinkedHashMapBuilder.
 					<DataCleanupPreupgradeProcess,
 					 List<DataCleanupPreupgradeProcess>>put(
-						a, DataCleanupPreupgradeProcess.dependsOn()
+						process1, DataCleanupPreupgradeProcess.dependsOn()
 					).put(
-						b, DataCleanupPreupgradeProcess.dependsOn(a)
+						process2,
+						DataCleanupPreupgradeProcess.dependsOn(process1)
 					).put(
-						c, DataCleanupPreupgradeProcess.dependsOn(b)
+						process3,
+						DataCleanupPreupgradeProcess.dependsOn(process2)
 					).build();
 
 		List<List<DataCleanupPreupgradeProcess>> waves =
@@ -144,15 +152,39 @@ public class DataCleanupPreupgradeProcessTest {
 
 		List<DataCleanupPreupgradeProcess> wave1 = waves.get(0);
 
-		Assert.assertSame(a, wave1.get(0));
+		Assert.assertSame(process1, wave1.get(0));
 
 		List<DataCleanupPreupgradeProcess> wave2 = waves.get(1);
 
-		Assert.assertSame(b, wave2.get(0));
+		Assert.assertSame(process2, wave2.get(0));
 
 		List<DataCleanupPreupgradeProcess> wave3 = waves.get(2);
 
-		Assert.assertSame(c, wave3.get(0));
+		Assert.assertSame(process3, wave3.get(0));
+	}
+
+	@Test
+	public void testGetWavedDataCleanupPreupgradeProcessesWithMissingDependency() {
+		Map<DataCleanupPreupgradeProcess, List<DataCleanupPreupgradeProcess>>
+			map =
+				LinkedHashMapBuilder.
+					<DataCleanupPreupgradeProcess,
+					 List<DataCleanupPreupgradeProcess>>put(
+						_newProcess(),
+						DataCleanupPreupgradeProcess.dependsOn(_newProcess())
+					).build();
+
+		try {
+			DataCleanupPreupgradeProcess.getWavedDataCleanupPreupgradeProcesses(
+				map);
+
+			Assert.fail();
+		}
+		catch (IllegalStateException illegalStateException) {
+			String message = illegalStateException.getMessage();
+
+			Assert.assertTrue(message.startsWith("Missing dependency "));
+		}
 	}
 
 	private DataCleanupPreupgradeProcess _newProcess() {

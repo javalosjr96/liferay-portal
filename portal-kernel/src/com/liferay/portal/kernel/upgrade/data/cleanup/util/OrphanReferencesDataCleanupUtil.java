@@ -248,7 +248,16 @@ public class OrphanReferencesDataCleanupUtil {
 
 				retryCount++;
 
-				Thread.sleep(_DELETE_DEADLOCK_RETRY_WAIT * retryCount);
+				try {
+					Thread.sleep(_DELETE_DEADLOCK_RETRY_WAIT * retryCount);
+				}
+				catch (InterruptedException interruptedException) {
+					Thread currentThread = Thread.currentThread();
+
+					currentThread.interrupt();
+
+					throw interruptedException;
+				}
 			}
 		}
 	}
