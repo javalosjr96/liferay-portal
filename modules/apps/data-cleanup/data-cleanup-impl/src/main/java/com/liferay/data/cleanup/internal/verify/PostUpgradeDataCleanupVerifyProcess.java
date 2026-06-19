@@ -100,16 +100,15 @@ public class PostUpgradeDataCleanupVerifyProcess extends VerifyProcess {
 		return postUpgradeDataCleanupProcesses;
 	}
 
+	private static final Log _log = LogFactoryUtil.getLog(
+		PostUpgradeDataCleanupVerifyProcess.class);
+
 	private static final Snapshot<IndexInformation> _indexInformationSnapshot =
 		new Snapshot<>(
 			PostUpgradeDataCleanupVerifyProcess.class, IndexInformation.class);
-
 	private static final Snapshot<IndexNameBuilder> _indexNameBuilderSnapshot =
 		new Snapshot<>(
 			PostUpgradeDataCleanupVerifyProcess.class, IndexNameBuilder.class);
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		PostUpgradeDataCleanupVerifyProcess.class);
 
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
