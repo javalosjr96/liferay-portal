@@ -69,22 +69,12 @@ public class PostUpgradeDataCleanupVerifyProcess extends VerifyProcess {
 		}
 	}
 
-	private List<PostUpgradeDataCleanupProcess>
-		_getPostUpgradeDataCleanupProcesses() {
-
-		List<PostUpgradeDataCleanupProcess> postUpgradeDataCleanupProcesses =
-			ListUtil.fromArray(
-				new ClassNamePostUpgradeDataCleanupProcess(
-					_classNameLocalService, _companyLocalService, connection,
-					_objectDefinitionLocalService),
-				new ResourceActionPostUpgradeDataCleanupProcess(
-					connection, _resourceActionLocalService),
-				new ServiceComponentPostUpgradeDataCleanupProcess(
-					connection, _serviceComponentLocalService),
-				new StorePostUpgradeDataCleanupProcess(_store));
-
-		IndexInformation indexInformation = _indexInformationSnapshot.get();
-		IndexNameBuilder indexNameBuilder = _indexNameBuilderSnapshot.get();
+	protected List<PostUpgradeDataCleanupProcess>
+		getPostUpgradeDataCleanupProcesses(
+			IndexInformation indexInformation,
+			IndexNameBuilder indexNameBuilder,
+			List<PostUpgradeDataCleanupProcess>
+				postUpgradeDataCleanupProcesses) {
 
 		if ((indexInformation != null) && (indexNameBuilder != null)) {
 			postUpgradeDataCleanupProcesses.add(
@@ -98,6 +88,22 @@ public class PostUpgradeDataCleanupVerifyProcess extends VerifyProcess {
 		}
 
 		return postUpgradeDataCleanupProcesses;
+	}
+
+	private List<PostUpgradeDataCleanupProcess>
+		_getPostUpgradeDataCleanupProcesses() {
+
+		return getPostUpgradeDataCleanupProcesses(
+			_indexInformationSnapshot.get(), _indexNameBuilderSnapshot.get(),
+			ListUtil.fromArray(
+				new ClassNamePostUpgradeDataCleanupProcess(
+					_classNameLocalService, _companyLocalService, connection,
+					_objectDefinitionLocalService),
+				new ResourceActionPostUpgradeDataCleanupProcess(
+					connection, _resourceActionLocalService),
+				new ServiceComponentPostUpgradeDataCleanupProcess(
+					connection, _serviceComponentLocalService),
+				new StorePostUpgradeDataCleanupProcess(_store)));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
