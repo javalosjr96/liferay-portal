@@ -1,5 +1,27 @@
 #!/bin/bash
 
+function assert_clean_upgrade_log {
+	local upgrade_log="${LIFERAY_HOME}/tools/portal-tools-db-upgrade-client/logs/upgrade.log"
+
+	if [[ ! -f "${upgrade_log}" ]]
+	then
+		echo "Unable to find upgrade log at ${upgrade_log}."
+
+		exit 1
+	fi
+
+	local error_lines=$(grep -E "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3} (ERROR|FATAL)" "${upgrade_log}")
+
+	if [[ -n "${error_lines}" ]]
+	then
+		echo "Unable to validate upgrade log due to ERROR or FATAL entries:"
+
+		echo "${error_lines}"
+
+		exit 1
+	fi
+}
+
 function cluster_set_up {
 	default_set_up
 
