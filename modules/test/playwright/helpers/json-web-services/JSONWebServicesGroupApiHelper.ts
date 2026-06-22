@@ -52,7 +52,10 @@ export class JSONWebServicesGroupApiHelper {
 		);
 	}
 
-	async getGroupByKey(companyId: number | string, groupKey: string): Promise<Group> {
+	async getGroupByKey(
+		companyId: number | string,
+		groupKey: string
+	): Promise<Group> {
 		const urlSearchParams = new URLSearchParams();
 
 		urlSearchParams.append('companyId', String(companyId));
