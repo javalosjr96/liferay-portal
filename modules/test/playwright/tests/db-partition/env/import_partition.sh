@@ -19,7 +19,7 @@ function main {
 
 	if [[ ! -f "${STATE_FILE}" ]]
 	then
-		echo "State file not found: ${STATE_FILE}"
+		echo "State file was not found: ${STATE_FILE}."
 
 		exit 1
 	fi
@@ -63,7 +63,7 @@ function main {
 		((attempts++))
 	done
 
-	echo "Partition import complete."
+	echo "Partition import is complete."
 }
 
 main "${@}"
