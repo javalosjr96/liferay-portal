@@ -8,6 +8,8 @@
 		<attribute default="" name="expected.string" />
 		<attribute default="" name="expected.type" />
 		<sequential>
+			<local name="mbean.attributes.output" />
+
 			<loadfile
 				property="mbean.attributes.output"
 				srcFile="${user.dir}/mbean-attributes-output.txt"
@@ -116,6 +118,11 @@
 
 	<target name="test-check-mbean-warning-upgrade">
 		<property name="custom.startup.log.message" value="Upgrade report generated" />
+		<property name="data.archive.type" value="data-archive-portal" />
+		<property name="portal.version" value="7.4.13" />
+		<property name="skip.get.testcase.database.properties" value="true" />
+
+		<antcall target="rebuild-legacy-database" />
 
 		<ant antfile="${basedir}/../../../../../../util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml" inheritAll="true" target="force-indexes-sql-failure" />
 
