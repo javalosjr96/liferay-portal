@@ -3,16 +3,16 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import {expect, mergeTests} from '@playwright/test';
 import * as fs from 'fs';
 import * as path from 'path';
 
-import {expect, mergeTests} from '@playwright/test';
-
 import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
-import {ApiHelpers} from '../../../helpers/ApiHelpers';
 import {loginTest} from '../../../fixtures/loginTest';
+import {ApiHelpers} from '../../../helpers/ApiHelpers';
 import {liferayConfig} from '../../../liferay.config';
 import {performLoginViaApi} from '../../../utils/performLogin';
+import {STATE_FILE} from '../utils';
 
 const test = mergeTests(apiHelpersTest, loginTest());
 
@@ -20,13 +20,8 @@ const VIRTUAL_HOST = 'www.able.com';
 
 const VIRTUAL_HOST_BASE_URL = `http://${VIRTUAL_HOST}:${liferayConfig.environment.port}`;
 
-// Written at end of phase 1; read by the offline Ant step and phase 2.
-const STATE_FILE = path.join(
-	__dirname,
-	'../../../test-results/db-partition-state.json'
-);
-
 // Document_1.doc is shared with Poshi's test dependencies.
+
 const DOCUMENT_PATH = path.join(
 	__dirname,
 	'../../../../../../portal-web/test/functional/com/liferay/portalweb/dependencies/Document_1.doc'
@@ -96,6 +91,7 @@ test.describe.serial('ExportAndAddDBPartition — Phase 1', () => {
 			).toBeVisible();
 
 			// Write company ID so the offline Ant step and phase 2 can use it.
+
 			fs.mkdirSync(path.dirname(STATE_FILE), {recursive: true});
 
 			fs.writeFileSync(

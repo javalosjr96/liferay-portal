@@ -3,9 +3,9 @@
 # Triggers a partition import and waits for Liferay to process it.
 #
 # Required env vars:
-#   LIFERAY_HOME  — path to the Liferay bundle (e.g. /opt/liferay)
-#   STATE_FILE    — path to the JSON file written by the Phase 1 Playwright spec
-#                   (default: modules/test/playwright/test-results/db-partition-state.json)
+# LIFERAY_HOME — path to the Liferay bundle (e.g. /opt/liferay)
+# STATE_FILE — path to the JSON file written by the Phase 1 Playwright spec
+# (default: modules/test/playwright/test-results/db-partition-state.json)
 
 STATE_FILE=${STATE_FILE:-modules/test/playwright/test-results/db-partition-state.json}
 
@@ -46,9 +46,21 @@ function main {
 
 	echo "Waiting for Liferay to process the import..."
 
+	local attempts=0
+	local max_attempts=75
+
 	while [[ -f "${config_file}" ]]
 	do
+		if [[ ${attempts} -ge ${max_attempts} ]]
+		then
+			echo "Unable to import partition: timed out waiting for ${config_file} to be deleted."
+
+			exit 1
+		fi
+
 		sleep 8
+
+		((attempts++))
 	done
 
 	echo "Partition import complete."

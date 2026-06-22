@@ -65,11 +65,9 @@ import {config as contactsWebConfig} from './tests/contacts-web/main/config';
 import {config as contentDashboardWebConfig} from './tests/content-dashboard-web/main/config';
 import {config as cookiesBannerWebConfig} from './tests/cookies-banner-web/main/config';
 import {config as dataCleanupConfig} from './tests/data-cleanup/main/config';
+import {config as dbPartitionPhase1Config} from './tests/db-partition/phase1/config';
+import {config as dbPartitionPhase2Config} from './tests/db-partition/phase2/config';
 import {config as depotWebConfig} from './tests/depot-web/main/config';
-import {
-	dbPartitionPhase1Config,
-	dbPartitionPhase2Config,
-} from './tests/db-partition/config';
 import {config as designLibraryWebConfig} from './tests/design-library-web/main/config';
 import {config as dispatchWebConfig} from './tests/dispatch-web/main/config';
 import {config as documentLibraryWebConfig} from './tests/document-library-web/main/config';
