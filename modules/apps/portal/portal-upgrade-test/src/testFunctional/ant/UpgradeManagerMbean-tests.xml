@@ -13,10 +13,7 @@
 				srcFile="${user.dir}/mbean-attributes-output.txt"
 			/>
 
-			<delete
-				failonerror="false"
-				file="${user.dir}/mbean-attributes-output.txt"
-			/>
+			<delete failonerror="false" file="${user.dir}/mbean-attributes-output.txt" />
 
 			<if>
 				<not>
