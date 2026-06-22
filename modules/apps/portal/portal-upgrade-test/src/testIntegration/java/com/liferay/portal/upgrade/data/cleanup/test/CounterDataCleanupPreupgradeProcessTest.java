@@ -254,6 +254,11 @@ public class CounterDataCleanupPreupgradeProcessTest
 		long fileEntryId1 = CounterLocalServiceUtil.increment();
 		long fileEntryId2 = CounterLocalServiceUtil.increment();
 		long fileEntryId3 = CounterLocalServiceUtil.increment();
+
+		long groupId1 = RandomTestUtil.nextLong();
+		long groupId2 = RandomTestUtil.nextLong();
+		long groupId3 = RandomTestUtil.nextLong();
+
 		long name =
 			CounterLocalServiceUtil.getCurrentId(DLFileEntry.class.getName()) +
 				100;
@@ -266,19 +271,16 @@ public class CounterDataCleanupPreupgradeProcessTest
 			(UnsafeRunnable<Exception>)() -> {
 				runSQL(
 					StringBundler.concat(
-						"insert into DLFileEntry (mvccVersion, ",
-						"ctCollectionId, fileEntryId, name) values (0, 0,",
-						fileEntryId1, ", '", name, "')"));
+						_INSERT_DL_FILE_ENTRY_SQL, fileEntryId1, ", ", groupId1,
+						", '", name, "')"));
 				runSQL(
 					StringBundler.concat(
-						"insert into DLFileEntry (mvccVersion, ",
-						"ctCollectionId, fileEntryId, name) values (0, 0,",
-						fileEntryId2, ", 'non-numeric')"));
+						_INSERT_DL_FILE_ENTRY_SQL, fileEntryId2, ", ", groupId2,
+						", 'non-numeric')"));
 				runSQL(
 					StringBundler.concat(
-						"insert into DLFileEntry (mvccVersion, ",
-						"ctCollectionId, fileEntryId, name) values (0, 0,",
-						fileEntryId3, ", '99999999999999999999')"));
+						_INSERT_DL_FILE_ENTRY_SQL, fileEntryId3, ", ", groupId3,
+						", '99999999999999999999')"));
 			},
 			(UnsafeConsumer<List<String>, Exception>)messages -> {
 				Assert.assertEquals(messages.toString(), 1, messages.size());
@@ -465,6 +467,10 @@ public class CounterDataCleanupPreupgradeProcessTest
 			postUnsafeRunnable.run();
 		}
 	}
+
+	private static final String _INSERT_DL_FILE_ENTRY_SQL =
+		"insert into DLFileEntry (mvccVersion, ctCollectionId, fileEntryId, " +
+			"groupId, name) values (0, 0, ";
 
 	private static final String _TABLE_NAME = "TestTable";
 
