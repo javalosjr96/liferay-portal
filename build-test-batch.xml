@@ -2128,6 +2128,8 @@ app.server.type=@{app.server.type}]]></echo>
 										select="\1"
 									/>
 
+									<fail message="Failed to parse db.partition.company.id from state file." unless="db.partition.company.id" />
+
 									<get-database-property property.name="database.host" />
 									<get-database-property property.name="database.password" />
 									<get-database-property property.name="database.username" />
@@ -2199,7 +2201,7 @@ app.server.type=@{app.server.type}]]></echo>
 										<env key="JAVA_HOME" value="${java.jdk.home}" />
 										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
 										<env key="LIFERAY_HOME" value="${liferay.home}" />
-										<env key="LIFERAY_PORTAL_URL" value="http://${env.HOSTNAME}:8080" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
 										<env key="PATH" value="${execute.path}" />
 										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
 									</exec>
@@ -3870,7 +3872,7 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 										<env key="JAVA_HOME" value="${java.jdk.home}" />
 										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
 										<env key="LIFERAY_HOME" value="${liferay.home}" />
-										<env key="LIFERAY_PORTAL_URL" value="http://${env.HOSTNAME}:8080" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
 										<env key="PATH" value="${execute.path}" />
 										<env key="PLAYWRIGHT_PROJECT_NAME" value="${playwright.project.name}" />
 									</exec>
