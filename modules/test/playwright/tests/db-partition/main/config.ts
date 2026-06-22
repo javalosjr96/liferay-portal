@@ -4,7 +4,7 @@
  */
 
 export const config = {
-	name: 'db-partition',
+	name: 'db-partition.main',
 	testDir: 'tests/db-partition/main',
 	use: {
 		testIdAttribute: 'data-qa-id',

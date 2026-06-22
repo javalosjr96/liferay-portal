@@ -37,10 +37,10 @@ export class JSONWebServicesGroupApiHelper {
 		);
 	}
 
-	async getCompanyGroup(companyId: string): Promise<Group> {
+	async getCompanyGroup(companyId: number | string): Promise<Group> {
 		const urlSearchParams = new URLSearchParams();
 
-		urlSearchParams.append('companyId', companyId);
+		urlSearchParams.append('companyId', String(companyId));
 
 		return this.apiHelpers.post(
 			`${liferayConfig.environment.baseUrl}${this.basePath}/get-company-group`,
@@ -52,10 +52,10 @@ export class JSONWebServicesGroupApiHelper {
 		);
 	}
 
-	async getGroupByKey(companyId: string, groupKey: string): Promise<Group> {
+	async getGroupByKey(companyId: number | string, groupKey: string): Promise<Group> {
 		const urlSearchParams = new URLSearchParams();
 
-		urlSearchParams.append('companyId', companyId);
+		urlSearchParams.append('companyId', String(companyId));
 		urlSearchParams.append('groupKey', groupKey);
 
 		return this.apiHelpers.post(
