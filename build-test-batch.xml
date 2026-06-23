@@ -1954,6 +1954,179 @@ app.server.type=@{app.server.type}]]></echo>
 		</sequential>
 	</macrodef>
 
+	<macrodef name="run-db-import-postgresql-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="mysql" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="mysql" stop.app.server="false">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<trycatch property="exception.message">
+								<try>
+
+									<!-- Phase 1: start server on MySQL, verify default instance is accessible -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="mysql" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase1 --grep "CanImportDatabaseToPostgreSQL"
+									</docker-execute>
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="mysql" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<antcall inheritall="false" target="stop-app-server" />
+
+									<!-- Start PostgreSQL Docker and rebuild schema -->
+
+									<antcall inheritall="false" target="start-docker-database">
+										<param name="database.type" value="postgresql" />
+									</antcall>
+
+									<antcall inheritall="false" target="rebuild-database">
+										<param name="database.type" value="postgresql" />
+										<param name="skip.delete.liferay.home" value="true" />
+									</antcall>
+
+									<!-- Run db-migration-importer: copy MySQL data to PostgreSQL -->
+
+									<get-database-property property.name="database.host" />
+									<get-database-property property.name="database.password" />
+									<get-database-property property.name="database.username" />
+
+									<ant antfile="modules/util/portal-tools-db-migration-importer-test/src/testFunctional/ant/build-test-db-migration-importer.xml" inheritAll="false" target="import-database">
+										<property name="path" value="${liferay.home}" />
+										<property name="source.jdbc.url" value="${jdbc.default.url}" />
+										<property name="source.password" value="${jdbc.default.password}" />
+										<property name="source.user" value="${jdbc.default.username}" />
+										<property name="target.jdbc.url" value="${database.postgresql.url}" />
+										<property name="target.password" value="${database.postgresql.password}" />
+										<property name="target.user" value="${database.postgresql.username}" />
+									</ant>
+
+									<!-- Switch portal-ext.properties to PostgreSQL -->
+
+									<propertyfile file="${liferay.home}/portal-ext.properties">
+										<entry key="jdbc.default.driver.class.name" value="${database.postgresql.driver}" />
+										<entry key="jdbc.default.password" value="${database.postgresql.password}" />
+										<entry key="jdbc.default.url" value="${database.postgresql.url}" />
+										<entry key="jdbc.default.username" value="${database.postgresql.username}" />
+									</propertyfile>
+
+									<antcall inheritall="false" target="start-app-server-preserve-liferay-home" />
+
+									<!-- Phase 2: verify default instance on PostgreSQL -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="postgresql" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase2 --grep "CanImportDatabaseToPostgreSQL"
+									</docker-execute>
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="postgresql" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<antcall inheritall="false" target="stop-docker-database">
+										<param name="database.type" value="postgresql" />
+									</antcall>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
 	<macrodef name="run-db-migration-container-test">
 		<attribute name="database.type" />
 		<attribute name="database.version" />
@@ -2008,6 +2181,1996 @@ app.server.type=@{app.server.type}]]></echo>
 									<ant dir="portal-kernel" inheritAll="false" target="test-class">
 										<property name="test.class" value="PortalLogAssertorTest" />
 									</ant>
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-db-partition-cluster-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+		<attribute name="database.type" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="@{database.type}" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="@{database.type}" stop.app.server="true">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<trycatch property="exception.message">
+								<try>
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.cluster" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.cluster
+									</docker-execute>
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.cluster" />
+									</exec>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-db-partition-compare-latest-7413-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+		<attribute name="database.type" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="@{database.type}" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="@{database.type}" rebuild.database="false" stop.app.server="false">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<local name="db.partition.compare.state.file" />
+
+							<property location="modules/test/playwright/test-results/db-partition-state.json" name="db.partition.compare.state.file" />
+
+							<trycatch property="exception.message">
+								<try>
+
+									<!-- Set up the released (7.4.13) bundle — CI must supply test.released.* properties -->
+
+									<antcall inheritAll="false" target="prepare-upgrade-released-bundle-test-environment" />
+
+									<!-- Phase 1: create www.able.com on old released bundle -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.compare-latest-7413" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.compare-latest-7413 --grep "Phase 1"
+									</docker-execute>
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.compare-latest-7413" />
+									</exec>
+
+									<!-- Read ableCompanyId so we can name the upgraded partition schema -->
+
+									<local name="phase1.state.json" />
+
+									<loadfile
+										property="phase1.state.json"
+										srcFile="${db.partition.compare.state.file}"
+									/>
+
+									<local name="able.company.id" />
+
+									<propertyregex
+										input="${phase1.state.json}"
+										property="able.company.id"
+										regexp="&quot;ableCompanyId&quot;\s*:\s*([0-9]+)"
+										select="\1"
+									/>
+
+									<!-- Set buildDate to epoch so module indexes regenerate after upgrade -->
+
+									<get-database-property property.name="database.host" />
+									<get-database-property property.name="database.password" />
+									<get-database-property property.name="database.username" />
+
+									<if>
+										<equals arg1="@{database.type}" arg2="mysql" />
+										<then>
+											<exec executable="docker" failonerror="true">
+												<arg value="exec" />
+												<arg value="${database.host}" />
+												<arg value="mysql" />
+												<arg value="--execute=UPDATE lportal.Release_ SET buildDate = '1970-01-01 00:00:00' WHERE releaseId = 1;" />
+												<arg value="--host=127.0.0.1" />
+												<arg value="--password=${database.password}" />
+												<arg value="--user=${database.username}" />
+											</exec>
+										</then>
+										<elseif>
+											<equals arg1="@{database.type}" arg2="postgresql" />
+											<then>
+												<exec executable="docker" failonerror="true">
+													<arg value="exec" />
+													<arg value="${database.host}" />
+													<arg value="/bin/bash" />
+													<arg value="-c" />
+													<arg value="PGPASSWORD=${database.password} psql --command=&quot;UPDATE &quot;&quot;Release_&quot;&quot; SET &quot;&quot;buildDate&quot;&quot; = '1970-01-01 00:00:00' WHERE &quot;&quot;releaseId&quot;&quot; = 1;&quot; --username=${database.username} lportal" />
+												</exec>
+											</then>
+										</elseif>
+									</if>
+
+									<!-- Restore original bundle and run the DB upgrade client -->
+
+									<antcall inheritAll="false" target="prepare-upgrade-original-bundle-test-environment" />
+
+									<antcall inheritAll="false" target="upgrade-legacy-database" />
+
+									<!-- Export upgraded schemas -->
+
+									<antcall inheritAll="false" target="export-database-schema">
+										<param name="database.file.prefix" value="upgraded" />
+										<param name="database.schema.name" value="lpartition_${able.company.id}" />
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<antcall inheritAll="false" target="export-database-schema">
+										<param name="database.file.prefix" value="upgraded" />
+										<param name="database.schema.name" value="lportal" />
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<!-- Rebuild DB and drop upgraded partition -->
+
+									<antcall inheritAll="false" target="rebuild-database">
+										<param name="database.bare.enabled" value="true" />
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<if>
+										<equals arg1="@{database.type}" arg2="mysql" />
+										<then>
+											<exec executable="docker" failonerror="true">
+												<arg value="exec" />
+												<arg value="${database.host}" />
+												<arg value="mysql" />
+												<arg value="--execute=DROP DATABASE IF EXISTS lpartition_${able.company.id};" />
+												<arg value="--host=127.0.0.1" />
+												<arg value="--password=${database.password}" />
+												<arg value="--user=${database.username}" />
+											</exec>
+										</then>
+										<elseif>
+											<equals arg1="@{database.type}" arg2="postgresql" />
+											<then>
+												<exec executable="docker" failonerror="true">
+													<arg value="exec" />
+													<arg value="${database.host}" />
+													<arg value="/bin/bash" />
+													<arg value="-c" />
+													<arg value="PGPASSWORD=${database.password} psql --command='DROP SCHEMA IF EXISTS lpartition_${able.company.id} CASCADE;' --username=${database.username} lportal" />
+												</exec>
+											</then>
+										</elseif>
+									</if>
+
+									<!-- Phase 3: create www.baker.com on fresh server -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.compare-latest-7413" />
+									</exec>
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.compare-latest-7413 --grep "Phase 3"
+									</docker-execute>
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.compare-latest-7413" />
+									</exec>
+
+									<!-- Read bakerCompanyId (phase3 merges it into the same state file) -->
+
+									<local name="final.state.json" />
+
+									<loadfile
+										property="final.state.json"
+										srcFile="${db.partition.compare.state.file}"
+									/>
+
+									<local name="baker.company.id" />
+
+									<propertyregex
+										input="${final.state.json}"
+										property="baker.company.id"
+										regexp="&quot;bakerCompanyId&quot;\s*:\s*([0-9]+)"
+										select="\1"
+									/>
+
+									<!-- Export fresh schemas -->
+
+									<antcall inheritAll="false" target="export-database-schema">
+										<param name="database.file.prefix" value="fresh" />
+										<param name="database.schema.name" value="lpartition_${baker.company.id}" />
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<antcall inheritAll="false" target="export-database-schema">
+										<param name="database.file.prefix" value="fresh" />
+										<param name="database.schema.name" value="lportal" />
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<!-- Compare: baker↔able partition, lportal↔lportal -->
+
+									<antcall inheritAll="false" target="validate-db-upgrade-schemas">
+										<param name="fresh.db.schema" value="lpartition_${baker.company.id}" />
+										<param name="upgraded.db.schema" value="lpartition_${able.company.id}" />
+									</antcall>
+
+									<antcall inheritAll="false" target="validate-db-upgrade-schemas">
+										<param name="fresh.db.schema" value="lportal" />
+										<param name="upgraded.db.schema" value="lportal" />
+									</antcall>
+
+									<!-- Fail if any comparison found differences -->
+
+									<local name="schema.compare.output.partition" />
+
+									<loadfile
+										failonerror="false"
+										property="schema.compare.output.partition"
+										srcFile="${selenium.output.dir.name}/lpartition_${able.company.id}-lpartition_${baker.company.id}-validate-db-schemas.txt"
+									/>
+
+									<fail message="DB partition schema comparison failed for able/baker partitions. See ${selenium.output.dir.name} for details.">
+										<condition>
+											<not>
+												<contains string="${schema.compare.output.partition}" substring="Database schemas match" />
+											</not>
+										</condition>
+									</fail>
+
+									<local name="schema.compare.output.main" />
+
+									<loadfile
+										failonerror="false"
+										property="schema.compare.output.main"
+										srcFile="${selenium.output.dir.name}/lportal-lportal-validate-db-schemas.txt"
+									/>
+
+									<fail message="DB partition schema comparison failed for lportal. See ${selenium.output.dir.name} for details.">
+										<condition>
+											<not>
+												<contains string="${schema.compare.output.main}" substring="Database schemas match" />
+											</not>
+										</condition>
+									</fail>
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.compare-latest-7413" />
+									</exec>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-db-partition-compare-schemas-7413-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+		<attribute name="database.type" />
+		<attribute default="data-archive-portal-partition" name="data.archive.type" />
+		<attribute default="7.4.13.u33" name="portal.version" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="@{database.type}" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="@{database.type}" rebuild.database="false" stop.app.server="false">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<local name="db.partition.compare.state.file" />
+
+							<property location="modules/test/playwright/test-results/db-partition-state.json" name="db.partition.compare.state.file" />
+
+							<trycatch property="exception.message">
+								<try>
+
+									<!-- Load data archive (7.4.13.u33 with company IDs 44913 and 42638) -->
+
+									<echo append="true" file="portal-impl/src/portal-ext.properties">
+upgrade.database.auto.run=true</echo>
+
+									<antcall target="rebuild-legacy-database">
+										<param name="data.archive.type" value="@{data.archive.type}" />
+										<param name="database.partition.enabled" value="true" />
+										<param name="portal.version" value="@{portal.version}" />
+										<param name="skip.get.testcase.database.properties" value="true" />
+									</antcall>
+
+									<!-- Start upgraded bundle against archived data — auto-upgrade runs -->
+
+									<antcall inheritAll="false" target="start-app-server" />
+
+									<antcall inheritAll="false" target="stop-app-server" />
+
+									<!-- Export upgraded schemas from the 7.4.13 archive (fixed company IDs) -->
+
+									<antcall inheritAll="false" target="export-database-schema">
+										<param name="database.file.prefix" value="upgraded" />
+										<param name="database.schema.name" value="lpartition_42638" />
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<antcall inheritAll="false" target="export-database-schema">
+										<param name="database.file.prefix" value="upgraded" />
+										<param name="database.schema.name" value="lpartition_44913" />
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<antcall inheritAll="false" target="export-database-schema">
+										<param name="database.file.prefix" value="upgraded" />
+										<param name="database.schema.name" value="lportal" />
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<!-- Rebuild main DB and drop the archived partition schemas -->
+
+									<antcall inheritAll="false" target="rebuild-database">
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<get-database-property property.name="database.host" />
+									<get-database-property property.name="database.password" />
+									<get-database-property property.name="database.username" />
+
+									<if>
+										<equals arg1="@{database.type}" arg2="mysql" />
+										<then>
+											<exec executable="docker" failonerror="true">
+												<arg value="exec" />
+												<arg value="${database.host}" />
+												<arg value="mysql" />
+												<arg value="--execute=DROP DATABASE IF EXISTS lpartition_42638; DROP DATABASE IF EXISTS lpartition_44913;" />
+												<arg value="--host=127.0.0.1" />
+												<arg value="--password=${database.password}" />
+												<arg value="--user=${database.username}" />
+											</exec>
+										</then>
+										<elseif>
+											<equals arg1="@{database.type}" arg2="postgresql" />
+											<then>
+												<exec executable="docker" failonerror="true">
+													<arg value="exec" />
+													<arg value="${database.host}" />
+													<arg value="/bin/bash" />
+													<arg value="-c" />
+													<arg value="PGPASSWORD=${database.password} psql --command='DROP SCHEMA IF EXISTS lpartition_42638 CASCADE; DROP SCHEMA IF EXISTS lpartition_44913 CASCADE;' --username=${database.username} lportal" />
+												</exec>
+											</then>
+										</elseif>
+									</if>
+
+									<!-- Phase: create two fresh virtual instances and record their IDs -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.compare-7413" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.compare-7413
+									</docker-execute>
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.compare-7413" />
+									</exec>
+
+									<!-- Read fresh company IDs written by the Playwright phase -->
+
+									<local name="compare.state.json" />
+
+									<loadfile
+										property="compare.state.json"
+										srcFile="${db.partition.compare.state.file}"
+									/>
+
+									<local name="able.company.id" />
+
+									<propertyregex
+										input="${compare.state.json}"
+										property="able.company.id"
+										regexp="&quot;ableCompanyId&quot;\s*:\s*([0-9]+)"
+										select="\1"
+									/>
+
+									<local name="baker.company.id" />
+
+									<propertyregex
+										input="${compare.state.json}"
+										property="baker.company.id"
+										regexp="&quot;bakerCompanyId&quot;\s*:\s*([0-9]+)"
+										select="\1"
+									/>
+
+									<!-- Export fresh schemas using the IDs assigned to the new instances -->
+
+									<antcall inheritAll="false" target="export-database-schema">
+										<param name="database.file.prefix" value="fresh" />
+										<param name="database.schema.name" value="lpartition_${able.company.id}" />
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<antcall inheritAll="false" target="export-database-schema">
+										<param name="database.file.prefix" value="fresh" />
+										<param name="database.schema.name" value="lpartition_${baker.company.id}" />
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<antcall inheritAll="false" target="export-database-schema">
+										<param name="database.file.prefix" value="fresh" />
+										<param name="database.schema.name" value="lportal" />
+										<param name="database.type" value="@{database.type}" />
+									</antcall>
+
+									<!-- Compare: fresh vs upgraded (able↔44913, baker↔42638, lportal↔lportal) -->
+
+									<antcall inheritAll="false" target="validate-db-upgrade-schemas">
+										<param name="fresh.db.schema" value="lpartition_${able.company.id}" />
+										<param name="upgraded.db.schema" value="lpartition_44913" />
+									</antcall>
+
+									<antcall inheritAll="false" target="validate-db-upgrade-schemas">
+										<param name="fresh.db.schema" value="lpartition_${baker.company.id}" />
+										<param name="upgraded.db.schema" value="lpartition_42638" />
+									</antcall>
+
+									<antcall inheritAll="false" target="validate-db-upgrade-schemas">
+										<param name="fresh.db.schema" value="lportal" />
+										<param name="upgraded.db.schema" value="lportal" />
+									</antcall>
+
+									<!-- Fail if any comparison found differences -->
+
+									<local name="schema.compare.output" />
+
+									<loadfile
+										failonerror="false"
+										property="schema.compare.output"
+										srcFile="${selenium.output.dir.name}/lpartition_44913-lpartition_${able.company.id}-validate-db-schemas.txt"
+									/>
+
+									<fail message="DB partition schema comparison failed for able/44913. See ${selenium.output.dir.name} for details.">
+										<condition>
+											<not>
+												<contains string="${schema.compare.output}" substring="Database schemas match" />
+											</not>
+										</condition>
+									</fail>
+
+									<local name="schema.compare.output.baker" />
+
+									<loadfile
+										failonerror="false"
+										property="schema.compare.output.baker"
+										srcFile="${selenium.output.dir.name}/lpartition_42638-lpartition_${baker.company.id}-validate-db-schemas.txt"
+									/>
+
+									<fail message="DB partition schema comparison failed for baker/42638. See ${selenium.output.dir.name} for details.">
+										<condition>
+											<not>
+												<contains string="${schema.compare.output.baker}" substring="Database schemas match" />
+											</not>
+										</condition>
+									</fail>
+
+									<local name="schema.compare.output.main" />
+
+									<loadfile
+										failonerror="false"
+										property="schema.compare.output.main"
+										srcFile="${selenium.output.dir.name}/lportal-lportal-validate-db-schemas.txt"
+									/>
+
+									<fail message="DB partition schema comparison failed for lportal. See ${selenium.output.dir.name} for details.">
+										<condition>
+											<not>
+												<contains string="${schema.compare.output.main}" substring="Database schemas match" />
+											</not>
+										</condition>
+									</fail>
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.compare-7413" />
+									</exec>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-db-partition-import-postgresql-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="mysql" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="mysql" stop.app.server="false">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<local name="db.partition.state.file" />
+
+							<property location="modules/test/playwright/test-results/db-partition-state.json" name="db.partition.state.file" />
+
+							<trycatch property="exception.message">
+								<try>
+
+									<!-- Phase 1: start server on MySQL, create www.able.com partition -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="mysql" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase1 --grep "ImportPartitionedDatabaseToPostgreSQL"
+									</docker-execute>
+
+									<!-- Offline bridge: export partition while server is UP -->
+
+									<exec executable="/bin/bash" failonerror="true" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/tests/db-partition/env/export_partition.sh" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="STATE_FILE" value="${db.partition.state.file}" />
+									</exec>
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="mysql" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<antcall inheritall="false" target="stop-app-server" />
+
+									<!-- Start PostgreSQL Docker and rebuild schema -->
+
+									<antcall inheritall="false" target="start-docker-database">
+										<param name="database.type" value="postgresql" />
+									</antcall>
+
+									<antcall inheritall="false" target="rebuild-database">
+										<param name="database.type" value="postgresql" />
+										<param name="skip.delete.liferay.home" value="true" />
+									</antcall>
+
+									<!-- Run db-migration-importer: copy MySQL data to PostgreSQL -->
+
+									<get-database-property property.name="database.host" />
+									<get-database-property property.name="database.password" />
+									<get-database-property property.name="database.username" />
+
+									<ant antfile="modules/util/portal-tools-db-migration-importer-test/src/testFunctional/ant/build-test-db-migration-importer.xml" inheritAll="false" target="import-database">
+										<property name="path" value="${liferay.home}" />
+										<property name="source.jdbc.url" value="${jdbc.default.url}" />
+										<property name="source.password" value="${jdbc.default.password}" />
+										<property name="source.user" value="${jdbc.default.username}" />
+										<property name="target.jdbc.url" value="${database.postgresql.url}" />
+										<property name="target.password" value="${database.postgresql.password}" />
+										<property name="target.user" value="${database.postgresql.username}" />
+									</ant>
+
+									<!-- Switch portal-ext.properties to PostgreSQL -->
+
+									<propertyfile file="${liferay.home}/portal-ext.properties">
+										<entry key="jdbc.default.driver.class.name" value="${database.postgresql.driver}" />
+										<entry key="jdbc.default.password" value="${database.postgresql.password}" />
+										<entry key="jdbc.default.url" value="${database.postgresql.url}" />
+										<entry key="jdbc.default.username" value="${database.postgresql.username}" />
+									</propertyfile>
+
+									<antcall inheritall="false" target="start-app-server-preserve-liferay-home" />
+
+									<!-- Import partition in PostgreSQL context -->
+
+									<exec executable="/bin/bash" failonerror="true" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/tests/db-partition/env/import_partition.sh" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="STATE_FILE" value="${db.partition.state.file}" />
+									</exec>
+
+									<!-- Phase 2: verify default instance and virtual instance on PostgreSQL -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="postgresql" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase2 --grep "ImportPartitionedDatabaseToPostgreSQL"
+									</docker-execute>
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="postgresql" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<antcall inheritall="false" target="stop-docker-database">
+										<param name="database.type" value="postgresql" />
+									</antcall>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-db-partition-nonpartitioned-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+		<attribute name="database.type" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="@{database.type}" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="@{database.type}" stop.app.server="false">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<!-- Start with DB partitioning disabled (non-partitioned source database) -->
+
+							<propertyfile file="${liferay.home}/portal-ext.properties">
+								<entry key="database.partition.enabled" value="false" />
+							</propertyfile>
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<local name="db.partition.state.file" />
+
+							<property location="modules/test/playwright/test-results/db-partition-state.json" name="db.partition.state.file" />
+
+							<trycatch property="exception.message">
+								<try>
+
+									<!-- Phase 1: start server, add virtual instance, upload DM document -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase1 --grep "ExportNonPartitioned"
+									</docker-execute>
+
+									<!-- Offline bridge: export partition while server is UP -->
+
+									<exec executable="/bin/bash" failonerror="true" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/tests/db-partition/env/export_partition.sh" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="STATE_FILE" value="${db.partition.state.file}" />
+									</exec>
+
+									<!-- Delete the virtual instance while the server is still UP -->
+
+									<exec executable="/bin/bash" failonerror="true" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/tests/db-partition/env/delete_instance.sh" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="STATE_FILE" value="${db.partition.state.file}" />
+									</exec>
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<antcall inheritall="false" target="stop-app-server" />
+
+									<!-- Enable DB partitioning for the fresh database -->
+
+									<propertyfile file="${liferay.home}/portal-ext.properties">
+										<entry key="database.partition.enabled" value="true" />
+									</propertyfile>
+
+									<!-- Drop lpartition_{id}: the export created a standalone copy; drop the original -->
+
+									<local name="db.partition.company.id" />
+									<local name="db.partition.state.json" />
+
+									<loadfile
+										property="db.partition.state.json"
+										srcFile="${db.partition.state.file}"
+									/>
+
+									<propertyregex
+										input="${db.partition.state.json}"
+										property="db.partition.company.id"
+										regexp="&quot;partitionCompanyId&quot;:\s*([0-9]+)"
+										select="\1"
+									/>
+
+									<fail message="Failed to parse db.partition.company.id from state file." unless="db.partition.company.id" />
+
+									<get-database-property property.name="database.host" />
+									<get-database-property property.name="database.password" />
+									<get-database-property property.name="database.username" />
+
+									<if>
+										<equals arg1="@{database.type}" arg2="mysql" />
+										<then>
+											<execute>
+												docker exec ${database.host} mysql --host=127.0.0.1 --password=${database.password} --user=${database.username} --execute="DROP SCHEMA IF EXISTS lpartition_${db.partition.company.id};"
+											</execute>
+										</then>
+										<elseif>
+											<equals arg1="@{database.type}" arg2="postgresql" />
+											<then>
+												<execute>
+													docker exec ${database.host} /bin/bash -c "PGPASSWORD=${database.password} psql --command='DROP SCHEMA IF EXISTS lpartition_${db.partition.company.id} CASCADE;' --username=${database.username}"
+												</execute>
+											</then>
+										</elseif>
+									</if>
+
+									<!-- Rebuild main DB with partitioning enabled -->
+
+									<antcall inheritall="false" target="rebuild-database">
+										<param name="database.type" value="@{database.type}" />
+										<param name="skip.delete.liferay.home" value="true" />
+									</antcall>
+
+									<antcall inheritall="false" target="start-app-server-preserve-liferay-home" />
+
+									<!-- Import partition: re-creates company record in the fresh partitioned DB -->
+
+									<exec executable="/bin/bash" failonerror="true" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/tests/db-partition/env/import_partition.sh" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="STATE_FILE" value="${db.partition.state.file}" />
+									</exec>
+
+									<!-- Phase 2: verify default instance and virtual instance after partition import -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase2 --grep "ExportNonPartitioned"
+									</docker-execute>
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-db-partition-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+		<attribute name="database.type" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="@{database.type}" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="@{database.type}" stop.app.server="false">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<local name="db.partition.state.file" />
+
+							<property location="modules/test/playwright/test-results/db-partition-state.json" name="db.partition.state.file" />
+
+							<trycatch property="exception.message">
+								<try>
+
+									<!-- Phase 1: start server, add virtual instance, upload DM document -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase1 --grep "ExportAndAddDBPartition"
+									</docker-execute>
+
+									<!-- Offline bridge: export partition while server is UP -->
+
+									<exec executable="/bin/bash" failonerror="true" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/tests/db-partition/env/export_partition.sh" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="STATE_FILE" value="${db.partition.state.file}" />
+									</exec>
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<antcall inheritall="false" target="stop-app-server" />
+
+									<!-- Drop lpartition_{id}: the export created a standalone copy; drop the original -->
+
+									<local name="db.partition.company.id" />
+									<local name="db.partition.state.json" />
+
+									<loadfile
+										property="db.partition.state.json"
+										srcFile="${db.partition.state.file}"
+									/>
+
+									<propertyregex
+										input="${db.partition.state.json}"
+										property="db.partition.company.id"
+										regexp="&quot;partitionCompanyId&quot;:\s*([0-9]+)"
+										select="\1"
+									/>
+
+									<fail message="Failed to parse db.partition.company.id from state file." unless="db.partition.company.id" />
+
+									<get-database-property property.name="database.host" />
+									<get-database-property property.name="database.password" />
+									<get-database-property property.name="database.username" />
+
+									<if>
+										<equals arg1="@{database.type}" arg2="mysql" />
+										<then>
+											<execute>
+												docker exec ${database.host} mysql --host=127.0.0.1 --password=${database.password} --user=${database.username} --execute="DROP SCHEMA IF EXISTS lpartition_${db.partition.company.id};"
+											</execute>
+										</then>
+										<elseif>
+											<equals arg1="@{database.type}" arg2="postgresql" />
+											<then>
+												<execute>
+													docker exec ${database.host} /bin/bash -c "PGPASSWORD=${database.password} psql --command='DROP SCHEMA IF EXISTS lpartition_${db.partition.company.id} CASCADE;' --username=${database.username}"
+												</execute>
+											</then>
+										</elseif>
+									</if>
+
+									<!-- Rebuild main DB (lpartition_{id} already dropped above) -->
+
+									<antcall inheritall="false" target="rebuild-database">
+										<param name="database.type" value="@{database.type}" />
+										<param name="skip.delete.liferay.home" value="true" />
+									</antcall>
+
+									<antcall inheritall="false" target="start-app-server-preserve-liferay-home" />
+
+									<!-- Import partition: re-creates company record in the fresh main DB -->
+
+									<exec executable="/bin/bash" failonerror="true" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/tests/db-partition/env/import_partition.sh" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="STATE_FILE" value="${db.partition.state.file}" />
+									</exec>
+
+									<!-- Phase 2: verify default instance and virtual instance after partition import -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase2 --grep "ExportAndAddDBPartition"
+									</docker-execute>
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-db-partition-restart-case-insensitive-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="mysql" />
+
+			<!-- Passed to start-docker-database-cmd via get-database-property -->
+
+			<var name="database.mysql.docker.database.options" value="--lower_case_table_names=1" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="mysql" stop.app.server="false">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<trycatch property="exception.message">
+								<try>
+
+									<!-- Phase 1: start server on MySQL (lower_case_table_names=1), create www.able.com partition -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="mysql" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase1 --grep "CaseInsensitiveDatabase"
+									</docker-execute>
+
+									<!-- Offline bridge: stop and restart server (preserve data) -->
+
+									<antcall inheritall="false" target="stop-app-server" />
+
+									<antcall inheritall="false" target="start-app-server-preserve-liferay-home" />
+
+									<!-- Phase 2: verify www.able.com is still accessible on case-insensitive DB -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="mysql" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase2 --grep "CaseInsensitiveDatabase"
+									</docker-execute>
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="mysql" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-db-partition-restart-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+		<attribute name="database.type" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="@{database.type}" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="@{database.type}" stop.app.server="false">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<trycatch property="exception.message">
+								<try>
+
+									<!-- Phase 1: start server, create www.able.com partition -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase1 --grep "AfterRestart —"
+									</docker-execute>
+
+									<!-- Offline bridge: stop and restart server (preserve data) -->
+
+									<antcall inheritall="false" target="stop-app-server" />
+
+									<antcall inheritall="false" target="start-app-server-preserve-liferay-home" />
+
+									<!-- Phase 2: verify www.able.com is still accessible -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase2 --grep "AfterRestart —"
+									</docker-execute>
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-db-partition-scheduler-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+		<attribute name="database.type" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="@{database.type}" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="@{database.type}" stop.app.server="true">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<trycatch property="exception.message">
+								<try>
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.scheduler" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.scheduler
+									</docker-execute>
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.scheduler" />
+									</exec>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-db-partition-schema-validator-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+		<attribute name="database.type" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="@{database.type}" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="@{database.type}" stop.app.server="true">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<trycatch property="exception.message">
+								<try>
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.main" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.main --grep "ExecuteSchemaValidator"
+									</docker-execute>
+
+									<!-- Run schema validator against the partition schemas -->
+
+									<antcall target="validate-db-partition-schemas">
+										<param name="schema.name.prefix" value="lpartition_" />
+									</antcall>
+
+									<!-- Assert validation passed -->
+
+									<local name="db.partition.validate.output" />
+
+									<loadfile
+										property="db.partition.validate.output"
+										srcFile="${liferay.home}/validateoutput.txt"
+									/>
+
+									<local name="db.partition.validation.passed" />
+
+									<condition property="db.partition.validation.passed">
+										<contains string="${db.partition.validate.output}" substring="Validation passed" />
+									</condition>
+
+									<fail message="DB partition schema validation failed. See ${liferay.home}/validateoutput.txt for details." unless="db.partition.validation.passed" />
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.main" />
+									</exec>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
+								</finally>
+							</trycatch>
+						</test-action>
+					</database-test-run-test>
+				</test-action>
+
+				<test-set-up>
+					<setup-test-environment />
+				</test-set-up>
+			</run-batch-test>
+		</sequential>
+	</macrodef>
+
+	<macrodef name="run-db-partition-upgraded-playwright-test">
+		<attribute default="tomcat" name="app.server.type" />
+		<attribute name="database.type" />
+
+		<sequential>
+			<get-java-jdk-bundle-type test.batch.name="${test.batch.name}" />
+			<get-java-jdk-bundle-version test.batch.name="${test.batch.name}" />
+			<var name="app.server.type" value="@{app.server.type}" />
+			<var name="database.type" value="@{database.type}" />
+
+			<run-batch-test>
+				<test-action>
+					<database-test-run-test database.type="@{database.type}" stop.app.server="false">
+						<test-action>
+							<delete dir="${liferay.home}/work" />
+
+							<antcall inheritAll="false" target="prepare-log4j-ext-xml" />
+
+							<generate-jdbc-properties properties.file="portal-impl/src/portal-ext.properties" />
+
+							<apply-portal-ext-properties />
+
+							<local name="execute.path" />
+							<local name="java.jdk.home" />
+							<local name="java.jdk.opts" />
+
+							<get-java-jdk-home type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+							<get-java-jdk-opts type="${java.jdk.bundle.type}" version="${java.jdk.bundle.version}" />
+
+							<propertyregex
+								input="${env.PATH}"
+								override="true"
+								property="execute.path"
+								regexp="/opt/java/(jdk|openjdk|zulu(-x64)?)[^/]+/bin"
+								replace="${java.jdk.home}/bin"
+							/>
+
+							<local name="db.partition.state.file" />
+
+							<property location="modules/test/playwright/test-results/db-partition-state.json" name="db.partition.state.file" />
+
+							<trycatch property="exception.message">
+								<try>
+
+									<!-- Phase 1: verify existing partitions from data archive, write state with both company IDs -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<start-docker-playwright />
+
+									<gradle-execute dir="${playwright.dir}" task="npmInstall" />
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase1 --grep "ExportAndAddDBPartitionWithUpgradedDB"
+									</docker-execute>
+
+									<!-- Offline bridge: export both partitions while server is UP -->
+
+									<exec executable="/bin/bash" failonerror="true" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/tests/db-partition/env/export_partitions.sh" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="STATE_FILE" value="${db.partition.state.file}" />
+									</exec>
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase1" />
+									</exec>
+
+									<antcall inheritall="false" target="stop-app-server" />
+
+									<!-- Drop all partition schemas; exports created standalone copies -->
+
+									<get-database-property property.name="database.host" />
+									<get-database-property property.name="database.password" />
+									<get-database-property property.name="database.username" />
+
+									<exec executable="/bin/bash" failonerror="true" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/tests/db-partition/env/drop_partitions.sh" />
+										<env key="DATABASE_HOST" value="${database.host}" />
+										<env key="DATABASE_PASSWORD" value="${database.password}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="DATABASE_USERNAME" value="${database.username}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="STATE_FILE" value="${db.partition.state.file}" />
+									</exec>
+
+									<!-- Rebuild main DB -->
+
+									<antcall inheritall="false" target="rebuild-database">
+										<param name="database.type" value="@{database.type}" />
+										<param name="skip.delete.liferay.home" value="true" />
+									</antcall>
+
+									<antcall inheritall="false" target="start-app-server-preserve-liferay-home" />
+
+									<!-- Import both partitions into the fresh database -->
+
+									<exec executable="/bin/bash" failonerror="true" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/tests/db-partition/env/import_partitions.sh" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="STATE_FILE" value="${db.partition.state.file}" />
+									</exec>
+
+									<!-- Phase 2: verify default instance and both virtual instances -->
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.setup.timeout}">
+										<arg value="modules/test/playwright/env/set_up.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<docker-execute container="${playwright.docker.host}">
+										cd ${playwright.dir}
+
+										npx playwright test --project=db-partition.phase2 --grep "ExportAndAddDBPartitionWithUpgradedDB"
+									</docker-execute>
+								</try>
+								<catch>
+									<echo>${exception.message}</echo>
+								</catch>
+								<finally>
+									<stop-docker-playwright />
+
+									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
+										<arg value="modules/test/playwright/env/tear_down.sh" />
+										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
+										<env key="DATABASE_TYPE" value="@{database.type}" />
+										<env key="JAVA_HOME" value="${java.jdk.home}" />
+										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
+										<env key="LIFERAY_HOME" value="${liferay.home}" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
+										<env key="PATH" value="${execute.path}" />
+										<env key="PLAYWRIGHT_PROJECT_NAME" value="db-partition.phase2" />
+									</exec>
+
+									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
+
+									<print-docker-database-logs />
 								</finally>
 							</trycatch>
 						</test-action>
@@ -3671,7 +5834,7 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 										<env key="JAVA_HOME" value="${java.jdk.home}" />
 										<env key="JAVA_OPTS" value="${java.jdk.opts}" />
 										<env key="LIFERAY_HOME" value="${liferay.home}" />
-										<env key="LIFERAY_PORTAL_URL" value="http://${env.HOSTNAME}:8080" />
+										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
 										<env key="PATH" value="${execute.path}" />
 										<env key="PLAYWRIGHT_PROJECT_NAME" value="${playwright.project.name}" />
 									</exec>
@@ -9760,6 +11923,90 @@ ${output.content}</echo>
 				<setup-test-environment />
 			</test-set-up>
 		</run-batch-test>
+	</target>
+
+	<target name="playwright-js-db-import-postgresql-tomcat101-mysql84">
+		<run-db-import-postgresql-playwright-test />
+	</target>
+
+	<target name="playwright-js-db-partition-cluster-tomcat101-mysql84">
+		<run-db-partition-cluster-playwright-test database.type="mysql" />
+	</target>
+
+	<target name="playwright-js-db-partition-cluster-tomcat101-postgresql163">
+		<run-db-partition-cluster-playwright-test database.type="postgresql" />
+	</target>
+
+	<target name="playwright-js-db-partition-compare-latest-7413-tomcat101-mysql84">
+		<run-db-partition-compare-latest-7413-playwright-test database.type="mysql" />
+	</target>
+
+	<target name="playwright-js-db-partition-compare-latest-7413-tomcat101-postgresql163">
+		<run-db-partition-compare-latest-7413-playwright-test database.type="postgresql" />
+	</target>
+
+	<target name="playwright-js-db-partition-compare-schemas-7413-tomcat101-mysql84">
+		<run-db-partition-compare-schemas-7413-playwright-test database.type="mysql" />
+	</target>
+
+	<target name="playwright-js-db-partition-compare-schemas-7413-tomcat101-postgresql163">
+		<run-db-partition-compare-schemas-7413-playwright-test database.type="postgresql" />
+	</target>
+
+	<target name="playwright-js-db-partition-import-postgresql-tomcat101-mysql84">
+		<run-db-partition-import-postgresql-playwright-test />
+	</target>
+
+	<target name="playwright-js-db-partition-nonpartitioned-tomcat101-mysql84">
+		<run-db-partition-nonpartitioned-playwright-test database.type="mysql" />
+	</target>
+
+	<target name="playwright-js-db-partition-nonpartitioned-tomcat101-postgresql163">
+		<run-db-partition-nonpartitioned-playwright-test database.type="postgresql" />
+	</target>
+
+	<target name="playwright-js-db-partition-restart-case-insensitive-tomcat101-mysql84">
+		<run-db-partition-restart-case-insensitive-playwright-test />
+	</target>
+
+	<target name="playwright-js-db-partition-restart-tomcat101-mysql84">
+		<run-db-partition-restart-playwright-test database.type="mysql" />
+	</target>
+
+	<target name="playwright-js-db-partition-restart-tomcat101-postgresql163">
+		<run-db-partition-restart-playwright-test database.type="postgresql" />
+	</target>
+
+	<target name="playwright-js-db-partition-scheduler-tomcat101-mysql84">
+		<run-db-partition-scheduler-playwright-test database.type="mysql" />
+	</target>
+
+	<target name="playwright-js-db-partition-scheduler-tomcat101-postgresql163">
+		<run-db-partition-scheduler-playwright-test database.type="postgresql" />
+	</target>
+
+	<target name="playwright-js-db-partition-schema-validator-tomcat101-mysql84">
+		<run-db-partition-schema-validator-playwright-test database.type="mysql" />
+	</target>
+
+	<target name="playwright-js-db-partition-schema-validator-tomcat101-postgresql163">
+		<run-db-partition-schema-validator-playwright-test database.type="postgresql" />
+	</target>
+
+	<target name="playwright-js-db-partition-tomcat101-mysql84">
+		<run-db-partition-playwright-test database.type="mysql" />
+	</target>
+
+	<target name="playwright-js-db-partition-tomcat101-postgresql163">
+		<run-db-partition-playwright-test database.type="postgresql" />
+	</target>
+
+	<target name="playwright-js-db-partition-upgraded-tomcat101-mysql84">
+		<run-db-partition-upgraded-playwright-test database.type="mysql" />
+	</target>
+
+	<target name="playwright-js-db-partition-upgraded-tomcat101-postgresql163">
+		<run-db-partition-upgraded-playwright-test database.type="postgresql" />
 	</target>
 
 	<target name="playwright-js-smoke-jboss80-postgresql155">
