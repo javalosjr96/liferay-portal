@@ -29,9 +29,7 @@ test.describe.serial('ImportPartitionedDatabaseToPostgreSQL — Phase 2', () => 
 		'www.able.com partition is accessible after DB migration to PostgreSQL',
 		{tag: '@LPD-91814'},
 		async ({browser}) => {
-			const port = liferayConfig.environment.port;
-
-			const ableBaseUrl = `http://${ABLE_HOST}:${port}`;
+			const ableBaseUrl = `http://${ABLE_HOST}:${liferayConfig.environment.port}`;
 
 			const instancePage = await browser.newPage({
 				baseURL: ableBaseUrl,

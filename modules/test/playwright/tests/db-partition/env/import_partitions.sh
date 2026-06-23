@@ -8,9 +8,7 @@
 # LIFERAY_HOME — path to the Liferay bundle
 # STATE_FILE — path to the JSON state file written by the Phase 1 spec
 
-CURRENT_DIR_NAME=$(dirname ${BASH_SOURCE[0]})
-
-source ${CURRENT_DIR_NAME}/db_partition_common.sh
+source "$(dirname "${BASH_SOURCE[0]}")/db_partition_common.sh"
 
 function main {
 	local company_ids

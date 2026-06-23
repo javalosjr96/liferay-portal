@@ -9,9 +9,7 @@
 # LIFERAY_PORTAL_URL — base URL of the portal (default: http://localhost:8080)
 # ADMIN_PASSWORD — admin user password (default: test)
 
-CURRENT_DIR_NAME=$(dirname ${BASH_SOURCE[0]})
-
-source ${CURRENT_DIR_NAME}/db_partition_common.sh
+source "$(dirname "${BASH_SOURCE[0]}")/db_partition_common.sh"
 
 LIFERAY_PORTAL_URL=${LIFERAY_PORTAL_URL:-"http://localhost:8080"}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-"test"}

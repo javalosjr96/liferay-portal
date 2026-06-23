@@ -24,9 +24,7 @@ test.describe.serial('NewCompanyStillAccessibleAfterRestart — Phase 2', () => 
 					ABLE_HOST
 				);
 
-			const port = liferayConfig.environment.port;
-
-			const ableBaseUrl = `http://${ABLE_HOST}:${port}`;
+			const ableBaseUrl = `http://${ABLE_HOST}:${liferayConfig.environment.port}`;
 
 			const instancePage = await browser.newPage({
 				baseURL: ableBaseUrl,
@@ -46,7 +44,7 @@ test.describe.serial('NewCompanyStillAccessibleAfterRestart — Phase 2', () => 
 				await instancePage.close();
 
 				await apiHelpers.headlessPortalInstance.deleteVirtualInstance(
-					ableCompany.companyId
+					Number(ableCompany.companyId)
 				);
 			}
 		}

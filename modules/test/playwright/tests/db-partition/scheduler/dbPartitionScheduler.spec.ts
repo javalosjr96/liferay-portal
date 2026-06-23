@@ -27,45 +27,42 @@ test.describe
 				virtualHost: ABLE_HOST,
 			});
 
-			const ableCompany =
-				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(
-					ABLE_HOST
-				);
-
-			const ableCompanyGroup =
-				await apiHelpers.jsonWebServicesGroup.getCompanyGroup(
-					ableCompany.companyId
-				);
-
-			const defaultCompany =
-				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(
+			const [ableCompany, defaultCompany] = await Promise.all([
+				apiHelpers.jsonWebServicesCompany.getCompanyByWebId(ABLE_HOST),
+				apiHelpers.jsonWebServicesCompany.getCompanyByWebId(
 					'liferay.com'
-				);
+				),
+			]);
 
-			const defaultCompanyGroup =
-				await apiHelpers.jsonWebServicesGroup.getCompanyGroup(
+			const [ableCompanyGroup, defaultCompanyGroup] = await Promise.all([
+				apiHelpers.jsonWebServicesGroup.getCompanyGroup(
+					ableCompany.companyId
+				),
+				apiHelpers.jsonWebServicesGroup.getCompanyGroup(
 					defaultCompany.companyId
-				);
+				),
+			]);
 
-			const ableStructureId = await getWebContentStructureId(
-				apiHelpers,
-				ableCompanyGroup.groupId,
-				'BASIC-WEB-CONTENT'
-			);
-
-			const defaultStructureId = await getWebContentStructureId(
-				apiHelpers,
-				defaultCompanyGroup.groupId,
-				'BASIC-WEB-CONTENT'
-			);
+			const [ableStructureId, defaultStructureId] = await Promise.all([
+				getWebContentStructureId(
+					apiHelpers,
+					ableCompanyGroup.groupId,
+					'BASIC-WEB-CONTENT'
+				),
+				getWebContentStructureId(
+					apiHelpers,
+					defaultCompanyGroup.groupId,
+					'BASIC-WEB-CONTENT'
+				),
+			]);
 
 			const scheduledDate = new Date(Date.now() + 2 * 60 * 1000);
 
-			const displayDateDay = scheduledDate.getUTCDate();
-			const displayDateHour = scheduledDate.getUTCHours();
-			const displayDateMinute = scheduledDate.getUTCMinutes();
-			const displayDateMonth = scheduledDate.getUTCMonth();
-			const displayDateYear = scheduledDate.getUTCFullYear();
+			const displayDateDay = scheduledDate.getDate();
+			const displayDateHour = scheduledDate.getHours();
+			const displayDateMinute = scheduledDate.getMinutes();
+			const displayDateMonth = scheduledDate.getMonth();
+			const displayDateYear = scheduledDate.getFullYear();
 
 			const ableArticle =
 				await apiHelpers.jsonWebServicesJournal.addWebContentDetailed({
@@ -119,28 +116,24 @@ test.describe
 
 			try {
 				await expect(async () => {
-					const defaultResponse = await page.request.post(
-						journalArticlePath,
-						{
+					const [defaultResponse, ableResponse] = await Promise.all([
+						page.request.post(journalArticlePath, {
 							data: defaultArticleUrlSearchParams.toString(),
 							headers: journalHeaders,
-						}
-					);
-
-					const defaultArticleData = await defaultResponse.json();
-
-					expect(defaultArticleData.status).toBe(WC_STATUS_APPROVED);
-
-					const ableResponse = await page.request.post(
-						journalArticlePath,
-						{
+						}),
+						page.request.post(journalArticlePath, {
 							data: ableArticleUrlSearchParams.toString(),
 							headers: journalHeaders,
-						}
-					);
+						}),
+					]);
 
-					const ableArticleData = await ableResponse.json();
+					const [defaultArticleData, ableArticleData] =
+						await Promise.all([
+							defaultResponse.json(),
+							ableResponse.json(),
+						]);
 
+					expect(defaultArticleData.status).toBe(WC_STATUS_APPROVED);
 					expect(ableArticleData.status).toBe(WC_STATUS_APPROVED);
 				}).toPass({timeout: 240_000});
 			}
@@ -151,7 +144,7 @@ test.describe
 				);
 
 				await apiHelpers.headlessPortalInstance.deleteVirtualInstance(
-					ableCompany.companyId
+					Number(ableCompany.companyId)
 				);
 			}
 		}
@@ -170,37 +163,34 @@ test.describe
 				virtualHost: ABLE_HOST,
 			});
 
-			const ableCompany =
-				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(
-					ABLE_HOST
-				);
-
-			const ableCompanyGroup =
-				await apiHelpers.jsonWebServicesGroup.getCompanyGroup(
-					ableCompany.companyId
-				);
-
-			const defaultCompany =
-				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(
+			const [ableCompany, defaultCompany] = await Promise.all([
+				apiHelpers.jsonWebServicesCompany.getCompanyByWebId(ABLE_HOST),
+				apiHelpers.jsonWebServicesCompany.getCompanyByWebId(
 					'liferay.com'
-				);
+				),
+			]);
 
-			const defaultCompanyGroup =
-				await apiHelpers.jsonWebServicesGroup.getCompanyGroup(
+			const [ableCompanyGroup, defaultCompanyGroup] = await Promise.all([
+				apiHelpers.jsonWebServicesGroup.getCompanyGroup(
+					ableCompany.companyId
+				),
+				apiHelpers.jsonWebServicesGroup.getCompanyGroup(
 					defaultCompany.companyId
-				);
+				),
+			]);
 
-			const ableStructureId = await getWebContentStructureId(
-				apiHelpers,
-				ableCompanyGroup.groupId,
-				'BASIC-WEB-CONTENT'
-			);
-
-			const defaultStructureId = await getWebContentStructureId(
-				apiHelpers,
-				defaultCompanyGroup.groupId,
-				'BASIC-WEB-CONTENT'
-			);
+			const [ableStructureId, defaultStructureId] = await Promise.all([
+				getWebContentStructureId(
+					apiHelpers,
+					ableCompanyGroup.groupId,
+					'BASIC-WEB-CONTENT'
+				),
+				getWebContentStructureId(
+					apiHelpers,
+					defaultCompanyGroup.groupId,
+					'BASIC-WEB-CONTENT'
+				),
+			]);
 
 			const ableScheduledDate = new Date(Date.now() + 4 * 60 * 1000);
 
@@ -260,28 +250,24 @@ test.describe
 
 			try {
 				await expect(async () => {
-					const defaultResponse = await page.request.post(
-						journalArticlePath,
-						{
+					const [defaultResponse, ableResponse] = await Promise.all([
+						page.request.post(journalArticlePath, {
 							data: defaultArticleUrlSearchParams.toString(),
 							headers: journalHeaders,
-						}
-					);
-
-					const defaultArticleData = await defaultResponse.json();
-
-					expect(defaultArticleData.status).toBe(WC_STATUS_APPROVED);
-
-					const ableResponse = await page.request.post(
-						journalArticlePath,
-						{
+						}),
+						page.request.post(journalArticlePath, {
 							data: ableArticleUrlSearchParams.toString(),
 							headers: journalHeaders,
-						}
-					);
+						}),
+					]);
 
-					const ableArticleData = await ableResponse.json();
+					const [defaultArticleData, ableArticleData] =
+						await Promise.all([
+							defaultResponse.json(),
+							ableResponse.json(),
+						]);
 
+					expect(defaultArticleData.status).toBe(WC_STATUS_APPROVED);
 					expect(ableArticleData.status).toBe(WC_STATUS_APPROVED);
 				}).toPass({timeout: 360_000});
 			}
@@ -292,7 +278,7 @@ test.describe
 				);
 
 				await apiHelpers.headlessPortalInstance.deleteVirtualInstance(
-					ableCompany.companyId
+					Number(ableCompany.companyId)
 				);
 			}
 		}

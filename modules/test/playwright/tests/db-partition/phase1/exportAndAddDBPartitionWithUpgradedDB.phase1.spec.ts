@@ -23,14 +23,10 @@ test.describe.serial('ExportAndAddDBPartitionWithUpgradedDB — Phase 1', () => 
 		'Verify www.able.com and www.baker.com partitions are accessible',
 		{tag: '@LPD-91814'},
 		async ({apiHelpers, browser}) => {
-			const ableCompany =
-				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(
-					ABLE_HOST
-				);
-			const bakerCompany =
-				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(
-					BAKER_HOST
-				);
+			const [ableCompany, bakerCompany] = await Promise.all([
+				apiHelpers.jsonWebServicesCompany.getCompanyByWebId(ABLE_HOST),
+				apiHelpers.jsonWebServicesCompany.getCompanyByWebId(BAKER_HOST),
+			]);
 
 			const port = liferayConfig.environment.port;
 

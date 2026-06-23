@@ -21,27 +21,23 @@ test.describe.serial('ComparePartitionedUpgradedAndFreshDBSchemas7413', () => {
 		'Create virtual instances for schema comparison',
 		{tag: '@LPD-91814'},
 		async ({apiHelpers}) => {
-			await apiHelpers.headlessPortalInstance.addVirtualInstance({
-				domain: ABLE_HOST,
-				portalInstanceId: ABLE_HOST,
-				virtualHost: ABLE_HOST,
-			});
+			await Promise.all([
+				apiHelpers.headlessPortalInstance.addVirtualInstance({
+					domain: ABLE_HOST,
+					portalInstanceId: ABLE_HOST,
+					virtualHost: ABLE_HOST,
+				}),
+				apiHelpers.headlessPortalInstance.addVirtualInstance({
+					domain: BAKER_HOST,
+					portalInstanceId: BAKER_HOST,
+					virtualHost: BAKER_HOST,
+				}),
+			]);
 
-			await apiHelpers.headlessPortalInstance.addVirtualInstance({
-				domain: BAKER_HOST,
-				portalInstanceId: BAKER_HOST,
-				virtualHost: BAKER_HOST,
-			});
-
-			const ableCompany =
-				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(
-					ABLE_HOST
-				);
-
-			const bakerCompany =
-				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(
-					BAKER_HOST
-				);
+			const [ableCompany, bakerCompany] = await Promise.all([
+				apiHelpers.jsonWebServicesCompany.getCompanyByWebId(ABLE_HOST),
+				apiHelpers.jsonWebServicesCompany.getCompanyByWebId(BAKER_HOST),
+			]);
 
 			fs.mkdirSync(path.dirname(STATE_FILE), {recursive: true});
 

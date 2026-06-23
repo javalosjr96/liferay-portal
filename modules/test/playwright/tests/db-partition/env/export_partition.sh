@@ -2,9 +2,7 @@
 
 # Triggers a partition export and waits for Liferay to process it.
 
-CURRENT_DIR_NAME=$(dirname ${BASH_SOURCE[0]})
-
-source ${CURRENT_DIR_NAME}/db_partition_common.sh
+source "$(dirname "${BASH_SOURCE[0]}")/db_partition_common.sh"
 
 function main {
 	local partition_company_id

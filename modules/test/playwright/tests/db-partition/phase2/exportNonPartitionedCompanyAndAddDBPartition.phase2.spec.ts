@@ -4,23 +4,18 @@
  */
 
 import {expect, mergeTests} from '@playwright/test';
-import * as fs from 'fs';
 
 import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {liferayConfig} from '../../../liferay.config';
 import {performLoginViaApi} from '../../../utils/performLogin';
-import {STATE_FILE} from '../utils';
+import {readState} from '../utils';
 
 const test = mergeTests(apiHelpersTest, loginTest());
 
 const VIRTUAL_HOST = 'www.able.com';
 
 const VIRTUAL_HOST_BASE_URL = `http://${VIRTUAL_HOST}:${liferayConfig.environment.port}`;
-
-function readState(): {partitionCompanyId: number} {
-	return JSON.parse(fs.readFileSync(STATE_FILE, 'utf-8'));
-}
 
 test.describe
 	.serial('ExportNonPartitionedCompanyAndAddDBPartition — Phase 2', () => {

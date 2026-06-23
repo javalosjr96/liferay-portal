@@ -1,8 +1,6 @@
 #!/bin/bash
 
-CURRENT_DIR_NAME=$(dirname ${BASH_SOURCE[0]})
-
-source ${CURRENT_DIR_NAME}/../../../env/common.sh
+source "$(dirname "${BASH_SOURCE[0]}")/../../../env/common.sh"
 
 function main {
 	if [[ "${PLAYWRIGHT_PROJECT_NAME}" == "db-partition.phase2" ]]
