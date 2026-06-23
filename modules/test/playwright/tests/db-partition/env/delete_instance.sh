@@ -36,7 +36,7 @@ function main {
 		exit 1
 	fi
 
-	echo "Virtual instance ${company_id} deleted successfully."
+	echo "Virtual instance ${company_id} was deleted successfully."
 }
 
 main "${@}"
