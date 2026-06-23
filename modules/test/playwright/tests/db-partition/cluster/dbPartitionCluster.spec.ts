@@ -141,12 +141,12 @@ test(
 
 			const serverAdminPage = new ServerAdministrationPage(secondaryPage);
 
-			await serverAdminPage.goto();
-			await serverAdminPage.executeScript(GROOVY_SCRIPT);
+			await expect(async () => {
+				await serverAdminPage.goto();
+				await serverAdminPage.executeScript(GROOVY_SCRIPT);
 
-			await expect(async () =>
-				expect(await serverAdminPage.getScriptOutput()).toContain('1')
-			).toPass({timeout: 30000});
+				expect(await serverAdminPage.getScriptOutput()).toContain('1');
+			}).toPass({timeout: 30000});
 
 			const instance =
 				await apiHelpers.headlessPortalInstance.addVirtualInstance({

@@ -61,11 +61,11 @@ test.describe
 
 			const scheduledDate = new Date(Date.now() + 2 * 60 * 1000);
 
-			const displayDateDay = scheduledDate.getDate();
-			const displayDateHour = scheduledDate.getHours();
-			const displayDateMinute = scheduledDate.getMinutes();
-			const displayDateMonth = scheduledDate.getMonth();
-			const displayDateYear = scheduledDate.getFullYear();
+			const displayDateDay = scheduledDate.getUTCDate();
+			const displayDateHour = scheduledDate.getUTCHours();
+			const displayDateMinute = scheduledDate.getUTCMinutes();
+			const displayDateMonth = scheduledDate.getUTCMonth();
+			const displayDateYear = scheduledDate.getUTCFullYear();
 
 			const ableArticle =
 				await apiHelpers.jsonWebServicesJournal.addWebContentDetailed({

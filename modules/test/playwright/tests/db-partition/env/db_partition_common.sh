@@ -52,7 +52,7 @@ function read_partition_company_id {
 
 	local company_id
 
-	company_id=$(grep -oP '"partitionCompanyId":\s*\K[0-9]+' "${STATE_FILE}")
+	company_id=$(node -e "console.log(JSON.parse(require('fs').readFileSync('${STATE_FILE}', 'utf8')).partitionCompanyId)")
 
 	if [[ -z "${company_id}" ]]
 	then
@@ -81,7 +81,7 @@ function read_partition_company_ids {
 
 	local company_ids
 
-	company_ids=$(grep -oP '"partitionCompanyIds":\s*\[\K[0-9, ]+' "${STATE_FILE}" | grep -oP '[0-9]+')
+	company_ids=$(node -e "console.log(JSON.parse(require('fs').readFileSync('${STATE_FILE}', 'utf8')).partitionCompanyIds.join('\n'))")
 
 	if [[ -z "${company_ids}" ]]
 	then
