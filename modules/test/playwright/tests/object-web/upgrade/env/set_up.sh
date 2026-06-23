@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e -x
+set -ex
 
 CURRENT_DIR_NAME=$(dirname ${BASH_SOURCE[0]})
 
