@@ -649,8 +649,7 @@ public abstract class BaseDBProcess implements DBProcess {
 						return preparedStatement;
 					}
 
-					Connection workerConnection = connectionsMap.get(
-						Thread.currentThread());
+					Connection workerConnection = connectionsMap.get(k);
 
 					if (workerConnection == null) {
 						return preparedStatement;
