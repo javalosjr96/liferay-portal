@@ -605,12 +605,13 @@ public abstract class BaseDBProcess implements DBProcess {
 		catch (SQLException sqlException) {
 			_log.error(sqlException);
 		}
-
-		try {
-			connection.setAutoCommit(true);
-		}
-		catch (SQLException sqlException) {
-			_log.error(sqlException);
+		finally {
+			try {
+				connection.setAutoCommit(true);
+			}
+			catch (SQLException sqlException) {
+				_log.error(sqlException);
+			}
 		}
 	}
 
