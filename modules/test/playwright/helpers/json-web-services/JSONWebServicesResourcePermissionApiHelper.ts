@@ -75,16 +75,16 @@ export class JSONWebServicesResourcePermissionApiHelper {
 
 	async setIndividualResourcePermissions(
 		actionIds: Array<string>,
-		companyId: string,
-		groupId: string,
+		companyId: number | string,
+		groupId: number | string,
 		name: string,
 		primKey: string,
 		roleId: string
 	) {
 		const urlSearchParams = new URLSearchParams();
 
-		urlSearchParams.append('groupId', groupId);
-		urlSearchParams.append('companyId', companyId);
+		urlSearchParams.append('groupId', String(groupId));
+		urlSearchParams.append('companyId', String(companyId));
 		urlSearchParams.append('name', name);
 		urlSearchParams.append('primKey', primKey);
 		urlSearchParams.append('roleId', roleId);

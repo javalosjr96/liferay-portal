@@ -33,7 +33,7 @@ export type ActionId =
 
 export type RolePermission = {
 	actionIds: ActionId[];
-	primaryKey: string;
+	primaryKey: number | string;
 	resourceName: string;
 	scope: number;
 };

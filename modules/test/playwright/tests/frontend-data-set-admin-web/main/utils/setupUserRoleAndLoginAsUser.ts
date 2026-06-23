@@ -13,7 +13,7 @@ type TRole = {
 	name: string;
 	rolePermissions?: Array<{
 		actionIds: string[];
-		primaryKey: string;
+		primaryKey: number | string;
 		resourceName: string;
 		scope: number;
 	}>;

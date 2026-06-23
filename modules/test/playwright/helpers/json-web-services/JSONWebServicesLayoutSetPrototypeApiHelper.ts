@@ -48,7 +48,7 @@ export class JSONWebServicesLayoutSetPrototypeApiHelper {
 				'liferay.com'
 			);
 
-		urlSearchParams.append('companyId', company.companyId);
+		urlSearchParams.append('companyId', String(company.companyId));
 
 		return this.apiHelpers.post(
 			`${liferayConfig.environment.baseUrl}${this.basePath}/get-layout-set-prototypes`,

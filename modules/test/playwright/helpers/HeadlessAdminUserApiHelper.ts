@@ -67,7 +67,7 @@ export type TPostalAddresses = {
 
 export type TPermission = {
 	actionIds: string[];
-	primaryKey: string;
+	primaryKey: number | string;
 	resourceName: string;
 	scope: number;
 };

@@ -7,7 +7,7 @@ import {liferayConfig} from '../../liferay.config';
 import {ApiHelpers} from '../ApiHelpers';
 
 type Company = {
-	companyId: string;
+	companyId: number;
 };
 
 export class JSONWebServicesCompanyApiHelper {

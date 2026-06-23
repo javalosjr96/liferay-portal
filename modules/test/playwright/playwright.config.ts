@@ -65,6 +65,13 @@ import {config as contactsWebConfig} from './tests/contacts-web/main/config';
 import {config as contentDashboardWebConfig} from './tests/content-dashboard-web/main/config';
 import {config as cookiesBannerWebConfig} from './tests/cookies-banner-web/main/config';
 import {config as dataCleanupConfig} from './tests/data-cleanup/main/config';
+import {config as dbPartitionClusterConfig} from './tests/db-partition/cluster/config';
+import {config as dbPartitionCompare7413Config} from './tests/db-partition/compare-7413/config';
+import {config as dbPartitionCompareLatest7413Config} from './tests/db-partition/compare-latest-7413/config';
+import {config as dbPartitionConfig} from './tests/db-partition/main/config';
+import {config as dbPartitionPhase1Config} from './tests/db-partition/phase1/config';
+import {config as dbPartitionPhase2Config} from './tests/db-partition/phase2/config';
+import {config as dbPartitionSchedulerConfig} from './tests/db-partition/scheduler/config';
 import {config as depotWebConfig} from './tests/depot-web/main/config';
 import {config as designLibraryWebConfig} from './tests/design-library-web/main/config';
 import {config as dispatchWebConfig} from './tests/dispatch-web/main/config';
@@ -294,6 +301,13 @@ export default defineConfig({
 		contentDashboardWebConfig,
 		cookiesBannerWebConfig,
 		customerConfig,
+		dbPartitionClusterConfig,
+		dbPartitionCompare7413Config,
+		dbPartitionCompareLatest7413Config,
+		dbPartitionConfig,
+		dbPartitionPhase1Config,
+		dbPartitionPhase2Config,
+		dbPartitionSchedulerConfig,
 		depotWebConfig,
 		designLibraryWebConfig,
 		dispatchWebConfig,
