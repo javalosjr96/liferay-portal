@@ -538,39 +538,7 @@ public abstract class BaseDBProcess implements DBProcess {
 
 	protected Connection connection;
 
-	private void _closeConnections(Map<Thread, Connection> connectionsMap) {
-		if (MapUtil.isEmpty(connectionsMap)) {
-			return;
-		}
-
-		Collection<Connection> connections = connectionsMap.values();
-
-		Iterator<Connection> iterator = connections.iterator();
-
-		while (iterator.hasNext()) {
-			Connection connection = iterator.next();
-
-			iterator.remove();
-
-			_finishAndCloseConnection(connection);
-		}
-	}
-
-	private void _closeConnections(
-		Map<Thread, Connection> connectionsMap, Thread thread) {
-
-		if (connectionsMap == null) {
-			return;
-		}
-
-		Connection connection = connectionsMap.remove(thread);
-
-		if (connection != null) {
-			_finishAndCloseConnection(connection);
-		}
-	}
-
-	private void _finishAndCloseConnection(Connection connection) {
+	private void _closeConnection(Connection connection) {
 		Boolean autoCommit = _autoCommits.remove(connection);
 
 		if (autoCommit != null) {
@@ -598,6 +566,38 @@ public abstract class BaseDBProcess implements DBProcess {
 		}
 
 		DataAccess.cleanUp(connection);
+	}
+
+	private void _closeConnections(Map<Thread, Connection> connectionsMap) {
+		if (MapUtil.isEmpty(connectionsMap)) {
+			return;
+		}
+
+		Collection<Connection> connections = connectionsMap.values();
+
+		Iterator<Connection> iterator = connections.iterator();
+
+		while (iterator.hasNext()) {
+			Connection connection = iterator.next();
+
+			iterator.remove();
+
+			_closeConnection(connection);
+		}
+	}
+
+	private void _closeConnections(
+		Map<Thread, Connection> connectionsMap, Thread thread) {
+
+		if (connectionsMap == null) {
+			return;
+		}
+
+		Connection connection = connectionsMap.remove(thread);
+
+		if (connection != null) {
+			_closeConnection(connection);
+		}
 	}
 
 	private PreparedStatement _getConcurrentPreparedStatement(
