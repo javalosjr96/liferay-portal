@@ -704,26 +704,28 @@ public abstract class BaseDBProcess implements DBProcess {
 
 		Runtime runtime = Runtime.getRuntime();
 
-		int expectedMaxConnectionsCount =
-			Math.min(companyIds.length - 1, runtime.availableProcessors()) *
-				runtime.availableProcessors();
+		int availableProcessors = runtime.availableProcessors();
 
-		if (expectedMaxConnectionsCount > (0.9 * maximumPoolSize)) {
-			if (_log.isWarnEnabled()) {
-				_log.warn(
-					StringBundler.concat(
-						"The database is close to reaching ", maximumPoolSize,
-						" connections. Consider increasing the property ",
-						"\"jdbc.default.maximumPoolSize\" to improve ",
-						"performance. Upgrade processes will continue in ",
-						"single threaded mode."));
-			}
+		int companyCount = Math.max(1, companyIds.length);
 
-			_fixedThreadPoolSize.set(1);
+		int connectionBudget = Math.max(
+			1, (int)(0.9 * maximumPoolSize / companyCount));
+
+		int fixedThreadPoolSize = Math.min(availableProcessors, connectionBudget);
+
+		if ((fixedThreadPoolSize < availableProcessors) &&
+			_log.isWarnEnabled()) {
+
+			_log.warn(
+				StringBundler.concat(
+					"Limiting upgrade worker threads to ", fixedThreadPoolSize,
+					" to avoid exhausting the database connection pool of ",
+					"size ", maximumPoolSize,
+					". Consider increasing \"jdbc.default.maximumPoolSize\" ",
+					"to improve upgrade performance."));
 		}
-		else {
-			_fixedThreadPoolSize.set(runtime.availableProcessors());
-		}
+
+		_fixedThreadPoolSize.set(fixedThreadPoolSize);
 
 		return _fixedThreadPoolSize.get();
 	}

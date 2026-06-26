@@ -24,21 +24,30 @@ public class BaseDBProcessTest {
 
 	@Test
 	public void testGetFixedThreadPoolSize() throws Exception {
-		_testGetFixedThreadPoolSize(DBType.MYSQL, 1, 1);
-
 		Runtime runtime = Runtime.getRuntime();
 
-		_testGetFixedThreadPoolSize(
-			DBType.MYSQL, runtime.availableProcessors(), 1000);
+		int availableProcessors = runtime.availableProcessors();
 
-		_testGetFixedThreadPoolSize(DBType.HYPERSONIC, 1, 1000);
+		_testGetFixedThreadPoolSize(DBType.HYPERSONIC, 1, 1, 1000);
+
+		// Ample pool, single company: all processors are used
+
+		_testGetFixedThreadPoolSize(DBType.MYSQL, availableProcessors, 1, 1000);
+
+		// Small pool, single company (LPD-96132): cap to connection budget
+
+		int smallPoolSize = 10;
+
+		_testGetFixedThreadPoolSize(
+			DBType.MYSQL,
+			Math.min(availableProcessors, (int)(0.9 * smallPoolSize)), 1,
+			smallPoolSize);
 	}
 
 	private void _testGetFixedThreadPoolSize(
-			DBType dbType, int expectedFixedThreadPoolSize, int maximumPoolSize)
+			DBType dbType, int expectedFixedThreadPoolSize, int companyCount,
+			int maximumPoolSize)
 		throws Exception {
-
-		Runtime runtime = Runtime.getRuntime();
 
 		try (MockedStatic<DBManagerUtil> dbManagerUtilMockedStatic =
 				Mockito.mockStatic(DBManagerUtil.class);
@@ -64,7 +73,7 @@ public class BaseDBProcessTest {
 			portalInstancePoolMockedStatic.when(
 				PortalInstancePool::getCompanyIds
 			).thenReturn(
-				new long[runtime.availableProcessors() + 2]
+				new long[companyCount]
 			);
 
 			propsUtilMockedStatic.when(
