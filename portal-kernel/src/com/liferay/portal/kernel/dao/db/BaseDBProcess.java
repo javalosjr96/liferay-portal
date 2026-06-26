@@ -779,59 +779,60 @@ public abstract class BaseDBProcess implements DBProcess {
 			boolean workflowEnabled = WorkflowThreadLocal.isEnabled();
 
 			for (int i = 0; i < fixedThreadPoolSize; i++) {
-				futures.add(
-					executorService.submit(
-						new CompanyInheritableThreadLocalCallable<>(
-							() -> {
-								NotificationThreadLocal.setEnabled(
-									notificationEnabled);
-								WorkflowThreadLocal.setEnabled(workflowEnabled);
+				CompanyInheritableThreadLocalCallable<Void> callable =
+					new CompanyInheritableThreadLocalCallable<>(
+						() -> {
+							NotificationThreadLocal.setEnabled(
+								notificationEnabled);
+							WorkflowThreadLocal.setEnabled(workflowEnabled);
 
-								Thread currentThread = Thread.currentThread();
+							Thread currentThread = Thread.currentThread();
 
-								try {
-									PreparedStatement preparedStatement = null;
+							try {
+								PreparedStatement preparedStatement = null;
 
-									while (true) {
-										T current = null;
+								while (true) {
+									T current = null;
 
-										synchronized (unsafeSupplier) {
-											current = unsafeSupplier.get();
-										}
-
-										if (current == null) {
-											break;
-										}
-
-										if (Validator.isNull(updateSQL)) {
-											unsafeConsumer.accept(current);
-										}
-										else {
-											preparedStatement =
-												_getConcurrentPreparedStatement(
-													updateSQL,
-													preparedStatementHashMap);
-
-											unsafeBiConsumer.accept(
-												current, preparedStatement);
-										}
+									synchronized (unsafeSupplier) {
+										current = unsafeSupplier.get();
 									}
 
-									if (preparedStatement != null) {
-										preparedStatement.executeBatch();
+									if (current == null) {
+										break;
+									}
 
-										preparedStatement.close();
+									if (Validator.isNull(updateSQL)) {
+										unsafeConsumer.accept(current);
+									}
+									else {
+										preparedStatement =
+											_getConcurrentPreparedStatement(
+												updateSQL,
+												preparedStatementHashMap);
+
+										unsafeBiConsumer.accept(
+											current, preparedStatement);
 									}
 								}
-								catch (Exception exception) {
-									throwableCollector.collect(exception);
-								}
-								finally {
-									closeConnections(currentThread);
-								}
 
-								return null;
-							})));
+								if (preparedStatement != null) {
+									preparedStatement.executeBatch();
+
+									preparedStatement.close();
+								}
+							}
+							catch (Exception exception) {
+								throwableCollector.collect(exception);
+							}
+							finally {
+								closeConnections(currentThread);
+							}
+
+							return null;
+						});
+
+				futures.add(executorService.submit(callable));
 			}
 		}
 		finally {
