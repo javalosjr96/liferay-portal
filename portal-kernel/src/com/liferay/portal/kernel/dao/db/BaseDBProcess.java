@@ -711,7 +711,8 @@ public abstract class BaseDBProcess implements DBProcess {
 		int connectionBudget = Math.max(
 			1, (int)(0.9 * maximumPoolSize / companyCount));
 
-		int fixedThreadPoolSize = Math.min(availableProcessors, connectionBudget);
+		int fixedThreadPoolSize = Math.min(
+			availableProcessors, connectionBudget);
 
 		if ((fixedThreadPoolSize < availableProcessors) &&
 			_log.isWarnEnabled()) {
