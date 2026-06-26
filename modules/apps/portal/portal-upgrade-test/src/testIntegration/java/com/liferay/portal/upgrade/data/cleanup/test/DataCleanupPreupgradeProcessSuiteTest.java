@@ -9,6 +9,7 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.kernel.dao.db.BaseDBProcess;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.model.CompanyConstants;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -103,6 +105,9 @@ public class DataCleanupPreupgradeProcessSuiteTest
 		_originalDataCleanupPreupgradeProcessesMap =
 			ReflectionTestUtil.getFieldValue(
 				this, "_dataCleanupPreupgradeProcessesMap");
+
+		ReflectionTestUtil.setFieldValue(
+			BaseDBProcess.class, "_fixedThreadPoolSize", new AtomicInteger(0));
 	}
 
 	@After
@@ -247,6 +252,37 @@ public class DataCleanupPreupgradeProcessSuiteTest
 
 		Assert.assertTrue(_cleanupMessages.contains(_SUCCESS_MESSAGE_1));
 		Assert.assertTrue(_cleanupMessages.contains(_SUCCESS_MESSAGE_2));
+	}
+
+	@Test
+	public void testDataCleanupPreupgradeProcessesSuiteWithPartitionEnabled()
+		throws Exception {
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"DATABASE_PARTITION_ENABLED", true)) {
+
+			ReflectionTestUtil.setFieldValue(
+				this, "_dataCleanupPreupgradeProcessesMap",
+				HashMapBuilder.
+					<DataCleanupPreupgradeProcess,
+					 List<DataCleanupPreupgradeProcess>>put(
+						_createDataCleanupPreupgradeProcess(
+							() -> _cleanupMessages.add(_SUCCESS_MESSAGE_1)),
+						DataCleanupPreupgradeProcess.dependsOn()
+					).put(
+						_createDataCleanupPreupgradeProcess(
+							() -> _cleanupMessages.add(_SUCCESS_MESSAGE_2)),
+						DataCleanupPreupgradeProcess.dependsOn()
+					).build());
+
+			cleanUp();
+
+			Assert.assertTrue(
+				_cleanupMessages.contains(_SUCCESS_MESSAGE_1));
+			Assert.assertTrue(
+				_cleanupMessages.contains(_SUCCESS_MESSAGE_2));
+		}
 	}
 
 	private static void _updatePortalSchemaVersion(String schemaVersion)
