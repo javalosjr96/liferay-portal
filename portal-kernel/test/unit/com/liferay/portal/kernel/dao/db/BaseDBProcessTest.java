@@ -42,6 +42,20 @@ public class BaseDBProcessTest {
 			DBType.MYSQL,
 			Math.min(availableProcessors, (int)(0.9 * smallPoolSize)), 1,
 			smallPoolSize);
+
+		// Small pool, multiple companies: connection budget is split per company
+
+		_testGetFixedThreadPoolSize(
+			DBType.MYSQL,
+			Math.min(availableProcessors, (int)(0.9 * smallPoolSize / 5)), 5,
+			smallPoolSize);
+
+		// No companies: guard defaults to one company to avoid dividing by zero
+
+		_testGetFixedThreadPoolSize(
+			DBType.MYSQL,
+			Math.min(availableProcessors, (int)(0.9 * smallPoolSize)), 0,
+			smallPoolSize);
 	}
 
 	private void _testGetFixedThreadPoolSize(
