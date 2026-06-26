@@ -544,7 +544,7 @@ public abstract class BaseDBProcess implements DBProcess {
 		if (autoCommit != null) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Closing a connection that still has an autoCommit " +
+					"Closing a connection that still has an \"autoCommit\" " +
 						"override");
 			}
 
@@ -561,7 +561,7 @@ public abstract class BaseDBProcess implements DBProcess {
 				connection.setAutoCommit(autoCommit);
 			}
 			catch (SQLException sqlException) {
-				_log.error("Unable to set autoCommit", sqlException);
+				_log.error("Unable to set \"autoCommit\"", sqlException);
 			}
 		}
 
@@ -939,7 +939,7 @@ public abstract class BaseDBProcess implements DBProcess {
 						GetterUtil.getBoolean(autoCommit, true));
 				}
 				catch (SQLException sqlException) {
-					_log.error("Unable to set autoCommit", sqlException);
+					_log.error("Unable to set \"autoCommit\"", sqlException);
 				}
 			}
 		}
