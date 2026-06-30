@@ -21,9 +21,17 @@ function main {
 		-Dskip.get.testcase.database.properties=true \
 		rebuild-legacy-database
 
-	ant -f build-test.xml upgrade-legacy-database
+	local upgrade_exit_code=0
+	ant -f build-test.xml upgrade-legacy-database || upgrade_exit_code=$?
 
 	assert_clean_upgrade_log
+
+	if [ ${upgrade_exit_code} -ne 0 ]
+	then
+		echo "Upgrade failed with exit code ${upgrade_exit_code}."
+
+		exit ${upgrade_exit_code}
+	fi
 
 	default_set_up
 }
