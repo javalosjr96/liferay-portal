@@ -25,9 +25,7 @@ async function viewUpgradedPortalContent(page: Page) {
 	await test.step('View document after upgrade', async () => {
 		await page.goto('/web/guest/document');
 
-		await expect(
-			page.getByText('Document1', {exact: true})
-		).toBeVisible();
+		await expect(page.getByText('Document1', {exact: true})).toBeVisible();
 	});
 
 	await test.step('View message boards after upgrade', async () => {

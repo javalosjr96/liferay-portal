@@ -150,6 +150,7 @@ import {config as osbFaroWebConfig} from './tests/osb-faro-web/main/config';
 import {config as passwordPoliciesAdminWebFirstLoginConfig} from './tests/password-policies-admin-web/first-login/config';
 import {config as passwordPoliciesAdminWebConfig} from './tests/password-policies-admin-web/main/config';
 import {config as passwordPoliciesAdminWebSetupAdminConfig} from './tests/password-policies-admin-web/setup-admin/config';
+import {config as portalDbInfrastructureMainConfig} from './tests/portal-db-infrastructure/main/config';
 import {config as portalDbInfrastructureUpgradeConfig} from './tests/portal-db-infrastructure/upgrade/config';
 import {config as portalDefaultPermissionsWebConfig} from './tests/portal-default-permissions-web/main/config';
 import {config as portalImplMainConfig} from './tests/portal-impl/main/config';
@@ -386,6 +387,7 @@ export default defineConfig({
 		passwordPoliciesAdminWebConfig,
 		passwordPoliciesAdminWebFirstLoginConfig,
 		passwordPoliciesAdminWebSetupAdminConfig,
+		portalDbInfrastructureMainConfig,
 		portalDbInfrastructureUpgradeConfig,
 		portalDefaultPermissionsWebConfig,
 		portalImplMainConfig,
