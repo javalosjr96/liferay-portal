@@ -1,6 +1,13 @@
 #!/bin/bash
 
 function assert_clean_upgrade_log {
+	if [ -z "${LIFERAY_HOME}" ]
+	then
+		echo "LIFERAY_HOME is not set."
+
+		exit 1
+	fi
+
 	local upgrade_log="${LIFERAY_HOME}/tools/portal-tools-db-upgrade-client/logs/upgrade.log"
 
 	if [ ! -f "${upgrade_log}" ]
