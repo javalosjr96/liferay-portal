@@ -462,6 +462,8 @@ public abstract class BaseDBProcess implements DBProcess {
 			String exceptionMessage)
 		throws Exception {
 
+		List<Object[]> rows = new ArrayList<>();
+
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				sql)) {
 
@@ -471,18 +473,32 @@ public abstract class BaseDBProcess implements DBProcess {
 			unsafeConsumer.accept(preparedStatement);
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
-				_processConcurrently(
-					updateSQL,
-					() -> {
-						if (resultSet.next()) {
-							return unsafeFunction.apply(resultSet);
-						}
-
-						return null;
-					},
-					null, unsafeBiConsumer, exceptionMessage);
+				while (resultSet.next()) {
+					rows.add(unsafeFunction.apply(resultSet));
+				}
 			}
 		}
+
+		if (rows.isEmpty()) {
+			return;
+		}
+
+		Object[][] values = rows.toArray(new Object[0][]);
+
+		AtomicInteger counter = new AtomicInteger();
+
+		_processConcurrently(
+			updateSQL,
+			() -> {
+				int index = counter.getAndIncrement();
+
+				if (index < values.length) {
+					return values[index];
+				}
+
+				return null;
+			},
+			null, unsafeBiConsumer, exceptionMessage);
 	}
 
 	protected void processConcurrently(
@@ -492,22 +508,38 @@ public abstract class BaseDBProcess implements DBProcess {
 			String exceptionMessage)
 		throws Exception {
 
+		List<Object[]> rows = new ArrayList<>();
+
 		try (Statement statement = connection.createStatement()) {
 			statement.setFetchSize(PropsValues.UPGRADE_CONCURRENT_FETCH_SIZE);
 
 			try (ResultSet resultSet = statement.executeQuery(sql)) {
-				_processConcurrently(
-					null,
-					() -> {
-						if (resultSet.next()) {
-							return unsafeFunction.apply(resultSet);
-						}
-
-						return null;
-					},
-					unsafeConsumer, null, exceptionMessage);
+				while (resultSet.next()) {
+					rows.add(unsafeFunction.apply(resultSet));
+				}
 			}
 		}
+
+		if (rows.isEmpty()) {
+			return;
+		}
+
+		Object[][] values = rows.toArray(new Object[0][]);
+
+		AtomicInteger counter = new AtomicInteger();
+
+		_processConcurrently(
+			null,
+			() -> {
+				int index = counter.getAndIncrement();
+
+				if (index < values.length) {
+					return values[index];
+				}
+
+				return null;
+			},
+			unsafeConsumer, null, exceptionMessage);
 	}
 
 	protected <T> void processConcurrently(
