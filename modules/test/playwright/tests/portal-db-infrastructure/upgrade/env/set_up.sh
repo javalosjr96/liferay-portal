@@ -1,10 +1,10 @@
 #!/bin/bash
 
-CURRENT_DIR_NAME=$(dirname ${BASH_SOURCE[0]})
+CURRENT_DIR_NAME=$(dirname "${BASH_SOURCE[0]}")
 
-echo CURRENT_DIR_NAME=${CURRENT_DIR_NAME}
+echo "CURRENT_DIR_NAME=${CURRENT_DIR_NAME}"
 
-source ${CURRENT_DIR_NAME}/../../../../env/common.sh
+source "${CURRENT_DIR_NAME}/../../../../env/common.sh"
 
 DATA_ARCHIVE_TYPE="data-archive-portal"
 PORTAL_VERSION="6.2.5"
@@ -12,7 +12,7 @@ PORTAL_VERSION="6.2.5"
 function main {
 	set -ex
 
-	cd ${_PORTAL_PROJECT_DIR}
+	cd "${_PORTAL_PROJECT_DIR}"
 
 	ant -f build-test.xml \
 		-Ddata.archive.type=${DATA_ARCHIVE_TYPE} \

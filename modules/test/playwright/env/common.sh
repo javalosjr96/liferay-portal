@@ -11,7 +11,7 @@ function assert_clean_upgrade_log {
 	fi
 
 	local upgrade_log_errors
-	upgrade_log_errors=$(grep -E "^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3} (ERROR|FATAL)" "${upgrade_log}" || true)
+	upgrade_log_errors=$(grep -E "^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+[0-9]{2}:[0-9]{2}:[0-9]{2}\.[0-9]{3}[[:space:]]+(ERROR|FATAL)" "${upgrade_log}" || true)
 
 	if [ -n "${upgrade_log_errors}" ]
 	then

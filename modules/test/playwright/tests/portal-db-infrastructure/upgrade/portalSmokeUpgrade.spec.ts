@@ -78,7 +78,7 @@ test.describe.serial('View portal smoke upgrade', () => {
 		async ({page}) => {
 			await page.goto('/c/portal/logout');
 
-			await page.goto('/web/guest/home');
+			await page.goto('/c/portal/login');
 
 			await page.getByLabel('Email Address').fill('user@liferay.com');
 
