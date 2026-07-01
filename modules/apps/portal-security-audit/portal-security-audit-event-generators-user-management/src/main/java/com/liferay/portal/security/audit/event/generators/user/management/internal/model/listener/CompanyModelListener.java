@@ -31,9 +31,9 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 				Company.class.getName(), company.getCompanyId(),
 				EventTypes.ADD, null);
 
-			JSONObject additionalInfo = auditMessage.getAdditionalInfo();
+			JSONObject additionalInfoJSONObject = auditMessage.getAdditionalInfo();
 
-			additionalInfo.put(
+			additionalInfoJSONObject.put(
 				"virtualHostname", company.getVirtualHostname()
 			).put(
 				"webId", company.getWebId()

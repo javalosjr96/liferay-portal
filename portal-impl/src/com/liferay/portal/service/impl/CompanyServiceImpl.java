@@ -6,8 +6,12 @@
 package com.liferay.portal.service.impl;
 
 import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.audit.AuditRouterUtil;
 import com.liferay.portal.kernel.bean.BeanReference;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceMode;
 import com.liferay.portal.kernel.model.Address;
@@ -18,8 +22,11 @@ import com.liferay.portal.kernel.model.Phone;
 import com.liferay.portal.kernel.model.Website;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.service.base.CompanyServiceBaseImpl;
@@ -120,8 +127,27 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
 		}
 
-		return companyLocalService.addDBPartitionCompany(
+		Company company = companyLocalService.addDBPartitionCompany(
 			companyId, name, virtualHostname, webId);
+
+		if (AuditRouterUtil.isDeployed()) {
+			long userId = GetterUtil.getLong(PrincipalThreadLocal.getName());
+
+			AuditMessage auditMessage = new AuditMessage(
+				0, company.getCompanyId(), userId,
+				PortalUtil.getUserName(userId, StringPool.BLANK), null,
+				JSONUtil.put(
+					"virtualHostname", company.getVirtualHostname()
+				).put(
+					"webId", company.getWebId()
+				),
+				Company.class.getName(),
+				String.valueOf(company.getCompanyId()), "ADD", null);
+
+			AuditRouterUtil.route(auditMessage);
+		}
+
+		return company;
 	}
 
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)

@@ -9,7 +9,7 @@ import com.liferay.headless.portal.instances.dto.v1_0.Admin;
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstance;
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstanceImport;
 import com.liferay.headless.portal.instances.resource.v1_0.PortalInstanceResource;
-import com.liferay.portal.kernel.exception.PortalException;
+import jakarta.ws.rs.BadRequestException;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
 import com.liferay.portal.kernel.exception.UserScreenNameException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
@@ -153,7 +153,8 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			StringUtil.removeSubstring(schemaName, "lextracted_"));
 
 		if (companyId == 0) {
-			throw new PortalException("Invalid schema name: " + schemaName);
+			throw new BadRequestException(
+				"Invalid schema name: " + schemaName);
 		}
 
 		Company company = _companyService.addDBPartitionCompany(
