@@ -26,8 +26,6 @@ import jakarta.ws.rs.BadRequestException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -138,15 +136,6 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			String idempotencyKey, PortalInstanceImport portalInstanceImport)
 		throws Exception {
 
-		if (idempotencyKey != null) {
-			PortalInstance cachedPortalInstance = _idempotencyCache.get(
-				idempotencyKey);
-
-			if (cachedPortalInstance != null) {
-				return cachedPortalInstance;
-			}
-		}
-
 		String schemaName = portalInstanceImport.getSchemaName();
 
 		long companyId = GetterUtil.getLong(
@@ -156,18 +145,11 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			throw new BadRequestException("Invalid schema name: " + schemaName);
 		}
 
-		Company company = _companyService.addDBPartitionCompany(
-			companyId, portalInstanceImport.getName(),
-			portalInstanceImport.getVirtualHost(),
-			portalInstanceImport.getWebId());
-
-		PortalInstance portalInstance = _toPortalInstance(company);
-
-		if (idempotencyKey != null) {
-			_idempotencyCache.put(idempotencyKey, portalInstance);
-		}
-
-		return portalInstance;
+		return _toPortalInstance(
+			_companyService.addDBPartitionCompany(
+				companyId, portalInstanceImport.getName(),
+				portalInstanceImport.getVirtualHost(),
+				portalInstanceImport.getWebId()));
 	}
 
 	@Override
@@ -220,9 +202,6 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				admin.getEmailAddress(), emailAddressValidator);
 		}
 	}
-
-	private static final Map<String, PortalInstance> _idempotencyCache =
-		new ConcurrentHashMap<>();
 
 	@Reference
 	private CompanyService _companyService;
