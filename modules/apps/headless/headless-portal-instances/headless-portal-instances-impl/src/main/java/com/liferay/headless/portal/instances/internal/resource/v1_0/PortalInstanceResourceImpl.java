@@ -136,6 +136,10 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			String idempotencyKey, PortalInstanceImport portalInstanceImport)
 		throws Exception {
 
+		if (portalInstanceImport == null) {
+			throw new BadRequestException("Import configuration is required");
+		}
+
 		String schemaNameString = portalInstanceImport.getSchemaName();
 
 		long companyId = GetterUtil.getLong(

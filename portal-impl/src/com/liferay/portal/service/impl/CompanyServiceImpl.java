@@ -127,26 +127,8 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
 		}
 
-		Company company = companyLocalService.addDBPartitionCompany(
+		return companyLocalService.addDBPartitionCompany(
 			companyId, name, virtualHostname, webId);
-
-		if (AuditRouterUtil.isDeployed()) {
-			long userId = GetterUtil.getLong(PrincipalThreadLocal.getName());
-
-			AuditRouterUtil.route(
-				new AuditMessage(
-					0, company.getCompanyId(), userId,
-					PortalUtil.getUserName(userId, StringPool.BLANK), null,
-					JSONUtil.put(
-						"virtualHostname", company.getVirtualHostname()
-					).put(
-						"webId", company.getWebId()
-					),
-					Company.class.getName(),
-					String.valueOf(company.getCompanyId()), "ADD", null));
-		}
-
-		return company;
 	}
 
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
