@@ -133,18 +133,17 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 		if (AuditRouterUtil.isDeployed()) {
 			long userId = GetterUtil.getLong(PrincipalThreadLocal.getName());
 
-			AuditMessage auditMessage = new AuditMessage(
-				0, company.getCompanyId(), userId,
-				PortalUtil.getUserName(userId, StringPool.BLANK), null,
-				JSONUtil.put(
-					"virtualHostname", company.getVirtualHostname()
-				).put(
-					"webId", company.getWebId()
-				),
-				Company.class.getName(), String.valueOf(company.getCompanyId()),
-				"ADD", null);
-
-			AuditRouterUtil.route(auditMessage);
+			AuditRouterUtil.route(
+				new AuditMessage(
+					0, company.getCompanyId(), userId,
+					PortalUtil.getUserName(userId, StringPool.BLANK), null,
+					JSONUtil.put(
+						"virtualHostname", company.getVirtualHostname()
+					).put(
+						"webId", company.getWebId()
+					),
+					Company.class.getName(),
+					String.valueOf(company.getCompanyId()), "ADD", null));
 		}
 
 		return company;
