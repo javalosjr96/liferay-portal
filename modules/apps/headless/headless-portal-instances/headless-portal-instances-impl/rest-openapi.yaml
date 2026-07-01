@@ -58,21 +58,21 @@ components:
             description:
                 Import configuration for a DB partition portal instance.
             properties:
-                newName:
+                name:
                     description:
-                        Optional new display name for the imported portal instance.
-                    type: string
-                newVirtualHostname:
-                    description:
-                        Optional new virtual hostname for the imported portal instance.
-                    type: string
-                newWebId:
-                    description:
-                        Optional new web ID for the imported portal instance.
+                        Optional display name for the imported portal instance.
                     type: string
                 schemaName:
                     description:
                         The DB partition schema name to import (format lextracted_[companyId]).
+                    type: string
+                virtualHost:
+                    description:
+                        Optional virtual host for the imported portal instance.
+                    type: string
+                webId:
+                    description:
+                        Optional web ID for the imported portal instance.
                     type: string
             required:
                 - schemaName
