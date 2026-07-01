@@ -91,6 +91,11 @@ public interface CompanyService extends BaseService {
 		throws PortalException;
 
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
+	public Company addDBPartitionCompany(
+			long companyId, String name, String virtualHostname, String webId)
+		throws PortalException;
+
+	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	public Company deleteCompany(long companyId) throws PortalException;
 
 	/**

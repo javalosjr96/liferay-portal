@@ -7,7 +7,9 @@ package com.liferay.headless.portal.instances.internal.resource.v1_0;
 
 import com.liferay.headless.portal.instances.dto.v1_0.Admin;
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstance;
+import com.liferay.headless.portal.instances.dto.v1_0.PortalInstanceImport;
 import com.liferay.headless.portal.instances.resource.v1_0.PortalInstanceResource;
+import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
 import com.liferay.portal.kernel.exception.UserScreenNameException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
@@ -15,6 +17,7 @@ import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.security.auth.EmailAddressValidator;
 import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.EmailAddressValidatorFactory;
 import com.liferay.portal.util.PortalInstances;
@@ -22,6 +25,8 @@ import com.liferay.portal.vulcan.pagination.Page;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -128,6 +133,44 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 	}
 
 	@Override
+	public PortalInstance postPortalInstanceImport(
+			String idempotencyKey,
+			PortalInstanceImport portalInstanceImport)
+		throws Exception {
+
+		if (idempotencyKey != null) {
+			PortalInstance cachedPortalInstance = _idempotencyCache.get(
+				idempotencyKey);
+
+			if (cachedPortalInstance != null) {
+				return cachedPortalInstance;
+			}
+		}
+
+		String schemaName = portalInstanceImport.getSchemaName();
+
+		long companyId = GetterUtil.getLong(
+			StringUtil.removeSubstring(schemaName, "lextracted_"));
+
+		if (companyId == 0) {
+			throw new PortalException("Invalid schema name: " + schemaName);
+		}
+
+		Company company = _companyService.addDBPartitionCompany(
+			companyId, portalInstanceImport.getNewName(),
+			portalInstanceImport.getNewVirtualHostname(),
+			portalInstanceImport.getNewWebId());
+
+		PortalInstance portalInstance = _toPortalInstance(company);
+
+		if (idempotencyKey != null) {
+			_idempotencyCache.put(idempotencyKey, portalInstance);
+		}
+
+		return portalInstance;
+	}
+
+	@Override
 	public void putPortalInstanceActivate(String portalInstanceId)
 		throws Exception {
 
@@ -180,5 +223,8 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 	@Reference
 	private CompanyService _companyService;
+
+	private final Map<String, PortalInstance> _idempotencyCache =
+		new ConcurrentHashMap<>();
 
 }
