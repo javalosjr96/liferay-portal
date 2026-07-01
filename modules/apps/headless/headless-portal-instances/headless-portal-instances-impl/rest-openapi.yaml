@@ -150,7 +150,7 @@ paths:
             operationId: postPortalInstanceImport
             parameters:
                 -   in: header
-                    name: Idempotency-Key
+                    name: idempotency-key
                     required: false
                     schema:
                         type: string
