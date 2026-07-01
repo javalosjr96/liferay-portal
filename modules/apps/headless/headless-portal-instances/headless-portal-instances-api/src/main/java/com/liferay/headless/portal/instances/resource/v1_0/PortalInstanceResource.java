@@ -59,7 +59,7 @@ public interface PortalInstanceResource {
 		throws Exception;
 
 	public PortalInstance postPortalInstanceImport(
-			String IdempotencyKey, PortalInstanceImport portalInstanceImport)
+			String idempotencyKey, PortalInstanceImport portalInstanceImport)
 		throws Exception;
 
 	public void putPortalInstanceActivate(String portalInstanceId)
@@ -156,4 +156,4 @@ public interface PortalInstanceResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-364633712
+// LIFERAY-REST-BUILDER-HASH:-527484496
