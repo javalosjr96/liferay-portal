@@ -395,37 +395,39 @@ public class PortalInstanceResourceTest
 	private void _testPostPortalInstanceImportForbidden() throws Exception {
 		User user = UserTestUtil.addUser(false);
 
-		user = _userLocalService.updatePassword(
-			user.getUserId(), "test", "test", false, true);
-
-		Company company = _companyLocalService.fetchCompany(
-			TestPropsValues.getCompanyId());
-
-		PortalInstanceResource portalInstanceResource =
-			PortalInstanceResource.builder(
-			).authentication(
-				user.getEmailAddress(), "test"
-			).endpoint(
-				company.getVirtualHostname(),
-				PortalUtil.getPortalServerPort(false), "http"
-			).locale(
-				LocaleUtil.getDefault()
-			).build();
-
-		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
-
-		portalInstanceImport.setSchemaName("lextracted_1");
-
 		try {
-			portalInstanceResource.postPortalInstanceImport(
-				null, portalInstanceImport);
+			user = _userLocalService.updatePassword(
+				user.getUserId(), "test", "test", false, true);
 
-			Assert.fail();
-		}
-		catch (Problem.ProblemException problemException) {
-			Problem problem = problemException.getProblem();
+			Company company = _companyLocalService.fetchCompany(
+				TestPropsValues.getCompanyId());
 
-			Assert.assertEquals("FORBIDDEN", problem.getStatus());
+			PortalInstanceResource portalInstanceResource =
+				PortalInstanceResource.builder(
+				).authentication(
+					user.getEmailAddress(), "test"
+				).endpoint(
+					company.getVirtualHostname(),
+					PortalUtil.getPortalServerPort(false), "http"
+				).locale(
+					LocaleUtil.getDefault()
+				).build();
+
+			PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
+
+			portalInstanceImport.setSchemaName("lextracted_1");
+
+			try {
+				portalInstanceResource.postPortalInstanceImport(
+					null, portalInstanceImport);
+
+				Assert.fail();
+			}
+			catch (Problem.ProblemException problemException) {
+				Problem problem = problemException.getProblem();
+
+				Assert.assertEquals("FORBIDDEN", problem.getStatus());
+			}
 		}
 		finally {
 			_userLocalService.deleteUser(user.getUserId());
