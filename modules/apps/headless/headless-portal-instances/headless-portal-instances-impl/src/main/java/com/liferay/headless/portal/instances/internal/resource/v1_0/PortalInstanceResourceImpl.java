@@ -9,7 +9,6 @@ import com.liferay.headless.portal.instances.dto.v1_0.Admin;
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstance;
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstanceImport;
 import com.liferay.headless.portal.instances.resource.v1_0.PortalInstanceResource;
-import jakarta.ws.rs.BadRequestException;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
 import com.liferay.portal.kernel.exception.UserScreenNameException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
@@ -22,6 +21,8 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.EmailAddressValidatorFactory;
 import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.vulcan.pagination.Page;
+
+import jakarta.ws.rs.BadRequestException;
 
 import java.util.ArrayList;
 import java.util.List;
