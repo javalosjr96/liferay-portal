@@ -203,26 +203,6 @@ public class PortalInstanceResourceTest
 		return portalInstance;
 	}
 
-	private void _testPostPortalInstanceImportInvalidSchemaName()
-		throws Exception {
-
-		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
-
-		portalInstanceImport.setSchemaName("invalid");
-
-		try {
-			portalInstanceResource.postPortalInstanceImport(
-				null, portalInstanceImport);
-
-			Assert.fail();
-		}
-		catch (Problem.ProblemException problemException) {
-			Problem problem = problemException.getProblem();
-
-			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
-		}
-	}
-
 	private static void _deletePortalInstance(PortalInstance portalInstance)
 		throws Exception {
 
@@ -404,6 +384,26 @@ public class PortalInstanceResourceTest
 			false, false, false, false, true);
 
 		_testPatchPortalInstace(portalInstance, false, false, false);
+	}
+
+	private void _testPostPortalInstanceImportInvalidSchemaName()
+		throws Exception {
+
+		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
+
+		portalInstanceImport.setSchemaName("invalid");
+
+		try {
+			portalInstanceResource.postPortalInstanceImport(
+				null, portalInstanceImport);
+
+			Assert.fail();
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
+		}
 	}
 
 	private void _testPostPortalInstanceWithAdmin() throws Exception {

@@ -141,8 +141,8 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 				).put(
 					"webId", company.getWebId()
 				),
-				Company.class.getName(),
-				String.valueOf(company.getCompanyId()), "ADD", null);
+				Company.class.getName(), String.valueOf(company.getCompanyId()),
+				"ADD", null);
 
 			AuditRouterUtil.route(auditMessage);
 		}

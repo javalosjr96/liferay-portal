@@ -75,7 +75,7 @@ components:
                         Optional web ID for the imported portal instance.
                     type: string
             required:
-                - schemaName
+                -   schemaName
             type: object
 info:
     description:

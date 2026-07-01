@@ -135,8 +135,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 	@Override
 	public PortalInstance postPortalInstanceImport(
-			String idempotencyKey,
-			PortalInstanceImport portalInstanceImport)
+			String idempotencyKey, PortalInstanceImport portalInstanceImport)
 		throws Exception {
 
 		if (idempotencyKey != null) {
@@ -154,8 +153,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			StringUtil.removeSubstring(schemaName, "lextracted_"));
 
 		if (companyId == 0) {
-			throw new BadRequestException(
-				"Invalid schema name: " + schemaName);
+			throw new BadRequestException("Invalid schema name: " + schemaName);
 		}
 
 		Company company = _companyService.addDBPartitionCompany(
@@ -223,10 +221,10 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		}
 	}
 
-	@Reference
-	private CompanyService _companyService;
-
 	private static final Map<String, PortalInstance> _idempotencyCache =
 		new ConcurrentHashMap<>();
+
+	@Reference
+	private CompanyService _companyService;
 
 }

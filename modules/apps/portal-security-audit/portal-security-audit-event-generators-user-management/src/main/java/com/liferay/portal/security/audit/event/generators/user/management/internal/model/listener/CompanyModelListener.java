@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -28,10 +28,11 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 	public void onBeforeCreate(Company company) throws ModelListenerException {
 		try {
 			AuditMessage auditMessage = AuditMessageBuilder.buildAuditMessage(
-				Company.class.getName(), company.getCompanyId(),
-				EventTypes.ADD, null);
+				Company.class.getName(), company.getCompanyId(), EventTypes.ADD,
+				null);
 
-			JSONObject additionalInfoJSONObject = auditMessage.getAdditionalInfo();
+			JSONObject additionalInfoJSONObject =
+				auditMessage.getAdditionalInfo();
 
 			additionalInfoJSONObject.put(
 				"virtualHostname", company.getVirtualHostname()
