@@ -1,0 +1,308 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+package com.liferay.headless.portal.instances.client.serdes.v1_0;
+
+import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstanceImport;
+import com.liferay.headless.portal.instances.client.json.BaseJSONParser;
+
+import jakarta.annotation.Generated;
+
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.TreeMap;
+
+/**
+ * @author Alberto Chaparro
+ * @generated
+ */
+@Generated("")
+public class PortalInstanceImportSerDes {
+
+	public static PortalInstanceImport toDTO(String json) {
+		PortalInstanceImportJSONParser portalInstanceImportJSONParser =
+			new PortalInstanceImportJSONParser();
+
+		return portalInstanceImportJSONParser.parseToDTO(json);
+	}
+
+	public static PortalInstanceImport[] toDTOs(String json) {
+		PortalInstanceImportJSONParser portalInstanceImportJSONParser =
+			new PortalInstanceImportJSONParser();
+
+		return portalInstanceImportJSONParser.parseToDTOs(json);
+	}
+
+	public static String toJSON(PortalInstanceImport portalInstanceImport) {
+		if (portalInstanceImport == null) {
+			return "null";
+		}
+
+		StringBuilder sb = new StringBuilder();
+
+		sb.append("{");
+
+		if (portalInstanceImport.getNewName() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"newName\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(portalInstanceImport.getNewName()));
+
+			sb.append("\"");
+		}
+
+		if (portalInstanceImport.getNewVirtualHostname() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"newVirtualHostname\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(portalInstanceImport.getNewVirtualHostname()));
+
+			sb.append("\"");
+		}
+
+		if (portalInstanceImport.getNewWebId() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"newWebId\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(portalInstanceImport.getNewWebId()));
+
+			sb.append("\"");
+		}
+
+		if (portalInstanceImport.getSchemaName() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"schemaName\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(portalInstanceImport.getSchemaName()));
+
+			sb.append("\"");
+		}
+
+		sb.append("}");
+
+		return sb.toString();
+	}
+
+	public static Map<String, Object> toMap(String json) {
+		PortalInstanceImportJSONParser portalInstanceImportJSONParser =
+			new PortalInstanceImportJSONParser();
+
+		return portalInstanceImportJSONParser.parseToMap(json);
+	}
+
+	public static Map<String, String> toMap(
+		PortalInstanceImport portalInstanceImport) {
+
+		if (portalInstanceImport == null) {
+			return null;
+		}
+
+		Map<String, String> map = new TreeMap<>();
+
+		if (portalInstanceImport.getNewName() == null) {
+			map.put("newName", null);
+		}
+		else {
+			map.put(
+				"newName", String.valueOf(portalInstanceImport.getNewName()));
+		}
+
+		if (portalInstanceImport.getNewVirtualHostname() == null) {
+			map.put("newVirtualHostname", null);
+		}
+		else {
+			map.put(
+				"newVirtualHostname",
+				String.valueOf(portalInstanceImport.getNewVirtualHostname()));
+		}
+
+		if (portalInstanceImport.getNewWebId() == null) {
+			map.put("newWebId", null);
+		}
+		else {
+			map.put(
+				"newWebId", String.valueOf(portalInstanceImport.getNewWebId()));
+		}
+
+		if (portalInstanceImport.getSchemaName() == null) {
+			map.put("schemaName", null);
+		}
+		else {
+			map.put(
+				"schemaName",
+				String.valueOf(portalInstanceImport.getSchemaName()));
+		}
+
+		return map;
+	}
+
+	public static class PortalInstanceImportJSONParser
+		extends BaseJSONParser<PortalInstanceImport> {
+
+		@Override
+		protected PortalInstanceImport createDTO() {
+			return new PortalInstanceImport();
+		}
+
+		@Override
+		protected PortalInstanceImport[] createDTOArray(int size) {
+			return new PortalInstanceImport[size];
+		}
+
+		@Override
+		protected boolean parseMaps(String jsonParserFieldName) {
+			if (Objects.equals(jsonParserFieldName, "newName")) {
+				return false;
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "newVirtualHostname")) {
+
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "newWebId")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "schemaName")) {
+				return false;
+			}
+
+			return false;
+		}
+
+		@Override
+		protected void setField(
+			PortalInstanceImport portalInstanceImport,
+			String jsonParserFieldName, Object jsonParserFieldValue) {
+
+			if (Objects.equals(jsonParserFieldName, "newName")) {
+				if (jsonParserFieldValue != null) {
+					portalInstanceImport.setNewName(
+						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(
+						jsonParserFieldName, "newVirtualHostname")) {
+
+				if (jsonParserFieldValue != null) {
+					portalInstanceImport.setNewVirtualHostname(
+						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "newWebId")) {
+				if (jsonParserFieldValue != null) {
+					portalInstanceImport.setNewWebId(
+						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "schemaName")) {
+				if (jsonParserFieldValue != null) {
+					portalInstanceImport.setSchemaName(
+						(String)jsonParserFieldValue);
+				}
+			}
+		}
+
+	}
+
+	private static String _escape(Object object) {
+		String string = String.valueOf(object);
+
+		for (String[] strings : BaseJSONParser.JSON_ESCAPE_STRINGS) {
+			string = string.replace(strings[0], strings[1]);
+		}
+
+		return string;
+	}
+
+	private static String _toJSON(Map<String, ?> map) {
+		StringBuilder sb = new StringBuilder("{");
+
+		@SuppressWarnings("unchecked")
+		Set set = map.entrySet();
+
+		@SuppressWarnings("unchecked")
+		Iterator<Map.Entry<String, ?>> iterator = set.iterator();
+
+		while (iterator.hasNext()) {
+			Map.Entry<String, ?> entry = iterator.next();
+
+			sb.append("\"");
+			sb.append(entry.getKey());
+			sb.append("\": ");
+
+			Object value = entry.getValue();
+
+			sb.append(_toJSON(value));
+
+			if (iterator.hasNext()) {
+				sb.append(", ");
+			}
+		}
+
+		sb.append("}");
+
+		return sb.toString();
+	}
+
+	private static String _toJSON(Object value) {
+		if (value == null) {
+			return "null";
+		}
+
+		if (value instanceof Map) {
+			return _toJSON((Map)value);
+		}
+
+		Class<?> clazz = value.getClass();
+
+		if (clazz.isArray()) {
+			StringBuilder sb = new StringBuilder("[");
+
+			Object[] values = (Object[])value;
+
+			for (int i = 0; i < values.length; i++) {
+				sb.append(_toJSON(values[i]));
+
+				if ((i + 1) < values.length) {
+					sb.append(", ");
+				}
+			}
+
+			sb.append("]");
+
+			return sb.toString();
+		}
+
+		if (value instanceof String) {
+			return "\"" + _escape(value) + "\"";
+		}
+
+		return String.valueOf(value);
+	}
+
+}
+// LIFERAY-REST-BUILDER-HASH:1714028631

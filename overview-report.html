@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Jira Overview — jorge.avalos@liferay.com</title>
+<style>
+  :root {
+    --bg: #282a36;
+    --panel: #2b2e3b;
+    --panel-2: #343746;
+    --border: #44475a;
+    --text: #f8f8f2;
+    --muted: #6272a4;
+    --accent: #bd93f9;
+    --cyan: #8be9fd;
+    --green: #50fa7b;
+    --amber: #ffb86c;
+    --red: #ff5555;
+    --purple: #bd93f9;
+    --pink: #ff79c6;
+    --yellow: #f1fa8c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 14px/1.5 -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 32px 28px 80px;
+  }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: var(--muted); margin: 0 0 24px; font-size: 13px; }
+
+  .toolbar {
+    display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+  .toolbar input[type=search] {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--text);
+    border-radius: 8px; padding: 8px 12px; font-size: 13px; min-width: 260px;
+  }
+  .toolbar input[type=search]::placeholder { color: var(--muted); }
+  .filters { display: flex; gap: 6px; flex-wrap: wrap; }
+  .chip {
+    background: var(--panel-2); border: 1px solid var(--border); color: var(--muted);
+    border-radius: 999px; padding: 5px 12px; cursor: pointer; font-size: 12px; user-select: none;
+  }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #282a36; font-weight: 600; }
+  .count { color: var(--muted); font-size: 12px; margin-left: auto; }
+
+  .cards { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 24px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px 18px; min-width: 130px; flex: 1;
+  }
+  .card .n { font-size: 26px; font-weight: 700; }
+  .card .l { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+  .card.green .n { color: var(--green); }
+  .card.amber .n { color: var(--amber); }
+  .card.red .n { color: var(--red); }
+  .card.accent .n { color: var(--accent); }
+
+  table { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 12px; overflow: hidden; }
+  thead th {
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--muted); padding: 12px 14px; border-bottom: 1px solid var(--border); cursor: pointer;
+    white-space: nowrap; background: var(--panel-2);
+  }
+  thead th:hover { color: var(--text); }
+  tbody td { padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr.child td:first-child { padding-left: 30px; }
+  tbody tr.child .key::before { content: "↳ "; color: var(--muted); }
+  tbody tr.parent { background: rgba(189,147,249,.07); }
+  tbody tr:hover { background: rgba(255,255,255,.03); }
+
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .key { font-family: "SFMono-Regular", Consolas, monospace; font-weight: 600; white-space: nowrap; }
+  .summary { max-width: 320px; }
+
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .st-inprogress { background: rgba(241,250,140,.15); color: var(--yellow); }
+  .st-open { background: rgba(98,114,164,.25); color: #abb2d6; }
+  .st-closed { background: rgba(80,250,123,.15); color: var(--green); }
+  .st-development { background: rgba(139,233,253,.15); color: var(--cyan); }
+  .st-validation { background: rgba(255,121,198,.15); color: var(--pink); }
+  .st-research { background: rgba(98,114,164,.25); color: #abb2d6; }
+
+  .pr-state { font-size: 11px; color: var(--muted); }
+  .pr-merged { color: var(--green); }
+  .pr-open { color: var(--amber); }
+  .pr-closed { color: var(--red); }
+
+  .pct { font-weight: 700; }
+  .pct.hi { color: var(--red); }
+  .pct.mid { color: var(--amber); }
+  .issues { max-width: 360px; color: #b9c0e0; font-size: 12.5px; }
+  .ok { color: var(--green); font-weight: 600; }
+  .dash { color: var(--border); }
+
+  h2 { font-size: 16px; margin: 36px 0 12px; }
+  .action { background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+    border-radius: 8px; padding: 12px 16px; margin-bottom: 10px; }
+  .action.warn { border-left-color: var(--red); }
+  .action .t { font-weight: 600; margin-bottom: 4px; }
+  .action .b { color: var(--muted); font-size: 13px; }
+  .gen { color: var(--border); font-size: 11px; margin-top: 30px; }
+</style>
+</head>
+<body>
+  <h1>Jira Overview</h1>
+  <p class="sub">jorge.avalos@liferay.com &middot; In-Progress first &middot; Brian feedback from brianchandotcom/liferay-portal</p>
+
+  <div class="cards">
+    <div class="card accent"><div class="n" id="c-total">0</div><div class="l">Tickets</div></div>
+    <div class="card amber"><div class="n" id="c-prog">0</div><div class="l">In Progress</div></div>
+    <div class="card red"><div class="n" id="c-brian">0</div><div class="l">Open at Brian</div></div>
+    <div class="card green"><div class="n" id="c-merged">0</div><div class="l">Merged</div></div>
+  </div>
+
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="Filter by key, summary, issue…">
+    <div class="filters" id="filters">
+      <span class="chip active" data-f="all">All</span>
+      <span class="chip" data-f="In Progress">In Progress</span>
+      <span class="chip" data-f="Open">Open</span>
+      <span class="chip" data-f="Closed">Closed</span>
+      <span class="chip" data-f="brian">At Brian</span>
+    </div>
+    <span class="count" id="count"></span>
+  </div>
+
+  <table id="tbl">
+    <thead>
+      <tr>
+        <th data-sort="key">Ticket</th>
+        <th data-sort="summary">Summary</th>
+        <th data-sort="status">Status</th>
+        <th data-sort="childpr">Child PR</th>
+        <th data-sort="brian">Brian PR</th>
+        <th data-sort="pct">Rejection</th>
+        <th data-sort="issues">Issues</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+
+  <h2>Action items</h2>
+  <div id="actions"></div>
+
+  <p class="gen" id="gen"></p>
+
+<script>
+const ROWS = [
+  {
+    "key": "LPD-95490",
+    "url": "https://liferay.atlassian.net/browse/LPD-95490",
+    "summary": "New counter cleanup test inserts duplicate DLFileEntry rows and fails on the IX_273362A5 unique index on all databases",
+    "status": "In Progress",
+    "level": "parent",
+    "childKey": "LPD-95619",
+    "childUrl": "https://liferay.atlassian.net/browse/LPD-95619",
+    "prNum": "3694",
+    "prUrl": "https://github.com/liferay-database-infra/liferay-portal/pull/3694",
+    "prState": "open",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPD-95619",
+    "url": "https://liferay.atlassian.net/browse/LPD-95619",
+    "summary": "Technical Task | New counter cleanup test inserts duplicate DLFileEntry rows",
+    "status": "In Progress",
+    "level": "child",
+    "parent": "LPD-95490",
+    "childKey": "LPD-95619",
+    "childUrl": "https://liferay.atlassian.net/browse/LPD-95619",
+    "prNum": "3694",
+    "prUrl": "https://github.com/liferay-database-infra/liferay-portal/pull/3694",
+    "prState": "open",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPD-80594",
+    "url": "https://liferay.atlassian.net/browse/LPD-80594",
+    "summary": "Poshi failing tests LocalFile.DatabasePartitioningUpgrade#ExportAndAddDBPartitionWithUpgradedDB and LocalFile.VirtualInstances",
+    "status": "In Progress",
+    "level": "parent",
+    "childKey": "LPD-83541",
+    "childUrl": "https://liferay.atlassian.net/browse/LPD-83541",
+    "prNum": "3548",
+    "prUrl": "https://github.com/liferay-database-infra/liferay-portal/pull/3548",
+    "prState": "closed",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPD-83541",
+    "url": "https://liferay.atlassian.net/browse/LPD-83541",
+    "summary": "Technical Task | Poshi failing tests LocalFile.DatabasePartitioningUpgrade",
+    "status": "In Progress",
+    "level": "child",
+    "parent": "LPD-80594",
+    "childKey": "LPD-83541",
+    "childUrl": "https://liferay.atlassian.net/browse/LPD-83541",
+    "prNum": "3548",
+    "prUrl": "https://github.com/liferay-database-infra/liferay-portal/pull/3548",
+    "prState": "closed",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPS-193587",
+    "url": "https://liferay.atlassian.net/browse/LPS-193587",
+    "summary": "Backend test coverage for transaction flushing LPS-185647",
+    "status": "In Progress",
+    "level": "parent",
+    "childKey": "",
+    "childUrl": "",
+    "prNum": "",
+    "prUrl": "",
+    "prState": "",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPD-96132",
+    "url": "https://liferay.atlassian.net/browse/LPD-96132",
+    "summary": "Upgrade fails on with high CPU counts",
+    "status": "In Review",
+    "level": "parent",
+    "childKey": "",
+    "childUrl": "",
+    "prNum": "3711",
+    "prUrl": "https://github.com/liferay-database-infra/liferay-portal/pull/3711",
+    "prState": "open",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPD-94076",
+    "url": "https://liferay.atlassian.net/browse/LPD-94076",
+    "summary": "PostUpgradeDataCleanupVerifyProcess fails to activate when search engine is offline, marking upgrade as unresolved",
+    "status": "In Review",
+    "level": "parent",
+    "childKey": "",
+    "childUrl": "",
+    "prNum": "3683",
+    "prUrl": "https://github.com/liferay-database-infra/liferay-portal/pull/3683",
+    "prState": "open",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPD-91685",
+    "url": "https://liferay.atlassian.net/browse/LPD-91685",
+    "summary": "Spike: Maintain log assertion when migrating upgrade tests from Poshi to Playwright",
+    "status": "In Review",
+    "level": "parent",
+    "childKey": "",
+    "childUrl": "",
+    "prNum": "3691",
+    "prUrl": "https://github.com/liferay-database-infra/liferay-portal/pull/3691",
+    "prState": "open",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPD-91814",
+    "url": "https://liferay.atlassian.net/browse/LPD-91814",
+    "summary": "Spike: Multi-phase Playwright + Ant orchestration",
+    "status": "In Review",
+    "level": "parent",
+    "childKey": "",
+    "childUrl": "",
+    "prNum": "3696",
+    "prUrl": "https://github.com/liferay-database-infra/liferay-portal/pull/3696",
+    "prState": "open",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPD-91815",
+    "url": "https://liferay.atlassian.net/browse/LPD-91815",
+    "summary": "Spike: UpgradeManagerMbean — migration plan from Poshi to Ant-only",
+    "status": "In Review",
+    "level": "parent",
+    "childKey": "",
+    "childUrl": "",
+    "prNum": "3688",
+    "prUrl": "https://github.com/liferay-database-infra/liferay-portal/pull/3688",
+    "prState": "open",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPP-64551",
+    "url": "https://liferay.atlassian.net/browse/LPP-64551",
+    "summary": "Upgrade from 7.4 U74 to 2025.Q1.15 causes Liferay to restart at upgradeExternalReferenceCode",
+    "status": "In Analysis",
+    "level": "parent",
+    "childKey": "",
+    "childUrl": "",
+    "prNum": "",
+    "prUrl": "",
+    "prState": "",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPD-10967",
+    "url": "https://liferay.atlassian.net/browse/LPD-10967",
+    "summary": "Apply Database tooling to improve the upgrade performance",
+    "status": "Development Complete",
+    "level": "parent",
+    "childKey": "",
+    "childUrl": "",
+    "prNum": "",
+    "prUrl": "",
+    "prState": "",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": ""
+  },
+  {
+    "key": "LPD-83885",
+    "url": "https://liferay.atlassian.net/browse/LPD-83885",
+    "summary": "Upgrade long-running queries detection",
+    "status": "Development Complete",
+    "level": "parent",
+    "childKey": "",
+    "childUrl": "",
+    "prNum": "3504",
+    "prUrl": "https://github.com/liferay-database-infra/liferay-portal/pull/3504",
+    "prState": "closed",
+    "brianNum": "",
+    "brianUrl": "",
+    "brianState": "",
+    "pct": null,
+    "issues": "OK_MERGED"
+  }
+]
+;
+
+const ACTIONS = [
+  {
+    "warn": false,
+    "t": "LPD-95490 / #3694 (open) — counter cleanup test fix",
+    "b": "PR open at db-infra. No Brian forward yet. Child: LPD-95619."
+  },
+  {
+    "warn": true,
+    "t": "LPD-80594 / #3548 (closed) — Poshi DatabasePartitioningUpgrade failures",
+    "b": "db-infra PR #3548 is closed (not merged). Needs a new PR or investigation of why it was closed."
+  },
+  {
+    "warn": false,
+    "t": "LPS-193587 — backend test coverage for transaction flushing",
+    "b": "In Progress with no PR yet. No db-infra PR found."
+  },
+  {
+    "warn": false,
+    "t": "LPD-96132 / #3711 (open) — upgrade fails on high CPU counts",
+    "b": "PR open at db-infra. Bug ticket In Review. No Brian forward yet."
+  },
+  {
+    "warn": false,
+    "t": "LPD-94076 / #3683 (open) — PostUpgradeDataCleanupVerifyProcess offline search bug",
+    "b": "PR open at db-infra. Bug ticket In Review. No Brian forward yet."
+  },
+  {
+    "warn": false,
+    "t": "LPD-91685 / #3691 (open) — Spike: log assertion migration",
+    "b": "Spike PR open at db-infra. In Review status."
+  },
+  {
+    "warn": false,
+    "t": "LPD-91814 / #3696 (open) — Spike: multi-phase Playwright + Ant orchestration",
+    "b": "Spike PR open at db-infra. In Review status."
+  },
+  {
+    "warn": false,
+    "t": "LPD-91815 / #3688 (open) — Spike: UpgradeManagerMbean Poshi to Ant migration",
+    "b": "Spike PR open at db-infra. In Review status."
+  },
+  {
+    "warn": false,
+    "t": "LPP-64551 — customer issue: upgrade from 7.4 U74 causes restart",
+    "b": "Customer issue In Analysis. No PR or action needed yet."
+  }
+]
+;
+
+const statusClass = s => ({
+  "In Progress":"st-inprogress","Open":"st-open","Closed":"st-closed",
+  "In Development":"st-development","In Validation":"st-validation","Ready for Research":"st-research"
+}[s] || "st-open");
+
+const tbody = document.getElementById("tbody");
+let filter = "all", query = "", sortKey = null, sortDir = 1;
+
+function prCell(r) {
+  if (r.childKey && r.childUrl) {
+    let html = `<a href="${r.childUrl}" target="_blank">${r.childKey}</a>`;
+    if (r.prUrl) html += ` <a href="${r.prUrl}" target="_blank">#${r.prNum}</a> <span class="pr-state pr-${r.prState}">(${r.prState})</span>`;
+    return html;
+  }
+  if (r.prUrl) return `<a href="${r.prUrl}" target="_blank">#${r.prNum}</a> <span class="pr-state pr-${r.prState}">(${r.prState})</span>`;
+  return `<span class="dash">—</span>`;
+}
+function brianCell(r) {
+  if (!r.brianUrl) return `<span class="dash">—</span>`;
+  return `<a href="${r.brianUrl}" target="_blank">#${r.brianNum}</a> <span class="pr-state pr-${r.brianState}">(${r.brianState})</span>`;
+}
+function pctCell(r) {
+  if (r.pct == null) {
+    if (r.prevPct) return `<span class="pct mid">prev ${r.prevPct}%</span>`;
+    return `<span class="dash">—</span>`;
+  }
+  const cls = r.pct >= 70 ? "hi" : r.pct >= 40 ? "mid" : "";
+  return `<span class="pct ${cls}">${r.pct}%</span>`;
+}
+function issuesCell(r) {
+  if (r.issues === "OK_MERGED") return `<span class="ok">✅ Merged</span>`;
+  if (!r.issues) return `<span class="dash">—</span>`;
+  return r.issues;
+}
+
+function matches(r) {
+  if (filter === "brian" && r.brianState !== "open") return false;
+  if (filter !== "all" && filter !== "brian" && r.status !== filter) return false;
+  if (query) {
+    const hay = (r.key + " " + r.summary + " " + (r.issues||"") + " " + (r.childKey||"")).toLowerCase();
+    if (!hay.includes(query)) return false;
+  }
+  return true;
+}
+
+function render() {
+  let rows = ROWS.filter(matches);
+  if (sortKey) {
+    rows = rows.slice().sort((a,b) => {
+      const get = r => ({
+        key:r.key, summary:r.summary, status:r.status, childpr:r.childKey||r.prNum||"",
+        brian:r.brianNum||"", pct:(r.pct ?? r.prevPct ?? -1), issues:r.issues||""
+      }[sortKey]);
+      const va = get(a), vb = get(b);
+      if (va < vb) return -1*sortDir;
+      if (va > vb) return 1*sortDir;
+      return 0;
+    });
+  }
+  tbody.innerHTML = rows.map(r => `
+    <tr class="${r.level}">
+      <td class="key">${r.level === "child"
+        ? `<span class="key"><a href="${r.url}" target="_blank">${r.key}</a></span>`
+        : `<a href="${r.url}" target="_blank">${r.key}</a>`}</td>
+      <td class="summary">${r.summary}</td>
+      <td><span class="badge ${statusClass(r.status)}">${r.status}</span></td>
+      <td>${prCell(r)}</td>
+      <td>${brianCell(r)}</td>
+      <td>${pctCell(r)}</td>
+      <td class="issues">${issuesCell(r)}</td>
+    </tr>`).join("");
+  document.getElementById("count").textContent = `${rows.length} of ${ROWS.length} shown`;
+}
+
+// stat cards
+document.getElementById("c-total").textContent = ROWS.length;
+document.getElementById("c-prog").textContent = ROWS.filter(r => r.status === "In Progress").length;
+document.getElementById("c-brian").textContent = ROWS.filter(r => r.brianState === "open").length;
+document.getElementById("c-merged").textContent = ROWS.filter(r => r.brianState === "merged").length;
+
+// actions
+document.getElementById("actions").innerHTML = ACTIONS.map(a => `
+  <div class="action ${a.warn?'warn':''}">
+    <div class="t">${a.t}</div><div class="b">${a.b}</div>
+  </div>`).join("");
+
+// events
+document.getElementById("search").addEventListener("input", e => { query = e.target.value.toLowerCase().trim(); render(); });
+document.getElementById("filters").addEventListener("click", e => {
+  if (!e.target.classList.contains("chip")) return;
+  document.querySelectorAll(".chip").forEach(c => c.classList.remove("active"));
+  e.target.classList.add("active");
+  filter = e.target.dataset.f;
+  render();
+});
+document.querySelectorAll("thead th").forEach(th => th.addEventListener("click", () => {
+  const k = th.dataset.sort;
+  if (sortKey === k) sortDir *= -1; else { sortKey = k; sortDir = 1; }
+  render();
+}));
+
+document.getElementById("gen").textContent = "Static snapshot generated by /overview — links are live, data is point-in-time.";
+render();
+</script>
+</body>
+</html>
