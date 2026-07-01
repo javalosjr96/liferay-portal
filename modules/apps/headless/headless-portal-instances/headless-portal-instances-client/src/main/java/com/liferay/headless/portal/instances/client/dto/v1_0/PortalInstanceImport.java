@@ -25,68 +25,24 @@ public class PortalInstanceImport implements Cloneable, Serializable {
 		return PortalInstanceImportSerDes.toDTO(json);
 	}
 
-	public String getNewName() {
-		return newName;
+	public String getName() {
+		return name;
 	}
 
-	public void setNewName(String newName) {
-		this.newName = newName;
+	public void setName(String name) {
+		this.name = name;
 	}
 
-	public void setNewName(
-		UnsafeSupplier<String, Exception> newNameUnsafeSupplier) {
-
+	public void setName(UnsafeSupplier<String, Exception> nameUnsafeSupplier) {
 		try {
-			newName = newNameUnsafeSupplier.get();
+			name = nameUnsafeSupplier.get();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected String newName;
-
-	public String getNewVirtualHostname() {
-		return newVirtualHostname;
-	}
-
-	public void setNewVirtualHostname(String newVirtualHostname) {
-		this.newVirtualHostname = newVirtualHostname;
-	}
-
-	public void setNewVirtualHostname(
-		UnsafeSupplier<String, Exception> newVirtualHostnameUnsafeSupplier) {
-
-		try {
-			newVirtualHostname = newVirtualHostnameUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected String newVirtualHostname;
-
-	public String getNewWebId() {
-		return newWebId;
-	}
-
-	public void setNewWebId(String newWebId) {
-		this.newWebId = newWebId;
-	}
-
-	public void setNewWebId(
-		UnsafeSupplier<String, Exception> newWebIdUnsafeSupplier) {
-
-		try {
-			newWebId = newWebIdUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected String newWebId;
+	protected String name;
 
 	public String getSchemaName() {
 		return schemaName;
@@ -108,6 +64,48 @@ public class PortalInstanceImport implements Cloneable, Serializable {
 	}
 
 	protected String schemaName;
+
+	public String getVirtualHost() {
+		return virtualHost;
+	}
+
+	public void setVirtualHost(String virtualHost) {
+		this.virtualHost = virtualHost;
+	}
+
+	public void setVirtualHost(
+		UnsafeSupplier<String, Exception> virtualHostUnsafeSupplier) {
+
+		try {
+			virtualHost = virtualHostUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String virtualHost;
+
+	public String getWebId() {
+		return webId;
+	}
+
+	public void setWebId(String webId) {
+		this.webId = webId;
+	}
+
+	public void setWebId(
+		UnsafeSupplier<String, Exception> webIdUnsafeSupplier) {
+
+		try {
+			webId = webIdUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected String webId;
 
 	@Override
 	public PortalInstanceImport clone() throws CloneNotSupportedException {
@@ -142,4 +140,4 @@ public class PortalInstanceImport implements Cloneable, Serializable {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-100048910
+// LIFERAY-REST-BUILDER-HASH:90796743

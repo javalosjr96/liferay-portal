@@ -57,31 +57,29 @@ public class PortalInstanceImport implements Serializable {
 	}
 
 	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "Optional new display name for the imported portal instance."
+		description = "Optional display name for the imported portal instance."
 	)
-	public String getNewName() {
-		if (_newNameSupplier != null) {
-			newName = _newNameSupplier.get();
+	public String getName() {
+		if (_nameSupplier != null) {
+			name = _nameSupplier.get();
 
-			_newNameSupplier = null;
+			_nameSupplier = null;
 		}
 
-		return newName;
+		return name;
 	}
 
-	public void setNewName(String newName) {
-		this.newName = newName;
+	public void setName(String name) {
+		this.name = name;
 
-		_newNameSupplier = null;
+		_nameSupplier = null;
 	}
 
 	@JsonIgnore
-	public void setNewName(
-		UnsafeSupplier<String, Exception> newNameUnsafeSupplier) {
-
-		_newNameSupplier = () -> {
+	public void setName(UnsafeSupplier<String, Exception> nameUnsafeSupplier) {
+		_nameSupplier = () -> {
 			try {
-				return newNameUnsafeSupplier.get();
+				return nameUnsafeSupplier.get();
 			}
 			catch (RuntimeException runtimeException) {
 				throw runtimeException;
@@ -93,103 +91,13 @@ public class PortalInstanceImport implements Serializable {
 	}
 
 	@GraphQLField(
-		description = "Optional new display name for the imported portal instance."
+		description = "Optional display name for the imported portal instance."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected String newName;
+	protected String name;
 
 	@JsonIgnore
-	private Supplier<String> _newNameSupplier;
-
-	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "Optional new virtual hostname for the imported portal instance."
-	)
-	public String getNewVirtualHostname() {
-		if (_newVirtualHostnameSupplier != null) {
-			newVirtualHostname = _newVirtualHostnameSupplier.get();
-
-			_newVirtualHostnameSupplier = null;
-		}
-
-		return newVirtualHostname;
-	}
-
-	public void setNewVirtualHostname(String newVirtualHostname) {
-		this.newVirtualHostname = newVirtualHostname;
-
-		_newVirtualHostnameSupplier = null;
-	}
-
-	@JsonIgnore
-	public void setNewVirtualHostname(
-		UnsafeSupplier<String, Exception> newVirtualHostnameUnsafeSupplier) {
-
-		_newVirtualHostnameSupplier = () -> {
-			try {
-				return newVirtualHostnameUnsafeSupplier.get();
-			}
-			catch (RuntimeException runtimeException) {
-				throw runtimeException;
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		};
-	}
-
-	@GraphQLField(
-		description = "Optional new virtual hostname for the imported portal instance."
-	)
-	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected String newVirtualHostname;
-
-	@JsonIgnore
-	private Supplier<String> _newVirtualHostnameSupplier;
-
-	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "Optional new web ID for the imported portal instance."
-	)
-	public String getNewWebId() {
-		if (_newWebIdSupplier != null) {
-			newWebId = _newWebIdSupplier.get();
-
-			_newWebIdSupplier = null;
-		}
-
-		return newWebId;
-	}
-
-	public void setNewWebId(String newWebId) {
-		this.newWebId = newWebId;
-
-		_newWebIdSupplier = null;
-	}
-
-	@JsonIgnore
-	public void setNewWebId(
-		UnsafeSupplier<String, Exception> newWebIdUnsafeSupplier) {
-
-		_newWebIdSupplier = () -> {
-			try {
-				return newWebIdUnsafeSupplier.get();
-			}
-			catch (RuntimeException runtimeException) {
-				throw runtimeException;
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		};
-	}
-
-	@GraphQLField(
-		description = "Optional new web ID for the imported portal instance."
-	)
-	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	protected String newWebId;
-
-	@JsonIgnore
-	private Supplier<String> _newWebIdSupplier;
+	private Supplier<String> _nameSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
 		description = "The DB partition schema name to import (format lextracted_[companyId])."
@@ -237,6 +145,96 @@ public class PortalInstanceImport implements Serializable {
 	@JsonIgnore
 	private Supplier<String> _schemaNameSupplier;
 
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "Optional virtual host for the imported portal instance."
+	)
+	public String getVirtualHost() {
+		if (_virtualHostSupplier != null) {
+			virtualHost = _virtualHostSupplier.get();
+
+			_virtualHostSupplier = null;
+		}
+
+		return virtualHost;
+	}
+
+	public void setVirtualHost(String virtualHost) {
+		this.virtualHost = virtualHost;
+
+		_virtualHostSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setVirtualHost(
+		UnsafeSupplier<String, Exception> virtualHostUnsafeSupplier) {
+
+		_virtualHostSupplier = () -> {
+			try {
+				return virtualHostUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "Optional virtual host for the imported portal instance."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String virtualHost;
+
+	@JsonIgnore
+	private Supplier<String> _virtualHostSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "Optional web ID for the imported portal instance."
+	)
+	public String getWebId() {
+		if (_webIdSupplier != null) {
+			webId = _webIdSupplier.get();
+
+			_webIdSupplier = null;
+		}
+
+		return webId;
+	}
+
+	public void setWebId(String webId) {
+		this.webId = webId;
+
+		_webIdSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setWebId(
+		UnsafeSupplier<String, Exception> webIdUnsafeSupplier) {
+
+		_webIdSupplier = () -> {
+			try {
+				return webIdUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "Optional web ID for the imported portal instance."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String webId;
+
+	@JsonIgnore
+	private Supplier<String> _webIdSupplier;
+
 	@Override
 	public boolean equals(Object object) {
 		if (this == object) {
@@ -265,50 +263,18 @@ public class PortalInstanceImport implements Serializable {
 
 		sb.append("{");
 
-		String newName = getNewName();
+		String name = getName();
 
-		if (newName != null) {
+		if (name != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"newName\": ");
+			sb.append("\"name\": ");
 
 			sb.append("\"");
 
-			sb.append(_escape(newName));
-
-			sb.append("\"");
-		}
-
-		String newVirtualHostname = getNewVirtualHostname();
-
-		if (newVirtualHostname != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"newVirtualHostname\": ");
-
-			sb.append("\"");
-
-			sb.append(_escape(newVirtualHostname));
-
-			sb.append("\"");
-		}
-
-		String newWebId = getNewWebId();
-
-		if (newWebId != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"newWebId\": ");
-
-			sb.append("\"");
-
-			sb.append(_escape(newWebId));
+			sb.append(_escape(name));
 
 			sb.append("\"");
 		}
@@ -325,6 +291,38 @@ public class PortalInstanceImport implements Serializable {
 			sb.append("\"");
 
 			sb.append(_escape(schemaName));
+
+			sb.append("\"");
+		}
+
+		String virtualHost = getVirtualHost();
+
+		if (virtualHost != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"virtualHost\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(virtualHost));
+
+			sb.append("\"");
+		}
+
+		String webId = getWebId();
+
+		if (webId != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"webId\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(webId));
 
 			sb.append("\"");
 		}
@@ -430,4 +428,4 @@ public class PortalInstanceImport implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-562395610
+// LIFERAY-REST-BUILDER-HASH:253266902

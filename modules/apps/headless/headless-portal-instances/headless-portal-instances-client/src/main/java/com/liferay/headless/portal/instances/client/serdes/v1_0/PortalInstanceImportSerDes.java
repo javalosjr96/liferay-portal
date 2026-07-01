@@ -46,44 +46,16 @@ public class PortalInstanceImportSerDes {
 
 		sb.append("{");
 
-		if (portalInstanceImport.getNewName() != null) {
+		if (portalInstanceImport.getName() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"newName\": ");
+			sb.append("\"name\": ");
 
 			sb.append("\"");
 
-			sb.append(_escape(portalInstanceImport.getNewName()));
-
-			sb.append("\"");
-		}
-
-		if (portalInstanceImport.getNewVirtualHostname() != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"newVirtualHostname\": ");
-
-			sb.append("\"");
-
-			sb.append(_escape(portalInstanceImport.getNewVirtualHostname()));
-
-			sb.append("\"");
-		}
-
-		if (portalInstanceImport.getNewWebId() != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"newWebId\": ");
-
-			sb.append("\"");
-
-			sb.append(_escape(portalInstanceImport.getNewWebId()));
+			sb.append(_escape(portalInstanceImport.getName()));
 
 			sb.append("\"");
 		}
@@ -98,6 +70,34 @@ public class PortalInstanceImportSerDes {
 			sb.append("\"");
 
 			sb.append(_escape(portalInstanceImport.getSchemaName()));
+
+			sb.append("\"");
+		}
+
+		if (portalInstanceImport.getVirtualHost() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"virtualHost\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(portalInstanceImport.getVirtualHost()));
+
+			sb.append("\"");
+		}
+
+		if (portalInstanceImport.getWebId() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"webId\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(portalInstanceImport.getWebId()));
 
 			sb.append("\"");
 		}
@@ -123,29 +123,11 @@ public class PortalInstanceImportSerDes {
 
 		Map<String, String> map = new TreeMap<>();
 
-		if (portalInstanceImport.getNewName() == null) {
-			map.put("newName", null);
+		if (portalInstanceImport.getName() == null) {
+			map.put("name", null);
 		}
 		else {
-			map.put(
-				"newName", String.valueOf(portalInstanceImport.getNewName()));
-		}
-
-		if (portalInstanceImport.getNewVirtualHostname() == null) {
-			map.put("newVirtualHostname", null);
-		}
-		else {
-			map.put(
-				"newVirtualHostname",
-				String.valueOf(portalInstanceImport.getNewVirtualHostname()));
-		}
-
-		if (portalInstanceImport.getNewWebId() == null) {
-			map.put("newWebId", null);
-		}
-		else {
-			map.put(
-				"newWebId", String.valueOf(portalInstanceImport.getNewWebId()));
+			map.put("name", String.valueOf(portalInstanceImport.getName()));
 		}
 
 		if (portalInstanceImport.getSchemaName() == null) {
@@ -155,6 +137,22 @@ public class PortalInstanceImportSerDes {
 			map.put(
 				"schemaName",
 				String.valueOf(portalInstanceImport.getSchemaName()));
+		}
+
+		if (portalInstanceImport.getVirtualHost() == null) {
+			map.put("virtualHost", null);
+		}
+		else {
+			map.put(
+				"virtualHost",
+				String.valueOf(portalInstanceImport.getVirtualHost()));
+		}
+
+		if (portalInstanceImport.getWebId() == null) {
+			map.put("webId", null);
+		}
+		else {
+			map.put("webId", String.valueOf(portalInstanceImport.getWebId()));
 		}
 
 		return map;
@@ -175,18 +173,16 @@ public class PortalInstanceImportSerDes {
 
 		@Override
 		protected boolean parseMaps(String jsonParserFieldName) {
-			if (Objects.equals(jsonParserFieldName, "newName")) {
-				return false;
-			}
-			else if (Objects.equals(
-						jsonParserFieldName, "newVirtualHostname")) {
-
-				return false;
-			}
-			else if (Objects.equals(jsonParserFieldName, "newWebId")) {
+			if (Objects.equals(jsonParserFieldName, "name")) {
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "schemaName")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "virtualHost")) {
+				return false;
+			}
+			else if (Objects.equals(jsonParserFieldName, "webId")) {
 				return false;
 			}
 
@@ -198,30 +194,26 @@ public class PortalInstanceImportSerDes {
 			PortalInstanceImport portalInstanceImport,
 			String jsonParserFieldName, Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "newName")) {
+			if (Objects.equals(jsonParserFieldName, "name")) {
 				if (jsonParserFieldValue != null) {
-					portalInstanceImport.setNewName(
-						(String)jsonParserFieldValue);
-				}
-			}
-			else if (Objects.equals(
-						jsonParserFieldName, "newVirtualHostname")) {
-
-				if (jsonParserFieldValue != null) {
-					portalInstanceImport.setNewVirtualHostname(
-						(String)jsonParserFieldValue);
-				}
-			}
-			else if (Objects.equals(jsonParserFieldName, "newWebId")) {
-				if (jsonParserFieldValue != null) {
-					portalInstanceImport.setNewWebId(
-						(String)jsonParserFieldValue);
+					portalInstanceImport.setName((String)jsonParserFieldValue);
 				}
 			}
 			else if (Objects.equals(jsonParserFieldName, "schemaName")) {
 				if (jsonParserFieldValue != null) {
 					portalInstanceImport.setSchemaName(
 						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "virtualHost")) {
+				if (jsonParserFieldValue != null) {
+					portalInstanceImport.setVirtualHost(
+						(String)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "webId")) {
+				if (jsonParserFieldValue != null) {
+					portalInstanceImport.setWebId((String)jsonParserFieldValue);
 				}
 			}
 		}
@@ -305,4 +297,4 @@ public class PortalInstanceImportSerDes {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:1714028631
+// LIFERAY-REST-BUILDER-HASH:-2041861221

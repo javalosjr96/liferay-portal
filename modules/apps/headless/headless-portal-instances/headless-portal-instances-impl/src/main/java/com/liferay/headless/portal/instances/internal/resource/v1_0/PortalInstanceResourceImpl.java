@@ -157,9 +157,9 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		}
 
 		Company company = _companyService.addDBPartitionCompany(
-			companyId, portalInstanceImport.getNewName(),
-			portalInstanceImport.getNewVirtualHostname(),
-			portalInstanceImport.getNewWebId());
+			companyId, portalInstanceImport.getName(),
+			portalInstanceImport.getVirtualHost(),
+			portalInstanceImport.getWebId());
 
 		PortalInstance portalInstance = _toPortalInstance(company);
 
@@ -224,7 +224,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 	@Reference
 	private CompanyService _companyService;
 
-	private final Map<String, PortalInstance> _idempotencyCache =
+	private static final Map<String, PortalInstance> _idempotencyCache =
 		new ConcurrentHashMap<>();
 
 }
