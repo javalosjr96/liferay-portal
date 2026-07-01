@@ -483,8 +483,6 @@ public abstract class BaseDBProcess implements DBProcess {
 			return;
 		}
 
-		Object[][] values = rows.toArray(new Object[0][]);
-
 		AtomicInteger counter = new AtomicInteger();
 
 		_processConcurrently(
@@ -492,8 +490,8 @@ public abstract class BaseDBProcess implements DBProcess {
 			() -> {
 				int index = counter.getAndIncrement();
 
-				if (index < values.length) {
-					return values[index];
+				if (index < rows.size()) {
+					return rows.get(index);
 				}
 
 				return null;
@@ -524,8 +522,6 @@ public abstract class BaseDBProcess implements DBProcess {
 			return;
 		}
 
-		Object[][] values = rows.toArray(new Object[0][]);
-
 		AtomicInteger counter = new AtomicInteger();
 
 		_processConcurrently(
@@ -533,8 +529,8 @@ public abstract class BaseDBProcess implements DBProcess {
 			() -> {
 				int index = counter.getAndIncrement();
 
-				if (index < values.length) {
-					return values[index];
+				if (index < rows.size()) {
+					return rows.get(index);
 				}
 
 				return null;
