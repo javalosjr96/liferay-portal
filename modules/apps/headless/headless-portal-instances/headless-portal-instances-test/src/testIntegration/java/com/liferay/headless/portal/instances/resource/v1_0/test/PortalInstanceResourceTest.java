@@ -8,6 +8,7 @@ package com.liferay.headless.portal.instances.resource.v1_0.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.headless.portal.instances.client.dto.v1_0.Admin;
 import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstance;
+import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstanceImport;
 import com.liferay.headless.portal.instances.client.pagination.Page;
 import com.liferay.headless.portal.instances.client.problem.Problem;
 import com.liferay.petra.lang.SafeCloseable;
@@ -93,6 +94,12 @@ public class PortalInstanceResourceTest
 		_testPostPortalInstanceWithoutAdmin();
 		_testPostPortalInstanceWithAdmin();
 		_testPostPortalInstanceWithAdminAndCompanyStrangers();
+	}
+
+	@Override
+	@Test
+	public void testPostPortalInstanceImport() throws Exception {
+		_testPostPortalInstanceImportInvalidSchemaName();
 	}
 
 	@Override
@@ -186,6 +193,34 @@ public class PortalInstanceResourceTest
 		throws Exception {
 
 		return portalInstanceResource.postPortalInstance(portalInstance);
+	}
+
+	@Override
+	protected PortalInstance testPostPortalInstanceImport_addPortalInstance(
+			PortalInstance portalInstance)
+		throws Exception {
+
+		return portalInstance;
+	}
+
+	private void _testPostPortalInstanceImportInvalidSchemaName()
+		throws Exception {
+
+		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
+
+		portalInstanceImport.setSchemaName("invalid");
+
+		try {
+			portalInstanceResource.postPortalInstanceImport(
+				null, portalInstanceImport);
+
+			Assert.fail();
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
+		}
 	}
 
 	private static void _deletePortalInstance(PortalInstance portalInstance)
