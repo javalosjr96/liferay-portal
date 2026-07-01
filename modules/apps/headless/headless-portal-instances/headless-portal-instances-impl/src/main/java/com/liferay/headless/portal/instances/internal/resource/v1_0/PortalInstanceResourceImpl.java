@@ -136,13 +136,14 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			String idempotencyKey, PortalInstanceImport portalInstanceImport)
 		throws Exception {
 
-		String schemaName = portalInstanceImport.getSchemaName();
+		String schemaNameString = portalInstanceImport.getSchemaName();
 
 		long companyId = GetterUtil.getLong(
-			StringUtil.removeSubstring(schemaName, "lextracted_"));
+			StringUtil.removeSubstring(schemaNameString, "lextracted_"));
 
 		if (companyId == 0) {
-			throw new BadRequestException("Invalid schema name: " + schemaName);
+			throw new BadRequestException(
+				"Invalid schema name: " + schemaNameString);
 		}
 
 		return _toPortalInstance(
