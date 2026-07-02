@@ -64,7 +64,7 @@ components:
                     type: string
                 schemaName:
                     description:
-                        The DB partition schema name to import (format lextracted_[companyId]).
+                        The DB partition schema name to import (format lexported_[companyId]).
                     type: string
                 virtualHost:
                     description:
