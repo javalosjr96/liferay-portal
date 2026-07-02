@@ -707,8 +707,6 @@ public abstract class BaseDBProcess implements DBProcess {
 
 		int availableProcessors = runtime.availableProcessors();
 
-		// Bound N so nested processConcurrently pools open at most N^2 connections
-
 		int connectionBudget = Math.max(
 			1, (int)Math.sqrt(0.9 * maximumPoolSize));
 
