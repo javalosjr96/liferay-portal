@@ -26,6 +26,7 @@ import jakarta.ws.rs.BadRequestException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -140,6 +141,19 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			throw new BadRequestException("Import configuration is required");
 		}
 
+		if (idempotencyKey != null) {
+			_IdempotencyEntry idempotencyEntry = _idempotencyCache.get(
+				idempotencyKey);
+
+			if ((idempotencyEntry != null) &&
+				!idempotencyEntry.isExpired()) {
+
+				return idempotencyEntry.portalInstance;
+			}
+
+			_idempotencyCache.remove(idempotencyKey);
+		}
+
 		String schemaNameString = portalInstanceImport.getSchemaName();
 
 		long companyId = GetterUtil.getLong(
@@ -150,11 +164,19 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				"Invalid schema name: " + schemaNameString);
 		}
 
-		return _toPortalInstance(
+		PortalInstance portalInstance = _toPortalInstance(
 			_companyService.addDBPartitionCompany(
 				companyId, portalInstanceImport.getName(),
 				portalInstanceImport.getVirtualHost(),
 				portalInstanceImport.getWebId()));
+
+		if (idempotencyKey != null) {
+			_idempotencyCache.put(
+				idempotencyKey,
+				new _IdempotencyEntry(portalInstance, _IDEMPOTENCY_TTL_MS));
+		}
+
+		return portalInstance;
 	}
 
 	@Override
@@ -208,7 +230,30 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		}
 	}
 
+	private static final long _IDEMPOTENCY_TTL_MS = 5L * 60L * 1000L;
+
+	private static final ConcurrentHashMap<String, _IdempotencyEntry>
+		_idempotencyCache = new ConcurrentHashMap<>();
+
 	@Reference
 	private CompanyService _companyService;
+
+	private static class _IdempotencyEntry {
+
+		public _IdempotencyEntry(
+			PortalInstance portalInstance, long ttlMs) {
+
+			expiryTime = System.currentTimeMillis() + ttlMs;
+			this.portalInstance = portalInstance;
+		}
+
+		public boolean isExpired() {
+			return System.currentTimeMillis() > expiryTime;
+		}
+
+		public final long expiryTime;
+		public final PortalInstance portalInstance;
+
+	}
 
 }
