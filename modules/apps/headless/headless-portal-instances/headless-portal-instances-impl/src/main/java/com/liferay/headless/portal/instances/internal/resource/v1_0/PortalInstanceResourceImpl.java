@@ -142,12 +142,10 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		}
 
 		if (idempotencyKey != null) {
-			_IdempotencyEntry idempotencyEntry = _idempotencyCache.get(
+			IdempotencyEntry idempotencyEntry = _idempotencyCache.get(
 				idempotencyKey);
 
-			if ((idempotencyEntry != null) &&
-				!idempotencyEntry.isExpired()) {
-
+			if ((idempotencyEntry != null) && !idempotencyEntry.isExpired()) {
 				return idempotencyEntry.portalInstance;
 			}
 
@@ -173,7 +171,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		if (idempotencyKey != null) {
 			_idempotencyCache.put(
 				idempotencyKey,
-				new _IdempotencyEntry(portalInstance, _IDEMPOTENCY_TTL_MS));
+				new IdempotencyEntry(portalInstance, _IDEMPOTENCY_TTL_MS));
 		}
 
 		return portalInstance;
@@ -232,23 +230,25 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 	private static final long _IDEMPOTENCY_TTL_MS = 5L * 60L * 1000L;
 
-	private static final ConcurrentHashMap<String, _IdempotencyEntry>
+	private static final ConcurrentHashMap<String, IdempotencyEntry>
 		_idempotencyCache = new ConcurrentHashMap<>();
 
 	@Reference
 	private CompanyService _companyService;
 
-	private static class _IdempotencyEntry {
+	private static class IdempotencyEntry {
 
-		public _IdempotencyEntry(
-			PortalInstance portalInstance, long ttlMs) {
-
+		public IdempotencyEntry(PortalInstance portalInstance, long ttlMs) {
 			expiryTime = System.currentTimeMillis() + ttlMs;
 			this.portalInstance = portalInstance;
 		}
 
 		public boolean isExpired() {
-			return System.currentTimeMillis() > expiryTime;
+			if (System.currentTimeMillis() > expiryTime) {
+				return true;
+			}
+
+			return false;
 		}
 
 		public final long expiryTime;
