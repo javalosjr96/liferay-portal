@@ -416,7 +416,7 @@ public class PortalInstanceResourceTest
 			PortalInstanceImport portalInstanceImport =
 				new PortalInstanceImport();
 
-			portalInstanceImport.setSchemaName("lextracted_1");
+			portalInstanceImport.setSchemaName("lexported_1");
 
 			try {
 				portalInstanceResource.postPortalInstanceImport(

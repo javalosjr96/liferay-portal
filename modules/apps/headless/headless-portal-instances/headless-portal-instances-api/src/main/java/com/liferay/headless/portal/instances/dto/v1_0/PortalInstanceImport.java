@@ -100,7 +100,7 @@ public class PortalInstanceImport implements Serializable {
 	private Supplier<String> _nameSupplier;
 
 	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "The DB partition schema name to import (format lextracted_[companyId])."
+		description = "The DB partition schema name to import (format lexported_[companyId])."
 	)
 	public String getSchemaName() {
 		if (_schemaNameSupplier != null) {
@@ -136,7 +136,7 @@ public class PortalInstanceImport implements Serializable {
 	}
 
 	@GraphQLField(
-		description = "The DB partition schema name to import (format lextracted_[companyId])."
+		description = "The DB partition schema name to import (format lexported_[companyId])."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
 	@NotEmpty
@@ -428,4 +428,4 @@ public class PortalInstanceImport implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:253266902
+// LIFERAY-REST-BUILDER-HASH:-383562972

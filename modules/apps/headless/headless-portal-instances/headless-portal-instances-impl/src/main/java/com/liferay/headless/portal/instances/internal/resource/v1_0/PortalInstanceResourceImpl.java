@@ -155,7 +155,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		String schemaNameString = portalInstanceImport.getSchemaName();
 
 		long companyId = GetterUtil.getLong(
-			StringUtil.removeSubstring(schemaNameString, "lextracted_"));
+			StringUtil.removeSubstring(schemaNameString, "lexported_"));
 
 		if (companyId == 0) {
 			throw new BadRequestException(
@@ -169,6 +169,11 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				portalInstanceImport.getWebId()));
 
 		if (idempotencyKey != null) {
+			if (_idempotencyCache.size() >= _IDEMPOTENCY_CACHE_MAX_SIZE) {
+				_idempotencyCache.entrySet().removeIf(
+					entry -> entry.getValue().isExpired());
+			}
+
 			_idempotencyCache.put(
 				idempotencyKey,
 				new IdempotencyEntry(portalInstance, _IDEMPOTENCY_TTL_MS));
@@ -227,6 +232,8 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				admin.getEmailAddress(), emailAddressValidator);
 		}
 	}
+
+	private static final int _IDEMPOTENCY_CACHE_MAX_SIZE = 1000;
 
 	private static final long _IDEMPOTENCY_TTL_MS = 5L * 60L * 1000L;
 
