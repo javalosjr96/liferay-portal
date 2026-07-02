@@ -375,7 +375,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 	@Reference
 	private GroupLocalService _groupLocalService;
 
-	private class ScopedConfiguration {
+	private static class ScopedConfiguration {
 
 		public ScopedConfiguration(
 			String configurationId, String dictionaryString,
