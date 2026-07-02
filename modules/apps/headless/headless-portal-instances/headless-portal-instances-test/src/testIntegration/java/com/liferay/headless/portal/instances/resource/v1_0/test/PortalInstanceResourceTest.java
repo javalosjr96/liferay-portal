@@ -98,11 +98,8 @@ public class PortalInstanceResourceTest
 	@Override
 	@Test
 	public void testPostPortalInstanceExport() throws Exception {
-		portalInstanceResource.postPortalInstanceExport(
-			_portalInstance.getPortalInstanceId());
-
-		Assert.assertNotNull(
-			_companyLocalService.fetchCompany(_portalInstance.getCompanyId()));
+		_testPostPortalInstanceExportExisting();
+		_testPostPortalInstanceExportNonexistent();
 	}
 
 	@Override
@@ -379,6 +376,30 @@ public class PortalInstanceResourceTest
 			false, false, false, false, true);
 
 		_testPatchPortalInstace(portalInstance, false, false, false);
+	}
+
+	private void _testPostPortalInstanceExportExisting() throws Exception {
+		portalInstanceResource.postPortalInstanceExport(
+			_portalInstance.getPortalInstanceId());
+
+		Assert.assertNotNull(
+			_companyLocalService.fetchCompany(_portalInstance.getCompanyId()));
+	}
+
+	private void _testPostPortalInstanceExportNonexistent() throws Exception {
+		String portalInstanceId = RandomTestUtil.randomString();
+
+		try {
+			portalInstanceResource.postPortalInstanceExport(portalInstanceId);
+
+			Assert.fail();
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("NOT_FOUND", problem.getStatus());
+			Assert.assertNull(problem.getTitle());
+		}
 	}
 
 	private void _testPostPortalInstanceWithAdmin() throws Exception {
