@@ -281,7 +281,11 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				scopedConfiguration.getScope(),
 				ExtendedObjectClassDefinition.Scope.COMPANY)) {
 
-			return companyId == (long)scopedConfiguration.getScopePK();
+			if (companyId == (long)scopedConfiguration.getScopePK()) {
+				return true;
+			}
+
+			return false;
 		}
 
 		if (Objects.equals(
@@ -304,7 +308,11 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				return false;
 			}
 
-			return group.getCompanyId() == companyId;
+			if (group.getCompanyId() == companyId) {
+				return true;
+			}
+
+			return false;
 		}
 
 		return true;

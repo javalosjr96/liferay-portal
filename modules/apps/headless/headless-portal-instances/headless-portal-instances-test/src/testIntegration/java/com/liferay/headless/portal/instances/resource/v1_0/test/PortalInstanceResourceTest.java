@@ -398,9 +398,11 @@ public class PortalInstanceResourceTest
 				_portalInstance.getPortalInstanceId());
 
 		Assert.assertEquals(200, httpResponse.getStatusCode());
+
+		String content = httpResponse.getContent();
+
 		Assert.assertTrue(
-			httpResponse.getContent().contains(
-				"lexported_" + _portalInstance.getCompanyId()));
+			content.contains("lexported_" + _portalInstance.getCompanyId()));
 	}
 
 	private void _testPostPortalInstanceExportForbidden() throws Exception {
