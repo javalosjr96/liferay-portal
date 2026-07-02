@@ -176,14 +176,16 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				"Unable to export portal instance " + portalInstanceId,
 				exception);
 
-			return Response.ok(
-				"Export failed with message: " + exception.getMessage()
-			).build();
+			Response.ResponseBuilder responseBuilder = Response.ok(
+				"Export failed with message: " + exception.getMessage());
+
+			return responseBuilder.build();
 		}
 
-		return Response.ok(
-			"lexported_" + companyId
-		).build();
+		Response.ResponseBuilder responseBuilder = Response.ok(
+			"lexported_" + companyId);
+
+		return responseBuilder.build();
 	}
 
 	@Override
@@ -243,24 +245,24 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		for (ScopedConfiguration scopedConfiguration : scopedConfigurations) {
 			DBPartitionUtil.exportConfiguration(
 				companyId, scopedConfiguration.getConfigurationId(),
-				scopedConfiguration.getDictionaryString());
+				scopedConfiguration.getEncodedDictionary());
 		}
 	}
 
 	private ScopedConfiguration _getScopedConfiguration(
-			String configurationId, String dictionaryString)
+			String configurationId, String encodedDictionary)
 		throws Exception {
 
 		Dictionary<String, String> dictionary = ConfigurationHandler.read(
 			new UnsyncByteArrayInputStream(
-				dictionaryString.getBytes(StringPool.UTF8)));
+				encodedDictionary.getBytes(StringPool.UTF8)));
 
 		Object value = dictionary.get(
 			ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey());
 
 		if (value != null) {
 			return new ScopedConfiguration(
-				configurationId, dictionaryString,
+				configurationId, encodedDictionary,
 				ExtendedObjectClassDefinition.Scope.GROUP,
 				GetterUtil.getLong(value));
 		}
@@ -270,7 +272,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		if (value != null) {
 			return new ScopedConfiguration(
-				configurationId, dictionaryString,
+				configurationId, encodedDictionary,
 				ExtendedObjectClassDefinition.Scope.COMPANY,
 				GetterUtil.getLong(value));
 		}
@@ -281,7 +283,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		if (value != null) {
 			return new ScopedConfiguration(
-				configurationId, dictionaryString,
+				configurationId, encodedDictionary,
 				ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
 				GetterUtil.getString(value));
 		}
@@ -316,7 +318,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						StringBundler.concat(
-							"Skipping configuration ",
+							"Unable to export configuration ",
 							scopedConfiguration.getConfigurationId(),
 							" because group ", groupId, " does not exist"));
 				}
@@ -378,11 +380,11 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 	private static class ScopedConfiguration {
 
 		public ScopedConfiguration(
-			String configurationId, String dictionaryString,
+			String configurationId, String encodedDictionary,
 			ExtendedObjectClassDefinition.Scope scope, Serializable scopePK) {
 
 			_configurationId = configurationId;
-			_dictionaryString = dictionaryString;
+			_encodedDictionary = encodedDictionary;
 			_scope = scope;
 			_scopePK = scopePK;
 		}
@@ -391,8 +393,8 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			return _configurationId;
 		}
 
-		public String getDictionaryString() {
-			return _dictionaryString;
+		public String getEncodedDictionary() {
+			return _encodedDictionary;
 		}
 
 		public ExtendedObjectClassDefinition.Scope getScope() {
@@ -404,7 +406,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		}
 
 		private final String _configurationId;
-		private final String _dictionaryString;
+		private final String _encodedDictionary;
 		private final ExtendedObjectClassDefinition.Scope _scope;
 		private final Object _scopePK;
 
