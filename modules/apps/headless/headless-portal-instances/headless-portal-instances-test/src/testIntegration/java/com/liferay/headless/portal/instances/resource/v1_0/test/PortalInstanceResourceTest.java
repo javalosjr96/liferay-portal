@@ -428,10 +428,9 @@ public class PortalInstanceResourceTest
 	}
 
 	private void _testPostPortalInstanceExportNonexistent() throws Exception {
-		String portalInstanceId = RandomTestUtil.randomString();
-
 		try {
-			portalInstanceResource.postPortalInstanceExport(portalInstanceId);
+			portalInstanceResource.postPortalInstanceExport(
+				RandomTestUtil.randomString());
 
 			Assert.fail();
 		}

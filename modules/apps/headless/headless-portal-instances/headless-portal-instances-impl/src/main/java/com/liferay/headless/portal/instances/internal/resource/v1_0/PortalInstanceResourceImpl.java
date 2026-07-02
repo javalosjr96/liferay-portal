@@ -182,10 +182,9 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			).build();
 		}
 
-		Response.ResponseBuilder responseBuilder = Response.ok(
-			"lexported_" + companyId);
-
-		return responseBuilder.build();
+		return Response.ok(
+			"lexported_" + companyId
+		).build();
 	}
 
 	@Override
