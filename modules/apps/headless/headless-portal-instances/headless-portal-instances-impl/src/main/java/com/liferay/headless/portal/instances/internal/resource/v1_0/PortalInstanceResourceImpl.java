@@ -213,10 +213,10 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			return;
 		}
 
-		List<ScopedConfiguration> scopedConfigurations = new ArrayList<>();
-
 		Map<String, String> configurations = DBPartitionUtil.getConfigurations(
 			CompanyConstants.SYSTEM);
+
+		List<ScopedConfiguration> scopedConfigurations = new ArrayList<>();
 
 		for (Map.Entry<String, String> entry : configurations.entrySet()) {
 			ScopedConfiguration scopedConfiguration = _getScopedConfiguration(
@@ -260,8 +260,9 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		if (value != null) {
 			return new ScopedConfiguration(
-				configurationId, dictionaryString, GetterUtil.getLong(value),
-				ExtendedObjectClassDefinition.Scope.GROUP);
+				configurationId, dictionaryString,
+				ExtendedObjectClassDefinition.Scope.GROUP,
+				GetterUtil.getLong(value));
 		}
 
 		value = dictionary.get(
@@ -269,8 +270,9 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		if (value != null) {
 			return new ScopedConfiguration(
-				configurationId, dictionaryString, GetterUtil.getLong(value),
-				ExtendedObjectClassDefinition.Scope.COMPANY);
+				configurationId, dictionaryString,
+				ExtendedObjectClassDefinition.Scope.COMPANY,
+				GetterUtil.getLong(value));
 		}
 
 		value = dictionary.get(
@@ -279,8 +281,9 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		if (value != null) {
 			return new ScopedConfiguration(
-				configurationId, dictionaryString, GetterUtil.getString(value),
-				ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE);
+				configurationId, dictionaryString,
+				ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
+				GetterUtil.getString(value));
 		}
 
 		return null;
@@ -376,12 +379,12 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		public ScopedConfiguration(
 			String configurationId, String dictionaryString,
-			Serializable scopePK, ExtendedObjectClassDefinition.Scope scope) {
+			ExtendedObjectClassDefinition.Scope scope, Serializable scopePK) {
 
 			_configurationId = configurationId;
 			_dictionaryString = dictionaryString;
-			_scopePK = scopePK;
 			_scope = scope;
+			_scopePK = scopePK;
 		}
 
 		public String getConfigurationId() {
