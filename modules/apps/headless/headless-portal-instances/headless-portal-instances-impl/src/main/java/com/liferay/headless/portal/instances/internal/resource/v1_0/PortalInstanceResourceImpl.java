@@ -141,7 +141,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			throw new BadRequestException("Import configuration is required");
 		}
 
-		if (idempotencyKey != null) {
+		if (Validator.isNotNull(idempotencyKey)) {
 			IdempotencyEntry idempotencyEntry = _idempotencyCache.get(
 				idempotencyKey);
 
@@ -168,7 +168,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				portalInstanceImport.getVirtualHost(),
 				portalInstanceImport.getWebId()));
 
-		if (idempotencyKey != null) {
+		if (Validator.isNotNull(idempotencyKey)) {
 			if (_idempotencyCache.size() >= _IDEMPOTENCY_CACHE_MAX_SIZE) {
 				_idempotencyCache.entrySet(
 				).removeIf(
