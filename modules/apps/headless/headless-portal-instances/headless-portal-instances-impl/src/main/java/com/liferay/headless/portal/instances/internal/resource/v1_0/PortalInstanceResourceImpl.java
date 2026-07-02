@@ -174,10 +174,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				"Unable to export portal instance " + portalInstanceId,
 				exception);
 
-			return Response.serverError(
-			).entity(
-				"Export failed with message: " + exception.getMessage()
-			).build();
+			throw exception;
 		}
 
 		return Response.ok(
