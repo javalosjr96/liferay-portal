@@ -80,11 +80,11 @@ public class CompanyServiceWrapper
 	@Override
 	public com.liferay.portal.kernel.model.Company addDBPartitionCompany(
 			long companyId, java.lang.String name,
-			java.lang.String virtualHostname, java.lang.String webId)
+			java.lang.String virtualHost, java.lang.String webId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _companyService.addDBPartitionCompany(
-			companyId, name, virtualHostname, webId);
+			companyId, name, virtualHost, webId);
 	}
 
 	@Override

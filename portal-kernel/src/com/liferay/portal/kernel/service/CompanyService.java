@@ -92,7 +92,7 @@ public interface CompanyService extends BaseService {
 
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	public Company addDBPartitionCompany(
-			long companyId, String name, String virtualHostname, String webId)
+			long companyId, String name, String virtualHost, String webId)
 		throws PortalException;
 
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)

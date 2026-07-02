@@ -26,6 +26,8 @@ import jakarta.ws.rs.BadRequestException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.osgi.service.component.annotations.Component;
@@ -152,14 +154,13 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			_idempotencyCache.remove(idempotencyKey);
 		}
 
-		String schemaNameString = portalInstanceImport.getSchemaName();
+		String schemaName = portalInstanceImport.getSchemaName();
 
 		long companyId = GetterUtil.getLong(
-			StringUtil.removeSubstring(schemaNameString, "lexported_"));
+			StringUtil.removeSubstring(schemaName, "lexported_"));
 
 		if (companyId == 0) {
-			throw new BadRequestException(
-				"Invalid schema name: " + schemaNameString);
+			throw new BadRequestException("Invalid schema name: " + schemaName);
 		}
 
 		PortalInstance portalInstance = _toPortalInstance(
@@ -170,11 +171,15 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		if (Validator.isNotNull(idempotencyKey)) {
 			if (_idempotencyCache.size() >= _IDEMPOTENCY_CACHE_MAX_SIZE) {
-				_idempotencyCache.entrySet(
-				).removeIf(
-					entry -> entry.getValue(
-					).isExpired()
-				);
+				Set<Map.Entry<String, IdempotencyEntry>> entries =
+					_idempotencyCache.entrySet();
+
+				entries.removeIf(
+					entry -> {
+						IdempotencyEntry expiredEntry = entry.getValue();
+
+						return expiredEntry.isExpired();
+					});
 			}
 
 			_idempotencyCache.put(

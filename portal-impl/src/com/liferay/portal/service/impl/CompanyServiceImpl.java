@@ -118,7 +118,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
 	public Company addDBPartitionCompany(
-			long companyId, String name, String virtualHostname, String webId)
+			long companyId, String name, String virtualHost, String webId)
 		throws PortalException {
 
 		PermissionChecker permissionChecker = getPermissionChecker();
@@ -128,7 +128,7 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 		}
 
 		Company company = companyLocalService.addDBPartitionCompany(
-			companyId, name, virtualHostname, webId);
+			companyId, name, virtualHost, webId);
 
 		if (AuditRouterUtil.isDeployed()) {
 			long userId = GetterUtil.getLong(PrincipalThreadLocal.getName());
