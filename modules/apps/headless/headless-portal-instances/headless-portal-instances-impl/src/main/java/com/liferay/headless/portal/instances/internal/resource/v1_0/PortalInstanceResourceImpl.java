@@ -170,8 +170,11 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		if (idempotencyKey != null) {
 			if (_idempotencyCache.size() >= _IDEMPOTENCY_CACHE_MAX_SIZE) {
-				_idempotencyCache.entrySet().removeIf(
-					entry -> entry.getValue().isExpired());
+				_idempotencyCache.entrySet(
+				).removeIf(
+					entry -> entry.getValue(
+					).isExpired()
+				);
 			}
 
 			_idempotencyCache.put(
