@@ -181,7 +181,9 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			).build();
 		}
 
-		return Response.ok("lexported_" + companyId).build();
+		return Response.ok(
+			"lexported_" + companyId
+		).build();
 	}
 
 	@Override
@@ -277,8 +279,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		if (value != null) {
 			return new ScopedConfiguration(
-				configurationId, dictionaryString,
-				GetterUtil.getString(value),
+				configurationId, dictionaryString, GetterUtil.getString(value),
 				ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE);
 		}
 
@@ -293,7 +294,11 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				scopedConfiguration.getScope(),
 				ExtendedObjectClassDefinition.Scope.COMPANY)) {
 
-			return (companyId == (long)scopedConfiguration.getScopePK());
+			if (companyId == (long)scopedConfiguration.getScopePK()) {
+				return true;
+			}
+
+			return false;
 		}
 
 		if (Objects.equals(
@@ -316,7 +321,11 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				return false;
 			}
 
-			return (group.getCompanyId() == companyId);
+			if (group.getCompanyId() == companyId) {
+				return true;
+			}
+
+			return false;
 		}
 
 		return true;

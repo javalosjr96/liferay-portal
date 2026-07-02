@@ -102,8 +102,7 @@ public class PortalInstanceResourceTest
 			_portalInstance.getPortalInstanceId());
 
 		Assert.assertNotNull(
-			_companyLocalService.fetchCompany(
-				_portalInstance.getCompanyId()));
+			_companyLocalService.fetchCompany(_portalInstance.getCompanyId()));
 	}
 
 	@Override
