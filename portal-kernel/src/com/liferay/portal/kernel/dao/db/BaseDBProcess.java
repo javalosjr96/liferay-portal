@@ -14,7 +14,6 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
@@ -701,8 +700,6 @@ public abstract class BaseDBProcess implements DBProcess {
 			return _fixedThreadPoolSize.get();
 		}
 
-		long[] companyIds = PortalInstancePool.getCompanyIds();
-
 		int maximumPoolSize = GetterUtil.getInteger(
 			PropsUtil.get("jdbc.default.maximumPoolSize"));
 
@@ -710,10 +707,10 @@ public abstract class BaseDBProcess implements DBProcess {
 
 		int availableProcessors = runtime.availableProcessors();
 
-		int companyCount = Math.max(1, companyIds.length);
+		// Bound N so nested processConcurrently pools open at most N^2 connections
 
 		int connectionBudget = Math.max(
-			1, (int)Math.sqrt(0.9 * maximumPoolSize / companyCount));
+			1, (int)Math.sqrt(0.9 * maximumPoolSize));
 
 		int fixedThreadPoolSize = Math.min(
 			availableProcessors, connectionBudget);
@@ -724,10 +721,8 @@ public abstract class BaseDBProcess implements DBProcess {
 			_log.warn(
 				StringBundler.concat(
 					"Limiting upgrade worker threads to ", fixedThreadPoolSize,
-					" to avoid exhausting the database connection pool of ",
-					"size ", maximumPoolSize,
-					". Consider increasing \"jdbc.default.maximumPoolSize\" ",
-					"to improve upgrade performance."));
+					" to avoid exhausting the database connection pool of size ",
+					maximumPoolSize));
 		}
 
 		_fixedThreadPoolSize.set(fixedThreadPoolSize);

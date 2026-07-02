@@ -5,7 +5,6 @@
 
 package com.liferay.portal.kernel.dao.db;
 
-import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
 
@@ -24,7 +23,7 @@ public class BaseDBProcessTest {
 
 	@Test
 	public void testGetFixedThreadPoolSize() throws Exception {
-		_testGetFixedThreadPoolSize(DBType.HYPERSONIC, 1, 1, 1000);
+		_testGetFixedThreadPoolSize(DBType.HYPERSONIC, 1, 1000);
 
 		Runtime runtime = Runtime.getRuntime();
 
@@ -33,8 +32,7 @@ public class BaseDBProcessTest {
 		int amplePoolSize =
 			(int)(availableProcessors * availableProcessors / 0.9) + 1;
 
-		_testGetFixedThreadPoolSize(
-			DBType.MYSQL, availableProcessors, 1, amplePoolSize);
+		_testGetFixedThreadPoolSize(DBType.MYSQL, availableProcessors, amplePoolSize);
 
 		int smallPoolSize = 10;
 
@@ -43,27 +41,17 @@ public class BaseDBProcessTest {
 			Math.min(
 				availableProcessors,
 				Math.max(1, (int)Math.sqrt(0.9 * smallPoolSize))),
-			1, smallPoolSize);
+			smallPoolSize);
 
-		_testGetFixedThreadPoolSize(DBType.MYSQL, 1, 5, smallPoolSize);
-
-		_testGetFixedThreadPoolSize(
-			DBType.MYSQL,
-			Math.min(
-				availableProcessors,
-				Math.max(1, (int)Math.sqrt(0.9 * smallPoolSize))),
-			0, smallPoolSize);
+		_testGetFixedThreadPoolSize(DBType.MYSQL, 1, 1);
 	}
 
 	private void _testGetFixedThreadPoolSize(
-			DBType dbType, int expectedFixedThreadPoolSize, int companyCount,
-			int maximumPoolSize)
+			DBType dbType, int expectedFixedThreadPoolSize, int maximumPoolSize)
 		throws Exception {
 
 		try (MockedStatic<DBManagerUtil> dbManagerUtilMockedStatic =
 				Mockito.mockStatic(DBManagerUtil.class);
-			MockedStatic<PortalInstancePool> portalInstancePoolMockedStatic =
-				Mockito.mockStatic(PortalInstancePool.class);
 			MockedStatic<PropsUtil> propsUtilMockedStatic = Mockito.mockStatic(
 				PropsUtil.class)) {
 
@@ -79,12 +67,6 @@ public class BaseDBProcessTest {
 				db.getDBType()
 			).thenReturn(
 				dbType
-			);
-
-			portalInstancePoolMockedStatic.when(
-				PortalInstancePool::getCompanyIds
-			).thenReturn(
-				new long[companyCount]
 			);
 
 			propsUtilMockedStatic.when(
