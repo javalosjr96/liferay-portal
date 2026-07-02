@@ -413,7 +413,8 @@ public class PortalInstanceResourceTest
 					LocaleUtil.getDefault()
 				).build();
 
-			PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
+			PortalInstanceImport portalInstanceImport =
+				new PortalInstanceImport();
 
 			portalInstanceImport.setSchemaName("lextracted_1");
 
