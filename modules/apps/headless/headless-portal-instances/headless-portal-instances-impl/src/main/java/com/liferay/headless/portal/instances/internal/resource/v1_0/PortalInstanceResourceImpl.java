@@ -37,8 +37,6 @@ import com.liferay.portal.vulcan.pagination.Page;
 
 import jakarta.ws.rs.core.Response;
 
-import java.io.Serializable;
-
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.List;
@@ -217,31 +215,16 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		Map<String, String> configurations = DBPartitionUtil.getConfigurations(
 			CompanyConstants.SYSTEM);
 
-		List<ScopedConfiguration> scopedConfigurations = new ArrayList<>();
-
 		for (Map.Entry<String, String> entry : configurations.entrySet()) {
 			ScopedConfiguration scopedConfiguration = _getScopedConfiguration(
 				entry.getKey(), entry.getValue());
 
-			if (scopedConfiguration == null) {
-				continue;
-			}
-
-			if (Objects.equals(
-					scopedConfiguration.getScope(),
-					ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE)) {
-
-				scopedConfigurations.add(scopedConfiguration);
+			if ((scopedConfiguration == null) ||
+				!_isApplicable(companyId, scopedConfiguration)) {
 
 				continue;
 			}
 
-			if (_isApplicable(companyId, scopedConfiguration)) {
-				scopedConfigurations.add(scopedConfiguration);
-			}
-		}
-
-		for (ScopedConfiguration scopedConfiguration : scopedConfigurations) {
 			DBPartitionUtil.exportConfiguration(
 				companyId, scopedConfiguration.getConfigurationId(),
 				scopedConfiguration.getEncodedDictionary());
@@ -298,11 +281,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				scopedConfiguration.getScope(),
 				ExtendedObjectClassDefinition.Scope.COMPANY)) {
 
-			if (companyId == (long)scopedConfiguration.getScopePK()) {
-				return true;
-			}
-
-			return false;
+			return companyId == (long)scopedConfiguration.getScopePK();
 		}
 
 		if (Objects.equals(
@@ -325,11 +304,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				return false;
 			}
 
-			if (group.getCompanyId() == companyId) {
-				return true;
-			}
-
-			return false;
+			return group.getCompanyId() == companyId;
 		}
 
 		return true;
@@ -380,7 +355,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		public ScopedConfiguration(
 			String configurationId, String encodedDictionary,
-			ExtendedObjectClassDefinition.Scope scope, Serializable scopePK) {
+			ExtendedObjectClassDefinition.Scope scope, Object scopePK) {
 
 			_configurationId = configurationId;
 			_encodedDictionary = encodedDictionary;
