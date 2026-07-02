@@ -21,6 +21,7 @@ import jakarta.annotation.Generated;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriInfo;
 
 import java.util.Collections;
@@ -55,6 +56,9 @@ public interface PortalInstanceResource {
 		throws Exception;
 
 	public PortalInstance postPortalInstance(PortalInstance portalInstance)
+		throws Exception;
+
+	public Response postPortalInstanceExport(String portalInstanceId)
 		throws Exception;
 
 	public void putPortalInstanceActivate(String portalInstanceId)
@@ -151,4 +155,4 @@ public interface PortalInstanceResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1561391421
+// LIFERAY-REST-BUILDER-HASH:-1120198807
