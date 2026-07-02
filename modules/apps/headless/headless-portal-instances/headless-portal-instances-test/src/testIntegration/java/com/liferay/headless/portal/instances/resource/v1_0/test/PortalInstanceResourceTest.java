@@ -97,6 +97,17 @@ public class PortalInstanceResourceTest
 
 	@Override
 	@Test
+	public void testPostPortalInstanceExport() throws Exception {
+		portalInstanceResource.postPortalInstanceExport(
+			_portalInstance.getPortalInstanceId());
+
+		Assert.assertNotNull(
+			_companyLocalService.fetchCompany(
+				_portalInstance.getCompanyId()));
+	}
+
+	@Override
+	@Test
 	public void testPutPortalInstanceActivate() throws Exception {
 		_companyLocalService.updateCompany(
 			_company.getCompanyId(), _company.getVirtualHostname(),
