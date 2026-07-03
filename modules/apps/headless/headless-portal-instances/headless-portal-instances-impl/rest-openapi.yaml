@@ -232,3 +232,28 @@ paths:
                     description:
                         default response
             tags: ["PortalInstance"]
+    /portal-instances/{portalInstanceId}/export:
+        # @review
+        post:
+            description:
+                Exports the portal instance
+            operationId: postPortalInstanceExport
+            parameters:
+                -   in: path
+                    name: portalInstanceId
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                type: string
+                        application/xml:
+                            schema:
+                                type: string
+                    description:
+                        default response
+            # @review
+            tags: ["PortalInstance"]
