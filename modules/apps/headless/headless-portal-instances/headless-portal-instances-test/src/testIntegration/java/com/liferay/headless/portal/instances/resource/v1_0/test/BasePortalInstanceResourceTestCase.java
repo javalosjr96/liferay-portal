@@ -330,6 +330,11 @@ public abstract class BasePortalInstanceResourceTestCase {
 	}
 
 	@Test
+	public void testPostPortalInstanceExport() throws Exception {
+		Assert.assertTrue(false);
+	}
+
+	@Test
 	public void testPutPortalInstanceActivate() throws Exception {
 		@SuppressWarnings("PMD.UnusedLocalVariable")
 		PortalInstance portalInstance =
@@ -1302,4 +1307,4 @@ public abstract class BasePortalInstanceResourceTestCase {
 			PortalInstanceResource _portalInstanceResource;
 
 }
-// LIFERAY-REST-BUILDER-HASH:1869092667
+// LIFERAY-REST-BUILDER-HASH:-1997465098
