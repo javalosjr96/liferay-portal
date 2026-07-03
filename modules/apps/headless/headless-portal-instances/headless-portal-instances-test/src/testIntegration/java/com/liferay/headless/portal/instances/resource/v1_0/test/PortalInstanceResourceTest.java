@@ -109,9 +109,9 @@ public class PortalInstanceResourceTest
 	@Override
 	@Test
 	public void testPostPortalInstanceExport() throws Exception {
-		_testPostPortalInstanceExportExisting();
 		_testPostPortalInstanceExportForbidden();
 		_testPostPortalInstanceExportNonexistent();
+		_testPostPortalInstanceExportExisting();
 	}
 
 	@Override
