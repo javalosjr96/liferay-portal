@@ -7,12 +7,16 @@ package com.liferay.headless.portal.instances.internal.resource.v1_0;
 
 import com.liferay.headless.portal.instances.dto.v1_0.Admin;
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstance;
+import com.liferay.headless.portal.instances.dto.v1_0.PortalInstanceImport;
 import com.liferay.headless.portal.instances.resource.v1_0.PortalInstanceResource;
+import com.liferay.portal.kernel.cache.MultiVMPool;
+import com.liferay.portal.kernel.cache.PortalCache;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
 import com.liferay.portal.kernel.exception.UserScreenNameException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.security.auth.EmailAddressValidator;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -20,9 +24,12 @@ import com.liferay.portal.security.auth.EmailAddressValidatorFactory;
 import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.vulcan.pagination.Page;
 
+import jakarta.ws.rs.BadRequestException;
+
 import java.util.ArrayList;
 import java.util.List;
 
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
@@ -128,6 +135,61 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 	}
 
 	@Override
+	public PortalInstance postPortalInstanceImport(
+			String idempotencyKey, PortalInstanceImport portalInstanceImport)
+		throws Exception {
+
+		if (portalInstanceImport == null) {
+			throw new BadRequestException("Import configuration is required");
+		}
+
+		String schemaName = portalInstanceImport.getSchemaName();
+
+		if (!schemaName.startsWith("lexported_")) {
+			throw new BadRequestException("Invalid schema name: " + schemaName);
+		}
+
+		long companyId = GetterUtil.getLong(
+			schemaName.substring("lexported_".length()));
+
+		if (companyId == 0) {
+			throw new BadRequestException("Invalid schema name: " + schemaName);
+		}
+
+		if (Validator.isNotNull(idempotencyKey)) {
+			Long cachedCompanyId = _idempotencyPortalCache.get(idempotencyKey);
+
+			if (cachedCompanyId != null) {
+				return _toPortalInstance(
+					_companyService.getCompanyById(cachedCompanyId));
+			}
+
+			Company company = _companyLocalService.fetchCompany(companyId);
+
+			if (company != null) {
+				_idempotencyPortalCache.put(
+					idempotencyKey, company.getCompanyId(),
+					_IDEMPOTENCY_CACHE_TTL_SECONDS);
+
+				return _toPortalInstance(company);
+			}
+		}
+
+		Company company = _companyService.addDBPartitionCompany(
+			companyId, portalInstanceImport.getName(),
+			portalInstanceImport.getVirtualHost(),
+			portalInstanceImport.getWebId());
+
+		if (Validator.isNotNull(idempotencyKey)) {
+			_idempotencyPortalCache.put(
+				idempotencyKey, company.getCompanyId(),
+				_IDEMPOTENCY_CACHE_TTL_SECONDS);
+		}
+
+		return _toPortalInstance(company);
+	}
+
+	@Override
 	public void putPortalInstanceActivate(String portalInstanceId)
 		throws Exception {
 
@@ -147,6 +209,13 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		_companyService.updateCompany(
 			company.getCompanyId(), company.getVirtualHostname(),
 			company.getMx(), company.getMaxUsers(), false);
+	}
+
+	@Activate
+	protected void activate() {
+		_idempotencyPortalCache =
+			(PortalCache<String, Long>)_multiVMPool.getPortalCache(
+				PortalInstanceResourceImpl.class.getName());
 	}
 
 	private PortalInstance _toPortalInstance(Company company) {
@@ -178,7 +247,17 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		}
 	}
 
+	private static final int _IDEMPOTENCY_CACHE_TTL_SECONDS = 5 * 60;
+
+	@Reference
+	private CompanyLocalService _companyLocalService;
+
 	@Reference
 	private CompanyService _companyService;
+
+	private PortalCache<String, Long> _idempotencyPortalCache;
+
+	@Reference
+	private MultiVMPool _multiVMPool;
 
 }
