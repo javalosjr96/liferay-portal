@@ -7,6 +7,7 @@ package com.liferay.headless.portal.instances.internal.resource.v1_0;
 
 import com.liferay.headless.portal.instances.dto.v1_0.Admin;
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstance;
+import com.liferay.headless.portal.instances.dto.v1_0.PortalInstanceImport;
 import com.liferay.headless.portal.instances.resource.v1_0.PortalInstanceResource;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
 import com.liferay.portal.kernel.exception.UserScreenNameException;
@@ -15,15 +16,23 @@ import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.security.auth.EmailAddressValidator;
 import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.security.auth.EmailAddressValidatorFactory;
 import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.vulcan.pagination.Page;
 
+import jakarta.ws.rs.BadRequestException;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ServiceScope;
 
@@ -128,6 +137,74 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 	}
 
 	@Override
+	public PortalInstance postPortalInstanceImport(
+			String idempotencyKey, PortalInstanceImport portalInstanceImport)
+		throws Exception {
+
+		if (portalInstanceImport == null) {
+			throw new BadRequestException("Import configuration is required");
+		}
+
+		String scopedIdempotencyKey = null;
+
+		if (Validator.isNotNull(idempotencyKey)) {
+			scopedIdempotencyKey =
+				contextUser.getUserId() + ":" + idempotencyKey;
+
+			IdempotencyEntry idempotencyEntry = _idempotencyCache.get(
+				scopedIdempotencyKey);
+
+			if ((idempotencyEntry != null) && !idempotencyEntry.isExpired()) {
+				return idempotencyEntry.getPortalInstance();
+			}
+
+			_idempotencyCache.remove(scopedIdempotencyKey);
+		}
+
+		String schemaName = portalInstanceImport.getSchemaName();
+
+		if (Validator.isNull(schemaName)) {
+			throw new BadRequestException("Schema name is required");
+		}
+
+		long companyId = GetterUtil.getLong(
+			StringUtil.removeSubstring(
+				schemaName, PropsValues.DATABASE_PARTITION_SCHEMA_NAME_PREFIX));
+
+		if (companyId == 0) {
+			throw new BadRequestException("Invalid schema name: " + schemaName);
+		}
+
+		PortalInstance portalInstance = _toPortalInstance(
+			_companyService.addDBPartitionCompany(
+				companyId, portalInstanceImport.getName(),
+				portalInstanceImport.getVirtualHost(),
+				portalInstanceImport.getWebId()));
+
+		if (Validator.isNotNull(scopedIdempotencyKey)) {
+			if (_idempotencyCache.size() >= _IDEMPOTENCY_CACHE_MAX_SIZE) {
+				Set<Map.Entry<String, IdempotencyEntry>> entries =
+					_idempotencyCache.entrySet();
+
+				entries.removeIf(
+					entry -> {
+						IdempotencyEntry expiredEntry = entry.getValue();
+
+						return expiredEntry.isExpired();
+					});
+			}
+
+			if (_idempotencyCache.size() < _IDEMPOTENCY_CACHE_MAX_SIZE) {
+				_idempotencyCache.put(
+					scopedIdempotencyKey,
+					new IdempotencyEntry(portalInstance, _IDEMPOTENCY_TTL_MS));
+			}
+		}
+
+		return portalInstance;
+	}
+
+	@Override
 	public void putPortalInstanceActivate(String portalInstanceId)
 		throws Exception {
 
@@ -147,6 +224,11 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		_companyService.updateCompany(
 			company.getCompanyId(), company.getVirtualHostname(),
 			company.getMx(), company.getMaxUsers(), false);
+	}
+
+	@Deactivate
+	protected void deactivate() {
+		_idempotencyCache.clear();
 	}
 
 	private PortalInstance _toPortalInstance(Company company) {
@@ -178,7 +260,39 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		}
 	}
 
+	private static final int _IDEMPOTENCY_CACHE_MAX_SIZE = 1000;
+
+	private static final long _IDEMPOTENCY_TTL_MS = 5L * 60L * 1000L;
+
+	private static final ConcurrentHashMap<String, IdempotencyEntry>
+		_idempotencyCache = new ConcurrentHashMap<>();
+
 	@Reference
 	private CompanyService _companyService;
+
+	private static class IdempotencyEntry {
+
+		public IdempotencyEntry(PortalInstance portalInstance, long ttlMs) {
+			_portalInstance = portalInstance;
+
+			_expiryTime = System.currentTimeMillis() + ttlMs;
+		}
+
+		public PortalInstance getPortalInstance() {
+			return _portalInstance;
+		}
+
+		public boolean isExpired() {
+			if (System.currentTimeMillis() > _expiryTime) {
+				return true;
+			}
+
+			return false;
+		}
+
+		private final long _expiryTime;
+		private final PortalInstance _portalInstance;
+
+	}
 
 }
