@@ -210,6 +210,39 @@ public abstract class BasePortalInstanceResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-portal-instances/v1.0/portal-instances/{portalInstanceId}/export'  -u 'test@liferay.com:test'
+	 */
+	@io.swagger.v3.oas.annotations.Operation(
+		description = "Exports the portal instance"
+	)
+	@io.swagger.v3.oas.annotations.Parameters(
+		value = {
+			@io.swagger.v3.oas.annotations.Parameter(
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
+				name = "portalInstanceId"
+			)
+		}
+	)
+	@io.swagger.v3.oas.annotations.tags.Tags(
+		value = {
+			@io.swagger.v3.oas.annotations.tags.Tag(name = "PortalInstance")
+		}
+	)
+	@jakarta.ws.rs.Path("/portal-instances/{portalInstanceId}/export")
+	@jakarta.ws.rs.POST
+	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
+	@Override
+	public void postPortalInstanceExport(
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.validation.constraints.NotNull
+			@jakarta.ws.rs.PathParam("portalInstanceId")
+			String portalInstanceId)
+		throws Exception {
+	}
+
+	/**
+	 * Invoke this method with the command line:
+	 *
 	 * curl -X 'PUT' 'http://localhost:8080/o/headless-portal-instances/v1.0/portal-instances/{portalInstanceId}/activate'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
@@ -718,4 +751,4 @@ public abstract class BasePortalInstanceResourceImpl
 		LogFactoryUtil.getLog(BasePortalInstanceResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:-745623835
+// LIFERAY-REST-BUILDER-HASH:-1475337886

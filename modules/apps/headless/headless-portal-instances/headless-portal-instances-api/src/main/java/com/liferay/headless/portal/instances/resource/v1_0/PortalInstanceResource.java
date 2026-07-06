@@ -57,6 +57,9 @@ public interface PortalInstanceResource {
 	public PortalInstance postPortalInstance(PortalInstance portalInstance)
 		throws Exception;
 
+	public void postPortalInstanceExport(String portalInstanceId)
+		throws Exception;
+
 	public void putPortalInstanceActivate(String portalInstanceId)
 		throws Exception;
 
@@ -151,4 +154,4 @@ public interface PortalInstanceResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1561391421
+// LIFERAY-REST-BUILDER-HASH:-1171522594
