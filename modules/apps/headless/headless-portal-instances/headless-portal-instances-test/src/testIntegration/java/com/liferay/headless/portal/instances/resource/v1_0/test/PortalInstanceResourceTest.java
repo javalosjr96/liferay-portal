@@ -8,11 +8,14 @@ package com.liferay.headless.portal.instances.resource.v1_0.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.headless.portal.instances.client.dto.v1_0.Admin;
 import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstance;
+import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstanceImport;
 import com.liferay.headless.portal.instances.client.pagination.Page;
 import com.liferay.headless.portal.instances.client.problem.Problem;
+import com.liferay.headless.portal.instances.client.resource.v1_0.PortalInstanceResource;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -20,6 +23,9 @@ import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.PrefsPropsTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -93,6 +99,14 @@ public class PortalInstanceResourceTest
 		_testPostPortalInstanceWithoutAdmin();
 		_testPostPortalInstanceWithAdmin();
 		_testPostPortalInstanceWithAdminAndCompanyStrangers();
+	}
+
+	@Override
+	@Test
+	public void testPostPortalInstanceImport() throws Exception {
+		_testPostPortalInstanceImportForbidden();
+		_testPostPortalInstanceImportForbiddenWithIdempotencyKey();
+		_testPostPortalInstanceImportInvalidSchemaName();
 	}
 
 	@Override
@@ -186,6 +200,14 @@ public class PortalInstanceResourceTest
 		throws Exception {
 
 		return portalInstanceResource.postPortalInstance(portalInstance);
+	}
+
+	@Override
+	protected PortalInstance testPostPortalInstanceImport_addPortalInstance(
+			PortalInstance portalInstance)
+		throws Exception {
+
+		return portalInstance;
 	}
 
 	private static void _deletePortalInstance(PortalInstance portalInstance)
@@ -369,6 +391,114 @@ public class PortalInstanceResourceTest
 			false, false, false, false, true);
 
 		_testPatchPortalInstace(portalInstance, false, false, false);
+	}
+
+	private void _testPostPortalInstanceImportForbidden() throws Exception {
+		User user = UserTestUtil.addUser(false);
+
+		try {
+			user = _userLocalService.updatePassword(
+				user.getUserId(), "test", "test", false, true);
+
+			Company company = _companyLocalService.fetchCompany(
+				TestPropsValues.getCompanyId());
+
+			PortalInstanceResource portalInstanceResource =
+				PortalInstanceResource.builder(
+				).authentication(
+					user.getEmailAddress(), "test"
+				).endpoint(
+					company.getVirtualHostname(),
+					PortalUtil.getPortalServerPort(false), "http"
+				).locale(
+					LocaleUtil.getDefault()
+				).build();
+
+			PortalInstanceImport portalInstanceImport =
+				new PortalInstanceImport();
+
+			portalInstanceImport.setSchemaName("lexported_1");
+
+			try {
+				portalInstanceResource.postPortalInstanceImport(
+					null, portalInstanceImport);
+
+				Assert.fail();
+			}
+			catch (Problem.ProblemException problemException) {
+				Problem problem = problemException.getProblem();
+
+				Assert.assertEquals("FORBIDDEN", problem.getStatus());
+			}
+		}
+		finally {
+			_userLocalService.deleteUser(user.getUserId());
+		}
+	}
+
+	private void _testPostPortalInstanceImportForbiddenWithIdempotencyKey()
+		throws Exception {
+
+		User user = UserTestUtil.addUser(false);
+
+		try {
+			user = _userLocalService.updatePassword(
+				user.getUserId(), "test", "test", false, true);
+
+			Company company = _companyLocalService.fetchCompany(
+				TestPropsValues.getCompanyId());
+
+			PortalInstanceResource portalInstanceResource =
+				PortalInstanceResource.builder(
+				).authentication(
+					user.getEmailAddress(), "test"
+				).endpoint(
+					company.getVirtualHostname(),
+					PortalUtil.getPortalServerPort(false), "http"
+				).locale(
+					LocaleUtil.getDefault()
+				).build();
+
+			PortalInstanceImport portalInstanceImport =
+				new PortalInstanceImport();
+
+			portalInstanceImport.setSchemaName("lexported_1");
+
+			try {
+				portalInstanceResource.postPortalInstanceImport(
+					RandomTestUtil.randomString(), portalInstanceImport);
+
+				Assert.fail();
+			}
+			catch (Problem.ProblemException problemException) {
+				Problem problem = problemException.getProblem();
+
+				Assert.assertEquals("FORBIDDEN", problem.getStatus());
+			}
+		}
+		finally {
+			_userLocalService.deleteUser(user.getUserId());
+		}
+	}
+
+	private void _testPostPortalInstanceImportInvalidSchemaName()
+		throws Exception {
+
+		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
+
+		portalInstanceImport.setSchemaName("invalid");
+
+		try {
+			portalInstanceResource.postPortalInstanceImport(
+				null, portalInstanceImport);
+
+			Assert.fail();
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
+		}
 	}
 
 	private void _testPostPortalInstanceWithAdmin() throws Exception {
