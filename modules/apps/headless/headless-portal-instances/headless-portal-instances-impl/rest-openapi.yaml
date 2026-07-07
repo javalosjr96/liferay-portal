@@ -53,6 +53,15 @@ components:
                 virtualHost:
                     type: string
             type: object
+        PortalInstanceExport:
+            description:
+                The result of a portal instance export operation.
+            properties:
+                schemaName:
+                    description:
+                        The DB partition schema name (format lexported_[companyId]).
+                    type: string
+            type: object
 info:
     description:
         "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.headless.portal.instances.client', and version '1.0.33'."
@@ -231,4 +240,27 @@ paths:
                         application/xml: {}
                     description:
                         default response
+            tags: ["PortalInstance"]
+    /portal-instances/{portalInstanceId}/export:
+        post:
+            description:
+                Exports the portal instance
+            operationId: postPortalInstanceExport
+            parameters:
+                -   in: path
+                    name: portalInstanceId
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/PortalInstanceExport"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/PortalInstanceExport"
+                    description:
+                        The exported portal instance.
             tags: ["PortalInstance"]
