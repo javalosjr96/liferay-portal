@@ -94,6 +94,13 @@ definition {
 				Navigator.openWithAppendToBaseURL(urlAppend = "group/${siteNameURL}/~/control_panel/manage");
 			}
 		}
+		else if (isSet(site)) {
+			var siteNameURL = StringUtil.replace(${site}, " ", "-");
+
+			var siteNameURL = StringUtil.lowerCase(${siteNameURL});
+
+			Navigator.openWithAppendToBaseURL(urlAppend = "group/${siteNameURL}/~/control_panel/manage");
+		}
 
 		ProductMenuHelper.openProductMenu();
 
