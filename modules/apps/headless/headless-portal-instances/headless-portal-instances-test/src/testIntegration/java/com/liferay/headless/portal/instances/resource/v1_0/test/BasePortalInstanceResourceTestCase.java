@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.util.ISO8601DateFormat;
 
 import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstance;
+import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstanceExport;
 import com.liferay.headless.portal.instances.client.http.HttpInvoker;
 import com.liferay.headless.portal.instances.client.pagination.Page;
 import com.liferay.headless.portal.instances.client.resource.v1_0.PortalInstanceResource;
@@ -376,6 +377,11 @@ public abstract class BasePortalInstanceResourceTestCase {
 			"This method needs to be implemented");
 	}
 
+	@Test
+	public void testPostPortalInstanceExport() throws Exception {
+		Assert.assertTrue(true);
+	}
+
 	protected void assertContains(
 		PortalInstance portalInstance, List<PortalInstance> portalInstances) {
 
@@ -421,6 +427,15 @@ public abstract class BasePortalInstanceResourceTestCase {
 
 			assertEquals(portalInstance1, portalInstance2);
 		}
+	}
+
+	protected void assertEquals(
+		PortalInstanceExport portalInstanceExport1,
+		PortalInstanceExport portalInstanceExport2) {
+
+		Assert.assertTrue(
+			portalInstanceExport1 + " does not equal " + portalInstanceExport2,
+			equals(portalInstanceExport1, portalInstanceExport2));
 	}
 
 	protected void assertEqualsIgnoringOrder(
@@ -565,7 +580,33 @@ public abstract class BasePortalInstanceResourceTestCase {
 		}
 	}
 
+	protected void assertValid(PortalInstanceExport portalInstanceExport) {
+		boolean valid = true;
+
+		for (String additionalAssertFieldName :
+				getAdditionalPortalInstanceExportAssertFieldNames()) {
+
+			if (Objects.equals("schemaName", additionalAssertFieldName)) {
+				if (portalInstanceExport.getSchemaName() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			throw new IllegalArgumentException(
+				"Invalid additional assert field name " +
+					additionalAssertFieldName);
+		}
+
+		Assert.assertTrue(valid);
+	}
+
 	protected String[] getAdditionalAssertFieldNames() {
+		return new String[0];
+	}
+
+	protected String[] getAdditionalPortalInstanceExportAssertFieldNames() {
 		return new String[0];
 	}
 
@@ -746,6 +787,36 @@ public abstract class BasePortalInstanceResourceTestCase {
 		}
 
 		return false;
+	}
+
+	protected boolean equals(
+		PortalInstanceExport portalInstanceExport1,
+		PortalInstanceExport portalInstanceExport2) {
+
+		if (portalInstanceExport1 == portalInstanceExport2) {
+			return true;
+		}
+
+		for (String additionalAssertFieldName :
+				getAdditionalPortalInstanceExportAssertFieldNames()) {
+
+			if (Objects.equals("schemaName", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						portalInstanceExport1.getSchemaName(),
+						portalInstanceExport2.getSchemaName())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			throw new IllegalArgumentException(
+				"Invalid additional assert field name " +
+					additionalAssertFieldName);
+		}
+
+		return true;
 	}
 
 	protected java.lang.reflect.Field[] getDeclaredFields(Class clazz)
@@ -1091,6 +1162,16 @@ public abstract class BasePortalInstanceResourceTestCase {
 		return randomPortalInstance();
 	}
 
+	protected PortalInstanceExport randomPortalInstanceExport()
+		throws Exception {
+
+		return new PortalInstanceExport() {
+			{
+				schemaName = RandomTestUtil.randomString();
+			}
+		};
+	}
+
 	protected PortalInstanceResource portalInstanceResource;
 	protected com.liferay.portal.kernel.model.Group irrelevantGroup;
 	protected com.liferay.portal.kernel.model.Company testCompany;
@@ -1302,4 +1383,4 @@ public abstract class BasePortalInstanceResourceTestCase {
 			PortalInstanceResource _portalInstanceResource;
 
 }
-// LIFERAY-REST-BUILDER-HASH:1869092667
+// LIFERAY-REST-BUILDER-HASH:-1274699032
