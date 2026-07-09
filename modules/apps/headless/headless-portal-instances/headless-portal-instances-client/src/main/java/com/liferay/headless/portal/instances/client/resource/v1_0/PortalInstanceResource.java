@@ -7,6 +7,7 @@ package com.liferay.headless.portal.instances.client.resource.v1_0;
 
 import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstance;
 import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstanceExport;
+import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstanceImport;
 import com.liferay.headless.portal.instances.client.http.HttpInvoker;
 import com.liferay.headless.portal.instances.client.pagination.Page;
 import com.liferay.headless.portal.instances.client.problem.Problem;
@@ -76,6 +77,12 @@ public interface PortalInstanceResource {
 
 	public HttpInvoker.HttpResponse postPortalInstanceExportHttpResponse(
 			String portalInstanceId)
+	public PortalInstance postPortalInstanceImport(
+			String idempotencyKey, PortalInstanceImport portalInstanceImport)
+		throws Exception;
+
+	public HttpInvoker.HttpResponse postPortalInstanceImportHttpResponse(
+			String idempotencyKey, PortalInstanceImport portalInstanceImport)
 		throws Exception;
 
 	public void putPortalInstanceActivate(String portalInstanceId)
@@ -739,6 +746,14 @@ public interface PortalInstanceResource {
 
 			HttpInvoker.HttpResponse httpResponse =
 				postPortalInstanceExportHttpResponse(portalInstanceId);
+		public PortalInstance postPortalInstanceImport(
+				String idempotencyKey,
+				PortalInstanceImport portalInstanceImport)
+			throws Exception {
+
+			HttpInvoker.HttpResponse httpResponse =
+				postPortalInstanceImportHttpResponse(
+					idempotencyKey, portalInstanceImport);
 
 			String content = httpResponse.getContent();
 
@@ -789,6 +804,7 @@ public interface PortalInstanceResource {
 
 			try {
 				return PortalInstanceExportSerDes.toDTO(content);
+				return PortalInstanceSerDes.toDTO(content);
 			}
 			catch (Exception e) {
 				_logger.log(
@@ -801,11 +817,16 @@ public interface PortalInstanceResource {
 
 		public HttpInvoker.HttpResponse postPortalInstanceExportHttpResponse(
 				String portalInstanceId)
+		public HttpInvoker.HttpResponse postPortalInstanceImportHttpResponse(
+				String idempotencyKey,
+				PortalInstanceImport portalInstanceImport)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
 
 			httpInvoker.body("[]", "application/json");
+			httpInvoker.body(
+				portalInstanceImport.toString(), "application/json");
 
 			if (_builder._locale != null) {
 				httpInvoker.header(
@@ -832,6 +853,7 @@ public interface PortalInstanceResource {
 						"/o/headless-portal-instances/v1.0/portal-instances/{portalInstanceId}/export");
 
 			httpInvoker.path("portalInstanceId", portalInstanceId);
+						"/o/headless-portal-instances/v1.0/portal-instances/import");
 
 			if ((_builder._login != null) && (_builder._password != null)) {
 				httpInvoker.userNameAndPassword(
@@ -1067,4 +1089,4 @@ public interface PortalInstanceResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-795160208
+// LIFERAY-REST-BUILDER-HASH:1719990980
