@@ -61,6 +61,8 @@ public interface PortalInstanceResource {
 
 	public PortalInstanceExport postPortalInstanceExport(
 			String portalInstanceId)
+		throws Exception;
+
 	public PortalInstance postPortalInstanceImport(
 			String idempotencyKey, PortalInstanceImport portalInstanceImport)
 		throws Exception;
