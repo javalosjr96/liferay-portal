@@ -246,7 +246,8 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				oldestEntry = entry;
 			}
 			else {
-				IdempotencyEntry oldestIdempotencyEntry = oldestEntry.getValue();
+				IdempotencyEntry oldestIdempotencyEntry =
+					oldestEntry.getValue();
 
 				if (idempotencyEntry.getExpiryTime() <
 						oldestIdempotencyEntry.getExpiryTime()) {
