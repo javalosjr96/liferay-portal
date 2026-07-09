@@ -330,6 +330,26 @@ public abstract class BasePortalInstanceResourceTestCase {
 	}
 
 	@Test
+	public void testPostPortalInstanceImport() throws Exception {
+		PortalInstance randomPortalInstance = randomPortalInstance();
+
+		PortalInstance postPortalInstance =
+			testPostPortalInstanceImport_addPortalInstance(
+				randomPortalInstance);
+
+		assertEquals(randomPortalInstance, postPortalInstance);
+		assertValid(postPortalInstance);
+	}
+
+	protected PortalInstance testPostPortalInstanceImport_addPortalInstance(
+			PortalInstance portalInstance)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
 	public void testPutPortalInstanceActivate() throws Exception {
 		@SuppressWarnings("PMD.UnusedLocalVariable")
 		PortalInstance portalInstance =
@@ -1302,4 +1322,4 @@ public abstract class BasePortalInstanceResourceTestCase {
 			PortalInstanceResource _portalInstanceResource;
 
 }
-// LIFERAY-REST-BUILDER-HASH:1869092667
+// LIFERAY-REST-BUILDER-HASH:-9671957
