@@ -11,9 +11,15 @@ import com.liferay.headless.portal.instances.dto.v1_0.PortalInstanceImport;
 import com.liferay.headless.portal.instances.resource.v1_0.PortalInstanceResource;
 import com.liferay.portal.kernel.exception.UserEmailAddressException;
 import com.liferay.portal.kernel.exception.UserScreenNameException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.security.auth.EmailAddressValidator;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
+import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -135,9 +141,13 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			PortalInstanceImport portalInstanceImport)
 		throws Exception {
 
+		_checkFeatureFlag();
+
 		if (portalInstanceImport == null) {
 			throw new BadRequestException("Import configuration is required");
 		}
+
+		_checkPermission();
 
 		String schemaNameString = portalInstanceImport.getSchemaName();
 
@@ -161,11 +171,20 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				"Invalid schema name: " + schemaNameString);
 		}
 
-		return _toPortalInstance(
-			_companyService.addDBPartitionCompany(
-				companyId, portalInstanceImport.getName(),
-				portalInstanceImport.getVirtualHost(),
-				portalInstanceImport.getWebId()));
+		try {
+			return _toPortalInstance(
+				_companyService.addDBPartitionCompany(
+					companyId, portalInstanceImport.getName(),
+					portalInstanceImport.getVirtualHost(),
+					portalInstanceImport.getWebId()));
+		}
+		catch (Exception exception) {
+			_log.error(
+				"Unable to import portal instance \"" + schemaNameString + "\"",
+				exception);
+
+			throw exception;
+		}
 	}
 
 	@Override
@@ -188,6 +207,23 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		_companyService.updateCompany(
 			company.getCompanyId(), company.getVirtualHostname(),
 			company.getMx(), company.getMaxUsers(), false);
+	}
+
+	private void _checkFeatureFlag() {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-11342")) {
+
+			throw new UnsupportedOperationException();
+		}
+	}
+
+	private void _checkPermission() throws Exception {
+		PermissionChecker permissionChecker =
+			PermissionThreadLocal.getPermissionChecker();
+
+		if (!permissionChecker.isOmniadmin()) {
+			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
+		}
 	}
 
 	private PortalInstance _toPortalInstance(Company company) {
@@ -221,6 +257,9 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 	private static final String
 		_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX = "lexported_";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		PortalInstanceResourceImpl.class);
 
 	@Reference
 	private CompanyService _companyService;
