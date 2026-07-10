@@ -402,19 +402,18 @@ public class PortalInstanceResourceTest
 
 		_companyLocalService.exportCompany(_company.getCompanyId());
 
-		String randomIdString = StringUtil.toLowerCase(
-			RandomTestUtil.randomString());
+		String randomId = StringUtil.toLowerCase(RandomTestUtil.randomString());
 
-		String virtualHostString =
-			randomIdString + "." +
+		String virtualHost =
+			randomId + "." +
 				StringUtil.toLowerCase(RandomTestUtil.randomString(3));
 
 		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
 
 		portalInstanceImport.setSchemaName(
 			"lexported_" + _company.getCompanyId());
-		portalInstanceImport.setVirtualHost(virtualHostString);
-		portalInstanceImport.setWebId(randomIdString);
+		portalInstanceImport.setVirtualHost(virtualHost);
+		portalInstanceImport.setWebId(randomId);
 
 		PortalInstance portalInstance =
 			portalInstanceResource.postPortalInstanceImport(
@@ -423,12 +422,10 @@ public class PortalInstanceResourceTest
 		try {
 			assertValid(portalInstance);
 
+			Assert.assertEquals(randomId, portalInstance.getPortalInstanceId());
+			Assert.assertEquals(virtualHost, portalInstance.getVirtualHost());
 			Assert.assertNotEquals(
 				_portalInstance.getCompanyId(), portalInstance.getCompanyId());
-			Assert.assertEquals(
-				randomIdString, portalInstance.getPortalInstanceId());
-			Assert.assertEquals(
-				virtualHostString, portalInstance.getVirtualHost());
 		}
 		finally {
 			_deletePortalInstance(portalInstance);
@@ -446,7 +443,7 @@ public class PortalInstanceResourceTest
 			Company company = _companyLocalService.fetchCompany(
 				TestPropsValues.getCompanyId());
 
-			PortalInstanceResource portalInstanceResource =
+			PortalInstanceResource userPortalInstanceResource =
 				PortalInstanceResource.builder(
 				).authentication(
 					user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD
@@ -463,7 +460,7 @@ public class PortalInstanceResourceTest
 			portalInstanceImport.setSchemaName(RandomTestUtil.randomString());
 
 			try {
-				portalInstanceResource.postPortalInstanceImport(
+				userPortalInstanceResource.postPortalInstanceImport(
 					portalInstanceImport);
 
 				Assert.fail();

@@ -149,26 +149,26 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		_checkPermission();
 
-		String schemaNameString = portalInstanceImport.getSchemaName();
+		String schemaName = portalInstanceImport.getSchemaName();
 
-		if (Validator.isNull(schemaNameString)) {
+		if (Validator.isNull(schemaName)) {
 			throw new BadRequestException("Schema name is required");
 		}
 
-		if (!schemaNameString.startsWith(
+		if (!schemaName.startsWith(
 				_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX)) {
 
 			throw new BadRequestException(
-				"Invalid schema name: " + schemaNameString);
+				"Invalid schema name: " + schemaName);
 		}
 
 		long companyId = GetterUtil.getLong(
-			schemaNameString.substring(
+			schemaName.substring(
 				_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX.length()));
 
 		if (companyId == 0) {
 			throw new BadRequestException(
-				"Invalid schema name: " + schemaNameString);
+				"Invalid schema name: " + schemaName);
 		}
 
 		try {
@@ -180,7 +180,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		}
 		catch (Exception exception) {
 			_log.error(
-				"Unable to import portal instance \"" + schemaNameString + "\"",
+				"Unable to import portal instance \"" + schemaName + "\"",
 				exception);
 
 			throw exception;
