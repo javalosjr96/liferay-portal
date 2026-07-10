@@ -227,9 +227,6 @@ public abstract class BasePortalInstanceResourceImpl
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
 	public PortalInstance postPortalInstanceImport(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.HeaderParam("idempotency-key")
-			String idempotencyKey,
 			PortalInstanceImport portalInstanceImport)
 		throws Exception {
 
@@ -747,4 +744,4 @@ public abstract class BasePortalInstanceResourceImpl
 		LogFactoryUtil.getLog(BasePortalInstanceResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1843344696
+// LIFERAY-REST-BUILDER-HASH:-1409329525

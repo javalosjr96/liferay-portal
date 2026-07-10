@@ -109,7 +109,6 @@ public class PortalInstanceResourceTest
 	@Test
 	public void testPostPortalInstanceImport() throws Exception {
 		_testPostPortalInstanceImportForbidden();
-		_testPostPortalInstanceImportIdempotent();
 		_testPostPortalInstanceImportInvalidSchemaName();
 		_testPostPortalInstanceImportSuccess();
 	}
@@ -403,30 +402,33 @@ public class PortalInstanceResourceTest
 
 		_companyLocalService.exportCompany(_company.getCompanyId());
 
-		String randomId = StringUtil.toLowerCase(RandomTestUtil.randomString());
+		String randomIdString = StringUtil.toLowerCase(
+			RandomTestUtil.randomString());
 
-		String virtualHost =
-			randomId + "." +
+		String virtualHostString =
+			randomIdString + "." +
 				StringUtil.toLowerCase(RandomTestUtil.randomString(3));
 
 		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
 
 		portalInstanceImport.setSchemaName(
 			"lexported_" + _company.getCompanyId());
-		portalInstanceImport.setVirtualHost(virtualHost);
-		portalInstanceImport.setWebId(randomId);
+		portalInstanceImport.setVirtualHost(virtualHostString);
+		portalInstanceImport.setWebId(randomIdString);
 
 		PortalInstance portalInstance =
 			portalInstanceResource.postPortalInstanceImport(
-				null, portalInstanceImport);
+				portalInstanceImport);
 
 		try {
 			assertValid(portalInstance);
 
 			Assert.assertNotEquals(
 				_portalInstance.getCompanyId(), portalInstance.getCompanyId());
-			Assert.assertEquals(randomId, portalInstance.getPortalInstanceId());
-			Assert.assertEquals(virtualHost, portalInstance.getVirtualHost());
+			Assert.assertEquals(
+				randomIdString, portalInstance.getPortalInstanceId());
+			Assert.assertEquals(
+				virtualHostString, portalInstance.getVirtualHost());
 		}
 		finally {
 			_deletePortalInstance(portalInstance);
@@ -434,13 +436,6 @@ public class PortalInstanceResourceTest
 	}
 
 	private void _testPostPortalInstanceImportForbidden() throws Exception {
-		_testPostPortalInstanceImportForbidden(null);
-		_testPostPortalInstanceImportForbidden(RandomTestUtil.randomString());
-	}
-
-	private void _testPostPortalInstanceImportForbidden(String idempotencyKey)
-		throws Exception {
-
 		User user = UserTestUtil.addUser(false);
 
 		try {
@@ -469,7 +464,7 @@ public class PortalInstanceResourceTest
 
 			try {
 				portalInstanceResource.postPortalInstanceImport(
-					idempotencyKey, portalInstanceImport);
+					portalInstanceImport);
 
 				Assert.fail();
 			}
@@ -484,49 +479,6 @@ public class PortalInstanceResourceTest
 		}
 	}
 
-	private void _testPostPortalInstanceImportIdempotent() throws Exception {
-		Assume.assumeTrue(_db.isSupportsDBPartition());
-
-		_companyLocalService.exportCompany(_company.getCompanyId());
-
-		String randomId = StringUtil.toLowerCase(RandomTestUtil.randomString());
-
-		String virtualHost =
-			randomId + "." +
-				StringUtil.toLowerCase(RandomTestUtil.randomString(3));
-
-		int companyCount = _companyLocalService.getCompaniesCount();
-
-		String idempotencyKey = RandomTestUtil.randomString();
-
-		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
-
-		portalInstanceImport.setSchemaName(
-			"lexported_" + _company.getCompanyId());
-		portalInstanceImport.setVirtualHost(virtualHost);
-		portalInstanceImport.setWebId(randomId);
-
-		PortalInstance firstPortalInstance =
-			portalInstanceResource.postPortalInstanceImport(
-				idempotencyKey, portalInstanceImport);
-
-		try {
-			PortalInstance secondPortalInstance =
-				portalInstanceResource.postPortalInstanceImport(
-					idempotencyKey, portalInstanceImport);
-
-			Assert.assertEquals(
-				firstPortalInstance.getCompanyId(),
-				secondPortalInstance.getCompanyId());
-
-			Assert.assertEquals(
-				companyCount + 1, _companyLocalService.getCompaniesCount());
-		}
-		finally {
-			_deletePortalInstance(firstPortalInstance);
-		}
-	}
-
 	private void _testPostPortalInstanceImportInvalidSchemaName()
 		throws Exception {
 
@@ -536,7 +488,7 @@ public class PortalInstanceResourceTest
 
 		try {
 			portalInstanceResource.postPortalInstanceImport(
-				null, portalInstanceImport);
+				portalInstanceImport);
 
 			Assert.fail();
 		}

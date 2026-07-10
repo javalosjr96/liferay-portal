@@ -25,9 +25,6 @@ import jakarta.ws.rs.BadRequestException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -135,81 +132,40 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 	@Override
 	public PortalInstance postPortalInstanceImport(
-			String idempotencyKey, PortalInstanceImport portalInstanceImport)
+			PortalInstanceImport portalInstanceImport)
 		throws Exception {
 
 		if (portalInstanceImport == null) {
 			throw new BadRequestException("Import configuration is required");
 		}
 
-		String scopedIdempotencyKey = null;
+		String schemaNameString = portalInstanceImport.getSchemaName();
 
-		if (Validator.isNotNull(idempotencyKey)) {
-			scopedIdempotencyKey =
-				contextUser.getUserId() + ":" + idempotencyKey;
-
-			IdempotencyEntry idempotencyEntry = _idempotencyCache.get(
-				scopedIdempotencyKey);
-
-			if (idempotencyEntry != null) {
-				if (!idempotencyEntry.isExpired()) {
-					return idempotencyEntry.getPortalInstance();
-				}
-
-				_idempotencyCache.remove(
-					scopedIdempotencyKey, idempotencyEntry);
-			}
-		}
-
-		String schemaName = portalInstanceImport.getSchemaName();
-
-		if (Validator.isNull(schemaName)) {
+		if (Validator.isNull(schemaNameString)) {
 			throw new BadRequestException("Schema name is required");
 		}
 
-		if (!schemaName.startsWith(
+		if (!schemaNameString.startsWith(
 				_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX)) {
 
-			throw new BadRequestException("Invalid schema name: " + schemaName);
+			throw new BadRequestException(
+				"Invalid schema name: " + schemaNameString);
 		}
 
 		long companyId = GetterUtil.getLong(
-			schemaName.substring(
+			schemaNameString.substring(
 				_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX.length()));
 
 		if (companyId == 0) {
-			throw new BadRequestException("Invalid schema name: " + schemaName);
+			throw new BadRequestException(
+				"Invalid schema name: " + schemaNameString);
 		}
 
-		PortalInstance portalInstance = _toPortalInstance(
+		return _toPortalInstance(
 			_companyService.addDBPartitionCompany(
 				companyId, portalInstanceImport.getName(),
 				portalInstanceImport.getVirtualHost(),
 				portalInstanceImport.getWebId()));
-
-		if (Validator.isNotNull(scopedIdempotencyKey)) {
-			if (_idempotencyCache.size() >= _IDEMPOTENCY_CACHE_MAX_SIZE) {
-				Set<Map.Entry<String, IdempotencyEntry>> entries =
-					_idempotencyCache.entrySet();
-
-				entries.removeIf(
-					entry -> {
-						IdempotencyEntry expiredEntry = entry.getValue();
-
-						return expiredEntry.isExpired();
-					});
-
-				if (_idempotencyCache.size() >= _IDEMPOTENCY_CACHE_MAX_SIZE) {
-					_evictOldestIdempotencyCacheEntry();
-				}
-			}
-
-			_idempotencyCache.put(
-				scopedIdempotencyKey,
-				new IdempotencyEntry(portalInstance, _IDEMPOTENCY_TTL_MS));
-		}
-
-		return portalInstance;
 	}
 
 	@Override
@@ -232,35 +188,6 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		_companyService.updateCompany(
 			company.getCompanyId(), company.getVirtualHostname(),
 			company.getMx(), company.getMaxUsers(), false);
-	}
-
-	private void _evictOldestIdempotencyCacheEntry() {
-		Map.Entry<String, IdempotencyEntry> oldestEntry = null;
-
-		for (Map.Entry<String, IdempotencyEntry> entry :
-				_idempotencyCache.entrySet()) {
-
-			IdempotencyEntry idempotencyEntry = entry.getValue();
-
-			if (oldestEntry == null) {
-				oldestEntry = entry;
-			}
-			else {
-				IdempotencyEntry oldestIdempotencyEntry =
-					oldestEntry.getValue();
-
-				if (idempotencyEntry.getExpiryTime() <
-						oldestIdempotencyEntry.getExpiryTime()) {
-
-					oldestEntry = entry;
-				}
-			}
-		}
-
-		if (oldestEntry != null) {
-			_idempotencyCache.remove(
-				oldestEntry.getKey(), oldestEntry.getValue());
-		}
 	}
 
 	private PortalInstance _toPortalInstance(Company company) {
@@ -295,43 +222,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 	private static final String
 		_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX = "lexported_";
 
-	private static final int _IDEMPOTENCY_CACHE_MAX_SIZE = 1000;
-
-	private static final long _IDEMPOTENCY_TTL_MS = 5 * 60 * 1000;
-
-	private static final ConcurrentHashMap<String, IdempotencyEntry>
-		_idempotencyCache = new ConcurrentHashMap<>();
-
 	@Reference
 	private CompanyService _companyService;
-
-	private static class IdempotencyEntry {
-
-		public IdempotencyEntry(PortalInstance portalInstance, long ttlMs) {
-			_portalInstance = portalInstance;
-
-			_expiryTime = System.currentTimeMillis() + ttlMs;
-		}
-
-		public long getExpiryTime() {
-			return _expiryTime;
-		}
-
-		public PortalInstance getPortalInstance() {
-			return _portalInstance;
-		}
-
-		public boolean isExpired() {
-			if (System.currentTimeMillis() > _expiryTime) {
-				return true;
-			}
-
-			return false;
-		}
-
-		private final long _expiryTime;
-		private final PortalInstance _portalInstance;
-
-	}
 
 }
