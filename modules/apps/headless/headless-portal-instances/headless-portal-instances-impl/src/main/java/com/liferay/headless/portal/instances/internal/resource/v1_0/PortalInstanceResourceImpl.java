@@ -155,26 +155,10 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			throw new BadRequestException("Schema name is required");
 		}
 
-		if (!schemaName.startsWith(
-				_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX)) {
-
-			throw new BadRequestException(
-				"Invalid schema name: " + schemaName);
-		}
-
-		long companyId = GetterUtil.getLong(
-			schemaName.substring(
-				_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX.length()));
-
-		if (companyId == 0) {
-			throw new BadRequestException(
-				"Invalid schema name: " + schemaName);
-		}
-
 		try {
 			return _toPortalInstance(
 				_companyService.addDBPartitionCompany(
-					companyId, portalInstanceImport.getName(),
+					schemaName, portalInstanceImport.getName(),
 					portalInstanceImport.getVirtualHost(),
 					portalInstanceImport.getWebId()));
 		}
@@ -254,9 +238,6 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 				admin.getEmailAddress(), emailAddressValidator);
 		}
 	}
-
-	private static final String
-		_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX = "lexported_";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortalInstanceResourceImpl.class);

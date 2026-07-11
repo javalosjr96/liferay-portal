@@ -130,7 +130,7 @@ public class CompanyServiceHttp {
 	}
 
 	public static com.liferay.portal.kernel.model.Company addDBPartitionCompany(
-			HttpPrincipal httpPrincipal, long companyId, String name,
+			HttpPrincipal httpPrincipal, String schemaName, String name,
 			String virtualHost, String webId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
@@ -140,7 +140,7 @@ public class CompanyServiceHttp {
 				_addDBPartitionCompanyParameterTypes2);
 
 			MethodHandler methodHandler = new MethodHandler(
-				methodKey, companyId, name, virtualHost, webId);
+				methodKey, schemaName, name, virtualHost, webId);
 
 			Object returnObj = null;
 
@@ -815,7 +815,7 @@ public class CompanyServiceHttp {
 		String.class, String.class
 	};
 	private static final Class<?>[] _addDBPartitionCompanyParameterTypes2 =
-		new Class[] {long.class, String.class, String.class, String.class};
+		new Class[] {String.class, String.class, String.class, String.class};
 	private static final Class<?>[] _deleteCompanyParameterTypes3 =
 		new Class[] {long.class};
 	private static final Class<?>[] _deleteLogoParameterTypes4 = new Class[] {
@@ -873,4 +873,4 @@ public class CompanyServiceHttp {
 		};
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1711042400
+// LIFERAY-SERVICE-BUILDER-HASH:-907110358

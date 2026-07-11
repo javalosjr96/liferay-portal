@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebService;
 import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceMode;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.model.Address;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.EmailAddress;
@@ -116,13 +117,29 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
 	public Company addDBPartitionCompany(
-			long companyId, String name, String virtualHost, String webId)
+			String schemaName, String name, String virtualHost, String webId)
 		throws PortalException {
 
 		PermissionChecker permissionChecker = getPermissionChecker();
 
 		if (!permissionChecker.isOmniadmin()) {
 			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
+		}
+
+		if (!schemaName.startsWith(
+				_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX)) {
+
+			throw new IllegalArgumentException(
+				"Invalid schema name \"" + schemaName + "\"");
+		}
+
+		long companyId = GetterUtil.getLong(
+			schemaName.substring(
+				_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX.length()));
+
+		if (companyId == 0) {
+			throw new IllegalArgumentException(
+				"Invalid schema name \"" + schemaName + "\"");
 		}
 
 		Company company = companyLocalService.addDBPartitionCompany(
@@ -529,6 +546,9 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 			companyId, authType, autoLogin, sendPassword, strangers,
 			strangersWithMx, strangersVerify, siteLogo);
 	}
+
+	private static final String
+		_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX = "lexported_";
 
 	@BeanReference(type = RoleLocalService.class)
 	private RoleLocalService _roleLocalService;
