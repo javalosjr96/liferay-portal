@@ -17,11 +17,21 @@ definition {
 				portlet = "Sites");
 		}
 
-		task ("Navigate to a site-scoped portlet via the product menu while still on the Control Panel page") {
+		task ("Navigate to Site Builder via the product menu while the Control Panel is open") {
 			ProductMenu.gotoPortlet(
 				category = "Site Builder",
 				portlet = "Pages",
 				site = "Guest");
+		}
+
+		task ("Navigate to Content and Data via the product menu from the site context") {
+			Navigator.openSiteURL(siteName = "Guest");
+
+			ProductMenu.gotoPortlet(
+				category = "Content & Data",
+				portlet = "Web Content");
+
+			SiteAdmin.viewPortletTitle(portletTitle = "Web Content");
 		}
 	}
 
