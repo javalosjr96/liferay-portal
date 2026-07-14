@@ -9,6 +9,9 @@ import {fetch, getOpener} from 'frontend-js-web';
 export default function ({namespace}) {
 	const form = document.getElementById(`${namespace}fm`);
 
+	const alertContainer = document.querySelector(
+		'.copy-instance-alert-container'
+	);
 	const content = document.querySelector('.copy-instance-content');
 	const loading = document.querySelector('.copy-instance-loading');
 
@@ -20,10 +23,6 @@ export default function ({namespace}) {
 		content.classList.add('d-none');
 		content.classList.remove('d-block');
 		loading.classList.add('d-flex');
-
-		const alertContainer = document.querySelector(
-			'.copy-instance-alert-container'
-		);
 
 		if (alertContainer.hasChildNodes()) {
 			alertContainer.firstChild.remove();
@@ -59,6 +58,21 @@ export default function ({namespace}) {
 						variant: 'stripe',
 					});
 				}
+			})
+			.catch(() => {
+				content.classList.add('d-block');
+				loading.classList.add('d-none');
+				loading.classList.remove('d-flex');
+
+				openToast({
+					autoClose: false,
+					container: alertContainer,
+					message: Liferay.Language.get(
+						'an-unexpected-error-occurred'
+					),
+					type: 'danger',
+					variant: 'stripe',
+				});
 			});
 	};
 
