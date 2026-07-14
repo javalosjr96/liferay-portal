@@ -79,12 +79,12 @@ public class CompanyServiceWrapper
 
 	@Override
 	public com.liferay.portal.kernel.model.Company addDBPartitionCompany(
-			long companyId, java.lang.String name, java.lang.String virtualHost,
-			java.lang.String webId)
+			java.lang.String schemaName, java.lang.String name,
+			java.lang.String virtualHost, java.lang.String webId)
 		throws com.liferay.portal.kernel.exception.PortalException {
 
 		return _companyService.addDBPartitionCompany(
-			companyId, name, virtualHost, webId);
+			schemaName, name, virtualHost, webId);
 	}
 
 	@Override
@@ -425,4 +425,4 @@ public class CompanyServiceWrapper
 	private CompanyService _companyService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-904274314
+// LIFERAY-SERVICE-BUILDER-HASH:-1278552199

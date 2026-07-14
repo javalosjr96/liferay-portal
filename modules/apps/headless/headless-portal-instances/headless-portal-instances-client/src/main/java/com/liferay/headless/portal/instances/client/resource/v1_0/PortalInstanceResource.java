@@ -77,12 +77,14 @@ public interface PortalInstanceResource {
 
 	public HttpInvoker.HttpResponse postPortalInstanceExportHttpResponse(
 			String portalInstanceId)
+		throws Exception;
+
 	public PortalInstance postPortalInstanceImport(
-			String idempotencyKey, PortalInstanceImport portalInstanceImport)
+			PortalInstanceImport portalInstanceImport)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse postPortalInstanceImportHttpResponse(
-			String idempotencyKey, PortalInstanceImport portalInstanceImport)
+			PortalInstanceImport portalInstanceImport)
 		throws Exception;
 
 	public void putPortalInstanceActivate(String portalInstanceId)
@@ -746,14 +748,6 @@ public interface PortalInstanceResource {
 
 			HttpInvoker.HttpResponse httpResponse =
 				postPortalInstanceExportHttpResponse(portalInstanceId);
-		public PortalInstance postPortalInstanceImport(
-				String idempotencyKey,
-				PortalInstanceImport portalInstanceImport)
-			throws Exception {
-
-			HttpInvoker.HttpResponse httpResponse =
-				postPortalInstanceImportHttpResponse(
-					idempotencyKey, portalInstanceImport);
 
 			String content = httpResponse.getContent();
 
@@ -804,7 +798,6 @@ public interface PortalInstanceResource {
 
 			try {
 				return PortalInstanceExportSerDes.toDTO(content);
-				return PortalInstanceSerDes.toDTO(content);
 			}
 			catch (Exception e) {
 				_logger.log(
@@ -817,16 +810,11 @@ public interface PortalInstanceResource {
 
 		public HttpInvoker.HttpResponse postPortalInstanceExportHttpResponse(
 				String portalInstanceId)
-		public HttpInvoker.HttpResponse postPortalInstanceImportHttpResponse(
-				String idempotencyKey,
-				PortalInstanceImport portalInstanceImport)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
 
 			httpInvoker.body("[]", "application/json");
-			httpInvoker.body(
-				portalInstanceImport.toString(), "application/json");
 
 			if (_builder._locale != null) {
 				httpInvoker.header(
@@ -853,6 +841,112 @@ public interface PortalInstanceResource {
 						"/o/headless-portal-instances/v1.0/portal-instances/{portalInstanceId}/export");
 
 			httpInvoker.path("portalInstanceId", portalInstanceId);
+
+			if ((_builder._login != null) && (_builder._password != null)) {
+				httpInvoker.userNameAndPassword(
+					_builder._login + ":" + _builder._password);
+			}
+
+			return httpInvoker.invoke();
+		}
+
+		public PortalInstance postPortalInstanceImport(
+				PortalInstanceImport portalInstanceImport)
+			throws Exception {
+
+			HttpInvoker.HttpResponse httpResponse =
+				postPortalInstanceImportHttpResponse(portalInstanceImport);
+
+			String content = httpResponse.getContent();
+
+			if ((httpResponse.getStatusCode() / 100) != 2) {
+				_logger.log(
+					Level.WARNING,
+					"Unable to process HTTP response content: " + content);
+				_logger.log(
+					Level.WARNING,
+					"HTTP response message: " + httpResponse.getMessage());
+				_logger.log(
+					Level.WARNING,
+					"HTTP response status code: " +
+						httpResponse.getStatusCode());
+
+				Problem.ProblemException problemException = null;
+
+				if (Objects.equals(
+						httpResponse.getContentType(), "application/json")) {
+
+					problemException = new Problem.ProblemException(
+						Problem.toDTO(content));
+				}
+				else {
+					_logger.log(
+						Level.WARNING,
+						"Unable to process content type: " +
+							httpResponse.getContentType());
+
+					Problem problem = new Problem();
+
+					problem.setStatus(
+						String.valueOf(httpResponse.getStatusCode()));
+
+					problemException = new Problem.ProblemException(problem);
+				}
+
+				throw problemException;
+			}
+			else {
+				_logger.fine("HTTP response content: " + content);
+				_logger.fine(
+					"HTTP response message: " + httpResponse.getMessage());
+				_logger.fine(
+					"HTTP response status code: " +
+						httpResponse.getStatusCode());
+			}
+
+			try {
+				return PortalInstanceSerDes.toDTO(content);
+			}
+			catch (Exception e) {
+				_logger.log(
+					Level.WARNING,
+					"Unable to process HTTP response: " + content, e);
+
+				throw new Problem.ProblemException(Problem.toDTO(content));
+			}
+		}
+
+		public HttpInvoker.HttpResponse postPortalInstanceImportHttpResponse(
+				PortalInstanceImport portalInstanceImport)
+			throws Exception {
+
+			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
+
+			httpInvoker.body(
+				portalInstanceImport.toString(), "application/json");
+
+			if (_builder._locale != null) {
+				httpInvoker.header(
+					"Accept-Language", _builder._locale.toLanguageTag());
+			}
+
+			for (Map.Entry<String, String> entry :
+					_builder._headers.entrySet()) {
+
+				httpInvoker.header(entry.getKey(), entry.getValue());
+			}
+
+			for (Map.Entry<String, String> entry :
+					_builder._parameters.entrySet()) {
+
+				httpInvoker.parameter(entry.getKey(), entry.getValue());
+			}
+
+			httpInvoker.httpMethod(HttpInvoker.HttpMethod.POST);
+
+			httpInvoker.path(
+				_builder._scheme + "://" + _builder._host + ":" +
+					_builder._port + _builder._contextPath +
 						"/o/headless-portal-instances/v1.0/portal-instances/import");
 
 			if ((_builder._login != null) && (_builder._password != null)) {
@@ -1089,4 +1183,4 @@ public interface PortalInstanceResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:1719990980
+// LIFERAY-REST-BUILDER-HASH:108006645

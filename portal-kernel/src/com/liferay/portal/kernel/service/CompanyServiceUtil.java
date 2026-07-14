@@ -81,11 +81,11 @@ public class CompanyServiceUtil {
 	}
 
 	public static Company addDBPartitionCompany(
-			long companyId, String name, String virtualHost, String webId)
+			String schemaName, String name, String virtualHost, String webId)
 		throws PortalException {
 
 		return getService().addDBPartitionCompany(
-			companyId, name, virtualHost, webId);
+			schemaName, name, virtualHost, webId);
 	}
 
 	public static Company deleteCompany(long companyId) throws PortalException {
@@ -387,4 +387,4 @@ public class CompanyServiceUtil {
 	private static volatile CompanyService _service;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-2020215277
+// LIFERAY-SERVICE-BUILDER-HASH:-2125220250
