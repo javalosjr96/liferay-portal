@@ -1,0 +1,52 @@
+<%--
+/**
+ * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+--%>
+
+<%@ include file="/init.jsp" %>
+
+<portlet:actionURL name="/portal_instances/copy_instance" var="copyInstanceURL" />
+
+<%
+long fromCompanyId = ParamUtil.getLong(request, "companyId");
+%>
+
+<div class="copy-instance-alert-container"></div>
+
+<clay:container-fluid>
+	<liferay-frontend:edit-form
+		action="<%= copyInstanceURL %>"
+		method="post"
+		name="fm"
+		onSubmit="event.preventDefault();"
+		validateOnBlur="<%= false %>"
+	>
+		<div class="copy-instance-content">
+			<div class="px-4 py-2">
+				<aui:model-context model="<%= Company.class %>" />
+
+				<aui:input name="fromCompanyId" type="hidden" value="<%= fromCompanyId %>" />
+
+				<aui:input name="name" required="<%= true %>" type="text" />
+
+				<aui:input name="webId" required="<%= true %>" />
+
+				<aui:input fieldParam="virtualHostname" label="virtual-host" model="<%= VirtualHost.class %>" name="hostname" />
+			</div>
+		</div>
+
+		<div class="copy-instance-loading align-items-center d-none flex-column justify-content-center">
+			<span aria-hidden="true" class="loading-animation mb-4"></span>
+
+			<p class="text-3 text-center text-secondary"><liferay-ui:message key="the-creation-of-the-site-may-take-some-time-.closing-the-window-will-not-cancel-the-process" /></p>
+		</div>
+
+		<input hidden type="submit" />
+	</liferay-frontend:edit-form>
+</clay:container-fluid>
+
+<liferay-frontend:component
+	module="{CopyInstance} from portal-instances-web"
+/>
