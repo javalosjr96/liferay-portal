@@ -63,7 +63,7 @@ public class CompanyActionDropdownItems {
 				(_company.getCompanyId() != _defaultCompanyId) &&
 				PropsValues.DATABASE_PARTITION_ENABLED &&
 				FeatureFlagManagerUtil.isEnabled(
-					_company.getCompanyId(), "LPD-11342"),
+					_defaultCompanyId, "LPD-11342"),
 			dropdownGroupItem -> {
 				dropdownGroupItem.setDropdownItems(
 					DropdownItemListBuilder.add(
