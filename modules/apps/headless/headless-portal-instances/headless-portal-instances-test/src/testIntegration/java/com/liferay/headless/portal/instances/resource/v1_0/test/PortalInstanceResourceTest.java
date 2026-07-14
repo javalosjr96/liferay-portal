@@ -145,7 +145,6 @@ public class PortalInstanceResourceTest
 	@Test
 	public void testPostPortalInstanceImport() throws Exception {
 		_testPostPortalInstanceImportForbidden();
-		_testPostPortalInstanceImportIdempotent();
 		_testPostPortalInstanceImportInvalidSchemaName();
 		_testPostPortalInstanceImportSuccess();
 	}
@@ -606,6 +605,70 @@ public class PortalInstanceResourceTest
 		}
 	}
 
+	private void _testPostPortalInstanceImportForbidden() throws Exception {
+		User user = UserTestUtil.addUser(false);
+
+		try {
+			user = _userLocalService.updatePassword(
+				user.getUserId(), PropsValues.DEFAULT_ADMIN_PASSWORD,
+				PropsValues.DEFAULT_ADMIN_PASSWORD, false, true);
+
+			Company company = _companyLocalService.fetchCompany(
+				TestPropsValues.getCompanyId());
+
+			PortalInstanceResource userPortalInstanceResource =
+				PortalInstanceResource.builder(
+				).authentication(
+					user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD
+				).endpoint(
+					company.getVirtualHostname(),
+					PortalUtil.getPortalServerPort(false), "http"
+				).locale(
+					LocaleUtil.getDefault()
+				).build();
+
+			PortalInstanceImport portalInstanceImport =
+				new PortalInstanceImport();
+
+			portalInstanceImport.setSchemaName(RandomTestUtil.randomString());
+
+			try {
+				userPortalInstanceResource.postPortalInstanceImport(
+					portalInstanceImport);
+
+				Assert.fail();
+			}
+			catch (Problem.ProblemException problemException) {
+				Problem problem = problemException.getProblem();
+
+				Assert.assertEquals("FORBIDDEN", problem.getStatus());
+			}
+		}
+		finally {
+			_userLocalService.deleteUser(user.getUserId());
+		}
+	}
+
+	private void _testPostPortalInstanceImportInvalidSchemaName()
+		throws Exception {
+
+		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
+
+		portalInstanceImport.setSchemaName(RandomTestUtil.randomString());
+
+		try {
+			portalInstanceResource.postPortalInstanceImport(
+				portalInstanceImport);
+
+			Assert.fail();
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
+		}
+	}
+
 	private void _testPostPortalInstanceImportSuccess() throws Exception {
 		Assume.assumeTrue(_db.isSupportsDBPartition());
 
@@ -626,7 +689,7 @@ public class PortalInstanceResourceTest
 
 		PortalInstance portalInstance =
 			portalInstanceResource.postPortalInstanceImport(
-				null, portalInstanceImport);
+				portalInstanceImport);
 
 		try {
 			assertValid(portalInstance);
@@ -638,120 +701,6 @@ public class PortalInstanceResourceTest
 		}
 		finally {
 			_deletePortalInstance(portalInstance);
-		}
-	}
-
-	private void _testPostPortalInstanceImportForbidden() throws Exception {
-		_testPostPortalInstanceImportForbidden(null);
-		_testPostPortalInstanceImportForbidden(RandomTestUtil.randomString());
-	}
-
-	private void _testPostPortalInstanceImportForbidden(String idempotencyKey)
-		throws Exception {
-
-		User user = UserTestUtil.addUser(false);
-
-		try {
-			user = _userLocalService.updatePassword(
-				user.getUserId(), PropsValues.DEFAULT_ADMIN_PASSWORD,
-				PropsValues.DEFAULT_ADMIN_PASSWORD, false, true);
-
-			Company company = _companyLocalService.fetchCompany(
-				TestPropsValues.getCompanyId());
-
-			PortalInstanceResource portalInstanceResource =
-				PortalInstanceResource.builder(
-				).authentication(
-					user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD
-				).endpoint(
-					company.getVirtualHostname(),
-					PortalUtil.getPortalServerPort(false), "http"
-				).locale(
-					LocaleUtil.getDefault()
-				).build();
-
-			PortalInstanceImport portalInstanceImport =
-				new PortalInstanceImport();
-
-			portalInstanceImport.setSchemaName(RandomTestUtil.randomString());
-
-			try {
-				portalInstanceResource.postPortalInstanceImport(
-					idempotencyKey, portalInstanceImport);
-
-				Assert.fail();
-			}
-			catch (Problem.ProblemException problemException) {
-				Problem problem = problemException.getProblem();
-
-				Assert.assertEquals("FORBIDDEN", problem.getStatus());
-			}
-		}
-		finally {
-			_userLocalService.deleteUser(user.getUserId());
-		}
-	}
-
-	private void _testPostPortalInstanceImportIdempotent() throws Exception {
-		Assume.assumeTrue(_db.isSupportsDBPartition());
-
-		_companyLocalService.exportCompany(_company.getCompanyId());
-
-		String randomId = StringUtil.toLowerCase(RandomTestUtil.randomString());
-
-		String virtualHost =
-			randomId + "." +
-				StringUtil.toLowerCase(RandomTestUtil.randomString(3));
-
-		int companyCount = _companyLocalService.getCompaniesCount();
-
-		String idempotencyKey = RandomTestUtil.randomString();
-
-		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
-
-		portalInstanceImport.setSchemaName(
-			"lexported_" + _company.getCompanyId());
-		portalInstanceImport.setVirtualHost(virtualHost);
-		portalInstanceImport.setWebId(randomId);
-
-		PortalInstance firstPortalInstance =
-			portalInstanceResource.postPortalInstanceImport(
-				idempotencyKey, portalInstanceImport);
-
-		try {
-			PortalInstance secondPortalInstance =
-				portalInstanceResource.postPortalInstanceImport(
-					idempotencyKey, portalInstanceImport);
-
-			Assert.assertEquals(
-				firstPortalInstance.getCompanyId(),
-				secondPortalInstance.getCompanyId());
-
-			Assert.assertEquals(
-				companyCount + 1, _companyLocalService.getCompaniesCount());
-		}
-		finally {
-			_deletePortalInstance(firstPortalInstance);
-		}
-	}
-
-	private void _testPostPortalInstanceImportInvalidSchemaName()
-		throws Exception {
-
-		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
-
-		portalInstanceImport.setSchemaName(RandomTestUtil.randomString());
-
-		try {
-			portalInstanceResource.postPortalInstanceImport(
-				null, portalInstanceImport);
-
-			Assert.fail();
-		}
-		catch (Problem.ProblemException problemException) {
-			Problem problem = problemException.getProblem();
-
-			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
 		}
 	}
 

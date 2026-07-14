@@ -39,14 +39,13 @@ import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.vulcan.pagination.Page;
 
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
 
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.felix.cm.file.ConfigurationHandler;
 
@@ -193,30 +192,15 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 	@Override
 	public PortalInstance postPortalInstanceImport(
-			String idempotencyKey, PortalInstanceImport portalInstanceImport)
+			PortalInstanceImport portalInstanceImport)
 		throws Exception {
+
+		_checkFeatureFlag();
+
+		_checkPermission();
 
 		if (portalInstanceImport == null) {
 			throw new BadRequestException("Import configuration is required");
-		}
-
-		String scopedIdempotencyKey = null;
-
-		if (Validator.isNotNull(idempotencyKey)) {
-			scopedIdempotencyKey =
-				contextUser.getUserId() + ":" + idempotencyKey;
-
-			IdempotencyEntry idempotencyEntry = _idempotencyCache.get(
-				scopedIdempotencyKey);
-
-			if (idempotencyEntry != null) {
-				if (!idempotencyEntry.isExpired()) {
-					return idempotencyEntry.getPortalInstance();
-				}
-
-				_idempotencyCache.remove(
-					scopedIdempotencyKey, idempotencyEntry);
-			}
 		}
 
 		String schemaName = portalInstanceImport.getSchemaName();
@@ -225,49 +209,19 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			throw new BadRequestException("Schema name is required");
 		}
 
-		if (!schemaName.startsWith(
-				_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX)) {
-
-			throw new BadRequestException("Invalid schema name: " + schemaName);
+		try {
+			return _toPortalInstance(
+				_companyService.addDBPartitionCompany(
+					schemaName, portalInstanceImport.getName(),
+					portalInstanceImport.getVirtualHost(),
+					portalInstanceImport.getWebId()));
 		}
+		catch (Exception exception) {
+			_log.error(
+				"Unable to import portal instance " + schemaName, exception);
 
-		long companyId = GetterUtil.getLong(
-			schemaName.substring(
-				_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX.length()));
-
-		if (companyId == 0) {
-			throw new BadRequestException("Invalid schema name: " + schemaName);
+			throw exception;
 		}
-
-		PortalInstance portalInstance = _toPortalInstance(
-			_companyService.addDBPartitionCompany(
-				companyId, portalInstanceImport.getName(),
-				portalInstanceImport.getVirtualHost(),
-				portalInstanceImport.getWebId()));
-
-		if (Validator.isNotNull(scopedIdempotencyKey)) {
-			if (_idempotencyCache.size() >= _IDEMPOTENCY_CACHE_MAX_SIZE) {
-				Set<Map.Entry<String, IdempotencyEntry>> entries =
-					_idempotencyCache.entrySet();
-
-				entries.removeIf(
-					entry -> {
-						IdempotencyEntry expiredEntry = entry.getValue();
-
-						return expiredEntry.isExpired();
-					});
-
-				if (_idempotencyCache.size() >= _IDEMPOTENCY_CACHE_MAX_SIZE) {
-					_evictOldestIdempotencyCacheEntry();
-				}
-			}
-
-			_idempotencyCache.put(
-				scopedIdempotencyKey,
-				new IdempotencyEntry(portalInstance, _IDEMPOTENCY_TTL_MS));
-		}
-
-		return portalInstance;
 	}
 
 	@Override
@@ -296,7 +250,7 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		if (!FeatureFlagManagerUtil.isEnabled(
 				contextCompany.getCompanyId(), "LPD-11342")) {
 
-			throw new UnsupportedOperationException();
+			throw new NotFoundException();
 		}
 	}
 
@@ -306,35 +260,6 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 		if (!permissionChecker.isOmniadmin()) {
 			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
-		}
-	}
-
-	private void _evictOldestIdempotencyCacheEntry() {
-		Map.Entry<String, IdempotencyEntry> oldestEntry = null;
-
-		for (Map.Entry<String, IdempotencyEntry> entry :
-				_idempotencyCache.entrySet()) {
-
-			IdempotencyEntry idempotencyEntry = entry.getValue();
-
-			if (oldestEntry == null) {
-				oldestEntry = entry;
-			}
-			else {
-				IdempotencyEntry oldestIdempotencyEntry =
-					oldestEntry.getValue();
-
-				if (idempotencyEntry.getExpiryTime() <
-						oldestIdempotencyEntry.getExpiryTime()) {
-
-					oldestEntry = entry;
-				}
-			}
-		}
-
-		if (oldestEntry != null) {
-			_idempotencyCache.remove(
-				oldestEntry.getKey(), oldestEntry.getValue());
 		}
 	}
 
@@ -497,18 +422,8 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 		}
 	}
 
-	private static final String
-		_DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX = "lexported_";
-
-	private static final int _IDEMPOTENCY_CACHE_MAX_SIZE = 1000;
-
-	private static final long _IDEMPOTENCY_TTL_MS = 5 * 60 * 1000;
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		PortalInstanceResourceImpl.class);
-
-	private static final ConcurrentHashMap<String, IdempotencyEntry>
-		_idempotencyCache = new ConcurrentHashMap<>();
 
 	@Reference
 	private CompanyLocalService _companyLocalService;
@@ -518,35 +433,6 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 
 	@Reference
 	private GroupLocalService _groupLocalService;
-
-	private static class IdempotencyEntry {
-
-		public IdempotencyEntry(PortalInstance portalInstance, long ttlMs) {
-			_portalInstance = portalInstance;
-
-			_expiryTime = System.currentTimeMillis() + ttlMs;
-		}
-
-		public long getExpiryTime() {
-			return _expiryTime;
-		}
-
-		public PortalInstance getPortalInstance() {
-			return _portalInstance;
-		}
-
-		public boolean isExpired() {
-			if (System.currentTimeMillis() > _expiryTime) {
-				return true;
-			}
-
-			return false;
-		}
-
-		private final long _expiryTime;
-		private final PortalInstance _portalInstance;
-
-	}
 
 	private static class ScopedConfiguration {
 

@@ -92,7 +92,7 @@ public interface CompanyService extends BaseService {
 
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	public Company addDBPartitionCompany(
-			long companyId, String name, String virtualHost, String webId)
+			String schemaName, String name, String virtualHost, String webId)
 		throws PortalException;
 
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
@@ -328,4 +328,4 @@ public interface CompanyService extends BaseService {
 		throws PortalException;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1524611022
+// LIFERAY-SERVICE-BUILDER-HASH:1229729915

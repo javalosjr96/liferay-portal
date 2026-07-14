@@ -159,12 +159,6 @@ paths:
             description:
                 Imports a DB partition portal instance
             operationId: postPortalInstanceImport
-            parameters:
-                -   in: header
-                    name: idempotency-key
-                    required: false
-                    schema:
-                        type: string
             requestBody:
                 content:
                     application/json:
