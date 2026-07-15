@@ -165,11 +165,12 @@ public class PortalInstanceResourceImpl extends BasePortalInstanceResourceImpl {
 			throw new BadRequestException("Copy configuration is required");
 		}
 
-		if (Validator.isNull(portalInstanceCopy.getVirtualHost()) ||
+		if (Validator.isNull(portalInstanceCopy.getName()) ||
+			Validator.isNull(portalInstanceCopy.getVirtualHost()) ||
 			Validator.isNull(portalInstanceCopy.getWebId())) {
 
 			throw new BadRequestException(
-				"Virtual host and web ID are required");
+				"Name, virtual host, and web ID are required");
 		}
 
 		Company sourceCompany = _companyService.getCompanyByWebId(

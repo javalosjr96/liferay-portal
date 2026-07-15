@@ -511,7 +511,9 @@ public class PortalInstanceResourceTest
 				virtualHost, copiedPortalInstance.getVirtualHost());
 		}
 		finally {
-			_deletePortalInstance(copiedPortalInstance);
+			if (copiedPortalInstance != null) {
+				_deletePortalInstance(copiedPortalInstance);
+			}
 		}
 	}
 
