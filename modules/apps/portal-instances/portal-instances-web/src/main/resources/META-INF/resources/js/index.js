@@ -5,5 +5,6 @@
 
 export {default as AddInstance} from './AddInstance';
 export {default as CompanyDropdownDefaultPropsTransformer} from './CompanyDropdownDefaultPropsTransformer';
+export {default as CopyInstance} from './CopyInstance';
 export {default as PortalInstancesManagementToolbarPropsTransformer} from './PortalInstancesManagementToolbarPropsTransformer';
 export {default as openDeleteCompanyModal} from './openDeleteCompanyModal';
