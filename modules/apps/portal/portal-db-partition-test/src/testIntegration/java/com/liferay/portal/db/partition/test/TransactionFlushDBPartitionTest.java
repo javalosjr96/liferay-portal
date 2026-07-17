@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -10,7 +10,6 @@ import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.db.partition.test.util.BaseDBPartitionTestCase;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.RoleConstants;
@@ -95,10 +94,8 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 							_company.getCompanyId())) {
 
-					DynamicQuery dynamicQuery =
-						_roleLocalService.dynamicQuery();
-
-					_roleLocalService.dynamicQuery(dynamicQuery);
+					_roleLocalService.dynamicQuery(
+						_roleLocalService.dynamicQuery());
 				}
 
 				return null;
@@ -124,14 +121,15 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 		role.setName(name);
 		role.setType(RoleConstants.TYPE_REGULAR);
 
-		_rolePersistence.update(role);
+		_roleLocalService.updateRole(role);
 	}
 
 	private void _deleteRole(long companyId, String name) throws Exception {
 		try (SafeCloseable safeCloseable =
-				CompanyThreadLocal.setRawCompanyIdWithSafeCloseable(
-					companyId);
+				CompanyThreadLocal.setRawCompanyIdWithSafeCloseable(companyId);
+
 			Connection connection = DataAccess.getConnection();
+
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				"delete from Role_ where name = ?")) {
 
@@ -143,9 +141,10 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 
 	private boolean _hasRole(long companyId, String name) throws Exception {
 		try (SafeCloseable safeCloseable =
-				CompanyThreadLocal.setRawCompanyIdWithSafeCloseable(
-					companyId);
+				CompanyThreadLocal.setRawCompanyIdWithSafeCloseable(companyId);
+
 			Connection connection = DataAccess.getConnection();
+
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select roleId from Role_ where name = ?")) {
 
@@ -157,11 +156,10 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 		}
 	}
 
+	private static Company _company;
 	private static final TransactionConfig _transactionConfig =
 		TransactionConfig.Factory.create(
 			Propagation.REQUIRED, new Class<?>[] {Exception.class});
-
-	private static Company _company;
 
 	@Inject
 	private ClassNameLocalService _classNameLocalService;
