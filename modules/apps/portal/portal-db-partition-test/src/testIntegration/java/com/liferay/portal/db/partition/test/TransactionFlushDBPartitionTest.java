@@ -71,8 +71,13 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 				return null;
 			});
 
-		Assert.assertTrue(_hasRole(_company.getCompanyId(), name));
-		Assert.assertFalse(_hasRole(TestPropsValues.getCompanyId(), name));
+		try {
+			Assert.assertTrue(_hasRole(_company.getCompanyId(), name));
+			Assert.assertFalse(_hasRole(TestPropsValues.getCompanyId(), name));
+		}
+		finally {
+			_deleteRole(TestPropsValues.getCompanyId(), name);
+		}
 	}
 
 	@Test
@@ -124,7 +129,8 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 
 	private void _deleteRole(long companyId, String name) throws Exception {
 		try (SafeCloseable safeCloseable =
-				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId);
+				CompanyThreadLocal.setRawCompanyIdWithSafeCloseable(
+					companyId);
 			Connection connection = DataAccess.getConnection();
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				"delete from Role_ where name = ?")) {
@@ -137,7 +143,8 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 
 	private boolean _hasRole(long companyId, String name) throws Exception {
 		try (SafeCloseable safeCloseable =
-				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId);
+				CompanyThreadLocal.setRawCompanyIdWithSafeCloseable(
+					companyId);
 			Connection connection = DataAccess.getConnection();
 			PreparedStatement preparedStatement = connection.prepareStatement(
 				"select roleId from Role_ where name = ?")) {
