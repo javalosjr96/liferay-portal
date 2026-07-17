@@ -157,16 +157,9 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 		}
 	}
 
-	private static final TransactionConfig _transactionConfig;
-
-	static {
-		TransactionConfig.Builder builder = new TransactionConfig.Builder();
-
-		builder.setPropagation(Propagation.REQUIRED);
-		builder.setRollbackForClasses(Exception.class);
-
-		_transactionConfig = builder.build();
-	}
+	private static final TransactionConfig _transactionConfig =
+		TransactionConfig.Factory.create(
+			Propagation.REQUIRED, new Class<?>[] {Exception.class});
 
 	private static Company _company;
 
