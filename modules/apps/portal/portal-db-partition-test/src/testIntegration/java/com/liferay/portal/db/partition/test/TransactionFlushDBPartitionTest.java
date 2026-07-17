@@ -127,10 +127,15 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 
 			Assert.assertNotNull(role);
 
-			Role otherRole = _roleLocalService.fetchRole(
-				_company.getCompanyId(), name);
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						_company.getCompanyId())) {
 
-			Assert.assertNull(otherRole);
+				Role otherRole = _roleLocalService.fetchRole(
+					_company.getCompanyId(), name);
+
+				Assert.assertNull(otherRole);
+			}
 		}
 		finally {
 			if (role != null) {
