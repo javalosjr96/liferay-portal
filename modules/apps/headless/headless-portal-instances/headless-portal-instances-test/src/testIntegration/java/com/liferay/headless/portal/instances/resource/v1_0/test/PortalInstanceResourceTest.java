@@ -8,16 +8,14 @@ package com.liferay.headless.portal.instances.resource.v1_0.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.headless.portal.instances.client.dto.v1_0.Admin;
 import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstance;
+import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstanceCopy;
 import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstanceExport;
-import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstanceImport;
 import com.liferay.headless.portal.instances.client.pagination.Page;
 import com.liferay.headless.portal.instances.client.problem.Problem;
 import com.liferay.headless.portal.instances.client.resource.v1_0.PortalInstanceResource;
 import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
-import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
@@ -26,6 +24,7 @@ import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
@@ -35,6 +34,7 @@ import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.PrefsPropsTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -100,16 +100,18 @@ public class PortalInstanceResourceTest
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 					PortalInstancePool.getDefaultCompanyId())) {
 
-			Company company = _companyLocalService.getCompany(
+			Company defaultCompany = _companyLocalService.getCompany(
 				PortalInstancePool.getDefaultCompanyId());
 
-			User user = UserTestUtil.getAdminUser(company.getCompanyId());
+			User defaultCompanyAdminUser = UserTestUtil.getAdminUser(
+				defaultCompany.getCompanyId());
 
 			portalInstanceResource = PortalInstanceResource.builder(
 			).authentication(
-				user.getEmailAddress(), PropsValues.DEFAULT_ADMIN_PASSWORD
+				defaultCompanyAdminUser.getEmailAddress(),
+				PropsValues.DEFAULT_ADMIN_PASSWORD
 			).endpoint(
-				company.getVirtualHostname(),
+				defaultCompany.getVirtualHostname(),
 				PortalUtil.getPortalServerPort(false), "http"
 			).locale(
 				LocaleUtil.getDefault()
@@ -163,6 +165,23 @@ public class PortalInstanceResourceTest
 	@FeatureFlag("LPD-11342")
 	@Override
 	@Test
+	public void testPostPortalInstanceCopy() throws Exception {
+		DB db = DBManagerUtil.getDB();
+
+		Assume.assumeTrue(db.isSupportsDBPartition());
+
+		Assume.assumeTrue(PropsValues.DATABASE_PARTITION_ENABLED);
+
+		_testPostPortalInstanceCopyMissingRequiredFields();
+		_testPostPortalInstanceCopySuccess();
+		_testPostPortalInstanceCopyWithNonexistentPortalInstance();
+		_testPostPortalInstanceCopyWithNonpositiveDestinationCompanyId();
+		_testPostPortalInstanceCopyWithoutOmniadminPermission();
+	}
+
+	@FeatureFlag("LPD-11342")
+	@Override
+	@Test
 	public void testPostPortalInstanceExport() throws Exception {
 		DB db = DBManagerUtil.getDB();
 
@@ -173,21 +192,6 @@ public class PortalInstanceResourceTest
 		_testPostPortalInstanceExport();
 		_testPostPortalInstanceExportWithNonexistentPortalInstance();
 		_testPostPortalInstanceExportWithoutOmniadminPermission();
-	}
-
-	@FeatureFlag("LPD-11342")
-	@Override
-	@Test
-	public void testPostPortalInstanceImport() throws Exception {
-		DB db = DBManagerUtil.getDB();
-
-		Assume.assumeTrue(db.isSupportsDBPartition());
-
-		Assume.assumeTrue(PropsValues.DATABASE_PARTITION_ENABLED);
-
-		_testPostPortalInstanceImportInvalidSchemaName();
-		_testPostPortalInstanceImportSuccess();
-		_testPostPortalInstanceImportWithoutOmniadminPermission();
 	}
 
 	@Override
@@ -283,14 +287,6 @@ public class PortalInstanceResourceTest
 		return portalInstanceResource.postPortalInstance(portalInstance);
 	}
 
-	@Override
-	protected PortalInstance testPostPortalInstanceImport_addPortalInstance(
-			PortalInstance portalInstance)
-		throws Exception {
-
-		return portalInstance;
-	}
-
 	private static void _deletePortalInstance(PortalInstance portalInstance)
 		throws Exception {
 
@@ -316,6 +312,23 @@ public class PortalInstanceResourceTest
 				setVirtualHost(company::getVirtualHostname);
 			}
 		};
+	}
+
+	private void _assertPostPortalInstanceCopyBadRequest(
+			PortalInstanceCopy portalInstanceCopy)
+		throws Exception {
+
+		try {
+			portalInstanceResource.postPortalInstanceCopy(
+				_portalInstance.getPortalInstanceId(), portalInstanceCopy);
+
+			Assert.fail();
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
+		}
 	}
 
 	private PortalInstance _copyPortalInstance(
@@ -373,10 +386,7 @@ public class PortalInstanceResourceTest
 	private void _dropExportedSchema(long companyId) throws Exception {
 		DB db = DBManagerUtil.getDB();
 
-		String sql =
-			"drop schema if exists " +
-				DBPartitionUtil.DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX +
-					companyId;
+		String sql = "drop schema lexported_" + companyId;
 
 		if (db.getDBType() == DBType.POSTGRESQL) {
 			sql = sql + " cascade";
@@ -399,11 +409,8 @@ public class PortalInstanceResourceTest
 		try (Connection connection = DataAccess.getConnection();
 
 			PreparedStatement preparedStatement = connection.prepareStatement(
-				StringBundler.concat(
-					"select configurationId from ",
-					DBPartitionUtil.
-						DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX,
-					companyId, ".Configuration_"));
+				"select configurationId from lexported_" + companyId +
+					".Configuration_");
 
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
@@ -534,6 +541,213 @@ public class PortalInstanceResourceTest
 		_testPatchPortalInstace(portalInstance, false, false, false);
 	}
 
+	private void _testPostPortalInstanceCopyMissingRequiredFields()
+		throws Exception {
+
+		PortalInstanceCopy portalInstanceCopy = new PortalInstanceCopy();
+
+		portalInstanceCopy.setVirtualHost(RandomTestUtil.randomString());
+		portalInstanceCopy.setWebId(RandomTestUtil.randomString());
+
+		_assertPostPortalInstanceCopyBadRequest(portalInstanceCopy);
+
+		portalInstanceCopy = new PortalInstanceCopy();
+
+		portalInstanceCopy.setName(RandomTestUtil.randomString());
+		portalInstanceCopy.setWebId(RandomTestUtil.randomString());
+
+		_assertPostPortalInstanceCopyBadRequest(portalInstanceCopy);
+
+		portalInstanceCopy = new PortalInstanceCopy();
+
+		portalInstanceCopy.setName(RandomTestUtil.randomString());
+		portalInstanceCopy.setVirtualHost(RandomTestUtil.randomString());
+
+		_assertPostPortalInstanceCopyBadRequest(portalInstanceCopy);
+	}
+
+	private void _testPostPortalInstanceCopySuccess() throws Exception {
+		String randomId = StringUtil.toLowerCase(RandomTestUtil.randomString());
+
+		String virtualHost =
+			randomId + "." +
+				StringUtil.toLowerCase(RandomTestUtil.randomString(3));
+
+		PortalInstanceCopy portalInstanceCopy = new PortalInstanceCopy();
+
+		portalInstanceCopy.setName(randomId);
+		portalInstanceCopy.setVirtualHost(virtualHost);
+		portalInstanceCopy.setWebId(randomId);
+
+		try (LogCapture logCapture1 = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.application.list.user.personal.site.permissions." +
+					"internal.model.listener.CompanyModelListener",
+				LoggerTestUtil.ERROR);
+			LogCapture logCapture2 = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.portal.kernel.transaction.TransactionCallbackUtil",
+				LoggerTestUtil.ERROR)) {
+
+			PortalInstance copiedPortalInstance =
+				portalInstanceResource.postPortalInstanceCopy(
+					_portalInstance.getPortalInstanceId(), portalInstanceCopy);
+
+			try {
+				assertValid(copiedPortalInstance);
+
+				Assert.assertNotEquals(
+					_portalInstance.getCompanyId(),
+					copiedPortalInstance.getCompanyId());
+				Assert.assertEquals(
+					randomId, copiedPortalInstance.getPortalInstanceId());
+				Assert.assertEquals(
+					virtualHost, copiedPortalInstance.getVirtualHost());
+			}
+			finally {
+				if (copiedPortalInstance != null) {
+					_deletePortalInstance(copiedPortalInstance);
+				}
+			}
+		}
+	}
+
+	private void _testPostPortalInstanceCopyWithNonexistentPortalInstance()
+		throws Exception {
+
+		PortalInstanceCopy portalInstanceCopy = new PortalInstanceCopy();
+
+		portalInstanceCopy.setName(RandomTestUtil.randomString());
+		portalInstanceCopy.setVirtualHost(RandomTestUtil.randomString());
+		portalInstanceCopy.setWebId(RandomTestUtil.randomString());
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.portal.vulcan.internal.jaxrs.exception.mapper." +
+					"WebApplicationExceptionMapper",
+				LoggerTestUtil.ERROR)) {
+
+			portalInstanceResource.postPortalInstanceCopy(
+				RandomTestUtil.randomString(), portalInstanceCopy);
+
+			Assert.fail();
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("NOT_FOUND", problem.getStatus());
+			Assert.assertNull(problem.getTitle());
+		}
+	}
+
+	private void _testPostPortalInstanceCopyWithNonpositiveDestinationCompanyId()
+		throws Exception {
+
+		String randomId = StringUtil.toLowerCase(RandomTestUtil.randomString());
+
+		String virtualHost =
+			randomId + "." +
+				StringUtil.toLowerCase(RandomTestUtil.randomString(3));
+
+		PortalInstanceCopy portalInstanceCopy = new PortalInstanceCopy();
+
+		portalInstanceCopy.setDestinationCompanyId(0L);
+		portalInstanceCopy.setName(randomId);
+		portalInstanceCopy.setVirtualHost(virtualHost);
+		portalInstanceCopy.setWebId(randomId);
+
+		try (LogCapture logCapture1 = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.application.list.user.personal.site.permissions." +
+					"internal.model.listener.CompanyModelListener",
+				LoggerTestUtil.ERROR);
+			LogCapture logCapture2 = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.portal.kernel.transaction.TransactionCallbackUtil",
+				LoggerTestUtil.ERROR)) {
+
+			PortalInstance copiedPortalInstance =
+				portalInstanceResource.postPortalInstanceCopy(
+					_portalInstance.getPortalInstanceId(), portalInstanceCopy);
+
+			try {
+				assertValid(copiedPortalInstance);
+
+				Assert.assertNotEquals(
+					_portalInstance.getCompanyId(),
+					copiedPortalInstance.getCompanyId());
+				Assert.assertEquals(
+					randomId, copiedPortalInstance.getPortalInstanceId());
+			}
+			finally {
+				if (copiedPortalInstance != null) {
+					_deletePortalInstance(copiedPortalInstance);
+				}
+			}
+		}
+	}
+
+	private void _testPostPortalInstanceCopyWithoutOmniadminPermission()
+		throws Exception {
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					PortalInstancePool.getDefaultCompanyId())) {
+
+			Company defaultCompany = _companyLocalService.getCompany(
+				PortalInstancePool.getDefaultCompanyId());
+
+			long defaultCompanyId = defaultCompany.getCompanyId();
+
+			User adminUser = UserTestUtil.getAdminUser(defaultCompanyId);
+
+			Group guestGroup = _groupLocalService.getGroup(
+				defaultCompanyId, GroupConstants.GUEST);
+
+			long guestGroupId = guestGroup.getGroupId();
+
+			User user = UserTestUtil.addUser(
+				defaultCompanyId, adminUser.getUserId(), "test",
+				RandomTestUtil.randomString() + "@liferay.com",
+				RandomTestUtil.randomString(), LocaleUtil.getDefault(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				new long[] {guestGroupId},
+				ServiceContextTestUtil.getServiceContext(guestGroupId));
+
+			try {
+				PortalInstanceResource userPortalInstanceResource =
+					PortalInstanceResource.builder(
+					).authentication(
+						user.getEmailAddress(), "test"
+					).endpoint(
+						defaultCompany.getVirtualHostname(),
+						PortalUtil.getPortalServerPort(false), "http"
+					).locale(
+						LocaleUtil.getDefault()
+					).build();
+
+				PortalInstanceCopy portalInstanceCopy =
+					new PortalInstanceCopy();
+
+				portalInstanceCopy.setName(RandomTestUtil.randomString());
+				portalInstanceCopy.setVirtualHost(
+					RandomTestUtil.randomString());
+				portalInstanceCopy.setWebId(RandomTestUtil.randomString());
+
+				try {
+					userPortalInstanceResource.postPortalInstanceCopy(
+						_portalInstance.getPortalInstanceId(),
+						portalInstanceCopy);
+
+					Assert.fail();
+				}
+				catch (Problem.ProblemException problemException) {
+					Problem problem = problemException.getProblem();
+
+					Assert.assertEquals("FORBIDDEN", problem.getStatus());
+				}
+			}
+			finally {
+				_userLocalService.deleteUser(user.getUserId());
+			}
+		}
+	}
+
 	private void _testPostPortalInstanceExport() throws Exception {
 		long companyId = _portalInstance.getCompanyId();
 
@@ -573,8 +787,7 @@ public class PortalInstanceResourceTest
 					_portalInstance.getPortalInstanceId());
 
 			Assert.assertEquals(
-				DBPartitionUtil.DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX +
-					companyId,
+				"lexported_" + companyId,
 				portalInstanceExport.getExportedPartitionName());
 			Assert.assertEquals(
 				PropsValues.DATABASE_PARTITION_SCHEMA_NAME_PREFIX + companyId,
@@ -653,108 +866,6 @@ public class PortalInstanceResourceTest
 		}
 	}
 
-	private void _testPostPortalInstanceImportInvalidSchemaName()
-		throws Exception {
-
-		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
-
-		portalInstanceImport.setSchemaName(RandomTestUtil.randomString());
-
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				"com.liferay.headless.portal.instances.internal.resource." +
-					"v1_0.PortalInstanceResourceImpl",
-				LoggerTestUtil.ERROR)) {
-
-			portalInstanceResource.postPortalInstanceImport(
-				portalInstanceImport);
-
-			Assert.fail();
-		}
-		catch (Problem.ProblemException problemException) {
-			Problem problem = problemException.getProblem();
-
-			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
-		}
-	}
-
-	private void _testPostPortalInstanceImportSuccess() throws Exception {
-		Company company = CompanyTestUtil.addCompany();
-
-		long companyId = company.getCompanyId();
-
-		try {
-			_companyLocalService.exportCompany(company.getCompanyId());
-		}
-		finally {
-			_companyLocalService.deleteCompany(company);
-		}
-
-		String randomId = StringUtil.toLowerCase(RandomTestUtil.randomString());
-
-		String virtualHost =
-			randomId + "." +
-				StringUtil.toLowerCase(RandomTestUtil.randomString(3));
-
-		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
-
-		portalInstanceImport.setSchemaName(
-			DBPartitionUtil.DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX +
-				companyId);
-		portalInstanceImport.setVirtualHost(virtualHost);
-		portalInstanceImport.setWebId(randomId);
-
-		PortalInstance portalInstance =
-			portalInstanceResource.postPortalInstanceImport(
-				portalInstanceImport);
-
-		try {
-			assertValid(portalInstance);
-
-			Assert.assertNotEquals(
-				_portalInstance.getCompanyId(), portalInstance.getCompanyId());
-			Assert.assertEquals(randomId, portalInstance.getPortalInstanceId());
-			Assert.assertEquals(virtualHost, portalInstance.getVirtualHost());
-		}
-		finally {
-			_deletePortalInstance(portalInstance);
-
-			_dropExportedSchema(companyId);
-		}
-	}
-
-	private void _testPostPortalInstanceImportWithoutOmniadminPermission()
-		throws Exception {
-
-		User user = UserTestUtil.addUser(testCompany, "test");
-
-		PortalInstanceResource userPortalInstanceResource =
-			PortalInstanceResource.builder(
-			).authentication(
-				user.getEmailAddress(), "test"
-			).endpoint(
-				testCompany.getVirtualHostname(),
-				PortalUtil.getPortalServerPort(false), "http"
-			).locale(
-				LocaleUtil.getDefault()
-			).build();
-
-		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
-
-		portalInstanceImport.setSchemaName(RandomTestUtil.randomString());
-
-		try {
-			userPortalInstanceResource.postPortalInstanceImport(
-				portalInstanceImport);
-
-			Assert.fail();
-		}
-		catch (Problem.ProblemException problemException) {
-			Problem problem = problemException.getProblem();
-
-			Assert.assertEquals("FORBIDDEN", problem.getStatus());
-		}
-	}
-
 	private void _testPostPortalInstanceWithAdmin() throws Exception {
 		PortalInstance randomPortalInstance = randomPortalInstance();
 
@@ -777,14 +888,9 @@ public class PortalInstanceResourceTest
 			testPostPortalInstance_addPortalInstance(randomPortalInstance);
 
 		try {
-			try (SafeCloseable safeCloseable =
-					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						postPortalInstance.getCompanyId())) {
-
-				Assert.assertNotNull(
-					_userLocalService.getUserByEmailAddress(
-						postPortalInstance.getCompanyId(), emailAddress));
-			}
+			Assert.assertNotNull(
+				_userLocalService.getUserByEmailAddress(
+					postPortalInstance.getCompanyId(), emailAddress));
 
 			assertEquals(randomPortalInstance, postPortalInstance);
 			assertValid(postPortalInstance);
