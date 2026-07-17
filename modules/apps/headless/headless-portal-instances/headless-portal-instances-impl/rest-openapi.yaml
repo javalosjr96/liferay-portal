@@ -54,16 +54,30 @@ components:
                     type: string
             type: object
         PortalInstanceCopy:
+            description:
+                Configuration for copying a portal instance.
             properties:
                 destinationCompanyId:
+                    description:
+                        The company ID to assign to the copy. Omit or pass a value <= 0 to auto-assign one.
                     format: int64
                     type: integer
                 name:
+                    description:
+                        The name of the new portal instance.
                     type: string
                 virtualHost:
+                    description:
+                        The virtual host of the new portal instance.
                     type: string
                 webId:
+                    description:
+                        The web ID of the new portal instance.
                     type: string
+            required:
+                -   name
+                -   virtualHost
+                -   webId
             type: object
         PortalInstanceExport:
             description:
@@ -77,6 +91,29 @@ components:
                     description:
                         The name of the source partition that was exported (e.g., lpartition_12345).
                     type: string
+            type: object
+        PortalInstanceImport:
+            description:
+                Import configuration for a DB partition portal instance.
+            properties:
+                name:
+                    description:
+                        Optional display name for the imported portal instance.
+                    type: string
+                schemaName:
+                    description:
+                        The DB partition schema name to import (e.g., lexported_12345).
+                    type: string
+                virtualHost:
+                    description:
+                        Optional virtual host for the imported portal instance.
+                    type: string
+                webId:
+                    description:
+                        Optional web ID for the imported portal instance.
+                    type: string
+            required:
+                -   schemaName
             type: object
 info:
     description:
@@ -142,6 +179,31 @@ paths:
                     description:
                         default response
             # @review
+            tags: ["PortalInstance"]
+    /portal-instances/import:
+        post:
+            description:
+                Imports a DB partition portal instance
+            operationId: postPortalInstanceImport
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/PortalInstanceImport"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/PortalInstanceImport"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/PortalInstance"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/PortalInstance"
+                    description:
+                        The imported portal instance.
             tags: ["PortalInstance"]
     /portal-instances/{portalInstanceId}:
         delete:
@@ -248,11 +310,6 @@ paths:
                     required: true
                     schema:
                         type: string
-                -   in: header
-                    name: idempotency-key
-                    required: false
-                    schema:
-                        type: string
             requestBody:
                 content:
                     application/json:
@@ -271,7 +328,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/PortalInstance"
                     description:
-                        Portal instance successfully copied
+                        The copied portal instance.
             tags: ["PortalInstance"]
     /portal-instances/{portalInstanceId}/deactivate:
         # @review
