@@ -6,6 +6,7 @@
 package com.liferay.headless.portal.instances.resource.v1_0;
 
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstance;
+import com.liferay.headless.portal.instances.dto.v1_0.PortalInstanceCopy;
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstanceExport;
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstanceImport;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -57,6 +58,11 @@ public interface PortalInstanceResource {
 		throws Exception;
 
 	public PortalInstance postPortalInstance(PortalInstance portalInstance)
+		throws Exception;
+
+	public PortalInstance postPortalInstanceCopy(
+			String portalInstanceId, String idempotencyKey,
+			PortalInstanceCopy portalInstanceCopy)
 		throws Exception;
 
 	public PortalInstanceExport postPortalInstanceExport(
@@ -161,4 +167,4 @@ public interface PortalInstanceResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:155115041
+// LIFERAY-REST-BUILDER-HASH:-431192417
