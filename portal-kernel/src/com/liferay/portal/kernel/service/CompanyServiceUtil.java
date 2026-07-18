@@ -88,6 +88,26 @@ public class CompanyServiceUtil {
 			schemaName, name, virtualHost, webId);
 	}
 
+	/**
+	 * Copies a company into a new database partition.
+	 *
+	 * @param fromCompanyId the primary key of the company to copy
+	 * @param toCompanyId the primary key of the new company (<code>null</code> to generate automatically)
+	 * @param name the new company's name
+	 * @param virtualHost the new company's virtual host name
+	 * @param webId the new company's web domain
+	 * @return the copied company
+	 * @throws PortalException if a portal exception occurred
+	 */
+	public static Company copyDBPartitionCompany(
+			long fromCompanyId, Long toCompanyId, String name,
+			String virtualHost, String webId)
+		throws PortalException {
+
+		return getService().copyDBPartitionCompany(
+			fromCompanyId, toCompanyId, name, virtualHost, webId);
+	}
+
 	public static Company deleteCompany(long companyId) throws PortalException {
 		return getService().deleteCompany(companyId);
 	}
@@ -387,4 +407,4 @@ public class CompanyServiceUtil {
 	private static volatile CompanyService _service;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-2125220250
+// LIFERAY-SERVICE-BUILDER-HASH:256394993
