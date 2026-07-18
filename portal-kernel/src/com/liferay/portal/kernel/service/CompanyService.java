@@ -95,6 +95,23 @@ public interface CompanyService extends BaseService {
 			String schemaName, String name, String virtualHost, String webId)
 		throws PortalException;
 
+	/**
+	 * Copies a company into a new database partition.
+	 *
+	 * @param fromCompanyId the primary key of the company to copy
+	 * @param toCompanyId the primary key of the new company (<code>null</code> to generate automatically)
+	 * @param name the new company's name
+	 * @param virtualHost the new company's virtual host name
+	 * @param webId the new company's web domain
+	 * @return the copied company
+	 * @throws PortalException if a portal exception occurred
+	 */
+	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
+	public Company copyDBPartitionCompany(
+			long fromCompanyId, Long toCompanyId, String name,
+			String virtualHost, String webId)
+		throws PortalException;
+
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	public Company deleteCompany(long companyId) throws PortalException;
 
@@ -328,4 +345,4 @@ public interface CompanyService extends BaseService {
 		throws PortalException;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1229729915
+// LIFERAY-SERVICE-BUILDER-HASH:-845854496

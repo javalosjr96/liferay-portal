@@ -169,6 +169,52 @@ public class CompanyServiceImpl extends CompanyServiceBaseImpl {
 		return company;
 	}
 
+	/**
+	 * Copies a company into a new database partition.
+	 *
+	 * @param  fromCompanyId the primary key of the company to copy
+	 * @param  toCompanyId the primary key of the new company (<code>null</code> to generate automatically)
+	 * @param  name the new company's name
+	 * @param  virtualHost the new company's virtual host name
+	 * @param  webId the new company's web domain
+	 * @return the copied company
+	 * @throws PortalException if a portal exception occurred
+	 */
+	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
+	@Override
+	public Company copyDBPartitionCompany(
+			long fromCompanyId, Long toCompanyId, String name,
+			String virtualHost, String webId)
+		throws PortalException {
+
+		PermissionChecker permissionChecker = getPermissionChecker();
+
+		if (!permissionChecker.isOmniadmin()) {
+			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
+		}
+
+		Company company = companyLocalService.copyDBPartitionCompany(
+			fromCompanyId, toCompanyId, name, virtualHost, webId);
+
+		if (AuditRouterUtil.isDeployed()) {
+			long userId = getUserId();
+
+			AuditRouterUtil.route(
+				new AuditMessage(
+					0, company.getCompanyId(), userId,
+					PortalUtil.getUserName(userId, StringPool.BLANK), null,
+					JSONUtil.put(
+						"virtualHostname", company.getVirtualHostname()
+					).put(
+						"webId", company.getWebId()
+					),
+					Company.class.getName(),
+					String.valueOf(company.getCompanyId()), "COPY", null));
+		}
+
+		return company;
+	}
+
 	@JSONWebService(mode = JSONWebServiceMode.IGNORE)
 	@Override
 	public Company deleteCompany(long companyId) throws PortalException {
