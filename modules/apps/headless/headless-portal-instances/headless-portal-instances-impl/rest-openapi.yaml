@@ -310,11 +310,6 @@ paths:
                     required: true
                     schema:
                         type: string
-                -   in: header
-                    name: idempotency-key
-                    required: false
-                    schema:
-                        type: string
             requestBody:
                 content:
                     application/json:
