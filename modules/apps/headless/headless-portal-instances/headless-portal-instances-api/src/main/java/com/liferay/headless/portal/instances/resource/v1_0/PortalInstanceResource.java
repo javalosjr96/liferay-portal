@@ -61,8 +61,7 @@ public interface PortalInstanceResource {
 		throws Exception;
 
 	public PortalInstance postPortalInstanceCopy(
-			String portalInstanceId, String idempotencyKey,
-			PortalInstanceCopy portalInstanceCopy)
+			String portalInstanceId, PortalInstanceCopy portalInstanceCopy)
 		throws Exception;
 
 	public PortalInstanceExport postPortalInstanceExport(
@@ -167,4 +166,4 @@ public interface PortalInstanceResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-431192417
+// LIFERAY-REST-BUILDER-HASH:-1827424030
