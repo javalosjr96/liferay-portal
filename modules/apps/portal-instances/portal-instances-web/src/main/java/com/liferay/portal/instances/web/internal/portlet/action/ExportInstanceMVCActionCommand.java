@@ -19,7 +19,6 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
-import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 
@@ -66,8 +65,6 @@ public class ExportInstanceMVCActionCommand extends BaseMVCActionCommand {
 		catch (Exception exception) {
 			_log.error(
 				"Unable to export portal instance " + companyId, exception);
-
-			SessionErrors.add(actionRequest, exception.getClass());
 
 			jsonObject.put(
 				"error",
