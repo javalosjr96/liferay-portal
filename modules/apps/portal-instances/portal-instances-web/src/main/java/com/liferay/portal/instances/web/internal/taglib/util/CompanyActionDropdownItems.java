@@ -7,10 +7,12 @@ package com.liferay.portal.instances.web.internal.taglib.util;
 
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemList;
 import com.liferay.frontend.taglib.clay.servlet.taglib.util.DropdownItemListBuilder;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.PortalUtil;
 
@@ -74,6 +76,36 @@ public class CompanyActionDropdownItems {
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "delete"));
+						}
+					).build());
+				dropdownGroupItem.setSeparator(true);
+			}
+		).addGroup(
+			() ->
+				(_company.getCompanyId() != _defaultCompanyId) &&
+				FeatureFlagManagerUtil.isEnabled(
+					PortalUtil.getCompanyId(_httpServletRequest), "LPD-11342"),
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						dropdownItem -> {
+							dropdownItem.putData("action", "copyInstance");
+							dropdownItem.putData(
+								"copyInstanceURL",
+								PortletURLBuilder.createRenderURL(
+									_liferayPortletResponse
+								).setMVCPath(
+									"/copy_instance.jsp"
+								).setRedirect(
+									PortalUtil.getCurrentURL(
+										_httpServletRequest)
+								).setParameter(
+									"companyId", _company.getCompanyId()
+								).setWindowState(
+									LiferayWindowState.POP_UP
+								).buildString());
+							dropdownItem.setLabel(
+								LanguageUtil.get(_httpServletRequest, "copy"));
 						}
 					).build());
 				dropdownGroupItem.setSeparator(true);
