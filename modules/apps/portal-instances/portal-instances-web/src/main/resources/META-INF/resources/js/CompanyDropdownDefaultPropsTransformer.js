@@ -35,6 +35,14 @@ const ACTIONS = {
 						type: 'danger',
 					});
 				}
+			})
+			.catch(() => {
+				openToast({
+					message: Liferay.Language.get(
+						'an-unexpected-error-occurred'
+					),
+					type: 'danger',
+				});
 			});
 	},
 };
