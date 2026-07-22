@@ -105,6 +105,10 @@ test(
 				);
 			}
 
+			// Assert the first export succeeded
+
+			await expect(virtualInstanceExportPage.successToast).toBeVisible();
+
 			// Export it again
 
 			await virtualInstanceExportPage.export(name);
