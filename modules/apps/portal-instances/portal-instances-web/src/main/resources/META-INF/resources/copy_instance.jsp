@@ -1,6 +1,6 @@
 <%--
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 --%>
@@ -8,10 +8,6 @@
 <%@ include file="/init.jsp" %>
 
 <portlet:actionURL name="/portal_instances/copy_instance" var="copyInstanceURL" />
-
-<%
-long companyId = ParamUtil.getLong(request, "companyId");
-%>
 
 <div class="copy-instance-alert-container"></div>
 
@@ -29,7 +25,7 @@ long companyId = ParamUtil.getLong(request, "companyId");
 
 				<aui:input label="name" name="name" required="<%= true %>" type="text" />
 
-				<aui:input name="sourceCompanyId" readOnly="<%= true %>" type="text" value="<%= companyId %>" />
+				<aui:input name="sourceCompanyId" readOnly="<%= true %>" type="text" value='<%= ParamUtil.getLong(request, "companyId") %>' />
 
 				<aui:input fieldParam="virtualHostname" label="virtual-host" model="<%= VirtualHost.class %>" name="hostname" required="<%= true %>" />
 
@@ -39,7 +35,7 @@ long companyId = ParamUtil.getLong(request, "companyId");
 			</div>
 		</div>
 
-		<div class="copy-instance-loading align-items-center d-none flex-column justify-content-center">
+		<div class="align-items-center copy-instance-loading d-none flex-column justify-content-center">
 			<span aria-hidden="true" class="loading-animation mb-4"></span>
 
 			<p class="text-3 text-center text-secondary"><liferay-ui:message key="the-creation-of-the-site-may-take-some-time-.closing-the-window-will-not-cancel-the-process" /></p>
