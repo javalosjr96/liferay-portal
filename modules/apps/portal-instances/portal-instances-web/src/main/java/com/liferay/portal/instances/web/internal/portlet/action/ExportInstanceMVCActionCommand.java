@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -59,8 +59,9 @@ public class ExportInstanceMVCActionCommand extends BaseMVCActionCommand {
 				_language.format(
 					actionRequest.getLocale(),
 					"the-instance-was-exported-to-the-schema-x",
-					DBPartitionUtil.DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX +
-						companyId));
+					DBPartitionUtil.
+						DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX +
+							companyId));
 		}
 		catch (Exception exception) {
 			_log.error(

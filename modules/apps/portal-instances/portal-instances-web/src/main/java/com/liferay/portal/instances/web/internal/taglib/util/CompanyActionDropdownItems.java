@@ -99,7 +99,8 @@ public class CompanyActionDropdownItems {
 									"companyId", _company.getCompanyId()
 								).buildString());
 							dropdownItem.setLabel(
-								LanguageUtil.get(_httpServletRequest, "export"));
+								LanguageUtil.get(
+									_httpServletRequest, "export"));
 						}
 					).build());
 				dropdownGroupItem.setSeparator(true);
