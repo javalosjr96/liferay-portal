@@ -13,7 +13,7 @@ import {virtualInstanceExportPagesTest} from './fixtures/virtualInstanceExportPa
 
 export const test = mergeTests(
 	apiHelpersTest,
-	featureFlagsTest({'LPD-11342': {enabled: true}}),
+	featureFlagsTest({'LPD-11342': {enabled: true, system: true}}),
 	loginTest(),
 	virtualInstanceExportPagesTest
 );
