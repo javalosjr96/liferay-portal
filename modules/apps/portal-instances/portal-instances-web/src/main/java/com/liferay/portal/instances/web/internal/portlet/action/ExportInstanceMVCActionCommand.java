@@ -50,7 +50,7 @@ public class ExportInstanceMVCActionCommand extends BaseMVCActionCommand {
 		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
-			_checkOmniadminPermission();
+			_checkPermission();
 
 			_companyLocalService.exportCompany(companyId);
 
@@ -78,7 +78,7 @@ public class ExportInstanceMVCActionCommand extends BaseMVCActionCommand {
 			actionRequest, actionResponse, jsonObject);
 	}
 
-	private void _checkOmniadminPermission() throws PrincipalException {
+	private void _checkPermission() throws PrincipalException {
 		PermissionChecker permissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
 
