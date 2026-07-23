@@ -6,30 +6,45 @@
 import {openModal} from 'frontend-js-components-web';
 
 export default function propsTransformer({portletNamespace, ...otherProps}) {
+	const openInstanceModal = (item) => {
+		const importInstanceURL = item?.data?.importInstanceURL;
+
+		openModal({
+			buttons: [
+				{
+					displayType: 'secondary',
+					label: Liferay.Language.get('cancel'),
+					type: 'cancel',
+				},
+				{
+					formId: `${portletNamespace}fm`,
+					label: importInstanceURL
+						? Liferay.Language.get('import')
+						: Liferay.Language.get('add'),
+					type: 'submit',
+				},
+			],
+			height: '60vh',
+			iframeBodyCssClass: '',
+			size: 'md',
+			title: importInstanceURL
+				? Liferay.Language.get('import-instance')
+				: Liferay.Language.get('add-instance'),
+			url: importInstanceURL || item?.data?.addInstanceURL,
+		});
+	};
+
 	return {
 		...otherProps,
 		onCreateButtonClick(event, {item}) {
 			event.preventDefault();
 
-			openModal({
-				buttons: [
-					{
-						displayType: 'secondary',
-						label: Liferay.Language.get('cancel'),
-						type: 'cancel',
-					},
-					{
-						formId: `${portletNamespace}fm`,
-						label: Liferay.Language.get('add'),
-						type: 'submit',
-					},
-				],
-				height: '60vh',
-				iframeBodyCssClass: '',
-				size: 'md',
-				title: Liferay.Language.get('add-instance'),
-				url: item?.data.addInstanceURL,
-			});
+			openInstanceModal(item);
+		},
+		onCreationMenuItemClick(event, {item}) {
+			event.preventDefault();
+
+			openInstanceModal(item);
 		},
 	};
 }
