@@ -181,6 +181,22 @@ export class VirtualInstancesPage {
 		await this.page.getByRole('button', {name: 'Delete'}).click();
 	}
 
+	async exportVirtualInstance(name: string) {
+		await this.globalMenuPage.goToControlPanel('Virtual Instances');
+
+		const row = await this.page.getByRole('row').filter({hasText: name});
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: this.page.getByRole('menuitem', {name: 'Export'}),
+			trigger: row.getByRole('button', {name: 'Show Actions'}),
+		});
+
+		await this.page.getByRole('button', {name: 'Export'}).waitFor();
+
+		await this.page.getByRole('button', {name: 'Export'}).click();
+	}
+
 	async goto() {
 		await this.globalMenuPage.goToControlPanel('Virtual Instances');
 	}
