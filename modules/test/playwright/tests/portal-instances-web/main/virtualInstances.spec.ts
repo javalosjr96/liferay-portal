@@ -6,50 +6,39 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
-import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import getRandomString from '../../../utils/getRandomString';
-import {virtualInstanceExportPagesTest} from './fixtures/virtualInstanceExportPagesTest';
+import {portalInstancesPagesTest} from './fixtures/portalInstancesPagesTest';
 
-export const test = mergeTests(
-	apiHelpersTest,
-	featureFlagsTest({'LPD-11342': {enabled: true, system: true}}),
-	loginTest(),
-	virtualInstanceExportPagesTest
-);
+const test = mergeTests(apiHelpersTest, loginTest(), portalInstancesPagesTest);
 
 test(
 	'LPD-92619 - Exporting a virtual instance shows the exported schema name.',
 	{tag: '@LPD-92619'},
-	async ({apiHelpers, virtualInstanceExportPage}) => {
+	async ({apiHelpers, virtualInstancesPage}) => {
 		test.setTimeout(240000);
 
 		const name = getRandomString();
 
 		try {
-
-			// Create the instance
-
-			await virtualInstanceExportPage.addInstance(name);
+			await virtualInstancesPage.addNewVirtualInstance(name);
 
 			const company =
 				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(name);
 
-			// Export it
-
-			await virtualInstanceExportPage.export(name);
-
-			// Skip when the database does not support partitioning
+			await virtualInstancesPage.exportVirtualInstance(name);
 
 			await expect(
-				virtualInstanceExportPage.successToast.or(
-					virtualInstanceExportPage.errorAlert
+				virtualInstancesPage.exportInstanceSuccessMessage.or(
+					virtualInstancesPage.exportInstanceErrorMessage
 				)
 			).toBeVisible({timeout: 60000});
 
-			if (await virtualInstanceExportPage.errorAlert.isVisible()) {
+			if (
+				await virtualInstancesPage.exportInstanceErrorMessage.isVisible()
+			) {
 				const errorText =
-					await virtualInstanceExportPage.errorAlert.textContent();
+					await virtualInstancesPage.exportInstanceErrorMessage.textContent();
 
 				test.skip(
 					errorText?.includes('is not supported for') ?? false,
@@ -57,18 +46,14 @@ test(
 				);
 			}
 
-			// Assert the toast
-
-			await expect(virtualInstanceExportPage.successToast).toContainText(
+			await expect(
+				virtualInstancesPage.exportInstanceSuccessMessage
+			).toContainText(
 				`The instance was exported to the schema lexported_${company.companyId}.`
 			);
 		}
 		finally {
-
-			// The exported schema is left in place; it is uniquely named per
-			// company and does not need cleanup
-
-			await virtualInstanceExportPage.deleteInstance(name);
+			await virtualInstancesPage.deleteVirtualInstance(name);
 		}
 	}
 );
@@ -76,32 +61,27 @@ test(
 test(
 	'LPD-92619 - Exporting an already-exported virtual instance shows an error.',
 	{tag: '@LPD-92619'},
-	async ({virtualInstanceExportPage}) => {
+	async ({virtualInstancesPage}) => {
 		test.setTimeout(240000);
 
 		const name = getRandomString();
 
 		try {
+			await virtualInstancesPage.addNewVirtualInstance(name);
 
-			// Create the instance
-
-			await virtualInstanceExportPage.addInstance(name);
-
-			// Export it
-
-			await virtualInstanceExportPage.export(name);
-
-			// Skip when the database does not support partitioning
+			await virtualInstancesPage.exportVirtualInstance(name);
 
 			await expect(
-				virtualInstanceExportPage.successToast.or(
-					virtualInstanceExportPage.errorAlert
+				virtualInstancesPage.exportInstanceSuccessMessage.or(
+					virtualInstancesPage.exportInstanceErrorMessage
 				)
 			).toBeVisible({timeout: 60000});
 
-			if (await virtualInstanceExportPage.errorAlert.isVisible()) {
+			if (
+				await virtualInstancesPage.exportInstanceErrorMessage.isVisible()
+			) {
 				const errorText =
-					await virtualInstanceExportPage.errorAlert.textContent();
+					await virtualInstancesPage.exportInstanceErrorMessage.textContent();
 
 				test.skip(
 					errorText?.includes('is not supported for') ?? false,
@@ -109,27 +89,18 @@ test(
 				);
 			}
 
-			// Assert the first export succeeded
+			await expect(
+				virtualInstancesPage.exportInstanceSuccessMessage
+			).toBeVisible();
 
-			await expect(virtualInstanceExportPage.successToast).toBeVisible();
+			await virtualInstancesPage.exportVirtualInstance(name);
 
-			// Export it again
-
-			await virtualInstanceExportPage.export(name);
-
-			// Assert the error
-
-			await expect(virtualInstanceExportPage.errorAlert).toContainText(
-				'Export failed with message:',
-				{timeout: 60000}
-			);
+			await expect(
+				virtualInstancesPage.exportInstanceErrorMessage
+			).toContainText('Export failed with message:', {timeout: 60000});
 		}
 		finally {
-
-			// The exported schema is left in place; it is uniquely named per
-			// company and does not need cleanup
-
-			await virtualInstanceExportPage.deleteInstance(name);
+			await virtualInstancesPage.deleteVirtualInstance(name);
 		}
 	}
 );
