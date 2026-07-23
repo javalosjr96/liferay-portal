@@ -29,7 +29,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 /**
- * @author Jorge Ávalos
+ * @author Jorge Avalos
  */
 @Component(
 	property = {
