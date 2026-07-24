@@ -12,8 +12,16 @@ export default function ({namespace}) {
 	const content = document.querySelector('.copy-instance-content');
 	const loading = document.querySelector('.copy-instance-loading');
 
+	let isSubmitting = false;
+
 	const onSubmit = (event) => {
 		event.preventDefault();
+
+		if (isSubmitting) {
+			return;
+		}
+
+		isSubmitting = true;
 
 		const formData = new FormData(form);
 
@@ -29,6 +37,26 @@ export default function ({namespace}) {
 			alertContainer.firstChild.remove();
 		}
 
+		const showError = (message) => {
+			isSubmitting = false;
+
+			content.classList.add('d-block');
+			content.classList.remove('d-none');
+			loading.classList.add('d-none');
+			loading.classList.remove('d-flex');
+
+			openToast({
+				autoClose: false,
+				container: alertContainer,
+				message,
+				toastProps: {
+					onClose: null,
+				},
+				type: 'danger',
+				variant: 'stripe',
+			});
+		};
+
 		fetch(form.action, {
 			body: formData,
 			method: 'POST',
@@ -37,28 +65,18 @@ export default function ({namespace}) {
 			.then((response) => {
 				const opener = getOpener();
 
-				if (!response.error) {
+				if (response.companyId) {
 					opener.Liferay.fire('closeModal', {
 						id: `${namespace}copySiteDialog`,
 						redirect: opener.location.href,
 					});
 				}
 				else {
-					content.classList.add('d-block');
-					loading.classList.add('d-none');
-					loading.classList.remove('d-flex');
-
-					openToast({
-						autoClose: false,
-						container: alertContainer,
-						message: response.error,
-						toastProps: {
-							onClose: null,
-						},
-						type: 'danger',
-						variant: 'stripe',
-					});
+					showError(response.error);
 				}
+			})
+			.catch(() => {
+				showError(Liferay.Language.get('an-unexpected-error-occurred'));
 			});
 	};
 

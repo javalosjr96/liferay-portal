@@ -9,16 +9,20 @@ import com.liferay.portal.instances.web.internal.constants.PortalInstancesPortle
 import com.liferay.portal.kernel.exception.CompanyNameException;
 import com.liferay.portal.kernel.exception.CompanyVirtualHostException;
 import com.liferay.portal.kernel.exception.CompanyWebIdException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.CompanyService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
@@ -43,10 +47,21 @@ public class CopyInstanceMVCActionCommand extends BaseMVCActionCommand {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				themeDisplay.getCompanyId(), "LPD-11342")) {
+
+			throw new UnsupportedOperationException();
+		}
+
 		JSONObject jsonObject = _jsonFactory.createJSONObject();
 
 		try {
-			_copyInstance(actionRequest);
+			Company company = _copyInstance(actionRequest);
+
+			jsonObject.put("companyId", company.getCompanyId());
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -55,14 +70,28 @@ public class CopyInstanceMVCActionCommand extends BaseMVCActionCommand {
 
 			String errorMessage = "an-unexpected-error-occurred";
 
-			if (exception instanceof CompanyNameException) {
-				errorMessage = "please-enter-a-valid-name";
+			if (exception instanceof IllegalArgumentException) {
+				errorMessage = "please-enter-a-valid-destination-company-id";
 			}
-			else if (exception instanceof CompanyVirtualHostException) {
-				errorMessage = "please-enter-a-valid-virtual-host";
-			}
-			else if (exception instanceof CompanyWebIdException) {
-				errorMessage = "please-enter-a-valid-web-id";
+			else {
+				Throwable causeThrowable = exception.getCause();
+
+				if ((exception instanceof CompanyNameException) ||
+					(causeThrowable instanceof CompanyNameException)) {
+
+					errorMessage = "please-enter-a-valid-name";
+				}
+				else if ((exception instanceof CompanyVirtualHostException) ||
+						 (causeThrowable instanceof
+							 CompanyVirtualHostException)) {
+
+					errorMessage = "please-enter-a-valid-virtual-host";
+				}
+				else if ((exception instanceof CompanyWebIdException) ||
+						 (causeThrowable instanceof CompanyWebIdException)) {
+
+					errorMessage = "please-enter-a-valid-web-id";
+				}
 			}
 
 			jsonObject.put(
@@ -76,7 +105,9 @@ public class CopyInstanceMVCActionCommand extends BaseMVCActionCommand {
 			actionRequest, actionResponse, jsonObject);
 	}
 
-	private void _copyInstance(ActionRequest actionRequest) throws Exception {
+	private Company _copyInstance(ActionRequest actionRequest)
+		throws Exception {
+
 		long sourceCompanyId = ParamUtil.getLong(
 			actionRequest, "sourceCompanyId");
 		long destinationCompanyId = ParamUtil.getLong(
@@ -86,7 +117,7 @@ public class CopyInstanceMVCActionCommand extends BaseMVCActionCommand {
 			actionRequest, "virtualHostname");
 		String webId = ParamUtil.getString(actionRequest, "webId");
 
-		_companyService.copyDBPartitionCompany(
+		return _companyService.copyDBPartitionCompany(
 			sourceCompanyId,
 			(destinationCompanyId > 0) ? destinationCompanyId : null, name,
 			virtualHostname, webId);
