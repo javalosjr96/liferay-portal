@@ -23,7 +23,7 @@
 			<div class="px-4 py-2">
 				<aui:model-context model="<%= Company.class %>" />
 
-				<aui:input label="name" name="name" required="<%= true %>" type="text" />
+				<aui:input name="name" required="<%= true %>" type="text" />
 
 				<aui:input name="sourceCompanyId" readOnly="<%= true %>" type="text" value='<%= ParamUtil.getLong(request, "companyId") %>' />
 
