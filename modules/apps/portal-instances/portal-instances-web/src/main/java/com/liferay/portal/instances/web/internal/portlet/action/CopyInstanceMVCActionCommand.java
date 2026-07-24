@@ -71,7 +71,13 @@ public class CopyInstanceMVCActionCommand extends BaseMVCActionCommand {
 			String errorMessage = "an-unexpected-error-occurred";
 
 			if (exception instanceof IllegalArgumentException) {
-				errorMessage = "please-enter-a-valid-destination-company-id";
+				long destinationCompanyId = ParamUtil.getLong(
+					actionRequest, "destinationCompanyId");
+
+				if (destinationCompanyId > 0) {
+					errorMessage =
+						"please-enter-a-valid-destination-company-id";
+				}
 			}
 			else {
 				Throwable causeThrowable = exception.getCause();
