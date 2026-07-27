@@ -12,6 +12,7 @@ import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
+import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.PortalUtil;
 
@@ -87,6 +88,26 @@ public class CompanyActionDropdownItems {
 			dropdownGroupItem -> {
 				dropdownGroupItem.setDropdownItems(
 					DropdownItemListBuilder.add(
+						dropdownItem -> {
+							dropdownItem.putData("action", "copyInstance");
+							dropdownItem.putData(
+								"copyInstanceURL",
+								PortletURLBuilder.createRenderURL(
+									_liferayPortletResponse
+								).setMVCPath(
+									"/copy_instance.jsp"
+								).setRedirect(
+									PortalUtil.getCurrentURL(
+										_httpServletRequest)
+								).setParameter(
+									"companyId", _company.getCompanyId()
+								).setWindowState(
+									LiferayWindowState.POP_UP
+								).buildString());
+							dropdownItem.setLabel(
+								LanguageUtil.get(_httpServletRequest, "copy"));
+						}
+					).add(
 						dropdownItem -> {
 							dropdownItem.putData("action", "exportInstance");
 							dropdownItem.putData(
