@@ -11,6 +11,7 @@ import {GlobalMenuPage} from '../product-navigation-applications-menu/GlobalMenu
 export class VirtualInstancesPage {
 	private addInstanceFrame: FrameLocator;
 	private copyInstanceFrame: FrameLocator;
+	private importInstanceFrame: FrameLocator;
 
 	readonly addInstanceActive: Locator;
 	readonly addInstanceAddButton: Locator;
@@ -36,6 +37,9 @@ export class VirtualInstancesPage {
 	readonly errorMessageScreenName: Locator;
 	readonly errorMessageEmailAddress: Locator;
 	readonly errorMessagePassword: Locator;
+	readonly importInstanceErrorMessage: Locator;
+	readonly importInstanceSchemaNameField: Locator;
+	readonly importInstanceSubmitButton: Locator;
 	readonly newVirtualInstanceButton: Locator;
 	readonly page: Page;
 	readonly successMessage: Locator;
@@ -103,6 +107,19 @@ export class VirtualInstancesPage {
 		this.successMessage = page.getByText(
 			'Your request completed successfully'
 		);
+
+		this.importInstanceFrame = page.frameLocator(
+			'iframe[title="Import Instance"]'
+		);
+		this.importInstanceSchemaNameField =
+			this.importInstanceFrame.getByLabel('Schema Name');
+		this.importInstanceErrorMessage = this.importInstanceFrame.getByText(
+			'Please enter a valid schema name'
+		);
+		this.importInstanceSubmitButton = page.getByRole('button', {
+			exact: true,
+			name: 'Import',
+		});
 	}
 
 	async addNewVirtualInstance(
@@ -234,6 +251,27 @@ export class VirtualInstancesPage {
 		await this.globalMenuPage.goToControlPanel('Virtual Instances');
 	}
 
+	async importVirtualInstance(schemaName: string) {
+		await this.goto();
+
+		await this.openCreationMenuItem('Import');
+
+		// Sometimes the frame loads slowly
+
+		await this.page.waitForTimeout(1000);
+
+		await this.importInstanceSchemaNameField.fill(schemaName);
+
+		await Promise.all([
+			this.page.waitForResponse((response) =>
+				response.url().includes('import_instance')
+			),
+			this.importInstanceSubmitButton.click(),
+		]);
+
+		await this.page.waitForTimeout(1000);
+	}
+
 	async openCopyVirtualInstanceModal(name: string) {
 		await this.globalMenuPage.goToControlPanel('Virtual Instances');
 
@@ -248,6 +286,14 @@ export class VirtualInstancesPage {
 		// Sometimes the frame loads slowly
 
 		await this.page.waitForTimeout(1000);
+	}
+
+	async openCreationMenuItem(name: string) {
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: this.page.getByRole('menuitem', {exact: true, name}),
+			trigger: this.page.getByRole('button', {name: 'New'}),
+		});
 	}
 
 	async submitCopyVirtualInstance({
