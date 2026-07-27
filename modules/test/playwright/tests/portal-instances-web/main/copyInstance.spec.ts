@@ -20,8 +20,12 @@ test(
 
 		const name = getRandomString();
 
+		let created = false;
+
 		try {
 			await virtualInstancesPage.addNewVirtualInstance(name);
+
+			created = true;
 
 			const company =
 				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(name);
@@ -41,13 +45,20 @@ test(
 			await expect(
 				virtualInstancesPage.copyInstanceErrorMessage
 			).toBeVisible();
+		}
+		finally {
 
 			// A failed copy leaves the modal open, which blocks navigation
 
-			await virtualInstancesPage.copyInstanceCancelButton.click();
-		}
-		finally {
-			await virtualInstancesPage.deleteVirtualInstance(name);
+			if (
+				await virtualInstancesPage.copyInstanceCancelButton.isVisible()
+			) {
+				await virtualInstancesPage.copyInstanceCancelButton.click();
+			}
+
+			if (created) {
+				await virtualInstancesPage.deleteVirtualInstance(name);
+			}
 		}
 	}
 );
