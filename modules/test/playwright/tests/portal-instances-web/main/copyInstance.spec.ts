@@ -62,3 +62,52 @@ test(
 		}
 	}
 );
+
+test(
+	'LPD-92620 - Copying an instance creates it and closes the modal.',
+	{tag: '@LPD-92620'},
+	async ({page, virtualInstancesPage}) => {
+		test.setTimeout(900000);
+
+		const name = getRandomString();
+		const copyName = getRandomString();
+
+		let copied = false;
+		let created = false;
+
+		try {
+			await virtualInstancesPage.addNewVirtualInstance(name);
+
+			created = true;
+
+			await virtualInstancesPage.openCopyVirtualInstanceModal(name);
+
+			// Omitting the destination company ID auto-assigns one
+
+			await virtualInstancesPage.submitCopyVirtualInstance({
+				destinationCompanyId: '',
+				name: copyName,
+				timeout: 600000,
+				virtualHost: copyName,
+				webId: copyName,
+			});
+
+			copied = true;
+
+			// Success closes the modal and redirects, reloading the list
+
+			await expect(
+				page.getByRole('row').filter({hasText: copyName})
+			).toHaveCount(1, {timeout: 120000});
+		}
+		finally {
+			if (copied) {
+				await virtualInstancesPage.deleteVirtualInstance(copyName);
+			}
+
+			if (created) {
+				await virtualInstancesPage.deleteVirtualInstance(name);
+			}
+		}
+	}
+);
