@@ -10,14 +10,13 @@ import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.db.partition.test.util.BaseDBPartitionTestCase;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
-import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.RoleConstants;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.persistence.RolePersistence;
-import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.transaction.Propagation;
@@ -29,9 +28,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 
-import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -41,20 +38,11 @@ import org.junit.runner.RunWith;
 @RunWith(Arquillian.class)
 public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 
-	@BeforeClass
-	public static void setUpClass() throws Exception {
-		_company = CompanyTestUtil.addCompany();
-	}
-
-	@AfterClass
-	public static void tearDownClass() throws Exception {
-		companyLocalService.deleteCompany(_company.getCompanyId());
-	}
-
 	@Test
 	public void testSetCompanyIdWithSafeCloseableFlushesSessionOnClose()
 		throws Throwable {
 
+		long defaultCompanyId = PortalInstancePool.getDefaultCompanyId();
 		String name = RandomTestUtil.randomString();
 
 		TransactionInvokerUtil.invoke(
@@ -62,9 +50,9 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 			() -> {
 				try (SafeCloseable safeCloseable =
 						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-							_company.getCompanyId())) {
+							defaultCompanyId)) {
 
-					_addRole(_company.getCompanyId(), name);
+					_addRole(defaultCompanyId, name);
 				}
 
 				return null;
@@ -72,10 +60,11 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 
 		try {
 			Assert.assertFalse(_hasRole(TestPropsValues.getCompanyId(), name));
-			Assert.assertTrue(_hasRole(_company.getCompanyId(), name));
+			Assert.assertTrue(_hasRole(defaultCompanyId, name));
 		}
 		finally {
 			_deleteRole(TestPropsValues.getCompanyId(), name);
+			_deleteRole(defaultCompanyId, name);
 		}
 	}
 
@@ -83,6 +72,7 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 	public void testSetCompanyIdWithSafeCloseableFlushesSessionOnEntry()
 		throws Throwable {
 
+		long defaultCompanyId = PortalInstancePool.getDefaultCompanyId();
 		String name = RandomTestUtil.randomString();
 
 		TransactionInvokerUtil.invoke(
@@ -92,7 +82,7 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 
 				try (SafeCloseable safeCloseable =
 						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-							_company.getCompanyId())) {
+							defaultCompanyId)) {
 
 					_roleLocalService.dynamicQuery(
 						_roleLocalService.dynamicQuery());
@@ -102,11 +92,12 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 			});
 
 		try {
-			Assert.assertFalse(_hasRole(_company.getCompanyId(), name));
+			Assert.assertFalse(_hasRole(defaultCompanyId, name));
 			Assert.assertTrue(_hasRole(TestPropsValues.getCompanyId(), name));
 		}
 		finally {
 			_deleteRole(TestPropsValues.getCompanyId(), name);
+			_deleteRole(defaultCompanyId, name);
 		}
 	}
 
@@ -156,7 +147,6 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 		}
 	}
 
-	private static Company _company;
 	private static final TransactionConfig _transactionConfig =
 		TransactionConfig.Factory.create(
 			Propagation.REQUIRED, new Class<?>[] {Exception.class});
