@@ -71,8 +71,8 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 			});
 
 		try {
-			Assert.assertTrue(_hasRole(_company.getCompanyId(), name));
 			Assert.assertFalse(_hasRole(TestPropsValues.getCompanyId(), name));
+			Assert.assertTrue(_hasRole(_company.getCompanyId(), name));
 		}
 		finally {
 			_deleteRole(TestPropsValues.getCompanyId(), name);
@@ -102,8 +102,8 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 			});
 
 		try {
-			Assert.assertTrue(_hasRole(TestPropsValues.getCompanyId(), name));
 			Assert.assertFalse(_hasRole(_company.getCompanyId(), name));
+			Assert.assertTrue(_hasRole(TestPropsValues.getCompanyId(), name));
 		}
 		finally {
 			_deleteRole(TestPropsValues.getCompanyId(), name);
@@ -121,7 +121,7 @@ public class TransactionFlushDBPartitionTest extends BaseDBPartitionTestCase {
 		role.setName(name);
 		role.setType(RoleConstants.TYPE_REGULAR);
 
-		_roleLocalService.updateRole(role);
+		_rolePersistence.update(role);
 	}
 
 	private void _deleteRole(long companyId, String name) throws Exception {
