@@ -12,7 +12,9 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import java.io.Serializable;
 
 import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.ehcache.Cache;
@@ -105,10 +107,16 @@ public class ShardedEhcachePortalCache<K extends Serializable, V>
 
 	@Override
 	protected void dispose() {
-		_cacheManager.removeCache(getPortalCacheName());
+		synchronized (_cacheManager) {
+			Set<Long> companyIds = new HashSet<>(_caches.keySet());
 
-		for (Long key : _caches.keySet()) {
-			_cacheManager.removeCache(_getCacheName(key));
+			resetEhcache();
+
+			_cacheManager.removeCache(getPortalCacheName());
+
+			for (Long companyId : companyIds) {
+				_cacheManager.removeCache(_getCacheName(companyId));
+			}
 		}
 	}
 
