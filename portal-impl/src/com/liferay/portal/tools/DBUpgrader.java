@@ -155,10 +155,23 @@ public class DBUpgrader {
 			return _upgradeDatabaseAutoRun;
 		}
 
-		if (StartupHelperUtil.isDBNew() ||
-			(DBManagerUtil.getDBType() == DBType.HYPERSONIC)) {
+		boolean dbNew = StartupHelperUtil.isDBNew();
 
+		if (dbNew || (DBManagerUtil.getDBType() == DBType.HYPERSONIC)) {
 			_upgradeDatabaseAutoRun = false;
+
+			if (_log.isInfoEnabled()) {
+				if (dbNew) {
+					_log.info(
+						"Skipping the automatic database upgrade because the " +
+							"database is new");
+				}
+				else {
+					_log.info(
+						"Skipping the automatic database upgrade because " +
+							"Hypersonic does not support it");
+				}
+			}
 		}
 		else {
 			_upgradeDatabaseAutoRun = GetterUtil.getBoolean(
