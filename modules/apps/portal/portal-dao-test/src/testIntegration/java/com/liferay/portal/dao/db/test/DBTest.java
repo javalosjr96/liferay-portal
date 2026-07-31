@@ -40,6 +40,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.After;
 import org.junit.AfterClass;
@@ -730,8 +731,18 @@ public class DBTest {
 				try {
 					futureTask.get(30, TimeUnit.SECONDS);
 				}
+				catch (TimeoutException timeoutException) {
+					futureTask.cancel(true);
+
+					if (_log.isDebugEnabled()) {
+						_log.debug(
+							"Unable to run locked query", timeoutException);
+					}
+				}
 				catch (Exception exception) {
-					_log.error(exception);
+					if (_log.isDebugEnabled()) {
+						_log.debug("Unable to run locked query", exception);
+					}
 				}
 			}
 		}
@@ -757,6 +768,8 @@ public class DBTest {
 
 						Statement statement =
 							backgroundConnection.createStatement()) {
+
+						statement.setQueryTimeout(10);
 
 						statement.execute(slowQuery);
 					}
@@ -817,8 +830,17 @@ public class DBTest {
 				try {
 					futureTask.get(30, TimeUnit.SECONDS);
 				}
+				catch (TimeoutException timeoutException) {
+					futureTask.cancel(true);
+
+					if (_log.isDebugEnabled()) {
+						_log.debug("Unable to run slow query", timeoutException);
+					}
+				}
 				catch (Exception exception) {
-					_log.error(exception);
+					if (_log.isDebugEnabled()) {
+						_log.debug("Unable to run slow query", exception);
+					}
 				}
 			}
 		}
@@ -922,8 +944,18 @@ public class DBTest {
 				try {
 					futureTask.get(30, TimeUnit.SECONDS);
 				}
+				catch (TimeoutException timeoutException) {
+					futureTask.cancel(true);
+
+					if (_log.isDebugEnabled()) {
+						_log.debug(
+							"Unable to run locked query", timeoutException);
+					}
+				}
 				catch (Exception exception) {
-					_log.error(exception);
+					if (_log.isDebugEnabled()) {
+						_log.debug("Unable to run locked query", exception);
+					}
 				}
 			}
 		}
