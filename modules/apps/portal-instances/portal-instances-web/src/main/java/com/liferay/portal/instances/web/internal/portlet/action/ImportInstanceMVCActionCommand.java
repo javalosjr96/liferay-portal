@@ -72,6 +72,9 @@ public class ImportInstanceMVCActionCommand extends BaseMVCActionCommand {
 			if (exception instanceof IllegalArgumentException) {
 				errorMessage = "please-enter-a-valid-schema-name";
 			}
+			else if (exception instanceof UnsupportedOperationException) {
+				errorMessage = "database-partitioning-must-be-enabled";
+			}
 			else {
 				Throwable causeThrowable = exception.getCause();
 

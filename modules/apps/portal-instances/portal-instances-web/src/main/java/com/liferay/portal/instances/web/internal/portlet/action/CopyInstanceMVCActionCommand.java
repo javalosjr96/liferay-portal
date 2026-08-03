@@ -79,6 +79,9 @@ public class CopyInstanceMVCActionCommand extends BaseMVCActionCommand {
 						"please-enter-a-valid-destination-company-id";
 				}
 			}
+			else if (exception instanceof UnsupportedOperationException) {
+				errorMessage = "database-partitioning-must-be-enabled";
+			}
 			else {
 				Throwable causeThrowable = exception.getCause();
 
