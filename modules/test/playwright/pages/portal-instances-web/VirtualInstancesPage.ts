@@ -37,6 +37,7 @@ export class VirtualInstancesPage {
 	readonly errorMessageScreenName: Locator;
 	readonly errorMessageEmailAddress: Locator;
 	readonly errorMessagePassword: Locator;
+	readonly importInstanceCancelButton: Locator;
 	readonly importInstanceErrorMessage: Locator;
 	readonly importInstanceNameField: Locator;
 	readonly importInstanceSchemaNameField: Locator;
@@ -74,20 +75,18 @@ export class VirtualInstancesPage {
 		this.addInstanceVirtualInstanceInitializer =
 			this.addInstanceFrame.getByLabel('Virtual Instance Initializer');
 		this.addInstanceWebIdField = this.addInstanceFrame.getByLabel('Web ID');
-		this.copyInstanceCancelButton = page.getByRole('button', {
-			exact: true,
-			name: 'Cancel',
-		});
+		this.copyInstanceCancelButton = page
+			.getByRole('dialog', {name: 'Copy Instance'})
+			.getByRole('button', {exact: true, name: 'Cancel'});
 		this.copyInstanceDestinationCompanyIdField =
 			this.copyInstanceFrame.getByLabel('Destination Company ID');
 		this.copyInstanceErrorMessage = this.copyInstanceFrame.getByText(
 			'Please enter a valid destination company ID'
 		);
 		this.copyInstanceNameField = this.copyInstanceFrame.getByLabel('Name');
-		this.copyInstanceSubmitButton = page.getByRole('button', {
-			exact: true,
-			name: 'Copy',
-		});
+		this.copyInstanceSubmitButton = page
+			.getByRole('dialog', {name: 'Copy Instance'})
+			.getByRole('button', {exact: true, name: 'Copy'});
 		this.copyInstanceVirtualHostField =
 			this.copyInstanceFrame.getByLabel('Virtual Host');
 		this.copyInstanceWebIdField =
@@ -118,6 +117,9 @@ export class VirtualInstancesPage {
 		this.importInstanceFrame = page.frameLocator(
 			'iframe[title="Import Instance"]'
 		);
+		this.importInstanceCancelButton = page
+			.getByRole('dialog', {name: 'Import Instance'})
+			.getByRole('button', {exact: true, name: 'Cancel'});
 		this.importInstanceSchemaNameField =
 			this.importInstanceFrame.getByLabel('Schema Name');
 		this.importInstanceErrorMessage = this.importInstanceFrame.getByText(
@@ -127,10 +129,9 @@ export class VirtualInstancesPage {
 			'Name',
 			{exact: true}
 		);
-		this.importInstanceSubmitButton = page.getByRole('button', {
-			exact: true,
-			name: 'Import',
-		});
+		this.importInstanceSubmitButton = page
+			.getByRole('dialog', {name: 'Import Instance'})
+			.getByRole('button', {exact: true, name: 'Import'});
 		this.importInstanceVirtualHostField =
 			this.importInstanceFrame.getByLabel('Virtual Host');
 		this.importInstanceWebIdField =
@@ -233,7 +234,6 @@ export class VirtualInstancesPage {
 	}
 
 	private async clickAddInstance() {
-		await this.newVirtualInstanceButton.click();
 
 		// A single-item creation menu opens the modal directly, while a menu
 		// holding Import as well opens a dropdown to pick from first
@@ -243,7 +243,10 @@ export class VirtualInstancesPage {
 			name: 'Add',
 		});
 
-		await expect(addMenuItem.or(this.addInstanceAddButton)).toBeVisible();
+		await clickAndExpectToBeVisible({
+			target: addMenuItem.or(this.addInstanceAddButton),
+			trigger: this.newVirtualInstanceButton,
+		});
 
 		if (await addMenuItem.isVisible()) {
 			await addMenuItem.click();

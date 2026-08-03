@@ -92,6 +92,15 @@ test(
 			imported = true;
 		}
 		finally {
+
+			// A failed import leaves the modal open, which blocks navigation
+
+			if (
+				await virtualInstancesPage.importInstanceCancelButton.isVisible()
+			) {
+				await virtualInstancesPage.importInstanceCancelButton.click();
+			}
+
 			if (imported) {
 				await virtualInstancesPage.deleteVirtualInstance(importName);
 			}
