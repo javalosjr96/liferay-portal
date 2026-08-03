@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
@@ -21,6 +22,7 @@ import com.liferay.portal.kernel.test.portlet.MockActionRequest;
 import com.liferay.portal.kernel.test.portlet.MockActionResponse;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -63,8 +65,9 @@ public class ExportInstanceMVCActionCommandTest {
 				Mockito.nullable(Locale.class), Mockito.anyString(),
 				Mockito.<Object>any())
 		).thenAnswer(
-			invocationOnMock -> invocationOnMock.getArgument(1) + ":" +
-				invocationOnMock.getArgument(2)
+			invocationOnMock ->
+				invocationOnMock.getArgument(1) + ":" +
+					invocationOnMock.getArgument(2)
 		);
 
 		ReflectionTestUtil.setFieldValue(
@@ -142,33 +145,19 @@ public class ExportInstanceMVCActionCommandTest {
 		_exportInstanceMVCActionCommand.doProcessAction(
 			_getMockActionRequest(companyId), new MockActionResponse());
 
-		String error = _jsonObject.getString("error");
+		PrincipalException.MustBeOmniadmin mustBeOmniadminException =
+			new PrincipalException.MustBeOmniadmin(_permissionChecker);
 
-		Assert.assertTrue(error.startsWith("export-failed-with-message-x:"));
+		Assert.assertEquals(
+			"export-failed-with-message-x:" +
+				GetterUtil.getString(mustBeOmniadminException.getMessage()),
+			_jsonObject.getString("error"));
 
 		Mockito.verify(
 			_companyLocalService, Mockito.never()
 		).exportCompany(
 			companyId
 		);
-	}
-
-	@Test
-	public void testUnsupportedOperationExceptionForDisabledFeatureFlag() {
-		_featureFlagManagerUtilMockedStatic.when(
-			() -> FeatureFlagManagerUtil.isEnabled(
-				Mockito.anyLong(), Mockito.eq("LPD-11342"))
-		).thenReturn(
-			false
-		);
-
-		Assert.assertThrows(
-			UnsupportedOperationException.class,
-			() -> _exportInstanceMVCActionCommand.doProcessAction(
-				_getMockActionRequest(RandomTestUtil.randomLong()),
-				new MockActionResponse()));
-
-		Mockito.verifyNoInteractions(_companyLocalService);
 	}
 
 	@Test
@@ -197,6 +186,24 @@ public class ExportInstanceMVCActionCommandTest {
 			() -> JSONPortletResponseUtil.writeJSON(
 				Mockito.any(ActionRequest.class),
 				Mockito.any(ActionResponse.class), Mockito.eq(_jsonObject)));
+	}
+
+	@Test
+	public void testUnsupportedOperationExceptionForDisabledFeatureFlag() {
+		_featureFlagManagerUtilMockedStatic.when(
+			() -> FeatureFlagManagerUtil.isEnabled(
+				Mockito.anyLong(), Mockito.eq("LPD-11342"))
+		).thenReturn(
+			false
+		);
+
+		Assert.assertThrows(
+			UnsupportedOperationException.class,
+			() -> _exportInstanceMVCActionCommand.doProcessAction(
+				_getMockActionRequest(RandomTestUtil.randomLong()),
+				new MockActionResponse()));
+
+		Mockito.verifyNoInteractions(_companyLocalService);
 	}
 
 	private void _assertErrorMessage(
@@ -236,8 +243,6 @@ public class ExportInstanceMVCActionCommandTest {
 
 	private final CompanyLocalService _companyLocalService = Mockito.mock(
 		CompanyLocalService.class);
-	private MockedStatic<FeatureFlagManagerUtil>
-		_featureFlagManagerUtilMockedStatic;
 
 	private final ExportInstanceMVCActionCommand
 		_exportInstanceMVCActionCommand = new ExportInstanceMVCActionCommand() {
@@ -249,6 +254,8 @@ public class ExportInstanceMVCActionCommandTest {
 
 		};
 
+	private MockedStatic<FeatureFlagManagerUtil>
+		_featureFlagManagerUtilMockedStatic;
 	private final JSONFactory _jsonFactory = Mockito.mock(JSONFactory.class);
 	private JSONObject _jsonObject;
 	private MockedStatic<JSONPortletResponseUtil>

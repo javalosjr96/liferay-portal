@@ -20,8 +20,12 @@ test(
 
 		const name = getRandomString();
 
+		let created = false;
+
 		try {
 			await virtualInstancesPage.addNewVirtualInstance(name);
+
+			created = true;
 
 			const company =
 				await apiHelpers.jsonWebServicesCompany.getCompanyByWebId(name);
@@ -53,7 +57,9 @@ test(
 			);
 		}
 		finally {
-			await virtualInstancesPage.deleteVirtualInstance(name);
+			if (created) {
+				await virtualInstancesPage.deleteVirtualInstance(name);
+			}
 		}
 	}
 );
@@ -66,8 +72,12 @@ test(
 
 		const name = getRandomString();
 
+		let created = false;
+
 		try {
 			await virtualInstancesPage.addNewVirtualInstance(name);
+
+			created = true;
 
 			await virtualInstancesPage.exportVirtualInstance(name);
 
@@ -100,7 +110,9 @@ test(
 			).toContainText('Export failed with message:', {timeout: 60000});
 		}
 		finally {
-			await virtualInstancesPage.deleteVirtualInstance(name);
+			if (created) {
+				await virtualInstancesPage.deleteVirtualInstance(name);
+			}
 		}
 	}
 );

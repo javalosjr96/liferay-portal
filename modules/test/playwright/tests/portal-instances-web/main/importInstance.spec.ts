@@ -83,13 +83,13 @@ test(
 				webId: importName,
 			});
 
-			imported = true;
-
 			// Success closes the modal and redirects, reloading the list
 
 			await expect(
 				page.getByRole('row').filter({hasText: importName})
 			).toHaveCount(1, {timeout: 120000});
+
+			imported = true;
 		}
 		finally {
 			if (imported) {

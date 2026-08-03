@@ -277,9 +277,13 @@ export class VirtualInstancesPage {
 			trigger: row.getByRole('button', {name: 'Show Actions'}),
 		});
 
-		await this.page.getByRole('button', {name: 'Export'}).waitFor();
+		const exportConfirmButton = this.page
+			.getByRole('dialog', {name: 'Export Instance'})
+			.getByRole('button', {exact: true, name: 'Export'});
 
-		await this.page.getByRole('button', {name: 'Export'}).click();
+		await exportConfirmButton.waitFor();
+
+		await exportConfirmButton.click();
 	}
 
 	async goto() {

@@ -92,15 +92,24 @@ test(
 				webId: copyName,
 			});
 
-			copied = true;
-
 			// Success closes the modal and redirects, reloading the list
 
 			await expect(
 				page.getByRole('row').filter({hasText: copyName})
 			).toHaveCount(1, {timeout: 120000});
+
+			copied = true;
 		}
 		finally {
+
+			// A failed copy leaves the modal open, which blocks navigation
+
+			if (
+				await virtualInstancesPage.copyInstanceCancelButton.isVisible()
+			) {
+				await virtualInstancesPage.copyInstanceCancelButton.click();
+			}
+
 			if (copied) {
 				await virtualInstancesPage.deleteVirtualInstance(copyName);
 			}
