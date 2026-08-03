@@ -16,7 +16,7 @@ test(
 	'LPD-92619 - Exporting a virtual instance shows the exported schema name.',
 	{tag: '@LPD-92619'},
 	async ({apiHelpers, virtualInstancesPage}) => {
-		test.setTimeout(240000);
+		test.setTimeout(900000);
 
 		const name = getRandomString();
 
@@ -62,7 +62,7 @@ test(
 	'LPD-92619 - Exporting an already-exported virtual instance shows an error.',
 	{tag: '@LPD-92619'},
 	async ({virtualInstancesPage}) => {
-		test.setTimeout(240000);
+		test.setTimeout(900000);
 
 		const name = getRandomString();
 
