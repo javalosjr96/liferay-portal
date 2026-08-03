@@ -7,6 +7,7 @@ package com.liferay.portal.instances.web.internal.portlet.action;
 
 import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.instances.web.internal.constants.PortalInstancesPortletKeys;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
@@ -19,8 +20,10 @@ import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.WebKeys;
 
 import jakarta.portlet.ActionRequest;
 import jakarta.portlet.ActionResponse;
@@ -45,6 +48,15 @@ public class ExportInstanceMVCActionCommand extends BaseMVCActionCommand {
 			ActionRequest actionRequest, ActionResponse actionResponse)
 		throws Exception {
 
+		ThemeDisplay themeDisplay = (ThemeDisplay)actionRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				themeDisplay.getCompanyId(), "LPD-11342")) {
+
+			throw new UnsupportedOperationException();
+		}
+
 		long companyId = ParamUtil.getLong(actionRequest, "companyId");
 
 		JSONObject jsonObject = _jsonFactory.createJSONObject();
@@ -64,8 +76,10 @@ public class ExportInstanceMVCActionCommand extends BaseMVCActionCommand {
 							companyId));
 		}
 		catch (Exception exception) {
-			_log.error(
-				"Unable to export portal instance " + companyId, exception);
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Unable to export portal instance " + companyId, exception);
+			}
 
 			jsonObject.put(
 				"error",
