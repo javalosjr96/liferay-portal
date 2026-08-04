@@ -199,27 +199,6 @@ public class PortalInstanceResourceTest
 		_testPostPortalInstanceExportWithoutOmniadminPermission();
 	}
 
-	@FeatureFlag(enable = false, value = "LPD-11342")
-	@Test
-	public void testPostPortalInstanceExportWithFeatureFlagDisabled()
-		throws Exception {
-
-		try {
-			portalInstanceResource.postPortalInstanceExport(
-				_portalInstance.getPortalInstanceId());
-
-			Assert.fail();
-		}
-		catch (Problem.ProblemException problemException) {
-			Problem problem = problemException.getProblem();
-
-			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
-			Assert.assertEquals(
-				UnsupportedOperationException.class.getName(),
-				problem.getType());
-		}
-	}
-
 	@FeatureFlag("LPD-11342")
 	@Override
 	@Test
