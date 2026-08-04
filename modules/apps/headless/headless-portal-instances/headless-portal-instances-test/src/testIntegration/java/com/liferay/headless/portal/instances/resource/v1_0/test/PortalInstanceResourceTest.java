@@ -47,6 +47,7 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
@@ -196,6 +197,27 @@ public class PortalInstanceResourceTest
 		_testPostPortalInstanceExport();
 		_testPostPortalInstanceExportWithNonexistentPortalInstance();
 		_testPostPortalInstanceExportWithoutOmniadminPermission();
+	}
+
+	@FeatureFlag(enable = false, value = "LPD-11342")
+	@Test
+	public void testPostPortalInstanceExportWithFeatureFlagDisabled()
+		throws Exception {
+
+		try {
+			portalInstanceResource.postPortalInstanceExport(
+				_portalInstance.getPortalInstanceId());
+
+			Assert.fail();
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
+			Assert.assertEquals(
+				UnsupportedOperationException.class.getName(),
+				problem.getType());
+		}
 	}
 
 	@FeatureFlag("LPD-11342")
@@ -857,6 +879,19 @@ public class PortalInstanceResourceTest
 				group.getGroupId()
 			).build());
 
+		long nonexistentGroupId = RandomTestUtil.randomLong();
+
+		Configuration nonexistentGroupConfiguration =
+			_createScopedConfiguration(
+				HashMapDictionaryBuilder.<String, Object>put(
+					ExtendedObjectClassDefinition.Scope.COMPANY.
+						getPropertyKey(),
+					companyId
+				).put(
+					ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(),
+					nonexistentGroupId
+				).build());
+
 		Configuration portletInstanceConfiguration = _createScopedConfiguration(
 			HashMapDictionaryBuilder.<String, Object>put(
 				ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE.
@@ -864,7 +899,10 @@ public class PortalInstanceResourceTest
 				RandomTestUtil.randomString()
 			).build());
 
-		try {
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_CLASS_NAME_PORTAL_INSTANCE_RESOURCE_IMPL,
+				LoggerTestUtil.WARN)) {
+
 			PortalInstanceExport portalInstanceExport =
 				portalInstanceResource.postPortalInstanceExport(
 					_portalInstance.getPortalInstanceId());
@@ -889,11 +927,28 @@ public class PortalInstanceResourceTest
 					portletInstanceConfiguration.getPid()));
 			Assert.assertFalse(
 				configurationIds.contains(company2Configuration.getPid()));
+			Assert.assertFalse(
+				configurationIds.contains(
+					nonexistentGroupConfiguration.getPid()));
+
+			List<LogEntry> logEntries = logCapture.getLogEntries();
+
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
+
+			LogEntry logEntry = logEntries.get(0);
+
+			Assert.assertEquals(
+				StringBundler.concat(
+					"Unable to export configuration ",
+					nonexistentGroupConfiguration.getPid(), " because group ",
+					nonexistentGroupId, " does not exist"),
+				logEntry.getMessage());
 		}
 		finally {
 			company1Configuration.delete();
 			company2Configuration.delete();
 			groupConfiguration.delete();
+			nonexistentGroupConfiguration.delete();
 			portletInstanceConfiguration.delete();
 
 			_dropExportedSchema(companyId);
