@@ -15,7 +15,6 @@ import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstanceImpor
 import com.liferay.headless.portal.instances.client.pagination.Page;
 import com.liferay.headless.portal.instances.client.problem.Problem;
 import com.liferay.headless.portal.instances.client.resource.v1_0.PortalInstanceResource;
-import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -41,6 +40,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -836,10 +836,6 @@ public class PortalInstanceResourceTest
 			return;
 		}
 
-		Group group = _groupLocalService.getCompanyGroup(companyId);
-
-		long nonexistentGroupId = RandomTestUtil.randomLong();
-
 		List<Configuration> configurations = new ArrayList<>();
 
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
@@ -864,6 +860,8 @@ public class PortalInstanceResourceTest
 
 			configurations.add(company2Configuration);
 
+			Group group = _groupLocalService.getCompanyGroup(companyId);
+
 			Configuration groupConfiguration = _createScopedConfiguration(
 				HashMapDictionaryBuilder.<String, Object>put(
 					ExtendedObjectClassDefinition.Scope.COMPANY.
@@ -875,6 +873,8 @@ public class PortalInstanceResourceTest
 				).build());
 
 			configurations.add(groupConfiguration);
+
+			long nonexistentGroupId = RandomTestUtil.randomLong();
 
 			Configuration nonexistentGroupConfiguration =
 				_createScopedConfiguration(
@@ -933,15 +933,9 @@ public class PortalInstanceResourceTest
 				nonexistentGroupConfiguration.getPid(), " because group ",
 				nonexistentGroupId, " does not exist");
 
-			List<LogEntry> logEntries = TransformUtil.transform(
+			List<LogEntry> logEntries = ListUtil.filter(
 				logCapture.getLogEntries(),
-				curLogEntry -> {
-					if (message.equals(curLogEntry.getMessage())) {
-						return curLogEntry;
-					}
-
-					return null;
-				});
+				curLogEntry -> message.equals(curLogEntry.getMessage()));
 
 			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
 
