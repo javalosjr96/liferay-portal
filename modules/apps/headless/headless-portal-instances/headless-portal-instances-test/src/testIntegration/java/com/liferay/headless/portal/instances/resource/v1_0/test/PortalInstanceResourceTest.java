@@ -53,6 +53,8 @@ import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 
+import java.io.IOException;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -944,13 +946,26 @@ public class PortalInstanceResourceTest
 			Assert.assertEquals(LoggerTestUtil.WARN, logEntry.getPriority());
 		}
 		finally {
-			try {
-				for (Configuration configuration : configurations) {
+			Exception exception = null;
+
+			for (Configuration configuration : configurations) {
+				try {
 					configuration.delete();
 				}
+				catch (IOException ioException) {
+					if (exception == null) {
+						exception = ioException;
+					}
+					else {
+						exception.addSuppressed(ioException);
+					}
+				}
 			}
-			finally {
-				_dropExportedSchema(companyId);
+
+			_dropExportedSchema(companyId);
+
+			if (exception != null) {
+				throw exception;
 			}
 		}
 	}
