@@ -27,13 +27,21 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 		try {
 			_listTypeDefinitionLocalService.deleteCompanyListTypeDefinitions(
 				company.getCompanyId());
+		}
+		catch (Exception exception) {
+			_log.error(
+				"Unable to delete the list type definitions of company " +
+					company.getCompanyId(),
+				exception);
+		}
 
+		try {
 			_listTypeEntryLocalService.deleteCompanyListTypeEntries(
 				company.getCompanyId());
 		}
 		catch (Exception exception) {
 			_log.error(
-				"Unable to delete the list types of company " +
+				"Unable to delete the list type entries of company " +
 					company.getCompanyId(),
 				exception);
 		}
