@@ -922,6 +922,7 @@ public class PortalInstanceResourceTest
 					nonexistentGroupConfiguration.getPid(), " because group ",
 					nonexistentGroupId, " does not exist"),
 				logEntry.getMessage());
+			Assert.assertEquals(LoggerTestUtil.WARN, logEntry.getPriority());
 		}
 		finally {
 			company1Configuration.delete();
