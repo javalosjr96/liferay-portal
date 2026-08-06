@@ -15,6 +15,7 @@ import com.liferay.headless.portal.instances.client.dto.v1_0.PortalInstanceImpor
 import com.liferay.headless.portal.instances.client.pagination.Page;
 import com.liferay.headless.portal.instances.client.problem.Problem;
 import com.liferay.headless.portal.instances.client.resource.v1_0.PortalInstanceResource;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -835,52 +836,69 @@ public class PortalInstanceResourceTest
 			return;
 		}
 
-		Configuration company1Configuration = _createScopedConfiguration(
-			HashMapDictionaryBuilder.<String, Object>put(
-				ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey(),
-				companyId
-			).build());
-
-		Configuration company2Configuration = _createScopedConfiguration(
-			HashMapDictionaryBuilder.<String, Object>put(
-				ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey(),
-				RandomTestUtil.randomLong()
-			).build());
-
 		Group group = _groupLocalService.getCompanyGroup(companyId);
-
-		Configuration groupConfiguration = _createScopedConfiguration(
-			HashMapDictionaryBuilder.<String, Object>put(
-				ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey(),
-				companyId
-			).put(
-				ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(),
-				group.getGroupId()
-			).build());
 
 		long nonexistentGroupId = RandomTestUtil.randomLong();
 
-		Configuration nonexistentGroupConfiguration =
-			_createScopedConfiguration(
+		List<Configuration> configurations = new ArrayList<>();
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_CLASS_NAME_PORTAL_INSTANCE_RESOURCE_IMPL,
+				LoggerTestUtil.WARN)) {
+
+			Configuration company1Configuration = _createScopedConfiguration(
+				HashMapDictionaryBuilder.<String, Object>put(
+					ExtendedObjectClassDefinition.Scope.COMPANY.
+						getPropertyKey(),
+					companyId
+				).build());
+
+			configurations.add(company1Configuration);
+
+			Configuration company2Configuration = _createScopedConfiguration(
+				HashMapDictionaryBuilder.<String, Object>put(
+					ExtendedObjectClassDefinition.Scope.COMPANY.
+						getPropertyKey(),
+					RandomTestUtil.randomLong()
+				).build());
+
+			configurations.add(company2Configuration);
+
+			Configuration groupConfiguration = _createScopedConfiguration(
 				HashMapDictionaryBuilder.<String, Object>put(
 					ExtendedObjectClassDefinition.Scope.COMPANY.
 						getPropertyKey(),
 					companyId
 				).put(
 					ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(),
-					nonexistentGroupId
+					group.getGroupId()
 				).build());
 
-		Configuration portletInstanceConfiguration = _createScopedConfiguration(
-			HashMapDictionaryBuilder.<String, Object>put(
-				ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE.
-					getPropertyKey(),
-				RandomTestUtil.randomString()
-			).build());
+			configurations.add(groupConfiguration);
 
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				_CLASS_NAME_PORTAL_INSTANCE_RESOURCE_IMPL,
-				LoggerTestUtil.WARN)) {
+			Configuration nonexistentGroupConfiguration =
+				_createScopedConfiguration(
+					HashMapDictionaryBuilder.<String, Object>put(
+						ExtendedObjectClassDefinition.Scope.COMPANY.
+							getPropertyKey(),
+						companyId
+					).put(
+						ExtendedObjectClassDefinition.Scope.GROUP.
+							getPropertyKey(),
+						nonexistentGroupId
+					).build());
+
+			configurations.add(nonexistentGroupConfiguration);
+
+			Configuration portletInstanceConfiguration =
+				_createScopedConfiguration(
+					HashMapDictionaryBuilder.<String, Object>put(
+						ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE.
+							getPropertyKey(),
+						RandomTestUtil.randomString()
+					).build());
+
+			configurations.add(portletInstanceConfiguration);
 
 			PortalInstanceExport portalInstanceExport =
 				portalInstanceResource.postPortalInstanceExport(
@@ -910,28 +928,36 @@ public class PortalInstanceResourceTest
 				configurationIds.contains(
 					nonexistentGroupConfiguration.getPid()));
 
-			List<LogEntry> logEntries = logCapture.getLogEntries();
+			String message = StringBundler.concat(
+				"Unable to export configuration ",
+				nonexistentGroupConfiguration.getPid(), " because group ",
+				nonexistentGroupId, " does not exist");
+
+			List<LogEntry> logEntries = TransformUtil.transform(
+				logCapture.getLogEntries(),
+				curLogEntry -> {
+					if (message.equals(curLogEntry.getMessage())) {
+						return curLogEntry;
+					}
+
+					return null;
+				});
 
 			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
 
 			LogEntry logEntry = logEntries.get(0);
 
-			Assert.assertEquals(
-				StringBundler.concat(
-					"Unable to export configuration ",
-					nonexistentGroupConfiguration.getPid(), " because group ",
-					nonexistentGroupId, " does not exist"),
-				logEntry.getMessage());
 			Assert.assertEquals(LoggerTestUtil.WARN, logEntry.getPriority());
 		}
 		finally {
-			company1Configuration.delete();
-			company2Configuration.delete();
-			groupConfiguration.delete();
-			nonexistentGroupConfiguration.delete();
-			portletInstanceConfiguration.delete();
-
-			_dropExportedSchema(companyId);
+			try {
+				for (Configuration configuration : configurations) {
+					configuration.delete();
+				}
+			}
+			finally {
+				_dropExportedSchema(companyId);
+			}
 		}
 	}
 
