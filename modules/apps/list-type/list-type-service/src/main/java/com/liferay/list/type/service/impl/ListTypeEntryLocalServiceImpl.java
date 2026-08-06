@@ -73,15 +73,14 @@ public class ListTypeEntryLocalServiceImpl
 		User user = _userLocalService.getUser(userId);
 
 		_validateExternalReferenceCode(
-			externalReferenceCode, listTypeDefinition.getCompanyId(),
-			listTypeDefinitionId, 0);
+			externalReferenceCode, user.getCompanyId(), listTypeDefinitionId,
+			0);
 
 		_validateKey(listTypeDefinitionId, key);
 		_validateName(nameMap);
 
 		return _addListTypeEntry(
-			externalReferenceCode, listTypeDefinition.getCompanyId(), user,
-			listTypeDefinitionId, key, nameMap,
+			externalReferenceCode, user, listTypeDefinitionId, key, nameMap,
 			WorkflowConstants.STATUS_APPROVED, system);
 	}
 
@@ -197,17 +196,12 @@ public class ListTypeEntryLocalServiceImpl
 			long userId, long listTypeDefinitionId, String key)
 		throws PortalException {
 
-		ListTypeDefinition listTypeDefinition =
-			_listTypeDefinitionPersistence.findByPrimaryKey(
-				listTypeDefinitionId);
-
 		User user = _userLocalService.getUser(userId);
 
 		return _emptyModelManager.getOrAddEmptyModel(
-			ListTypeEntry.class, listTypeDefinition.getCompanyId(),
+			ListTypeEntry.class, user.getCompanyId(),
 			() -> _addListTypeEntry(
-				null, listTypeDefinition.getCompanyId(), user,
-				listTypeDefinitionId, key,
+				null, user, listTypeDefinitionId, key,
 				HashMapBuilder.put(
 					LocaleUtil.getSiteDefault(), key
 				).build(),
@@ -268,15 +262,14 @@ public class ListTypeEntryLocalServiceImpl
 	}
 
 	private ListTypeEntry _addListTypeEntry(
-		String externalReferenceCode, long companyId, User user,
-		long listTypeDefinitionId, String key, Map<Locale, String> nameMap,
-		int status, boolean system) {
+		String externalReferenceCode, User user, long listTypeDefinitionId,
+		String key, Map<Locale, String> nameMap, int status, boolean system) {
 
 		ListTypeEntry listTypeEntry = listTypeEntryPersistence.create(
 			counterLocalService.increment());
 
 		listTypeEntry.setExternalReferenceCode(externalReferenceCode);
-		listTypeEntry.setCompanyId(companyId);
+		listTypeEntry.setCompanyId(user.getCompanyId());
 		listTypeEntry.setUserId(user.getUserId());
 		listTypeEntry.setUserName(user.getFullName());
 		listTypeEntry.setListTypeDefinitionId(listTypeDefinitionId);
