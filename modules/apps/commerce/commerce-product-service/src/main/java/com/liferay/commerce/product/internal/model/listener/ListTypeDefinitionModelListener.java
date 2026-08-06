@@ -11,6 +11,7 @@ import com.liferay.list.type.model.ListTypeDefinition;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.ModelListener;
+import com.liferay.portal.util.PortalInstances;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -25,6 +26,10 @@ public class ListTypeDefinitionModelListener
 	@Override
 	public void onBeforeRemove(ListTypeDefinition listTypeDefinition)
 		throws ModelListenerException {
+
+		if (PortalInstances.isCurrentCompanyInDeletionProcess()) {
+			return;
+		}
 
 		int count =
 			_cpSpecificationOptionListTypeDefinitionRelLocalService.

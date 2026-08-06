@@ -88,6 +88,18 @@ public class ListTypeDefinitionLocalServiceImpl
 		return listTypeDefinition;
 	}
 
+	@Override
+	public void deleteCompanyListTypeDefinitions(long companyId)
+		throws PortalException {
+
+		for (ListTypeDefinition listTypeDefinition :
+				listTypeDefinitionPersistence.findByCompanyId(companyId)) {
+
+			listTypeDefinitionLocalService.deleteListTypeDefinition(
+				listTypeDefinition);
+		}
+	}
+
 	@Indexable(type = IndexableType.DELETE)
 	@Override
 	@SystemEvent(type = SystemEventConstants.TYPE_DELETE)
