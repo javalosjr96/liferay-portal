@@ -6,7 +6,7 @@
 package com.liferay.list.type.internal.model.listener;
 
 import com.liferay.list.type.service.ListTypeDefinitionLocalService;
-import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
@@ -27,12 +27,15 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 		try {
 			_listTypeDefinitionLocalService.deleteCompanyListTypeDefinitions(
 				company.getCompanyId());
+
+			_listTypeEntryLocalService.deleteCompanyListTypeEntries(
+				company.getCompanyId());
 		}
-		catch (PortalException portalException) {
+		catch (Exception exception) {
 			_log.error(
-				"Unable to delete the list type definitions of company " +
+				"Unable to delete the list types of company " +
 					company.getCompanyId(),
-				portalException);
+				exception);
 		}
 	}
 
@@ -41,5 +44,8 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 
 	@Reference
 	private ListTypeDefinitionLocalService _listTypeDefinitionLocalService;
+
+	@Reference
+	private ListTypeEntryLocalService _listTypeEntryLocalService;
 
 }

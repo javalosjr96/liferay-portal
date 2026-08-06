@@ -84,6 +84,17 @@ public class ListTypeEntryLocalServiceImpl
 			WorkflowConstants.STATUS_APPROVED, system);
 	}
 
+	@Override
+	public void deleteCompanyListTypeEntries(long companyId)
+		throws PortalException {
+
+		for (ListTypeEntry listTypeEntry :
+				listTypeEntryPersistence.findByCompanyId(companyId)) {
+
+			listTypeEntryLocalService.deleteListTypeEntry(listTypeEntry);
+		}
+	}
+
 	@Indexable(type = IndexableType.DELETE)
 	@Override
 	public ListTypeEntry deleteListTypeEntry(ListTypeEntry listTypeEntry)

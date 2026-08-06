@@ -63,6 +63,9 @@
 
 		<!-- Finder methods -->
 
+		<finder name="CompanyId" return-type="Collection">
+			<finder-column name="companyId" />
+		</finder>
 		<finder name="ListTypeEntryId" return-type="Collection">
 			<finder-column arrayable-operator="OR" comparator="=" name="listTypeEntryId" />
 		</finder>
