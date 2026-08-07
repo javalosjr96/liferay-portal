@@ -155,7 +155,6 @@ public class ExportInstanceMVCActionCommandTest {
 	@Test
 	public void testSchemaNameOnSuccess() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
-
 		String exportedPartitionName = RandomTestUtil.randomString();
 
 		Mockito.when(
