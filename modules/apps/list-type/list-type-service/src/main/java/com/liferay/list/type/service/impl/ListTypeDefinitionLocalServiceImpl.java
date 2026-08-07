@@ -40,6 +40,7 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.util.PortalInstances;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -111,12 +112,15 @@ public class ListTypeDefinitionLocalServiceImpl
 			"Only allowed bundles can delete system list type definitions",
 			listTypeDefinition.isSystem());
 
-		int count =
-			_objectFieldLocalService.getObjectFieldsCountByListTypeDefinitionId(
-				listTypeDefinition.getListTypeDefinitionId());
+		if (!PortalInstances.isCurrentCompanyInDeletionProcess()) {
+			int count =
+				_objectFieldLocalService.
+					getObjectFieldsCountByListTypeDefinitionId(
+						listTypeDefinition.getListTypeDefinitionId());
 
-		if (count > 0) {
-			throw new RequiredListTypeDefinitionException();
+			if (count > 0) {
+				throw new RequiredListTypeDefinitionException();
+			}
 		}
 
 		_resourceLocalService.deleteResource(

@@ -212,7 +212,15 @@ public class ListTypeEntryLocalServiceImpl
 			long userId, long listTypeDefinitionId, String key)
 		throws PortalException {
 
+		ListTypeDefinition listTypeDefinition =
+			_listTypeDefinitionPersistence.findByPrimaryKey(
+				listTypeDefinitionId);
+
 		User user = _userLocalService.getUser(userId);
+
+		if (user.getCompanyId() != listTypeDefinition.getCompanyId()) {
+			throw new PrincipalException();
+		}
 
 		return _emptyModelManager.getOrAddEmptyModel(
 			ListTypeEntry.class, user.getCompanyId(),
