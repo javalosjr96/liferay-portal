@@ -43,6 +43,17 @@ const ACTIONS = {
 
 		openExportCompanyModal({
 			onExport: () => {
+				if (pendingExportURLs.has(itemData.exportURL)) {
+					openToast({
+						message: Liferay.Language.get(
+							'exporting-an-instance-is-already-in-progress'
+						),
+						type: 'info',
+					});
+
+					return;
+				}
+
 				pendingExportURLs.add(itemData.exportURL);
 
 				fetch(itemData.exportURL, {method: 'POST'})
