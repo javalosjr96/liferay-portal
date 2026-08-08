@@ -142,6 +142,8 @@ public class PortalInstanceExporterImplTest {
 		_dbPartitionUtilMockedStatic.verify(
 			() -> DBPartitionUtil.getConfigurations(Mockito.anyLong()),
 			Mockito.never());
+
+		_assertNoConfigurationExported();
 	}
 
 	@Test
