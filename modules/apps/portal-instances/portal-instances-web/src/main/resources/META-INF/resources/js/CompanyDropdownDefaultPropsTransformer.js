@@ -53,16 +53,16 @@ const ACTIONS = {
 
 						return response.json();
 					})
-					.then((responseJSON) => {
-						if (responseJSON.successMessage) {
+					.then((data) => {
+						if (data.successMessage) {
 							openToast({
-								message: responseJSON.successMessage,
+								message: data.successMessage,
 								type: 'success',
 							});
 						}
-						else if (responseJSON.error) {
+						else if (data.error) {
 							openToast({
-								message: responseJSON.error,
+								message: data.error,
 								type: 'danger',
 							});
 						}
