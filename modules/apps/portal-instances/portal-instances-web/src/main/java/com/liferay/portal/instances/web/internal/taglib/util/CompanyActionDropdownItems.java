@@ -57,6 +57,29 @@ public class CompanyActionDropdownItems {
 				dropdownGroupItem.setSeparator(true);
 			}
 		).addGroup(
+			() -> _company.getCompanyId() != _defaultCompanyId,
+			dropdownGroupItem -> {
+				dropdownGroupItem.setDropdownItems(
+					DropdownItemListBuilder.add(
+						dropdownItem -> {
+							dropdownItem.putData("action", "deleteInstance");
+							dropdownItem.putData(
+								"deleteURL",
+								PortletURLBuilder.createActionURL(
+									_liferayPortletResponse
+								).setActionName(
+									"/portal_instances/delete_instance"
+								).setParameter(
+									"companyId", _company.getCompanyId()
+								).buildString());
+							dropdownItem.setLabel(
+								LanguageUtil.get(
+									_httpServletRequest, "delete"));
+						}
+					).build());
+				dropdownGroupItem.setSeparator(true);
+			}
+		).addGroup(
 			() ->
 				(_company.getCompanyId() != _defaultCompanyId) &&
 				FeatureFlagManagerUtil.isEnabled(
@@ -78,29 +101,6 @@ public class CompanyActionDropdownItems {
 							dropdownItem.setLabel(
 								LanguageUtil.get(
 									_httpServletRequest, "export"));
-						}
-					).build());
-				dropdownGroupItem.setSeparator(true);
-			}
-		).addGroup(
-			() -> _company.getCompanyId() != _defaultCompanyId,
-			dropdownGroupItem -> {
-				dropdownGroupItem.setDropdownItems(
-					DropdownItemListBuilder.add(
-						dropdownItem -> {
-							dropdownItem.putData("action", "deleteInstance");
-							dropdownItem.putData(
-								"deleteURL",
-								PortletURLBuilder.createActionURL(
-									_liferayPortletResponse
-								).setActionName(
-									"/portal_instances/delete_instance"
-								).setParameter(
-									"companyId", _company.getCompanyId()
-								).buildString());
-							dropdownItem.setLabel(
-								LanguageUtil.get(
-									_httpServletRequest, "delete"));
 						}
 					).build());
 				dropdownGroupItem.setSeparator(true);
