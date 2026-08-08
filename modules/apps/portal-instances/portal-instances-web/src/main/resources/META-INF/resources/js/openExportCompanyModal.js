@@ -9,7 +9,7 @@ import {sub} from 'frontend-js-web';
 export default function openExportCompanyModal({onExport}) {
 	openModal({
 		bodyHTML: Liferay.Language.get(
-			'exporting-an-instance-copies-its-data-to-a-new-schema'
+			'exporting-an-instance-copies-its-data-to-a-new-schema-and-replaces-any-previous-export'
 		),
 		buttons: [
 			{
