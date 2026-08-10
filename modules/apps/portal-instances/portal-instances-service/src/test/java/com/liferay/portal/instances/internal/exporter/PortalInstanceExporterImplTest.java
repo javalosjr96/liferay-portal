@@ -193,7 +193,7 @@ public class PortalInstanceExporterImplTest {
 	public void testConfigurationNotExportedForOtherCompanyGroupScope()
 		throws Exception {
 
-		_setUpGroup(_OTHER_COMPANY_ID, _GROUP_ID);
+		_setUpGroup(_COMPANY_ID_OTHER, _GROUP_ID);
 		_setUpConfigurations(
 			_CONFIGURATION_ID,
 			_getDictionaryString(
@@ -208,7 +208,7 @@ public class PortalInstanceExporterImplTest {
 	public void testConfigurationNotExportedForOtherCompanyGroupWithCompanyScope()
 		throws Exception {
 
-		_setUpGroup(_OTHER_COMPANY_ID, _GROUP_ID);
+		_setUpGroup(_COMPANY_ID_OTHER, _GROUP_ID);
 		_setUpConfigurations(
 			_CONFIGURATION_ID,
 			_getDictionaryString(
@@ -234,7 +234,7 @@ public class PortalInstanceExporterImplTest {
 			_CONFIGURATION_ID,
 			_getDictionaryString(
 				ExtendedObjectClassDefinition.Scope.COMPANY,
-				_OTHER_COMPANY_ID));
+				_COMPANY_ID_OTHER));
 
 		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID);
 
@@ -357,12 +357,12 @@ public class PortalInstanceExporterImplTest {
 
 	private static final long _COMPANY_ID = RandomTestUtil.randomLong();
 
+	private static final long _COMPANY_ID_OTHER = RandomTestUtil.randomLong();
+
 	private static final String _CONFIGURATION_ID =
 		RandomTestUtil.randomString();
 
 	private static final long _GROUP_ID = RandomTestUtil.randomLong();
-
-	private static final long _OTHER_COMPANY_ID = RandomTestUtil.randomLong();
 
 	private final CompanyService _companyService = Mockito.mock(
 		CompanyService.class);
