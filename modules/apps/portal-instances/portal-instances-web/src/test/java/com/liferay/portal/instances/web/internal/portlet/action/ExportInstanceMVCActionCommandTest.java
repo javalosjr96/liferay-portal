@@ -6,10 +6,8 @@
 package com.liferay.portal.instances.web.internal.portlet.action;
 
 import com.liferay.portal.instances.exporter.PortalInstanceExporter;
-import com.liferay.portal.json.JSONObjectImpl;
 import com.liferay.portal.kernel.exception.RequiredCompanyException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
-import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
@@ -51,14 +49,6 @@ public class ExportInstanceMVCActionCommandTest {
 
 	@Before
 	public void setUp() {
-		_jsonObject = new JSONObjectImpl();
-
-		Mockito.when(
-			_jsonFactory.createJSONObject()
-		).thenReturn(
-			_jsonObject
-		);
-
 		Mockito.when(
 			_language.format(
 				Mockito.nullable(Locale.class), Mockito.anyString(),
@@ -69,8 +59,6 @@ public class ExportInstanceMVCActionCommandTest {
 					invocationOnMock.getArgument(2)
 		);
 
-		ReflectionTestUtil.setFieldValue(
-			_exportInstanceMVCActionCommand, "_jsonFactory", _jsonFactory);
 		ReflectionTestUtil.setFieldValue(
 			_exportInstanceMVCActionCommand, "_language", _language);
 		ReflectionTestUtil.setFieldValue(
@@ -104,7 +92,11 @@ public class ExportInstanceMVCActionCommandTest {
 				Mockito.any(ActionResponse.class),
 				Mockito.any(JSONObject.class))
 		).then(
-			invocationOnMock -> null
+			invocationOnMock -> {
+				_jsonObject = invocationOnMock.getArgument(2);
+
+				return null;
+			}
 		);
 	}
 
@@ -117,13 +109,11 @@ public class ExportInstanceMVCActionCommandTest {
 
 	@Test
 	public void testErrorMessageForEscapedExceptionMessage() throws Exception {
-		String message = RandomTestUtil.randomString();
-
 		_assertErrorMessage(
-			new RequiredCompanyException(message),
-			"export-failed-with-message-x:" + message);
+			new RequiredCompanyException(_MESSAGE),
+			"export-failed-with-message-x:" + _MESSAGE);
 
-		_htmlUtilMockedStatic.verify(() -> HtmlUtil.escape(message));
+		_htmlUtilMockedStatic.verify(() -> HtmlUtil.escape(_MESSAGE));
 	}
 
 	@Test
@@ -144,32 +134,19 @@ public class ExportInstanceMVCActionCommandTest {
 	}
 
 	@Test
-	public void testErrorMessageOnFailure() throws Exception {
-		String message = RandomTestUtil.randomString();
-
-		_assertErrorMessage(
-			new RequiredCompanyException(message),
-			"export-failed-with-message-x:" + message);
-	}
-
-	@Test
 	public void testSchemaNameOnSuccess() throws Exception {
-		long companyId = RandomTestUtil.randomLong();
-
-		String exportedPartitionName = RandomTestUtil.randomString();
-
 		Mockito.when(
-			_portalInstanceExporter.exportPortalInstance(companyId)
+			_portalInstanceExporter.exportPortalInstance(_COMPANY_ID)
 		).thenReturn(
-			exportedPartitionName
+			_EXPORTED_PARTITION_NAME
 		);
 
 		_exportInstanceMVCActionCommand.doProcessAction(
-			_getMockActionRequest(companyId), new MockActionResponse());
+			_getMockActionRequest(_COMPANY_ID), new MockActionResponse());
 
 		Assert.assertEquals(
 			"the-instance-was-exported-to-the-schema-x:" +
-				exportedPartitionName,
+				_EXPORTED_PARTITION_NAME,
 			_jsonObject.getString("successMessage"));
 
 		Assert.assertFalse(_jsonObject.has("error"));
@@ -177,7 +154,7 @@ public class ExportInstanceMVCActionCommandTest {
 		Mockito.verify(
 			_portalInstanceExporter
 		).exportPortalInstance(
-			companyId
+			_COMPANY_ID
 		);
 
 		_jsonPortletResponseUtilMockedStatic.verify(
@@ -198,8 +175,7 @@ public class ExportInstanceMVCActionCommandTest {
 		Assert.assertThrows(
 			UnsupportedOperationException.class,
 			() -> _exportInstanceMVCActionCommand.doProcessAction(
-				_getMockActionRequest(RandomTestUtil.randomLong()),
-				new MockActionResponse()));
+				_getMockActionRequest(_COMPANY_ID), new MockActionResponse()));
 
 		Mockito.verifyNoInteractions(_portalInstanceExporter);
 	}
@@ -208,16 +184,14 @@ public class ExportInstanceMVCActionCommandTest {
 			Exception exception, String expectedErrorMessage)
 		throws Exception {
 
-		long companyId = RandomTestUtil.randomLong();
-
 		Mockito.when(
-			_portalInstanceExporter.exportPortalInstance(companyId)
+			_portalInstanceExporter.exportPortalInstance(_COMPANY_ID)
 		).thenThrow(
 			exception
 		);
 
 		_exportInstanceMVCActionCommand.doProcessAction(
-			_getMockActionRequest(companyId), new MockActionResponse());
+			_getMockActionRequest(_COMPANY_ID), new MockActionResponse());
 
 		Assert.assertEquals(
 			expectedErrorMessage, _jsonObject.getString("error"));
@@ -239,6 +213,13 @@ public class ExportInstanceMVCActionCommandTest {
 		return mockActionRequest;
 	}
 
+	private static final long _COMPANY_ID = RandomTestUtil.randomLong();
+
+	private static final String _EXPORTED_PARTITION_NAME =
+		RandomTestUtil.randomString();
+
+	private static final String _MESSAGE = RandomTestUtil.randomString();
+
 	private final ExportInstanceMVCActionCommand
 		_exportInstanceMVCActionCommand = new ExportInstanceMVCActionCommand() {
 
@@ -252,7 +233,6 @@ public class ExportInstanceMVCActionCommandTest {
 	private MockedStatic<FeatureFlagManagerUtil>
 		_featureFlagManagerUtilMockedStatic;
 	private MockedStatic<HtmlUtil> _htmlUtilMockedStatic;
-	private final JSONFactory _jsonFactory = Mockito.mock(JSONFactory.class);
 	private JSONObject _jsonObject;
 	private MockedStatic<JSONPortletResponseUtil>
 		_jsonPortletResponseUtilMockedStatic;
