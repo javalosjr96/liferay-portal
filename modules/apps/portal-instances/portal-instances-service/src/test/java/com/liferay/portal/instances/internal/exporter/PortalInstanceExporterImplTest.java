@@ -22,6 +22,8 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.sql.SQLException;
+
 import java.util.Collections;
 import java.util.Dictionary;
 
@@ -70,59 +72,49 @@ public class PortalInstanceExporterImplTest {
 
 	@Test
 	public void testConfigurationExportedForCompanyScope() throws Exception {
-		long companyId = RandomTestUtil.randomLong();
+		String dictionaryString = _getDictionaryString(
+			ExtendedObjectClassDefinition.Scope.COMPANY, _COMPANY_ID_1);
 
-		String configurationId = RandomTestUtil.randomString();
-		String encodedDictionary = _getEncodedDictionary(
-			ExtendedObjectClassDefinition.Scope.COMPANY, companyId);
+		_setUpConfigurations(_CONFIGURATION_ID, dictionaryString);
 
-		_setUpConfigurations(configurationId, encodedDictionary);
-
-		_portalInstanceExporterImpl.exportPortalInstance(companyId);
+		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID_1);
 
 		_dbPartitionUtilMockedStatic.verify(
 			() -> DBPartitionUtil.exportConfiguration(
-				companyId, configurationId, encodedDictionary));
+				_COMPANY_ID_1, _CONFIGURATION_ID, dictionaryString));
 	}
 
 	@Test
 	public void testConfigurationExportedForGroupScope() throws Exception {
-		long companyId = RandomTestUtil.randomLong();
+		_setUpGroup(_COMPANY_ID_1, _GROUP_ID);
 
-		long groupId = RandomTestUtil.randomLong();
+		String dictionaryString = _getDictionaryString(
+			ExtendedObjectClassDefinition.Scope.GROUP, _GROUP_ID);
 
-		String configurationId = RandomTestUtil.randomString();
-		String encodedDictionary = _getEncodedDictionary(
-			ExtendedObjectClassDefinition.Scope.GROUP, groupId);
+		_setUpConfigurations(_CONFIGURATION_ID, dictionaryString);
 
-		_setUpGroup(companyId, groupId);
-		_setUpConfigurations(configurationId, encodedDictionary);
-
-		_portalInstanceExporterImpl.exportPortalInstance(companyId);
+		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID_1);
 
 		_dbPartitionUtilMockedStatic.verify(
 			() -> DBPartitionUtil.exportConfiguration(
-				companyId, configurationId, encodedDictionary));
+				_COMPANY_ID_1, _CONFIGURATION_ID, dictionaryString));
 	}
 
 	@Test
 	public void testConfigurationExportedForPortletInstanceScope()
 		throws Exception {
 
-		long companyId = RandomTestUtil.randomLong();
-
-		String configurationId = RandomTestUtil.randomString();
-		String encodedDictionary = _getEncodedDictionary(
+		String dictionaryString = _getDictionaryString(
 			ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
 			RandomTestUtil.randomString());
 
-		_setUpConfigurations(configurationId, encodedDictionary);
+		_setUpConfigurations(_CONFIGURATION_ID, dictionaryString);
 
-		_portalInstanceExporterImpl.exportPortalInstance(companyId);
+		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID_1);
 
 		_dbPartitionUtilMockedStatic.verify(
 			() -> DBPartitionUtil.exportConfiguration(
-				companyId, configurationId, encodedDictionary));
+				_COMPANY_ID_1, _CONFIGURATION_ID, dictionaryString));
 	}
 
 	@Test
@@ -133,8 +125,7 @@ public class PortalInstanceExporterImplTest {
 				PropsValuesTestUtil.swapWithSafeCloseable(
 					"DATABASE_PARTITION_ENABLED", true)) {
 
-			_portalInstanceExporterImpl.exportPortalInstance(
-				RandomTestUtil.randomLong());
+			_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID_1);
 		}
 
 		_dbPartitionUtilMockedStatic.verify(
@@ -146,60 +137,54 @@ public class PortalInstanceExporterImplTest {
 	public void testConfigurationNotExportedForFailedCompanyExport()
 		throws Exception {
 
-		long companyId = RandomTestUtil.randomLong();
-
 		_setUpConfigurations(
-			RandomTestUtil.randomString(),
-			_getEncodedDictionary(
-				ExtendedObjectClassDefinition.Scope.COMPANY, companyId));
+			_CONFIGURATION_ID,
+			_getDictionaryString(
+				ExtendedObjectClassDefinition.Scope.COMPANY, _COMPANY_ID_1));
 
 		Mockito.when(
-			_companyService.exportCompany(companyId)
+			_companyService.exportCompany(_COMPANY_ID_1)
 		).thenThrow(
 			new PrincipalException.MustBeOmniadmin(RandomTestUtil.randomLong())
 		);
 
 		Assert.assertThrows(
 			PrincipalException.MustBeOmniadmin.class,
-			() -> _portalInstanceExporterImpl.exportPortalInstance(companyId));
+			() -> _portalInstanceExporterImpl.exportPortalInstance(
+				_COMPANY_ID_1));
 
 		_assertNoConfigurationExported();
 	}
 
 	@Test
 	public void testConfigurationNotExportedForMissingGroup() throws Exception {
-		long groupId = RandomTestUtil.randomLong();
-
 		Mockito.when(
-			_groupLocalService.fetchGroup(groupId)
+			_groupLocalService.fetchGroup(_GROUP_ID)
 		).thenReturn(
 			null
 		);
 
 		_setUpConfigurations(
-			RandomTestUtil.randomString(),
-			_getEncodedDictionary(
-				ExtendedObjectClassDefinition.Scope.GROUP, groupId));
+			_CONFIGURATION_ID,
+			_getDictionaryString(
+				ExtendedObjectClassDefinition.Scope.GROUP, _GROUP_ID));
 
-		_portalInstanceExporterImpl.exportPortalInstance(
-			RandomTestUtil.randomLong());
+		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID_1);
 
 		_assertNoConfigurationExported();
 	}
 
 	@Test
-	public void testConfigurationNotExportedForNullEncodedDictionary()
+	public void testConfigurationNotExportedForNullDictionaryString()
 		throws Exception {
 
 		_dbPartitionUtilMockedStatic.when(
 			() -> DBPartitionUtil.getConfigurations(CompanyConstants.SYSTEM)
 		).thenReturn(
-			Collections.<String, String>singletonMap(
-				RandomTestUtil.randomString(), null)
+			Collections.<String, String>singletonMap(_CONFIGURATION_ID, null)
 		);
 
-		_portalInstanceExporterImpl.exportPortalInstance(
-			RandomTestUtil.randomLong());
+		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID_1);
 
 		_assertNoConfigurationExported();
 	}
@@ -208,16 +193,13 @@ public class PortalInstanceExporterImplTest {
 	public void testConfigurationNotExportedForOtherCompanyGroupScope()
 		throws Exception {
 
-		long groupId = RandomTestUtil.randomLong();
-
-		_setUpGroup(RandomTestUtil.randomLong(), groupId);
+		_setUpGroup(_COMPANY_ID_2, _GROUP_ID);
 		_setUpConfigurations(
-			RandomTestUtil.randomString(),
-			_getEncodedDictionary(
-				ExtendedObjectClassDefinition.Scope.GROUP, groupId));
+			_CONFIGURATION_ID,
+			_getDictionaryString(
+				ExtendedObjectClassDefinition.Scope.GROUP, _GROUP_ID));
 
-		_portalInstanceExporterImpl.exportPortalInstance(
-			RandomTestUtil.randomLong());
+		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID_1);
 
 		_assertNoConfigurationExported();
 	}
@@ -226,24 +208,20 @@ public class PortalInstanceExporterImplTest {
 	public void testConfigurationNotExportedForOtherCompanyGroupWithCompanyScope()
 		throws Exception {
 
-		long companyId = RandomTestUtil.randomLong();
-
-		long groupId = RandomTestUtil.randomLong();
-
-		_setUpGroup(RandomTestUtil.randomLong(), groupId);
+		_setUpGroup(_COMPANY_ID_2, _GROUP_ID);
 		_setUpConfigurations(
-			RandomTestUtil.randomString(),
-			_getEncodedDictionary(
+			_CONFIGURATION_ID,
+			_getDictionaryString(
 				HashMapDictionaryBuilder.<String, Object>put(
 					ExtendedObjectClassDefinition.Scope.COMPANY.
 						getPropertyKey(),
-					companyId
+					_COMPANY_ID_1
 				).put(
 					ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(),
-					groupId
+					_GROUP_ID
 				).build()));
 
-		_portalInstanceExporterImpl.exportPortalInstance(companyId);
+		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID_1);
 
 		_assertNoConfigurationExported();
 	}
@@ -253,13 +231,11 @@ public class PortalInstanceExporterImplTest {
 		throws Exception {
 
 		_setUpConfigurations(
-			RandomTestUtil.randomString(),
-			_getEncodedDictionary(
-				ExtendedObjectClassDefinition.Scope.COMPANY,
-				RandomTestUtil.randomLong()));
+			_CONFIGURATION_ID,
+			_getDictionaryString(
+				ExtendedObjectClassDefinition.Scope.COMPANY, _COMPANY_ID_2));
 
-		_portalInstanceExporterImpl.exportPortalInstance(
-			RandomTestUtil.randomLong());
+		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID_1);
 
 		_assertNoConfigurationExported();
 	}
@@ -267,33 +243,52 @@ public class PortalInstanceExporterImplTest {
 	@Test
 	public void testConfigurationNotExportedForSystemScope() throws Exception {
 		_setUpConfigurations(
-			RandomTestUtil.randomString(),
-			_getEncodedDictionary(
+			_CONFIGURATION_ID,
+			_getDictionaryString(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString()));
 
-		_portalInstanceExporterImpl.exportPortalInstance(
-			RandomTestUtil.randomLong());
+		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID_1);
 
 		_assertNoConfigurationExported();
 	}
 
 	@Test
 	public void testExportPortalInstance() throws Exception {
-		long companyId = RandomTestUtil.randomLong();
-
 		String exportedPartitionName =
-			_portalInstanceExporterImpl.exportPortalInstance(companyId);
+			_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID_1);
 
 		Assert.assertEquals(
 			DBPartitionUtil.DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX +
-				companyId,
+				_COMPANY_ID_1,
 			exportedPartitionName);
 
 		Mockito.verify(
 			_companyService
 		).exportCompany(
-			companyId
+			_COMPANY_ID_1
 		);
+	}
+
+	@Test
+	public void testExportPortalInstanceForFailedConfigurationExport()
+		throws Exception {
+
+		String dictionaryString = _getDictionaryString(
+			ExtendedObjectClassDefinition.Scope.COMPANY, _COMPANY_ID_1);
+
+		_setUpConfigurations(_CONFIGURATION_ID, dictionaryString);
+
+		_dbPartitionUtilMockedStatic.when(
+			() -> DBPartitionUtil.exportConfiguration(
+				_COMPANY_ID_1, _CONFIGURATION_ID, dictionaryString)
+		).thenThrow(
+			new SQLException()
+		);
+
+		Assert.assertThrows(
+			SQLException.class,
+			() -> _portalInstanceExporterImpl.exportPortalInstance(
+				_COMPANY_ID_1));
 	}
 
 	private void _assertNoConfigurationExported() {
@@ -303,7 +298,7 @@ public class PortalInstanceExporterImplTest {
 			Mockito.never());
 	}
 
-	private String _getEncodedDictionary(Dictionary<String, Object> dictionary)
+	private String _getDictionaryString(Dictionary<String, Object> dictionary)
 		throws Exception {
 
 		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
@@ -315,30 +310,30 @@ public class PortalInstanceExporterImplTest {
 			unsyncByteArrayOutputStream.toByteArray(), StringPool.UTF8);
 	}
 
-	private String _getEncodedDictionary(
+	private String _getDictionaryString(
 			ExtendedObjectClassDefinition.Scope scope, Object scopePK)
 		throws Exception {
 
-		return _getEncodedDictionary(scope.getPropertyKey(), scopePK);
+		return _getDictionaryString(scope.getPropertyKey(), scopePK);
 	}
 
-	private String _getEncodedDictionary(String propertyKey, Object value)
+	private String _getDictionaryString(String propertyKey, Object value)
 		throws Exception {
 
-		return _getEncodedDictionary(
+		return _getDictionaryString(
 			HashMapDictionaryBuilder.<String, Object>put(
 				propertyKey, value
 			).build());
 	}
 
 	private void _setUpConfigurations(
-		String configurationId, String encodedDictionary) {
+		String configurationId, String dictionaryString) {
 
 		_dbPartitionUtilMockedStatic.when(
 			() -> DBPartitionUtil.getConfigurations(CompanyConstants.SYSTEM)
 		).thenReturn(
 			HashMapBuilder.put(
-				configurationId, encodedDictionary
+				configurationId, dictionaryString
 			).build()
 		);
 	}
@@ -358,6 +353,15 @@ public class PortalInstanceExporterImplTest {
 			group
 		);
 	}
+
+	private static final long _COMPANY_ID_1 = RandomTestUtil.randomLong();
+
+	private static final long _COMPANY_ID_2 = RandomTestUtil.randomLong();
+
+	private static final String _CONFIGURATION_ID =
+		RandomTestUtil.randomString();
+
+	private static final long _GROUP_ID = RandomTestUtil.randomLong();
 
 	private final CompanyService _companyService = Mockito.mock(
 		CompanyService.class);
