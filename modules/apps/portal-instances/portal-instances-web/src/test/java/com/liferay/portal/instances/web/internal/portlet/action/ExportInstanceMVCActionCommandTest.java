@@ -6,10 +6,8 @@
 package com.liferay.portal.instances.web.internal.portlet.action;
 
 import com.liferay.portal.instances.exporter.PortalInstanceExporter;
-import com.liferay.portal.json.JSONObjectImpl;
 import com.liferay.portal.kernel.exception.RequiredCompanyException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
-import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
@@ -51,14 +49,6 @@ public class ExportInstanceMVCActionCommandTest {
 
 	@Before
 	public void setUp() {
-		_jsonObject = new JSONObjectImpl();
-
-		Mockito.when(
-			_jsonFactory.createJSONObject()
-		).thenReturn(
-			_jsonObject
-		);
-
 		Mockito.when(
 			_language.format(
 				Mockito.nullable(Locale.class), Mockito.anyString(),
@@ -69,8 +59,6 @@ public class ExportInstanceMVCActionCommandTest {
 					invocationOnMock.getArgument(2)
 		);
 
-		ReflectionTestUtil.setFieldValue(
-			_exportInstanceMVCActionCommand, "_jsonFactory", _jsonFactory);
 		ReflectionTestUtil.setFieldValue(
 			_exportInstanceMVCActionCommand, "_language", _language);
 		ReflectionTestUtil.setFieldValue(
@@ -104,7 +92,11 @@ public class ExportInstanceMVCActionCommandTest {
 				Mockito.any(ActionResponse.class),
 				Mockito.any(JSONObject.class))
 		).then(
-			invocationOnMock -> null
+			invocationOnMock -> {
+				_jsonObject = invocationOnMock.getArgument(2);
+
+				return null;
+			}
 		);
 	}
 
@@ -241,7 +233,6 @@ public class ExportInstanceMVCActionCommandTest {
 	private MockedStatic<FeatureFlagManagerUtil>
 		_featureFlagManagerUtilMockedStatic;
 	private MockedStatic<HtmlUtil> _htmlUtilMockedStatic;
-	private final JSONFactory _jsonFactory = Mockito.mock(JSONFactory.class);
 	private JSONObject _jsonObject;
 	private MockedStatic<JSONPortletResponseUtil>
 		_jsonPortletResponseUtilMockedStatic;

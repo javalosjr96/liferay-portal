@@ -8,8 +8,7 @@ package com.liferay.portal.instances.web.internal.portlet.action;
 import com.liferay.portal.instances.exporter.PortalInstanceExporter;
 import com.liferay.portal.instances.web.internal.constants.PortalInstancesPortletKeys;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
-import com.liferay.portal.kernel.json.JSONFactory;
-import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -56,42 +55,39 @@ public class ExportInstanceMVCActionCommand extends BaseMVCActionCommand {
 
 		long companyId = ParamUtil.getLong(actionRequest, "companyId");
 
-		JSONObject jsonObject = _jsonFactory.createJSONObject();
-
 		try {
 			String exportedPartitionName =
 				_portalInstanceExporter.exportPortalInstance(companyId);
 
-			jsonObject.put(
-				"successMessage",
-				_language.format(
-					actionRequest.getLocale(),
-					"the-instance-was-exported-to-the-schema-x",
-					exportedPartitionName));
+			JSONPortletResponseUtil.writeJSON(
+				actionRequest, actionResponse,
+				JSONUtil.put(
+					"successMessage",
+					_language.format(
+						actionRequest.getLocale(),
+						"the-instance-was-exported-to-the-schema-x",
+						exportedPartitionName)));
 		}
 		catch (Exception exception) {
 			_log.error(
 				"Unable to export portal instance " + companyId, exception);
 
-			jsonObject.put(
-				"error",
-				_language.format(
-					actionRequest.getLocale(), "export-failed-with-message-x",
-					HtmlUtil.escape(
-						GetterUtil.getString(exception.getMessage()))));
+			JSONPortletResponseUtil.writeJSON(
+				actionRequest, actionResponse,
+				JSONUtil.put(
+					"error",
+					_language.format(
+						actionRequest.getLocale(),
+						"export-failed-with-message-x",
+						HtmlUtil.escape(
+							GetterUtil.getString(exception.getMessage())))));
 		}
-
-		JSONPortletResponseUtil.writeJSON(
-			actionRequest, actionResponse, jsonObject);
 
 		hideDefaultSuccessMessage(actionRequest);
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ExportInstanceMVCActionCommand.class);
-
-	@Reference
-	private JSONFactory _jsonFactory;
 
 	@Reference
 	private Language _language;
