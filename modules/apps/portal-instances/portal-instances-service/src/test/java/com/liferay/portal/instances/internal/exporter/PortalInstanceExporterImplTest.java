@@ -72,49 +72,49 @@ public class PortalInstanceExporterImplTest {
 
 	@Test
 	public void testConfigurationExportedForCompanyScope() throws Exception {
-		String encodedDictionary = _getEncodedDictionary(
+		String dictionaryString = _getDictionaryString(
 			ExtendedObjectClassDefinition.Scope.COMPANY, _COMPANY_ID);
 
-		_setUpConfigurations(_CONFIGURATION_ID, encodedDictionary);
+		_setUpConfigurations(_CONFIGURATION_ID, dictionaryString);
 
 		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID);
 
 		_dbPartitionUtilMockedStatic.verify(
 			() -> DBPartitionUtil.exportConfiguration(
-				_COMPANY_ID, _CONFIGURATION_ID, encodedDictionary));
+				_COMPANY_ID, _CONFIGURATION_ID, dictionaryString));
 	}
 
 	@Test
 	public void testConfigurationExportedForGroupScope() throws Exception {
 		_setUpGroup(_COMPANY_ID, _GROUP_ID);
 
-		String encodedDictionary = _getEncodedDictionary(
+		String dictionaryString = _getDictionaryString(
 			ExtendedObjectClassDefinition.Scope.GROUP, _GROUP_ID);
 
-		_setUpConfigurations(_CONFIGURATION_ID, encodedDictionary);
+		_setUpConfigurations(_CONFIGURATION_ID, dictionaryString);
 
 		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID);
 
 		_dbPartitionUtilMockedStatic.verify(
 			() -> DBPartitionUtil.exportConfiguration(
-				_COMPANY_ID, _CONFIGURATION_ID, encodedDictionary));
+				_COMPANY_ID, _CONFIGURATION_ID, dictionaryString));
 	}
 
 	@Test
 	public void testConfigurationExportedForPortletInstanceScope()
 		throws Exception {
 
-		String encodedDictionary = _getEncodedDictionary(
+		String dictionaryString = _getDictionaryString(
 			ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
 			RandomTestUtil.randomString());
 
-		_setUpConfigurations(_CONFIGURATION_ID, encodedDictionary);
+		_setUpConfigurations(_CONFIGURATION_ID, dictionaryString);
 
 		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID);
 
 		_dbPartitionUtilMockedStatic.verify(
 			() -> DBPartitionUtil.exportConfiguration(
-				_COMPANY_ID, _CONFIGURATION_ID, encodedDictionary));
+				_COMPANY_ID, _CONFIGURATION_ID, dictionaryString));
 	}
 
 	@Test
@@ -139,7 +139,7 @@ public class PortalInstanceExporterImplTest {
 
 		_setUpConfigurations(
 			_CONFIGURATION_ID,
-			_getEncodedDictionary(
+			_getDictionaryString(
 				ExtendedObjectClassDefinition.Scope.COMPANY, _COMPANY_ID));
 
 		Mockito.when(
@@ -166,7 +166,7 @@ public class PortalInstanceExporterImplTest {
 
 		_setUpConfigurations(
 			_CONFIGURATION_ID,
-			_getEncodedDictionary(
+			_getDictionaryString(
 				ExtendedObjectClassDefinition.Scope.GROUP, _GROUP_ID));
 
 		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID);
@@ -175,7 +175,7 @@ public class PortalInstanceExporterImplTest {
 	}
 
 	@Test
-	public void testConfigurationNotExportedForNullEncodedDictionary()
+	public void testConfigurationNotExportedForNullDictionaryString()
 		throws Exception {
 
 		_dbPartitionUtilMockedStatic.when(
@@ -196,7 +196,7 @@ public class PortalInstanceExporterImplTest {
 		_setUpGroup(_OTHER_COMPANY_ID, _GROUP_ID);
 		_setUpConfigurations(
 			_CONFIGURATION_ID,
-			_getEncodedDictionary(
+			_getDictionaryString(
 				ExtendedObjectClassDefinition.Scope.GROUP, _GROUP_ID));
 
 		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID);
@@ -211,7 +211,7 @@ public class PortalInstanceExporterImplTest {
 		_setUpGroup(_OTHER_COMPANY_ID, _GROUP_ID);
 		_setUpConfigurations(
 			_CONFIGURATION_ID,
-			_getEncodedDictionary(
+			_getDictionaryString(
 				HashMapDictionaryBuilder.<String, Object>put(
 					ExtendedObjectClassDefinition.Scope.COMPANY.
 						getPropertyKey(),
@@ -232,7 +232,7 @@ public class PortalInstanceExporterImplTest {
 
 		_setUpConfigurations(
 			_CONFIGURATION_ID,
-			_getEncodedDictionary(
+			_getDictionaryString(
 				ExtendedObjectClassDefinition.Scope.COMPANY,
 				_OTHER_COMPANY_ID));
 
@@ -245,7 +245,7 @@ public class PortalInstanceExporterImplTest {
 	public void testConfigurationNotExportedForSystemScope() throws Exception {
 		_setUpConfigurations(
 			_CONFIGURATION_ID,
-			_getEncodedDictionary(
+			_getDictionaryString(
 				RandomTestUtil.randomString(), RandomTestUtil.randomString()));
 
 		_portalInstanceExporterImpl.exportPortalInstance(_COMPANY_ID);
@@ -274,14 +274,14 @@ public class PortalInstanceExporterImplTest {
 	public void testExportPortalInstanceForFailedConfigurationExport()
 		throws Exception {
 
-		String encodedDictionary = _getEncodedDictionary(
+		String dictionaryString = _getDictionaryString(
 			ExtendedObjectClassDefinition.Scope.COMPANY, _COMPANY_ID);
 
-		_setUpConfigurations(_CONFIGURATION_ID, encodedDictionary);
+		_setUpConfigurations(_CONFIGURATION_ID, dictionaryString);
 
 		_dbPartitionUtilMockedStatic.when(
 			() -> DBPartitionUtil.exportConfiguration(
-				_COMPANY_ID, _CONFIGURATION_ID, encodedDictionary)
+				_COMPANY_ID, _CONFIGURATION_ID, dictionaryString)
 		).thenThrow(
 			new SQLException()
 		);
@@ -299,7 +299,7 @@ public class PortalInstanceExporterImplTest {
 			Mockito.never());
 	}
 
-	private String _getEncodedDictionary(Dictionary<String, Object> dictionary)
+	private String _getDictionaryString(Dictionary<String, Object> dictionary)
 		throws Exception {
 
 		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
@@ -311,30 +311,30 @@ public class PortalInstanceExporterImplTest {
 			unsyncByteArrayOutputStream.toByteArray(), StringPool.UTF8);
 	}
 
-	private String _getEncodedDictionary(
+	private String _getDictionaryString(
 			ExtendedObjectClassDefinition.Scope scope, Object scopePK)
 		throws Exception {
 
-		return _getEncodedDictionary(scope.getPropertyKey(), scopePK);
+		return _getDictionaryString(scope.getPropertyKey(), scopePK);
 	}
 
-	private String _getEncodedDictionary(String propertyKey, Object value)
+	private String _getDictionaryString(String propertyKey, Object value)
 		throws Exception {
 
-		return _getEncodedDictionary(
+		return _getDictionaryString(
 			HashMapDictionaryBuilder.<String, Object>put(
 				propertyKey, value
 			).build());
 	}
 
 	private void _setUpConfigurations(
-		String configurationId, String encodedDictionary) {
+		String configurationId, String dictionaryString) {
 
 		_dbPartitionUtilMockedStatic.when(
 			() -> DBPartitionUtil.getConfigurations(CompanyConstants.SYSTEM)
 		).thenReturn(
 			HashMapBuilder.put(
-				configurationId, encodedDictionary
+				configurationId, dictionaryString
 			).build()
 		);
 	}

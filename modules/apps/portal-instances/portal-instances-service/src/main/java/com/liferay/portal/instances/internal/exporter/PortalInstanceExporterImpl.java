@@ -96,28 +96,28 @@ public class PortalInstanceExporterImpl implements PortalInstanceExporter {
 		for (ScopedConfiguration scopedConfiguration : scopedConfigurations) {
 			DBPartitionUtil.exportConfiguration(
 				companyId, scopedConfiguration.getConfigurationId(),
-				scopedConfiguration.getEncodedDictionary());
+				scopedConfiguration.getDictionaryString());
 		}
 	}
 
 	private ScopedConfiguration _getScopedConfiguration(
-			String configurationId, String encodedDictionary)
+			String configurationId, String dictionaryString)
 		throws Exception {
 
-		if (Validator.isNull(encodedDictionary)) {
+		if (Validator.isNull(dictionaryString)) {
 			return null;
 		}
 
 		Dictionary<String, String> dictionary = ConfigurationHandler.read(
 			new UnsyncByteArrayInputStream(
-				encodedDictionary.getBytes(StringPool.UTF8)));
+				dictionaryString.getBytes(StringPool.UTF8)));
 
 		Object value = dictionary.get(
 			ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey());
 
 		if (value != null) {
 			return new ScopedConfiguration(
-				configurationId, encodedDictionary,
+				configurationId, dictionaryString,
 				ExtendedObjectClassDefinition.Scope.GROUP,
 				GetterUtil.getLong(value));
 		}
@@ -127,7 +127,7 @@ public class PortalInstanceExporterImpl implements PortalInstanceExporter {
 
 		if (value != null) {
 			return new ScopedConfiguration(
-				configurationId, encodedDictionary,
+				configurationId, dictionaryString,
 				ExtendedObjectClassDefinition.Scope.COMPANY,
 				GetterUtil.getLong(value));
 		}
@@ -138,7 +138,7 @@ public class PortalInstanceExporterImpl implements PortalInstanceExporter {
 
 		if (value != null) {
 			return new ScopedConfiguration(
-				configurationId, encodedDictionary,
+				configurationId, dictionaryString,
 				ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
 				GetterUtil.getString(value));
 		}
@@ -202,11 +202,11 @@ public class PortalInstanceExporterImpl implements PortalInstanceExporter {
 	private static class ScopedConfiguration {
 
 		public ScopedConfiguration(
-			String configurationId, String encodedDictionary,
+			String configurationId, String dictionaryString,
 			ExtendedObjectClassDefinition.Scope scope, Object scopePK) {
 
 			_configurationId = configurationId;
-			_encodedDictionary = encodedDictionary;
+			_dictionaryString = dictionaryString;
 			_scope = scope;
 			_scopePK = scopePK;
 		}
@@ -215,8 +215,8 @@ public class PortalInstanceExporterImpl implements PortalInstanceExporter {
 			return _configurationId;
 		}
 
-		public String getEncodedDictionary() {
-			return _encodedDictionary;
+		public String getDictionaryString() {
+			return _dictionaryString;
 		}
 
 		public ExtendedObjectClassDefinition.Scope getScope() {
@@ -228,7 +228,7 @@ public class PortalInstanceExporterImpl implements PortalInstanceExporter {
 		}
 
 		private final String _configurationId;
-		private final String _encodedDictionary;
+		private final String _dictionaryString;
 		private final ExtendedObjectClassDefinition.Scope _scope;
 		private final Object _scopePK;
 
