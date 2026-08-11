@@ -18,10 +18,15 @@ import com.liferay.list.type.service.ListTypeDefinitionLocalService;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.lazy.referencing.LazyReferencingThreadLocal;
+import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.AssertUtils;
 import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -138,6 +143,25 @@ public class ListTypeEntryLocalServiceTest {
 			"No ListTypeDefinition exists with the primary key 0",
 			() -> _testAddListTypeEntry(0, "able", false));
 
+		Company company = CompanyTestUtil.addCompany(true);
+
+		try {
+			User user = company.getGuestUser();
+
+			AssertUtils.assertFailure(
+				PrincipalException.class, null,
+				() -> _listTypeEntryLocalService.addListTypeEntry(
+					null, user.getUserId(),
+					_listTypeDefinition.getListTypeDefinitionId(),
+					RandomTestUtil.randomString(),
+					Collections.singletonMap(
+						LocaleUtil.US, RandomTestUtil.randomString()),
+					false));
+		}
+		finally {
+			_companyLocalService.deleteCompany(company);
+		}
+
 		ListTypeEntry listTypeEntry = _addListTypeEntry(
 			_listTypeDefinition.getListTypeDefinitionId());
 
@@ -245,6 +269,28 @@ public class ListTypeEntryLocalServiceTest {
 
 			_testGetOrAddEmptyListTypeEntry(_listTypeDefinition);
 			_testGetOrAddEmptyListTypeEntry(_systemListTypeDefinition);
+		}
+
+		AssertUtils.assertFailure(
+			NoSuchListTypeDefinitionException.class,
+			"No ListTypeDefinition exists with the primary key 0",
+			() -> _listTypeEntryLocalService.getOrAddEmptyListTypeEntry(
+				TestPropsValues.getUserId(), 0, RandomTestUtil.randomString()));
+
+		Company company = CompanyTestUtil.addCompany(true);
+
+		try {
+			User user = company.getGuestUser();
+
+			AssertUtils.assertFailure(
+				PrincipalException.class, null,
+				() -> _listTypeEntryLocalService.getOrAddEmptyListTypeEntry(
+					user.getUserId(),
+					_listTypeDefinition.getListTypeDefinitionId(),
+					RandomTestUtil.randomString()));
+		}
+		finally {
+			_companyLocalService.deleteCompany(company);
 		}
 	}
 
@@ -374,6 +420,9 @@ public class ListTypeEntryLocalServiceTest {
 		Assert.assertEquals(
 			WorkflowConstants.STATUS_APPROVED, listTypeEntry.getStatus());
 	}
+
+	@Inject
+	private CompanyLocalService _companyLocalService;
 
 	private ListTypeDefinition _listTypeDefinition;
 

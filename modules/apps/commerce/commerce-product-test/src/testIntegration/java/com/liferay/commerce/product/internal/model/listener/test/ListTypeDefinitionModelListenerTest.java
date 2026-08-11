@@ -13,6 +13,7 @@ import com.liferay.commerce.product.service.CPSpecificationOptionLocalService;
 import com.liferay.list.type.entry.util.ListTypeEntryUtil;
 import com.liferay.list.type.model.ListTypeDefinition;
 import com.liferay.list.type.service.ListTypeDefinitionLocalService;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
@@ -28,11 +29,13 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portal.util.PortalInstances;
 
 import java.util.Collections;
 
 import org.frutilla.FrutillaRule;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -67,9 +70,7 @@ public class ListTypeDefinitionModelListenerTest {
 			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
 			RandomTestUtil.randomLocaleStringMap(),
 			RandomTestUtil.randomLocaleStringMap(),
-			RandomTestUtil.randomDouble(),
-			CPDefinitionSpecificationOptionValueTableReferenceDefinitionTest.
-				class.getSimpleName(),
+			RandomTestUtil.randomDouble(), RandomTestUtil.randomString(),
 			_serviceContext);
 
 		_listTypeDefinition = _addListTypeDefinition();
@@ -104,6 +105,30 @@ public class ListTypeDefinitionModelListenerTest {
 
 		_listTypeDefinitionLocalService.deleteListTypeDefinition(
 			_listTypeDefinition.getListTypeDefinitionId());
+	}
+
+	@Test
+	public void testOnBeforeRemove() throws Exception {
+		_cpSpecificationOptionLocalService.addCPSpecificationOption(
+			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
+			_cpOptionCategory.getCPOptionCategoryId(),
+			new long[] {_listTypeDefinition.getListTypeDefinitionId()},
+			RandomTestUtil.randomLocaleStringMap(),
+			RandomTestUtil.randomLocaleStringMap(), true,
+			RandomTestUtil.randomString(), RandomTestUtil.randomDouble(), true,
+			_serviceContext);
+
+		try (SafeCloseable safeCloseable =
+				PortalInstances.setCompanyInDeletionProcessWithSafeCloseable(
+					TestPropsValues.getCompanyId())) {
+
+			_listTypeDefinitionLocalService.deleteListTypeDefinition(
+				_listTypeDefinition.getListTypeDefinitionId());
+		}
+
+		Assert.assertNull(
+			_listTypeDefinitionLocalService.fetchListTypeDefinition(
+				_listTypeDefinition.getListTypeDefinitionId()));
 	}
 
 	@Rule
