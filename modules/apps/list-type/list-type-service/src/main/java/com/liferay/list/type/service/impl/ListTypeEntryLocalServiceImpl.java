@@ -23,6 +23,7 @@ import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Indexable;
 import com.liferay.portal.kernel.search.IndexableType;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -72,6 +73,10 @@ public class ListTypeEntryLocalServiceImpl
 
 		User user = _userLocalService.getUser(userId);
 
+		if (user.getCompanyId() != listTypeDefinition.getCompanyId()) {
+			throw new PrincipalException();
+		}
+
 		_validateExternalReferenceCode(
 			externalReferenceCode, user.getCompanyId(), listTypeDefinitionId,
 			0);
@@ -82,6 +87,18 @@ public class ListTypeEntryLocalServiceImpl
 		return _addListTypeEntry(
 			externalReferenceCode, user, listTypeDefinitionId, key, nameMap,
 			WorkflowConstants.STATUS_APPROVED, system);
+	}
+
+	@Override
+	public void deleteCompanyListTypeEntries(long companyId)
+		throws PortalException {
+
+		List<ListTypeEntry> listTypeEntries =
+			listTypeEntryPersistence.findByCompanyId(companyId);
+
+		for (ListTypeEntry listTypeEntry : listTypeEntries) {
+			listTypeEntryLocalService.deleteListTypeEntry(listTypeEntry);
+		}
 	}
 
 	@Indexable(type = IndexableType.DELETE)
@@ -196,7 +213,15 @@ public class ListTypeEntryLocalServiceImpl
 			long userId, long listTypeDefinitionId, String key)
 		throws PortalException {
 
+		ListTypeDefinition listTypeDefinition =
+			_listTypeDefinitionPersistence.findByPrimaryKey(
+				listTypeDefinitionId);
+
 		User user = _userLocalService.getUser(userId);
+
+		if (user.getCompanyId() != listTypeDefinition.getCompanyId()) {
+			throw new PrincipalException();
+		}
 
 		return _emptyModelManager.getOrAddEmptyModel(
 			ListTypeEntry.class, user.getCompanyId(),
