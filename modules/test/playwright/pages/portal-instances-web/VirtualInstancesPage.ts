@@ -10,6 +10,7 @@ import {GlobalMenuPage} from '../product-navigation-applications-menu/GlobalMenu
 
 export class VirtualInstancesPage {
 	private addInstanceFrame: FrameLocator;
+	private importInstanceFrame: FrameLocator;
 
 	readonly addInstanceActive: Locator;
 	readonly addInstanceAddButton: Locator;
@@ -21,6 +22,12 @@ export class VirtualInstancesPage {
 	readonly addInstanceVirtualHost: Locator;
 	readonly addInstanceVirtualInstanceInitializer: Locator;
 	readonly addInstanceWebIdField: Locator;
+	readonly importInstanceErrorMessage: Locator;
+	readonly importInstanceNameField: Locator;
+	readonly importInstanceSchemaNameField: Locator;
+	readonly importInstanceSubmitButton: Locator;
+	readonly importInstanceVirtualHostField: Locator;
+	readonly importInstanceWebIdField: Locator;
 	readonly globalMenuPage: GlobalMenuPage;
 	readonly errorMessage: Locator;
 	readonly errorMessageScreenName: Locator;
@@ -34,9 +41,14 @@ export class VirtualInstancesPage {
 		this.addInstanceFrame = page.frameLocator(
 			'iframe[title="Add Instance"]'
 		);
+		this.importInstanceFrame = page.frameLocator(
+			'iframe[title="Import Instance"]'
+		);
 
 		this.addInstanceActive = this.addInstanceFrame.getByText('Active');
-		this.addInstanceAddButton = page.getByText('Add', {exact: true});
+		this.addInstanceAddButton = page
+			.getByRole('dialog', {name: 'Add Instance'})
+			.getByRole('button', {exact: true, name: 'Add'});
 		this.addInstanceEmailAddressField =
 			this.addInstanceFrame.getByLabel('Email Address');
 		this.addInstanceMailDomain =
@@ -52,6 +64,22 @@ export class VirtualInstancesPage {
 		this.addInstanceVirtualInstanceInitializer =
 			this.addInstanceFrame.getByLabel('Virtual Instance Initializer');
 		this.addInstanceWebIdField = this.addInstanceFrame.getByLabel('Web ID');
+		this.importInstanceErrorMessage = this.importInstanceFrame.getByText(
+			'Please enter a valid schema name'
+		);
+		this.importInstanceNameField = this.importInstanceFrame.getByLabel(
+			'Name',
+			{exact: true}
+		);
+		this.importInstanceSchemaNameField =
+			this.importInstanceFrame.getByLabel('Schema Name');
+		this.importInstanceSubmitButton = page
+			.getByRole('dialog', {name: 'Import Instance'})
+			.getByRole('button', {exact: true, name: 'Import'});
+		this.importInstanceVirtualHostField =
+			this.importInstanceFrame.getByLabel('Virtual Host');
+		this.importInstanceWebIdField =
+			this.importInstanceFrame.getByLabel('Web ID');
 		this.globalMenuPage = new GlobalMenuPage(page);
 		this.errorMessage = this.addInstanceFrame.getByText(
 			'Error:Please enter a valid'
@@ -65,7 +93,9 @@ export class VirtualInstancesPage {
 		this.errorMessageScreenName = this.addInstanceFrame.getByText(
 			'The Screen Name field is required'
 		);
-		this.newVirtualInstanceButton = page.getByRole('button', {name: 'Add'});
+		this.newVirtualInstanceButton = page
+			.locator('[data-qa-id="creationMenuNewButton"]')
+			.filter({visible: true});
 		this.page = page;
 		this.successMessage = page.getByText(
 			'Your request completed successfully'
@@ -80,7 +110,7 @@ export class VirtualInstancesPage {
 	) {
 		await this.globalMenuPage.goToHome();
 		await this.globalMenuPage.goToControlPanel('Virtual Instances');
-		await this.newVirtualInstanceButton.click();
+		await this.clickAddInstance();
 
 		// Sometimes the frame loads slowly
 
@@ -124,7 +154,7 @@ export class VirtualInstancesPage {
 		virtualInstanceInitializer = ''
 	) {
 		await this.globalMenuPage.goToControlPanel('Virtual Instances');
-		await this.newVirtualInstanceButton.click();
+		await this.clickAddInstance();
 
 		// Sometimes the frame loads slowly
 
@@ -165,6 +195,24 @@ export class VirtualInstancesPage {
 		await this.page.waitForTimeout(1000);
 	}
 
+	private async clickAddInstance() {
+		await this.newVirtualInstanceButton.click();
+
+		// A single item creation menu opens the modal directly, while a menu
+		// holding Import as well opens a dropdown to pick from first
+
+		const addMenuItem = this.page.getByRole('menuitem', {
+			exact: true,
+			name: 'Add',
+		});
+
+		await expect(addMenuItem.or(this.addInstanceAddButton)).toBeVisible();
+
+		if (await addMenuItem.isVisible()) {
+			await addMenuItem.click();
+		}
+	}
+
 	async deleteVirtualInstance(name: string) {
 		await this.globalMenuPage.goToControlPanel('Virtual Instances');
 
@@ -183,5 +231,49 @@ export class VirtualInstancesPage {
 
 	async goto() {
 		await this.globalMenuPage.goToControlPanel('Virtual Instances');
+	}
+
+	async openImportVirtualInstanceModal() {
+		await this.goto();
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: this.page.getByRole('menuitem', {
+				exact: true,
+				name: 'Import',
+			}),
+			trigger: this.newVirtualInstanceButton,
+		});
+
+		// Sometimes the frame loads slowly
+
+		await this.page.waitForTimeout(1000);
+	}
+
+	async submitImportVirtualInstance({
+		name = '',
+		schemaName,
+		virtualHost = '',
+		webId = '',
+	}: {
+		name?: string;
+		schemaName: string;
+		virtualHost?: string;
+		webId?: string;
+	}) {
+		await this.importInstanceSchemaNameField.fill(schemaName);
+		await this.importInstanceNameField.fill(name);
+		await this.importInstanceVirtualHostField.fill(virtualHost);
+		await this.importInstanceWebIdField.fill(webId);
+
+		await Promise.all([
+			this.page.waitForResponse(
+				(response) => response.url().includes('import_instance'),
+				{timeout: 30 * 1000}
+			),
+			this.importInstanceSubmitButton.click(),
+		]);
+
+		await this.page.waitForTimeout(1000);
 	}
 }
