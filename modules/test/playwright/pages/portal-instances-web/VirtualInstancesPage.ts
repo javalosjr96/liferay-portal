@@ -22,6 +22,8 @@ export class VirtualInstancesPage {
 	readonly addInstanceVirtualHost: Locator;
 	readonly addInstanceVirtualInstanceInitializer: Locator;
 	readonly addInstanceWebIdField: Locator;
+	readonly exportInstanceConfirmButton: Locator;
+	readonly exportInstanceSuccessMessage: Locator;
 	readonly importInstanceErrorMessage: Locator;
 	readonly importInstanceNameField: Locator;
 	readonly importInstanceSchemaNameField: Locator;
@@ -64,6 +66,12 @@ export class VirtualInstancesPage {
 		this.addInstanceVirtualInstanceInitializer =
 			this.addInstanceFrame.getByLabel('Virtual Instance Initializer');
 		this.addInstanceWebIdField = this.addInstanceFrame.getByLabel('Web ID');
+		this.exportInstanceConfirmButton = page
+			.getByRole('dialog', {name: 'Export Instance'})
+			.getByRole('button', {exact: true, name: 'Export'});
+		this.exportInstanceSuccessMessage = page.getByText(
+			'The instance was exported to the schema'
+		);
 		this.importInstanceErrorMessage = this.importInstanceFrame.getByText(
 			'Please enter a valid schema name'
 		);
@@ -229,8 +237,44 @@ export class VirtualInstancesPage {
 		await this.page.getByRole('button', {name: 'Delete'}).click();
 	}
 
+	async exportVirtualInstance(name: string) {
+		await this.goto();
+
+		const row = this.page.getByRole('row').filter({hasText: name});
+
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: this.page.getByRole('menuitem', {
+				exact: true,
+				name: 'Export',
+			}),
+			trigger: row.getByRole('button', {name: 'Show Actions'}),
+		});
+
+		await this.exportInstanceConfirmButton.click();
+
+		await expect(this.exportInstanceSuccessMessage).toBeVisible({
+			timeout: 180 * 1000,
+		});
+
+		const successMessage =
+			await this.exportInstanceSuccessMessage.innerText();
+
+		// The exported schema name is only surfaced in the success message
+
+		const [, schemaName] = successMessage.match(/schema (\S+)\./) || [];
+
+		expect(schemaName).toBeTruthy();
+
+		return schemaName;
+	}
+
 	async goto() {
 		await this.globalMenuPage.goToControlPanel('Virtual Instances');
+	}
+
+	importInstanceSuccessMessage(webId: string) {
+		return this.page.getByText(`The instance was imported to ${webId}.`);
 	}
 
 	async openImportVirtualInstanceModal() {
