@@ -19,8 +19,11 @@ import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
 import com.liferay.portal.kernel.portlet.bridges.mvc.BaseMVCActionCommand;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.CompanyService;
+import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.ParamUtil;
+import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import jakarta.portlet.ActionRequest;
@@ -58,6 +61,21 @@ public class ImportInstanceMVCActionCommand extends BaseMVCActionCommand {
 		try {
 			Company company = _importInstance(actionRequest);
 
+			if (SessionMessages.contains(
+					actionRequest,
+					_portal.getPortletId(actionRequest) +
+						SessionMessages.
+							KEY_SUFFIX_HIDE_DEFAULT_SUCCESS_MESSAGE)) {
+
+				SessionMessages.clear(actionRequest);
+			}
+
+			SessionMessages.add(
+				actionRequest, "requestProcessed",
+				_language.format(
+					actionRequest.getLocale(), "the-instance-was-imported-to-x",
+					company.getWebId()));
+
 			JSONPortletResponseUtil.writeJSON(
 				actionRequest, actionResponse,
 				JSONUtil.put("companyId", company.getCompanyId()));
@@ -71,7 +89,13 @@ public class ImportInstanceMVCActionCommand extends BaseMVCActionCommand {
 				errorMessage = "please-enter-a-valid-schema-name";
 			}
 			else if (exception instanceof UnsupportedOperationException) {
-				errorMessage = "database-partitioning-must-be-enabled";
+				if (PropsValues.DATABASE_PARTITION_ENABLED) {
+					errorMessage =
+						"importing-an-instance-is-already-in-progress";
+				}
+				else {
+					errorMessage = "database-partitioning-must-be-enabled";
+				}
 			}
 			else {
 				Throwable causeThrowable = exception.getCause();
@@ -125,5 +149,8 @@ public class ImportInstanceMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private Language _language;
+
+	@Reference
+	private Portal _portal;
 
 }
