@@ -81,45 +81,13 @@ public class ImportInstanceMVCActionCommand extends BaseMVCActionCommand {
 				JSONUtil.put("companyId", company.getCompanyId()));
 		}
 		catch (Exception exception) {
-			_log.error("Unable to import portal instance", exception);
+			String errorMessage = _getErrorMessage(exception);
 
-			String errorMessage = "an-unexpected-error-occurred";
-
-			if (exception instanceof IllegalArgumentException) {
-				errorMessage = "please-enter-a-valid-schema-name";
+			if (errorMessage.equals(_ERROR_UNEXPECTED)) {
+				_log.error("Unable to import portal instance", exception);
 			}
-			else if (exception instanceof UnsupportedOperationException) {
-				String message = GetterUtil.getString(exception.getMessage());
-
-				if (message.equals("Database partitioning must be enabled")) {
-					errorMessage = "database-partitioning-must-be-enabled";
-				}
-				else if (message.equals(
-						"Company in import process company ID is not null")) {
-
-					errorMessage =
-						"importing-an-instance-is-already-in-progress";
-				}
-			}
-			else {
-				Throwable causeThrowable = exception.getCause();
-
-				if ((exception instanceof CompanyNameException) ||
-					(causeThrowable instanceof CompanyNameException)) {
-
-					errorMessage = "please-enter-a-valid-name";
-				}
-				else if ((exception instanceof CompanyVirtualHostException) ||
-						 (causeThrowable instanceof
-							 CompanyVirtualHostException)) {
-
-					errorMessage = "please-enter-a-valid-virtual-host";
-				}
-				else if ((exception instanceof CompanyWebIdException) ||
-						 (causeThrowable instanceof CompanyWebIdException)) {
-
-					errorMessage = "please-enter-a-valid-web-id";
-				}
+			else if (_log.isDebugEnabled()) {
+				_log.debug("Unable to import portal instance", exception);
 			}
 
 			JSONPortletResponseUtil.writeJSON(
@@ -130,6 +98,50 @@ public class ImportInstanceMVCActionCommand extends BaseMVCActionCommand {
 
 			hideDefaultSuccessMessage(actionRequest);
 		}
+	}
+
+	private String _getErrorMessage(Exception exception) {
+		if (exception instanceof IllegalArgumentException) {
+			return "please-enter-a-valid-schema-name";
+		}
+
+		if (exception instanceof UnsupportedOperationException) {
+			String message = GetterUtil.getString(exception.getMessage());
+
+			if (message.equals("Database partitioning must be enabled")) {
+				return "database-partitioning-must-be-enabled";
+			}
+
+			if (message.equals(
+					"Company in import process company ID is not null")) {
+
+				return "importing-an-instance-is-already-in-progress";
+			}
+
+			return _ERROR_UNEXPECTED;
+		}
+
+		Throwable causeThrowable = exception.getCause();
+
+		if ((exception instanceof CompanyNameException) ||
+			(causeThrowable instanceof CompanyNameException)) {
+
+			return "please-enter-a-valid-name";
+		}
+
+		if ((exception instanceof CompanyVirtualHostException) ||
+			(causeThrowable instanceof CompanyVirtualHostException)) {
+
+			return "please-enter-a-valid-virtual-host";
+		}
+
+		if ((exception instanceof CompanyWebIdException) ||
+			(causeThrowable instanceof CompanyWebIdException)) {
+
+			return "please-enter-a-valid-web-id";
+		}
+
+		return _ERROR_UNEXPECTED;
 	}
 
 	private Company _importInstance(ActionRequest actionRequest)
@@ -144,6 +156,9 @@ public class ImportInstanceMVCActionCommand extends BaseMVCActionCommand {
 		return _companyService.addDBPartitionCompany(
 			schemaName, name, virtualHostname, webId);
 	}
+
+	private static final String _ERROR_UNEXPECTED =
+		"an-unexpected-error-occurred";
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		ImportInstanceMVCActionCommand.class);
