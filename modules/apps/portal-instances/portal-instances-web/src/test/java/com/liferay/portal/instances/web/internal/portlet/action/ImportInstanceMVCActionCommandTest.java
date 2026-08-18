@@ -201,7 +201,20 @@ public class ImportInstanceMVCActionCommandTest {
 	@Test
 	public void testErrorForIllegalArgumentException() throws Exception {
 		_assertError(
-			new IllegalArgumentException(), "please-enter-a-valid-schema-name");
+			new IllegalArgumentException(
+				"Invalid schema name \"" + _SCHEMA_NAME + "\""),
+			"please-enter-a-valid-schema-name");
+
+		_assertError(
+			new IllegalArgumentException(
+				"Database partition " + _SCHEMA_NAME + " already exists"),
+			"an-instance-for-this-schema-already-exists");
+
+		_assertError(
+			new IllegalArgumentException(
+				"Unable to insert the database partition " + _SCHEMA_NAME +
+					" because it does not exist"),
+			"the-exported-schema-does-not-exist");
 	}
 
 	@Test
