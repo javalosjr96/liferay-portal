@@ -5,7 +5,6 @@
 
 package com.liferay.portal.instances.web.internal.portlet.action;
 
-import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.kernel.exception.CompanyNameException;
 import com.liferay.portal.kernel.exception.CompanyVirtualHostException;
 import com.liferay.portal.kernel.exception.CompanyWebIdException;
@@ -22,7 +21,6 @@ import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.portlet.MockActionRequest;
 import com.liferay.portal.kernel.test.portlet.MockActionResponse;
-import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Portal;
@@ -226,23 +224,19 @@ public class ImportInstanceMVCActionCommandTest {
 
 	@Test
 	public void testErrorForUnsupportedOperationException() throws Exception {
-		try (SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"DATABASE_PARTITION_ENABLED", false)) {
+		_assertError(
+			new UnsupportedOperationException(
+				"Database partitioning must be enabled"),
+			"database-partitioning-must-be-enabled");
 
-			_assertError(
-				new UnsupportedOperationException(),
-				"database-partitioning-must-be-enabled");
-		}
+		_assertError(
+			new UnsupportedOperationException(
+				"Company in import process company ID is not null"),
+			"importing-an-instance-is-already-in-progress");
 
-		try (SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"DATABASE_PARTITION_ENABLED", true)) {
-
-			_assertError(
-				new UnsupportedOperationException(),
-				"importing-an-instance-is-already-in-progress");
-		}
+		_assertError(
+			new UnsupportedOperationException("Unsupported SQL: select 1"),
+			"an-unexpected-error-occurred");
 	}
 
 	@Test
