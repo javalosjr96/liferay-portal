@@ -21,9 +21,9 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
 import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
-import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.WebKeys;
 
 import jakarta.portlet.ActionRequest;
@@ -89,12 +89,16 @@ public class ImportInstanceMVCActionCommand extends BaseMVCActionCommand {
 				errorMessage = "please-enter-a-valid-schema-name";
 			}
 			else if (exception instanceof UnsupportedOperationException) {
-				if (PropsValues.DATABASE_PARTITION_ENABLED) {
+				String message = GetterUtil.getString(exception.getMessage());
+
+				if (message.equals("Database partitioning must be enabled")) {
+					errorMessage = "database-partitioning-must-be-enabled";
+				}
+				else if (message.equals(
+						"Company in import process company ID is not null")) {
+
 					errorMessage =
 						"importing-an-instance-is-already-in-progress";
-				}
-				else {
-					errorMessage = "database-partitioning-must-be-enabled";
 				}
 			}
 			else {
