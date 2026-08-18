@@ -9,6 +9,12 @@ import {loginTest} from '../../../fixtures/loginTest';
 
 const test = mergeTests(loginTest());
 
+const ARCHIVE_ANNOTATIONS = [
+	{type: 'data.archive.type', description: 'data-archive-portal'},
+	{type: 'database.types', description: 'postgresql'},
+	{type: 'portal.version', description: '6.2.5'},
+];
+
 const ARCHIVE_USER_EMAIL = 'user@liferay.com';
 const ARCHIVE_USER_PASSWORD = 'test';
 
@@ -69,7 +75,7 @@ async function viewUpgradedPortalContent(page: Page) {
 test.describe.serial('View portal smoke upgrade', () => {
 	test(
 		'Can view upgraded portal content as admin',
-		{tag: '@LPD-96642'},
+		{annotation: ARCHIVE_ANNOTATIONS, tag: ['@6.2.5', '@data-archive-portal', '@postgresql', '@LPD-96642']},
 		async ({page}) => {
 			await viewUpgradedPortalContent(page);
 		}
@@ -77,7 +83,7 @@ test.describe.serial('View portal smoke upgrade', () => {
 
 	baseTest(
 		'Can view upgraded portal content as regular user',
-		{tag: '@LPD-96642'},
+		{annotation: ARCHIVE_ANNOTATIONS, tag: ['@6.2.5', '@data-archive-portal', '@postgresql', '@LPD-96642']},
 		async ({page}) => {
 			await page.goto('/c/portal/login');
 

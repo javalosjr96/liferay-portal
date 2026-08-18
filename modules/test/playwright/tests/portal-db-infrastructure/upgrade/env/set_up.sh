@@ -6,8 +6,8 @@ echo "CURRENT_DIR_NAME=${CURRENT_DIR_NAME}"
 
 source "${CURRENT_DIR_NAME}/../../../../env/common.sh"
 
-DATA_ARCHIVE_TYPE="data-archive-portal"
-PORTAL_VERSION="6.2.5"
+DATA_ARCHIVE_TYPE="${DATA_ARCHIVE_TYPE:-data-archive-portal}"
+PORTAL_VERSION="${PORTAL_VERSION:-6.2.5}"
 
 function main {
 	set -ex
