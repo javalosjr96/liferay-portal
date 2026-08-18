@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayWindowState;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -52,8 +53,10 @@ public class PortalInstancesManagementToolbarDisplayContext
 					LanguageUtil.get(httpServletRequest, "add"));
 			}
 		).addDropdownItem(
-			() -> FeatureFlagManagerUtil.isEnabled(
-				PortalUtil.getCompanyId(httpServletRequest), "LPD-11342"),
+			() ->
+				PropsValues.DATABASE_PARTITION_ENABLED &&
+				FeatureFlagManagerUtil.isEnabled(
+					PortalUtil.getCompanyId(httpServletRequest), "LPD-11342"),
 			dropdownItem -> {
 				dropdownItem.putData(
 					"importInstanceURL",
