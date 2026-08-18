@@ -102,6 +102,18 @@ public class ImportInstanceMVCActionCommand extends BaseMVCActionCommand {
 
 	private String _getErrorMessage(Exception exception) {
 		if (exception instanceof IllegalArgumentException) {
+			String message = GetterUtil.getString(exception.getMessage());
+
+			if (message.contains(" already exists")) {
+				return "an-instance-for-this-schema-already-exists";
+			}
+
+			if (message.startsWith(
+					"Unable to insert the database partition ")) {
+
+				return "the-exported-schema-does-not-exist";
+			}
+
 			return "please-enter-a-valid-schema-name";
 		}
 
