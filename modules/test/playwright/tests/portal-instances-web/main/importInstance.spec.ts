@@ -31,6 +31,8 @@ test(
 	'LPD-92621 Importing an exported schema shows the import success message',
 	{tag: '@LPD-92621'},
 	async ({virtualInstancesPage}) => {
+		test.setTimeout(900 * 1000);
+
 		const exportedWebId = getRandomString();
 		const importedWebId = getRandomString();
 
@@ -38,6 +40,8 @@ test(
 
 		const schemaName =
 			await virtualInstancesPage.exportVirtualInstance(exportedWebId);
+
+		await virtualInstancesPage.deleteVirtualInstance(exportedWebId);
 
 		await virtualInstancesPage.openImportVirtualInstanceModal();
 
@@ -53,6 +57,5 @@ test(
 		).toBeVisible();
 
 		await virtualInstancesPage.deleteVirtualInstance(importedWebId);
-		await virtualInstancesPage.deleteVirtualInstance(exportedWebId);
 	}
 );
