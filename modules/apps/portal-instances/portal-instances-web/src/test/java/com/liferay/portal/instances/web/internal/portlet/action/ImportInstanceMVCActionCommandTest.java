@@ -11,6 +11,7 @@ import com.liferay.portal.kernel.exception.CompanyWebIdException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.portlet.JSONPortletResponseUtil;
@@ -224,6 +225,43 @@ public class ImportInstanceMVCActionCommandTest {
 		_assertError(
 			new IllegalArgumentException(_SCHEMA_NAME),
 			"an-unexpected-error-occurred");
+	}
+
+	@Test
+	public void testLogLevelOnError() throws Exception {
+		Log log = Mockito.mock(Log.class);
+
+		Mockito.when(
+			log.isDebugEnabled()
+		).thenReturn(
+			true
+		);
+
+		try (AutoCloseable autoCloseable =
+				ReflectionTestUtil.setFieldValueWithAutoCloseable(
+					ImportInstanceMVCActionCommand.class, "_log", log)) {
+
+			_assertError(
+				new IllegalArgumentException(
+					"Database partition " + _SCHEMA_NAME + " already exists"),
+				"an-instance-for-this-schema-already-exists");
+
+			Mockito.verify(
+				log, Mockito.never()
+			).error(
+				Mockito.anyString(), Mockito.any(Exception.class)
+			);
+
+			_assertError(
+				new IllegalArgumentException(_SCHEMA_NAME),
+				"an-unexpected-error-occurred");
+
+			Mockito.verify(
+				log
+			).error(
+				Mockito.anyString(), Mockito.any(Exception.class)
+			);
+		}
 	}
 
 	@Test
