@@ -23,6 +23,7 @@ import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,17 +39,24 @@ public class AutoBatchPreparedStatementUtil {
 	public static PreparedStatement autoBatch(Connection connection, String sql)
 		throws SQLException {
 
+		return autoBatch(connection, sql, false);
+	}
+
+	public static PreparedStatement autoBatch(
+			Connection connection, String sql, boolean returnRowCounts)
+		throws SQLException {
+
 		DatabaseMetaData databaseMetaData = connection.getMetaData();
 
 		if (databaseMetaData.supportsBatchUpdates()) {
 			return (PreparedStatement)ProxyUtil.newProxyInstance(
 				ClassLoader.getSystemClassLoader(), _INTERFACES,
-				new BatchInvocationHandler(connection, sql));
+				new BatchInvocationHandler(connection, sql, returnRowCounts));
 		}
 
 		return (PreparedStatement)ProxyUtil.newProxyInstance(
 			ClassLoader.getSystemClassLoader(), _INTERFACES,
-			new NoBatchInvocationHandler(connection, sql));
+			new NoBatchInvocationHandler(connection, sql, returnRowCounts));
 	}
 
 	public static PreparedStatement concurrentAutoBatch(
@@ -109,26 +117,27 @@ public class AutoBatchPreparedStatementUtil {
 			if (++_count >= _HIBERNATE_JDBC_BATCH_SIZE) {
 				_count = 0;
 
-				localPreparedStatement.executeBatch();
+				addRowCounts(localPreparedStatement.executeBatch());
 			}
 		}
 
 		@Override
 		protected int[] doExecuteBatch() throws SQLException {
-			if (_count > 0) {
-				_count = 0;
-
-				PreparedStatement localPreparedStatement =
-					getPreparedStatement();
-
-				return localPreparedStatement.executeBatch();
+			if (_count == 0) {
+				return getRowCounts(new int[0]);
 			}
 
-			return new int[0];
+			_count = 0;
+
+			PreparedStatement localPreparedStatement = getPreparedStatement();
+
+			return getRowCounts(localPreparedStatement.executeBatch());
 		}
 
-		private BatchInvocationHandler(Connection connection, String sql) {
-			super(connection, sql);
+		private BatchInvocationHandler(
+			Connection connection, String sql, boolean returnRowCounts) {
+
+			super(connection, sql, returnRowCounts);
 		}
 
 		private int _count;
@@ -268,11 +277,23 @@ public class AutoBatchPreparedStatementUtil {
 	private static class NoBatchInvocationHandler
 		extends PreparedStatementInvocationHandler {
 
+		protected void addRowCounts(int[] rowCounts) {
+			if (_rowCounts == null) {
+				return;
+			}
+
+			int index = _rowCounts.length;
+
+			_rowCounts = Arrays.copyOf(_rowCounts, index + rowCounts.length);
+
+			System.arraycopy(rowCounts, 0, _rowCounts, index, rowCounts.length);
+		}
+
 		@Override
 		protected void doAddBatch() throws SQLException {
 			PreparedStatement localPreparedStatement = getPreparedStatement();
 
-			localPreparedStatement.executeUpdate();
+			addRowCounts(new int[] {localPreparedStatement.executeUpdate()});
 		}
 
 		@Override
@@ -284,12 +305,30 @@ public class AutoBatchPreparedStatementUtil {
 
 		@Override
 		protected int[] doExecuteBatch() throws SQLException {
-			return new int[0];
+			return getRowCounts(new int[0]);
 		}
 
-		private NoBatchInvocationHandler(Connection connection, String sql) {
-			super(connection, sql);
+		protected int[] getRowCounts(int[] rowCounts) {
+			if (_rowCounts == null) {
+				return rowCounts;
+			}
+
+			addRowCounts(rowCounts);
+
+			return _rowCounts;
 		}
+
+		private NoBatchInvocationHandler(
+			Connection connection, String sql, boolean returnRowCounts) {
+
+			super(connection, sql);
+
+			if (returnRowCounts) {
+				_rowCounts = new int[0];
+			}
+		}
+
+		private int[] _rowCounts;
 
 	}
 
