@@ -206,11 +206,48 @@ public class AutoBatchPreparedStatementUtilTest {
 	}
 
 	@Test
+	public void testReturnRowCounts() throws Exception {
+		PropsUtil.set(PropsKeys.HIBERNATE_JDBC_BATCH_SIZE, "2");
+
+		Assert.assertArrayEquals(
+			new int[] {1, 1, 1, 1, 1}, doExecuteBatch(5, true));
+		Assert.assertArrayEquals(
+			new int[] {1, 1, 1, 1}, doExecuteBatch(4, true));
+		Assert.assertArrayEquals(new int[0], doExecuteBatch(0, true));
+
+		Assert.assertArrayEquals(
+			new int[] {1, 1, 1, 1, 1}, doExecuteBatch(5, false));
+		Assert.assertArrayEquals(new int[0], doExecuteBatch(0, false));
+	}
+
+	@Test
 	public void testSupportBatchUpdates() throws Exception {
 		PropsUtil.set(PropsKeys.HIBERNATE_JDBC_BATCH_SIZE, "2");
 
 		doTestSupportBaseUpdates();
 		doTestSupportBaseUpdatesConcurrent();
+	}
+
+	protected int[] doExecuteBatch(int batchCount, boolean supportBatchUpdates)
+		throws Exception {
+
+		Connection connection = (Connection)ProxyUtil.newProxyInstance(
+			ClassLoader.getSystemClassLoader(),
+			new Class<?>[] {Connection.class},
+			new ConnectionInvocationHandler(
+				new PreparedStatementInvocationHandler(
+					supportBatchUpdates, true)));
+
+		try (PreparedStatement preparedStatement =
+				AutoBatchPreparedStatementUtil.autoBatch(
+					connection, StringPool.BLANK, true)) {
+
+			for (int i = 0; i < batchCount; i++) {
+				preparedStatement.addBatch();
+			}
+
+			return preparedStatement.executeBatch();
+		}
 	}
 
 	protected void doTestConcurrentCancellationException(
@@ -736,9 +773,13 @@ public class AutoBatchPreparedStatementUtilTest {
 
 			_methods.add(method);
 
-			if (method.equals(PreparedStatement.class.getMethod("addBatch")) ||
-				method.equals(PreparedStatement.class.getMethod("close"))) {
+			if (method.equals(PreparedStatement.class.getMethod("addBatch"))) {
+				_batchCount++;
 
+				return null;
+			}
+
+			if (method.equals(PreparedStatement.class.getMethod("close"))) {
 				return null;
 			}
 
@@ -753,7 +794,17 @@ public class AutoBatchPreparedStatementUtilTest {
 					throw _runtimeException;
 				}
 
-				return new int[0];
+				if (!_trackRowCounts) {
+					return new int[0];
+				}
+
+				int[] rowCounts = new int[_batchCount];
+
+				Arrays.fill(rowCounts, 1);
+
+				_batchCount = 0;
+
+				return rowCounts;
 			}
 
 			if (method.equals(
@@ -761,6 +812,10 @@ public class AutoBatchPreparedStatementUtilTest {
 
 				if (_runtimeException != null) {
 					throw _runtimeException;
+				}
+
+				if (_trackRowCounts) {
+					return 1;
 				}
 
 				return 0;
@@ -776,12 +831,21 @@ public class AutoBatchPreparedStatementUtilTest {
 		private PreparedStatementInvocationHandler(
 			boolean supportBatchUpdates) {
 
-			_supportBatchUpdates = supportBatchUpdates;
+			this(supportBatchUpdates, false);
 		}
 
+		private PreparedStatementInvocationHandler(
+			boolean supportBatchUpdates, boolean trackRowCounts) {
+
+			_supportBatchUpdates = supportBatchUpdates;
+			_trackRowCounts = trackRowCounts;
+		}
+
+		private int _batchCount;
 		private final List<Method> _methods = new ArrayList<>();
 		private RuntimeException _runtimeException;
 		private final boolean _supportBatchUpdates;
+		private final boolean _trackRowCounts;
 
 	}
 
