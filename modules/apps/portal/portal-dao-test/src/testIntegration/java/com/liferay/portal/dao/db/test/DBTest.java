@@ -38,6 +38,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -727,24 +728,7 @@ public class DBTest {
 			}
 		}
 		finally {
-			if (futureTask != null) {
-				try {
-					futureTask.get(30, TimeUnit.SECONDS);
-				}
-				catch (TimeoutException timeoutException) {
-					futureTask.cancel(true);
-
-					if (_log.isDebugEnabled()) {
-						_log.debug(
-							"Unable to run locked query", timeoutException);
-					}
-				}
-				catch (Exception exception) {
-					if (_log.isDebugEnabled()) {
-						_log.debug("Unable to run locked query", exception);
-					}
-				}
-			}
+			_awaitWorker(futureTask, "Unable to run locked query");
 		}
 	}
 
@@ -788,6 +772,10 @@ public class DBTest {
 			boolean foundLongRunningQuery = false;
 
 			while (System.currentTimeMillis() < endTime) {
+				if (futureTask.isDone()) {
+					futureTask.get();
+				}
+
 				for (DB.QueryInfo queryInfo :
 						db.getLongRunningQueryInfos(pollingConnection)) {
 
@@ -826,23 +814,7 @@ public class DBTest {
 			Assert.assertTrue(foundLongRunningQuery);
 		}
 		finally {
-			if (futureTask != null) {
-				try {
-					futureTask.get(30, TimeUnit.SECONDS);
-				}
-				catch (TimeoutException timeoutException) {
-					futureTask.cancel(true);
-
-					if (_log.isDebugEnabled()) {
-						_log.debug("Unable to run slow query", timeoutException);
-					}
-				}
-				catch (Exception exception) {
-					if (_log.isDebugEnabled()) {
-						_log.debug("Unable to run slow query", exception);
-					}
-				}
-			}
+			_awaitWorker(futureTask, "Unable to run slow query");
 		}
 	}
 
@@ -940,24 +912,7 @@ public class DBTest {
 			}
 		}
 		finally {
-			if (futureTask != null) {
-				try {
-					futureTask.get(30, TimeUnit.SECONDS);
-				}
-				catch (TimeoutException timeoutException) {
-					futureTask.cancel(true);
-
-					if (_log.isDebugEnabled()) {
-						_log.debug(
-							"Unable to run locked query", timeoutException);
-					}
-				}
-				catch (Exception exception) {
-					if (_log.isDebugEnabled()) {
-						_log.debug("Unable to run locked query", exception);
-					}
-				}
-			}
+			_awaitWorker(futureTask, "Unable to run locked query");
 		}
 	}
 
@@ -1282,6 +1237,28 @@ public class DBTest {
 	protected static DB db;
 	protected static DBInspector dbInspector;
 
+	private void _awaitWorker(FutureTask<Void> futureTask, String message)
+		throws Exception {
+
+		if (futureTask == null) {
+			return;
+		}
+
+		try {
+			futureTask.get(30, TimeUnit.SECONDS);
+		}
+		catch (ExecutionException executionException) {
+			if (_log.isInfoEnabled()) {
+				_log.info(message, executionException.getCause());
+			}
+		}
+		catch (TimeoutException timeoutException) {
+			futureTask.cancel(true);
+
+			throw timeoutException;
+		}
+	}
+
 	private void _createTestTable(String tableName) throws Exception {
 		db.runSQL(
 			StringBundler.concat(
@@ -1333,7 +1310,7 @@ public class DBTest {
 
 		if (dbType == DBType.DB2) {
 			return "with t(n) as (values 1 union all select n+1 from t where " +
-				"n < 50000000) select max(n) from t";
+				"n < 5000000) select max(n) from t";
 		}
 		else if ((dbType == DBType.MARIADB) || (dbType == DBType.MYSQL)) {
 			return "select sleep(2)";
