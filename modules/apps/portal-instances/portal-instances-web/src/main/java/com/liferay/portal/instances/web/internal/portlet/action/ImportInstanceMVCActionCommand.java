@@ -114,7 +114,13 @@ public class ImportInstanceMVCActionCommand extends BaseMVCActionCommand {
 				return "the-exported-schema-does-not-exist";
 			}
 
-			return "please-enter-a-valid-schema-name";
+			if (message.startsWith("Invalid schema name ") ||
+				message.endsWith(" is the default company ID")) {
+
+				return "please-enter-a-valid-schema-name";
+			}
+
+			return _ERROR_UNEXPECTED;
 		}
 
 		if (exception instanceof UnsupportedOperationException) {
