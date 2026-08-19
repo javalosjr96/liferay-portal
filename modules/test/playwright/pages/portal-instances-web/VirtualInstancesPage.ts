@@ -234,7 +234,15 @@ export class VirtualInstancesPage {
 
 		await this.page.getByRole('button', {name: 'Delete'}).waitFor();
 
-		await this.page.getByRole('button', {name: 'Delete'}).click();
+		await Promise.all([
+			this.page.waitForResponse(
+				(response) => response.url().includes('delete_instance'),
+				{timeout: 180 * 1000}
+			),
+			this.page.getByRole('button', {name: 'Delete'}).click(),
+		]);
+
+		await expect(row).toBeHidden({timeout: 180 * 1000});
 	}
 
 	async exportVirtualInstance(name: string) {
@@ -297,11 +305,13 @@ export class VirtualInstancesPage {
 	async submitImportVirtualInstance({
 		name = '',
 		schemaName,
+		timeout = 30 * 1000,
 		virtualHost = '',
 		webId = '',
 	}: {
 		name?: string;
 		schemaName: string;
+		timeout?: number;
 		virtualHost?: string;
 		webId?: string;
 	}) {
@@ -313,7 +323,7 @@ export class VirtualInstancesPage {
 		await Promise.all([
 			this.page.waitForResponse(
 				(response) => response.url().includes('import_instance'),
-				{timeout: 30 * 1000}
+				{timeout}
 			),
 			this.importInstanceSubmitButton.click(),
 		]);

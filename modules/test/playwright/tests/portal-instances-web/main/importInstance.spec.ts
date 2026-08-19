@@ -31,7 +31,7 @@ test(
 	'LPD-92621 Importing an exported schema shows the import success message',
 	{tag: '@LPD-92621'},
 	async ({virtualInstancesPage}) => {
-		test.setTimeout(900 * 1000);
+		test.setTimeout(5 * 180 * 1000);
 
 		const exportedWebId = getRandomString();
 		const importedWebId = getRandomString();
@@ -48,6 +48,7 @@ test(
 		await virtualInstancesPage.submitImportVirtualInstance({
 			name: importedWebId,
 			schemaName,
+			timeout: 180 * 1000,
 			virtualHost: importedWebId,
 			webId: importedWebId,
 		});
