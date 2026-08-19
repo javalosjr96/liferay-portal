@@ -104,7 +104,7 @@ public class ImportInstanceMVCActionCommand extends BaseMVCActionCommand {
 		if (exception instanceof IllegalArgumentException) {
 			String message = GetterUtil.getString(exception.getMessage());
 
-			if (message.contains(" already exists")) {
+			if (message.startsWith("Database partition ")) {
 				return "an-instance-for-this-schema-already-exists";
 			}
 
