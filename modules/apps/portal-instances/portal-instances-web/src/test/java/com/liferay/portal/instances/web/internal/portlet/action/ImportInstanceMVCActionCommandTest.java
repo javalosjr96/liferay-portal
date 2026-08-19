@@ -225,6 +225,15 @@ public class ImportInstanceMVCActionCommandTest {
 				"Unable to insert the database partition " + _SCHEMA_NAME +
 					" because it does not exist"),
 			"the-exported-schema-does-not-exist");
+
+		_assertError(
+			new IllegalArgumentException(
+				"Company ID " + _COMPANY_ID + " is the default company ID"),
+			"please-enter-a-valid-schema-name");
+
+		_assertError(
+			new IllegalArgumentException(_SCHEMA_NAME),
+			"an-unexpected-error-occurred");
 	}
 
 	@Test
