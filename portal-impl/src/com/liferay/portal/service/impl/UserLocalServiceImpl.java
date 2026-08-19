@@ -7510,7 +7510,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 					connection,
 					CustomSQLUtil.get(
 						UserLocalServiceImpl.class.getName() +
-							".updateLastLogin"))) {
+							".updateLastLogin"),
+					true)) {
 
 			for (User user : users) {
 				preparedStatement.setTimestamp(
