@@ -191,6 +191,15 @@ definition {
 		}
 	}
 
+	@summary = "Update portal properties on ${nodePort}"
+	macro updatePortalPropertiesOnSpecificServer(propertiesOriginal = null, nodePort = null, propertiesUpdate = null) {
+		var leadingPortNumber = StringUtil.replace(${nodePort}, 080, "");
+
+		var bundleIndex = ${leadingPortNumber} - 8;
+
+		AntCommands.runCommand("build-test.xml", "portal-ext-properties-update -Dapp.server.bundle.index=${bundleIndex} -Dupdate.properties=${propertiesUpdate} -Dupdate.properties.original=${propertiesOriginal}");
+	}
+
 	@summary = "Assert the cluster status in console log"
 	macro viewClusterStatusInConsole() {
 		var nodeLog2 = Clustering.getLogFileSpecificServer(nodePort = 9080);
