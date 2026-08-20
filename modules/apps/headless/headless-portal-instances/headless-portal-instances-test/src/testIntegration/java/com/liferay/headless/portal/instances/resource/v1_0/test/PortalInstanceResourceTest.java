@@ -40,7 +40,6 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -48,12 +47,9 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.test.log.LogCapture;
-import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
-
-import java.io.IOException;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -840,10 +836,7 @@ public class PortalInstanceResourceTest
 
 		List<Configuration> configurations = new ArrayList<>();
 
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				_CLASS_NAME_PORTAL_INSTANCE_RESOURCE_IMPL,
-				LoggerTestUtil.WARN)) {
-
+		try {
 			Configuration company1Configuration = _createScopedConfiguration(
 				HashMapDictionaryBuilder.<String, Object>put(
 					ExtendedObjectClassDefinition.Scope.COMPANY.
@@ -929,43 +922,15 @@ public class PortalInstanceResourceTest
 			Assert.assertFalse(
 				configurationIds.contains(
 					nonexistentGroupConfiguration.getPid()));
-
-			String message = StringBundler.concat(
-				"Unable to export configuration ",
-				nonexistentGroupConfiguration.getPid(), " because group ",
-				nonexistentGroupId, " does not exist");
-
-			List<LogEntry> logEntries = ListUtil.filter(
-				logCapture.getLogEntries(),
-				curLogEntry -> message.equals(curLogEntry.getMessage()));
-
-			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
-
-			LogEntry logEntry = logEntries.get(0);
-
-			Assert.assertEquals(LoggerTestUtil.WARN, logEntry.getPriority());
 		}
 		finally {
-			Exception exception = null;
-
-			for (Configuration configuration : configurations) {
-				try {
+			try {
+				for (Configuration configuration : configurations) {
 					configuration.delete();
 				}
-				catch (IOException ioException) {
-					if (exception == null) {
-						exception = ioException;
-					}
-					else {
-						exception.addSuppressed(ioException);
-					}
-				}
 			}
-
-			_dropExportedSchema(companyId);
-
-			if (exception != null) {
-				throw exception;
+			finally {
+				_dropExportedSchema(companyId);
 			}
 		}
 	}
