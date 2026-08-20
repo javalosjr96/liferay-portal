@@ -232,6 +232,11 @@ public class ImportInstanceMVCActionCommandTest {
 			"please-enter-a-valid-schema-name");
 
 		_assertError(
+			new IllegalArgumentException(
+				"Company ID " + _COMPANY_ID + " already exists"),
+			"an-unexpected-error-occurred");
+
+		_assertError(
 			new IllegalArgumentException(_SCHEMA_NAME),
 			"an-unexpected-error-occurred");
 	}
