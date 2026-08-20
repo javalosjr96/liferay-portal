@@ -139,9 +139,17 @@ export class VirtualInstancesPage {
 
 	async addNewVirtualInstance(
 		name: string,
-		active = true,
-		maxUsers = '0',
-		virtualInstanceInitializer = ''
+		{
+			active = true,
+			maxUsers = '0',
+			timeout = 30 * 1000,
+			virtualInstanceInitializer = '',
+		}: {
+			active?: boolean;
+			maxUsers?: string;
+			timeout?: number;
+			virtualInstanceInitializer?: string;
+		} = {}
 	) {
 		await this.globalMenuPage.goToHome();
 		await this.globalMenuPage.goToControlPanel('Virtual Instances');
@@ -161,10 +169,11 @@ export class VirtualInstancesPage {
 		);
 
 		await Promise.all([
-			this.addInstanceAddButton.click(),
-			this.page.waitForResponse((response) =>
-				response.url().includes('add_instance')
+			this.page.waitForResponse(
+				(response) => response.url().includes('add_instance'),
+				{timeout}
 			),
+			this.addInstanceAddButton.click(),
 		]);
 
 		await this.page.waitForTimeout(1000);
@@ -172,9 +181,7 @@ export class VirtualInstancesPage {
 		// Only wait for Virtual Instance creation if there are no errors
 
 		if (await this.errorMessage.isHidden()) {
-			await expect(await this.successMessage).toBeVisible({
-				timeout: 180 * 1000,
-			});
+			await expect(await this.successMessage).toBeVisible({timeout});
 			await this.page.locator('.alert').getByLabel('Close').click();
 		}
 	}
@@ -254,7 +261,10 @@ export class VirtualInstancesPage {
 		return this.page.getByText(`The instance was copied to ${webId}.`);
 	}
 
-	async deleteVirtualInstance(name: string) {
+	async deleteVirtualInstance(
+		name: string,
+		{timeout = 30 * 1000}: {timeout?: number} = {}
+	) {
 		await this.globalMenuPage.goToControlPanel('Virtual Instances');
 
 		const row = await this.page.getByRole('row').filter({hasText: name});
@@ -267,10 +277,21 @@ export class VirtualInstancesPage {
 
 		await this.page.getByRole('button', {name: 'Delete'}).waitFor();
 
-		await this.page.getByRole('button', {name: 'Delete'}).click();
+		await Promise.all([
+			this.page.waitForResponse(
+				(response) => response.url().includes('delete_instance'),
+				{timeout}
+			),
+			this.page.getByRole('button', {name: 'Delete'}).click(),
+		]);
+
+		await expect(row.first()).toBeHidden({timeout});
 	}
 
-	async exportVirtualInstance(name: string) {
+	async exportVirtualInstance(
+		name: string,
+		{timeout = 30 * 1000}: {timeout?: number} = {}
+	) {
 		await this.goto();
 
 		const row = this.page.getByRole('row').filter({hasText: name});
@@ -286,9 +307,7 @@ export class VirtualInstancesPage {
 
 		await this.exportInstanceConfirmButton.click();
 
-		await expect(this.exportInstanceSuccessMessage).toBeVisible({
-			timeout: 180 * 1000,
-		});
+		await expect(this.exportInstanceSuccessMessage).toBeVisible({timeout});
 
 		const successMessage =
 			await this.exportInstanceSuccessMessage.innerText();
@@ -377,11 +396,13 @@ export class VirtualInstancesPage {
 	async submitImportVirtualInstance({
 		name = '',
 		schemaName,
+		timeout = 30 * 1000,
 		virtualHost = '',
 		webId = '',
 	}: {
 		name?: string;
 		schemaName: string;
+		timeout?: number;
 		virtualHost?: string;
 		webId?: string;
 	}) {
@@ -393,7 +414,7 @@ export class VirtualInstancesPage {
 		await Promise.all([
 			this.page.waitForResponse(
 				(response) => response.url().includes('import_instance'),
-				{timeout: 30 * 1000}
+				{timeout}
 			),
 			this.importInstanceSubmitButton.click(),
 		]);

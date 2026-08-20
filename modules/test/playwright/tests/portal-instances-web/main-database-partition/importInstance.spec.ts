@@ -31,31 +31,62 @@ test(
 	'LPD-92621 Importing an exported schema shows the import success message',
 	{tag: '@LPD-92621'},
 	async ({virtualInstancesPage}) => {
-		test.setTimeout(900 * 1000);
+		test.setTimeout(8 * 180 * 1000);
 
 		const exportedWebId = getRandomString();
 		const importedWebId = getRandomString();
 
-		await virtualInstancesPage.addNewVirtualInstance(exportedWebId);
+		let exported = false;
+		let imported = false;
 
-		const schemaName =
-			await virtualInstancesPage.exportVirtualInstance(exportedWebId);
+		try {
+			await virtualInstancesPage.addNewVirtualInstance(exportedWebId, {
+				timeout: 180 * 1000,
+			});
 
-		await virtualInstancesPage.deleteVirtualInstance(exportedWebId);
+			exported = true;
 
-		await virtualInstancesPage.openImportVirtualInstanceModal();
+			const schemaName = await virtualInstancesPage.exportVirtualInstance(
+				exportedWebId,
+				{timeout: 180 * 1000}
+			);
 
-		await virtualInstancesPage.submitImportVirtualInstance({
-			name: importedWebId,
-			schemaName,
-			virtualHost: importedWebId,
-			webId: importedWebId,
-		});
+			await virtualInstancesPage.deleteVirtualInstance(exportedWebId, {
+				timeout: 180 * 1000,
+			});
 
-		await expect(
-			virtualInstancesPage.importInstanceSuccessMessage(importedWebId)
-		).toBeVisible();
+			exported = false;
 
-		await virtualInstancesPage.deleteVirtualInstance(importedWebId);
+			await virtualInstancesPage.openImportVirtualInstanceModal();
+
+			await virtualInstancesPage.submitImportVirtualInstance({
+				name: importedWebId,
+				schemaName,
+				timeout: 180 * 1000,
+				virtualHost: importedWebId,
+				webId: importedWebId,
+			});
+
+			imported = true;
+
+			await expect(
+				virtualInstancesPage.importInstanceSuccessMessage(importedWebId)
+			).toBeVisible();
+		}
+		finally {
+			if (imported) {
+				await virtualInstancesPage.deleteVirtualInstance(
+					importedWebId,
+					{timeout: 180 * 1000}
+				);
+			}
+
+			if (exported) {
+				await virtualInstancesPage.deleteVirtualInstance(
+					exportedWebId,
+					{timeout: 180 * 1000}
+				);
+			}
+		}
 	}
 );
