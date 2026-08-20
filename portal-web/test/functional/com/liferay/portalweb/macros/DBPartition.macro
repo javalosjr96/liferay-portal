@@ -1,5 +1,23 @@
 definition {
 
+	@summary = "Exports an integrated DB Partition into a standalone partition"
+	macro exportDBPartition(partitionCompanyId = null, portalInstanceId = null) {
+		var sourceCompanyId = HeadlessPortalInstanceAPI.exportPortalInstance(portalInstanceId = ${portalInstanceId});
+
+		if (isSet(partitionCompanyId)) {
+			TestUtils.assertEquals(
+				actual = ${sourceCompanyId},
+				expected = ${partitionCompanyId});
+		}
+
+		return ${sourceCompanyId};
+	}
+
+	@summary = "Imports a standalone DB Partition as a new company"
+	macro importDBPartition(partitionCompanyId = null) {
+		HeadlessPortalInstanceAPI.importPortalInstance(schemaName = "lexported_${partitionCompanyId}");
+	}
+
 	@summary = "Validates that the records are correctly tied to their partitions using the portal-tools-db-partition-schema-validator tool"
 	macro validateSchemas(schemaNamePrefix = null) {
 		var liferayHome = PropsUtil.get("liferay.home.dir.name");

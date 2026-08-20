@@ -133,4 +133,94 @@ definition {
 		ValidateDatabasePartitioningUpgrade.viewUpgradeDBPartition();
 	}
 
+	@priority = 4
+	test ExportAndAddDBPartitionWithUpgradedDB {
+		property app.server.bundles.size = "1";
+		property cluster.enabled = "true";
+		property custom.properties = "feature.flag.LPD-11342=true${line.separator}virtual.hosts.valid.hosts=localhost,127.0.0.1,www.able.com,www.baker.com";
+		property data.archive.type = "data-archive-portal-partition";
+		property portal.version = "7.4.13.u33";
+		property test.assert.warning.exceptions = "false";
+		property web.xml.timeout = "60";
+
+		task ("Validate www.able.com and www.baker.com partitions") {
+			User.loginPG(
+				nodePort = 8080,
+				password = PropsUtil.get("default.admin.password"),
+				userEmailAddress = "test@liferay.com");
+
+			SearchAdministration.executeReindex();
+
+			ValidateDatabasePartitioningUpgrade.viewUpgradeDBPartition();
+
+			SignOut.signOutOfSpecificURL(url = "http://www.able.com:8080");
+
+			SignOut.signOutOfSpecificURL(url = "http://www.baker.com:8080");
+		}
+
+		task ("Export www.able.com and www.baker.com partitions and shutdown the server") {
+			var ableCompanyId = DBPartition.exportDBPartition(portalInstanceId = "www.able.com");
+
+			var bakerCompanyId = DBPartition.exportDBPartition(portalInstanceId = "www.baker.com");
+
+			Clustering.shutdownSpecificServer(nodePort = 8080);
+
+			Clustering.shutdownSpecificServer(nodePort = 9080);
+		}
+
+		task ("Create an empty database") {
+			AntCommands.runCommand("build-test.xml", "rebuild-database -Ddatabase.type=mysql -Dsql.dir=sql/create-bare/ -Dsql.file=create-bare-mysql.sql");
+
+			Clustering.startSpecificServer(
+				deleteLiferayHome = "false",
+				nodePort = 8080);
+
+			Clustering.startSpecificServer(
+				deleteLiferayHome = "false",
+				nodePort = 9080);
+		}
+
+		task ("Removing the original schemas") {
+			var databaseType = PropsUtil.get("database.type");
+
+			if (${databaseType} == "mysql") {
+				SQL.executeSQLStatement(sqlStatement = "drop schema if exists lpartition_${ableCompanyId};");
+
+				SQL.executeSQLStatement(sqlStatement = "drop schema if exists lpartition_${bakerCompanyId};");
+			}
+			else if (${databaseType} == "postgresql") {
+				SQL.executeSQLStatement(sqlStatement = "drop schema if exists lpartition_${ableCompanyId} cascade;");
+
+				SQL.executeSQLStatement(sqlStatement = "drop schema if exists lpartition_${bakerCompanyId} cascade;");
+			}
+		}
+
+		task ("Add previously exported partitions into new database") {
+			DBPartition.importDBPartition(partitionCompanyId = ${ableCompanyId});
+
+			DBPartition.importDBPartition(partitionCompanyId = ${bakerCompanyId});
+		}
+
+		task ("Ensure that portal main functionalities work correctly") {
+			SignIn.signInTestSetup();
+
+			PagesAdmin.enableWidgetPages();
+
+			Smoke.runSmoke();
+
+			SignOut.signOut();
+		}
+
+		task ("Ensure that both www.able.com and www.baker.com are accessible") {
+			User.loginPG(
+				nodePort = 8080,
+				password = PropsUtil.get("default.admin.password"),
+				userEmailAddress = "test@liferay.com");
+
+			SearchAdministration.executeReindex();
+
+			ValidateDatabasePartitioningUpgrade.viewUpgradeDBPartition();
+		}
+	}
+
 }
