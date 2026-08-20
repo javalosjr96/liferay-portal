@@ -45,11 +45,14 @@ public class WebIdToCompanyConfigurationPluginImpl
 			"dxp.lxc.liferay.com.virtualInstanceId");
 
 		if (Validator.isNull(webId)) {
-			return;
+			webId = (String)properties.get("companyWebId");
+		}
+		else if (Objects.equals(webId, "default")) {
+			webId = PropsValues.COMPANY_DEFAULT_WEB_ID;
 		}
 
-		if (Objects.equals(webId, "default")) {
-			webId = PropsValues.COMPANY_DEFAULT_WEB_ID;
+		if (Validator.isNull(webId) || (properties.get("companyId") != null)) {
+			return;
 		}
 
 		try {
