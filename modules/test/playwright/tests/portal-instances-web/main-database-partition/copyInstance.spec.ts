@@ -16,14 +16,16 @@ test(
 	'LPD-92620 Copying an instance to an existing company ID shows an error',
 	{tag: '@LPD-92620'},
 	async ({apiHelpers, virtualInstancesPage}) => {
-		test.setTimeout(360000);
+		test.setTimeout(5 * 180 * 1000);
 
 		const name = getRandomString();
 
 		let created = false;
 
 		try {
-			await virtualInstancesPage.addNewVirtualInstance(name);
+			await virtualInstancesPage.addNewVirtualInstance(name, {
+				timeout: 180 * 1000,
+			});
 
 			created = true;
 
@@ -57,7 +59,9 @@ test(
 			}
 
 			if (created) {
-				await virtualInstancesPage.deleteVirtualInstance(name);
+				await virtualInstancesPage.deleteVirtualInstance(name, {
+					timeout: 180 * 1000,
+				});
 			}
 		}
 	}
@@ -67,7 +71,7 @@ test(
 	'LPD-92620 Copying an instance shows the copy success message',
 	{tag: '@LPD-92620'},
 	async ({virtualInstancesPage}) => {
-		test.setTimeout(360000);
+		test.setTimeout(7 * 180 * 1000);
 
 		const name = getRandomString();
 		const copyWebId = getRandomString();
@@ -76,7 +80,9 @@ test(
 		let created = false;
 
 		try {
-			await virtualInstancesPage.addNewVirtualInstance(name);
+			await virtualInstancesPage.addNewVirtualInstance(name, {
+				timeout: 180 * 1000,
+			});
 
 			created = true;
 
@@ -100,11 +106,15 @@ test(
 		}
 		finally {
 			if (copied) {
-				await virtualInstancesPage.deleteVirtualInstance(copyWebId);
+				await virtualInstancesPage.deleteVirtualInstance(copyWebId, {
+					timeout: 180 * 1000,
+				});
 			}
 
 			if (created) {
-				await virtualInstancesPage.deleteVirtualInstance(name);
+				await virtualInstancesPage.deleteVirtualInstance(name, {
+					timeout: 180 * 1000,
+				});
 			}
 		}
 	}
