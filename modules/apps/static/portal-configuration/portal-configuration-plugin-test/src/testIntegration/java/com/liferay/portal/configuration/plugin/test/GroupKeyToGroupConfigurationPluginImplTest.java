@@ -11,7 +11,9 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -42,7 +44,10 @@ public class GroupKeyToGroupConfigurationPluginImplTest {
 	public void testModifyConfiguration() throws Exception {
 		Dictionary<String, Object> processedProperties =
 			_getProcessedProperties(
-				TestPropsValues.COMPANY_WEB_ID + "--" + GroupConstants.GUEST);
+				MapUtil.singletonDictionary(
+					"groupKey",
+					TestPropsValues.COMPANY_WEB_ID + "--" +
+						GroupConstants.GUEST));
 
 		Assert.assertEquals(
 			TestPropsValues.getCompanyId(),
@@ -55,16 +60,96 @@ public class GroupKeyToGroupConfigurationPluginImplTest {
 			group.getGroupId(), processedProperties.get("groupId"));
 	}
 
+	@Test
+	public void testModifyConfigurationWithExistingCompanyId()
+		throws Exception {
+
+		long companyId = RandomTestUtil.randomLong();
+
+		Dictionary<String, Object> processedProperties =
+			_getProcessedProperties(
+				HashMapDictionaryBuilder.<String, Object>put(
+					"companyId", companyId
+				).put(
+					"groupKey",
+					TestPropsValues.COMPANY_WEB_ID + "--" +
+						GroupConstants.GUEST
+				).build());
+
+		Assert.assertEquals(companyId, processedProperties.get("companyId"));
+
+		Group group = _groupLocalService.getGroup(
+			TestPropsValues.getCompanyId(), GroupConstants.GUEST);
+
+		Assert.assertEquals(
+			group.getGroupId(), processedProperties.get("groupId"));
+	}
+
+	@Test
+	public void testModifyConfigurationWithExistingGroupId() throws Exception {
+		long groupId = RandomTestUtil.randomLong();
+
+		Dictionary<String, Object> processedProperties =
+			_getProcessedProperties(
+				HashMapDictionaryBuilder.<String, Object>put(
+					"groupId", groupId
+				).put(
+					"groupKey",
+					TestPropsValues.COMPANY_WEB_ID + "--" +
+						GroupConstants.GUEST
+				).build());
+
+		Assert.assertNull(processedProperties.get("companyId"));
+		Assert.assertEquals(groupId, processedProperties.get("groupId"));
+	}
+
+	@Test
+	public void testModifyConfigurationWithMalformedGroupKey()
+		throws Exception {
+
+		Dictionary<String, Object> processedProperties =
+			_getProcessedProperties(
+				MapUtil.singletonDictionary(
+					"groupKey", GroupConstants.GUEST));
+
+		Assert.assertNull(processedProperties.get("companyId"));
+		Assert.assertNull(processedProperties.get("groupId"));
+	}
+
+	@Test
+	public void testModifyConfigurationWithUnknownGroupKey() throws Exception {
+		Dictionary<String, Object> processedProperties =
+			_getProcessedProperties(
+				MapUtil.singletonDictionary(
+					"groupKey",
+					TestPropsValues.COMPANY_WEB_ID + "--" +
+						RandomTestUtil.randomString()));
+
+		Assert.assertNull(processedProperties.get("companyId"));
+		Assert.assertNull(processedProperties.get("groupId"));
+	}
+
+	@Test
+	public void testModifyConfigurationWithUnknownWebId() throws Exception {
+		Dictionary<String, Object> processedProperties =
+			_getProcessedProperties(
+				MapUtil.singletonDictionary(
+					"groupKey",
+					RandomTestUtil.randomString() + "--" +
+						GroupConstants.GUEST));
+
+		Assert.assertNull(processedProperties.get("companyId"));
+		Assert.assertNull(processedProperties.get("groupId"));
+	}
+
 	private Dictionary<String, Object> _getProcessedProperties(
-			String portableIdentifier)
+			Dictionary<String, Object> properties)
 		throws Exception {
 
 		Configuration configuration = _configurationAdmin.getConfiguration(
 			"test.pid");
 
-		ConfigurationTestUtil.saveConfiguration(
-			configuration,
-			MapUtil.singletonDictionary("groupKey", portableIdentifier));
+		ConfigurationTestUtil.saveConfiguration(configuration, properties);
 
 		configuration = _configurationAdmin.getConfiguration("test.pid");
 

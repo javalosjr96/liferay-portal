@@ -63,11 +63,28 @@ public class WebIdToCompanyConfigurationPluginImplTest {
 				HashMapDictionaryBuilder.<String, Object>put(
 					"companyId", companyId
 				).put(
+					"companyWebId", TestPropsValues.COMPANY_WEB_ID
+				).build());
+
+		Assert.assertEquals(companyId, processedProperties.get("companyId"));
+	}
+
+	@Test
+	public void testModifyConfigurationWithExistingCompanyIdAndVirtualInstanceId()
+		throws Exception {
+
+		Dictionary<String, Object> processedProperties =
+			_getProcessedProperties(
+				HashMapDictionaryBuilder.<String, Object>put(
+					"companyId", RandomTestUtil.randomLong()
+				).put(
 					"dxp.lxc.liferay.com.virtualInstanceId",
 					TestPropsValues.COMPANY_WEB_ID
 				).build());
 
-		Assert.assertEquals(companyId, processedProperties.get("companyId"));
+		Assert.assertEquals(
+			TestPropsValues.getCompanyId(),
+			processedProperties.get("companyId"));
 	}
 
 	private Dictionary<String, Object> _getProcessedProperties(
