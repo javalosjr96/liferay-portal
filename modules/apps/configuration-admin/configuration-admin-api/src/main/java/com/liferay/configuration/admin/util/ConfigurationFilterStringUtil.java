@@ -28,8 +28,10 @@ public class ConfigurationFilterStringUtil {
 		return StringBundler.concat(
 			"(&(|(",
 			ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey(),
-			StringPool.EQUAL, _toString(companyId),
-			")(dxp.lxc.liferay.com.virtualInstanceId=",
+			StringPool.EQUAL, _toString(companyId), ")",
+			_getPortablePropertyFilterString(
+				ExtendedObjectClassDefinition.Scope.COMPANY, companyId),
+			"(dxp.lxc.liferay.com.virtualInstanceId=",
 			GetterUtil.get(virtualInstanceId, "*"), "))(!(",
 			ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(),
 			"=*))(!(siteExternalReferenceCode=*))(!(",
@@ -62,8 +64,10 @@ public class ConfigurationFilterStringUtil {
 
 		return StringBundler.concat(
 			"(&(|(", ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(),
-			StringPool.EQUAL, _toString(groupId),
-			")(siteExternalReferenceCode=",
+			StringPool.EQUAL, _toString(groupId), ")",
+			_getPortablePropertyFilterString(
+				ExtendedObjectClassDefinition.Scope.GROUP, groupId),
+			"(siteExternalReferenceCode=",
 			GetterUtil.get(siteExternalReferenceCode, "*"), "))(",
 			ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey(),
 			StringPool.EQUAL, companyId, ")(!(",
@@ -129,8 +133,13 @@ public class ConfigurationFilterStringUtil {
 			ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey(),
 			"=*))(",
 			ExtendedObjectClassDefinition.Scope.COMPANY.getPropertyKey(),
-			"=0))(!(dxp.lxc.liferay.com.virtualInstanceId=*))(!(",
+			"=0))(!(",
+			ExtendedObjectClassDefinition.Scope.COMPANY.
+				getPortablePropertyKey(),
+			"=*))(!(dxp.lxc.liferay.com.virtualInstanceId=*))(!(",
 			ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(),
+			"=*))(!(",
+			ExtendedObjectClassDefinition.Scope.GROUP.getPortablePropertyKey(),
 			"=*))(!(siteExternalReferenceCode=*))(!(",
 			ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE.
 				getPropertyKey(),
@@ -158,6 +167,17 @@ public class ConfigurationFilterStringUtil {
 		return StringBundler.concat(
 			StringPool.OPEN_PARENTHESIS, StringPool.AMPERSAND, filterString,
 			getSystemScopedFilterString(), StringPool.CLOSE_PARENTHESIS);
+	}
+
+	private static String _getPortablePropertyFilterString(
+		ExtendedObjectClassDefinition.Scope scope, Serializable scopePK) {
+
+		if (scopePK != null) {
+			return StringPool.BLANK;
+		}
+
+		return _getPropertyFilterString(
+			scope.getPortablePropertyKey(), StringPool.STAR);
 	}
 
 	private static String _getPropertyFilterString(String key, String value) {

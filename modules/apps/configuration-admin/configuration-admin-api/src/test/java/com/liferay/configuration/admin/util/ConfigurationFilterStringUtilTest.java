@@ -71,6 +71,11 @@ public class ConfigurationFilterStringUtilTest {
 		_test(
 			true, filterString,
 			HashMapBuilder.<String, Serializable>put(
+				"companyWebId", "any"
+			).build());
+		_test(
+			true, filterString,
+			HashMapBuilder.<String, Serializable>put(
 				"dxp.lxc.liferay.com.virtualInstanceId", "any"
 			).build());
 
@@ -106,6 +111,11 @@ public class ConfigurationFilterStringUtilTest {
 				"companyId", companyId
 			).put(
 				"siteExternalReferenceCode", "any"
+			).build());
+		_test(
+			false, filterString,
+			HashMapBuilder.<String, Serializable>put(
+				"companyWebId", "any"
 			).build());
 		_test(
 			true, filterString,
@@ -195,6 +205,13 @@ public class ConfigurationFilterStringUtilTest {
 			HashMapBuilder.<String, Serializable>put(
 				"companyId", companyId
 			).put(
+				"groupKey", "any"
+			).build());
+		_test(
+			true, filterString,
+			HashMapBuilder.<String, Serializable>put(
+				"companyId", companyId
+			).put(
 				"siteExternalReferenceCode", "any"
 			).build());
 
@@ -204,6 +221,13 @@ public class ConfigurationFilterStringUtilTest {
 		filterString = ConfigurationFilterStringUtil.getGroupScopedFilterString(
 			companyId, groupId, siteExternalReferenceCode);
 
+		_test(
+			false, filterString,
+			HashMapBuilder.<String, Serializable>put(
+				"companyId", companyId
+			).put(
+				"groupKey", "any"
+			).build());
 		_test(
 			false, filterString,
 			HashMapBuilder.<String, Serializable>put(
@@ -357,12 +381,22 @@ public class ConfigurationFilterStringUtilTest {
 		_test(
 			false, filterString,
 			HashMapBuilder.<String, Serializable>put(
+				"companyWebId", "any"
+			).build());
+		_test(
+			false, filterString,
+			HashMapBuilder.<String, Serializable>put(
 				"dxp.lxc.liferay.com.virtualInstanceId", "any"
 			).build());
 		_test(
 			false, filterString,
 			HashMapBuilder.<String, Serializable>put(
 				"groupId", "any"
+			).build());
+		_test(
+			false, filterString,
+			HashMapBuilder.<String, Serializable>put(
+				"groupKey", "any"
 			).build());
 		_test(
 			false, filterString,
