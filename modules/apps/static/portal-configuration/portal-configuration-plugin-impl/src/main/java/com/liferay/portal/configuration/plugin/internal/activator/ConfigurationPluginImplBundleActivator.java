@@ -5,6 +5,7 @@
 
 package com.liferay.portal.configuration.plugin.internal.activator;
 
+import com.liferay.portal.configuration.plugin.internal.GroupKeyToGroupConfigurationPluginImpl;
 import com.liferay.portal.configuration.plugin.internal.SiteExternalReferenceCodeToGroupConfigurationPluginImpl;
 import com.liferay.portal.configuration.plugin.internal.WebIdToCompanyConfigurationPluginImpl;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -35,6 +36,16 @@ public class ConfigurationPluginImplBundleActivator implements BundleActivator {
 					"config.plugin.id",
 					SiteExternalReferenceCodeToGroupConfigurationPluginImpl.
 						class.getName()
+				).build()));
+		_serviceRegistrations.add(
+			bundleContext.registerService(
+				ConfigurationPlugin.class,
+				new GroupKeyToGroupConfigurationPluginImpl(bundleContext),
+				HashMapDictionaryBuilder.<String, Object>put(
+					ConfigurationPlugin.CM_RANKING, 450
+				).put(
+					"config.plugin.id",
+					GroupKeyToGroupConfigurationPluginImpl.class.getName()
 				).build()));
 		_serviceRegistrations.add(
 			bundleContext.registerService(
