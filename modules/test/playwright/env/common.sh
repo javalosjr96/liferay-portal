@@ -17,7 +17,6 @@ function assert_clean_upgrade_log {
 		exit 1
 	fi
 
-	# WARN is excluded: EnvPropertiesUtil:54 emits a WARN on every clean upgrade run.
 	local upgrade_log_errors
 	upgrade_log_errors=$(grep -E "^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+[0-9]{2}:[0-9]{2}:[0-9]{2}([.,][0-9]{3})?[[:space:]]+(ERROR|FATAL)" "${upgrade_log}" || true)
 
