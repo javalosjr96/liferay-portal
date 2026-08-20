@@ -3607,10 +3607,25 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 
 									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
 
+									<propertyregex
+										defaultvalue="${playwright.project.name}"
+										global="true"
+										input="${playwright.project.name}"
+										override="true"
+										property="playwright.project.dir.name"
+										regexp="\."
+										replace="/"
+									/>
+
+									<property
+										file="modules/test/playwright/tests/${playwright.project.dir.name}/test.properties"
+										prefix="playwright.project"
+									/>
+
 									<if>
 										<or>
 											<equals arg1="${playwright.project.name}" arg2="smoke.main" />
-											<contains string="${playwright.project.name}" substring="upgrade" />
+											<equals arg1="${playwright.project.test.assert.warning.exceptions}" arg2="true" />
 										</or>
 										<then>
 											<ant dir="portal-kernel" inheritAll="false" target="test-class">
