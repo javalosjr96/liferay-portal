@@ -68,21 +68,27 @@ public class SiteExternalReferenceCodeToGroupConfigurationPluginImpl
 				PreparedStatement preparedStatement =
 					connection.prepareStatement(
 						_db.buildSQL(
-							"select groupId from Group_ where " +
+							"select companyId, groupId from Group_ where " +
 								"externalReferenceCode = ?"))) {
 
 				preparedStatement.setString(1, siteExternalReferenceCode);
 
 				try (ResultSet resultSet = preparedStatement.executeQuery()) {
 					if (resultSet.next()) {
+						long companyId = resultSet.getLong("companyId");
 						long groupId = resultSet.getLong("groupId");
 
 						properties.put("groupId", groupId);
 
+						if (properties.get("companyId") == null) {
+							properties.put("companyId", companyId);
+						}
+
 						if (_log.isInfoEnabled()) {
 							_log.info(
 								StringBundler.concat(
-									"Injected group ID ", groupId,
+									"Injected company ID ", companyId,
+									" and group ID ", groupId,
 									" for site external reference code ",
 									siteExternalReferenceCode));
 						}
