@@ -40,6 +40,8 @@ async function viewUpgradedPortalContent(page: Page) {
 	await test.step('View wiki after upgrade', async () => {
 		await page.goto('/web/guest/wiki');
 
+		await expect(page.getByText('FrontPage', {exact: true})).toBeVisible();
+
 		await expect(
 			page.getByText('Wiki Front Page Content', {exact: true})
 		).toBeVisible();
