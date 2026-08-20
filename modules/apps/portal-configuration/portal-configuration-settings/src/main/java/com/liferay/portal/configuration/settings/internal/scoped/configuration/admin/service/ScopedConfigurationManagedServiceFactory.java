@@ -5,9 +5,12 @@
 
 package com.liferay.portal.configuration.settings.internal.scoped.configuration.admin.service;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.configuration.settings.internal.util.ConfigurationPidUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.settings.LocationVariableResolver;
@@ -117,6 +120,24 @@ public class ScopedConfigurationManagedServiceFactory
 				ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE,
 				properties);
 		}
+		else if ((companyId == CompanyConstants.SYSTEM) &&
+				 (groupId == GroupConstants.ANY_PARENT_GROUP_ID) &&
+				 _log.isWarnEnabled()) {
+
+			_log.warn(
+				StringBundler.concat(
+					"Configuration ", pid, " for ",
+					_configurationBeanClass.getName(),
+					" was not applied because it is missing the properties \"",
+					ExtendedObjectClassDefinition.Scope.COMPANY.
+						getPropertyKey(),
+					"\", \"",
+					ExtendedObjectClassDefinition.Scope.GROUP.getPropertyKey(),
+					"\", and \"",
+					ExtendedObjectClassDefinition.Scope.PORTLET_INSTANCE.
+						getPropertyKey(),
+					"\""));
+		}
 	}
 
 	private ScopeKey _getScopeKey(
@@ -201,6 +222,9 @@ public class ScopedConfigurationManagedServiceFactory
 	}
 
 	private static final String _SEPARATOR = "--";
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		ScopedConfigurationManagedServiceFactory.class);
 
 	private final Class<?> _configurationBeanClass;
 	private final Map<ScopeKey, Map<String, Object>> _configurationBeans =
