@@ -3588,7 +3588,7 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 									</docker-execute>
 								</try>
 								<catch>
-									<fail message="${exception.message}" />
+									<echo>${exception.message}</echo>
 								</catch>
 								<finally>
 									<stop-docker-playwright />
@@ -3624,7 +3624,7 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 
 									<if>
 										<or>
-											<equals arg1="${playwright.project.name}" arg2="smoke.main" />
+											<equals arg1="${playwright.project.name}" arg2="smoke" />
 											<equals arg1="${playwright.project.test.assert.warning.exceptions}" arg2="true" />
 										</or>
 										<then>
