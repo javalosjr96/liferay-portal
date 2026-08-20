@@ -7,6 +7,7 @@ import {expect, mergeTests} from '@playwright/test';
 
 import {loginTest} from '../../../fixtures/loginTest';
 import {virtualInstancesPagesTest} from '../../../fixtures/virtualInstancesPagesTest';
+import getRandomString from '../../../utils/getRandomString';
 
 const test = mergeTests(loginTest(), virtualInstancesPagesTest);
 
@@ -23,5 +24,35 @@ test(
 		await expect(
 			virtualInstancesPage.importInstanceErrorMessage
 		).toBeVisible();
+	}
+);
+
+test(
+	'LPD-92621 Importing an exported schema shows the import success message',
+	{tag: '@LPD-92621'},
+	async ({virtualInstancesPage}) => {
+		const exportedWebId = getRandomString();
+		const importedWebId = getRandomString();
+
+		await virtualInstancesPage.addNewVirtualInstance(exportedWebId);
+
+		const schemaName =
+			await virtualInstancesPage.exportVirtualInstance(exportedWebId);
+
+		await virtualInstancesPage.openImportVirtualInstanceModal();
+
+		await virtualInstancesPage.submitImportVirtualInstance({
+			name: importedWebId,
+			schemaName,
+			virtualHost: importedWebId,
+			webId: importedWebId,
+		});
+
+		await expect(
+			virtualInstancesPage.importInstanceSuccessMessage(importedWebId)
+		).toBeVisible();
+
+		await virtualInstancesPage.deleteVirtualInstance(importedWebId);
+		await virtualInstancesPage.deleteVirtualInstance(exportedWebId);
 	}
 );
