@@ -94,9 +94,7 @@ public class GroupKeyToGroupConfigurationPluginImplTest {
 				HashMapDictionaryBuilder.<String, Object>put(
 					"groupId", groupId
 				).put(
-					"groupKey",
-					TestPropsValues.COMPANY_WEB_ID + "--" +
-						GroupConstants.GUEST
+					"groupKey", RandomTestUtil.randomString()
 				).build());
 
 		Assert.assertNull(processedProperties.get("companyId"));
