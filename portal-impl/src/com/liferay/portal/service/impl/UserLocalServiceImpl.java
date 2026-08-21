@@ -215,6 +215,7 @@ import java.io.Serializable;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Statement;
 import java.sql.Timestamp;
 
 import java.text.DateFormat;
@@ -7510,7 +7511,8 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 					connection,
 					CustomSQLUtil.get(
 						UserLocalServiceImpl.class.getName() +
-							".updateLastLogin"))) {
+							".updateLastLogin"),
+					true)) {
 
 			for (User user : users) {
 				preparedStatement.setTimestamp(
@@ -7527,10 +7529,28 @@ public class UserLocalServiceImpl extends UserLocalServiceBaseImpl {
 
 			int[] results = preparedStatement.executeBatch();
 
+			if (results.length != users.size()) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						StringBundler.concat(
+							"Unable to map ", results.length,
+							" row counts onto ", users.size(), " users"));
+				}
+
+				for (User user : users) {
+					EntityCacheUtil.removeResult(
+						UserImpl.class, user.getUserId());
+				}
+
+				return;
+			}
+
 			for (int i = 0; i < results.length; i++) {
 				User user = users.get(i);
 
-				if (results[i] == 1) {
+				if ((results[i] > 0) ||
+					(results[i] == Statement.SUCCESS_NO_INFO)) {
+
 					EntityCacheUtil.putResult(
 						UserImpl.class, user, true, false);
 				}
