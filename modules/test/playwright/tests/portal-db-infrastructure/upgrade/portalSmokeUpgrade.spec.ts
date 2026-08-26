@@ -27,21 +27,45 @@ async function viewUpgradedPortalContent(page: Page) {
 	await test.step('View document after upgrade', async () => {
 		await page.goto('/web/guest/document');
 
-		await expect(page.getByText('Document1', {exact: true})).toBeVisible();
+		await page.getByRole('link', {name: 'Document1'}).click();
+
+		await page.locator('a[href*=infoPanel]').click();
+
+		await expect(page.locator('.username')).toHaveText('Test Test');
+
+		await expect(page.locator('.label-item')).toHaveText('Version 1.0');
+
+		await expect(page.locator('.workflow-status')).toHaveText('Approved');
 	});
 
 	await test.step('View message boards after upgrade', async () => {
 		await page.goto('/web/guest/message-boards');
 
+		const threadLink = page.getByRole('link', {
+			name: 'Message Boards Subject',
+		});
+
+		await expect(threadLink).toBeVisible();
+
+		const threadURL = await threadLink.getAttribute('href');
+
+		await page.goto(threadURL ?? '');
+
 		await expect(
-			page.getByText('Message Boards Subject', {exact: true})
+			page.getByRole('heading', {name: 'Message Boards Subject'})
+		).toBeVisible();
+
+		await expect(
+			page.getByText('Message Boards Body', {exact: true})
 		).toBeVisible();
 	});
 
 	await test.step('View wiki after upgrade', async () => {
 		await page.goto('/web/guest/wiki');
 
-		await expect(page.getByText('FrontPage', {exact: true})).toBeVisible();
+		await expect(
+			page.getByRole('heading', {name: 'FrontPage'})
+		).toBeVisible();
 
 		await expect(
 			page.getByText('Wiki Front Page Content', {exact: true})
@@ -63,7 +87,7 @@ async function viewUpgradedPortalContent(page: Page) {
 	await test.step('View site page after upgrade', async () => {
 		await page.goto('/web/site-name/site-page');
 
-		await expect(page).toHaveTitle(/Site Page/);
+		await expect(page).toHaveTitle(/^Site Page - Site Name/);
 	});
 }
 
