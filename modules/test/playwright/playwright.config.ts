@@ -172,6 +172,7 @@ import {config as passwordPoliciesAdminWebFirstLoginConfig} from './tests/passwo
 import {config as passwordPoliciesAdminWebConfig} from './tests/password-policies-admin-web/main/config';
 import {config as passwordPoliciesAdminWebSetupAdminConfig} from './tests/password-policies-admin-web/setup-admin/config';
 import {config as portalDbInfrastructureUpgrade625Config} from './tests/portal-db-infrastructure/upgrade-625/config';
+import {config as portalDbInfrastructureUpgrade7413Config} from './tests/portal-db-infrastructure/upgrade-7413/config';
 import {config as portalDefaultPermissionsWebConfig} from './tests/portal-default-permissions-web/main/config';
 import {config as portalImplMainConfig} from './tests/portal-impl/main/config';
 import {config as portalImplPortletConfig} from './tests/portal-impl/portlet/config';
@@ -437,6 +438,7 @@ export default defineConfig({
 		passwordPoliciesAdminWebFirstLoginConfig,
 		passwordPoliciesAdminWebSetupAdminConfig,
 		portalDbInfrastructureUpgrade625Config,
+		portalDbInfrastructureUpgrade7413Config,
 		portalDefaultPermissionsWebConfig,
 		portalImplMainConfig,
 		portalImplPortletConfig,
