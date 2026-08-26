@@ -17,13 +17,13 @@ function assert_clean_upgrade_log {
 		exit 1
 	fi
 
-	local upgrade_log_errors
-	upgrade_log_errors=$(grep -E "^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+[0-9]{2}:[0-9]{2}:[0-9]{2}([.,][0-9]{3})?[[:space:]]+(ERROR|FATAL)" "${upgrade_log}" || true)
+	local unclean_log_entries
+	unclean_log_entries=$(grep -E "^[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]+[0-9]{2}:[0-9]{2}:[0-9]{2}([.,][0-9]{3})?[[:space:]]+(ERROR|FATAL|WARN)" "${upgrade_log}" | grep -v "\[SidecarManager:" || true)
 
-	if [ -n "${upgrade_log_errors}" ]
+	if [ -n "${unclean_log_entries}" ]
 	then
-		echo "Upgrade log contains ERROR or FATAL entries:"
-		printf "%s\n" "${upgrade_log_errors}"
+		echo "Upgrade log contains ERROR, FATAL, or WARN entries:"
+		printf "%s\n" "${unclean_log_entries}"
 
 		exit 1
 	fi
