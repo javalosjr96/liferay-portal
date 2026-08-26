@@ -6,9 +6,10 @@
 import {Page, expect, mergeTests} from '@playwright/test';
 
 import {loginTest} from '../../../fixtures/loginTest';
+import {searchAdminPageTest} from '../../../fixtures/searchAdminPageTest';
 import {performLoginViaApi, performLogout} from '../../../utils/performLogin';
 
-const test = mergeTests(loginTest());
+const test = mergeTests(loginTest(), searchAdminPageTest);
 
 async function viewUpgradedPortalContent(page: Page) {
 	await test.step('View web content after upgrade', async () => {
@@ -70,7 +71,24 @@ test.describe.serial('View portal smoke upgrade', () => {
 	test(
 		'Can view upgraded portal content as admin',
 		{tag: '@LPD-96642'},
-		async ({page}) => {
+		async ({page, searchAdminPage}) => {
+			await test.step('Reindex all search indexes', async () => {
+				await searchAdminPage.goto();
+
+				await searchAdminPage.goToIndexActionsTab();
+
+				await searchAdminPage.reindexAllSearchIndexes();
+
+				const reindexAllSearchIndexes =
+					await searchAdminPage.getIndexActionsItem(
+						'All Search Indexes'
+					);
+
+				await expect(
+					reindexAllSearchIndexes.locator('.progress')
+				).toBeHidden({timeout: 600 * 1000});
+			});
+
 			await viewUpgradedPortalContent(page);
 		}
 	);
