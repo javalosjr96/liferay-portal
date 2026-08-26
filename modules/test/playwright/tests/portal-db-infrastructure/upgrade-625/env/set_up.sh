@@ -27,6 +27,10 @@ function main {
 	assert_clean_upgrade_log
 
 	default_set_up
+
+	sleep "${INDEX_ON_STARTUP_DELAY:-60}"
+
+	wait_for_portal_log_inactivity "${LIFERAY_HOME}"
 }
 
 main "${@}"
