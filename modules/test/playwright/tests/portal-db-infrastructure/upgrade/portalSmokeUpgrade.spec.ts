@@ -31,11 +31,17 @@ async function viewUpgradedPortalContent(page: Page) {
 
 		await page.locator('a[href*=infoPanel]').click();
 
-		await expect(page.locator('.username')).toHaveText('Test Test');
+		await expect(page.locator('.sidebar-body .username')).toHaveText(
+			'Test Test'
+		);
 
-		await expect(page.locator('.label-item')).toHaveText('Version 1.0');
+		await expect(page.locator('.sidebar-header .label-item')).toHaveText(
+			'Version 1.0'
+		);
 
-		await expect(page.locator('.workflow-status')).toHaveText('Approved');
+		await expect(
+			page.locator('.sidebar-header .workflow-status')
+		).toHaveText('Approved');
 
 		const downloadButton = page
 			.locator('.sidebar-section')
