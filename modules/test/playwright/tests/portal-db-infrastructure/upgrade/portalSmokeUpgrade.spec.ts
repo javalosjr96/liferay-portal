@@ -72,7 +72,9 @@ async function viewUpgradedPortalContent(page: Page) {
 
 		const threadURL = await threadLink.getAttribute('href');
 
-		await page.goto(threadURL ?? '');
+		expect(threadURL).not.toBeNull();
+
+		await page.goto(threadURL as string);
 
 		await expect(
 			page.getByRole('heading', {name: 'Message Boards Subject'})
