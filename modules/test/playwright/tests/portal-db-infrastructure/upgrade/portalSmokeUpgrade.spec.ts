@@ -56,6 +56,14 @@ async function viewUpgradedPortalContent(page: Page) {
 
 		await expect(threadLink).toBeVisible();
 
+		const threadRow = page
+			.getByTestId('row')
+			.filter({hasText: 'Message Boards Subject'});
+
+		await expect(
+			threadRow.locator('.lfr-portal-tooltip[title="0 Replies"]')
+		).toBeVisible();
+
 		const threadURL = await threadLink.getAttribute('href');
 
 		await page.goto(threadURL ?? '');
