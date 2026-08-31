@@ -36,6 +36,15 @@ async function viewUpgradedPortalContent(page: Page) {
 		await expect(page.locator('.label-item')).toHaveText('Version 1.0');
 
 		await expect(page.locator('.workflow-status')).toHaveText('Approved');
+
+		const downloadButton = page
+			.locator('.sidebar-section')
+			.getByRole('link', {name: 'Download'});
+
+		await expect(downloadButton).toHaveAttribute(
+			'title',
+			'File Size 22 KB'
+		);
 	});
 
 	await test.step('View message boards after upgrade', async () => {
