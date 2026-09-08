@@ -192,19 +192,19 @@ public class CTServicePublisher<T extends CTModel<T>> {
 				connection, tableName, primaryKeyName);
 
 			if (predeletedRowCount != _deletionCTEntries.size()) {
-				int updatedRowCount = _updateCTCollectionId(
+				int updatedCTEntryCount = _updateCTCollectionId(
 					connection, tableName, primaryKeyName,
 					_deletionCTEntries.values(), _targetCTCollectionId,
 					_sourceCTCollectionId, false, false);
 
-				if ((predeletedRowCount + updatedRowCount) !=
+				if ((predeletedRowCount + updatedCTEntryCount) !=
 						_deletionCTEntries.size()) {
 
 					throw new SystemException(
 						StringBundler.concat(
 							"Unable to publish ", _deletionCTEntries.size(),
 							" deletions, predeleted ", predeletedRowCount,
-							" and updated ", updatedRowCount));
+							" and updated ", updatedCTEntryCount));
 				}
 			}
 
@@ -326,22 +326,23 @@ public class CTServicePublisher<T extends CTModel<T>> {
 				preparedStatement.addBatch();
 			}
 
-			int totalRowCount = 0;
+			int updatedCTEntryCount = 0;
 
 			for (int rowCount : preparedStatement.executeBatch()) {
 				if ((rowCount > 0) || (rowCount == Statement.SUCCESS_NO_INFO)) {
-					totalRowCount++;
+					updatedCTEntryCount++;
 				}
 			}
 
-			if (checkRowCount && (totalRowCount != ctEntries.size())) {
+			if (checkRowCount && (updatedCTEntryCount != ctEntries.size())) {
 				throw new SystemException(
 					StringBundler.concat(
-						"Size mismatch expected ", ctEntries.size(),
-						" but was ", totalRowCount));
+						"Unable to update ", ctEntries.size(),
+						" change tracking entries, updated ",
+						updatedCTEntryCount));
 			}
 
-			return totalRowCount;
+			return updatedCTEntryCount;
 		}
 	}
 
