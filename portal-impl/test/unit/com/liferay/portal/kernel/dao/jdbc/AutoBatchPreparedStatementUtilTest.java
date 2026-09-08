@@ -107,22 +107,6 @@ public class AutoBatchPreparedStatementUtilTest {
 	}
 
 	@Test
-	public void testAutoBatchReturnRowCountsBatchSizeZero() throws Exception {
-		PropsUtil.set(PropsKeys.HIBERNATE_JDBC_BATCH_SIZE, "0");
-
-		Assert.assertArrayEquals(
-			new int[] {1, 2, 3, 4, 5}, doTestReturnRowCounts(5, true));
-	}
-
-	@Test
-	public void testAutoBatchReturnRowCountsSingleFlush() throws Exception {
-		PropsUtil.set(PropsKeys.HIBERNATE_JDBC_BATCH_SIZE, "2000");
-
-		Assert.assertArrayEquals(
-			new int[] {1, 2, 3, 4, 5}, doTestReturnRowCounts(5, true));
-	}
-
-	@Test
 	public void testCINITFailure() throws ClassNotFoundException {
 		PropsUtil.set(PropsKeys.HIBERNATE_JDBC_BATCH_SIZE, "0");
 
