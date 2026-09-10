@@ -4,21 +4,25 @@
  */
 
 import {Page, expect} from '@playwright/test';
+import {statSync} from 'fs';
+
+import {getTempDir} from '../../../utils/temp';
 
 /**
  * Asserts that a document restored by a legacy database upgrade opens on the
  * page that lists it, reports the metadata the archive recorded for it, and
- * serves its bytes rather than the 404 a store miss produces. Pass fileSize
- * only for an archive whose expected display size is known.
+ * downloads with the bytes the store holds for it. Pass expectedSize for an
+ * archive whose byte count is known; without it the download must still
+ * produce a non-empty file.
  */
 export async function viewUpgradedDocument({
 	documentPageURL,
-	fileSize,
+	expectedSize,
 	page,
 	title,
 }: {
 	documentPageURL: string;
-	fileSize?: string;
+	expectedSize?: number;
 	page: Page;
 	title: string;
 }) {
@@ -40,26 +44,25 @@ export async function viewUpgradedDocument({
 		'Approved'
 	);
 
-	const downloadLink = page
+	const downloadPromise = page.waitForEvent('download');
+
+	await page
 		.locator('.sidebar-section')
-		.getByRole('link', {name: 'Download'});
+		.getByRole('link', {name: 'Download'})
+		.click();
 
-	if (fileSize) {
-		await expect(downloadLink).toHaveAttribute(
-			'title',
-			`File Size ${fileSize}`
-		);
+	const download = await downloadPromise;
+
+	const filePath = getTempDir() + download.suggestedFilename();
+
+	await download.saveAs(filePath);
+
+	const {size} = statSync(filePath);
+
+	if (expectedSize) {
+		expect(size).toBe(expectedSize);
 	}
-
-	const downloadURL = await downloadLink.getAttribute('href');
-
-	expect(downloadURL).not.toBeNull();
-
-	const response = await page.request.get(downloadURL as string);
-
-	expect(response.status()).toBe(200);
-
-	const body = await response.body();
-
-	expect(body.length).toBeGreaterThan(0);
+	else {
+		expect(size).toBeGreaterThan(0);
+	}
 }
