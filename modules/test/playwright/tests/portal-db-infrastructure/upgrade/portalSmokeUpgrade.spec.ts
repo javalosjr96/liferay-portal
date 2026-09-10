@@ -119,7 +119,7 @@ async function viewUpgradedPortalContent(page: Page) {
 test.describe.serial('View portal smoke upgrade', () => {
 	test(
 		'Can view upgraded portal content as admin',
-		{tag: '@LPD-96642'},
+		{tag: ['@LPD-96642', '@LPD-104393']},
 		async ({page, searchAdminPage}) => {
 			await test.step('Reindex all search indexes', async () => {
 				await searchAdminPage.goto();
@@ -146,7 +146,7 @@ test.describe.serial('View portal smoke upgrade', () => {
 
 	test(
 		'Can view upgraded portal content as the archive user',
-		{tag: '@LPD-96642'},
+		{tag: ['@LPD-96642', '@LPD-104393']},
 		async ({page}) => {
 			await performLogout(page);
 
