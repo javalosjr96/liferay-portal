@@ -16,6 +16,8 @@ function assert_advanced_file_system_store_root_dir {
 	then
 		echo "Unable to confirm the advanced file system store used ${document_library_dir}."
 
+		find "${LIFERAY_HOME}/data" -maxdepth 2 -name README.txt
+
 		exit 1
 	fi
 }

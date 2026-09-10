@@ -7,6 +7,7 @@ import {expect, mergeTests} from '@playwright/test';
 
 import {documentLibraryPagesTest} from '../../../fixtures/documentLibraryPages.fixtures';
 import {loginTest} from '../../../fixtures/loginTest';
+import {RecycleBinPage} from '../../../pages/trash-web/RecycleBinPage';
 import {viewUpgradedDocument} from '../utils/viewUpgradedDocument';
 
 const test = mergeTests(loginTest(), documentLibraryPagesTest);
@@ -18,7 +19,11 @@ test.describe.serial('View AFS store upgrade', () => {
 		async ({page}) => {
 			for (const title of ['Document1', 'Image1']) {
 				await test.step(`View ${title} after upgrade`, async () => {
-					await viewUpgradedDocument({page, title});
+					await viewUpgradedDocument({
+						documentPageURL: '/web/site-name/document',
+						page,
+						title,
+					});
 				});
 			}
 		}
@@ -40,6 +45,16 @@ test.describe.serial('View AFS store upgrade', () => {
 				await documentLibraryPage.moveToRecycleBin(title);
 
 				await expect(card).toBeHidden();
+			}
+
+			const recycleBinPage = new RecycleBinPage(page);
+
+			await recycleBinPage.goto('/site-name');
+
+			for (const title of ['Document1', 'Image1']) {
+				await recycleBinPage.delete(title);
+
+				await recycleBinPage.assertEntryAbsent(title);
 			}
 		}
 	);

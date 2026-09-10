@@ -6,21 +6,23 @@
 import {Page, expect} from '@playwright/test';
 
 /**
- * Asserts that a document restored by a legacy database upgrade opens on its
- * site page, reports the metadata the archive recorded for it, and answers its
- * download URL with 200 rather than the 404 a store miss produces. Pass
- * fileSize only for an archive whose expected display size is known.
+ * Asserts that a document restored by a legacy database upgrade opens on the
+ * page that lists it, reports the metadata the archive recorded for it, and
+ * serves its bytes rather than the 404 a store miss produces. Pass fileSize
+ * only for an archive whose expected display size is known.
  */
 export async function viewUpgradedDocument({
+	documentPageURL,
 	fileSize,
 	page,
 	title,
 }: {
+	documentPageURL: string;
 	fileSize?: string;
 	page: Page;
 	title: string;
 }) {
-	await page.goto('/web/site-name/document');
+	await page.goto(documentPageURL);
 
 	await page.getByRole('link', {name: title}).click();
 
@@ -56,4 +58,8 @@ export async function viewUpgradedDocument({
 	const response = await page.request.get(downloadURL as string);
 
 	expect(response.status()).toBe(200);
+
+	const body = await response.body();
+
+	expect(body.length).toBeGreaterThan(0);
 }
