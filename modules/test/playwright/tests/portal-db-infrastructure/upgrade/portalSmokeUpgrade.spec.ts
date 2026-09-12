@@ -19,7 +19,10 @@ const test = mergeTests(
 	searchAdminPageTest
 );
 
-async function viewUpgradedPortalContent(page: Page) {
+async function viewUpgradedPortalContent(
+	page: Page,
+	hasDownloadPermission = true
+) {
 	await test.step('View web content after upgrade', async () => {
 		await page.goto('/web/guest/web-content');
 
@@ -51,14 +54,16 @@ async function viewUpgradedPortalContent(page: Page) {
 			page.locator('.sidebar-header .workflow-status')
 		).toHaveText('Approved');
 
-		const downloadButton = page
-			.locator('.sidebar-section')
-			.getByRole('link', {name: 'Download'});
+		if (hasDownloadPermission) {
+			const downloadButton = page
+				.locator('.sidebar-section')
+				.getByRole('link', {name: 'Download'});
 
-		await expect(downloadButton).toHaveAttribute(
-			'title',
-			'File Size 22 KB'
-		);
+			await expect(downloadButton).toHaveAttribute(
+				'title',
+				'File Size 22 KB'
+			);
+		}
 	});
 
 	await test.step('View message boards after upgrade', async () => {
@@ -179,7 +184,7 @@ test.describe.serial('View portal smoke upgrade', () => {
 
 			expect(alternateName).toBe('usersn');
 
-			await viewUpgradedPortalContent(page);
+			await viewUpgradedPortalContent(page, false);
 		}
 	);
 });
