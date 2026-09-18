@@ -9,6 +9,8 @@ import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {searchAdminPageTest} from '../../../fixtures/searchAdminPageTest';
 import {getHeader} from '../../../helpers/ApiHelpers';
+import {liferayConfig} from '../../../liferay.config';
+import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisible';
 import {performLoginViaApi, performLogout} from '../../../utils/performLogin';
 
 const test = mergeTests(
@@ -24,27 +26,25 @@ const NO_PERMISSION_MESSAGE =
 
 async function assertNoPermission(page: Page) {
 	await expect(
-		page.getByText(NO_PERMISSION_MESSAGE, {exact: true})
+		page.locator('.alert').getByText(NO_PERMISSION_MESSAGE, {exact: true})
 	).toBeVisible();
 }
 
 async function assertPortletOption(page: Page, optionsName: string) {
-	await page.locator('.portlet-options').first().click();
-
-	const menuItem = page.getByRole('menuitem', {name: optionsName});
-
-	await expect(menuItem).toBeVisible();
-
-	await expect(menuItem).toHaveText(optionsName);
+	await clickAndExpectToBeVisible({
+		target: page.getByRole('menuitem', {exact: true, name: optionsName}),
+		timeout: 5000,
+		trigger: page.locator('.portlet-options').first(),
+	});
 }
 
-async function signIn(page: Page, screenName: string) {
+async function signIn(page: Page, emailPrefix: string, screenName: string) {
 	await performLogout(page);
 
 	await performLoginViaApi({
 		page,
-		password: 'test',
-		screenName,
+		password: liferayConfig.environment.password,
+		screenName: emailPrefix,
 	});
 
 	const response = await page.request.get(
@@ -61,7 +61,7 @@ async function signIn(page: Page, screenName: string) {
 
 test.describe.serial('View portlets permissions upgrade', () => {
 	test(
-		'Can view the portlet permissions each user kept after upgrade',
+		'Can view the portlet permissions the first user kept after upgrade',
 		{tag: ['@LPD-104389']},
 		async ({page, searchAdminPage}) => {
 			await test.step('Reindex all search indexes', async () => {
@@ -84,7 +84,7 @@ test.describe.serial('View portlets permissions upgrade', () => {
 			});
 
 			await test.step('Sign in as the first upgraded user', async () => {
-				await signIn(page, 'userea1');
+				await signIn(page, 'userea1', 'usersn1');
 			});
 
 			await test.step('View the message boards thread', async () => {
@@ -103,6 +103,8 @@ test.describe.serial('View portlets permissions upgrade', () => {
 				await expect(
 					threadRow.locator('.lfr-portal-tooltip[title="0 Replies"]')
 				).toBeVisible();
+
+				await expect(threadRow.getByText('Test Test')).toBeVisible();
 
 				const threadURL = await threadLink.getAttribute('href');
 
@@ -144,21 +146,27 @@ test.describe.serial('View portlets permissions upgrade', () => {
 
 				await assertNoPermission(page);
 			});
+		}
+	);
 
+	test(
+		'Can view the portlet permissions the second user kept after upgrade',
+		{tag: ['@LPD-104389']},
+		async ({page}) => {
 			await test.step('Sign in as the second upgraded user', async () => {
-				await signIn(page, 'userea2');
+				await signIn(page, 'userea2', 'usersn2');
 			});
 
 			await test.step('View the wiki front page', async () => {
 				await page.goto('/web/site-name-2/wiki-page');
 
 				await expect(
+					page.getByRole('heading', {name: 'FrontPage'})
+				).toBeVisible();
+
+				await expect(
 					page.getByText('Wiki Front Page Content', {exact: true})
 				).toBeVisible();
-			});
-
-			await test.step('View the wiki portlet configuration option', async () => {
-				await page.goto('/web/site-name-2/wiki-page');
 
 				await assertPortletOption(page, 'Configuration');
 			});
@@ -169,15 +177,11 @@ test.describe.serial('View portlets permissions upgrade', () => {
 				await expect(
 					page.getByRole('link', {name: 'Document1'})
 				).toBeVisible();
-			});
-
-			await test.step('View the documents portlet permissions option', async () => {
-				await page.goto('/web/site-name-2/documents-and-media-page');
 
 				await assertPortletOption(page, 'Permissions');
 			});
 
-			await test.step('View no permission on the second site blogs again', async () => {
+			await test.step('View no permission on the second site blogs', async () => {
 				await page.goto('/web/site-name-2/blogs-page');
 
 				await assertNoPermission(page);
