@@ -8,6 +8,7 @@ export const config = {
 	testDir: 'tests/portal-db-infrastructure/upgrade-virtual-instances',
 	timeout: 480 * 1000,
 	use: {
+		assertCustomObjects: true,
 		testIdAttribute: 'data-qa-id',
 	},
 };

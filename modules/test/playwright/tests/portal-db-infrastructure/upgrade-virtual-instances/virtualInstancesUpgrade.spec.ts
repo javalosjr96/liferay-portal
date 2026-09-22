@@ -9,6 +9,7 @@ import {loginTest} from '../../../fixtures/loginTest';
 import {searchAdminPageTest} from '../../../fixtures/searchAdminPageTest';
 import {usersAndOrganizationsPagesTest} from '../../../fixtures/usersAndOrganizationsPagesTest';
 import {performLoginViaApi} from '../../../utils/performLogin';
+import {viewUpgradedCustomObject} from '../utils/viewUpgradedCustomObject';
 import {
 	UpgradedVirtualInstance,
 	viewUpgradedVirtualInstance,
@@ -43,6 +44,18 @@ const THIRD_INSTANCE: UpgradedVirtualInstance = {
 	userIndex: '3',
 	webId: 'www.baker.com',
 };
+
+// Only the 7.4.13.u33 archive carries custom objects, and the three projects
+// share this spec, so the project config opts in rather than the spec branching
+// on a version string.
+
+function assertsCustomObjects() {
+	const {assertCustomObjects} = test.info().project.use as {
+		assertCustomObjects?: boolean;
+	};
+
+	return Boolean(assertCustomObjects);
+}
 
 function getInstanceURL(baseURL: string, instance: UpgradedVirtualInstance) {
 	const {port} = new URL(baseURL);
@@ -87,6 +100,15 @@ test.describe.serial('View virtual instances upgrade', () => {
 				page,
 				usersAndOrganizationsPage,
 			});
+
+			if (assertsCustomObjects()) {
+				await viewUpgradedCustomObject({
+					absentNameSuffix: SECOND_INSTANCE.nameSuffix,
+					instanceURL: '',
+					nameSuffix: DEFAULT_INSTANCE.nameSuffix,
+					page,
+				});
+			}
 		}
 	);
 
@@ -113,6 +135,15 @@ test.describe.serial('View virtual instances upgrade', () => {
 				page,
 				usersAndOrganizationsPage,
 			});
+
+			if (assertsCustomObjects()) {
+				await viewUpgradedCustomObject({
+					absentNameSuffix: THIRD_INSTANCE.nameSuffix,
+					instanceURL,
+					nameSuffix: SECOND_INSTANCE.nameSuffix,
+					page,
+				});
+			}
 		}
 	);
 
@@ -139,6 +170,15 @@ test.describe.serial('View virtual instances upgrade', () => {
 				page,
 				usersAndOrganizationsPage,
 			});
+
+			if (assertsCustomObjects()) {
+				await viewUpgradedCustomObject({
+					absentNameSuffix: SECOND_INSTANCE.nameSuffix,
+					instanceURL,
+					nameSuffix: THIRD_INSTANCE.nameSuffix,
+					page,
+				});
+			}
 		}
 	);
 });
