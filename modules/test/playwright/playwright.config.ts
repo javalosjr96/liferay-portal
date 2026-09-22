@@ -185,6 +185,9 @@ import {config as portalDbInfrastructureUpgradePortal7210Config} from './tests/p
 import {config as portalDbInfrastructureUpgradePortal7310Config} from './tests/portal-db-infrastructure/upgrade-portal-7310/config';
 import {config as portalDbInfrastructureUpgradePortal7413Config} from './tests/portal-db-infrastructure/upgrade-portal-7413/config';
 import {config as portalDbInfrastructureUpgradePortalPartition7413u33Config} from './tests/portal-db-infrastructure/upgrade-portal-partition-7413u33/config';
+import {config as portalDbInfrastructureUpgradeVirtualInstances621021Config} from './tests/portal-db-infrastructure/upgrade-virtual-instances-621021/config';
+import {config as portalDbInfrastructureUpgradeVirtualInstances7310Config} from './tests/portal-db-infrastructure/upgrade-virtual-instances-7310/config';
+import {config as portalDbInfrastructureUpgradeVirtualInstances7413u33Config} from './tests/portal-db-infrastructure/upgrade-virtual-instances-7413u33/config';
 import {config as portalDefaultPermissionsWebConfig} from './tests/portal-default-permissions-web/main/config';
 import {config as portalImplMainConfig} from './tests/portal-impl/main/config';
 import {config as portalImplPortletConfig} from './tests/portal-impl/portlet/config';
@@ -459,6 +462,9 @@ export default defineConfig({
 		portalDbInfrastructureUpgradePortal7310Config,
 		portalDbInfrastructureUpgradePortal7413Config,
 		portalDbInfrastructureUpgradePortalPartition7413u33Config,
+		portalDbInfrastructureUpgradeVirtualInstances621021Config,
+		portalDbInfrastructureUpgradeVirtualInstances7310Config,
+		portalDbInfrastructureUpgradeVirtualInstances7413u33Config,
 		portalDefaultPermissionsWebConfig,
 		portalImplMainConfig,
 		portalImplPortletConfig,
