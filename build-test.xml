@@ -15830,6 +15830,18 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 							<![CDATA[
 								#!/bin/bash
 
+								echo "su - db2inst1 -c '/database/config/db2inst1/sqllib/bin/db2 force applications all'"
+
+								force_output=$(su - db2inst1 -c '/database/config/db2inst1/sqllib/bin/db2 force applications all')
+
+								echo "${force_output}"
+
+								echo "su - db2inst1 -c '/database/config/db2inst1/sqllib/bin/db2 deactivate database lportal'"
+
+								deactivate_output=$(su - db2inst1 -c '/database/config/db2inst1/sqllib/bin/db2 deactivate database lportal')
+
+								echo "${deactivate_output}"
+
 								echo "su - db2inst1 -c '/database/config/db2inst1/sqllib/bin/db2 restore database lportal user ${database.username} using ${database.password} from /opt/ibm/db2 ON /database/config/db2inst1 replace existing'"
 
 								output=$(su - db2inst1 -c '/database/config/db2inst1/sqllib/bin/db2 restore database lportal user ${database.username} using ${database.password} from /opt/ibm/db2 ON /database/config/db2inst1 replace existing')
@@ -15856,6 +15868,18 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 							<echo file="${import.database.sh.file.path}">
 								<![CDATA[
 									#!/bin/bash
+
+									echo "db2 force applications all"
+
+									force_output=$(db2 force applications all)
+
+									echo "${force_output}"
+
+									echo "db2 deactivate database lportal"
+
+									deactivate_output=$(db2 deactivate database lportal)
+
+									echo "${deactivate_output}"
 
 									echo "db2 restore database lportal user ${database.username} using ${database.password} from /opt/ibm/db2 replace existing"
 
