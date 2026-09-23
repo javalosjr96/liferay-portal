@@ -15834,13 +15834,21 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 
 								force_output=$(su - db2inst1 -c '/database/config/db2inst1/sqllib/bin/db2 force applications all')
 
+								force_exit_code=$?
+
 								echo "${force_output}"
+
+								echo "db2 force applications all exited with ${force_exit_code}"
 
 								echo "su - db2inst1 -c '/database/config/db2inst1/sqllib/bin/db2 deactivate database lportal'"
 
 								deactivate_output=$(su - db2inst1 -c '/database/config/db2inst1/sqllib/bin/db2 deactivate database lportal')
 
+								deactivate_exit_code=$?
+
 								echo "${deactivate_output}"
+
+								echo "db2 deactivate database lportal exited with ${deactivate_exit_code}"
 
 								echo "su - db2inst1 -c '/database/config/db2inst1/sqllib/bin/db2 restore database lportal user ${database.username} using ${database.password} from /opt/ibm/db2 ON /database/config/db2inst1 replace existing'"
 
@@ -15873,13 +15881,21 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 
 									force_output=$(db2 force applications all)
 
+									force_exit_code=$?
+
 									echo "${force_output}"
+
+									echo "db2 force applications all exited with ${force_exit_code}"
 
 									echo "db2 deactivate database lportal"
 
 									deactivate_output=$(db2 deactivate database lportal)
 
+									deactivate_exit_code=$?
+
 									echo "${deactivate_output}"
+
+									echo "db2 deactivate database lportal exited with ${deactivate_exit_code}"
 
 									echo "db2 restore database lportal user ${database.username} using ${database.password} from /opt/ibm/db2 replace existing"
 
