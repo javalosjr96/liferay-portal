@@ -18,10 +18,12 @@ import com.liferay.portal.search.engine.adapter.index.IndicesExistsIndexResponse
 import com.liferay.portal.search.index.IndexNameBuilder;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 
 /**
@@ -70,11 +72,19 @@ public class BaseWorkflowMetricsReindexerTest {
 
 		_testWorkflowMetricsReindexer.reindex(_COMPANY_ID);
 
+		ArgumentCaptor<DeleteByQueryDocumentRequest> argumentCaptor =
+			ArgumentCaptor.forClass(DeleteByQueryDocumentRequest.class);
+
 		Mockito.verify(
 			_searchEngineAdapter, Mockito.times(1)
 		).execute(
-			Mockito.any(DeleteByQueryDocumentRequest.class)
+			argumentCaptor.capture()
 		);
+
+		DeleteByQueryDocumentRequest deleteByQueryDocumentRequest =
+			argumentCaptor.getValue();
+
+		Assert.assertTrue(deleteByQueryDocumentRequest.isProceedOnConflicts());
 
 		Mockito.verify(
 			_searchEngineAdapter, Mockito.never()

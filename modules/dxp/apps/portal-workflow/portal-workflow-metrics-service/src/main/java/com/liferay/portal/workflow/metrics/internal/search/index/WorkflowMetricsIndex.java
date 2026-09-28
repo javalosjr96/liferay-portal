@@ -130,10 +130,14 @@ public enum WorkflowMetricsIndex {
 			return false;
 		}
 
-		searchEngineAdapter.execute(
+		DeleteByQueryDocumentRequest deleteByQueryDocumentRequest =
 			new DeleteByQueryDocumentRequest(
 				QueriesUtil.matchAll(),
-				getIndexName(indexNameBuilder, _indexNameSuffix, companyId)));
+				getIndexName(indexNameBuilder, _indexNameSuffix, companyId));
+
+		deleteByQueryDocumentRequest.setProceedOnConflicts(true);
+
+		searchEngineAdapter.execute(deleteByQueryDocumentRequest);
 
 		return true;
 	}
