@@ -10,16 +10,6 @@ definition {
 	property test.run.type = "single";
 	property testray.main.component.name = "Database Upgrade Framework";
 
-	setUp {
-		var portalURL = PropsUtil.get("portal.url");
-
-		if (${portalURL} != "http://www.example.com") {
-			SignIn.signIn();
-
-			SearchAdministration.executeReindex();
-		}
-	}
-
 	@priority = 4
 	test ViewAFSStoreUpgradeNoConfig {
 		property data.archive.type = "data-archive-afs-store";
