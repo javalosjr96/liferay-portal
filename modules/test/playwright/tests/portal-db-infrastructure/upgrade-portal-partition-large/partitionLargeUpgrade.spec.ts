@@ -22,20 +22,22 @@ test.describe('View large database partitioning upgrade', () => {
 
 			await page.getByRole('button', {name: 'Sign In'}).click();
 
-			const emailAddressInput = page.getByLabel('Email Address');
+			const emailAddressInput = page.getByLabel('Email Address', {
+				exact: true,
+			});
 
 			await expect(emailAddressInput).toBeVisible();
 
 			await emailAddressInput.fill('test@www.able.com');
 
-			await page.getByLabel('Password').fill('1234');
+			await page.getByLabel('Password', {exact: true}).fill('1234');
 
 			await page
 				.locator('form.sign-in-form')
 				.getByRole('button', {name: 'Sign In'})
 				.click();
 
-			await expect(page.getByLabel('Test Test')).toBeVisible({
+			await expect(page.getByLabel('Test Test', {exact: true})).toBeVisible({
 				timeout: 30 * 1000,
 			});
 		}
