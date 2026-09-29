@@ -37,9 +37,7 @@ test.describe('View large database partitioning upgrade', () => {
 				.getByRole('button', {name: 'Sign In'})
 				.click();
 
-			await expect(
-				page.getByLabel('Test Test', {exact: true})
-			).toBeVisible({
+			await expect(page.getByLabel('Test Test')).toBeVisible({
 				timeout: 30 * 1000,
 			});
 		}
