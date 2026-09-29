@@ -578,6 +578,19 @@ function prepare_additional_bundles {
 	done
 }
 
+function print_upgrade_report {
+	local upgrade_report_file=${1}
+
+	if [ ! -f "${upgrade_report_file}" ]
+	then
+		echo "Unable to find upgrade report at ${upgrade_report_file}."
+
+		exit 1
+	fi
+
+	cat "${upgrade_report_file}"
+}
+
 function rebuild_legacy_database {
 	local data_archive_type=${1}
 	local portal_version=${2}
