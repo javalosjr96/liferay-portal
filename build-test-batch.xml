@@ -3590,6 +3590,13 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 								<isset property="env.PLAYWRIGHT_PROJECT_NAME" />
 							</condition>
 
+							<if>
+								<isset property="test.class.playwright.setup.timeout[${playwright.project.name}]" />
+								<then>
+									<propertycopy from="test.class.playwright.setup.timeout[${playwright.project.name}]" name="test.class.playwright.setup.timeout" override="true" />
+								</then>
+							</if>
+
 							<local name="execute.path" />
 							<local name="java.jdk.home" />
 							<local name="java.jdk.opts" />
