@@ -8,6 +8,7 @@ package com.liferay.portal.security.audit.storage.internal.upgrade.registry;
 import com.liferay.portal.kernel.service.ReleaseLocalService;
 import com.liferay.portal.kernel.upgrade.BaseSQLServerDatetimeUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeStep;
+import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.security.audit.storage.internal.upgrade.v1_0_1.util.AuditEventTable;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
@@ -57,17 +58,16 @@ public class AuditStorageServiceUpgradeStepRegistrator
 
 		registry.register(
 			"2.2.0", "2.3.0",
-			UpgradeProcessFactory.addColumns(
-				"Audit_AuditEvent", "correlationId VARCHAR(75) null",
-				"httpMethod VARCHAR(75) null", "impersonated BOOLEAN",
-				"impersonatedUserEmailAddress VARCHAR(75) null",
-				"impersonatedUserId LONG",
-				"impersonatedUserName VARCHAR(75) null",
-				"objectName VARCHAR(75) null", "requestId VARCHAR(200) null",
-				"requestIdGenerated BOOLEAN", "resourceAction VARCHAR(75) null",
-				"resourceType VARCHAR(75) null", "roles TEXT null",
-				"userAgent VARCHAR(255) null",
-				"userEmailAddress VARCHAR(75) null"));
+			new UpgradeProcess() {
+
+				@Override
+				protected void doUpgrade() throws Exception {
+					throw new Exception(
+						"LPD-106556 DELIBERATE BREAK: simulated failure of " +
+							"the audit storage upgrade");
+				}
+
+			});
 	}
 
 	@Reference
