@@ -464,6 +464,12 @@ public class JournalServiceUpgradeStepRegistrator
 
 		registry.register(
 			"6.1.8", "6.1.9", new DDMFieldAttributeUpgradeProcess());
+
+		registry.register(
+			"6.1.9", "6.1.10",
+			UpgradeProcessFactory.runSQL(
+				"update Release_ set schemaVersion = '99.0.0' where " +
+					"servletContextName = 'portal'"));
 	}
 
 	private void _deleteTempImages() throws Exception {
