@@ -16,6 +16,10 @@ test.describe('View large database partitioning upgrade', () => {
 				`http://www.able.com:${liferayConfig.environment.port}`
 			);
 
+			await expect(
+				page.locator('.user-personal-bar').getByPlaceholder('Search')
+			).toBeVisible();
+
 			await page.getByRole('button', {name: 'Sign In'}).click();
 
 			const emailAddressInput = page.getByLabel('Email Address');
