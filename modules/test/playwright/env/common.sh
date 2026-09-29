@@ -890,7 +890,8 @@ function update_property {
 	done
 }
 
-function upgrade_legacy_database_set_up {
+function upgrade_legacy_database {
+	local custom_startup_timeout=${4}
 	local custom_upgrade_properties=${3}
 	local data_archive_type=${1}
 	local portal_version=${2}
@@ -900,6 +901,7 @@ function upgrade_legacy_database_set_up {
 	if [[ -n ${custom_upgrade_properties} ]]
 	then
 		ant -f build-test.xml \
+			${custom_startup_timeout:+-Dcustom.startup.timeout=${custom_startup_timeout}} \
 			-Dcustom.upgrade.properties="${custom_upgrade_properties}" \
 			-Dportal.version="${portal_version}" \
 			-Dtest.class=playwright \
@@ -909,6 +911,10 @@ function upgrade_legacy_database_set_up {
 			-Dportal.version="${portal_version}" \
 			upgrade-legacy-database
 	fi
+}
+
+function upgrade_legacy_database_set_up {
+	upgrade_legacy_database "${@}"
 
 	assert_clean_upgrade_log
 

@@ -16,14 +16,7 @@ function main {
 
 	update_portal_ext_properties
 
-	rebuild_legacy_database "${DATA_ARCHIVE_TYPE}" "${PORTAL_VERSION}"
-
-	ant -f build-test.xml \
-		-Dcustom.startup.timeout="${CUSTOM_STARTUP_TIMEOUT}" \
-		-Dcustom.upgrade.properties="${CUSTOM_UPGRADE_PROPERTIES}" \
-		-Dportal.version="${PORTAL_VERSION}" \
-		-Dtest.class=playwright \
-		upgrade-legacy-database
+	upgrade_legacy_database "${DATA_ARCHIVE_TYPE}" "${PORTAL_VERSION}" "${CUSTOM_UPGRADE_PROPERTIES}" "${CUSTOM_STARTUP_TIMEOUT}"
 
 	print_upgrade_report "${LIFERAY_HOME}/tools/portal-tools-db-upgrade-client/reports/upgrade_report.txt"
 
