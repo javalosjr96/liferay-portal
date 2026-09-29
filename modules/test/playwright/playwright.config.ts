@@ -188,8 +188,8 @@ import {config as portalDBInfrastructureUpgradePortal7210Config} from './tests/p
 import {config as portalDBInfrastructureUpgradePortal7310Config} from './tests/portal-db-infrastructure/upgrade-portal-7310/config';
 import {config as portalDBInfrastructureUpgradePortal7413Config} from './tests/portal-db-infrastructure/upgrade-portal-7413/config';
 import {config as portalDBInfrastructureUpgradePortalPartition7413u33Config} from './tests/portal-db-infrastructure/upgrade-portal-partition-7413u33/config';
-import {config as portalDBInfrastructureUpgradePortalPartitionLarge2024q23Config} from './tests/portal-db-infrastructure/upgrade-portal-partition-large-2024q23/config';
 import {config as portalDBInfrastructureUpgradePortalPartitionLarge2024q23AutoConfig} from './tests/portal-db-infrastructure/upgrade-portal-partition-large-2024q23-auto/config';
+import {config as portalDBInfrastructureUpgradePortalPartitionLarge2024q23Config} from './tests/portal-db-infrastructure/upgrade-portal-partition-large-2024q23/config';
 import {config as portalDBInfrastructureUpgradePortletsPermissions621015Config} from './tests/portal-db-infrastructure/upgrade-portlets-permissions-621015/config';
 import {config as portalDBInfrastructureUpgradePortletsPermissions621021Config} from './tests/portal-db-infrastructure/upgrade-portlets-permissions-621021/config';
 import {config as portalDBInfrastructureUpgradeVirtualInstances621021Config} from './tests/portal-db-infrastructure/upgrade-virtual-instances-621021/config';
@@ -471,8 +471,8 @@ export default defineConfig({
 		portalDBInfrastructureUpgradePortal7310Config,
 		portalDBInfrastructureUpgradePortal7413Config,
 		portalDBInfrastructureUpgradePortalPartition7413u33Config,
-		portalDBInfrastructureUpgradePortalPartitionLarge2024q23Config,
 		portalDBInfrastructureUpgradePortalPartitionLarge2024q23AutoConfig,
+		portalDBInfrastructureUpgradePortalPartitionLarge2024q23Config,
 		portalDBInfrastructureUpgradePortletsPermissions621015Config,
 		portalDBInfrastructureUpgradePortletsPermissions621021Config,
 		portalDBInfrastructureUpgradeVirtualInstances621021Config,
