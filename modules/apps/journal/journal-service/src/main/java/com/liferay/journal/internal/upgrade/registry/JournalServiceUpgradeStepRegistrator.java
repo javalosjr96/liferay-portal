@@ -464,6 +464,13 @@ public class JournalServiceUpgradeStepRegistrator
 
 		registry.register(
 			"6.1.8", "6.1.9", new DDMFieldAttributeUpgradeProcess());
+
+		registry.register(
+			"6.1.9", "6.1.10",
+			UpgradeProcessFactory.runSQL(
+				"delete from JournalArticle where id_ in (select " +
+					"articlePK from JournalArticleLocalization where " +
+						"title = 'Web Content Title')"));
 	}
 
 	private void _deleteTempImages() throws Exception {
