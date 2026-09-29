@@ -25,11 +25,11 @@ function main {
 		-Dtest.class=playwright \
 		upgrade-legacy-database
 
+	print_upgrade_report "${LIFERAY_HOME}/tools/portal-tools-db-upgrade-client/reports/upgrade_report.txt"
+
 	assert_clean_upgrade_log
 
 	default_set_up
-
-	print_upgrade_report "${LIFERAY_HOME}/tools/portal-tools-db-upgrade-client/reports/upgrade_report.txt"
 }
 
 main "${@}"
