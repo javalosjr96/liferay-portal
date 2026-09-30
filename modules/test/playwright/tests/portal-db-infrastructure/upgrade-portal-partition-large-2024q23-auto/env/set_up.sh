@@ -19,6 +19,8 @@ function main {
 	default_set_up
 
 	print_upgrade_report "${LIFERAY_HOME}/reports/upgrade_report.txt"
+
+	assert_successful_upgrade_report "${LIFERAY_HOME}/reports/upgrade_report.txt"
 }
 
 main "${@}"

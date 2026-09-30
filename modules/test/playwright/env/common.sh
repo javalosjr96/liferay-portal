@@ -23,6 +23,17 @@ function assert_clean_upgrade_log {
 	fi
 }
 
+function assert_successful_upgrade_report {
+	local upgrade_report_file=${1}
+
+	if ! grep --quiet "^Result: success$" "${upgrade_report_file}"
+	then
+		echo "Upgrade report ${upgrade_report_file} does not have a successful result."
+
+		exit 1
+	fi
+}
+
 function assert_document_library_not_populated {
 	local document_library_dir="${LIFERAY_HOME}/data/document_library"
 

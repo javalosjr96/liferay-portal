@@ -20,6 +20,8 @@ function main {
 
 	print_upgrade_report "${LIFERAY_HOME}/tools/portal-tools-db-upgrade-client/reports/upgrade_report.txt"
 
+	assert_successful_upgrade_report "${LIFERAY_HOME}/tools/portal-tools-db-upgrade-client/reports/upgrade_report.txt"
+
 	assert_clean_upgrade_log
 
 	default_set_up
