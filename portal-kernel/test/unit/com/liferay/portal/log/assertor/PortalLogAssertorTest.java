@@ -45,8 +45,30 @@ import org.xml.sax.InputSource;
 public class PortalLogAssertorTest {
 
 	@BeforeClass
-	public static void setUpClass() {
+	public static void setUpClass() throws Exception {
 		Assume.assumeNotNull(System.getenv("JENKINS_HOME"));
+
+		String ignoreErrorsFileName = System.getProperty(
+			"ignore.errors.file.name");
+
+		if (Validator.isNull(ignoreErrorsFileName)) {
+			return;
+		}
+
+		DocumentBuilderFactory documentBuilderFactory =
+			DocumentBuilderFactory.newInstance();
+
+		DocumentBuilder documentBuilder =
+			documentBuilderFactory.newDocumentBuilder();
+
+		Document document = documentBuilder.parse(
+			new File(ignoreErrorsFileName));
+
+		NodeList logNodeList = document.getElementsByTagName("log");
+
+		Element logElement = (Element)logNodeList.item(0);
+
+		_ignoreErrorNodeList = logElement.getElementsByTagName("ignore-error");
 	}
 
 	@Test
@@ -134,24 +156,12 @@ public class PortalLogAssertorTest {
 				if (levelString.equals("ERROR") ||
 					levelString.equals("FATAL") || levelString.equals("WARN")) {
 
-					Element eventElement = (Element)node;
-
-					NodeList messageNodeList = eventElement.getElementsByTagName(
-						"message");
-
-					Node messageNode = messageNodeList.item(0);
-
-					if ((messageNode != null) &&
-						_isInIgnoreErrorsFile(messageNode.getTextContent())) {
-
-						continue;
-					}
-
 					NodeList childNodeList = node.getChildNodes();
 
 					String message =
 						"\nPortal log assert failure, see above log for more " +
 							"information: \n";
+					String messageText = null;
 
 					for (int j = 0; j < childNodeList.getLength(); j++) {
 						Node childNode = childNodeList.item(j);
@@ -159,11 +169,19 @@ public class PortalLogAssertorTest {
 						String nodeName = childNode.getNodeName();
 
 						if (nodeName.equals("message")) {
-							message += childNode.getTextContent();
+							messageText = childNode.getTextContent();
+
+							message += messageText;
 						}
 						else if (nodeName.equals("throwable")) {
 							message += "\n" + childNode.getTextContent();
 						}
+					}
+
+					if ((messageText != null) &&
+						_isInIgnoreErrorsFile(messageText)) {
+
+						continue;
 					}
 
 					System.out.println(
@@ -196,34 +214,13 @@ public class PortalLogAssertorTest {
 		return node.getTextContent();
 	}
 
-	private boolean _isInIgnoreErrorsFile(String messageText)
-		throws Exception {
-
-		String ignoreErrorsFileName = System.getProperty(
-			"ignore.errors.file.name");
-
-		if (Validator.isNull(ignoreErrorsFileName)) {
+	private boolean _isInIgnoreErrorsFile(String messageText) {
+		if (_ignoreErrorNodeList == null) {
 			return false;
 		}
 
-		DocumentBuilderFactory documentBuilderFactory =
-			DocumentBuilderFactory.newInstance();
-
-		DocumentBuilder documentBuilder =
-			documentBuilderFactory.newDocumentBuilder();
-
-		Document document = documentBuilder.parse(
-			new File(ignoreErrorsFileName));
-
-		NodeList logNodeList = document.getElementsByTagName("log");
-
-		Element logElement = (Element)logNodeList.item(0);
-
-		NodeList ignoreErrorNodeList = logElement.getElementsByTagName(
-			"ignore-error");
-
-		for (int i = 0; i < ignoreErrorNodeList.getLength(); i++) {
-			Element ignoreErrorElement = (Element)ignoreErrorNodeList.item(i);
+		for (int i = 0; i < _ignoreErrorNodeList.getLength(); i++) {
+			Element ignoreErrorElement = (Element)_ignoreErrorNodeList.item(i);
 
 			String containsText = _getTextContent(
 				ignoreErrorElement, "contains");
@@ -246,5 +243,7 @@ public class PortalLogAssertorTest {
 
 		return false;
 	}
+
+	private static NodeList _ignoreErrorNodeList;
 
 }
