@@ -6,6 +6,7 @@
 package com.liferay.portal.db.partition.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -33,10 +34,16 @@ import com.liferay.portal.kernel.test.rule.AssumeTestRule;
 import com.liferay.portal.kernel.test.rule.CompanyProviderClassTestRule;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.util.InfrastructureUtil;
+import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -48,7 +55,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
+
+import javax.sql.DataSource;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -484,6 +495,18 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	}
 
 	@Test
+	@TestInfo("LPD-105887")
+	public void testExportConfiguration() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+
+		_assertConnectionsClosed(
+			DBPartitionUtil.getExportedPartitionName(companyId),
+			() -> DBPartitionUtil.exportConfiguration(
+				companyId, RandomTestUtil.randomString(),
+				RandomTestUtil.randomString()));
+	}
+
+	@Test
 	@TestInfo("LPS-199893")
 	public void testExportDBPartition() throws Exception {
 		addDBPartitions();
@@ -612,6 +635,16 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	}
 
 	@Test
+	@TestInfo("LPD-105887")
+	public void testGetConfigurations() throws Exception {
+		long companyId = RandomTestUtil.randomLong();
+
+		_assertConnectionsClosed(
+			getPartitionName(companyId),
+			() -> DBPartitionUtil.getConfigurations(companyId));
+	}
+
+	@Test
 	public void testIncrementCounter() throws Exception {
 		long count = DBPartitionUtil.incrementCounter();
 
@@ -667,6 +700,63 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 		}
 
 		Assert.assertEquals(_JOBS_COUNT, _getJobsCount(defaultPartitionName));
+	}
+
+	private void _assertConnectionsClosed(
+			String partitionName, UnsafeRunnable<Exception> unsafeRunnable)
+		throws Exception {
+
+		DataSource dataSource = InfrastructureUtil.getDataSource();
+
+		Queue<Connection> connections = new ConcurrentLinkedQueue<>();
+
+		db.runSQL(
+			dbPartitionDB.getCreatePartitionSQL(connection, partitionName));
+
+		try {
+			db.runSQL(
+				dbPartitionDB.getCreateTableSQL(
+					connection, defaultPartitionName, partitionName,
+					"Configuration_"));
+
+			InfrastructureUtil.setDataSource(
+				(DataSource)ProxyUtil.newProxyInstance(
+					ClassLoader.getSystemClassLoader(),
+					new Class<?>[] {DataSource.class},
+					new DataSourceInvocationHandler(
+						connections, dataSource, Thread.currentThread())));
+
+			try {
+				for (int i = 0; i < 3; i++) {
+					unsafeRunnable.run();
+				}
+			}
+			finally {
+				InfrastructureUtil.setDataSource(dataSource);
+			}
+
+			Assert.assertEquals(connections.toString(), 3, connections.size());
+
+			List<Connection> unclosedConnections = new ArrayList<>();
+
+			for (Connection curConnection : connections) {
+				if (!curConnection.isClosed()) {
+					unclosedConnections.add(curConnection);
+				}
+			}
+
+			Assert.assertEquals(
+				unclosedConnections.toString(), 0, unclosedConnections.size());
+		}
+		finally {
+			for (Connection curConnection : connections) {
+				if (!curConnection.isClosed()) {
+					curConnection.close();
+				}
+			}
+
+			db.runSQL(dbPartitionDB.getDropPartitionSQL(partitionName));
+		}
 	}
 
 	private void _assertJobMessage(long companyId, String jobName)
@@ -944,5 +1034,42 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 		filter = "component.name=com.liferay.portal.scheduler.quartz.internal.QuartzTriggerFactory"
 	)
 	private TriggerFactory _triggerFactory;
+
+	private class DataSourceInvocationHandler implements InvocationHandler {
+
+		@Override
+		public Object invoke(Object proxy, Method method, Object[] args)
+			throws Throwable {
+
+			try {
+				Object result = method.invoke(_dataSource, args);
+
+				if ((result instanceof Connection) &&
+					(Thread.currentThread() == _thread)) {
+
+					_connections.add((Connection)result);
+				}
+
+				return result;
+			}
+			catch (InvocationTargetException invocationTargetException) {
+				throw invocationTargetException.getTargetException();
+			}
+		}
+
+		private DataSourceInvocationHandler(
+			Queue<Connection> connections, DataSource dataSource,
+			Thread thread) {
+
+			_connections = connections;
+			_dataSource = dataSource;
+			_thread = thread;
+		}
+
+		private final Queue<Connection> _connections;
+		private final DataSource _dataSource;
+		private final Thread _thread;
+
+	}
 
 }
