@@ -22,7 +22,11 @@ import com.liferay.asset.test.util.AssetTestUtil;
 import com.liferay.commerce.currency.model.CommerceCurrency;
 import com.liferay.commerce.currency.test.util.CommerceCurrencyTestUtil;
 import com.liferay.commerce.model.CommerceOrder;
+import com.liferay.commerce.product.model.CPDefinition;
+import com.liferay.commerce.product.model.CommerceCatalog;
 import com.liferay.commerce.product.model.CommerceChannel;
+import com.liferay.commerce.product.service.CPDefinitionLocalService;
+import com.liferay.commerce.product.test.util.CPTestUtil;
 import com.liferay.commerce.service.CommerceOrderLocalServiceUtil;
 import com.liferay.commerce.test.util.CommerceTestUtil;
 import com.liferay.counter.kernel.service.CounterLocalService;
@@ -156,6 +160,7 @@ import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
 import com.liferay.portal.kernel.comment.CommentManagerUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
 import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.encryptor.Encryptor;
@@ -225,7 +230,6 @@ import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.DateUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
-import com.liferay.portal.kernel.util.JavaDetector;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
@@ -2250,7 +2254,7 @@ public class ObjectEntryLocalServiceTest {
 						EncryptorException.class.getName(), ": ",
 						EncryptorException.class.getName(), ": ",
 						NoSuchAlgorithmException.class.getName(),
-						_getNoSuchAlgorithmExceptionMessage()),
+						": Null or empty transformation"),
 					() -> _objectEntryLocalService.getValues(
 						objectEntry.getObjectEntryId()));
 
@@ -2260,7 +2264,7 @@ public class ObjectEntryLocalServiceTest {
 						EncryptorException.class.getName(), ": ",
 						EncryptorException.class.getName(), ": ",
 						NoSuchAlgorithmException.class.getName(),
-						_getNoSuchAlgorithmExceptionMessage()),
+						": Null or empty transformation"),
 					() -> _addObjectEntry(
 						HashMapBuilder.<String, Serializable>put(
 							"emailAddress", RandomTestUtil.randomString()
@@ -4826,6 +4830,8 @@ public class ObjectEntryLocalServiceTest {
 			).put(
 				"firstName", "Peter"
 			).put(
+				"lastName", "Parker"
+			).put(
 				"listTypeEntryKeyRequired", "listTypeEntryKey1"
 			).build());
 
@@ -4860,6 +4866,100 @@ public class ObjectEntryLocalServiceTest {
 
 			Assert.assertFalse(_containsObjectEntryValuesSQLQuery(logCapture));
 		}
+
+		_addCustomObjectField(
+			new FormulaObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).name(
+				"formula"
+			).objectDefinitionId(
+				_objectDefinition.getObjectDefinitionId()
+			).objectFieldSettings(
+				Collections.singletonList(
+					new ObjectFieldSettingBuilder(
+					).name(
+						"output"
+					).value(
+						ObjectFieldConstants.BUSINESS_TYPE_DECIMAL
+					).build())
+			).build());
+
+		ObjectValidationRule objectValidationRule = _addObjectValidationRule(
+			_objectDefinition, "not(isEmpty(lastName))");
+
+		_clearValidatedObjectEntryIds();
+
+		try {
+			_objectEntryLocalService.updateObjectEntry(
+				TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+				objectEntry.getObjectEntryFolderId(),
+				HashMapBuilder.<String, Serializable>put(
+					"emailAddressRequired", "peter@liferay.com"
+				).put(
+					"listTypeEntryKeyRequired", "listTypeEntryKey1"
+				).build(),
+				ServiceContextTestUtil.getServiceContext());
+
+			Assert.fail();
+		}
+		catch (ModelListenerException modelListenerException) {
+			_assertFailureObjectValidationRule(
+				modelListenerException, objectValidationRule);
+		}
+
+		objectEntry = _objectEntryLocalService.getObjectEntry(
+			objectEntry.getObjectEntryId());
+
+		Assert.assertEquals(
+			"Parker", MapUtil.getString(objectEntry.getValues(), "lastName"));
+
+		_objectEntryLocalService.updateStatus(
+			TestPropsValues.getUserId(), objectEntry.getObjectEntryId(),
+			WorkflowConstants.STATUS_DRAFT,
+			ServiceContextTestUtil.getServiceContext());
+
+		objectEntry = _objectEntryLocalService.getObjectEntry(
+			objectEntry.getObjectEntryId());
+
+		Assert.assertNotNull(
+			ReflectionTestUtil.getFieldValue(
+				objectEntry, "_dynamicObjectDefinitionTableValues"));
+
+		ObjectField objectField = _addCustomObjectField(
+			new TextObjectFieldBuilder(
+			).labelMap(
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString())
+			).name(
+				"surname"
+			).objectDefinitionId(
+				_objectDefinition.getObjectDefinitionId()
+			).build());
+
+		Assert.assertNull(
+			EntityCacheUtil.getResult(
+				objectEntry.getClass(), objectEntry.getPrimaryKeyObj()));
+
+		objectEntry = _objectEntryLocalService.getObjectEntry(
+			objectEntry.getObjectEntryId());
+
+		_objectFieldLocalService.deleteObjectField(
+			objectField.getObjectFieldId());
+
+		Assert.assertNull(
+			EntityCacheUtil.getResult(
+				objectEntry.getClass(), objectEntry.getPrimaryKeyObj()));
+
+		objectEntry = _objectEntryLocalService.getObjectEntry(
+			objectEntry.getObjectEntryId());
+
+		ObjectRelationshipTestUtil.addObjectRelationship(
+			_objectRelationshipLocalService, _irrelevantObjectDefinition,
+			_objectDefinition);
+
+		Assert.assertNull(
+			EntityCacheUtil.getResult(
+				objectEntry.getClass(), objectEntry.getPrimaryKeyObj()));
 	}
 
 	@Test
@@ -6215,6 +6315,61 @@ public class ObjectEntryLocalServiceTest {
 		LocaleThreadLocal.setThemeDisplayLocale(themeDisplayLocale);
 
 		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
+	}
+
+	@Test
+	public void testGetTitleValue() throws Exception {
+
+		// Modifiable custom object definition
+
+		ObjectEntry objectEntry = _addObjectEntry(
+			HashMapBuilder.<String, Serializable>put(
+				"emailAddressRequired", _getRandomEmailAddress()
+			).put(
+				"firstName", "John"
+			).put(
+				"listTypeEntryKeyRequired", "listTypeEntryKey1"
+			).build());
+
+		_assertGetTitleValue(
+			"John", _objectDefinition.getObjectDefinitionId(), "firstName",
+			objectEntry.getObjectEntryId());
+
+		// Unmodifiable system object definition
+
+		CommerceCatalog commerceCatalog = CPTestUtil.getSystemCommerceCatalog(
+			TestPropsValues.getCompanyId());
+
+		CPDefinition cpDefinition = CPTestUtil.addCPDefinition(
+			commerceCatalog.getGroupId());
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinitionByClassName(
+				TestPropsValues.getCompanyId(), CPDefinition.class.getName());
+
+		Assert.assertEquals(
+			cpDefinition.getName(),
+			_objectEntryLocalService.getTitleValue(
+				objectDefinition.getObjectDefinitionId(),
+				cpDefinition.getCProductId()));
+
+		long originalTitleObjectFieldId =
+			objectDefinition.getTitleObjectFieldId();
+
+		_assertGetTitleValue(
+			String.valueOf(commerceCatalog.getCommerceCatalogId()),
+			objectDefinition.getObjectDefinitionId(), "catalogId",
+			cpDefinition.getCProductId());
+		_assertGetTitleValue(
+			String.valueOf(cpDefinition.getCProductId()),
+			objectDefinition.getObjectDefinitionId(), "productId",
+			cpDefinition.getCProductId());
+
+		_objectDefinitionLocalService.updateTitleObjectFieldId(
+			objectDefinition.getObjectDefinitionId(),
+			originalTitleObjectFieldId);
+
+		_cpDefinitionLocalService.deleteCPDefinition(cpDefinition);
 	}
 
 	@Test
@@ -9288,6 +9443,11 @@ public class ObjectEntryLocalServiceTest {
 		_assertObjectEntryStatus(
 			WorkflowConstants.STATUS_APPROVED, objectEntryA);
 
+		objectEntryA = _objectEntryLocalService.getObjectEntry(
+			objectEntryA.getObjectEntryId());
+
+		objectEntryA.getValues();
+
 		ObjectAction objectAction = _addObjectAction(
 			objectDefinitionAA,
 			ObjectActionTriggerConstants.KEY_ON_AFTER_UPDATE);
@@ -9304,6 +9464,13 @@ public class ObjectEntryLocalServiceTest {
 
 		_assertObjectEntryStatus(
 			WorkflowConstants.STATUS_APPROVED, objectEntryAA);
+
+		objectEntryA = _objectEntryLocalService.getObjectEntry(
+			objectEntryA.getObjectEntryId());
+
+		Assert.assertNotNull(
+			ReflectionTestUtil.getFieldValue(
+				objectEntryA, "_dynamicObjectDefinitionTableValues"));
 
 		WorkflowDefinitionLink workflowDefinitionLink =
 			_updateWorkflowDefinitionLink(objectDefinitionA, "Single Approver");
@@ -10115,7 +10282,7 @@ public class ObjectEntryLocalServiceTest {
 		return _objectActionLocalService.addObjectAction(
 			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
 			objectDefinitionId, true, StringPool.BLANK,
-			RandomTestUtil.randomString(),
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			RandomTestUtil.randomString(), objectActionExecutorKey,
@@ -10502,6 +10669,23 @@ public class ObjectEntryLocalServiceTest {
 				search, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null));
 	}
 
+	private void _assertGetTitleValue(
+			String expectedTitleValue, long objectDefinitionId,
+			String objectFieldName, long primaryKey)
+		throws Exception {
+
+		ObjectField objectField = _objectFieldLocalService.getObjectField(
+			objectDefinitionId, objectFieldName);
+
+		_objectDefinitionLocalService.updateTitleObjectFieldId(
+			objectDefinitionId, objectField.getObjectFieldId());
+
+		Assert.assertEquals(
+			expectedTitleValue,
+			_objectEntryLocalService.getTitleValue(
+				objectDefinitionId, primaryKey));
+	}
+
 	private void _assertGetWorkflowInstancesSize(
 			String assetClassName, long assetClassPK, int expectedSize)
 		throws Exception {
@@ -10812,16 +10996,6 @@ public class ObjectEntryLocalServiceTest {
 		}
 
 		return sb.toString();
-	}
-
-	private String _getNoSuchAlgorithmExceptionMessage() {
-		String javaVersion = JavaDetector.getJavaVersion();
-
-		if (javaVersion.startsWith("21")) {
-			return ": Null or empty transformation";
-		}
-
-		return ": Invalid transformation format:";
 	}
 
 	private String _getRandomEmailAddress() {
@@ -12641,6 +12815,9 @@ public class ObjectEntryLocalServiceTest {
 
 	@Inject
 	private CounterLocalService _counterLocalService;
+
+	@Inject
+	private CPDefinitionLocalService _cpDefinitionLocalService;
 
 	@Inject
 	private DepotEntryLocalService _depotEntryLocalService;

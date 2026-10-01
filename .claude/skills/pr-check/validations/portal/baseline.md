@@ -8,7 +8,7 @@ Do not narrow the run to the branch diff. The comparison target is resolved from
 
 ## Match
 
-`. &! ^modules/test/jenkins-results-parser/|^modules/test/playwright/|^modules/test/poshi/|^portal-web/test/`
+`. &! ^\.claude/|^modules/test/jenkins-results-parser/|^modules/test/playwright/|^modules/test/poshi/|^portal-web/test/`
 
 ## Command
 
@@ -100,6 +100,8 @@ This needs no network and **fails** rather than advises. Run it on every pass, n
 Run it **after** the Autocommit step below, and read it from the branch diff as it stands then. Run before, it reports the very bump the autocommit exists to supply, so it would fail by construction on every branch that changed an exported API. Run after, a bump that landed is in the diff and a bump that is missing still is not.
 
 Look at each changed `.java` under an `*-api` module's `src/main/java`, `portal-impl/src`, or `portal-kernel/src`. When its diff adds or removes a `public` or `protected` line, the exported API changed, so the version has to be bumped too. The bump shows up in the diff as a changed `packageinfo` under that package's path in `src/main/resources`, or a changed `bnd.bnd` `Bundle-Version` for an `*-api` module. Look it up by package path and not beside the `.java`, which never holds one. When neither changed, fail and name the package.
+
+The bump is owed against the last release, which is the artifact in Nexus rather than the version on master. A release branch can publish a new version without changing anything on master, so no file in the tree reliably records the released one. A package therefore needs no bump in the diff when the standalone `--rerun` baseline of its module ran and neither that run nor `baseline-all` printed a warning row naming the package, since the released version already allows the change. Tell that the standalone run happened from its output: a module's run prints `> Task :<path>:baseline`, and a run of one of the seven Ant projects prints `1 executed`. In every other case, including every run without network access, the bump has to be in the diff as described above.
 
 Fail as well on a lowered `packageinfo` or `Bundle-Version` that has no matching `public` or `protected` removal. Read this from the branch diff rather than the tree, or the baseline task's own repair reads as exactly that lowering and gets counted a second time.
 

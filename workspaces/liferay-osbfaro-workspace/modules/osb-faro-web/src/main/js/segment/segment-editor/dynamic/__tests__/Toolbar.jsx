@@ -69,6 +69,71 @@ describe('Toolbar', () => {
 		);
 	});
 
+	it('should open the segment membership modal w/ anonymous individuals and their accounts for individual segments', async () => {
+		API.individuals.search.mockReturnValue(
+			Promise.resolve({items: [], total: 1})
+		);
+
+		const open = jest.fn();
+
+		const {container, getByTestId} = render(
+			<MemoryRouter>
+				<Formik>
+					<Toolbar
+						channelId='321'
+						criteria={data.mockNewCriteria(1, {valid: true})}
+						criteriaString='filter'
+						groupId='123'
+						includeAnonymousUsers
+						open={open}
+						segmentCategory={SegmentCategories.Individual}
+						segmentType='BATCH'
+					/>
+				</Formik>
+			</MemoryRouter>
+		);
+
+		await waitForLoadingToBeRemoved(container);
+
+		fireEvent.click(getByTestId('preview-criteria-button'));
+
+		expect(open).toHaveBeenCalledWith(
+			modalTypes.SEARCHABLE_ENTITIES_TABLE_MODAL,
+			expect.objectContaining({
+				columns: [
+					expect.objectContaining({
+						accessor: 'name',
+						className: 'w-50'
+					}),
+					expect.objectContaining({
+						accessor: 'accountName',
+						className: 'w-50',
+						label: 'Account Name'
+					})
+				],
+				entityLabel: 'Individuals',
+				title: 'Segment Membership'
+			})
+		);
+
+		const [, {dataSourceFn}] = open.mock.calls[0];
+
+		API.individuals.search.mockClear();
+
+		dataSourceFn({delta: 10, page: 1});
+
+		expect(API.individuals.search).toHaveBeenCalledWith(
+			expect.objectContaining({
+				channelId: '321',
+				delta: 10,
+				filter: 'filter',
+				groupId: '123',
+				includeAnonymousUsers: true,
+				page: 1
+			})
+		);
+	});
+
 	it('should render w/ preview button disabled if criteria is valid and total members count is equal to 0', () => {
 		const {getByTestId} = render(
 			<MemoryRouter>

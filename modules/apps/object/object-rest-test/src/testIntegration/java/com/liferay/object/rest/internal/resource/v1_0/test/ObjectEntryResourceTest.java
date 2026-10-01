@@ -9350,18 +9350,12 @@ public class ObjectEntryResourceTest {
 	}
 
 	@Test
-	public void testPatchObjectEntryWithAttachmentObjectFieldIdJSONObject()
-		throws Exception {
-
-		_testPatchObjectEntryWithAttachmentObjectField(
-			fileEntryId -> JSONUtil.put("id", fileEntryId));
-	}
-
-	@Test
-	public void testPatchObjectEntryWithAttachmentObjectFieldIdString()
+	public void testPatchObjectEntryWithAttachmentObjectFieldId()
 		throws Exception {
 
 		_testPatchObjectEntryWithAttachmentObjectField(String::valueOf);
+		_testPatchObjectEntryWithAttachmentObjectField(
+			fileEntryId -> JSONUtil.put("id", fileEntryId));
 	}
 
 	@Test
@@ -16089,7 +16083,7 @@ public class ObjectEntryResourceTest {
 		return _objectActionLocalService.addObjectAction(
 			RandomTestUtil.randomString(), TestPropsValues.getUserId(),
 			objectDefinition.getObjectDefinitionId(), true, StringPool.BLANK,
-			RandomTestUtil.randomString(),
+			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
 			RandomTestUtil.randomString(),
