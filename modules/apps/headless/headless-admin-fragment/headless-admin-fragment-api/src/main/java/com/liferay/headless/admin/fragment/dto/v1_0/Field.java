@@ -56,7 +56,36 @@ import java.util.function.Supplier;
 )
 @JsonFilter("Liferay.Vulcan")
 @JsonSubTypes(
-	{@JsonSubTypes.Type(name = "itemSelector", value = ItemSelectorField.class)}
+	{
+		@JsonSubTypes.Type(
+			name = "categoryTreeNodeSelector",
+			value = CategoryTreeNodeSelectorField.class
+		),
+		@JsonSubTypes.Type(name = "checkbox", value = CheckboxField.class),
+		@JsonSubTypes.Type(
+			name = "collectionSelector", value = CollectionSelectorField.class
+		),
+		@JsonSubTypes.Type(
+			name = "colorPalette", value = ColorPaletteField.class
+		),
+		@JsonSubTypes.Type(
+			name = "colorPicker", value = ColorPickerField.class
+		),
+		@JsonSubTypes.Type(
+			name = "itemSelector", value = ItemSelectorField.class
+		),
+		@JsonSubTypes.Type(name = "length", value = LengthField.class),
+		@JsonSubTypes.Type(name = "select", value = SelectField.class),
+		@JsonSubTypes.Type(
+			name = "targetCollectionDisplay",
+			value = TargetCollectionDisplayField.class
+		),
+		@JsonSubTypes.Type(name = "text", value = TextField.class),
+		@JsonSubTypes.Type(name = "url", value = URLField.class),
+		@JsonSubTypes.Type(
+			name = "videoSelector", value = VideoSelectorField.class
+		)
+	}
 )
 @JsonTypeInfo(
 	include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type",
@@ -531,7 +560,12 @@ public abstract class Field implements Serializable {
 	@GraphQLName("Type")
 	public static enum Type {
 
-		ITEM_SELECTOR("itemSelector");
+		CATEGORY_TREE_NODE_SELECTOR("categoryTreeNodeSelector"),
+		CHECKBOX("checkbox"), COLLECTION_SELECTOR("collectionSelector"),
+		COLOR_PALETTE("colorPalette"), COLOR_PICKER("colorPicker"),
+		ITEM_SELECTOR("itemSelector"), LENGTH("length"), SELECT("select"),
+		TARGET_COLLECTION_DISPLAY("targetCollectionDisplay"), TEXT("text"),
+		URL("url"), VIDEO_SELECTOR("videoSelector");
 
 		@JsonCreator
 		public static Type create(String value) {
@@ -676,4 +710,4 @@ public abstract class Field implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:2080319104
+// LIFERAY-REST-BUILDER-HASH:-311206686

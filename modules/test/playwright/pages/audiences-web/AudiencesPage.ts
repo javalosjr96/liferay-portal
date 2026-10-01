@@ -37,7 +37,8 @@ export class AudiencesPage {
 			name: 'ERC',
 		});
 		this.generalSettingsButton = page.getByRole('button', {
-			name: 'General Settings',
+			exact: true,
+			name: 'Settings',
 		});
 		this.nameInput = page.getByPlaceholder('New Audience');
 		this.newAudienceButton = page.getByLabel('New', {exact: true});
@@ -175,7 +176,18 @@ export class AudiencesPage {
 	}
 
 	async deleteAudience(name: string, {accept = true} = {}) {
-		const dialogPromise = this.page.waitForEvent('dialog');
+		const messagePromise = new Promise<string>((resolve) => {
+			this.page.once('dialog', async (dialog) => {
+				resolve(dialog.message());
+
+				if (accept) {
+					await dialog.accept();
+				}
+				else {
+					await dialog.dismiss();
+				}
+			});
+		});
 
 		await clickAndExpectToBeVisible({
 			autoClick: true,
@@ -185,17 +197,10 @@ export class AudiencesPage {
 				.locator('button.dropdown-toggle'),
 		});
 
-		const dialog = await dialogPromise;
-
-		const message = dialog.message();
+		const message = await messagePromise;
 
 		if (accept) {
-			await dialog.accept();
-
 			await waitForAlert(this.page);
-		}
-		else {
-			await dialog.dismiss();
 		}
 
 		return message;

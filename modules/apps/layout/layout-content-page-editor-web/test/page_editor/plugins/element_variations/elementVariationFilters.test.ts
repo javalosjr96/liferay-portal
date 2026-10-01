@@ -5,7 +5,6 @@
 
 import {
 	Filter,
-	NO_AUDIENCE_VALUE,
 	getFilterOptions,
 	getFilterText,
 	getFilteredVariations,
@@ -57,10 +56,14 @@ function createVariation(
 
 describe('elementVariationFilters', () => {
 	describe('getFilterOptions', () => {
-		it('lists the none option and the audiences for the audience filter', () => {
-			expect(getFilterOptions('audience', AUDIENCES)).toEqual([
-				{label: 'none', value: NO_AUDIENCE_VALUE},
-				...AUDIENCES,
+		it('lists the audiences for the audience filter', () => {
+			expect(getFilterOptions('audience', AUDIENCES)).toEqual(AUDIENCES);
+		});
+
+		it('lists the missing audience and missing page element options for the issue filter', () => {
+			expect(getFilterOptions('issue', AUDIENCES)).toEqual([
+				{label: 'missing-audience', value: 'missing-audience'},
+				{label: 'missing-page-element', value: 'missing-page-element'},
 			]);
 		});
 
@@ -111,17 +114,6 @@ describe('elementVariationFilters', () => {
 		});
 
 		it('previews three labels and counts the rest as hidden', () => {
-			const filter: Filter = {
-				exclude: false,
-				type: 'type',
-				values: ['html', 'javascript', 'hide-element'],
-			};
-
-			expect(getFilterText(filter, AUDIENCES)).toEqual({
-				hiddenCount: 0,
-				label: 'html, javascript, hide-element',
-			});
-
 			expect(
 				getFilterText(
 					{
@@ -200,8 +192,14 @@ describe('elementVariationFilters', () => {
 			).toEqual([other]);
 		});
 
-		it('keeps the variations without audiences for the none option', () => {
-			const matching = createVariation({key: 'matching'});
+		it('keeps the variations missing an audience or a page element for the issue filter', () => {
+			const missingAudience = createVariation({key: 'missingAudience'});
+
+			const missingPageElement = createVariation({
+				audienceEntryERCs: ['audience-a'],
+				key: 'missingPageElement',
+				targetElement: '.deleted',
+			});
 
 			const other = createVariation({
 				audienceEntryERCs: ['audience-a'],
@@ -210,16 +208,23 @@ describe('elementVariationFilters', () => {
 
 			expect(
 				filterVariations({
-					elementVariations: [matching, other],
+					elementVariations: [
+						missingAudience,
+						missingPageElement,
+						other,
+					],
 					filters: [
 						{
 							exclude: false,
-							type: 'audience',
-							values: [NO_AUDIENCE_VALUE],
+							type: 'issue',
+							values: [
+								'missing-audience',
+								'missing-page-element',
+							],
 						},
 					],
 				})
-			).toEqual([matching]);
+			).toEqual([missingAudience, missingPageElement]);
 		});
 
 		it('derives the status from the active flag', () => {

@@ -5,9 +5,27 @@
 
 package com.liferay.headless.admin.fragment.internal.util;
 
+import com.liferay.asset.kernel.model.AssetCategory;
+import com.liferay.asset.kernel.model.AssetVocabulary;
+import com.liferay.asset.kernel.service.AssetCategoryLocalServiceUtil;
+import com.liferay.asset.kernel.service.AssetVocabularyLocalServiceUtil;
+import com.liferay.asset.list.model.AssetListEntry;
+import com.liferay.asset.list.service.AssetListEntryLocalServiceUtil;
 import com.liferay.exportimport.kernel.empty.model.EmptyModelManagerUtil;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.util.configuration.FragmentConfigurationField;
+import com.liferay.headless.admin.fragment.dto.v1_0.CategoryFragmentConfigurationFieldDefaultValue;
+import com.liferay.headless.admin.fragment.dto.v1_0.CategoryTreeNodeSelectorField;
+import com.liferay.headless.admin.fragment.dto.v1_0.CheckboxField;
+import com.liferay.headless.admin.fragment.dto.v1_0.CheckboxFragmentConfigurationFieldDefaultValue;
+import com.liferay.headless.admin.fragment.dto.v1_0.CheckboxTypeOptions;
+import com.liferay.headless.admin.fragment.dto.v1_0.CollectionFragmentConfigurationFieldDefaultValue;
+import com.liferay.headless.admin.fragment.dto.v1_0.CollectionSelectorField;
+import com.liferay.headless.admin.fragment.dto.v1_0.CollectionSelectorTypeOptions;
+import com.liferay.headless.admin.fragment.dto.v1_0.ColorPaletteField;
+import com.liferay.headless.admin.fragment.dto.v1_0.ColorPaletteFragmentConfigurationFieldDefaultValue;
+import com.liferay.headless.admin.fragment.dto.v1_0.ColorPickerField;
+import com.liferay.headless.admin.fragment.dto.v1_0.ColorPickerFragmentConfigurationFieldDefaultValue;
 import com.liferay.headless.admin.fragment.dto.v1_0.Configuration;
 import com.liferay.headless.admin.fragment.dto.v1_0.Dependency;
 import com.liferay.headless.admin.fragment.dto.v1_0.Field;
@@ -15,17 +33,63 @@ import com.liferay.headless.admin.fragment.dto.v1_0.FieldSet;
 import com.liferay.headless.admin.fragment.dto.v1_0.ItemFragmentConfigurationFieldDefaultValue;
 import com.liferay.headless.admin.fragment.dto.v1_0.ItemSelectorField;
 import com.liferay.headless.admin.fragment.dto.v1_0.ItemSelectorTypeOptions;
+import com.liferay.headless.admin.fragment.dto.v1_0.LengthField;
+import com.liferay.headless.admin.fragment.dto.v1_0.LengthFragmentConfigurationFieldDefaultValue;
+import com.liferay.headless.admin.fragment.dto.v1_0.NumberValidation;
+import com.liferay.headless.admin.fragment.dto.v1_0.PatternValidation;
+import com.liferay.headless.admin.fragment.dto.v1_0.SelectField;
+import com.liferay.headless.admin.fragment.dto.v1_0.SelectFragmentConfigurationFieldDefaultValue;
+import com.liferay.headless.admin.fragment.dto.v1_0.SelectTypeOptions;
+import com.liferay.headless.admin.fragment.dto.v1_0.TargetCollectionDisplayField;
+import com.liferay.headless.admin.fragment.dto.v1_0.TargetCollectionDisplayFragmentConfigurationFieldDefaultValue;
+import com.liferay.headless.admin.fragment.dto.v1_0.TargetCollectionDisplayTypeOptions;
+import com.liferay.headless.admin.fragment.dto.v1_0.TextField;
+import com.liferay.headless.admin.fragment.dto.v1_0.TextFragmentConfigurationFieldDefaultValue;
+import com.liferay.headless.admin.fragment.dto.v1_0.TextTypeOptions;
+import com.liferay.headless.admin.fragment.dto.v1_0.TextValidation;
+import com.liferay.headless.admin.fragment.dto.v1_0.TypeOptions;
+import com.liferay.headless.admin.fragment.dto.v1_0.URLField;
+import com.liferay.headless.admin.fragment.dto.v1_0.URLFragmentConfigurationFieldDefaultValue;
+import com.liferay.headless.admin.fragment.dto.v1_0.ValidValue;
+import com.liferay.headless.admin.fragment.dto.v1_0.Validation;
+import com.liferay.headless.admin.fragment.dto.v1_0.VideoFragmentConfigurationFieldDefaultValue;
+import com.liferay.headless.admin.fragment.dto.v1_0.VideoSelectorField;
+import com.liferay.headless.admin.site.dto.v1_0.CategoryFragmentConfigurationFieldValue;
+import com.liferay.headless.admin.site.dto.v1_0.ClassNameReference;
+import com.liferay.headless.admin.site.dto.v1_0.CollectionFragmentConfigurationFieldValue;
+import com.liferay.headless.admin.site.dto.v1_0.CollectionItemExternalReference;
+import com.liferay.headless.admin.site.dto.v1_0.CollectionReference;
+import com.liferay.headless.admin.site.dto.v1_0.ColorPaletteValue;
 import com.liferay.headless.admin.site.dto.v1_0.FragmentConfigurationFieldValue;
+import com.liferay.headless.admin.site.dto.v1_0.HrefURLValue;
 import com.liferay.headless.admin.site.dto.v1_0.ItemExternalReference;
 import com.liferay.headless.admin.site.dto.v1_0.ItemFragmentConfigurationFieldValue;
 import com.liferay.headless.admin.site.dto.v1_0.ItemValue;
+import com.liferay.headless.admin.site.dto.v1_0.RepeatableFieldsCollectionProviderReference;
+import com.liferay.headless.admin.site.dto.v1_0.SitePageURLValue;
+import com.liferay.headless.admin.site.dto.v1_0.URLFragmentConfigurationFieldValue;
+import com.liferay.headless.admin.site.dto.v1_0.URLValue;
+import com.liferay.headless.admin.site.dto.v1_0.VideoValue;
+import com.liferay.info.collection.provider.InfoCollectionProvider;
+import com.liferay.info.collection.provider.RelatedInfoItemCollectionProvider;
+import com.liferay.info.collection.provider.RepeatableFieldInfoItemCollectionProvider;
+import com.liferay.info.collection.provider.SingleFormVariationInfoCollectionProvider;
+import com.liferay.info.exception.NoSuchFormVariationException;
+import com.liferay.info.field.InfoField;
+import com.liferay.info.form.InfoForm;
 import com.liferay.info.item.ClassPKInfoItemIdentifier;
 import com.liferay.info.item.ERCInfoItemIdentifier;
 import com.liferay.info.item.InfoItemDetails;
+import com.liferay.info.item.InfoItemFormVariation;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemDetailsProvider;
+import com.liferay.info.item.provider.InfoItemFormVariationsProvider;
 import com.liferay.info.item.provider.InfoItemObjectProvider;
+import com.liferay.info.item.provider.RepeatableFieldsInfoItemFormProvider;
+import com.liferay.info.list.provider.item.selector.criterion.InfoListProviderItemSelectorReturnType;
+import com.liferay.item.selector.criteria.InfoListItemSelectorReturnType;
+import com.liferay.item.selector.criteria.VideoEmbeddableHTMLItemSelectorReturnType;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -35,8 +99,12 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.service.LayoutLocalServiceUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.ScopeUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -194,12 +262,164 @@ public class ConfigurationUtil {
 		return null;
 	}
 
+	private static JSONObject _getDefaultValueJSONObject(
+		JSONObject fieldJSONObject) {
+
+		Object defaultValue = fieldJSONObject.opt("defaultValue");
+
+		if (defaultValue instanceof JSONObject) {
+			return (JSONObject)defaultValue;
+		}
+
+		if (!(defaultValue instanceof String)) {
+			return null;
+		}
+
+		try {
+			return JSONFactoryUtil.createJSONObject((String)defaultValue);
+		}
+		catch (JSONException jsonException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(jsonException);
+			}
+
+			return null;
+		}
+	}
+
+	private static InfoCollectionProvider _getInfoCollectionProvider(
+		String className, InfoItemServiceRegistry infoItemServiceRegistry) {
+
+		InfoCollectionProvider infoCollectionProvider =
+			infoItemServiceRegistry.getInfoItemService(
+				InfoCollectionProvider.class, className);
+
+		if (infoCollectionProvider == null) {
+			infoCollectionProvider = infoItemServiceRegistry.getInfoItemService(
+				RelatedInfoItemCollectionProvider.class, className);
+		}
+
+		return infoCollectionProvider;
+	}
+
+	private static InfoItemFormVariation _getInfoItemFormVariation(
+		String className, long groupId,
+		InfoItemServiceRegistry infoItemServiceRegistry,
+		ItemExternalReference itemExternalReference) {
+
+		InfoItemFormVariationsProvider<?> infoItemFormVariationsProvider =
+			infoItemServiceRegistry.getFirstInfoItemService(
+				InfoItemFormVariationsProvider.class, className);
+
+		if (infoItemFormVariationsProvider == null) {
+			_logOptionalReference(
+				className, itemExternalReference.getExternalReferenceCode(),
+				groupId,
+				_getScopeExternalReferenceCode(
+					itemExternalReference.getScope()));
+
+			return null;
+		}
+
+		InfoItemFormVariation infoItemFormVariation =
+			infoItemFormVariationsProvider.
+				getInfoItemFormVariationByExternalReferenceCode(
+					itemExternalReference.getExternalReferenceCode(), groupId);
+
+		if (infoItemFormVariation == null) {
+			_logOptionalReference(
+				infoItemFormVariationsProvider.
+					getInfoItemFormVariationClassName(),
+				itemExternalReference.getExternalReferenceCode(), groupId,
+				_getScopeExternalReferenceCode(
+					itemExternalReference.getScope()));
+		}
+
+		return infoItemFormVariation;
+	}
+
+	private static String _getRepeatableFieldsTitle(
+		String className, String fieldName,
+		InfoItemFormVariation infoItemFormVariation,
+		InfoItemServiceRegistry infoItemServiceRegistry,
+		ItemExternalReference itemExternalReference) {
+
+		if (infoItemFormVariation == null) {
+			return null;
+		}
+
+		RepeatableFieldsInfoItemFormProvider<?>
+			repeatableFieldsInfoItemFormProvider =
+				infoItemServiceRegistry.getFirstInfoItemService(
+					RepeatableFieldsInfoItemFormProvider.class, className);
+
+		if (repeatableFieldsInfoItemFormProvider == null) {
+			_logOptionalReference(
+				RepeatableFieldsInfoItemFormProvider.class, className);
+
+			return null;
+		}
+
+		try {
+			InfoForm infoForm =
+				repeatableFieldsInfoItemFormProvider.
+					getRepeatableFieldsInfoForm(infoItemFormVariation.getKey());
+
+			if (infoForm == null) {
+				_logOptionalReference(
+					InfoForm.class, infoItemFormVariation.getKey());
+
+				return null;
+			}
+
+			InfoField infoField = infoForm.getInfoField(fieldName);
+
+			if (infoField == null) {
+				_logOptionalReference(InfoField.class, fieldName);
+
+				return null;
+			}
+
+			if (infoField.isRepeatable()) {
+				return infoField.getLabel(LocaleUtil.getDefault());
+			}
+		}
+		catch (NoSuchFormVariationException noSuchFormVariationException) {
+			_logOptionalReference(
+				InfoForm.class,
+				itemExternalReference.getExternalReferenceCode());
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(noSuchFormVariationException);
+			}
+		}
+
+		return null;
+	}
+
 	private static String _getScopeExternalReferenceCode(Scope scope) {
 		if (scope == null) {
 			return null;
 		}
 
 		return scope.getExternalReferenceCode();
+	}
+
+	private static void _logOptionalReference(
+		Class<?> modelClass, String modelExternalReferenceCode) {
+
+		if (_log.isWarnEnabled()) {
+			StringBundler sb = new StringBundler(6);
+
+			sb.append("Optional reference generated for missing ");
+			sb.append(modelClass.getSimpleName());
+			sb.append(" with external reference code ");
+			sb.append(modelExternalReferenceCode);
+			sb.append(" and company ID ");
+			sb.append(CompanyThreadLocal.getCompanyId());
+
+			_log.warn(sb.toString());
+		}
 	}
 
 	private static void _logOptionalReference(
@@ -229,6 +449,476 @@ public class ConfigurationUtil {
 
 		EmptyModelManagerUtil.reportMissingReference(
 			className, externalReferenceCode, groupId);
+	}
+
+	private static Boolean _toBoolean(
+		CheckboxFragmentConfigurationFieldDefaultValue
+			checkboxFragmentConfigurationFieldDefaultValue) {
+
+		if (checkboxFragmentConfigurationFieldDefaultValue == null) {
+			return null;
+		}
+
+		return checkboxFragmentConfigurationFieldDefaultValue.getValue();
+	}
+
+	private static Boolean _toBoolean(JSONObject fieldJSONObject) {
+		if (!fieldJSONObject.has("defaultValue")) {
+			return null;
+		}
+
+		return fieldJSONObject.getBoolean("defaultValue");
+	}
+
+	private static CategoryFragmentConfigurationFieldDefaultValue
+		_toCategoryFragmentConfigurationFieldDefaultValue(
+			ItemExternalReference itemExternalReference) {
+
+		if (itemExternalReference == null) {
+			return null;
+		}
+
+		return new CategoryFragmentConfigurationFieldDefaultValue() {
+			{
+				setValue(() -> itemExternalReference);
+			}
+		};
+	}
+
+	private static JSONObject _toCategoryTreeNodeJSONObject(
+			CategoryFragmentConfigurationFieldDefaultValue
+				categoryFragmentConfigurationFieldDefaultValue,
+			long groupId)
+		throws PortalException {
+
+		if (categoryFragmentConfigurationFieldDefaultValue == null) {
+			return null;
+		}
+
+		ItemExternalReference itemExternalReference =
+			categoryFragmentConfigurationFieldDefaultValue.getValue();
+
+		if (itemExternalReference == null) {
+			return null;
+		}
+
+		String categoryTreeNodeType = "Category";
+
+		if (Objects.equals(
+				itemExternalReference.getClassName(),
+				AssetVocabulary.class.getName())) {
+
+			categoryTreeNodeType = "Vocabulary";
+		}
+
+		String scopeExternalReferenceCode =
+			ScopeUtil.getItemScopeExternalReferenceCode(
+				_getScopeExternalReferenceCode(
+					itemExternalReference.getScope()),
+				groupId);
+
+		JSONObject categoryTreeNodeJSONObject = JSONUtil.put(
+			"categoryTreeNodeType", categoryTreeNodeType
+		).put(
+			"externalReferenceCode",
+			itemExternalReference.getExternalReferenceCode()
+		).put(
+			"scopeExternalReferenceCode", scopeExternalReferenceCode
+		);
+
+		Long itemGroupId = ScopeUtil.getItemGroupId(
+			CompanyThreadLocal.getCompanyId(), scopeExternalReferenceCode,
+			groupId);
+
+		if (itemGroupId == null) {
+			_logOptionalReference(
+				itemExternalReference.getClassName(),
+				itemExternalReference.getExternalReferenceCode(), groupId,
+				scopeExternalReferenceCode);
+
+			return categoryTreeNodeJSONObject;
+		}
+
+		if (Objects.equals(categoryTreeNodeType, "Vocabulary")) {
+			AssetVocabulary assetVocabulary =
+				AssetVocabularyLocalServiceUtil.
+					fetchAssetVocabularyByExternalReferenceCode(
+						itemExternalReference.getExternalReferenceCode(),
+						itemGroupId);
+
+			if (assetVocabulary == null) {
+				_logOptionalReference(
+					itemExternalReference.getClassName(),
+					itemExternalReference.getExternalReferenceCode(), groupId,
+					scopeExternalReferenceCode);
+
+				return categoryTreeNodeJSONObject;
+			}
+
+			return categoryTreeNodeJSONObject.put(
+				"categoryTreeNodeId",
+				String.valueOf(assetVocabulary.getVocabularyId())
+			).put(
+				"title",
+				assetVocabulary.getTitle(LocaleUtil.getMostRelevantLocale())
+			);
+		}
+
+		AssetCategory assetCategory =
+			AssetCategoryLocalServiceUtil.
+				fetchAssetCategoryByExternalReferenceCode(
+					itemExternalReference.getExternalReferenceCode(),
+					itemGroupId);
+
+		if (assetCategory == null) {
+			_logOptionalReference(
+				itemExternalReference.getClassName(),
+				itemExternalReference.getExternalReferenceCode(), groupId,
+				scopeExternalReferenceCode);
+
+			return categoryTreeNodeJSONObject;
+		}
+
+		return categoryTreeNodeJSONObject.put(
+			"categoryTreeNodeId", String.valueOf(assetCategory.getCategoryId())
+		).put(
+			"title", assetCategory.getName()
+		);
+	}
+
+	private static CheckboxFragmentConfigurationFieldDefaultValue
+		_toCheckboxFragmentConfigurationFieldDefaultValue(Boolean value) {
+
+		if (value == null) {
+			return null;
+		}
+
+		CheckboxFragmentConfigurationFieldDefaultValue
+			checkboxFragmentConfigurationFieldDefaultValue =
+				new CheckboxFragmentConfigurationFieldDefaultValue();
+
+		checkboxFragmentConfigurationFieldDefaultValue.setValue(() -> value);
+
+		return checkboxFragmentConfigurationFieldDefaultValue;
+	}
+
+	private static CheckboxTypeOptions _toCheckboxTypeOptions(
+		JSONObject typeOptionsJSONObject) {
+
+		if (typeOptionsJSONObject == null) {
+			return null;
+		}
+
+		return new CheckboxTypeOptions() {
+			{
+				setDependency(() -> _toDependencyMap(typeOptionsJSONObject));
+				setDisplayType(
+					() -> CheckboxTypeOptions.DisplayType.create(
+						typeOptionsJSONObject.getString("displayType")));
+			}
+		};
+	}
+
+	private static JSONObject _toClassNameReferenceJSONObject(
+		ClassNameReference classNameReference,
+		InfoItemServiceRegistry infoItemServiceRegistry) {
+
+		String className = classNameReference.getClassName();
+
+		if (Validator.isNull(className)) {
+			return null;
+		}
+
+		InfoCollectionProvider infoCollectionProvider =
+			_getInfoCollectionProvider(className, infoItemServiceRegistry);
+
+		if (infoCollectionProvider == null) {
+			_logOptionalReference(InfoCollectionProvider.class, className);
+
+			return JSONUtil.put(
+				"key", className
+			).put(
+				"type", InfoListProviderItemSelectorReturnType.class.getName()
+			);
+		}
+
+		return JSONUtil.put(
+			"itemSubtype",
+			() -> {
+				if (!(infoCollectionProvider instanceof
+						SingleFormVariationInfoCollectionProvider)) {
+
+					return null;
+				}
+
+				SingleFormVariationInfoCollectionProvider<?>
+					singleFormVariationInfoCollectionProvider =
+						(SingleFormVariationInfoCollectionProvider<?>)
+							infoCollectionProvider;
+
+				return singleFormVariationInfoCollectionProvider.
+					getFormVariationKey();
+			}
+		).put(
+			"itemType", infoCollectionProvider.getCollectionItemClassName()
+		).put(
+			"key", infoCollectionProvider.getKey()
+		).put(
+			"title",
+			() -> infoCollectionProvider.getLabel(LocaleUtil.getDefault())
+		).put(
+			"type", InfoListProviderItemSelectorReturnType.class.getName()
+		);
+	}
+
+	private static CollectionFragmentConfigurationFieldDefaultValue
+		_toCollectionFragmentConfigurationFieldDefaultValue(
+			CollectionReference collectionReference) {
+
+		if (collectionReference == null) {
+			return null;
+		}
+
+		return new CollectionFragmentConfigurationFieldDefaultValue() {
+			{
+				setValue(() -> collectionReference);
+			}
+		};
+	}
+
+	private static JSONObject _toCollectionItemExternalReferenceJSONObject(
+			CollectionItemExternalReference collectionItemExternalReference,
+			long groupId)
+		throws PortalException {
+
+		if (Validator.isNull(
+				collectionItemExternalReference.getExternalReferenceCode())) {
+
+			return null;
+		}
+
+		String scopeExternalReferenceCode =
+			ScopeUtil.getItemScopeExternalReferenceCode(
+				_getScopeExternalReferenceCode(
+					collectionItemExternalReference.getScope()),
+				groupId);
+
+		JSONObject collectionJSONObject = JSONUtil.put(
+			"externalReferenceCode",
+			collectionItemExternalReference.getExternalReferenceCode()
+		).put(
+			"scopeExternalReferenceCode", scopeExternalReferenceCode
+		).put(
+			"type", InfoListItemSelectorReturnType.class.getName()
+		);
+
+		Long itemGroupId = ScopeUtil.getItemGroupId(
+			CompanyThreadLocal.getCompanyId(), scopeExternalReferenceCode,
+			groupId);
+
+		if (itemGroupId == null) {
+			_logOptionalReference(
+				AssetListEntry.class.getName(),
+				collectionItemExternalReference.getExternalReferenceCode(),
+				groupId, scopeExternalReferenceCode);
+
+			return collectionJSONObject;
+		}
+
+		AssetListEntry assetListEntry =
+			AssetListEntryLocalServiceUtil.
+				fetchAssetListEntryByExternalReferenceCode(
+					collectionItemExternalReference.getExternalReferenceCode(),
+					itemGroupId);
+
+		if (assetListEntry == null) {
+			_logOptionalReference(
+				AssetListEntry.class.getName(),
+				collectionItemExternalReference.getExternalReferenceCode(),
+				groupId, scopeExternalReferenceCode);
+
+			return collectionJSONObject;
+		}
+
+		return collectionJSONObject.put(
+			"classNameId",
+			String.valueOf(PortalUtil.getClassNameId(AssetListEntry.class))
+		).put(
+			"classPK", String.valueOf(assetListEntry.getAssetListEntryId())
+		).put(
+			"itemSubtype", assetListEntry.getAssetEntrySubtype()
+		).put(
+			"itemType", assetListEntry.getAssetEntryType()
+		).put(
+			"title", assetListEntry.getTitle()
+		);
+	}
+
+	private static JSONObject _toCollectionJSONObject(
+			CollectionFragmentConfigurationFieldDefaultValue
+				collectionFragmentConfigurationFieldDefaultValue,
+			long groupId, InfoItemServiceRegistry infoItemServiceRegistry)
+		throws PortalException {
+
+		if (collectionFragmentConfigurationFieldDefaultValue == null) {
+			return null;
+		}
+
+		CollectionReference collectionReference =
+			collectionFragmentConfigurationFieldDefaultValue.getValue();
+
+		if (collectionReference instanceof
+				ClassNameReference classNameReference) {
+
+			return _toClassNameReferenceJSONObject(
+				classNameReference, infoItemServiceRegistry);
+		}
+
+		if (collectionReference instanceof
+				CollectionItemExternalReference
+					collectionItemExternalReference) {
+
+			return _toCollectionItemExternalReferenceJSONObject(
+				collectionItemExternalReference, groupId);
+		}
+
+		if (collectionReference instanceof
+				RepeatableFieldsCollectionProviderReference
+					repeatableFieldsCollectionProviderReference) {
+
+			return _toRepeatableFieldsCollectionProviderReferenceJSONObject(
+				groupId, infoItemServiceRegistry,
+				repeatableFieldsCollectionProviderReference);
+		}
+
+		return null;
+	}
+
+	private static CollectionReference _toCollectionReference(
+		JSONObject fieldJSONObject,
+		DTOConverter
+			<FragmentConfigurationField, FragmentConfigurationFieldValue>
+				fragmentConfigurationFieldValueDTOConverter,
+		FragmentEntry fragmentEntry) {
+
+		FragmentConfigurationFieldValue fragmentConfigurationFieldValue =
+			_toFragmentConfigurationFieldValue(
+				fieldJSONObject, fragmentConfigurationFieldValueDTOConverter,
+				fragmentEntry);
+
+		if (!(fragmentConfigurationFieldValue instanceof
+				CollectionFragmentConfigurationFieldValue
+					collectionFragmentConfigurationFieldValue)) {
+
+			return null;
+		}
+
+		return collectionFragmentConfigurationFieldValue.getValue();
+	}
+
+	private static CollectionSelectorTypeOptions
+		_toCollectionSelectorTypeOptions(JSONObject typeOptionsJSONObject) {
+
+		if (typeOptionsJSONObject == null) {
+			return null;
+		}
+
+		return new CollectionSelectorTypeOptions() {
+			{
+				setDependency(() -> _toDependencyMap(typeOptionsJSONObject));
+				setItemSubtype(
+					() -> typeOptionsJSONObject.getString("itemSubtype", null));
+				setItemType(
+					() -> typeOptionsJSONObject.getString("itemType", null));
+				setNumberOfItems(
+					() -> {
+						if (!typeOptionsJSONObject.has("numberOfItems")) {
+							return null;
+						}
+
+						return typeOptionsJSONObject.getInt("numberOfItems");
+					});
+			}
+		};
+	}
+
+	private static ColorPaletteFragmentConfigurationFieldDefaultValue
+		_toColorPaletteFragmentConfigurationFieldDefaultValue(
+			ColorPaletteValue colorPaletteValue) {
+
+		if (colorPaletteValue == null) {
+			return null;
+		}
+
+		return new ColorPaletteFragmentConfigurationFieldDefaultValue() {
+			{
+				setValue(() -> colorPaletteValue);
+			}
+		};
+	}
+
+	private static JSONObject _toColorPaletteJSONObject(
+		ColorPaletteFragmentConfigurationFieldDefaultValue
+			colorPaletteFragmentConfigurationFieldDefaultValue) {
+
+		if (colorPaletteFragmentConfigurationFieldDefaultValue == null) {
+			return null;
+		}
+
+		ColorPaletteValue colorPaletteValue =
+			colorPaletteFragmentConfigurationFieldDefaultValue.getValue();
+
+		if (colorPaletteValue == null) {
+			return null;
+		}
+
+		JSONObject colorPaletteJSONObject = JSONUtil.put(
+			"color", colorPaletteValue.getColor()
+		).put(
+			"cssClass", colorPaletteValue.getCssClass()
+		).put(
+			"rgbValue", colorPaletteValue.getRgbValue()
+		);
+
+		if (colorPaletteJSONObject.length() == 0) {
+			return null;
+		}
+
+		return colorPaletteJSONObject;
+	}
+
+	private static ColorPaletteValue _toColorPaletteValue(
+		JSONObject defaultValueJSONObject) {
+
+		if (JSONUtil.isEmpty(defaultValueJSONObject)) {
+			return null;
+		}
+
+		return new ColorPaletteValue() {
+			{
+				setColor(() -> defaultValueJSONObject.getString("color", null));
+				setCssClass(
+					() -> defaultValueJSONObject.getString("cssClass", null));
+				setRgbValue(
+					() -> defaultValueJSONObject.getString("rgbValue", null));
+			}
+		};
+	}
+
+	private static ColorPickerFragmentConfigurationFieldDefaultValue
+		_toColorPickerFragmentConfigurationFieldDefaultValue(String value) {
+
+		if (value == null) {
+			return null;
+		}
+
+		ColorPickerFragmentConfigurationFieldDefaultValue
+			colorPickerFragmentConfigurationFieldDefaultValue =
+				new ColorPickerFragmentConfigurationFieldDefaultValue();
+
+		colorPickerFragmentConfigurationFieldDefaultValue.setValue(() -> value);
+
+		return colorPickerFragmentConfigurationFieldDefaultValue;
 	}
 
 	private static Dependency _toDependency(JSONObject dependencyJSONObject) {
@@ -309,7 +999,173 @@ public class ConfigurationUtil {
 
 		String type = fieldJSONObject.getString("type");
 
-		if (!Objects.equals(type, "itemSelector")) {
+		Field field = null;
+
+		if (Objects.equals(type, "categoryTreeNodeSelector")) {
+			field = new CategoryTreeNodeSelectorField() {
+				{
+					setDefaultValue(
+						() -> _toCategoryFragmentConfigurationFieldDefaultValue(
+							_toItemExternalReference(
+								fieldJSONObject,
+								fragmentConfigurationFieldValueDTOConverter,
+								fragmentEntry)));
+					setTypeOptions(
+						() -> _toTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else if (Objects.equals(type, "checkbox")) {
+			field = new CheckboxField() {
+				{
+					setDefaultValue(
+						() -> _toCheckboxFragmentConfigurationFieldDefaultValue(
+							_toBoolean(fieldJSONObject)));
+					setTypeOptions(
+						() -> _toCheckboxTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else if (Objects.equals(type, "collectionSelector")) {
+			field = new CollectionSelectorField() {
+				{
+					setDefaultValue(
+						() ->
+							_toCollectionFragmentConfigurationFieldDefaultValue(
+								_toCollectionReference(
+									fieldJSONObject,
+									fragmentConfigurationFieldValueDTOConverter,
+									fragmentEntry)));
+					setTypeOptions(
+						() -> _toCollectionSelectorTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else if (Objects.equals(type, "colorPalette")) {
+			field = new ColorPaletteField() {
+				{
+					setDefaultValue(
+						() ->
+							_toColorPaletteFragmentConfigurationFieldDefaultValue(
+								_toColorPaletteValue(
+									_getDefaultValueJSONObject(
+										fieldJSONObject))));
+					setTypeOptions(
+						() -> _toTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else if (Objects.equals(type, "colorPicker")) {
+			field = new ColorPickerField() {
+				{
+					setDefaultValue(
+						() ->
+							_toColorPickerFragmentConfigurationFieldDefaultValue(
+								fieldJSONObject.getString(
+									"defaultValue", null)));
+					setTypeOptions(
+						() -> _toTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else if (Objects.equals(type, "itemSelector")) {
+			field = new ItemSelectorField() {
+				{
+					setDefaultValue(
+						() -> _toItemFragmentConfigurationFieldDefaultValue(
+							_toItemValue(
+								fieldJSONObject,
+								fragmentConfigurationFieldValueDTOConverter,
+								fragmentEntry)));
+					setTypeOptions(
+						() -> _toItemSelectorTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else if (Objects.equals(type, "length")) {
+			field = new LengthField() {
+				{
+					setDefaultValue(
+						() -> _toLengthFragmentConfigurationFieldDefaultValue(
+							fieldJSONObject.getString("defaultValue", null)));
+					setTypeOptions(
+						() -> _toTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else if (Objects.equals(type, "select")) {
+			field = new SelectField() {
+				{
+					setDefaultValue(
+						() -> _toSelectFragmentConfigurationFieldDefaultValue(
+							fieldJSONObject.getString("defaultValue", null)));
+					setTypeOptions(
+						() -> _toSelectTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else if (Objects.equals(type, "targetCollectionDisplay")) {
+			field = new TargetCollectionDisplayField() {
+				{
+					setDefaultValue(
+						() ->
+							_toTargetCollectionDisplayFragmentConfigurationFieldDefaultValue(
+								fieldJSONObject.getJSONArray("defaultValue")));
+					setTypeOptions(
+						() -> _toTargetCollectionDisplayTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else if (Objects.equals(type, "text")) {
+			field = new TextField() {
+				{
+					setDefaultValue(
+						() -> _toTextFragmentConfigurationFieldDefaultValue(
+							fieldJSONObject.getString("defaultValue", null)));
+					setTypeOptions(
+						() -> _toTextTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else if (Objects.equals(type, "url")) {
+			field = new URLField() {
+				{
+					setDefaultValue(
+						() -> _toURLFragmentConfigurationFieldDefaultValue(
+							_toURLValue(
+								fieldJSONObject,
+								fragmentConfigurationFieldValueDTOConverter,
+								fragmentEntry)));
+					setTypeOptions(
+						() -> _toTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else if (Objects.equals(type, "videoSelector")) {
+			field = new VideoSelectorField() {
+				{
+					setDefaultValue(
+						() -> _toVideoFragmentConfigurationFieldDefaultValue(
+							_toVideoValue(
+								_getDefaultValueJSONObject(fieldJSONObject))));
+					setTypeOptions(
+						() -> _toTypeOptions(
+							fieldJSONObject.getJSONObject("typeOptions")));
+				}
+			};
+		}
+		else {
 			throw new IllegalStateException(
 				StringBundler.concat(
 					"Fragment entry with ID ",
@@ -317,20 +1173,6 @@ public class ConfigurationUtil {
 					" has an approved configuration with a field of unknown ",
 					"type ", type));
 		}
-
-		Field field = new ItemSelectorField() {
-			{
-				setDefaultValue(
-					() -> _toItemFragmentConfigurationFieldDefaultValue(
-						_toItemValue(
-							fieldJSONObject,
-							fragmentConfigurationFieldValueDTOConverter,
-							fragmentEntry)));
-				setTypeOptions(
-					() -> _toItemSelectorTypeOptions(
-						fieldJSONObject.getJSONObject("typeOptions")));
-			}
-		};
 
 		field.setDataType(
 			() -> Field.DataType.create(fieldJSONObject.getString("dataType")));
@@ -375,7 +1217,59 @@ public class ConfigurationUtil {
 			"type", String.valueOf(field.getType())
 		);
 
-		if (field instanceof ItemSelectorField itemSelectorField) {
+		if (field instanceof
+				CategoryTreeNodeSelectorField categoryTreeNodeSelectorField) {
+
+			fieldJSONObject.put(
+				"defaultValue",
+				_toCategoryTreeNodeJSONObject(
+					categoryTreeNodeSelectorField.getDefaultValue(), groupId)
+			).put(
+				"typeOptions",
+				_toTypeOptionsJSONObject(
+					categoryTreeNodeSelectorField.getTypeOptions())
+			);
+		}
+		else if (field instanceof CheckboxField checkboxField) {
+			fieldJSONObject.put(
+				"defaultValue", _toBoolean(checkboxField.getDefaultValue())
+			).put(
+				"typeOptions",
+				_toTypeOptionsJSONObject(checkboxField.getTypeOptions())
+			);
+		}
+		else if (field instanceof
+					CollectionSelectorField collectionSelectorField) {
+
+			fieldJSONObject.put(
+				"defaultValue",
+				_toCollectionJSONObject(
+					collectionSelectorField.getDefaultValue(), groupId,
+					infoItemServiceRegistry)
+			).put(
+				"typeOptions",
+				_toTypeOptionsJSONObject(
+					collectionSelectorField.getTypeOptions())
+			);
+		}
+		else if (field instanceof ColorPaletteField colorPaletteField) {
+			fieldJSONObject.put(
+				"defaultValue",
+				_toColorPaletteJSONObject(colorPaletteField.getDefaultValue())
+			).put(
+				"typeOptions",
+				_toTypeOptionsJSONObject(colorPaletteField.getTypeOptions())
+			);
+		}
+		else if (field instanceof ColorPickerField colorPickerField) {
+			fieldJSONObject.put(
+				"defaultValue", _toString(colorPickerField.getDefaultValue())
+			).put(
+				"typeOptions",
+				_toTypeOptionsJSONObject(colorPickerField.getTypeOptions())
+			);
+		}
+		else if (field instanceof ItemSelectorField itemSelectorField) {
 			fieldJSONObject.put(
 				"defaultValue",
 				_toItemJSONObject(
@@ -384,6 +1278,60 @@ public class ConfigurationUtil {
 			).put(
 				"typeOptions",
 				_toTypeOptionsJSONObject(itemSelectorField.getTypeOptions())
+			);
+		}
+		else if (field instanceof LengthField lengthField) {
+			fieldJSONObject.put(
+				"defaultValue", _toString(lengthField.getDefaultValue())
+			).put(
+				"typeOptions",
+				_toTypeOptionsJSONObject(lengthField.getTypeOptions())
+			);
+		}
+		else if (field instanceof SelectField selectField) {
+			fieldJSONObject.put(
+				"defaultValue", _toString(selectField.getDefaultValue())
+			).put(
+				"typeOptions",
+				_toTypeOptionsJSONObject(selectField.getTypeOptions())
+			);
+		}
+		else if (field instanceof
+					TargetCollectionDisplayField targetCollectionDisplayField) {
+
+			fieldJSONObject.put(
+				"defaultValue",
+				_toJSONArray(targetCollectionDisplayField.getDefaultValue())
+			).put(
+				"typeOptions",
+				_toTypeOptionsJSONObject(
+					targetCollectionDisplayField.getTypeOptions())
+			);
+		}
+		else if (field instanceof TextField textField) {
+			fieldJSONObject.put(
+				"defaultValue", _toString(textField.getDefaultValue())
+			).put(
+				"typeOptions",
+				_toTypeOptionsJSONObject(textField.getTypeOptions())
+			);
+		}
+		else if (field instanceof URLField urlField) {
+			fieldJSONObject.put(
+				"defaultValue",
+				_toURLJSONObject(groupId, urlField.getDefaultValue())
+			).put(
+				"typeOptions",
+				_toTypeOptionsJSONObject(urlField.getTypeOptions())
+			);
+		}
+		else if (field instanceof VideoSelectorField videoSelectorField) {
+			fieldJSONObject.put(
+				"defaultValue",
+				_toVideoJSONObject(videoSelectorField.getDefaultValue())
+			).put(
+				"typeOptions",
+				_toTypeOptionsJSONObject(videoSelectorField.getTypeOptions())
 			);
 		}
 
@@ -460,23 +1408,10 @@ public class ConfigurationUtil {
 					fragmentConfigurationFieldValueDTOConverter,
 			FragmentEntry fragmentEntry) {
 
-		Object defaultValue = fieldJSONObject.opt("defaultValue");
+		JSONObject defaultValueJSONObject = _getDefaultValueJSONObject(
+			fieldJSONObject);
 
-		if (defaultValue instanceof String) {
-			try {
-				defaultValue = JSONFactoryUtil.createJSONObject(
-					(String)defaultValue);
-			}
-			catch (JSONException jsonException) {
-				if (_log.isDebugEnabled()) {
-					_log.debug(jsonException);
-				}
-
-				return null;
-			}
-		}
-
-		if (!(defaultValue instanceof JSONObject)) {
+		if (defaultValueJSONObject == null) {
 			return null;
 		}
 
@@ -487,7 +1422,8 @@ public class ConfigurationUtil {
 					HashMapBuilder.<String, Object>put(
 						"companyId", fragmentEntry.getCompanyId()
 					).put(
-						"fragmentFragmentConfigurationFieldValue", defaultValue
+						"fragmentFragmentConfigurationFieldValue",
+						defaultValueJSONObject
 					).put(
 						"scopeGroupId", fragmentEntry.getGroupId()
 					).build(),
@@ -504,6 +1440,38 @@ public class ConfigurationUtil {
 		}
 
 		return null;
+	}
+
+	private static ItemExternalReference _toItemExternalReference(
+		JSONObject fieldJSONObject,
+		DTOConverter
+			<FragmentConfigurationField, FragmentConfigurationFieldValue>
+				fragmentConfigurationFieldValueDTOConverter,
+		FragmentEntry fragmentEntry) {
+
+		FragmentConfigurationFieldValue fragmentConfigurationFieldValue =
+			_toFragmentConfigurationFieldValue(
+				fieldJSONObject, fragmentConfigurationFieldValueDTOConverter,
+				fragmentEntry);
+
+		if (!(fragmentConfigurationFieldValue instanceof
+				CategoryFragmentConfigurationFieldValue
+					categoryFragmentConfigurationFieldValue)) {
+
+			return null;
+		}
+
+		ItemExternalReference itemExternalReference =
+			categoryFragmentConfigurationFieldValue.getValue();
+
+		if ((itemExternalReference == null) ||
+			Validator.isNull(
+				itemExternalReference.getExternalReferenceCode())) {
+
+			return null;
+		}
+
+		return itemExternalReference;
 	}
 
 	private static ItemFragmentConfigurationFieldDefaultValue
@@ -656,6 +1624,384 @@ public class ConfigurationUtil {
 		return itemValue;
 	}
 
+	private static JSONArray _toJSONArray(
+		TargetCollectionDisplayFragmentConfigurationFieldDefaultValue
+			targetCollectionDisplayFragmentConfigurationFieldDefaultValue) {
+
+		if (targetCollectionDisplayFragmentConfigurationFieldDefaultValue ==
+				null) {
+
+			return null;
+		}
+
+		String[] values =
+			targetCollectionDisplayFragmentConfigurationFieldDefaultValue.
+				getValue();
+
+		if (values == null) {
+			return null;
+		}
+
+		return JSONFactoryUtil.createJSONArray(values);
+	}
+
+	private static JSONObject _toLayoutJSONObject(
+			long groupId, ItemExternalReference itemExternalReference)
+		throws PortalException {
+
+		String scopeExternalReferenceCode =
+			ScopeUtil.getItemScopeExternalReferenceCode(
+				_getScopeExternalReferenceCode(
+					itemExternalReference.getScope()),
+				groupId);
+
+		JSONObject layoutJSONObject = JSONUtil.put(
+			"externalReferenceCode",
+			itemExternalReference.getExternalReferenceCode()
+		).put(
+			"scopeExternalReferenceCode", scopeExternalReferenceCode
+		);
+
+		Long itemGroupId = ScopeUtil.getItemGroupId(
+			CompanyThreadLocal.getCompanyId(), scopeExternalReferenceCode,
+			groupId);
+
+		if (itemGroupId == null) {
+			_logOptionalReference(
+				Layout.class.getName(),
+				itemExternalReference.getExternalReferenceCode(), groupId,
+				scopeExternalReferenceCode);
+
+			return layoutJSONObject;
+		}
+
+		Layout layout =
+			LayoutLocalServiceUtil.fetchLayoutByExternalReferenceCode(
+				itemExternalReference.getExternalReferenceCode(), itemGroupId);
+
+		if (layout == null) {
+			_logOptionalReference(
+				Layout.class.getName(),
+				itemExternalReference.getExternalReferenceCode(), groupId,
+				scopeExternalReferenceCode);
+
+			return layoutJSONObject;
+		}
+
+		return layoutJSONObject.put(
+			"groupId", String.valueOf(layout.getGroupId())
+		).put(
+			"layoutId", String.valueOf(layout.getLayoutId())
+		).put(
+			"layoutUuid", layout.getUuid()
+		).put(
+			"privateLayout", layout.isPrivateLayout()
+		).put(
+			"title", layout.getName(LocaleUtil.getMostRelevantLocale())
+		);
+	}
+
+	private static LengthFragmentConfigurationFieldDefaultValue
+		_toLengthFragmentConfigurationFieldDefaultValue(String value) {
+
+		if (value == null) {
+			return null;
+		}
+
+		LengthFragmentConfigurationFieldDefaultValue
+			lengthFragmentConfigurationFieldDefaultValue =
+				new LengthFragmentConfigurationFieldDefaultValue();
+
+		lengthFragmentConfigurationFieldDefaultValue.setValue(() -> value);
+
+		return lengthFragmentConfigurationFieldDefaultValue;
+	}
+
+	private static JSONObject
+		_toRepeatableFieldsCollectionProviderReferenceJSONObject(
+			long groupId, InfoItemServiceRegistry infoItemServiceRegistry,
+			RepeatableFieldsCollectionProviderReference
+				repeatableFieldsCollectionProviderReference) {
+
+		String className =
+			repeatableFieldsCollectionProviderReference.getClassName();
+
+		if (Validator.isNull(className)) {
+			return null;
+		}
+
+		ItemExternalReference subTypeExternalReference =
+			repeatableFieldsCollectionProviderReference.
+				getSubTypeExternalReference();
+
+		if ((subTypeExternalReference == null) ||
+			(subTypeExternalReference.getExternalReferenceCode() == null)) {
+
+			return null;
+		}
+
+		InfoItemFormVariation infoItemFormVariation = _getInfoItemFormVariation(
+			className, groupId, infoItemServiceRegistry,
+			subTypeExternalReference);
+
+		return JSONUtil.put(
+			"fieldName",
+			repeatableFieldsCollectionProviderReference.getFieldName()
+		).put(
+			"itemSubtypeKey",
+			subTypeExternalReference.getExternalReferenceCode()
+		).put(
+			"itemType", className
+		).put(
+			"key", RepeatableFieldInfoItemCollectionProvider.class.getName()
+		).put(
+			"title",
+			_getRepeatableFieldsTitle(
+				className,
+				repeatableFieldsCollectionProviderReference.getFieldName(),
+				infoItemFormVariation, infoItemServiceRegistry,
+				subTypeExternalReference)
+		).put(
+			"type", InfoListProviderItemSelectorReturnType.class.getName()
+		);
+	}
+
+	private static SelectFragmentConfigurationFieldDefaultValue
+		_toSelectFragmentConfigurationFieldDefaultValue(String value) {
+
+		if (value == null) {
+			return null;
+		}
+
+		SelectFragmentConfigurationFieldDefaultValue
+			selectFragmentConfigurationFieldDefaultValue =
+				new SelectFragmentConfigurationFieldDefaultValue();
+
+		selectFragmentConfigurationFieldDefaultValue.setValue(() -> value);
+
+		return selectFragmentConfigurationFieldDefaultValue;
+	}
+
+	private static SelectTypeOptions _toSelectTypeOptions(
+		JSONObject typeOptionsJSONObject) {
+
+		if (typeOptionsJSONObject == null) {
+			return null;
+		}
+
+		return new SelectTypeOptions() {
+			{
+				setDependency(() -> _toDependencyMap(typeOptionsJSONObject));
+				setValidValues(
+					() -> {
+						JSONArray validValuesJSONArray =
+							typeOptionsJSONObject.getJSONArray("validValues");
+
+						if (validValuesJSONArray == null) {
+							return null;
+						}
+
+						return JSONUtil.toArray(
+							validValuesJSONArray,
+							validValueJSONObject -> _toValidValue(
+								validValueJSONObject),
+							ValidValue.class);
+					});
+			}
+		};
+	}
+
+	private static String _toString(
+		ColorPickerFragmentConfigurationFieldDefaultValue
+			colorPickerFragmentConfigurationFieldDefaultValue) {
+
+		if (colorPickerFragmentConfigurationFieldDefaultValue == null) {
+			return null;
+		}
+
+		return colorPickerFragmentConfigurationFieldDefaultValue.getValue();
+	}
+
+	private static String _toString(
+		LengthFragmentConfigurationFieldDefaultValue
+			lengthFragmentConfigurationFieldDefaultValue) {
+
+		if (lengthFragmentConfigurationFieldDefaultValue == null) {
+			return null;
+		}
+
+		return lengthFragmentConfigurationFieldDefaultValue.getValue();
+	}
+
+	private static String _toString(
+		SelectFragmentConfigurationFieldDefaultValue
+			selectFragmentConfigurationFieldDefaultValue) {
+
+		if (selectFragmentConfigurationFieldDefaultValue == null) {
+			return null;
+		}
+
+		return selectFragmentConfigurationFieldDefaultValue.getValue();
+	}
+
+	private static String _toString(
+		TextFragmentConfigurationFieldDefaultValue
+			textFragmentConfigurationFieldDefaultValue) {
+
+		if (textFragmentConfigurationFieldDefaultValue == null) {
+			return null;
+		}
+
+		return textFragmentConfigurationFieldDefaultValue.getValue();
+	}
+
+	private static TargetCollectionDisplayFragmentConfigurationFieldDefaultValue
+		_toTargetCollectionDisplayFragmentConfigurationFieldDefaultValue(
+			JSONArray jsonArray) {
+
+		if (jsonArray == null) {
+			return null;
+		}
+
+		return new TargetCollectionDisplayFragmentConfigurationFieldDefaultValue() {
+			{
+				setValue(() -> JSONUtil.toStringArray(jsonArray));
+			}
+		};
+	}
+
+	private static TargetCollectionDisplayTypeOptions
+		_toTargetCollectionDisplayTypeOptions(
+			JSONObject typeOptionsJSONObject) {
+
+		if (typeOptionsJSONObject == null) {
+			return null;
+		}
+
+		return new TargetCollectionDisplayTypeOptions() {
+			{
+				setDependency(() -> _toDependencyMap(typeOptionsJSONObject));
+				setEnableCompatibleCollections(
+					() -> {
+						if (!typeOptionsJSONObject.has(
+								"enableCompatibleCollections")) {
+
+							return null;
+						}
+
+						return typeOptionsJSONObject.getBoolean(
+							"enableCompatibleCollections");
+					});
+			}
+		};
+	}
+
+	private static TextFragmentConfigurationFieldDefaultValue
+		_toTextFragmentConfigurationFieldDefaultValue(String value) {
+
+		if (value == null) {
+			return null;
+		}
+
+		TextFragmentConfigurationFieldDefaultValue
+			textFragmentConfigurationFieldDefaultValue =
+				new TextFragmentConfigurationFieldDefaultValue();
+
+		textFragmentConfigurationFieldDefaultValue.setValue(() -> value);
+
+		return textFragmentConfigurationFieldDefaultValue;
+	}
+
+	private static TextTypeOptions _toTextTypeOptions(
+		JSONObject typeOptionsJSONObject) {
+
+		if (typeOptionsJSONObject == null) {
+			return null;
+		}
+
+		return new TextTypeOptions() {
+			{
+				setDependency(() -> _toDependencyMap(typeOptionsJSONObject));
+				setPlaceholder(
+					() -> typeOptionsJSONObject.getString("placeholder", null));
+				setValidation(
+					() -> _toValidation(
+						typeOptionsJSONObject.getJSONObject("validation")));
+			}
+		};
+	}
+
+	private static TypeOptions _toTypeOptions(
+		JSONObject typeOptionsJSONObject) {
+
+		if (typeOptionsJSONObject == null) {
+			return null;
+		}
+
+		Map<String, Dependency> dependencyMap = _toDependencyMap(
+			typeOptionsJSONObject);
+
+		if (dependencyMap == null) {
+			return null;
+		}
+
+		return new TypeOptions() {
+			{
+				setDependency(() -> dependencyMap);
+			}
+		};
+	}
+
+	private static JSONObject _toTypeOptionsJSONObject(
+		CheckboxTypeOptions checkboxTypeOptions) {
+
+		if (checkboxTypeOptions == null) {
+			return null;
+		}
+
+		JSONObject typeOptionsJSONObject = JSONUtil.put(
+			"dependency",
+			_toDependencyJSONObject(checkboxTypeOptions.getDependency()));
+
+		if (checkboxTypeOptions.getDisplayType() != null) {
+			typeOptionsJSONObject.put(
+				"displayType",
+				String.valueOf(checkboxTypeOptions.getDisplayType()));
+		}
+
+		if (typeOptionsJSONObject.length() == 0) {
+			return null;
+		}
+
+		return typeOptionsJSONObject;
+	}
+
+	private static JSONObject _toTypeOptionsJSONObject(
+		CollectionSelectorTypeOptions collectionSelectorTypeOptions) {
+
+		if (collectionSelectorTypeOptions == null) {
+			return null;
+		}
+
+		JSONObject typeOptionsJSONObject = JSONUtil.put(
+			"dependency",
+			_toDependencyJSONObject(
+				collectionSelectorTypeOptions.getDependency())
+		).put(
+			"itemSubtype", collectionSelectorTypeOptions.getItemSubtype()
+		).put(
+			"itemType", collectionSelectorTypeOptions.getItemType()
+		).put(
+			"numberOfItems", collectionSelectorTypeOptions.getNumberOfItems()
+		);
+
+		if (typeOptionsJSONObject.length() == 0) {
+			return null;
+		}
+
+		return typeOptionsJSONObject;
+	}
+
 	private static JSONObject _toTypeOptionsJSONObject(
 		ItemSelectorTypeOptions itemSelectorTypeOptions) {
 
@@ -689,6 +2035,374 @@ public class ConfigurationUtil {
 		}
 
 		return typeOptionsJSONObject;
+	}
+
+	private static JSONObject _toTypeOptionsJSONObject(
+		SelectTypeOptions selectTypeOptions) {
+
+		if (selectTypeOptions == null) {
+			return null;
+		}
+
+		JSONObject typeOptionsJSONObject = JSONUtil.put(
+			"dependency",
+			_toDependencyJSONObject(selectTypeOptions.getDependency()));
+
+		ValidValue[] validValues = selectTypeOptions.getValidValues();
+
+		if (ArrayUtil.isNotEmpty(validValues)) {
+			typeOptionsJSONObject.put(
+				"validValues",
+				JSONUtil.toJSONArray(
+					validValues,
+					validValue -> _toValidValueJSONObject(validValue), _log));
+		}
+
+		if (typeOptionsJSONObject.length() == 0) {
+			return null;
+		}
+
+		return typeOptionsJSONObject;
+	}
+
+	private static JSONObject _toTypeOptionsJSONObject(
+		TargetCollectionDisplayTypeOptions targetCollectionDisplayTypeOptions) {
+
+		if (targetCollectionDisplayTypeOptions == null) {
+			return null;
+		}
+
+		JSONObject typeOptionsJSONObject = JSONUtil.put(
+			"dependency",
+			_toDependencyJSONObject(
+				targetCollectionDisplayTypeOptions.getDependency())
+		).put(
+			"enableCompatibleCollections",
+			targetCollectionDisplayTypeOptions.getEnableCompatibleCollections()
+		);
+
+		if (typeOptionsJSONObject.length() == 0) {
+			return null;
+		}
+
+		return typeOptionsJSONObject;
+	}
+
+	private static JSONObject _toTypeOptionsJSONObject(
+		TextTypeOptions textTypeOptions) {
+
+		if (textTypeOptions == null) {
+			return null;
+		}
+
+		JSONObject typeOptionsJSONObject = JSONUtil.put(
+			"dependency",
+			_toDependencyJSONObject(textTypeOptions.getDependency())
+		).put(
+			"placeholder", textTypeOptions.getPlaceholder()
+		).put(
+			"validation",
+			_toValidationJSONObject(textTypeOptions.getValidation())
+		);
+
+		if (typeOptionsJSONObject.length() == 0) {
+			return null;
+		}
+
+		return typeOptionsJSONObject;
+	}
+
+	private static JSONObject _toTypeOptionsJSONObject(
+		TypeOptions typeOptions) {
+
+		if (typeOptions == null) {
+			return null;
+		}
+
+		JSONObject dependencyJSONObject = _toDependencyJSONObject(
+			typeOptions.getDependency());
+
+		if (dependencyJSONObject == null) {
+			return null;
+		}
+
+		return JSONUtil.put("dependency", dependencyJSONObject);
+	}
+
+	private static URLFragmentConfigurationFieldDefaultValue
+		_toURLFragmentConfigurationFieldDefaultValue(URLValue urlValue) {
+
+		if (urlValue == null) {
+			return null;
+		}
+
+		return new URLFragmentConfigurationFieldDefaultValue() {
+			{
+				setValue(() -> urlValue);
+			}
+		};
+	}
+
+	private static JSONObject _toURLJSONObject(
+			long groupId,
+			URLFragmentConfigurationFieldDefaultValue
+				urlFragmentConfigurationFieldDefaultValue)
+		throws PortalException {
+
+		if (urlFragmentConfigurationFieldDefaultValue == null) {
+			return null;
+		}
+
+		URLValue urlValue =
+			urlFragmentConfigurationFieldDefaultValue.getValue();
+
+		if (urlValue instanceof HrefURLValue hrefURLValue) {
+			return JSONUtil.put("href", hrefURLValue.getHref());
+		}
+
+		if (!(urlValue instanceof SitePageURLValue sitePageURLValue) ||
+			(sitePageURLValue.getSitePageItemExternalReference() == null)) {
+
+			return null;
+		}
+
+		return JSONUtil.put(
+			"layout",
+			_toLayoutJSONObject(
+				groupId, sitePageURLValue.getSitePageItemExternalReference()));
+	}
+
+	private static URLValue _toURLValue(
+		JSONObject fieldJSONObject,
+		DTOConverter
+			<FragmentConfigurationField, FragmentConfigurationFieldValue>
+				fragmentConfigurationFieldValueDTOConverter,
+		FragmentEntry fragmentEntry) {
+
+		FragmentConfigurationFieldValue fragmentConfigurationFieldValue =
+			_toFragmentConfigurationFieldValue(
+				fieldJSONObject, fragmentConfigurationFieldValueDTOConverter,
+				fragmentEntry);
+
+		if (!(fragmentConfigurationFieldValue instanceof
+				URLFragmentConfigurationFieldValue
+					urlFragmentConfigurationFieldValue)) {
+
+			return null;
+		}
+
+		URLValue urlValue = urlFragmentConfigurationFieldValue.getValue();
+
+		if (!(urlValue instanceof SitePageURLValue sitePageURLValue)) {
+			return urlValue;
+		}
+
+		ItemExternalReference itemExternalReference =
+			sitePageURLValue.getSitePageItemExternalReference();
+
+		if ((itemExternalReference == null) ||
+			Validator.isNull(
+				itemExternalReference.getExternalReferenceCode())) {
+
+			return null;
+		}
+
+		return urlValue;
+	}
+
+	private static ValidValue _toValidValue(JSONObject validValueJSONObject) {
+		if (validValueJSONObject == null) {
+			return null;
+		}
+
+		return new ValidValue() {
+			{
+				setLabel(() -> validValueJSONObject.getString("label", null));
+				setValue(() -> validValueJSONObject.getString("value", null));
+			}
+		};
+	}
+
+	private static JSONObject _toValidValueJSONObject(ValidValue validValue) {
+		return JSONUtil.put(
+			"label", validValue.getLabel()
+		).put(
+			"value", validValue.getValue()
+		);
+	}
+
+	private static Validation _toValidation(JSONObject validationJSONObject) {
+		if (validationJSONObject == null) {
+			return null;
+		}
+
+		String type = validationJSONObject.getString("type");
+
+		Validation validation = null;
+
+		if (Objects.equals(type, "number")) {
+			validation = new NumberValidation() {
+				{
+					setMax(
+						() -> {
+							if (!validationJSONObject.has("max")) {
+								return null;
+							}
+
+							return validationJSONObject.getLong("max");
+						});
+					setMin(
+						() -> {
+							if (!validationJSONObject.has("min")) {
+								return null;
+							}
+
+							return validationJSONObject.getLong("min");
+						});
+				}
+			};
+		}
+		else if (Objects.equals(type, "pattern")) {
+			validation = new PatternValidation() {
+				{
+					setRegexp(
+						() -> validationJSONObject.getString("regexp", null));
+				}
+			};
+		}
+		else if (Objects.equals(type, "email") ||
+				 Objects.equals(type, "text") || Objects.equals(type, "url")) {
+
+			validation = new TextValidation() {
+				{
+					setMaxLength(
+						() -> {
+							if (!validationJSONObject.has("maxLength")) {
+								return null;
+							}
+
+							return validationJSONObject.getLong("maxLength");
+						});
+					setMinLength(
+						() -> {
+							if (!validationJSONObject.has("minLength")) {
+								return null;
+							}
+
+							return validationJSONObject.getLong("minLength");
+						});
+				}
+			};
+		}
+
+		if (validation == null) {
+			return null;
+		}
+
+		validation.setErrorMessage(
+			() -> validationJSONObject.getString("errorMessage", null));
+		validation.setRequired(
+			() -> {
+				if (!validationJSONObject.has("required")) {
+					return null;
+				}
+
+				return validationJSONObject.getBoolean("required");
+			});
+		validation.setType(() -> Validation.Type.create(type));
+
+		return validation;
+	}
+
+	private static JSONObject _toValidationJSONObject(Validation validation) {
+		if (validation == null) {
+			return null;
+		}
+
+		JSONObject validationJSONObject = JSONUtil.put(
+			"errorMessage", validation.getErrorMessage()
+		).put(
+			"required", validation.getRequired()
+		).put(
+			"type", validation.getTypeAsString()
+		);
+
+		if (validation instanceof NumberValidation numberValidation) {
+			return validationJSONObject.put(
+				"max", numberValidation.getMax()
+			).put(
+				"min", numberValidation.getMin()
+			);
+		}
+
+		if (validation instanceof PatternValidation patternValidation) {
+			return validationJSONObject.put(
+				"regexp", patternValidation.getRegexp());
+		}
+
+		if (validation instanceof TextValidation textValidation) {
+			return validationJSONObject.put(
+				"maxLength", textValidation.getMaxLength()
+			).put(
+				"minLength", textValidation.getMinLength()
+			);
+		}
+
+		return validationJSONObject;
+	}
+
+	private static VideoFragmentConfigurationFieldDefaultValue
+		_toVideoFragmentConfigurationFieldDefaultValue(VideoValue videoValue) {
+
+		if (videoValue == null) {
+			return null;
+		}
+
+		return new VideoFragmentConfigurationFieldDefaultValue() {
+			{
+				setValue(() -> videoValue);
+			}
+		};
+	}
+
+	private static JSONObject _toVideoJSONObject(
+		VideoFragmentConfigurationFieldDefaultValue
+			videoFragmentConfigurationFieldDefaultValue) {
+
+		if (videoFragmentConfigurationFieldDefaultValue == null) {
+			return null;
+		}
+
+		VideoValue videoValue =
+			videoFragmentConfigurationFieldDefaultValue.getValue();
+
+		if ((videoValue == null) || Validator.isNull(videoValue.getHtml())) {
+			return null;
+		}
+
+		return JSONUtil.put(
+			"html", videoValue.getHtml()
+		).put(
+			"title", videoValue.getTitle()
+		).put(
+			"type", VideoEmbeddableHTMLItemSelectorReturnType.class.getName()
+		);
+	}
+
+	private static VideoValue _toVideoValue(JSONObject defaultValueJSONObject) {
+		if ((defaultValueJSONObject == null) ||
+			(!defaultValueJSONObject.has("html") &&
+			 !defaultValueJSONObject.has("title"))) {
+
+			return null;
+		}
+
+		return new VideoValue() {
+			{
+				setHtml(() -> defaultValueJSONObject.getString("html", null));
+				setTitle(() -> defaultValueJSONObject.getString("title", null));
+			}
+		};
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

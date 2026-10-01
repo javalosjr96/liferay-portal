@@ -6334,12 +6334,60 @@
 	},
 	{
 		"classNames": [
+			"CommerceOrderLocalService",
+			"CommerceOrderLocalServiceUtil",
+			"CommerceOrderLocalServiceWrapper",
+			"CommerceOrderService",
+			"CommerceOrderServiceUtil",
+			"CommerceOrderServiceWrapper"
+		],
+		"from": "updateCommerceOrder(String paramName, long paramName, long paramName, long paramName, long paramName, String paramName, String paramName, String paramName, BigDecimal paramName, String paramName, BigDecimal paramName, BigDecimal paramName, CommerceContext paramName)",
+		"issueKey": "LPD-103276",
+		"to": "updateCommerceOrder(param#0#, param#1#, param#2#, param#3#, param#4#, param#5#, param#6#, null, param#7#, param#8#, param#9#, param#10#, param#11#)"
+	},
+	{
+		"classNames": [
 			"Language",
 			"LanguageUtil"
 		],
 		"from": "get(PageContext paramName, String paramName)",
 		"hasMessage": true,
 		"issueKey": "LPD-105365"
+	},
+	{
+		"from": "PanelCategoryKeys.CONTROL_PANEL_CONFIGURATION",
+		"issueKey": "LPD-106961",
+		"to": "PanelCategoryKeys.CONTROL_PANEL_INSTANCE",
+		"validExtensions": [
+			"java",
+			"jsp"
+		]
+	},
+	{
+		"from": "PortletCategoryKeys.CONTROL_PANEL_CONFIGURATION",
+		"issueKey": "LPD-106961",
+		"to": "PortletCategoryKeys.CONTROL_PANEL_INSTANCE",
+		"validExtensions": [
+			"java",
+			"jsp"
+		]
+	},
+	{
+		"from": "regex:\\bcontrol_panel\\.configuration(?![\\w.-])",
+		"issueKey": "LPD-106961",
+		"to": "control_panel.instance",
+		"validExtensions": [
+			"java",
+			"jsp"
+		]
+	},
+	{
+		"from": "regex:\\bcontrol_panel\\.configuration(?![\\w.-])",
+		"issueKey": "LPD-106961",
+		"to": "control_panel.object",
+		"validExtensions": [
+			"json"
+		]
 	},
 	{
 		"from": "regex:MultiVMPoolUtil\\s*.\\s*getPortalCache\\(\\s*(?<prefixMethodName>[\\s\\S]*?)\\)",

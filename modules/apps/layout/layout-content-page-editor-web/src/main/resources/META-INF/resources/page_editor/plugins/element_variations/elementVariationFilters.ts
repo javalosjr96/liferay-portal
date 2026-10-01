@@ -5,19 +5,25 @@
 
 import {ElementVariation} from './elementVariationsReducer';
 
-export const FILTER_TYPES = ['audience', 'status', 'type'] as const;
+type IssueValue = 'missing-audience' | 'missing-page-element';
 
-export const NO_AUDIENCE_VALUE = 'none';
+export type Filter = {exclude: boolean} & (
+	| {type: 'audience'; values: string[]}
+	| {type: 'issue'; values: IssueValue[]}
+	| {type: 'status'; values: Array<'disabled' | 'enabled'>}
+	| {type: 'type'; values: Array<'hide-element' | 'html' | 'javascript'>}
+);
+
+export type FilterType = Filter['type'];
+
+export const FILTER_TYPES: FilterType[] = [
+	'audience',
+	'issue',
+	'status',
+	'type',
+];
 
 const PREVIEW_VALUES_COUNT = 3;
-
-export type FilterType = (typeof FILTER_TYPES)[number];
-
-export type Filter = {
-	exclude: boolean;
-	type: FilterType;
-	values: string[];
-};
 
 type Option = {label: string; value: string};
 
@@ -27,9 +33,35 @@ export function hasValueInAnyLanguage(
 	return Object.values(localizedValue).some(Boolean);
 }
 
+export function getElementVariationIssues(
+	elementVariation: ElementVariation,
+	editableElementOptions: Option[]
+): IssueValue[] {
+	const issues: IssueValue[] = [];
+
+	if (!elementVariation.audienceEntryERCs.length) {
+		issues.push('missing-audience');
+	}
+
+	if (
+		!editableElementOptions.some(
+			(editableElementOption) =>
+				editableElementOption.value === elementVariation.targetElement
+		)
+	) {
+		issues.push('missing-page-element');
+	}
+
+	return issues;
+}
+
 export function getFilterLabel(type: FilterType): string {
 	if (type === 'audience') {
 		return Liferay.Language.get('audience');
+	}
+
+	if (type === 'issue') {
+		return Liferay.Language.get('issue');
 	}
 
 	if (type === 'status') {
@@ -44,9 +76,19 @@ export function getFilterOptions(
 	audiences: Option[]
 ): Option[] {
 	if (type === 'audience') {
+		return audiences;
+	}
+
+	if (type === 'issue') {
 		return [
-			{label: Liferay.Language.get('none'), value: NO_AUDIENCE_VALUE},
-			...audiences,
+			{
+				label: Liferay.Language.get('missing-audience'),
+				value: 'missing-audience',
+			},
+			{
+				label: Liferay.Language.get('missing-page-element'),
+				value: 'missing-page-element',
+			},
 		];
 	}
 
@@ -70,7 +112,9 @@ export function getFilterText(
 ): {hiddenCount: number; label: string} {
 	const options = getFilterOptions(filter.type, audiences);
 
-	const labels = filter.values
+	const filterValues: string[] = filter.values;
+
+	const labels = filterValues
 		.map((value) => options.find((option) => option.value === value)?.label)
 		.filter(Boolean);
 
@@ -84,16 +128,24 @@ export function getFilterText(
 	};
 }
 
-function getVariationValues(
-	type: FilterType,
-	elementVariation: ElementVariation
-): string[] {
+function getVariationValues({
+	editableElementOptions,
+	elementVariation,
+	type,
+}: {
+	editableElementOptions: Option[];
+	elementVariation: ElementVariation;
+	type: FilterType;
+}): string[] {
 	if (type === 'audience') {
-		if (!elementVariation.audienceEntryERCs.length) {
-			return [NO_AUDIENCE_VALUE];
-		}
-
 		return elementVariation.audienceEntryERCs;
+	}
+
+	if (type === 'issue') {
+		return getElementVariationIssues(
+			elementVariation,
+			editableElementOptions
+		);
 	}
 
 	if (type === 'status') {
@@ -139,7 +191,11 @@ function getVariationText({
 
 	const typeOptions = getFilterOptions('type', audiences);
 
-	const typeLabels = getVariationValues('type', elementVariation).map(
+	const typeLabels = getVariationValues({
+		editableElementOptions,
+		elementVariation,
+		type: 'type',
+	}).map(
 		(value) => typeOptions.find((option) => option.value === value)?.label
 	);
 
@@ -175,7 +231,11 @@ export function getFilteredVariations({
 
 	return elementVariations.filter((elementVariation) => {
 		const matchesFilters = filters.every((filter) => {
-			const values = getVariationValues(filter.type, elementVariation);
+			const values = getVariationValues({
+				editableElementOptions,
+				elementVariation,
+				type: filter.type,
+			});
 
 			const matches = filter.values.some((value) =>
 				values.includes(value)

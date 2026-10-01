@@ -28,9 +28,10 @@ import ElementVariationsList from './ElementVariationsList';
 import ElementVariationsPreview, {
 	ElementVariationsPreviewRef,
 } from './ElementVariationsPreview';
+import ElementVariationsSimulation from './ElementVariationsSimulation';
 import {
 	Filter,
-	NO_AUDIENCE_VALUE,
+	getElementVariationIssues,
 	getFilteredVariations,
 } from './elementVariationFilters';
 import {
@@ -49,6 +50,7 @@ const SIDEBAR_WIDTH = 320;
 interface Props {
 	addElementVariationURL: string;
 	audiences: Array<{label: string; value: string}>;
+	availableViewportSizes: Config['availableViewportSizes'];
 	createAudienceURL: string;
 	defaultLanguageId: string;
 	deleteElementVariationURL: string;
@@ -70,7 +72,10 @@ interface Props {
 }
 
 export default function (props: Props) {
-	initializeConfig({portletNamespace: props.portletNamespace} as Config);
+	initializeConfig({
+		availableViewportSizes: props.availableViewportSizes,
+		portletNamespace: props.portletNamespace,
+	} as Config);
 
 	return <ElementVariations {...props} />;
 }
@@ -168,8 +173,7 @@ function ElementVariations({
 		document.getElementById(`${portletNamespace}elementVariations`)
 	);
 
-	const [missingAudiencesAlertVisible, setMissingAudiencesAlertVisible] =
-		useState(true);
+	const [issuesAlertVisible, setIssuesAlertVisible] = useState(true);
 
 	const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -181,6 +185,34 @@ function ElementVariations({
 		hideProductMenuIfPresent({onHide: () => setSidebarOpen(true)});
 	}, []);
 
+	useEffect(() => {
+		const controlMenuContainer = document.querySelector(
+			'.control-menu-container'
+		);
+
+		if (!controlMenuContainer || !open) {
+			return;
+		}
+
+		const keepControlMenuInteractive = () => {
+			if (controlMenuContainer.hasAttribute('inert')) {
+				controlMenuContainer.removeAttribute('inert');
+			}
+		};
+
+		keepControlMenuInteractive();
+
+		const mutationObserver = new MutationObserver(
+			keepControlMenuInteractive
+		);
+
+		mutationObserver.observe(controlMenuContainer, {
+			attributeFilter: ['inert'],
+		});
+
+		return () => mutationObserver.disconnect();
+	}, [open]);
+
 	const createElementVariationDraft = () =>
 		dispatch({
 			draftElementVariation: createElementVariation(experienceKey),
@@ -189,6 +221,16 @@ function ElementVariations({
 
 	return (
 		<div className="d-flex element-variations flex-column">
+			<ElementVariationsSimulation
+				audiences={audiences}
+				defaultLanguageId={defaultLanguageId}
+				experiences={experiences}
+				languageId={languageId}
+				locales={locales}
+				previewURL={previewURL}
+				segmentsExperienceERC={experienceKey}
+			/>
+
 			<SidePanel
 				aria-label={Liferay.Language.get('element-variations')}
 				className="bg-white element-variations__sidebar overflow-hidden shadow-none"
@@ -319,26 +361,31 @@ function ElementVariations({
 								searchTerm={searchTerm}
 							/>
 
-							{missingAudiencesAlertVisible &&
+							{issuesAlertVisible &&
+							editableElementOptions &&
 							experienceElementVariations.some(
 								(elementVariation) =>
-									!elementVariation.audienceEntryERCs.length
+									getElementVariationIssues(
+										elementVariation,
+										editableElementOptions
+									).length
 							) ? (
-								<MissingAudiencesAlert
-									onClose={() =>
-										setMissingAudiencesAlertVisible(false)
-									}
+								<IssuesAlert
+									onClose={() => setIssuesAlertVisible(false)}
 									onShowVariations={() => {
 										dispatch({
 											filter: {
 												exclude: false,
-												type: 'audience',
-												values: [NO_AUDIENCE_VALUE],
+												type: 'issue',
+												values: [
+													'missing-audience',
+													'missing-page-element',
+												],
 											},
 											type: 'ADD_FILTER',
 										});
 
-										setMissingAudiencesAlertVisible(false);
+										setIssuesAlertVisible(false);
 									}}
 								/>
 							) : null}
@@ -557,15 +604,12 @@ function Toolbar({
 	);
 }
 
-interface MissingAudiencesAlertProps {
+interface IssuesAlertProps {
 	onClose: () => void;
 	onShowVariations: () => void;
 }
 
-function MissingAudiencesAlert({
-	onClose,
-	onShowVariations,
-}: MissingAudiencesAlertProps) {
+function IssuesAlert({onClose, onShowVariations}: IssuesAlertProps) {
 	return (
 		<ClayAlert
 			closeButtonAriaLabel={Liferay.Language.get('close')}
@@ -575,7 +619,7 @@ function MissingAudiencesAlert({
 			variant="stripe"
 		>
 			{Liferay.Language.get(
-				'there-are-missing-audiences-for-some-variations'
+				'there-are-missing-audiences-or-page-elements-for-some-variations'
 			)}
 
 			<ClayAlert.Footer>
