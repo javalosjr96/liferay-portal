@@ -16,6 +16,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.model.Release;
 import com.liferay.portal.kernel.model.ReleaseConstants;
@@ -35,6 +36,8 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.verify.PostupgradeVerifyDatabaseState;
 import com.liferay.portal.verify.VerifyProcess;
 import com.liferay.portal.verify.test.util.BaseVerifyProcessTestCase;
+
+import java.sql.Connection;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -141,6 +144,23 @@ public class PostupgradeVerifyDatabaseStateTest
 		}
 		finally {
 			alterColumnType("Address", "city", "VARCHAR(75)");
+		}
+
+		_replaceColumn(
+			"QUARTZ_SIMPROP_TRIGGERS", "DEC_PROP_1", "NUMERIC(15,6) null");
+
+		try {
+			_testVerifyColumns(
+				_getExpectedMessage(
+					StringBundler.concat(
+						"Column ", getNormalizedName("DEC_PROP_1"),
+						" is not defined as NUMERIC(13,4) null for ",
+						getNormalizedName("QUARTZ_SIMPROP_TRIGGERS"), " table"),
+					"com.liferay.portal.scheduler.quartz"));
+		}
+		finally {
+			_replaceColumn(
+				"QUARTZ_SIMPROP_TRIGGERS", "DEC_PROP_1", "NUMERIC(13,4) null");
 		}
 	}
 
@@ -406,6 +426,19 @@ public class PostupgradeVerifyDatabaseStateTest
 		}
 
 		return messages.toString();
+	}
+
+	private void _replaceColumn(
+			String tableName, String columnName, String columnType)
+		throws Exception {
+
+		DB db = DBManagerUtil.getDB();
+
+		try (Connection connection = DataAccess.getConnection()) {
+			db.alterTableDropColumn(connection, tableName, columnName);
+			db.alterTableAddColumn(
+				connection, tableName, columnName, columnType);
+		}
 	}
 
 	private void _testGetMessages(
