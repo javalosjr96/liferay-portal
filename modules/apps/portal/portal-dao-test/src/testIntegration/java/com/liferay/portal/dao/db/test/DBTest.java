@@ -1267,7 +1267,7 @@ public class DBTest {
 		DBType dbType = db.getDBType();
 
 		if (dbType == DBType.DB2) {
-			return "dbms_lock.sleep";
+			return "dbms_pipe.receive_message";
 		}
 		else if ((dbType == DBType.MARIADB) || (dbType == DBType.MYSQL)) {
 			return "sleep";
@@ -1289,7 +1289,8 @@ public class DBTest {
 		DBType dbType = db.getDBType();
 
 		if (dbType == DBType.DB2) {
-			return "call dbms_lock.sleep(" + _SLOW_QUERY_SECONDS + ")";
+			return "values dbms_pipe.receive_message('DBTest', " +
+				_SLOW_QUERY_SECONDS + ")";
 		}
 		else if ((dbType == DBType.MARIADB) || (dbType == DBType.MYSQL)) {
 			return "select sleep(" + _SLOW_QUERY_SECONDS + ")";
