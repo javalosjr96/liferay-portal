@@ -183,7 +183,9 @@ public class DBInspector {
 				columnType, DB::getSQLType);
 
 			if (expectedColumnDataType == null) {
-				if (!_hasNumericColumnType(columnType, resultSet)) {
+				if (!_hasNumericColumnType(
+						actualColumnSize, columnType, resultSet)) {
+
 					return false;
 				}
 			}
@@ -597,7 +599,7 @@ public class DBInspector {
 	}
 
 	private boolean _hasNumericColumnType(
-			String columnType, ResultSet resultSet)
+			int actualColumnSize, String columnType, ResultSet resultSet)
 		throws SQLException {
 
 		Matcher matcher = _numericColumnTypePattern.matcher(columnType);
@@ -615,8 +617,6 @@ public class DBInspector {
 		}
 
 		int expectedColumnSize = GetterUtil.getInteger(matcher.group(1));
-
-		int actualColumnSize = resultSet.getInt("COLUMN_SIZE");
 
 		if (expectedColumnSize != actualColumnSize) {
 			return false;
