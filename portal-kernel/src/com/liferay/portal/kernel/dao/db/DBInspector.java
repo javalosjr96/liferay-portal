@@ -10,6 +10,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -181,18 +182,21 @@ public class DBInspector {
 			Integer expectedColumnDataType = _getByColumnType(
 				columnType, DB::getSQLType);
 
-			int actualColumnDataType = resultSet.getInt("DATA_TYPE");
-
-			if ((expectedColumnDataType == null) ||
-				(expectedColumnDataType != actualColumnDataType)) {
-
+			if (expectedColumnDataType == null) {
+				if (!_hasNumericColumnType(columnType, resultSet)) {
+					return false;
+				}
+			}
+			else if (expectedColumnDataType != resultSet.getInt("DATA_TYPE")) {
 				return false;
 			}
 
 			Integer expectedColumnDecimalDigits = _getByColumnType(
 				columnType, DB::getSQLTypeDecimalDigits);
 
-			if (expectedColumnDecimalDigits != DB.SQL_SIZE_NONE) {
+			if ((expectedColumnDecimalDigits != null) &&
+				(expectedColumnDecimalDigits != DB.SQL_SIZE_NONE)) {
+
 				int actualColumnDecimalDigits = resultSet.getInt(
 					"DECIMAL_DIGITS");
 
@@ -411,7 +415,9 @@ public class DBInspector {
 			return true;
 		}
 
-		return false;
+		Matcher matcher = _numericColumnTypePattern.matcher(columnType);
+
+		return matcher.lookingAt();
 	}
 
 	public String normalizeName(String name) throws SQLException {
@@ -590,6 +596,44 @@ public class DBInspector {
 		return false;
 	}
 
+	private boolean _hasNumericColumnType(
+			String columnType, ResultSet resultSet)
+		throws SQLException {
+
+		Matcher matcher = _numericColumnTypePattern.matcher(columnType);
+
+		if (!matcher.lookingAt()) {
+			return false;
+		}
+
+		int actualColumnDataType = resultSet.getInt("DATA_TYPE");
+
+		if ((actualColumnDataType != Types.DECIMAL) &&
+			(actualColumnDataType != Types.NUMERIC)) {
+
+			return false;
+		}
+
+		int expectedColumnSize = GetterUtil.getInteger(matcher.group(1));
+
+		int actualColumnSize = resultSet.getInt("COLUMN_SIZE");
+
+		if (expectedColumnSize != actualColumnSize) {
+			return false;
+		}
+
+		int expectedColumnDecimalDigits = GetterUtil.getInteger(
+			matcher.group(2));
+
+		int actualColumnDecimalDigits = resultSet.getInt("DECIMAL_DIGITS");
+
+		if (expectedColumnDecimalDigits != actualColumnDecimalDigits) {
+			return false;
+		}
+
+		return true;
+	}
+
 	private boolean _isColumnNullable(String typeName) {
 		typeName = typeName.trim();
 
@@ -627,6 +671,8 @@ public class DBInspector {
 	private static final Set<String> _controlTableNames = new HashSet<>(
 		Arrays.asList(
 			"company", "release_", "servicecomponent", "virtualhost"));
+	private static final Pattern _numericColumnTypePattern = Pattern.compile(
+		"^NUMERIC\\((\\d+),\\s*(\\d+)\\)", Pattern.CASE_INSENSITIVE);
 	private static final Set<String> _partitionedControlTableNames =
 		new HashSet<>(Arrays.asList("classname_", "counter", "resourceaction"));
 	private static final Map<String, Set<String>> _tableNamesMap =
