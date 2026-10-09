@@ -65,21 +65,12 @@ test(
 					exportedWebId,
 				]);
 
+			const finishedImportTask =
+				await headlessBatchEngine.waitForImportTask(importTask.id);
+
+			expect(finishedImportTask.executeStatus).toBe('COMPLETED');
+
 			exportedCreated = false;
-
-			await expect
-				.poll(
-					async () => {
-						const currentImportTask =
-							await headlessBatchEngine.getImportTask(
-								importTask.id
-							);
-
-						return currentImportTask.executeStatus;
-					},
-					{intervals: [1000], timeout: 180 * 1000}
-				)
-				.toBe('COMPLETED');
 
 			await virtualInstancesPage.openImportVirtualInstanceModal();
 
