@@ -672,7 +672,7 @@ public class DBInspector {
 		Arrays.asList(
 			"company", "release_", "servicecomponent", "virtualhost"));
 	private static final Pattern _numericColumnTypePattern = Pattern.compile(
-		"^NUMERIC\\((\\d+),\\s*(\\d+)\\)", Pattern.CASE_INSENSITIVE);
+		"^NUMERIC\\((\\d+),\\s*(\\d+)\\)(?:\\s|$)", Pattern.CASE_INSENSITIVE);
 	private static final Set<String> _partitionedControlTableNames =
 		new HashSet<>(Arrays.asList("classname_", "counter", "resourceaction"));
 	private static final Map<String, Set<String>> _tableNamesMap =
