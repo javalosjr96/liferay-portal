@@ -6,6 +6,7 @@
 package com.liferay.search.experiences.internal.model.listener;
 
 import com.liferay.asset.kernel.model.AssetEntry;
+import com.liferay.asset.list.model.AssetListEntryUsageTable;
 import com.liferay.asset.util.AssetHelper;
 import com.liferay.blogs.model.BlogsEntry;
 import com.liferay.blogs.service.BlogsEntryLocalService;
@@ -15,27 +16,41 @@ import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureService;
+import com.liferay.fragment.model.FragmentCompositionTable;
+import com.liferay.fragment.model.FragmentEntryLinkTable;
 import com.liferay.info.collection.provider.InfoCollectionProvider;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleService;
 import com.liferay.knowledge.base.model.KBArticle;
 import com.liferay.knowledge.base.service.KBArticleLocalService;
+import com.liferay.layout.page.template.model.LayoutPageTemplateStructureRelTable;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
+import com.liferay.portal.dao.orm.common.SQLTransformer;
+import com.liferay.portal.instance.lifecycle.EveryNodeEveryStartup;
+import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
+import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.ModelListener;
+import com.liferay.portal.kernel.model.PortletPreferenceValueTable;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
-import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupService;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
+import com.liferay.portal.kernel.util.InfrastructureUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.asset.AssetSubtypeIdentifier;
 import com.liferay.portal.search.asset.AssetSubtypeIdentifierBuilder;
 import com.liferay.portal.search.searcher.SearchRequestBuilderFactory;
 import com.liferay.portal.search.searcher.Searcher;
+import com.liferay.portal.util.PortalInstances;
 import com.liferay.search.experiences.internal.info.collection.provider.AssetEntrySXPBlueprintInfoCollectionProvider;
 import com.liferay.search.experiences.internal.info.collection.provider.BlogsEntrySXPBlueprintInfoCollectionProvider;
 import com.liferay.search.experiences.internal.info.collection.provider.CalendarBookingSXPBlueprintInfoCollectionProvider;
@@ -48,7 +63,9 @@ import com.liferay.search.experiences.rest.dto.v1_0.Configuration;
 import com.liferay.search.experiences.rest.dto.v1_0.GeneralConfiguration;
 import com.liferay.search.experiences.service.SXPBlueprintLocalService;
 
-import java.util.List;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -73,17 +90,21 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 			return;
 		}
 
-		_className = _getClassName(sxpBlueprint);
+		String className = _getClassName(sxpBlueprint);
 
-		ServiceRegistration<?> serviceRegistration = _serviceRegistrations.put(
+		Map<Long, ServiceRegistration<?>> serviceRegistrations =
+			_serviceRegistrations.computeIfAbsent(
+				sxpBlueprint.getCompanyId(), key -> new ConcurrentHashMap<>());
+
+		ServiceRegistration<?> serviceRegistration = serviceRegistrations.put(
 			sxpBlueprint.getSXPBlueprintId(),
 			_bundleContext.registerService(
 				InfoCollectionProvider.class,
-				_createInfoCollectionProvider(sxpBlueprint),
+				_createInfoCollectionProvider(className, sxpBlueprint),
 				HashMapDictionaryBuilder.<String, Object>put(
 					"company.id", sxpBlueprint.getCompanyId()
 				).put(
-					"item.class.name", _className
+					"item.class.name", className
 				).build()));
 
 		if (serviceRegistration != null) {
@@ -93,8 +114,15 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 
 	@Override
 	public void onAfterRemove(SXPBlueprint sxpBlueprint) {
+		Map<Long, ServiceRegistration<?>> serviceRegistrations =
+			_serviceRegistrations.get(sxpBlueprint.getCompanyId());
+
+		if (serviceRegistrations == null) {
+			return;
+		}
+
 		ServiceRegistration<?> serviceRegistration =
-			_serviceRegistrations.remove(sxpBlueprint.getSXPBlueprintId());
+			serviceRegistrations.remove(sxpBlueprint.getSXPBlueprintId());
 
 		if (serviceRegistration != null) {
 			serviceRegistration.unregister();
@@ -114,51 +142,43 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 	protected void activate(BundleContext bundleContext) {
 		_bundleContext = bundleContext;
 
-		_companyLocalService.forEachCompanyId(
-			companyId -> {
-				List<SXPBlueprint> sxpBlueprints =
-					_sxpBlueprintLocalService.getSXPBlueprints(companyId);
-
-				for (SXPBlueprint sxpBlueprint : sxpBlueprints) {
-					onAfterCreate(sxpBlueprint);
-				}
-			});
+		_serviceRegistration = bundleContext.registerService(
+			PortalInstanceLifecycleListener.class,
+			new InfoCollectionProviderPortalInstanceLifecycleListener(), null);
 	}
 
 	@Deactivate
 	protected void deactivate() {
-		for (ServiceRegistration<?> serviceRegistration :
-				_serviceRegistrations.values()) {
+		_serviceRegistration.unregister();
 
-			serviceRegistration.unregister();
+		for (long companyId : _serviceRegistrations.keySet()) {
+			_unregisterServiceRegistrations(companyId);
 		}
-
-		_serviceRegistrations.clear();
 	}
 
 	private InfoCollectionProvider<?> _createInfoCollectionProvider(
-		SXPBlueprint sxpBlueprint) {
+		String className, SXPBlueprint sxpBlueprint) {
 
-		if (_className.equals(BlogsEntry.class.getName())) {
+		if (className.equals(BlogsEntry.class.getName())) {
 			return new BlogsEntrySXPBlueprintInfoCollectionProvider(
 				_assetHelper, _blogsEntryLocalService, _searcher,
 				_searchRequestBuilderFactory, sxpBlueprint);
 		}
 
-		if (_className.equals(CalendarBooking.class.getName())) {
+		if (className.equals(CalendarBooking.class.getName())) {
 			return new CalendarBookingSXPBlueprintInfoCollectionProvider(
 				_assetHelper, _calendarBookingLocalService, _searcher,
 				_searchRequestBuilderFactory, sxpBlueprint);
 		}
 
-		if (_className.equals(DLFileEntry.class.getName())) {
+		if (className.equals(DLFileEntry.class.getName())) {
 			return new FileEntrySXPBlueprintInfoCollectionProvider(
 				_assetHelper, _assetSubtypeIdentifierBuilder,
 				_dlAppLocalService, _dlFileEntryTypeLocalService, _groupService,
 				_searcher, _searchRequestBuilderFactory, sxpBlueprint);
 		}
 
-		if (_className.equals(JournalArticle.class.getName())) {
+		if (className.equals(JournalArticle.class.getName())) {
 			return new JournalArticleSXPBlueprintInfoCollectionProvider(
 				_assetHelper, _assetSubtypeIdentifierBuilder,
 				_classNameLocalService, _ddmStructureService, _groupService,
@@ -166,15 +186,15 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 				sxpBlueprint);
 		}
 
-		if (_className.equals(KBArticle.class.getName())) {
+		if (className.equals(KBArticle.class.getName())) {
 			return new KBArticleSXPBlueprintInfoCollectionProvider(
 				_assetHelper, _kbArticleLocalService, _searcher,
 				_searchRequestBuilderFactory, sxpBlueprint);
 		}
 
-		if (_className.contains(ObjectDefinition.class.getName())) {
+		if (className.contains(ObjectDefinition.class.getName())) {
 			return new ObjectEntrySXPBlueprintInfoCollectionProvider(
-				_assetHelper, _className, _objectDefinitionLocalService,
+				_assetHelper, className, _objectDefinitionLocalService,
 				_objectEntryLocalService, _searcher,
 				_searchRequestBuilderFactory, sxpBlueprint);
 		}
@@ -233,6 +253,61 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 			generalConfiguration.getCollectionProvider());
 	}
 
+	private void _replaceInfoCollectionProviderKeys(
+			Connection connection, long fromCompanyId, long toCompanyId)
+		throws Exception {
+
+		for (String className : _CLASS_NAMES) {
+			String fromKeyPrefix = StringBundler.concat(
+				className, StringPool.UNDERLINE, fromCompanyId,
+				StringPool.UNDERLINE);
+			String toKeyPrefix = StringBundler.concat(
+				className, StringPool.UNDERLINE, toCompanyId,
+				StringPool.UNDERLINE);
+
+			for (Map.Entry<String, String> entry : _columnNames.entrySet()) {
+				try (PreparedStatement preparedStatement =
+						connection.prepareStatement(
+							SQLTransformer.transform(
+								StringBundler.concat(
+									"update ",
+									PropsValues.DATABASE_PARTITION_SCHEMA_NAME_PREFIX,
+									toCompanyId, StringPool.PERIOD,
+									entry.getKey(), " set ", entry.getValue(),
+									" = replace(", entry.getValue(),
+									", ?, ?) where ", entry.getValue(),
+									" like ?")))) {
+
+					preparedStatement.setString(1, fromKeyPrefix);
+					preparedStatement.setString(2, toKeyPrefix);
+					preparedStatement.setString(3, "%" + fromKeyPrefix + "%");
+
+					preparedStatement.executeUpdate();
+				}
+			}
+		}
+	}
+
+	private void _unregisterServiceRegistrations(long companyId) {
+		Map<Long, ServiceRegistration<?>> serviceRegistrations =
+			_serviceRegistrations.remove(companyId);
+
+		if (serviceRegistrations == null) {
+			return;
+		}
+
+		for (ServiceRegistration<?> serviceRegistration :
+				serviceRegistrations.values()) {
+
+			serviceRegistration.unregister();
+		}
+	}
+
+	private static final String[] _CLASS_NAMES = {
+		AssetEntrySXPBlueprintInfoCollectionProvider.class.getName(),
+		SXPBlueprint.class.getName()
+	};
+
 	@Reference
 	private AssetHelper _assetHelper;
 
@@ -247,13 +322,28 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 	@Reference
 	private CalendarBookingLocalService _calendarBookingLocalService;
 
-	private String _className = AssetEntry.class.getName();
-
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
 
+	private final Map<String, String> _columnNames = HashMapBuilder.put(
+		AssetListEntryUsageTable.INSTANCE.getTableName(),
+		AssetListEntryUsageTable.INSTANCE.key.getName()
+	).put(
+		FragmentCompositionTable.INSTANCE.getTableName(),
+		FragmentCompositionTable.INSTANCE.data.getName()
+	).put(
+		FragmentEntryLinkTable.INSTANCE.getTableName(),
+		FragmentEntryLinkTable.INSTANCE.editableValues.getName()
+	).put(
+		LayoutPageTemplateStructureRelTable.INSTANCE.getTableName(),
+		LayoutPageTemplateStructureRelTable.INSTANCE.data.getName()
+	).put(
+		PortletPreferenceValueTable.INSTANCE.getTableName(),
+		PortletPreferenceValueTable.INSTANCE.smallValue.getName()
+	).build();
+
 	@Reference
-	private CompanyLocalService _companyLocalService;
+	private CurrentConnection _currentConnection;
 
 	@Reference
 	private DDMStructureService _ddmStructureService;
@@ -285,10 +375,49 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 	@Reference
 	private Searcher _searcher;
 
-	private final Map<Long, ServiceRegistration<?>> _serviceRegistrations =
-		new ConcurrentHashMap<>();
+	private ServiceRegistration<PortalInstanceLifecycleListener>
+		_serviceRegistration;
+	private final Map<Long, Map<Long, ServiceRegistration<?>>>
+		_serviceRegistrations = new ConcurrentHashMap<>();
 
 	@Reference
 	private SXPBlueprintLocalService _sxpBlueprintLocalService;
+
+	private class InfoCollectionProviderPortalInstanceLifecycleListener
+		implements EveryNodeEveryStartup, PortalInstanceLifecycleListener {
+
+		@Override
+		public void portalInstancePreregistered(Company company)
+			throws Exception {
+
+			if (!PropsValues.DATABASE_PARTITION_ENABLED ||
+				!PortalInstances.isCompanyInCopyProcess()) {
+
+				return;
+			}
+
+			_replaceInfoCollectionProviderKeys(
+				_currentConnection.getConnection(
+					InfrastructureUtil.getDataSource()),
+				PortalInstances.getCopyInProcessCompanyId(),
+				company.getCompanyId());
+		}
+
+		@Override
+		public void portalInstanceRegistered(Company company) {
+			for (SXPBlueprint sxpBlueprint :
+					_sxpBlueprintLocalService.getSXPBlueprints(
+						company.getCompanyId())) {
+
+				onAfterCreate(sxpBlueprint);
+			}
+		}
+
+		@Override
+		public void portalInstanceUnregistered(Company company) {
+			_unregisterServiceRegistrations(company.getCompanyId());
+		}
+
+	}
 
 }
