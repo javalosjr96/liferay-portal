@@ -257,26 +257,25 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 			Connection connection, long fromCompanyId, long toCompanyId)
 		throws Exception {
 
-		for (String className : _CLASS_NAMES) {
-			String fromKeyPrefix = StringBundler.concat(
-				className, StringPool.UNDERLINE, fromCompanyId,
-				StringPool.UNDERLINE);
-			String toKeyPrefix = StringBundler.concat(
-				className, StringPool.UNDERLINE, toCompanyId,
-				StringPool.UNDERLINE);
+		for (Map.Entry<String, String> entry : _columnNames.entrySet()) {
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(
+						SQLTransformer.transform(
+							StringBundler.concat(
+								"update ",
+								PropsValues.DATABASE_PARTITION_SCHEMA_NAME_PREFIX,
+								toCompanyId, StringPool.PERIOD, entry.getKey(),
+								" set ", entry.getValue(), " = replace(",
+								entry.getValue(), ", ?, ?) where ",
+								entry.getValue(), " like ?")))) {
 
-			for (Map.Entry<String, String> entry : _columnNames.entrySet()) {
-				try (PreparedStatement preparedStatement =
-						connection.prepareStatement(
-							SQLTransformer.transform(
-								StringBundler.concat(
-									"update ",
-									PropsValues.DATABASE_PARTITION_SCHEMA_NAME_PREFIX,
-									toCompanyId, StringPool.PERIOD,
-									entry.getKey(), " set ", entry.getValue(),
-									" = replace(", entry.getValue(),
-									", ?, ?) where ", entry.getValue(),
-									" like ?")))) {
+				for (String className : _CLASS_NAMES) {
+					String fromKeyPrefix = StringBundler.concat(
+						className, StringPool.UNDERLINE, fromCompanyId,
+						StringPool.UNDERLINE);
+					String toKeyPrefix = StringBundler.concat(
+						className, StringPool.UNDERLINE, toCompanyId,
+						StringPool.UNDERLINE);
 
 					preparedStatement.setString(1, fromKeyPrefix);
 					preparedStatement.setString(2, toKeyPrefix);
