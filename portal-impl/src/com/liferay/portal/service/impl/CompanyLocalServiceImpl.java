@@ -397,9 +397,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 						companyId)) {
 
-				companyPersistence.clearCache();
-				_virtualHostPersistence.clearCache();
-
 				Company dbPartitionCompany = TransactionInvokerUtil.invoke(
 					_transactionConfig,
 					() -> {
@@ -434,6 +431,9 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 						return _addDBPartitionCompany(company);
 					});
+
+				companyPersistence.clearCache();
+				_virtualHostPersistence.clearCache();
 
 				return _registerDBPartitionCompany(dbPartitionCompany);
 			}
