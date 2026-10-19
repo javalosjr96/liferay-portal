@@ -13,6 +13,15 @@ import com.liferay.counter.kernel.service.persistence.CounterFinder;
 import com.liferay.counter.model.CounterRegister;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.store.Store;
+import com.liferay.info.collection.provider.InfoCollectionProvider;
+import com.liferay.info.item.InfoItemServiceRegistry;
+import com.liferay.info.list.provider.item.selector.criterion.InfoListProviderItemSelectorReturnType;
+import com.liferay.journal.model.JournalArticle;
+import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
+import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
+import com.liferay.layout.test.util.LayoutTestUtil;
+import com.liferay.layout.util.structure.CollectionStyledLayoutStructureItem;
+import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.test.util.ObjectDefinitionTestUtil;
@@ -32,10 +41,12 @@ import com.liferay.portal.kernel.exception.CompanyVirtualHostException;
 import com.liferay.portal.kernel.exception.CompanyWebIdException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.User;
@@ -47,6 +58,7 @@ import com.liferay.portal.kernel.repository.registry.RepositoryDefiner;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.RepositoryLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
@@ -856,6 +868,94 @@ public class CompanyLocalServiceDBPartitionTest
 	}
 
 	@Test
+	public void testCopyDBPartitionCompanyWhenSXPBlueprintIsCollectionProvider()
+		throws Exception {
+
+		Company copiedCompany = null;
+
+		try (SafeCloseable safeCloseable1 =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					TestPropsValues.getCompanyId())) {
+
+			SXPBlueprint sxpBlueprint1 = _addSXPBlueprint(
+				JSONUtil.put("collectionProvider", true));
+			SXPBlueprint sxpBlueprint2 = _addSXPBlueprint(
+				JSONUtil.put(
+					"collectionProvider", true
+				).put(
+					"searchableAssetTypes",
+					JSONUtil.put(JournalArticle.class.getName())
+				));
+
+			Layout layout = LayoutTestUtil.addTypeContentLayout(
+				_groupLocalService.getGroup(TestPropsValues.getGroupId()));
+
+			LayoutPageTemplateStructure layoutPageTemplateStructure =
+				_layoutPageTemplateStructureLocalService.
+					fetchLayoutPageTemplateStructure(
+						layout.getGroupId(), layout.getPlid());
+
+			LayoutStructure layoutStructure = LayoutStructure.of(
+				layoutPageTemplateStructure.getDefaultSegmentsExperienceData());
+
+			String itemId1 = _addCollectionStyledLayoutStructureItem(
+				layoutStructure, sxpBlueprint1);
+			String itemId2 = _addCollectionStyledLayoutStructureItem(
+				layoutStructure, sxpBlueprint2);
+
+			_layoutPageTemplateStructureLocalService.
+				updateLayoutPageTemplateStructureData(
+					TestPropsValues.getUserId(), layout.getGroupId(),
+					layout.getPlid(), layoutStructure.toString());
+
+			copiedCompany = companyLocalService.copyDBPartitionCompany(
+				TestPropsValues.getCompanyId(), null,
+				RandomTestUtil.randomString(),
+				StringUtil.toLowerCase(RandomTestUtil.randomString()),
+				RandomTestUtil.randomString());
+
+			long copiedCompanyId = copiedCompany.getCompanyId();
+
+			try (SafeCloseable safeCloseable2 =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						copiedCompanyId)) {
+
+				LayoutPageTemplateStructure copiedLayoutPageTemplateStructure =
+					_layoutPageTemplateStructureLocalService.
+						fetchLayoutPageTemplateStructure(
+							layout.getGroupId(), layout.getPlid());
+
+				LayoutStructure copiedLayoutStructure = LayoutStructure.of(
+					copiedLayoutPageTemplateStructure.
+						getDefaultSegmentsExperienceData());
+
+				_assertCollectionStyledLayoutStructureItem(
+					copiedCompanyId, itemId1, copiedLayoutStructure,
+					sxpBlueprint1);
+				_assertCollectionStyledLayoutStructureItem(
+					copiedCompanyId, itemId2, copiedLayoutStructure,
+					sxpBlueprint2);
+			}
+
+			_sxpBlueprintLocalService.deleteSXPBlueprint(sxpBlueprint1);
+			_sxpBlueprintLocalService.deleteSXPBlueprint(sxpBlueprint2);
+
+			companyLocalService.deleteCompany(copiedCompanyId);
+
+			copiedCompany = null;
+
+			Assert.assertNull(
+				_getInfoCollectionProviderKey(
+					copiedCompanyId, sxpBlueprint1.getExternalReferenceCode()));
+		}
+		finally {
+			if (copiedCompany != null) {
+				companyLocalService.deleteCompany(copiedCompany.getCompanyId());
+			}
+		}
+	}
+
+	@Test
 	public void testDeleteCompany() throws Exception {
 		_company1 = CompanyTestUtil.addCompany();
 
@@ -1095,6 +1195,29 @@ public class CompanyLocalServiceDBPartitionTest
 		Assert.assertEquals(updatedMx, company.getMx());
 	}
 
+	private String _addCollectionStyledLayoutStructureItem(
+			LayoutStructure layoutStructure, SXPBlueprint sxpBlueprint)
+		throws Exception {
+
+		CollectionStyledLayoutStructureItem
+			collectionStyledLayoutStructureItem =
+				(CollectionStyledLayoutStructureItem)
+					layoutStructure.addCollectionStyledLayoutStructureItem(
+						layoutStructure.getMainItemId(), 0);
+
+		collectionStyledLayoutStructureItem.setCollectionJSONObject(
+			JSONUtil.put(
+				"key",
+				_getInfoCollectionProviderKey(
+					TestPropsValues.getCompanyId(),
+					sxpBlueprint.getExternalReferenceCode())
+			).put(
+				"type", InfoListProviderItemSelectorReturnType.class.getName()
+			));
+
+		return collectionStyledLayoutStructureItem.getItemId();
+	}
+
 	private void _addCopyDBPartitionCompanyCache(long companyId) {
 		_className1 = _classNameLocalService.addClassName(_CLASS_NAME_1);
 		_className2 = _classNameLocalService.addClassName(_CLASS_NAME_2);
@@ -1114,6 +1237,20 @@ public class CompanyLocalServiceDBPartitionTest
 			_counterLocalService.reset(
 				CompanyLocalServiceDBPartitionTest.class.getName(), 100000);
 		}
+	}
+
+	private SXPBlueprint _addSXPBlueprint(
+			JSONObject generalConfigurationJSONObject)
+		throws Exception {
+
+		return _sxpBlueprintLocalService.addSXPBlueprint(
+			null, TestPropsValues.getUserId(),
+			JSONUtil.put(
+				"generalConfiguration", generalConfigurationJSONObject
+			).toString(),
+			Collections.emptyMap(), StringPool.BLANK, StringPool.BLANK,
+			RandomTestUtil.randomLocaleStringMap(),
+			ServiceContextTestUtil.getServiceContext());
 	}
 
 	private void _assertCache(long companyId, boolean cached) throws Exception {
@@ -1162,6 +1299,25 @@ public class CompanyLocalServiceDBPartitionTest
 						repositoryClassDefinition, "_repositoriesMap")));
 
 		Assert.assertEquals(cached, _hasResourceActionsCached(companyId));
+	}
+
+	private void _assertCollectionStyledLayoutStructureItem(
+		long companyId, String itemId, LayoutStructure layoutStructure,
+		SXPBlueprint sxpBlueprint) {
+
+		CollectionStyledLayoutStructureItem
+			collectionStyledLayoutStructureItem =
+				(CollectionStyledLayoutStructureItem)
+					layoutStructure.getLayoutStructureItem(itemId);
+
+		JSONObject collectionJSONObject =
+			collectionStyledLayoutStructureItem.getCollectionJSONObject();
+
+		String key = _getInfoCollectionProviderKey(
+			companyId, sxpBlueprint.getExternalReferenceCode());
+
+		Assert.assertNotNull(key);
+		Assert.assertEquals(key, collectionJSONObject.getString("key"));
 	}
 
 	private void _assertCompanyConfiguration(
@@ -1476,6 +1632,27 @@ public class CompanyLocalServiceDBPartitionTest
 		throw new SQLException("At least one database partition is required");
 	}
 
+	private String _getInfoCollectionProviderKey(
+		long companyId, String externalReferenceCode) {
+
+		String suffix = StringBundler.concat(
+			StringPool.UNDERLINE, companyId, StringPool.UNDERLINE,
+			externalReferenceCode);
+
+		for (InfoCollectionProvider<?> infoCollectionProvider :
+				_infoItemServiceRegistry.getAllInfoItemServices(
+					InfoCollectionProvider.class)) {
+
+			String key = infoCollectionProvider.getKey();
+
+			if (key.endsWith(suffix)) {
+				return key;
+			}
+		}
+
+		return null;
+	}
+
 	private int _getResourcePermissionsCount(
 			String partitionName, long companyId)
 		throws Exception {
@@ -1592,6 +1769,16 @@ public class CompanyLocalServiceDBPartitionTest
 
 	@Inject
 	private CounterLocalService _counterLocalService;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
+
+	@Inject
+	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Inject
+	private LayoutPageTemplateStructureLocalService
+		_layoutPageTemplateStructureLocalService;
 
 	@Inject
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
