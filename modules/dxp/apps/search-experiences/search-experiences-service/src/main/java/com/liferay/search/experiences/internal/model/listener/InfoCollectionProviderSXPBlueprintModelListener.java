@@ -34,6 +34,7 @@ import com.liferay.portal.instance.lifecycle.EveryNodeEveryStartup;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
+import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.Company;
@@ -259,6 +260,11 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 			Connection connection, long fromCompanyId, long toCompanyId)
 		throws Exception {
 
+		String[] classNames = {
+			AssetEntrySXPBlueprintInfoCollectionProvider.class.getName(),
+			SXPBlueprint.class.getName()
+		};
+
 		for (Map.Entry<String, String> entry : _columnNames.entrySet()) {
 			try (PreparedStatement preparedStatement =
 					AutoBatchPreparedStatementUtil.autoBatch(
@@ -273,7 +279,7 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 								entry.getValue(), ", ?, ?) where ",
 								entry.getValue(), " like ?")))) {
 
-				for (String className : _CLASS_NAMES) {
+				for (String className : classNames) {
 					String fromKeyPrefix = StringBundler.concat(
 						className, StringPool.UNDERLINE, fromCompanyId,
 						StringPool.UNDERLINE);
@@ -307,11 +313,6 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 			serviceRegistration.unregister();
 		}
 	}
-
-	private static final String[] _CLASS_NAMES = {
-		AssetEntrySXPBlueprintInfoCollectionProvider.class.getName(),
-		SXPBlueprint.class.getName()
-	};
 
 	@Reference
 	private AssetHelper _assetHelper;
@@ -398,7 +399,7 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 			if (!PropsValues.DATABASE_PARTITION_ENABLED ||
 				!PortalInstances.isCompanyInCopyProcess() ||
 				(company.getCompanyId() ==
-					PortalInstances.getDefaultCompanyId())) {
+					PortalInstancePool.getDefaultCompanyId())) {
 
 				return;
 			}
