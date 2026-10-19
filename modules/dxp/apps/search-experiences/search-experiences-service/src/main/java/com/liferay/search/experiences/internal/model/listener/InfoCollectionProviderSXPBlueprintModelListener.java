@@ -391,7 +391,9 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 			throws Exception {
 
 			if (!PropsValues.DATABASE_PARTITION_ENABLED ||
-				!PortalInstances.isCompanyInCopyProcess()) {
+				!PortalInstances.isCompanyInCopyProcess() ||
+				(company.getCompanyId() ==
+					PortalInstances.getDefaultCompanyId())) {
 
 				return;
 			}
