@@ -263,7 +263,8 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 						SQLTransformer.transform(
 							StringBundler.concat(
 								"update ",
-								PropsValues.DATABASE_PARTITION_SCHEMA_NAME_PREFIX,
+								PropsValues.
+									DATABASE_PARTITION_SCHEMA_NAME_PREFIX,
 								toCompanyId, StringPool.PERIOD, entry.getKey(),
 								" set ", entry.getValue(), " = replace(",
 								entry.getValue(), ", ?, ?) where ",
@@ -281,8 +282,10 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 					preparedStatement.setString(2, toKeyPrefix);
 					preparedStatement.setString(3, "%" + fromKeyPrefix + "%");
 
-					preparedStatement.executeUpdate();
+					preparedStatement.addBatch();
 				}
+
+				preparedStatement.executeBatch();
 			}
 		}
 	}
