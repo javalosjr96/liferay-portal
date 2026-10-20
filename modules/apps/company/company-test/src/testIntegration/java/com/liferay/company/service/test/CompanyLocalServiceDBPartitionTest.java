@@ -287,6 +287,47 @@ public class CompanyLocalServiceDBPartitionTest
 	}
 
 	@Test
+	public void testAddCompanyWhenCompanyIdExists() throws Exception {
+		Company company = CompanyTestUtil.addCompany();
+
+		try {
+			long[] companyIds =
+				CompanyLocalServiceTestUtil.getCompanyIdsBySQL();
+			String partitionName =
+				CompanyLocalServiceTestUtil.getPartitionName(
+					company.getCompanyId());
+
+			int usersCount = _getUsersCount(partitionName);
+
+			Assert.assertTrue(usersCount > 0);
+
+			try {
+				_companyLocalService.addCompany(
+					company.getCompanyId(),
+					RandomTestUtil.randomString() + ".test",
+					RandomTestUtil.randomString() + ".test", "test.com", 0,
+					true, false, null, null, null, null, null, null);
+
+				Assert.fail();
+			}
+			catch (IllegalArgumentException illegalArgumentException) {
+				Assert.assertEquals(
+					"Company ID " + company.getCompanyId() + " already exists",
+					illegalArgumentException.getMessage());
+			}
+
+			Assert.assertArrayEquals(
+				companyIds, CompanyLocalServiceTestUtil.getCompanyIdsBySQL());
+			Assert.assertTrue(
+				dbPartitionDB.existsPartition(connection, partitionName));
+			Assert.assertEquals(usersCount, _getUsersCount(partitionName));
+		}
+		finally {
+			companyLocalService.deleteCompany(company);
+		}
+	}
+
+	@Test
 	public void testAddCompanyWhenCompanyLocalServiceFails() throws Exception {
 		long[] companyIds = CompanyLocalServiceTestUtil.getCompanyIdsBySQL();
 		int dbPartitionsCount = _getDBPartitionsCount();
@@ -1517,6 +1558,18 @@ public class CompanyLocalServiceDBPartitionTest
 
 				return resultSet.getLong("count");
 			}
+		}
+	}
+
+	private int _getUsersCount(String partitionName) throws Exception {
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				"select count(*) COUNT_VALUE from " + partitionName +
+					".User_");
+			ResultSet resultSet = preparedStatement.executeQuery()) {
+
+			resultSet.next();
+
+			return resultSet.getInt("COUNT_VALUE");
 		}
 	}
 
