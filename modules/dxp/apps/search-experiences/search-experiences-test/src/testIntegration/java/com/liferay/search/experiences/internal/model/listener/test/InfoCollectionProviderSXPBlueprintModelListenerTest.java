@@ -56,6 +56,8 @@ public class InfoCollectionProviderSXPBlueprintModelListenerTest {
 				JSONUtil.put(
 					"collectionProvider", true
 				).put(
+					"collectionProviderType", JournalArticle.class.getName()
+				).put(
 					"searchableAssetTypes",
 					JSONUtil.put(JournalArticle.class.getName())
 				)
