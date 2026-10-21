@@ -105,15 +105,15 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess
 			String.CASE_INSENSITIVE_ORDER);
 
 		_putColumnNames(
-			columnNamesMap,
 			DBResourceUtil.getServiceComponentPortalColumnDefinitionsMap(
-				connection));
+				connection),
+			columnNamesMap);
 		_putColumnNames(
-			columnNamesMap,
 			DBResourceUtil.getServiceComponentModuleColumnDefinitionsMap(
-				connection));
+				connection),
+			columnNamesMap);
 		_putColumnNames(
-			columnNamesMap, DBResourceUtil.getPortalColumnDefinitionsMap());
+			DBResourceUtil.getPortalColumnDefinitionsMap(), columnNamesMap);
 
 		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
 
@@ -127,12 +127,8 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess
 			}
 
 			_putColumnNames(
-				columnNamesMap,
-				DBResourceUtil.getModuleColumnDefinitionsMap(bundle));
-		}
-
-		if (columnNamesMap.isEmpty()) {
-			return;
+				DBResourceUtil.getModuleColumnDefinitionsMap(bundle),
+				columnNamesMap);
 		}
 
 		Map<String, Map<String, String>> columnsMap = new TreeMap<>(
@@ -190,8 +186,8 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess
 	}
 
 	private void _putColumnNames(
-		Map<String, Map<String, String>> columnNamesMap,
-		Map<String, List<String>> columnDefinitionsMap) {
+		Map<String, List<String>> columnDefinitionsMap,
+		Map<String, Map<String, String>> columnNamesMap) {
 
 		for (Map.Entry<String, List<String>> entry :
 				columnDefinitionsMap.entrySet()) {
