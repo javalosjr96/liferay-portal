@@ -111,8 +111,7 @@ public class UpgradeProcessFactoryTest {
 			UpgradeProcessFactoryTest.class,
 			StringBundler.concat(
 				"Modifying table ", _TABLE_NAME_1,
-				" to alter the name of the column typeLong to newTypeLong ",
-				"LONG null"),
+				" to alter the name of the column typeLong to newTypeLong"),
 			upgradeProcess);
 
 		Assert.assertTrue(
@@ -286,7 +285,7 @@ public class UpgradeProcessFactoryTest {
 			StringBundler.concat(
 				"Modifying table ", _TABLE_NAME_1,
 				" to alter the name of the column newColumn to ",
-				"newColumnModified LONG null"),
+				"newColumnModified"),
 			(UpgradeProcess)upgradeSteps[3]);
 
 		Assert.assertTrue(
