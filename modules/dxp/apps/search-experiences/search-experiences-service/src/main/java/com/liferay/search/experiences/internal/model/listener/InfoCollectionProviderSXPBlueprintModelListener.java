@@ -23,6 +23,7 @@ import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleService;
 import com.liferay.knowledge.base.model.KBArticle;
 import com.liferay.knowledge.base.service.KBArticleLocalService;
+import com.liferay.layout.content.model.LayoutContentVersionTable;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructureRelTable;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
@@ -344,6 +345,9 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 	).put(
 		FragmentEntryLinkTable.INSTANCE.getTableName(),
 		FragmentEntryLinkTable.INSTANCE.editableValues.getName()
+	).put(
+		LayoutContentVersionTable.INSTANCE.getTableName(),
+		LayoutContentVersionTable.INSTANCE.data.getName()
 	).put(
 		LayoutPageTemplateStructureRelTable.INSTANCE.getTableName(),
 		LayoutPageTemplateStructureRelTable.INSTANCE.data.getName()

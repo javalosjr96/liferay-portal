@@ -27,6 +27,7 @@ dependencies {
 	compileOnly project(":apps:info:info-api")
 	compileOnly project(":apps:journal:journal-api")
 	compileOnly project(":apps:knowledge-base:knowledge-base-api")
+	compileOnly project(":apps:layout:layout-content-api")
 	compileOnly project(":apps:layout:layout-page-template-api")
 	compileOnly project(":apps:message-boards:message-boards-api")
 	compileOnly project(":apps:object:object-api")
