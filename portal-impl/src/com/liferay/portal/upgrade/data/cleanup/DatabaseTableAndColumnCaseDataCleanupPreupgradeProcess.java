@@ -15,6 +15,8 @@ import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.module.util.BundleUtil;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
 import com.liferay.portal.kernel.upgrade.data.cleanup.util.DataCleanupLoggingUtil;
@@ -25,10 +27,14 @@ import com.liferay.portal.kernel.util.Validator;
 import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
 
 /**
  * @author Jorge Avalos
@@ -95,19 +101,42 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess
 			alterTableName(tempTableName, expectedTableName);
 		}
 
-		Map<String, List<String>> columnDefinitionsMap =
-			DBResourceUtil.getServiceComponentPortalColumnDefinitionsMap(
-				connection);
+		Map<String, Map<String, String>> columnNamesMap = new TreeMap<>(
+			String.CASE_INSENSITIVE_ORDER);
 
-		if (columnDefinitionsMap.isEmpty()) {
+		_putColumnNames(
+			columnNamesMap,
+			DBResourceUtil.getServiceComponentPortalColumnDefinitionsMap(
+				connection));
+		_putColumnNames(
+			columnNamesMap,
+			DBResourceUtil.getServiceComponentModuleColumnDefinitionsMap(
+				connection));
+		_putColumnNames(
+			columnNamesMap, DBResourceUtil.getPortalColumnDefinitionsMap());
+
+		BundleContext bundleContext = SystemBundleUtil.getBundleContext();
+
+		for (Bundle bundle : bundleContext.getBundles()) {
+			String symbolicName = bundle.getSymbolicName();
+
+			if (!symbolicName.startsWith("com.liferay") ||
+				!BundleUtil.isLiferayServiceBundle(bundle)) {
+
+				continue;
+			}
+
+			_putColumnNames(
+				columnNamesMap,
+				DBResourceUtil.getModuleColumnDefinitionsMap(bundle));
+		}
+
+		if (columnNamesMap.isEmpty()) {
 			return;
 		}
 
-		columnDefinitionsMap.putAll(
-			DBResourceUtil.getServiceComponentModuleColumnDefinitionsMap(
-				connection));
-
-		Map<String, Map<String, String>> columnsMap = new TreeMap<>();
+		Map<String, Map<String, String>> columnsMap = new TreeMap<>(
+			String.CASE_INSENSITIVE_ORDER);
 
 		for (String tableName : expectedTableNames) {
 			try (ResultSet resultSet = databaseMetaData.getColumns(
@@ -127,17 +156,21 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess
 			}
 		}
 
-		for (Map.Entry<String, List<String>> entry :
-				columnDefinitionsMap.entrySet()) {
+		for (Map.Entry<String, Map<String, String>> entry :
+				columnsMap.entrySet()) {
 
 			String tableName = entry.getKey();
-			List<String> columnDefinitions = entry.getValue();
 
-			Map<String, String> columnNames = columnsMap.get(tableName);
+			Map<String, String> expectedColumnNames = columnNamesMap.get(
+				tableName);
+
+			if (expectedColumnNames == null) {
+				continue;
+			}
 
 			_validateColumnNamesCasing(
-				dbInspector, columnDefinitions, columnNames,
-				databaseMetaData.getMaxColumnNameLength(),
+				dbInspector, new ArrayList<>(expectedColumnNames.values()),
+				entry.getValue(), databaseMetaData.getMaxColumnNameLength(),
 				dbInspector.normalizeName(tableName));
 		}
 	}
@@ -154,6 +187,30 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess
 		).concat(
 			_TEMP_SUFFIX
 		);
+	}
+
+	private void _putColumnNames(
+		Map<String, Map<String, String>> columnNamesMap,
+		Map<String, List<String>> columnDefinitionsMap) {
+
+		for (Map.Entry<String, List<String>> entry :
+				columnDefinitionsMap.entrySet()) {
+
+			Map<String, String> columnNames = columnNamesMap.computeIfAbsent(
+				entry.getKey(),
+				k -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
+
+			for (String columnDefinition : entry.getValue()) {
+				if (Validator.isNull(columnDefinition)) {
+					continue;
+				}
+
+				String columnName = StringUtil.split(
+					columnDefinition, StringPool.SPACE)[0];
+
+				columnNames.put(columnName, columnName);
+			}
+		}
 	}
 
 	private void _validateColumnNamesCasing(
