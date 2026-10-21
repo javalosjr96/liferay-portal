@@ -45,6 +45,7 @@ import com.liferay.portal.kernel.repository.LocalRepository;
 import com.liferay.portal.kernel.repository.RepositoryFactory;
 import com.liferay.portal.kernel.repository.registry.RepositoryDefiner;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.PortletLocalService;
@@ -1672,8 +1673,12 @@ public class CompanyLocalServiceDBPartitionTest
 	private Throwable _invokeInTransaction(Callable<Void> callable)
 		throws Exception {
 
+		long userId = TestPropsValues.getUserId();
+
 		FutureTask<Throwable> futureTask = new FutureTask<>(
 			() -> {
+				PrincipalThreadLocal.setName(userId);
+
 				try (SafeCloseable safeCloseable =
 						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 							_defaultCompanyId)) {
