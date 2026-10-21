@@ -108,6 +108,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.felix.cm.PersistenceManager;
 
@@ -1648,6 +1649,26 @@ public class CompanyLocalServiceDBPartitionTest
 		}
 	}
 
+	private boolean _hasResourceActionsCached(long companyId) {
+		AopInvocationHandler aopInvocationHandler =
+			ProxyUtil.fetchInvocationHandler(
+				_resourceActionLocalService, AopInvocationHandler.class);
+
+		Map<String, ResourceAction> resourceActions =
+			ReflectionTestUtil.getFieldValue(
+				(ResourceActionLocalServiceImpl)
+					aopInvocationHandler.getTarget(),
+				"_resourceActions");
+
+		for (String key : resourceActions.keySet()) {
+			if (key.endsWith(StringPool.AT + companyId)) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private Throwable _invokeInTransaction(Callable<Void> callable)
 		throws Exception {
 
@@ -1674,27 +1695,14 @@ public class CompanyLocalServiceDBPartitionTest
 
 		thread.start();
 
-		return futureTask.get(60, TimeUnit.SECONDS);
-	}
-
-	private boolean _hasResourceActionsCached(long companyId) {
-		AopInvocationHandler aopInvocationHandler =
-			ProxyUtil.fetchInvocationHandler(
-				_resourceActionLocalService, AopInvocationHandler.class);
-
-		Map<String, ResourceAction> resourceActions =
-			ReflectionTestUtil.getFieldValue(
-				(ResourceActionLocalServiceImpl)
-					aopInvocationHandler.getTarget(),
-				"_resourceActions");
-
-		for (String key : resourceActions.keySet()) {
-			if (key.endsWith(StringPool.AT + companyId)) {
-				return true;
-			}
+		try {
+			return futureTask.get(60, TimeUnit.SECONDS);
 		}
+		catch (TimeoutException timeoutException) {
+			futureTask.cancel(true);
 
-		return false;
+			throw timeoutException;
+		}
 	}
 
 	private void _waitForConfigurationUpdates() throws Exception {
