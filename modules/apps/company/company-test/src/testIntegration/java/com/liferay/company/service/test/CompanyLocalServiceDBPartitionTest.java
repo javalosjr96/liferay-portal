@@ -64,6 +64,9 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.transaction.Propagation;
+import com.liferay.portal.kernel.transaction.TransactionConfig;
+import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -100,8 +103,11 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.felix.cm.PersistenceManager;
 
@@ -615,6 +621,75 @@ public class CompanyLocalServiceDBPartitionTest
 	}
 
 	@Test
+	public void testAddDBPartitionCompanyWhenTransactionFails()
+		throws Exception {
+
+		Company company = CompanyTestUtil.addCompany();
+
+		try {
+			companyLocalService.exportCompany(company.getCompanyId());
+
+			_companyLocalService.deleteCompany(company);
+
+			Throwable throwable = _invokeInTransaction(
+				() -> {
+					try {
+						companyLocalService.addDBPartitionCompany(
+							company.getCompanyId(),
+							RandomTestUtil.randomString(76), null, null);
+					}
+					catch (PortalException portalException) {
+						Assert.assertThrows(
+							UnsupportedOperationException.class,
+							() ->
+								PortalInstances.
+									setImportInProcessCompanyIdWithSafeCloseable(
+										company.getCompanyId()));
+
+						throw portalException;
+					}
+
+					return null;
+				});
+
+			Assert.assertSame(PortalException.class, throwable.getClass());
+
+			Assert.assertFalse(
+				ArrayUtil.contains(
+					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+					company.getCompanyId()));
+
+			CompanyLocalServiceTestUtil.checkStandaloneDBPartitionTables(
+				connection, dbPartitionDB,
+				DBPartitionUtil.getExportedPartitionName(
+					company.getCompanyId()),
+				"Company", "VirtualHost");
+
+			SafeCloseable safeCloseable =
+				PortalInstances.setImportInProcessCompanyIdWithSafeCloseable(
+					company.getCompanyId());
+
+			safeCloseable.close();
+		}
+		finally {
+			db.runSQL(
+				dbPartitionDB.getDropPartitionSQL(
+					DBPartitionUtil.getExportedPartitionName(
+						company.getCompanyId())));
+
+			if (ArrayUtil.contains(
+					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+					company.getCompanyId())) {
+
+				companyLocalService.deleteCompany(company);
+			}
+			else {
+				removeDBPartitions(new long[] {company.getCompanyId()});
+			}
+		}
+	}
+
+	@Test
 	public void testCopyDBPartitionCompany() throws Exception {
 		long rulesCount = _getRulesCount(defaultPartitionName);
 
@@ -837,6 +912,59 @@ public class CompanyLocalServiceDBPartitionTest
 			Assert.fail();
 		}
 		catch (PortalException portalException) {
+			Assert.assertFalse(
+				ArrayUtil.contains(
+					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+					toCompanyId));
+
+			_checkPartitionDoesNotExist(toCompanyId);
+
+			SafeCloseable safeCloseable =
+				PortalInstances.setCopyInProcessCompanyIdWithSafeCloseable(
+					toCompanyId);
+
+			safeCloseable.close();
+		}
+		finally {
+			companyLocalService.deleteCompany(company);
+		}
+	}
+
+	@Test
+	public void testCopyDBPartitionCompanyWhenTransactionFails()
+		throws Exception {
+
+		Company company = CompanyTestUtil.addCompany();
+
+		long toCompanyId = RandomTestUtil.nextLong();
+
+		try {
+			Throwable throwable = _invokeInTransaction(
+				() -> {
+					try {
+						companyLocalService.copyDBPartitionCompany(
+							company.getCompanyId(), toCompanyId,
+							RandomTestUtil.randomString(76),
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()),
+							RandomTestUtil.randomString());
+					}
+					catch (PortalException portalException) {
+						Assert.assertThrows(
+							UnsupportedOperationException.class,
+							() ->
+								PortalInstances.
+									setCopyInProcessCompanyIdWithSafeCloseable(
+										toCompanyId));
+
+						throw portalException;
+					}
+
+					return null;
+				});
+
+			Assert.assertSame(PortalException.class, throwable.getClass());
+
 			Assert.assertFalse(
 				ArrayUtil.contains(
 					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
@@ -1518,6 +1646,35 @@ public class CompanyLocalServiceDBPartitionTest
 				return resultSet.getLong("count");
 			}
 		}
+	}
+
+	private Throwable _invokeInTransaction(Callable<Void> callable)
+		throws Exception {
+
+		FutureTask<Throwable> futureTask = new FutureTask<>(
+			() -> {
+				try (SafeCloseable safeCloseable =
+						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+							_defaultCompanyId)) {
+
+					TransactionInvokerUtil.invoke(
+						TransactionConfig.Factory.create(
+							Propagation.REQUIRED,
+							new Class<?>[] {Exception.class}),
+						callable);
+
+					return null;
+				}
+				catch (Throwable throwable) {
+					return throwable;
+				}
+			});
+
+		Thread thread = new Thread(futureTask);
+
+		thread.start();
+
+		return futureTask.get(60, TimeUnit.SECONDS);
 	}
 
 	private boolean _hasResourceActionsCached(long companyId) {
