@@ -82,6 +82,8 @@ import com.liferay.portal.service.impl.ClassNameLocalServiceImpl;
 import com.liferay.portal.service.impl.CompanyLocalServiceImpl;
 import com.liferay.portal.service.impl.ResourceActionLocalServiceImpl;
 import com.liferay.portal.spring.aop.AopInvocationHandler;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -641,12 +643,8 @@ public class CompanyLocalServiceDBPartitionTest
 							RandomTestUtil.randomString(76), null, null);
 					}
 					catch (PortalException portalException) {
-						Assert.assertThrows(
-							UnsupportedOperationException.class,
-							() ->
-								PortalInstances.
-									setImportInProcessCompanyIdWithSafeCloseable(
-										company.getCompanyId()));
+						Assert.assertTrue(
+							PortalInstances.isCompanyInImportProcess());
 
 						throw portalException;
 					}
@@ -667,11 +665,7 @@ public class CompanyLocalServiceDBPartitionTest
 					company.getCompanyId()),
 				"Company", "VirtualHost");
 
-			SafeCloseable safeCloseable =
-				PortalInstances.setImportInProcessCompanyIdWithSafeCloseable(
-					company.getCompanyId());
-
-			safeCloseable.close();
+			Assert.assertFalse(PortalInstances.isCompanyInImportProcess());
 		}
 		finally {
 			db.runSQL(
@@ -952,12 +946,8 @@ public class CompanyLocalServiceDBPartitionTest
 							RandomTestUtil.randomString());
 					}
 					catch (PortalException portalException) {
-						Assert.assertThrows(
-							UnsupportedOperationException.class,
-							() ->
-								PortalInstances.
-									setCopyInProcessCompanyIdWithSafeCloseable(
-										toCompanyId));
+						Assert.assertTrue(
+							PortalInstances.isCompanyInCopyProcess());
 
 						throw portalException;
 					}
@@ -974,11 +964,7 @@ public class CompanyLocalServiceDBPartitionTest
 
 			_checkPartitionDoesNotExist(toCompanyId);
 
-			SafeCloseable safeCloseable =
-				PortalInstances.setCopyInProcessCompanyIdWithSafeCloseable(
-					toCompanyId);
-
-			safeCloseable.close();
+			Assert.assertFalse(PortalInstances.isCompanyInCopyProcess());
 		}
 		finally {
 			companyLocalService.deleteCompany(company);
@@ -1696,11 +1682,14 @@ public class CompanyLocalServiceDBPartitionTest
 				}
 			});
 
-		Thread thread = new Thread(futureTask);
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"org.hibernate.engine.jdbc.spi.SqlExceptionHelper",
+				LoggerTestUtil.OFF)) {
 
-		thread.start();
+			Thread thread = new Thread(futureTask);
 
-		try {
+			thread.start();
+
 			return futureTask.get(60, TimeUnit.SECONDS);
 		}
 		catch (TimeoutException timeoutException) {
