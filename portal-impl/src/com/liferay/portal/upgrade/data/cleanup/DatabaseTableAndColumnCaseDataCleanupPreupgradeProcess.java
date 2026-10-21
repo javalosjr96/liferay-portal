@@ -201,8 +201,8 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess
 					continue;
 				}
 
-				String columnName = StringUtil.split(
-					columnDefinition, StringPool.SPACE)[0];
+				String columnName =
+					StringUtil.split(columnDefinition, StringPool.SPACE)[0];
 
 				columnNames.put(columnName, columnName);
 			}
