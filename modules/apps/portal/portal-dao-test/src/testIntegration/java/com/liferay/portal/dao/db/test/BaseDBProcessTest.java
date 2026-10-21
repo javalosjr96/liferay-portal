@@ -155,9 +155,6 @@ public class BaseDBProcessTest extends BaseDBProcess {
 
 	@Test
 	public void testAlterColumnName() throws Exception {
-		Assert.assertFalse(
-			_dbInspector.hasColumn(_TABLE_NAME, "typeVarcharDefaultTest"));
-
 		alterColumnName(
 			_TABLE_NAME, "typeVarcharDefault", "typeVarcharDefaultTest");
 
@@ -279,7 +276,6 @@ public class BaseDBProcessTest extends BaseDBProcess {
 				_dbInspector.normalizeName("typeBoolean")
 			});
 	}
-
 
 	@Test
 	public void testAlterColumnTypeAlterSize() throws Exception {

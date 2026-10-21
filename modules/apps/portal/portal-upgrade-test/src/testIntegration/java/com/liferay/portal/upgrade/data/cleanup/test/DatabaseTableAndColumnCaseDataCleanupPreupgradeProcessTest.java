@@ -358,8 +358,9 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcessTest
 	}
 
 	private void _testUpgradeWithServiceComponentTable(
-			String columnType, String invalidColumnName, String invalidTableName,
-			String testColumnName, String testTableName)
+			String columnType, String invalidColumnName,
+			String invalidTableName, String testColumnName,
+			String testTableName)
 		throws Exception {
 
 		ServiceComponent serviceComponent =
