@@ -22,7 +22,9 @@ import com.liferay.portal.kernel.util.InfrastructureUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.tools.db.migration.importer.DBCopyTablesProcess;
 import com.liferay.portal.tools.db.migration.importer.jdbc.AutoBatchPreparedStatementUtil;
+import com.liferay.portal.tools.db.migration.importer.jdbc.ConnectionConfigUtil;
 
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -155,6 +157,41 @@ public class DBCopyTablesProcessTest {
 		_testColumnTypeOf(
 			Function.identity(), GetterUtil::getDouble, "DOUBLE",
 			() -> RandomTestUtil.nextDouble() + 0.5);
+	}
+
+	@Test
+	public void testFailedBatch() throws Exception {
+		_createTable("INTEGER");
+
+		int id = RandomTestUtil.randomInt(1, _TABLE_SIZE);
+
+		try (Connection connection = _targetDataSource.getConnection()) {
+			_targetDB.runSQL(
+				connection,
+				"alter table TestTable add constraint TestTable_check check " +
+					"(id <> " + id + ")");
+		}
+
+		Object[] values = new Object[_TABLE_SIZE];
+
+		for (int i = 0; i < _TABLE_SIZE; i++) {
+			values[i] = RandomTestUtil.randomInt();
+		}
+
+		_insertValues(values);
+
+		ConnectionConfigUtil.setBatchSize("3000");
+
+		try {
+			RuntimeException runtimeException = Assert.assertThrows(
+				RuntimeException.class, this::_copyTable);
+
+			Assert.assertTrue(
+				runtimeException.getCause() instanceof BatchUpdateException);
+		}
+		finally {
+			ConnectionConfigUtil.setBatchSize("0");
+		}
 	}
 
 	@Test

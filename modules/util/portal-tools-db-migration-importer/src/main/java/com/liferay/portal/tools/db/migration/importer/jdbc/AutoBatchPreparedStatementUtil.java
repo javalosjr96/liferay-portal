@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -119,18 +120,33 @@ public class AutoBatchPreparedStatementUtil {
 		}
 
 		private void _close() throws Throwable {
+			Throwable throwable1 = null;
+
 			for (Future<?> future : _futures) {
 				try {
 					future.get();
 				}
-				catch (Exception exception) {
-					exception.printStackTrace(System.err);
+				catch (Throwable throwable2) {
+					if (throwable2 instanceof ExecutionException) {
+						throwable2 = throwable2.getCause();
+					}
+
+					if (throwable1 == null) {
+						throwable1 = throwable2;
+					}
+					else {
+						throwable1.addSuppressed(throwable2);
+					}
 				}
 			}
 
 			_cleanUp(_preparedStatement);
 
 			_preparedStatement = null;
+
+			if (throwable1 != null) {
+				throw throwable1;
+			}
 		}
 
 		private void _executeAsync(Runnable runnable) {
