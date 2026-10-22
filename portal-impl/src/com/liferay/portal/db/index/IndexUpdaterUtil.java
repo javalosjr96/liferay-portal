@@ -265,6 +265,7 @@ public class IndexUpdaterUtil {
 			}
 
 			String indexColumns = matcher.group(2);
+
 			String orderByColumns = StringUtil.merge(
 				db.getPrimaryKeyColumnNames(connection, tableName),
 				StringPool.COMMA_AND_SPACE);
