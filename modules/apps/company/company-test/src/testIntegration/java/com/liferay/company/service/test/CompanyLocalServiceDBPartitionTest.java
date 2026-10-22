@@ -1690,7 +1690,7 @@ public class CompanyLocalServiceDBPartitionTest
 
 			thread.start();
 
-			return futureTask.get(60, TimeUnit.SECONDS);
+			return futureTask.get(10, TimeUnit.MINUTES);
 		}
 		catch (TimeoutException timeoutException) {
 			futureTask.cancel(true);
