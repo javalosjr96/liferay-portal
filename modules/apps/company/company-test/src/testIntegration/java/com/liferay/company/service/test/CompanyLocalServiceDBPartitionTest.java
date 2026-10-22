@@ -17,6 +17,8 @@ import com.liferay.info.collection.provider.InfoCollectionProvider;
 import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.list.provider.item.selector.criterion.InfoListProviderItemSelectorReturnType;
 import com.liferay.journal.model.JournalArticle;
+import com.liferay.layout.content.model.LayoutContentVersion;
+import com.liferay.layout.content.service.LayoutContentVersionLocalService;
 import com.liferay.layout.page.template.model.LayoutPageTemplateStructure;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.test.util.LayoutTestUtil;
@@ -59,6 +61,7 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.RepositoryLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
@@ -67,6 +70,7 @@ import com.liferay.portal.kernel.service.VirtualHostLocalService;
 import com.liferay.portal.kernel.spring.orm.LastSessionRecorderHelper;
 import com.liferay.portal.kernel.spring.orm.LastSessionRecorderHelperUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.AssumeTestRule;
 import com.liferay.portal.kernel.test.rule.DataGuard;
@@ -83,6 +87,7 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.repository.liferayrepository.LiferayRepository;
 import com.liferay.portal.repository.registry.RepositoryClassDefinition;
 import com.liferay.portal.repository.registry.RepositoryClassDefinitionCatalogUtil;
@@ -90,6 +95,7 @@ import com.liferay.portal.service.impl.ClassNameLocalServiceImpl;
 import com.liferay.portal.service.impl.CompanyLocalServiceImpl;
 import com.liferay.portal.service.impl.ResourceActionLocalServiceImpl;
 import com.liferay.portal.spring.aop.AopInvocationHandler;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -867,19 +873,24 @@ public class CompanyLocalServiceDBPartitionTest
 		}
 	}
 
+	@FeatureFlag("LPD-10622")
 	@Test
 	public void testCopyDBPartitionCompanyWhenSXPBlueprintIsCollectionProvider()
 		throws Exception {
 
 		Company copiedCompany = null;
+		Layout layout = null;
+		LayoutContentVersion layoutContentVersion = null;
+		SXPBlueprint sxpBlueprint1 = null;
+		SXPBlueprint sxpBlueprint2 = null;
 
 		try (SafeCloseable safeCloseable1 =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 					TestPropsValues.getCompanyId())) {
 
-			SXPBlueprint sxpBlueprint1 = _addSXPBlueprint(
+			sxpBlueprint1 = _addSXPBlueprint(
 				JSONUtil.put("collectionProvider", true));
-			SXPBlueprint sxpBlueprint2 = _addSXPBlueprint(
+			sxpBlueprint2 = _addSXPBlueprint(
 				JSONUtil.put(
 					"collectionProvider", true
 				).put(
@@ -887,7 +898,7 @@ public class CompanyLocalServiceDBPartitionTest
 					JSONUtil.put(JournalArticle.class.getName())
 				));
 
-			Layout layout = LayoutTestUtil.addTypeContentLayout(
+			layout = LayoutTestUtil.addTypeContentLayout(
 				_groupLocalService.getGroup(TestPropsValues.getGroupId()));
 
 			LayoutPageTemplateStructure layoutPageTemplateStructure =
@@ -907,6 +918,15 @@ public class CompanyLocalServiceDBPartitionTest
 				updateLayoutPageTemplateStructureData(
 					TestPropsValues.getUserId(), layout.getGroupId(),
 					layout.getPlid(), layoutStructure.toString());
+
+			Layout draftLayout = layout.fetchDraftLayout();
+
+			layoutContentVersion =
+				_layoutContentVersionLocalService.addLayoutContentVersion(
+					null, TestPropsValues.getUserId(),
+					layoutStructure.toString(),
+					RandomTestUtil.randomLocaleStringMap(),
+					draftLayout.getPlid(), WorkflowConstants.STATUS_DRAFT);
 
 			copiedCompany = companyLocalService.copyDBPartitionCompany(
 				TestPropsValues.getCompanyId(), null,
@@ -935,10 +955,38 @@ public class CompanyLocalServiceDBPartitionTest
 				_assertCollectionStyledLayoutStructureItem(
 					copiedCompanyId, itemId2, copiedLayoutStructure,
 					sxpBlueprint2);
-			}
 
-			_sxpBlueprintLocalService.deleteSXPBlueprint(sxpBlueprint1);
-			_sxpBlueprintLocalService.deleteSXPBlueprint(sxpBlueprint2);
+				List<LayoutContentVersion> layoutContentVersions =
+					_layoutContentVersionLocalService.getLayoutContentVersions(
+						draftLayout.getPlid());
+
+				Assert.assertEquals(
+					layoutContentVersions.toString(), 1,
+					layoutContentVersions.size());
+
+				LayoutContentVersion copiedLayoutContentVersion =
+					layoutContentVersions.get(0);
+
+				String data = copiedLayoutContentVersion.getData();
+
+				Assert.assertTrue(
+					data.contains(
+						_getInfoCollectionProviderKey(
+							copiedCompanyId,
+							sxpBlueprint1.getExternalReferenceCode())));
+				Assert.assertTrue(
+					data.contains(
+						_getInfoCollectionProviderKey(
+							copiedCompanyId,
+							sxpBlueprint2.getExternalReferenceCode())));
+				Assert.assertFalse(
+					data.contains(
+						StringBundler.concat(
+							StringPool.UNDERLINE,
+							TestPropsValues.getCompanyId(),
+							StringPool.UNDERLINE,
+							sxpBlueprint1.getExternalReferenceCode())));
+			}
 
 			companyLocalService.deleteCompany(copiedCompanyId);
 
@@ -951,6 +999,31 @@ public class CompanyLocalServiceDBPartitionTest
 		finally {
 			if (copiedCompany != null) {
 				companyLocalService.deleteCompany(copiedCompany.getCompanyId());
+			}
+
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						TestPropsValues.getCompanyId());
+				ContextUserReplace contextUserReplace = new ContextUserReplace(
+					TestPropsValues.getUser())) {
+
+				if (layoutContentVersion != null) {
+					_layoutContentVersionLocalService.
+						deleteLayoutContentVersion(
+							layoutContentVersion.getLayoutContentVersionId());
+				}
+
+				if (layout != null) {
+					_layoutLocalService.deleteLayout(layout);
+				}
+
+				if (sxpBlueprint1 != null) {
+					_sxpBlueprintLocalService.deleteSXPBlueprint(sxpBlueprint1);
+				}
+
+				if (sxpBlueprint2 != null) {
+					_sxpBlueprintLocalService.deleteSXPBlueprint(sxpBlueprint2);
+				}
 			}
 		}
 	}
@@ -1775,6 +1848,12 @@ public class CompanyLocalServiceDBPartitionTest
 
 	@Inject
 	private InfoItemServiceRegistry _infoItemServiceRegistry;
+
+	@Inject
+	private LayoutContentVersionLocalService _layoutContentVersionLocalService;
+
+	@Inject
+	private LayoutLocalService _layoutLocalService;
 
 	@Inject
 	private LayoutPageTemplateStructureLocalService
