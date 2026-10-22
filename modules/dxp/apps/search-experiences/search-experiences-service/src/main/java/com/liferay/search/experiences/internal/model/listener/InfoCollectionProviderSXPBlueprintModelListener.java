@@ -32,7 +32,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.dao.orm.common.SQLTransformer;
 import com.liferay.portal.instance.lifecycle.EveryNodeEveryStartup;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
-import com.liferay.portal.kernel.dao.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -60,6 +59,7 @@ import com.liferay.search.experiences.internal.info.collection.provider.FileEntr
 import com.liferay.search.experiences.internal.info.collection.provider.JournalArticleSXPBlueprintInfoCollectionProvider;
 import com.liferay.search.experiences.internal.info.collection.provider.KBArticleSXPBlueprintInfoCollectionProvider;
 import com.liferay.search.experiences.internal.info.collection.provider.ObjectEntrySXPBlueprintInfoCollectionProvider;
+import com.liferay.search.experiences.internal.info.collection.provider.SXPBlueprintInfoCollectionProvider;
 import com.liferay.search.experiences.model.SXPBlueprint;
 import com.liferay.search.experiences.rest.dto.v1_0.Configuration;
 import com.liferay.search.experiences.rest.dto.v1_0.GeneralConfiguration;
@@ -260,41 +260,45 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 			Connection connection, long fromCompanyId, long toCompanyId)
 		throws Exception {
 
-		String[] classNames = {
-			AssetEntrySXPBlueprintInfoCollectionProvider.class.getName(),
-			SXPBlueprint.class.getName()
-		};
+		String assetEntryClassName =
+			AssetEntrySXPBlueprintInfoCollectionProvider.class.getName();
+		String sxpBlueprintClassName = SXPBlueprint.class.getName();
 
 		for (Map.Entry<String, String> entry : _columnNames.entrySet()) {
 			try (PreparedStatement preparedStatement =
-					AutoBatchPreparedStatementUtil.autoBatch(
-						connection,
+					connection.prepareStatement(
 						SQLTransformer.transform(
 							StringBundler.concat(
 								"update ",
 								PropsValues.
 									DATABASE_PARTITION_SCHEMA_NAME_PREFIX,
 								toCompanyId, StringPool.PERIOD, entry.getKey(),
-								" set ", entry.getValue(), " = replace(",
-								entry.getValue(), ", ?, ?) where ",
-								entry.getValue(), " like ?")))) {
+								" set ", entry.getValue(),
+								" = replace(replace(", entry.getValue(),
+								", ?, ?), ?, ?) where ", entry.getValue(),
+								" like ?")))) {
 
-				for (String className : classNames) {
-					String fromKeyPrefix = StringBundler.concat(
-						className, StringPool.UNDERLINE, fromCompanyId,
-						StringPool.UNDERLINE);
-					String toKeyPrefix = StringBundler.concat(
-						className, StringPool.UNDERLINE, toCompanyId,
-						StringPool.UNDERLINE);
+				preparedStatement.setString(
+					1,
+					SXPBlueprintInfoCollectionProvider.getKey(
+						assetEntryClassName, fromCompanyId, StringPool.BLANK));
+				preparedStatement.setString(
+					2,
+					SXPBlueprintInfoCollectionProvider.getKey(
+						assetEntryClassName, toCompanyId, StringPool.BLANK));
+				preparedStatement.setString(
+					3,
+					SXPBlueprintInfoCollectionProvider.getKey(
+						sxpBlueprintClassName, fromCompanyId,
+						StringPool.BLANK));
+				preparedStatement.setString(
+					4,
+					SXPBlueprintInfoCollectionProvider.getKey(
+						sxpBlueprintClassName, toCompanyId, StringPool.BLANK));
+				preparedStatement.setString(
+					5, StringBundler.concat("%\\_", fromCompanyId, "\\_%"));
 
-					preparedStatement.setString(1, fromKeyPrefix);
-					preparedStatement.setString(2, toKeyPrefix);
-					preparedStatement.setString(3, "%" + fromKeyPrefix + "%");
-
-					preparedStatement.addBatch();
-				}
-
-				preparedStatement.executeBatch();
+				preparedStatement.executeUpdate();
 			}
 		}
 	}
