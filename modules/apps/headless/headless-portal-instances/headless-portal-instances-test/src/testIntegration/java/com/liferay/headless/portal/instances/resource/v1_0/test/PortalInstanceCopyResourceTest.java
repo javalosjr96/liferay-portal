@@ -450,10 +450,21 @@ public class PortalInstanceCopyResourceTest
 
 			Thread thread = new Thread(futureTask);
 
+			thread.setDaemon(true);
+			thread.setName(
+				PortalInstanceCopyResourceTest.class.getSimpleName() +
+					"-postPortalInstanceCopy");
+
 			thread.start();
 
 			Problem problem = futureTask.get(10, TimeUnit.MINUTES);
 
+			if (problem == null) {
+				_deleteCompanyByVirtualHost(
+					portalInstanceCopy.getVirtualHost());
+			}
+
+			Assert.assertNotNull(problem);
 			Assert.assertEquals("INTERNAL_SERVER_ERROR", problem.getStatus());
 		}
 		catch (TimeoutException timeoutException) {

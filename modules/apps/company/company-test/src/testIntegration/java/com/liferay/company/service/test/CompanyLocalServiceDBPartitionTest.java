@@ -1704,6 +1704,11 @@ public class CompanyLocalServiceDBPartitionTest
 
 			Thread thread = new Thread(futureTask);
 
+			thread.setDaemon(true);
+			thread.setName(
+				CompanyLocalServiceDBPartitionTest.class.getSimpleName() +
+					"-invokeInTransaction");
+
 			thread.start();
 
 			return futureTask.get(10, TimeUnit.MINUTES);
