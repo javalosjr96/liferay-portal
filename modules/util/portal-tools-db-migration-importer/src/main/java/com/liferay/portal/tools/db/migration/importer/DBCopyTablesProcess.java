@@ -5,7 +5,6 @@
 
 package com.liferay.portal.tools.db.migration.importer;
 
-import com.liferay.petra.io.unsync.UnsyncBufferedReader;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -19,12 +18,9 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.tools.db.migration.importer.jdbc.AutoBatchPreparedStatementUtil;
 import com.liferay.portal.tools.db.migration.importer.jdbc.ConnectionConfigUtil;
 
-import java.io.Reader;
-
 import java.math.BigDecimal;
 
 import java.sql.Blob;
-import java.sql.Clob;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
@@ -298,35 +294,6 @@ public class DBCopyTablesProcess {
 
 			valueString = value ? "1" : "0";
 		}
-		else if (sourceType == Types.CLOB) {
-			Clob value = resultSet.getClob(columnName);
-
-			if (value == null) {
-				preparedStatement.setNull(index, targetType);
-
-				return;
-			}
-
-			try (Reader reader = value.getCharacterStream();
-
-				UnsyncBufferedReader unsyncBufferedReader =
-					new UnsyncBufferedReader(reader)) {
-
-				StringBundler sb = new StringBundler();
-
-				String line = null;
-
-				while ((line = unsyncBufferedReader.readLine()) != null) {
-					if (sb.length() != 0) {
-						sb.append("\n");
-					}
-
-					sb.append(line);
-				}
-
-				valueString = sb.toString();
-			}
-		}
 		else if ((sourceType == Types.DECIMAL) ||
 				 (sourceType == Types.NUMERIC)) {
 
@@ -411,7 +378,8 @@ public class DBCopyTablesProcess {
 
 			valueString = String.valueOf(value);
 		}
-		else if ((sourceType == Types.LONGVARCHAR) ||
+		else if ((sourceType == Types.CLOB) ||
+				 (sourceType == Types.LONGVARCHAR) ||
 				 (sourceType == Types.NVARCHAR) ||
 				 (sourceType == Types.VARCHAR)) {
 

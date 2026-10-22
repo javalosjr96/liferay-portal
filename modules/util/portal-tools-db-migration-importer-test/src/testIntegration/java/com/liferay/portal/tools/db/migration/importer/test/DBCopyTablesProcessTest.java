@@ -6,6 +6,7 @@
 package com.liferay.portal.tools.db.migration.importer.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.dao.jdbc.postgresql.PostgreSQLJDBCUtil;
 import com.liferay.portal.kernel.dao.db.DB;
@@ -162,6 +163,17 @@ public class DBCopyTablesProcessTest {
 		_testColumnTypeOf(
 			Function.identity(), Function.identity(), "INTEGER",
 			RandomTestUtil::nextInt);
+	}
+
+	@Test
+	public void testLineEndings() throws Exception {
+		_testColumnTypeOf(
+			Function.identity(), Function.identity(), "TEXT",
+			() -> StringBundler.concat(
+				StringPool.NEW_LINE, RandomTestUtil.randomString(),
+				StringPool.RETURN_NEW_LINE, RandomTestUtil.randomString(),
+				StringPool.RETURN, RandomTestUtil.randomString(),
+				StringPool.RETURN_NEW_LINE));
 	}
 
 	@Test
