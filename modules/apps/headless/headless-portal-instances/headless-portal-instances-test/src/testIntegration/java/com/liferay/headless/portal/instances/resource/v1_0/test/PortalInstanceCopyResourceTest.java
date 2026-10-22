@@ -42,6 +42,8 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.util.PortalInstances;
 
 import java.util.Arrays;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -121,6 +123,7 @@ public class PortalInstanceCopyResourceTest
 		_testPostPortalInstanceCopyMissingRequiredFields();
 		_testPostPortalInstanceCopySuccess();
 		_testPostPortalInstanceCopySuccessWithDestinationCompanyId();
+		_testPostPortalInstanceCopyWithLongName();
 		_testPostPortalInstanceCopyWithNonexistentPortalInstance();
 		_testPostPortalInstanceCopyWithNonpositiveDestinationCompanyId();
 		_testPostPortalInstanceCopyWithoutOmniadminPermission();
@@ -413,6 +416,46 @@ public class PortalInstanceCopyResourceTest
 			Assert.assertEquals(
 				"Database partitioning must be enabled", problem.getTitle());
 		}
+	}
+
+	private void _testPostPortalInstanceCopyWithLongName() throws Exception {
+		PortalInstanceCopy portalInstanceCopy = _randomPortalInstanceCopy();
+
+		portalInstanceCopy.setName(RandomTestUtil.randomString(76));
+
+		FutureTask<Problem> futureTask = new FutureTask<>(
+			() -> {
+				try {
+					portalInstanceCopyResource.postPortalInstanceCopy(
+						portalInstanceCopy);
+
+					return null;
+				}
+				catch (Problem.ProblemException problemException) {
+					return problemException.getProblem();
+				}
+			});
+
+		try (LogCapture logCapture1 = LoggerTestUtil.configureLog4JLogger(
+				_CLASS_NAME_PORTAL_INSTANCE_COPY_RESOURCE_IMPL,
+				LoggerTestUtil.OFF);
+			LogCapture logCapture2 = LoggerTestUtil.configureLog4JLogger(
+				"org.hibernate.engine.jdbc.spi.SqlExceptionHelper",
+				LoggerTestUtil.OFF)) {
+
+			Thread thread = new Thread(futureTask);
+
+			thread.start();
+
+			Problem problem = futureTask.get(60, TimeUnit.SECONDS);
+
+			Assert.assertEquals("INTERNAL_SERVER_ERROR", problem.getStatus());
+		}
+
+		Assert.assertFalse(PortalInstances.isCompanyInCopyProcess());
+		Assert.assertNull(
+			_virtualHostLocalService.fetchVirtualHost(
+				portalInstanceCopy.getVirtualHost()));
 	}
 
 	private void _testPostPortalInstanceCopyWithNonexistentPortalInstance()
