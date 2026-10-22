@@ -90,7 +90,7 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 
 	@Override
 	public void onAfterCreate(SXPBlueprint sxpBlueprint) {
-		if (!_isCollectionProvider(sxpBlueprint)) {
+		if (_deactivated || !_isCollectionProvider(sxpBlueprint)) {
 			return;
 		}
 
@@ -113,6 +113,11 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 
 		if (serviceRegistration != null) {
 			serviceRegistration.unregister();
+		}
+
+		if (_deactivated) {
+			_unregisterServiceRegistration(
+				serviceRegistrations.remove(sxpBlueprint.getSXPBlueprintId()));
 		}
 	}
 
@@ -153,6 +158,8 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 
 	@Deactivate
 	protected void deactivate() {
+		_deactivated = true;
+
 		_serviceRegistration.unregister();
 
 		Set<Long> companyIds = _serviceRegistrations.keySet();
@@ -304,6 +311,14 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 		}
 	}
 
+	private void _unregisterServiceRegistration(
+		ServiceRegistration<?> serviceRegistration) {
+
+		if (serviceRegistration != null) {
+			serviceRegistration.unregister();
+		}
+	}
+
 	private void _unregisterServiceRegistrations(long companyId) {
 		Map<Long, ServiceRegistration<?>> serviceRegistrations =
 			_serviceRegistrations.remove(companyId);
@@ -312,10 +327,9 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 			return;
 		}
 
-		for (ServiceRegistration<?> serviceRegistration :
-				serviceRegistrations.values()) {
-
-			serviceRegistration.unregister();
+		for (Long sxpBlueprintId : serviceRegistrations.keySet()) {
+			_unregisterServiceRegistration(
+				serviceRegistrations.remove(sxpBlueprintId));
 		}
 	}
 
@@ -361,6 +375,8 @@ public class InfoCollectionProviderSXPBlueprintModelListener
 
 	@Reference
 	private DDMStructureService _ddmStructureService;
+
+	private volatile boolean _deactivated;
 
 	@Reference
 	private DLAppLocalService _dlAppLocalService;
