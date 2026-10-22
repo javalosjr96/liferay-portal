@@ -386,64 +386,86 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 				GetterUtil.getString(webId), lowerCaseVirtualHostname);
 		}
 
-		try (SafeCloseable safeCloseable1 =
-				PortalInstances.setImportInProcessCompanyIdWithSafeCloseable(
-					companyId)) {
+		SafeCloseable safeCloseable1 =
+			PortalInstances.setImportInProcessCompanyIdWithSafeCloseable(
+				companyId);
 
+		try {
 			DBPartitionUtil.importDBPartition(
 				companyId, lowerCaseVirtualHostname, webId);
+		}
+		catch (Throwable throwable) {
+			safeCloseable1.close();
 
-			try (SafeCloseable safeCloseable2 =
-					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						companyId)) {
+			throw throwable;
+		}
 
-				companyPersistence.clearCache();
-				_virtualHostPersistence.clearCache();
+		try (SafeCloseable safeCloseable2 =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId)) {
 
-				Company dbPartitionCompany = TransactionInvokerUtil.invoke(
-					_transactionConfig,
-					() -> {
-						Company company = companyPersistence.findByPrimaryKey(
-							companyId);
+			companyPersistence.clearCache();
+			_virtualHostPersistence.clearCache();
 
-						if (Validator.isNotNull(name) &&
-							!StringUtil.equals(company.getName(), name)) {
+			Company dbPartitionCompany = TransactionInvokerUtil.invoke(
+				_transactionConfig,
+				() -> {
+					Company company = companyPersistence.findByPrimaryKey(
+						companyId);
 
-							validateName(companyId, name);
+					if (Validator.isNotNull(name) &&
+						!StringUtil.equals(company.getName(), name)) {
 
-							company.setName(name);
+						validateName(companyId, name);
 
-							CompanyInfo companyInfo = company.getCompanyInfo();
+						company.setName(name);
 
-							company = companyPersistence.update(company);
+						CompanyInfo companyInfo = company.getCompanyInfo();
 
-							_companyInfoPersistence.update(companyInfo);
-						}
+						company = companyPersistence.update(company);
 
-						if (Validator.isNotNull(lowerCaseVirtualHostname) &&
-							!StringUtil.equals(
-								company.getVirtualHostname(),
-								lowerCaseVirtualHostname)) {
+						_companyInfoPersistence.update(companyInfo);
+					}
 
-							company = updateVirtualHostname(
-								companyId, lowerCaseVirtualHostname);
-						}
+					if (Validator.isNotNull(lowerCaseVirtualHostname) &&
+						!StringUtil.equals(
+							company.getVirtualHostname(),
+							lowerCaseVirtualHostname)) {
 
-						return _addDBPartitionCompany(company);
-					});
+						company = updateVirtualHostname(
+							companyId, lowerCaseVirtualHostname);
+					}
 
-				return _registerDBPartitionCompany(dbPartitionCompany);
-			}
-			catch (Throwable throwable1) {
-				try {
-					_removeDBPartition(companyId, true);
-				}
-				catch (Throwable throwable2) {
-					throwable1.addSuppressed(throwable2);
-				}
+					return _addDBPartitionCompany(company);
+				});
 
-				throw new PortalException(throwable1);
-			}
+			Company company = _registerDBPartitionCompany(dbPartitionCompany);
+
+			safeCloseable1.close();
+
+			return company;
+		}
+		catch (Throwable throwable1) {
+			TransactionCallbackUtil.registerCompletionCallback(
+				() -> {
+					try {
+						_removeDBPartition(companyId, true);
+					}
+					catch (Throwable throwable2) {
+						throwable1.addSuppressed(throwable2);
+
+						_log.error(
+							"Unable to remove database partition for company " +
+								companyId,
+							throwable2);
+					}
+					finally {
+						safeCloseable1.close();
+					}
+
+					return null;
+				});
+
+			throw new PortalException(throwable1);
 		}
 	}
 
@@ -620,52 +642,74 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 		validateWebId(webId);
 
-		try (SafeCloseable safeCloseable1 =
-				PortalInstances.setCopyInProcessCompanyIdWithSafeCloseable(
-					fromCompanyId)) {
+		SafeCloseable safeCloseable1 =
+			PortalInstances.setCopyInProcessCompanyIdWithSafeCloseable(
+				fromCompanyId);
 
+		try {
 			DBPartitionUtil.copyDBPartition(fromCompanyId, toCompanyId);
+		}
+		catch (Throwable throwable) {
+			safeCloseable1.close();
 
-			long companyId = toCompanyId;
+			throw throwable;
+		}
 
-			try (SafeCloseable safeCloseable2 =
-					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						toCompanyId)) {
+		long companyId = toCompanyId;
 
-				Company dbPartitionCompany = TransactionInvokerUtil.invoke(
-					_transactionConfig,
-					() -> {
-						Company company = fromCompany.cloneWithOriginalValues();
+		try (SafeCloseable safeCloseable2 =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(toCompanyId)) {
 
-						company.setCompanyId(companyId);
-						company.setWebId(webId);
-						company.setName(name);
-						company.setNew(true);
+			Company dbPartitionCompany = TransactionInvokerUtil.invoke(
+				_transactionConfig,
+				() -> {
+					Company company = fromCompany.cloneWithOriginalValues();
 
-						CompanyInfo companyInfo = company.getCompanyInfo();
+					company.setCompanyId(companyId);
+					company.setWebId(webId);
+					company.setName(name);
+					company.setNew(true);
 
-						company = companyPersistence.update(company);
+					CompanyInfo companyInfo = company.getCompanyInfo();
 
-						company = updateVirtualHostname(
-							company.getCompanyId(), lowerCaseVirtualHostname);
+					company = companyPersistence.update(company);
 
-						_companyInfoPersistence.update(companyInfo);
+					company = updateVirtualHostname(
+						company.getCompanyId(), lowerCaseVirtualHostname);
 
-						return _addDBPartitionCompany(company);
-					});
+					_companyInfoPersistence.update(companyInfo);
 
-				return _registerDBPartitionCompany(dbPartitionCompany);
-			}
-			catch (Throwable throwable1) {
-				try {
-					_removeDBPartition(companyId, false);
-				}
-				catch (Throwable throwable2) {
-					throwable1.addSuppressed(throwable2);
-				}
+					return _addDBPartitionCompany(company);
+				});
 
-				throw new PortalException(throwable1);
-			}
+			Company company = _registerDBPartitionCompany(dbPartitionCompany);
+
+			safeCloseable1.close();
+
+			return company;
+		}
+		catch (Throwable throwable1) {
+			TransactionCallbackUtil.registerCompletionCallback(
+				() -> {
+					try {
+						_removeDBPartition(companyId, false);
+					}
+					catch (Throwable throwable2) {
+						throwable1.addSuppressed(throwable2);
+
+						_log.error(
+							"Unable to remove database partition for company " +
+								companyId,
+							throwable2);
+					}
+					finally {
+						safeCloseable1.close();
+					}
+
+					return null;
+				});
+
+			throw new PortalException(throwable1);
 		}
 	}
 
