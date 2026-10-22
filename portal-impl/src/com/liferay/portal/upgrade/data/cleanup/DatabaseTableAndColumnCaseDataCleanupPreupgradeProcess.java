@@ -197,10 +197,6 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess
 				k -> new TreeMap<>(String.CASE_INSENSITIVE_ORDER));
 
 			for (String columnDefinition : entry.getValue()) {
-				if (Validator.isNull(columnDefinition)) {
-					continue;
-				}
-
 				String columnName =
 					StringUtil.split(columnDefinition, StringPool.SPACE)[0];
 
