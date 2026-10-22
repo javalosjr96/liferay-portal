@@ -5,6 +5,7 @@
 
 package com.liferay.headless.admin.site.internal.dto.v1_0.converter;
 
+import com.liferay.headless.admin.site.dto.v1_0.AdvancedStylingConfig;
 import com.liferay.headless.admin.site.dto.v1_0.BasicWidgetPageWidgetInstance;
 import com.liferay.headless.admin.site.dto.v1_0.GeneralConfig;
 import com.liferay.headless.admin.site.dto.v1_0.NestedApplicationsWidgetPageWidgetInstance;
@@ -16,6 +17,8 @@ import com.liferay.headless.admin.site.internal.resource.v1_0.util.LayoutUtil;
 import com.liferay.layout.exporter.PortletPermissionsExporter;
 import com.liferay.layout.exporter.PortletPreferencesPortletConfigurationExporter;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutTypePortlet;
@@ -176,6 +179,42 @@ public class WidgetPageWidgetInstanceDTOConverter
 		return null;
 	}
 
+	private AdvancedStylingConfig _getAdvancedStylingConfig(
+		PortletPreferences portletPreferences) {
+
+		JSONObject jsonObject = _jsonFactory.safeCreateJSONObject(
+			portletPreferences.getValue("portletSetupCss", null));
+
+		if (jsonObject == null) {
+			return null;
+		}
+
+		JSONObject advancedDataJSONObject = jsonObject.getJSONObject(
+			"advancedData");
+
+		if (advancedDataJSONObject == null) {
+			return null;
+		}
+
+		String customCSS = advancedDataJSONObject.getString("customCSS");
+		String customCSSClassName = advancedDataJSONObject.getString(
+			"customCSSClassName");
+
+		if (Validator.isNull(customCSS) &&
+			Validator.isNull(customCSSClassName)) {
+
+			return null;
+		}
+
+		AdvancedStylingConfig advancedStylingConfig =
+			new AdvancedStylingConfig();
+
+		advancedStylingConfig.setCustomCSS(() -> customCSS);
+		advancedStylingConfig.setCustomCSSClassNames(() -> customCSSClassName);
+
+		return advancedStylingConfig;
+	}
+
 	private Map<String, String> _getCustomTitleMap(
 		long groupId, PortletPreferences portletPreferences) {
 
@@ -185,9 +224,11 @@ public class WidgetPageWidgetInstanceDTOConverter
 			String portletSetupTitle = portletPreferences.getValue(
 				"portletSetupTitle_" + LocaleUtil.toLanguageId(locale), null);
 
-			if (Validator.isNotNull(portletSetupTitle)) {
-				map.put(locale, portletSetupTitle);
+			if (Validator.isNull(portletSetupTitle)) {
+				continue;
 			}
+
+			map.put(locale, portletSetupTitle);
 		}
 
 		if (MapUtil.isEmpty(map)) {
@@ -211,9 +252,11 @@ public class WidgetPageWidgetInstanceDTOConverter
 			layout.getTypeSettingsProperties();
 
 		for (String key : unicodeProperties.keySet()) {
-			if (key.startsWith("_" + portletId)) {
-				portletNestedColumnIds.add(key);
+			if (!key.startsWith("_" + portletId)) {
+				continue;
 			}
+
+			portletNestedColumnIds.add(key);
 		}
 
 		return TransformUtil.transformToArray(
@@ -273,6 +316,8 @@ public class WidgetPageWidgetInstanceDTOConverter
 				return GetterUtil.getBoolean(value);
 			});
 
+		widgetLookAndFeelConfig.setAdvancedStylingConfig(
+			() -> _getAdvancedStylingConfig(portletPreferences));
 		widgetLookAndFeelConfig.setGeneralConfig(() -> generalConfig);
 
 		return widgetLookAndFeelConfig;
@@ -316,6 +361,9 @@ public class WidgetPageWidgetInstanceDTOConverter
 		ListUtil.fromArray(
 			"portletSetupUseCustomTitle", "portletSetupPortletDecoratorId",
 			"portletSetupCss");
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private PortletPermissionsExporter _portletPermissionsExporter;

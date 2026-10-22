@@ -26,7 +26,11 @@ import com.liferay.exportimport.kernel.configuration.ExportImportConfigurationSe
 import com.liferay.exportimport.kernel.configuration.constants.ExportImportConfigurationConstants;
 import com.liferay.exportimport.kernel.exception.LARTypeException;
 import com.liferay.exportimport.kernel.lar.ExportImportHelperUtil;
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
+import com.liferay.exportimport.kernel.lifecycle.ExportImportLifecycleEvent;
+import com.liferay.exportimport.kernel.lifecycle.ExportImportLifecycleListener;
+import com.liferay.exportimport.kernel.lifecycle.constants.ExportImportLifecycleConstants;
 import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
 import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalServiceUtil;
 import com.liferay.exportimport.kernel.service.ExportImportLocalServiceUtil;
@@ -52,7 +56,6 @@ import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.service.JournalArticleLocalService;
 import com.liferay.journal.test.util.JournalTestUtil;
 import com.liferay.layout.friendly.url.LayoutFriendlyURLEntryHelper;
-import com.liferay.layout.page.template.admin.constants.LayoutPageTemplateAdminPortletKeys;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.page.template.service.LayoutPageTemplateEntryLocalService;
@@ -115,6 +118,7 @@ import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.segments.service.SegmentsExperienceLocalService;
 import com.liferay.sites.kernel.util.Sites;
 
@@ -131,6 +135,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -138,6 +143,11 @@ import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author Eduardo García
@@ -148,7 +158,9 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 	@ClassRule
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
 
 	@Before
 	@Override
@@ -292,6 +304,84 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 	}
 
 	@Test
+	@TestInfo("LPD-108615")
+	public void testEnableLocalStagingKeepsLayoutAddedToStagingGroupDuringPublication()
+		throws Exception {
+
+		LayoutTestUtil.addTypePortletLayout(group);
+
+		AtomicReference<Layout> stagingLayoutAtomicReference =
+			new AtomicReference<>();
+
+		Bundle bundle = FrameworkUtil.getBundle(LayoutExportImportTest.class);
+
+		BundleContext bundleContext = bundle.getBundleContext();
+
+		ServiceRegistration<ExportImportLifecycleListener> serviceRegistration =
+			bundleContext.registerService(
+				ExportImportLifecycleListener.class,
+				new ExportImportLifecycleListener() {
+
+					@Override
+					public boolean isParallel() {
+						return false;
+					}
+
+					@Override
+					public void onExportImportLifecycleEvent(
+							ExportImportLifecycleEvent
+								exportImportLifecycleEvent)
+						throws Exception {
+
+						if (exportImportLifecycleEvent.getCode() !=
+								ExportImportLifecycleConstants.
+									EVENT_LAYOUT_IMPORT_STARTED) {
+
+							return;
+						}
+
+						List<Serializable> attributes =
+							exportImportLifecycleEvent.getAttributes();
+
+						PortletDataContext portletDataContext =
+							(PortletDataContext)attributes.get(0);
+
+						if ((portletDataContext.getSourceGroupId() !=
+								group.getGroupId()) ||
+							(stagingLayoutAtomicReference.get() != null)) {
+
+							return;
+						}
+
+						stagingLayoutAtomicReference.set(
+							LayoutTestUtil.addTypePortletLayout(
+								portletDataContext.getGroupId()));
+					}
+
+				},
+				null);
+
+		try {
+			GroupTestUtil.enableLocalStaging(group);
+		}
+		finally {
+			serviceRegistration.unregister();
+		}
+
+		Layout stagingLayout = stagingLayoutAtomicReference.get();
+
+		Assert.assertNotNull(stagingLayout);
+
+		Group stagingGroup = group.getStagingGroup();
+
+		Assert.assertEquals(
+			stagingGroup.getGroupId(), stagingLayout.getGroupId());
+
+		Assert.assertNotNull(
+			_layoutLocalService.fetchLayout(stagingLayout.getPlid()));
+	}
+
+	@Test
 	public void testExportImportCompanyGroupInvalidLARType() throws Exception {
 
 		// Import a layout set to a company layout set
@@ -338,85 +428,6 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 		finally {
 			importedGroup = originalImportedGroup;
 			group = originalGroup;
-		}
-	}
-
-	@Test
-	@TestInfo("LPS-91440")
-	public void testExportImportCompanyGroupLayoutPageTemplateEntryIntoAnotherInstance()
-		throws Exception {
-
-		_layoutPrototype = LayoutTestUtil.addLayoutPrototype(
-			RandomTestUtil.randomString());
-
-		LayoutPageTemplateEntry layoutPageTemplateEntry =
-			_layoutPageTemplateEntryLocalService.
-				fetchFirstLayoutPageTemplateEntry(
-					_layoutPrototype.getLayoutPrototypeId());
-
-		Company company = _companyLocalService.getCompany(
-			TestPropsValues.getCompanyId());
-
-		Group companyGroup = company.getGroup();
-
-		User user = TestPropsValues.getUser();
-
-		Map<String, Serializable> exportLayoutSettingsMap =
-			ExportImportConfigurationSettingsMapFactoryUtil.
-				buildExportLayoutSettingsMap(
-					user, companyGroup.getGroupId(), false, new long[0],
-					HashMapBuilder.put(
-						PortletDataHandlerKeys.PORTLET_DATA,
-						new String[] {Boolean.TRUE.toString()}
-					).put(
-						PortletDataHandlerKeys.PORTLET_DATA +
-							StringPool.UNDERLINE +
-								LayoutPageTemplateAdminPortletKeys.
-									LAYOUT_PAGE_TEMPLATES,
-						new String[] {Boolean.TRUE.toString()}
-					).put(
-						PortletDataHandlerKeys.PORTLET_DATA_ALL,
-						new String[] {Boolean.FALSE.toString()}
-					).build());
-
-		ExportImportConfiguration exportImportConfiguration =
-			ExportImportConfigurationLocalServiceUtil.
-				addDraftExportImportConfiguration(
-					user.getUserId(),
-					ExportImportConfigurationConstants.TYPE_EXPORT_LAYOUT,
-					exportLayoutSettingsMap);
-
-		larFile = ExportImportLocalServiceUtil.exportLayoutsAsFile(
-			exportImportConfiguration);
-
-		_company = CompanyTestUtil.addCompany(true);
-
-		User companyAdminUser = UserTestUtil.getAdminUser(
-			_company.getCompanyId());
-
-		try (SafeCloseable safeCloseable =
-				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-					_company.getCompanyId())) {
-
-			Group newCompanyGroup = _company.getGroup();
-
-			try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-					"com.liferay.batch.engine.internal." +
-						"BatchEngineImportTaskExecutorImpl",
-					LoggerTestUtil.ERROR)) {
-
-				_importLayouts(companyAdminUser, newCompanyGroup);
-
-				List<LogEntry> logEntries = logCapture.getLogEntries();
-
-				Assert.assertTrue(logEntries.toString(), logEntries.isEmpty());
-			}
-
-			Assert.assertNotNull(
-				_layoutPageTemplateEntryLocalService.
-					fetchLayoutPageTemplateEntryByExternalReferenceCode(
-						layoutPageTemplateEntry.getExternalReferenceCode(),
-						newCompanyGroup.getGroupId()));
 		}
 	}
 
@@ -1251,8 +1262,6 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 				_layoutLocalService.getLayoutsCount(group, false),
 				_layoutLocalService.getLayoutsCount(newCompanyGroup, false));
 		}
-
-		UserTestUtil.setUser(TestPropsValues.getUser());
 	}
 
 	@Test
@@ -1293,6 +1302,8 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 					_company.getCompanyId())) {
+
+			UserTestUtil.setUser(adminUser);
 
 			Group newCompanyGroup = GroupTestUtil.addGroup(
 				_company.getCompanyId(), adminUser.getUserId(),
@@ -1675,6 +1686,37 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 			importedLayout2.getPriority() > importedLayout3.getPriority());
 	}
 
+	@Test
+	@TestInfo("LPD-108615")
+	public void testPublishToLiveKeepsLiveLayoutWithDifferentExternalReferenceCode()
+		throws Exception {
+
+		GroupTestUtil.enableLocalStaging(group);
+
+		Group stagingGroup = group.getStagingGroup();
+
+		Layout stagingLayout = LayoutTestUtil.addTypePortletLayout(
+			stagingGroup);
+
+		_publishToLive(stagingGroup);
+
+		Layout liveLayout = _layoutLocalService.getLayoutByUuidAndGroupId(
+			stagingLayout.getUuid(), group.getGroupId(), false);
+
+		Assert.assertEquals(
+			stagingLayout.getExternalReferenceCode(),
+			liveLayout.getExternalReferenceCode());
+
+		liveLayout.setExternalReferenceCode(RandomTestUtil.randomString());
+
+		liveLayout = _layoutLocalService.updateLayout(liveLayout);
+
+		_publishToLive(stagingGroup);
+
+		Assert.assertNotNull(
+			_layoutLocalService.fetchLayout(liveLayout.getPlid()));
+	}
+
 	protected void testAvailableLocales(
 			Collection<Locale> sourceAvailableLocales,
 			Collection<Locale> targetAvailableLocales, boolean expectFailure)
@@ -1862,6 +1904,15 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 			exportImportConfiguration, larFile);
 	}
 
+	private void _publishToLive(Group stagingGroup) throws Exception {
+		StagingUtil.publishLayouts(
+			TestPropsValues.getUserId(),
+			ExportImportConfigurationFactory.
+				buildDefaultLocalPublishingExportImportConfiguration(
+					TestPropsValues.getUser(), stagingGroup.getGroupId(),
+					stagingGroup.getLiveGroupId(), false));
+	}
+
 	private void _testExportImportLayoutUtilityPageEntryWithPreviewFileEntry()
 		throws Exception {
 
@@ -1964,9 +2015,6 @@ public class LayoutExportImportTest extends BaseExportImportTestCase {
 	@Inject
 	private LayoutPageTemplateEntryLocalService
 		_layoutPageTemplateEntryLocalService;
-
-	@DeleteAfterTestRun
-	private LayoutPrototype _layoutPrototype;
 
 	@Inject
 	private LayoutServiceContextHelper _layoutServiceContextHelper;

@@ -80,7 +80,8 @@ public interface ObjectFieldBusinessType {
 	public String getLabel(Locale locale);
 
 	public default Map<String, Object> getLocalizedValues(
-			ObjectField objectField, Long userId, Map<String, Object> values)
+			Long groupId, ObjectField objectField, Long userId,
+			Map<String, Object> values)
 		throws PortalException {
 
 		Object value = values.get(objectField.getI18nObjectFieldName());
@@ -227,13 +228,15 @@ public interface ObjectFieldBusinessType {
 		for (String requiredObjectFieldSettingName :
 				getRequiredObjectFieldSettingsNames(objectField)) {
 
-			if (Validator.isNull(
+			if (Validator.isNotNull(
 					objectFieldSettingsValuesMap.get(
 						requiredObjectFieldSettingName))) {
 
-				missingRequiredObjectFieldSettingsNames.add(
-					requiredObjectFieldSettingName);
+				continue;
 			}
+
+			missingRequiredObjectFieldSettingsNames.add(
+				requiredObjectFieldSettingName);
 		}
 
 		if (!missingRequiredObjectFieldSettingsNames.isEmpty()) {

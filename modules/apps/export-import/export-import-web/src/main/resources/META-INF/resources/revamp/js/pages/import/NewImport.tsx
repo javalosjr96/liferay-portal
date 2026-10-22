@@ -26,6 +26,7 @@ export function NewImport({
 	importProcessAPIURL,
 	lookAndFeelEnabled = false,
 	scope,
+	siteSelectionEnabled = false,
 }: {
 	backURL: string;
 	commentsAndRatingsEnabled?: boolean;
@@ -33,6 +34,7 @@ export function NewImport({
 	importProcessAPIURL: string;
 	lookAndFeelEnabled?: boolean;
 	scope: Scope;
+	siteSelectionEnabled?: boolean;
 }) {
 	const [importPreview, setImportPreview] = useState<
 		ImportPreview | undefined
@@ -62,21 +64,23 @@ export function NewImport({
 			</WizardStep>
 
 			<WizardStep
-				description={Liferay.Language.get(
-					'select-the-data-from-your-file-that-you-would-like-to-import'
-				)}
 				initialValues={{
 					contentSelection: undefined,
 					deletions: false,
 					permissions: false,
+					siteExternalReferenceCodes: [],
 				}}
-				isStepValid={(values) => !!values.contentSelection}
+				isStepValid={(values) =>
+					!!values.contentSelection ||
+					!!values.siteExternalReferenceCodes?.length
+				}
 				title={Liferay.Language.get('data-selection')}
 			>
 				<DataSelectionStep
 					commentsAndRatingsEnabled={commentsAndRatingsEnabled}
 					importPreview={importPreview}
 					lookAndFeelEnabled={lookAndFeelEnabled}
+					siteSelectionEnabled={siteSelectionEnabled}
 				/>
 			</WizardStep>
 
@@ -123,6 +127,8 @@ export function NewImport({
 										[],
 									values.contentSelection
 								),
+							siteExternalReferenceCodes:
+								values.siteExternalReferenceCodes,
 							userIdStrategy:
 								values.userIdStrategy as UserIdStrategy,
 						},

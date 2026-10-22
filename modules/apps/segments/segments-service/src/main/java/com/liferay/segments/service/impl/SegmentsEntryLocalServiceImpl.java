@@ -45,16 +45,24 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.odata.entity.EntityModel;
+import com.liferay.portal.odata.filter.FilterParser;
+import com.liferay.portal.odata.filter.FilterParserProvider;
+import com.liferay.portal.odata.filter.expression.ExpressionVisitException;
 import com.liferay.segments.constants.SegmentsEntryConstants;
 import com.liferay.segments.constants.SegmentsExperimentConstants;
 import com.liferay.segments.criteria.Criteria;
 import com.liferay.segments.criteria.CriteriaSerializer;
+import com.liferay.segments.criteria.contributor.SegmentsCriteriaContributor;
+import com.liferay.segments.criteria.contributor.SegmentsCriteriaContributorRegistry;
 import com.liferay.segments.exception.LockedSegmentsEntryException;
 import com.liferay.segments.exception.RequiredSegmentsEntryException;
+import com.liferay.segments.exception.SegmentsEntryCriteriaException;
 import com.liferay.segments.exception.SegmentsEntryKeyException;
 import com.liferay.segments.exception.SegmentsEntryNameException;
 import com.liferay.segments.internal.constants.SegmentsDestinationNames;
 import com.liferay.segments.internal.criteria.contributor.SegmentsEntrySegmentsCriteriaContributor;
+import com.liferay.segments.internal.odata.entity.BaseExpandoEntityModel;
 import com.liferay.segments.model.SegmentsEntry;
 import com.liferay.segments.model.SegmentsExperiment;
 import com.liferay.segments.service.SegmentsEntryRelLocalService;
@@ -72,6 +80,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -116,6 +125,7 @@ public class SegmentsEntryLocalServiceImpl
 			segmentsEntryKey = StringUtil.toUpperCase(segmentsEntryKey.trim());
 		}
 
+		_validateCriteria(criteria);
 		_validateKey(0, groupId, segmentsEntryKey);
 		_validateName(groupId, nameMap);
 
@@ -445,6 +455,7 @@ public class SegmentsEntryLocalServiceImpl
 
 		segmentsEntryKey = StringUtil.toUpperCase(segmentsEntryKey.trim());
 
+		_validateCriteria(criteria);
 		_validateKey(
 			segmentsEntryId, segmentsEntry.getGroupId(), segmentsEntryKey);
 
@@ -534,6 +545,21 @@ public class SegmentsEntryLocalServiceImpl
 		searchContext.setStart(start);
 
 		return searchContext;
+	}
+
+	private SegmentsCriteriaContributor _getSegmentsCriteriaContributor(
+		String key) {
+
+		for (SegmentsCriteriaContributor segmentsCriteriaContributor :
+				_segmentsCriteriaContributorRegistry.
+					getSegmentsCriteriaContributors()) {
+
+			if (Objects.equals(key, segmentsCriteriaContributor.getKey())) {
+				return segmentsCriteriaContributor;
+			}
+		}
+
+		return null;
 	}
 
 	private List<SegmentsEntry> _getSegmentsEntries(Hits hits)
@@ -629,16 +655,20 @@ public class SegmentsEntryLocalServiceImpl
 			Criteria.Criterion criterion = criteria.getCriterion(
 				SegmentsEntrySegmentsCriteriaContributor.KEY);
 
-			if (criterion != null) {
-				String filterString = criterion.getFilterString();
-
-				if (Validator.isNotNull(filterString) &&
-					filterString.contains(
-						String.valueOf(segmentsEntry.getSegmentsEntryId()))) {
-
-					_reindexSegmentsEntryRels2(referredSegmentsEntry);
-				}
+			if (criterion == null) {
+				continue;
 			}
+
+			String filterString = criterion.getFilterString();
+
+			if (Validator.isNull(filterString) ||
+				!filterString.contains(
+					String.valueOf(segmentsEntry.getSegmentsEntryId()))) {
+
+				continue;
+			}
+
+			_reindexSegmentsEntryRels2(referredSegmentsEntry);
 		}
 	}
 
@@ -664,6 +694,72 @@ public class SegmentsEntryLocalServiceImpl
 
 				return null;
 			});
+	}
+
+	private void _validateCriteria(String criteria) throws PortalException {
+		if (Validator.isNull(criteria)) {
+			return;
+		}
+
+		Criteria deserializedCriteria = CriteriaSerializer.deserialize(
+			criteria);
+
+		Map<String, Criteria.Criterion> criteriaMap =
+			deserializedCriteria.getCriteria();
+
+		if (criteriaMap == null) {
+			return;
+		}
+
+		for (Map.Entry<String, Criteria.Criterion> entry :
+				criteriaMap.entrySet()) {
+
+			Criteria.Criterion criterion = entry.getValue();
+
+			if (!Objects.equals(
+					Criteria.Type.MODEL.getValue(), criterion.getTypeValue())) {
+
+				continue;
+			}
+
+			String filterString = criterion.getFilterString();
+
+			if (Validator.isNull(filterString)) {
+				continue;
+			}
+
+			SegmentsCriteriaContributor segmentsCriteriaContributor =
+				_getSegmentsCriteriaContributor(entry.getKey());
+
+			if (segmentsCriteriaContributor == null) {
+				continue;
+			}
+
+			EntityModel entityModel =
+				segmentsCriteriaContributor.getEntityModel();
+
+			if (entityModel == null) {
+				continue;
+			}
+
+			if (entityModel instanceof BaseExpandoEntityModel) {
+				BaseExpandoEntityModel baseExpandoEntityModel =
+					(BaseExpandoEntityModel)entityModel;
+
+				entityModel = baseExpandoEntityModel.getEntityModel(false);
+			}
+
+			FilterParser filterParser = _filterParserProvider.provide(
+				entityModel);
+
+			try {
+				filterParser.parse(filterString);
+			}
+			catch (ExpressionVisitException expressionVisitException) {
+				throw new SegmentsEntryCriteriaException(
+					expressionVisitException);
+			}
+		}
 	}
 
 	private void _validateKey(
@@ -709,6 +805,9 @@ public class SegmentsEntryLocalServiceImpl
 	}
 
 	@Reference
+	private FilterParserProvider _filterParserProvider;
+
+	@Reference
 	private GroupLocalService _groupLocalService;
 
 	@Reference
@@ -719,6 +818,10 @@ public class SegmentsEntryLocalServiceImpl
 
 	@Reference
 	private ResourceLocalService _resourceLocalService;
+
+	@Reference
+	private SegmentsCriteriaContributorRegistry
+		_segmentsCriteriaContributorRegistry;
 
 	@Reference
 	private SegmentsEntryRelLocalService _segmentsEntryRelLocalService;

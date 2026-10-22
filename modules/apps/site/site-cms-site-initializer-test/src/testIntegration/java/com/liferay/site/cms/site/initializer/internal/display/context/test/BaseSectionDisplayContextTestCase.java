@@ -20,12 +20,15 @@ import com.liferay.object.constants.ObjectDefinitionSettingConstants;
 import com.liferay.object.constants.ObjectEntryFolderConstants;
 import com.liferay.object.constants.ObjectFolderConstants;
 import com.liferay.object.definition.setting.builder.ObjectDefinitionSettingBuilder;
+import com.liferay.object.field.attachment.AttachmentManager;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntryFolder;
+import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectFolder;
 import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
 import com.liferay.object.service.ObjectDefinitionService;
 import com.liferay.object.service.ObjectEntryFolderLocalService;
+import com.liferay.object.service.ObjectFieldLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -306,6 +309,11 @@ public abstract class BaseSectionDisplayContextTestCase
 		).put(
 			"defaultPermissionAdditionalProps",
 			_getDefaultPermissionAdditionalProps()
+		).put(
+			"editableImageMIMETypes",
+			PropsUtil.getArray(PropsKeys.DL_FILE_ENTRY_PREVIEW_IMAGE_MIME_TYPES)
+		).put(
+			"maxFileSize", _getMaxFileSize(themeDisplay)
 		).put(
 			"objectDefinitionCssClasses",
 			HashMapBuilder.put(
@@ -1186,9 +1194,11 @@ public abstract class BaseSectionDisplayContextTestCase
 		for (Long groupId : groupIds) {
 			JSONObject jsonObject = _getJSONObject(groupId);
 
-			if (jsonObject != null) {
-				jsonArray.put(jsonObject);
+			if (jsonObject == null) {
+				continue;
 			}
+
+			jsonArray.put(jsonObject);
 		}
 
 		return jsonArray;
@@ -1219,17 +1229,18 @@ public abstract class BaseSectionDisplayContextTestCase
 		for (DepotEntry depotEntry : depotEntries) {
 			Group group = groupLocalService.fetchGroup(depotEntry.getGroupId());
 
-			if (group != null) {
-				jsonArray.put(
-					JSONUtil.put(
-						"externalReferenceCode",
-						group.getExternalReferenceCode()
-					).put(
-						"groupId", group.getGroupId()
-					).put(
-						"name", group.getName(LocaleUtil.getDefault())
-					));
+			if (group == null) {
+				continue;
 			}
+
+			jsonArray.put(
+				JSONUtil.put(
+					"externalReferenceCode", group.getExternalReferenceCode()
+				).put(
+					"groupId", group.getGroupId()
+				).put(
+					"name", group.getName(LocaleUtil.getDefault())
+				));
 		}
 
 		return jsonArray;
@@ -1291,6 +1302,25 @@ public abstract class BaseSectionDisplayContextTestCase
 		}
 
 		return localizedKeysMap;
+	}
+
+	private String _getMaxFileSize(ThemeDisplay themeDisplay) {
+		ObjectDefinition objectDefinition =
+			ObjectDefinitionLocalServiceUtil.
+				fetchObjectDefinitionByExternalReferenceCode(
+					"L_CMS_BASIC_DOCUMENT", themeDisplay.getCompanyId());
+
+		ObjectField objectField = _objectFieldLocalService.fetchObjectField(
+			objectDefinition.getObjectDefinitionId(), "file");
+
+		long jsonStringMaxLength = GetterUtil.getLong(
+			PropsUtil.get(PropsKeys.JSON_STRING_MAX_LENGTH));
+
+		return String.valueOf(
+			Math.min(
+				_attachmentManager.getMaximumFileSize(
+					objectField.getObjectFieldId(), themeDisplay.isSignedIn()),
+				jsonStringMaxLength / 4 * 3));
 	}
 
 	private String _getRedirect(DropdownItem dropdownItem) {
@@ -1413,6 +1443,9 @@ public abstract class BaseSectionDisplayContextTestCase
 	}
 
 	@Inject
+	private AttachmentManager _attachmentManager;
+
+	@Inject
 	private DepotEntryLocalService _depotEntryLocalService;
 
 	@Inject
@@ -1423,6 +1456,9 @@ public abstract class BaseSectionDisplayContextTestCase
 
 	@Inject
 	private ObjectEntryFolderLocalService _objectEntryFolderLocalService;
+
+	@Inject
+	private ObjectFieldLocalService _objectFieldLocalService;
 
 	@Inject
 	private Portal _portal;

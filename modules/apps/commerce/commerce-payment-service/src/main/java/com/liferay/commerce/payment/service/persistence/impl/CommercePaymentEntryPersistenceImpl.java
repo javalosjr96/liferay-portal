@@ -1028,7 +1028,13 @@ public class CommercePaymentEntryPersistenceImpl
 	public void activate() {
 		_collectionPersistenceFinderByCompanyId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, CommercePaymentEntry::getCommercePaymentEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+					"countByCompanyId", new String[] {Long.class.getName()},
+					new String[] {"companyId"}, false),
+				"", CommercePaymentEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCompanyId",
 					new String[] {
@@ -1037,18 +1043,13 @@ public class CommercePaymentEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"companyId"}, true),
+				_SQL_COUNT_COMMERCEPAYMENTENTRY_WHERE,
+				_SQL_SELECT_COMMERCEPAYMENTENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
 					"findByCompanyId", new String[] {Long.class.getName()},
 					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByCompanyId", new String[] {Long.class.getName()},
-					new String[] {"companyId"}, false),
-				_SQL_SELECT_COMMERCEPAYMENTENTRY_WHERE,
-				_SQL_COUNT_COMMERCEPAYMENTENTRY_WHERE,
-				CommercePaymentEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"commercePaymentEntry.", "companyId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -1056,7 +1057,17 @@ public class CommercePaymentEntryPersistenceImpl
 
 		_collectionPersistenceFinderByC_C_C =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, CommercePaymentEntry::getCommercePaymentEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_C_C",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Long.class.getName()
+					},
+					new String[] {"companyId", "classNameId", "classPK"},
+					false),
+				"", CommercePaymentEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_C_C",
 					new String[] {
@@ -1066,6 +1077,8 @@ public class CommercePaymentEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"companyId", "classNameId", "classPK"}, true),
+				_SQL_COUNT_COMMERCEPAYMENTENTRY_WHERE,
+				_SQL_SELECT_COMMERCEPAYMENTENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_C_C",
 					new String[] {
@@ -1073,18 +1086,7 @@ public class CommercePaymentEntryPersistenceImpl
 						Long.class.getName()
 					},
 					new String[] {"companyId", "classNameId", "classPK"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_C_C",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Long.class.getName()
-					},
-					new String[] {"companyId", "classNameId", "classPK"},
-					false),
-				_SQL_SELECT_COMMERCEPAYMENTENTRY_WHERE,
-				_SQL_COUNT_COMMERCEPAYMENTENTRY_WHERE,
-				CommercePaymentEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"commercePaymentEntry.", "companyId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -1099,7 +1101,19 @@ public class CommercePaymentEntryPersistenceImpl
 
 		_collectionPersistenceFinderByC_C_C_T =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, CommercePaymentEntry::getCommercePaymentEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_C_C_T",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Long.class.getName(), Integer.class.getName()
+					},
+					new String[] {
+						"companyId", "classNameId", "classPK", "type_"
+					},
+					false),
+				"", CommercePaymentEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_C_C_T",
 					new String[] {
@@ -1112,6 +1126,8 @@ public class CommercePaymentEntryPersistenceImpl
 						"companyId", "classNameId", "classPK", "type_"
 					},
 					true),
+				_SQL_COUNT_COMMERCEPAYMENTENTRY_WHERE,
+				_SQL_SELECT_COMMERCEPAYMENTENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_C_C_T",
 					new String[] {
@@ -1122,20 +1138,7 @@ public class CommercePaymentEntryPersistenceImpl
 						"companyId", "classNameId", "classPK", "type_"
 					},
 					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_C_C_T",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {
-						"companyId", "classNameId", "classPK", "type_"
-					},
-					false),
-				_SQL_SELECT_COMMERCEPAYMENTENTRY_WHERE,
-				_SQL_COUNT_COMMERCEPAYMENTENTRY_WHERE,
-				CommercePaymentEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"commercePaymentEntry.", "companyId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -1154,7 +1157,22 @@ public class CommercePaymentEntryPersistenceImpl
 
 		_collectionPersistenceFinderByC_C_C_P_T =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, CommercePaymentEntry::getCommercePaymentEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+					"countByC_C_C_P_T",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Long.class.getName(), Integer.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {
+						"companyId", "classNameId", "classPK", "paymentStatus",
+						"type_"
+					},
+					false),
+				"", CommercePaymentEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_C_C_P_T",
 					new String[] {
@@ -1169,6 +1187,8 @@ public class CommercePaymentEntryPersistenceImpl
 						"type_"
 					},
 					true),
+				_SQL_COUNT_COMMERCEPAYMENTENTRY_WHERE,
+				_SQL_SELECT_COMMERCEPAYMENTENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
 					"findByC_C_C_P_T",
@@ -1182,23 +1202,7 @@ public class CommercePaymentEntryPersistenceImpl
 						"type_"
 					},
 					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByC_C_C_P_T",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Long.class.getName(), Integer.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {
-						"companyId", "classNameId", "classPK", "paymentStatus",
-						"type_"
-					},
-					false),
-				_SQL_SELECT_COMMERCEPAYMENTENTRY_WHERE,
-				_SQL_COUNT_COMMERCEPAYMENTENTRY_WHERE,
-				CommercePaymentEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"commercePaymentEntry.", "companyId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -1301,4 +1305,4 @@ public class CommercePaymentEntryPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-291196576
+// LIFERAY-SERVICE-BUILDER-HASH:-999256305

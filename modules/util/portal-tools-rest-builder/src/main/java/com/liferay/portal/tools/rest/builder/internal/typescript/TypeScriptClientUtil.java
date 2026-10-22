@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -92,7 +93,8 @@ public class TypeScriptClientUtil {
 
 			for (Map.Entry<String, Schema> entry : schemas.entrySet()) {
 				_createFile(
-					_buildModelContext(entry.getKey(), entry.getValue()),
+					_buildModelContext(
+						entry.getKey(), entry.getValue(), schemas),
 					configYAML, copyrightFile, files, "typescript/model",
 					StringBundler.concat(
 						baseClientDir.getPath(), "/src/models/", entry.getKey(),
@@ -209,10 +211,12 @@ public class TypeScriptClientUtil {
 		for (Schema schema : schemas.values()) {
 			Map<String, Schema> propertySchemas = schema.getPropertySchemas();
 
-			if (propertySchemas != null) {
-				for (Schema propertySchema : propertySchemas.values()) {
-					_getDataType(dataTypes, propertySchema);
-				}
+			if (propertySchemas == null) {
+				continue;
+			}
+
+			for (Schema propertySchema : propertySchemas.values()) {
+				_getDataType(dataTypes, propertySchema);
 			}
 		}
 
@@ -288,11 +292,12 @@ public class TypeScriptClientUtil {
 	}
 
 	private static Map<String, Object> _buildModelContext(
-		String modelName, Schema schema) {
+		String modelName, Schema schema, Map<String, Schema> schemas) {
 
 		Set<String> importClasses = new HashSet<>();
 		String parentClass = null;
 		List<Map<String, Object>> properties = new ArrayList<>();
+		Map<String, Schema> propertySchemas = new LinkedHashMap<>();
 
 		if (schema.getAllOfSchemas() != null) {
 			List<Schema> allOfSchemas = schema.getAllOfSchemas();
@@ -300,44 +305,36 @@ public class TypeScriptClientUtil {
 			Schema parentSchema = allOfSchemas.get(0);
 
 			if (parentSchema.getReference() != null) {
-				String parentSchemaReference = parentSchema.getReference();
-
-				parentClass = parentSchemaReference.substring(
-					parentSchemaReference.lastIndexOf('/') + 1);
+				parentClass = OpenAPIParserUtil.getReferenceName(
+					parentSchema.getReference());
 
 				importClasses.add(parentClass);
 
-				for (Schema curSchema : schema.getAllOfSchemas()) {
-					if (curSchema.getPropertySchemas() == null) {
+				for (Schema allOfSchema : allOfSchemas) {
+					Map<String, Schema> allOfSchemaPropertySchemas =
+						_getAllOfSchemaPropertySchemas(
+							parentClass, allOfSchema, schemas);
+
+					if (allOfSchemaPropertySchemas == null) {
 						continue;
 					}
 
-					Map<String, Schema> propertySchemas =
-						curSchema.getPropertySchemas();
-
-					propertySchemas.forEach(
-						(name, propertySchema) -> properties.add(
-							HashMapBuilder.<String, Object>put(
-								"dataType",
-								_getDataType(importClasses, propertySchema)
-							).put(
-								"name", StringUtil.replace(name, '-', '_')
-							).build()));
+					propertySchemas.putAll(allOfSchemaPropertySchemas);
 				}
 			}
 		}
 
-		Map<String, Schema> propertySchemas = schema.getPropertySchemas();
-
-		if (propertySchemas != null) {
-			propertySchemas.forEach(
-				(name, propertySchema) -> properties.add(
-					HashMapBuilder.<String, Object>put(
-						"dataType", _getDataType(importClasses, propertySchema)
-					).put(
-						"name", StringUtil.replace(name, '-', '_')
-					).build()));
+		if (schema.getPropertySchemas() != null) {
+			propertySchemas.putAll(schema.getPropertySchemas());
 		}
+
+		propertySchemas.forEach(
+			(name, propertySchema) -> properties.add(
+				HashMapBuilder.<String, Object>put(
+					"dataType", _getDataType(importClasses, propertySchema)
+				).put(
+					"name", StringUtil.replace(name, '-', '_')
+				).build()));
 
 		return HashMapBuilder.<String, Object>put(
 			"description", schema.getDescription()
@@ -519,9 +516,11 @@ public class TypeScriptClientUtil {
 				for (Response response : responses.values()) {
 					Map<String, Content> content = response.getContent();
 
-					if (content != null) {
-						responseContentTypes.addAll(content.keySet());
+					if (content == null) {
+						continue;
 					}
+
+					responseContentTypes.addAll(content.keySet());
 				}
 
 				if (responseContentTypes.isEmpty()) {
@@ -643,95 +642,91 @@ public class TypeScriptClientUtil {
 			Set<String> processedReferences, Schema schema)
 		throws Exception {
 
-		Map<String, Schema> propertySchemas = schema.getPropertySchemas();
+		for (String reference : _getReferences(schema)) {
+			boolean local = reference.startsWith("#");
 
-		if (propertySchemas == null) {
-			return;
+			if ((local && Validator.isNull(parentYAMLPath)) ||
+				!processedReferences.add(reference)) {
+
+				continue;
+			}
+
+			String referencedSchemaName = OpenAPIParserUtil.getReferenceName(
+				reference);
+
+			File referencedYAMLFile = null;
+
+			if (local) {
+				referencedYAMLFile = new File(parentYAMLPath);
+			}
+			else {
+				String parentDir = configYAML.getBaseDir();
+
+				if (Validator.isNotNull(parentYAMLPath)) {
+					File parentYAMLFile = new File(parentYAMLPath);
+
+					parentDir = parentYAMLFile.getParent();
+				}
+
+				referencedYAMLFile = OpenAPIParserUtil.resolveExternalFile(
+					parentDir, reference);
+			}
+
+			files.add(referencedYAMLFile);
+
+			OpenAPIYAML referencedOpenAPIYAML =
+				OpenAPIParserUtil.loadOpenAPIYAML(
+					FileUtil.read(referencedYAMLFile));
+
+			Components referencedComponents =
+				referencedOpenAPIYAML.getComponents();
+
+			Map<String, Schema> referencedSchemas =
+				referencedComponents.getSchemas();
+
+			Schema referencedSchema = referencedSchemas.get(
+				referencedSchemaName);
+
+			_createFile(
+				_buildModelContext(
+					referencedSchemaName, referencedSchema, referencedSchemas),
+				configYAML, copyrightFile, files, "typescript/model",
+				StringBundler.concat(
+					baseClientDir.getPath(), "/src/models/",
+					referencedSchemaName, ".ts"));
+			_createRelatedSchemaModels(
+				baseClientDir, configYAML, copyrightFile, files,
+				referencedYAMLFile.getAbsolutePath(), processedReferences,
+				referencedSchema);
+		}
+	}
+
+	private static Map<String, Schema> _getAllOfSchemaPropertySchemas(
+		String parentClass, Schema schema, Map<String, Schema> schemas) {
+
+		if (schema.getPropertySchemas() != null) {
+			return schema.getPropertySchemas();
 		}
 
-		for (Schema propertySchema : propertySchemas.values()) {
-			List<String> references = new ArrayList<>();
+		String reference = schema.getReference();
 
-			if (propertySchema.getReference() != null) {
-				references.add(propertySchema.getReference());
-			}
-
-			Items items = propertySchema.getItems();
-
-			if (items != null) {
-				Schema itemsSchema = items.toSchema();
-
-				if (itemsSchema.getReference() != null) {
-					references.add(itemsSchema.getReference());
-				}
-			}
-
-			for (String reference : references) {
-				boolean local = reference.startsWith("#");
-
-				if ((local && Validator.isNull(parentYAMLPath)) ||
-					!processedReferences.add(reference)) {
-
-					continue;
-				}
-
-				String referencedSchemaName = null;
-
-				if (local) {
-					referencedSchemaName = reference.substring(
-						reference.lastIndexOf("/") + 1);
-				}
-				else {
-					referencedSchemaName = reference.split("#")[1];
-
-					referencedSchemaName = referencedSchemaName.substring(
-						referencedSchemaName.lastIndexOf("/") + 1);
-				}
-
-				File referencedYAMLFile = null;
-
-				if (local) {
-					referencedYAMLFile = new File(parentYAMLPath);
-				}
-				else {
-					String parentDir = configYAML.getBaseDir();
-
-					if (Validator.isNotNull(parentYAMLPath)) {
-						parentDir = parentYAMLPath.substring(
-							0, parentYAMLPath.lastIndexOf("/") + 1);
-					}
-
-					referencedYAMLFile = new File(
-						parentDir, reference.split("#")[0]);
-				}
-
-				files.add(referencedYAMLFile);
-
-				OpenAPIYAML referencedOpenAPIYAML =
-					OpenAPIParserUtil.loadOpenAPIYAML(
-						FileUtil.read(referencedYAMLFile));
-
-				Components referencedComponents =
-					referencedOpenAPIYAML.getComponents();
-
-				Map<String, Schema> referencedSchemas =
-					referencedComponents.getSchemas();
-
-				Schema referencedSchema = referencedSchemas.get(
-					referencedSchemaName);
-
-				_createFile(
-					_buildModelContext(referencedSchemaName, referencedSchema),
-					configYAML, copyrightFile, files, "typescript/model",
-					StringBundler.concat(
-						baseClientDir.getPath(), "/src/models/",
-						referencedSchemaName, ".ts"));
-				_createRelatedSchemaModels(
-					baseClientDir, configYAML, copyrightFile, files,
-					referencedYAMLFile.getAbsolutePath(), processedReferences,
-					referencedSchema);
-			}
+		if (reference == null) {
+			return null;
 		}
+
+		String referenceName = OpenAPIParserUtil.getReferenceName(reference);
+
+		if (referenceName.equals(parentClass)) {
+			return null;
+		}
+
+		Schema referencedSchema = schemas.get(referenceName);
+
+		if (referencedSchema == null) {
+			return null;
+		}
+
+		return referencedSchema.getPropertySchemas();
 	}
 
 	private static String _getDataType(Set<String> dataTypes, Schema schema) {
@@ -740,18 +735,8 @@ public class TypeScriptClientUtil {
 		}
 
 		if (schema.getReference() != null) {
-			String dataType = null;
-
-			String schemaReference = schema.getReference();
-
-			if (schemaReference.startsWith("#")) {
-				dataType = schemaReference.substring(
-					schemaReference.lastIndexOf('/') + 1);
-			}
-			else {
-				dataType = schemaReference.substring(
-					schemaReference.lastIndexOf('#') + 1);
-			}
+			String dataType = OpenAPIParserUtil.getReferenceName(
+				schema.getReference());
 
 			dataTypes.add(dataType);
 
@@ -845,6 +830,58 @@ public class TypeScriptClientUtil {
 		}
 
 		return "any";
+	}
+
+	private static List<String> _getReferences(Schema schema) {
+		List<String> references = new ArrayList<>();
+
+		Discriminator discriminator = schema.getDiscriminator();
+
+		if ((discriminator != null) && (discriminator.getMapping() != null)) {
+			Map<String, String> mapping = discriminator.getMapping();
+
+			references.addAll(mapping.values());
+		}
+
+		List<Schema> allOfSchemas = schema.getAllOfSchemas();
+
+		if (allOfSchemas != null) {
+			for (Schema allOfSchema : allOfSchemas) {
+				if (allOfSchema.getReference() == null) {
+					continue;
+				}
+
+				references.add(allOfSchema.getReference());
+			}
+		}
+
+		Map<String, Schema> propertySchemas = schema.getPropertySchemas();
+
+		if (propertySchemas == null) {
+			return references;
+		}
+
+		for (Schema propertySchema : propertySchemas.values()) {
+			if (propertySchema.getReference() != null) {
+				references.add(propertySchema.getReference());
+			}
+
+			Items items = propertySchema.getItems();
+
+			if (items == null) {
+				continue;
+			}
+
+			Schema itemsSchema = items.toSchema();
+
+			if (itemsSchema.getReference() == null) {
+				continue;
+			}
+
+			references.add(itemsSchema.getReference());
+		}
+
+		return references;
 	}
 
 }

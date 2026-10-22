@@ -224,10 +224,43 @@ public class CommerceTaxFixedRateAddressRelPersistenceTest {
 	}
 
 	@Test
-	public void testCountByCountryId() throws Exception {
-		_persistence.countByCountryId(RandomTestUtil.nextLong());
+	public void testCountByC_C_R_Z() throws Exception {
+		_persistence.countByC_C_R_Z(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
+			RandomTestUtil.nextLong(), "");
 
-		_persistence.countByCountryId(0L);
+		_persistence.countByC_C_R_Z(0L, 0L, 0L, "null");
+
+		_persistence.countByC_C_R_Z(0L, 0L, 0L, (String)null);
+	}
+
+	@Test
+	public void testCountByC_C_R_ZArrayable() throws Exception {
+		_persistence.countByC_C_R_Z(
+			RandomTestUtil.nextLong(),
+			new long[] {RandomTestUtil.nextLong(), 0L},
+			new long[] {RandomTestUtil.nextLong(), 0L},
+			RandomTestUtil.randomString());
+	}
+
+	@Test
+	public void testCountByC_C_C_R_Z() throws Exception {
+		_persistence.countByC_C_C_R_Z(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(), "");
+
+		_persistence.countByC_C_C_R_Z(0L, 0L, 0L, 0L, "null");
+
+		_persistence.countByC_C_C_R_Z(0L, 0L, 0L, 0L, (String)null);
+	}
+
+	@Test
+	public void testCountByC_C_C_R_ZArrayable() throws Exception {
+		_persistence.countByC_C_C_R_Z(
+			RandomTestUtil.nextLong(), RandomTestUtil.nextLong(),
+			new long[] {RandomTestUtil.nextLong(), 0L},
+			new long[] {RandomTestUtil.nextLong(), 0L},
+			RandomTestUtil.randomString());
 	}
 
 	@Test
@@ -567,4 +600,4 @@ public class CommerceTaxFixedRateAddressRelPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:776347611
+// LIFERAY-SERVICE-BUILDER-HASH:-2029129457

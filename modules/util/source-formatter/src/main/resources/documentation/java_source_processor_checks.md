@@ -12,7 +12,7 @@ ArrayUtilCheck | [Styling](styling_checks.md#styling-checks) | Checks for utiliz
 [AssertEqualsCheck](check/assert_equals_check.md#assertequalscheck) | [Styling](styling_checks.md#styling-checks) | Checks that additional information is provided when calling `Assert.assertEquals`. |
 AssertFailCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks that calls to `Assert.fail` can be only used inside a try block as the last statement. |
 AssignAsUsedCheck | [Performance](performance_checks.md#performance-checks) | Finds cases where an assign statement can be inlined or moved closer to where it is used. |
-[AutoBatchPreparedStatementUtilCheck](check/auto_batch_prepared_statement_util_check.md#autobatchpreparedstatementutilcheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds cases where `AutoBatchPreparedStatementUtil.autoBatch` or `AutoBatchPreparedStatementUtil.concurrentAutoBatch` should be used. |
+[AutoBatchPreparedStatementUtilCheck](check/auto_batch_prepared_statement_util_check.md#autobatchpreparedstatementutilcheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds cases where `AutoBatchPreparedStatementUtil.autoBatch`, `AutoBatchPreparedStatementUtil.autoBatchWithResults`, or `AutoBatchPreparedStatementUtil.concurrentAutoBatch` should be used. |
 [AvoidNestedBlocksCheck](https://checkstyle.sourceforge.io/checks/blocks/avoidnestedblocks.html) | [Styling](styling_checks.md#styling-checks) | Finds nested blocks (blocks that are used freely in the code). |
 [AvoidStarImportCheck](https://checkstyle.sourceforge.io/checks/imports/avoidstarimport.html) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks that there are no import statements that use the * notation. |
 [BatchableUpdateCheck](check/batchable_update_check.md#batchableupdatecheck) | [Performance](performance_checks.md#performance-checks) | Checks for cases where batch updates should be used inside a loop instead of individual executeUpdate calls. |
@@ -43,6 +43,7 @@ DatabaseMetaDataSupportsBatchUpdatesCallCheck | [Bug Prevention](bug_prevention_
 [DefaultComesLastCheck](https://checkstyle.sourceforge.io/checks/coding/defaultcomeslast.html) | [Styling](styling_checks.md#styling-checks) | Checks that the `default` is after all the cases in a `switch` statement. |
 DeprecatedAPICheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds calls to deprecated classes, constructors, fields or methods. |
 DeprecatedClassesCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Replaces deprecated classes. |
+[EarlyLoopExitCheck](check/early_loop_exit_check.md#earlyloopexitcheck) | [Styling](styling_checks.md#styling-checks) | Finds if-statements at the end of a loop body that can be inverted to use `break`, `continue`, `return`, or `throw` as early as possible. |
 EmptyCollectionCheck | [Styling](styling_checks.md#styling-checks) | Checks that there are no calls to `Collections.EMPTY_LIST`, `Collections.EMPTY_MAP` or `Collections.EMPTY_SET`. |
 EmptyConstructorCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds unnecessary empty constructors. |
 EnumConstantDividerCheck | [Styling](styling_checks.md#styling-checks) | Find unnecessary empty lines between enum constants. |
@@ -108,6 +109,7 @@ JavaEmptyLinesCheck | [Styling](styling_checks.md#styling-checks) | Finds missin
 JavaEntityFieldsMapOrderCheck | [Styling](styling_checks.md#styling-checks) | Sorts entity fields when calling `EntityFieldsMapFactory.create` and `EntityModel.toEntityFieldsMap`. |
 JavaExceptionCheck | [Naming Conventions](naming_conventions_checks.md#naming-conventions-checks) | Checks that variable names of exceptions in `catch` statements follow naming conventions. |
 JavaExpandoBridgeAttributesCallOrderCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Ensure `setExpandoBridgeAttributes` is the final setter called on a model before model persistence. |
+JavaFeatureFlagAnnotationCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks that feature flags are declared with `x-feature-flag` in `rest-openapi.yaml` instead of using the annotation `@FeatureFlag`. |
 JavaFeatureFlagManagerUtilCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds cases where `FeatureFlagManagerUtil.isEnabled` should be used and incorrect use of it. |
 JavaFeatureFlagsAndTestInfoAnnotationCheck | [Styling](styling_checks.md#styling-checks) | Sorts the values in `@FeatureFlags` and `@TestInfo` annotation. |
 JavaFinalVariableCheck | [Styling](styling_checks.md#styling-checks) | Finds cases of unneeded `final` modifiers for variables and parameters. |
@@ -267,6 +269,7 @@ OperatorOrderCheck | [Styling](styling_checks.md#styling-checks) | Verifies that
 [PackageNameCheck](https://checkstyle.sourceforge.io/checks/naming/packagename.html) | [Naming Conventions](naming_conventions_checks.md#naming-conventions-checks) | Checks that package names conform to a specified pattern. |
 [ParameterNameCheck](https://checkstyle.sourceforge.io/checks/naming/parametername.html) | [Naming Conventions](naming_conventions_checks.md#naming-conventions-checks) | Checks that method parameter names conform to a specified pattern. |
 ParsePrimitiveTypeCheck | [Performance](performance_checks.md#performance-checks) | Verifies that `GetterUtil.parse*` is used to parse primitive types, when possible. |
+PatternMatchingForSwitchCheck | [Performance](performance_checks.md#performance-checks) | Finds usage of pattern matching for `switch`. |
 PersistenceCallCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds illegal persistence calls across component boundaries. |
 [PersistenceUpdateCheck](check/persistence_update_check.md#persistenceupdatecheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks that there are no stale references in service code from persistence updates. |
 PlusStatementCheck | [Styling](styling_checks.md#styling-checks) | Performs several checks to statements where `+` is used for concatenation. |
@@ -275,6 +278,7 @@ PrimitiveWrapperInstantiationCheck | [Bug Prevention](bug_prevention_checks.md#b
 PrincipalExceptionCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds calls to `PrincipalException.class.getName()` (use `PrincipalException.getNestedClasses()` instead). |
 RESTDTOSetCallCheck | [Performance](performance_checks.md#performance-checks) | Ensures using set calls with `UnsafeSupplier` parameter for REST DTO. |
 RecordClassCheck | [Performance](performance_checks.md#performance-checks) | Finds usage of `record`. |
+RecordPatternCheck | [Performance](performance_checks.md#performance-checks) | Finds usage of record patterns. |
 RedundantBranchingStatementCheck | [Performance](performance_checks.md#performance-checks) | Finds unnecessary branching (`break`, `continue` or `return`) statements. |
 [RedundantLogCheck](check/redundant_log_check.md#redundantlogcheck) | [Performance](performance_checks.md#performance-checks) | Finds unnecessary logs. |
 ReferenceAnnotationCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Performs several checks on classes with @Reference annotation. |
@@ -313,6 +317,7 @@ TestClassCheck | [Naming Conventions](naming_conventions_checks.md#naming-conven
 TestClassDBConnectionCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds cases of incorrect use of database connection. |
 TestClassHardcodedPortCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks usages of `PortalUtil.getPortalServerPort()` in test classes. |
 TestClassMissingLiferayUnitTestRuleCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds missing LiferayUnitTestRule. |
+[TestClassStaticInitializerCheck](check/test_class_static_initializer_check.md#testclassstaticinitializercheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks that static initializers of Arquillian tests do not call portal test utilities and service methods. |
 TestClassStaticVariableCheck | [Performance](performance_checks.md#performance-checks) | Finds unnecessary static modifiers in test classes. |
 TextBlockCheck | [Styling](styling_checks.md#styling-checks) | Finds usage of text block. |
 [ThreadContextClassLoaderCheck](check/thread_context_class_loader_check.md#threadcontextclassloadercheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks usage of `Thread.setContextClassLoader`. |

@@ -5,6 +5,7 @@
 
 import {Option, Picker} from '@clayui/core';
 import ClayEmptyState from '@clayui/empty-state';
+import ClayIcon from '@clayui/icon';
 import {useScreenReaderAnnounce} from '@liferay/layout-js-components-web';
 import classNames from 'classnames';
 import React, {Dispatch, Fragment, useMemo, useRef, useState} from 'react';
@@ -62,8 +63,8 @@ function collectNodeNames(
 		if (isGroup(node)) {
 			const conjunction =
 				node.conjunction === 'OR'
-					? Liferay.Language.get('any')
-					: Liferay.Language.get('all');
+					? Liferay.Language.get('any[match]')
+					: Liferay.Language.get('all[match]');
 
 			namesById[node.id] = `${conjunction} ${Liferay.Language.get(
 				'of-these-criteria-are-met'
@@ -467,8 +468,8 @@ function ConjunctionBar({
 				className="form-control-sm w-auto"
 				id={`${conjunctionLabelId}-value`}
 				items={[
-					{label: Liferay.Language.get('all'), value: 'AND'},
-					{label: Liferay.Language.get('any'), value: 'OR'},
+					{label: Liferay.Language.get('all[match]'), value: 'AND'},
+					{label: Liferay.Language.get('any[match]'), value: 'OR'},
 				]}
 				onSelectionChange={(key) => onConjunctionChange(key as string)}
 				selectedKey={conjunction}
@@ -507,7 +508,13 @@ function ConditionsEmptyState({
 					description={Liferay.Language.get(
 						'to-create-a-new-audience-drag-items-from-the-sidebar-and-drop-them-here'
 					)}
-					imgSrc={`${Liferay.ThemeDisplay.getPathThemeImages()}/states/empty_state.svg`}
+					image={
+						<ClayIcon
+							className="c-empty-state-icon c-empty-state-icon-empty-state"
+							illustration
+							symbol="empty-state"
+						/>
+					}
 					title={Liferay.Language.get('no-criteria-yet')}
 				/>
 			)}

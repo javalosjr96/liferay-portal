@@ -984,6 +984,8 @@ public class WikiNodePersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					wikiNode.getUuid(), wikiNode.getExternalReferenceCode()) &&
+				!Objects.equals(
 					wikiNodeModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					wikiNode.getExternalReferenceCode())) {
@@ -1300,7 +1302,12 @@ public class WikiNodePersistenceImpl
 
 		_collectionPersistenceFinderByGroupId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, WikiNode::getNodeId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
+					new String[] {Long.class.getName()},
+					new String[] {"groupId"}, false),
+				"", WikiNodeModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByGroupId",
 					new String[] {
@@ -1309,17 +1316,12 @@ public class WikiNodePersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId"}, true),
+				_SQL_COUNT_WIKINODE_WHERE, _SQL_SELECT_WIKINODE_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByGroupId",
 					new String[] {Long.class.getName()},
 					new String[] {"groupId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
-					new String[] {Long.class.getName()},
-					new String[] {"groupId"}, false),
-				_SQL_SELECT_WIKINODE_WHERE, _SQL_COUNT_WIKINODE_WHERE,
-				WikiNodeModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"wikiNode.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, WikiNode::getGroupId));
@@ -1367,7 +1369,14 @@ public class WikiNodePersistenceImpl
 
 		_collectionPersistenceFinderByG_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, WikiNode::getNodeId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_S",
+					new String[] {
+						Long.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "status"}, false),
+				"", WikiNodeModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_S",
 					new String[] {
@@ -1376,21 +1385,14 @@ public class WikiNodePersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "status"}, true),
+				_SQL_COUNT_WIKINODE_WHERE, _SQL_SELECT_WIKINODE_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_S",
 					new String[] {
 						Long.class.getName(), Integer.class.getName()
 					},
 					new String[] {"groupId", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_S",
-					new String[] {
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "status"}, false),
-				_SQL_SELECT_WIKINODE_WHERE, _SQL_COUNT_WIKINODE_WHERE,
-				WikiNodeModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"wikiNode.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, WikiNode::getGroupId),
@@ -1507,4 +1509,4 @@ public class WikiNodePersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1587071644
+// LIFERAY-SERVICE-BUILDER-HASH:-1932168380

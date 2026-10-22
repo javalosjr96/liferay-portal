@@ -1988,7 +1988,7 @@ public class PortletDataContextImpl implements PortletDataContext {
 								ExportImportClassedModelUtil.getClassPK(
 									classedModel),
 								GetterUtil.getLong(getExportImportProcessId()),
-								ExportImportReportEntryConstants.TYPE_ERROR,
+								ExportImportReportEntryConstants.TYPE_WARNING,
 								StringUtil.merge(warningMessages, "\n"), null,
 								clazz.getName());
 					}
@@ -2681,27 +2681,29 @@ public class PortletDataContextImpl implements PortletDataContext {
 				typePK = ddmPrimaryKeys.getOrDefault(typePK, typePK);
 			}
 
-			if ((workflowDefinition != null) &&
-				!WorkflowDefinitionLinkLocalServiceUtil.
+			if ((workflowDefinition == null) ||
+				WorkflowDefinitionLinkLocalServiceUtil.
 					hasWorkflowDefinitionLink(
 						getCompanyId(), getScopeGroupId(), className,
 						newPrimaryKey, typePK)) {
 
-				PermissionChecker permissionChecker =
-					PermissionThreadLocal.getPermissionChecker();
+				continue;
+			}
 
-				try {
-					WorkflowDefinitionLinkLocalServiceUtil.
-						addWorkflowDefinitionLink(
-							null, permissionChecker.getUserId(), getCompanyId(),
-							getScopeGroupId(), className, newPrimaryKey, typePK,
-							workflowDefinition.getName(),
-							workflowDefinition.getVersion());
-				}
-				catch (PortalException portalException) {
-					throw new PortletDataException(
-						portalException.getMessage(), portalException);
-				}
+			PermissionChecker permissionChecker =
+				PermissionThreadLocal.getPermissionChecker();
+
+			try {
+				WorkflowDefinitionLinkLocalServiceUtil.
+					addWorkflowDefinitionLink(
+						null, permissionChecker.getUserId(), getCompanyId(),
+						getScopeGroupId(), className, newPrimaryKey, typePK,
+						workflowDefinition.getName(),
+						workflowDefinition.getVersion());
+			}
+			catch (PortalException portalException) {
+				throw new PortletDataException(
+					portalException.getMessage(), portalException);
 			}
 		}
 	}

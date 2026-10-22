@@ -10,13 +10,28 @@ import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.model.AssetTag;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.asset.kernel.service.AssetTagLocalService;
+import com.liferay.change.tracking.closure.CTClosure;
+import com.liferay.change.tracking.closure.CTClosureFactory;
 import com.liferay.change.tracking.conflict.ConflictInfo;
+import com.liferay.change.tracking.exception.CTPublishConflictException;
 import com.liferay.change.tracking.model.CTCollection;
+import com.liferay.change.tracking.model.CTCollectionTemplate;
 import com.liferay.change.tracking.model.CTEntry;
+import com.liferay.change.tracking.model.CTRemote;
 import com.liferay.change.tracking.service.CTCollectionLocalService;
 import com.liferay.change.tracking.service.CTCollectionService;
+import com.liferay.change.tracking.service.CTCollectionTemplateLocalService;
 import com.liferay.change.tracking.service.CTEntryLocalService;
+import com.liferay.change.tracking.service.CTPreferencesLocalService;
 import com.liferay.change.tracking.service.CTProcessLocalService;
+import com.liferay.change.tracking.service.CTRemoteLocalService;
+import com.liferay.change.tracking.service.CTSchemaVersionLocalService;
+import com.liferay.change.tracking.store.model.CTSContent;
+import com.liferay.change.tracking.store.service.CTSContentLocalService;
+import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.document.library.kernel.model.DLFolder;
+import com.liferay.document.library.kernel.model.DLFolderConstants;
+import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.journal.constants.JournalArticleConstants;
 import com.liferay.journal.constants.JournalFolderConstants;
 import com.liferay.journal.model.JournalArticle;
@@ -27,22 +42,32 @@ import com.liferay.journal.test.util.JournalTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.image.ImageToolUtil;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
+import com.liferay.portal.kernel.json.JSONUtil;
+import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
+import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.WorkflowInstanceLinkLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
+import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -50,6 +75,8 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+
+import java.awt.image.BufferedImage;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -355,6 +382,80 @@ public class CTCollectionLocalServiceTest {
 	}
 
 	@Test
+	public void testDeleteCompany() throws Exception {
+		Company company = CompanyTestUtil.addCompany();
+
+		User user = UserTestUtil.getAdminUser(company.getCompanyId());
+
+		CTCollection ctCollection = _ctCollectionLocalService.addCTCollection(
+			null, company.getCompanyId(), user.getUserId(), 0,
+			RandomTestUtil.randomString(), null);
+
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					ctCollection.getCtCollectionId())) {
+
+			_journalFolderLocalService.addFolder(
+				null, user.getUserId(), company.getGroupId(),
+				JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+				RandomTestUtil.randomString(), null,
+				ServiceContextTestUtil.getServiceContext(
+					company.getGroupId(), user.getUserId()));
+
+			_userLocalService.updatePortrait(
+				user.getUserId(),
+				ImageToolUtil.getBytes(
+					new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB),
+					"png"));
+		}
+
+		_ctProcessLocalService.addCTProcess(
+			user.getUserId(), ctCollection.getCtCollectionId());
+
+		List<CTEntry> ctEntries = _ctEntryLocalService.getCTEntries(
+			ctCollection.getCtCollectionId(),
+			_classNameLocalService.getClassNameId(CTSContent.class));
+
+		CTEntry ctEntry = ctEntries.get(0);
+
+		CTCollectionTemplate ctCollectionTemplate =
+			_ctCollectionTemplateLocalService.addCTCollectionTemplate(
+				user.getUserId(), RandomTestUtil.randomString(), null,
+				JSONUtil.put(
+					"description", RandomTestUtil.randomString()
+				).put(
+					"name", RandomTestUtil.randomString()
+				).toString());
+
+		_ctPreferencesLocalService.getCTPreferences(company.getCompanyId(), 0);
+
+		CTRemote ctRemote = _ctRemoteLocalService.addCTRemote(
+			user.getUserId(), RandomTestUtil.randomString(), null,
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString());
+
+		_companyLocalService.deleteCompany(company.getCompanyId());
+
+		Assert.assertNull(
+			_ctCollectionLocalService.fetchCTCollection(
+				ctCollection.getCtCollectionId()));
+		Assert.assertNull(
+			_ctCollectionTemplateLocalService.fetchCTCollectionTemplate(
+				ctCollectionTemplate.getCtCollectionTemplateId()));
+		Assert.assertNull(ctCollectionTemplate.getJSONObject());
+		Assert.assertNull(
+			_ctsContentLocalService.fetchCTSContent(ctEntry.getModelClassPK()));
+		Assert.assertNull(
+			_ctPreferencesLocalService.fetchCTPreferences(
+				company.getCompanyId(), 0));
+		Assert.assertNull(
+			_ctRemoteLocalService.fetchCTRemote(ctRemote.getCtRemoteId()));
+		Assert.assertNull(
+			_ctSchemaVersionLocalService.fetchCTSchemaVersion(
+				ctCollection.getSchemaVersionId()));
+	}
+
+	@Test
 	public void testDeletePredeletedLayout() throws Exception {
 		Layout layout1 = LayoutTestUtil.addTypePortletLayout(_group);
 
@@ -603,6 +704,80 @@ public class CTCollectionLocalServiceTest {
 	}
 
 	@Test
+	public void testMoveCTEntryWithUnresolvedConflictInRelatedCTEntry()
+		throws Exception {
+
+		String externalReferenceCode = RandomTestUtil.randomString();
+		Folder folder = null;
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+
+		try (SafeCloseable safeCloseable =
+				CTCollectionThreadLocal.setCTCollectionIdWithSafeCloseable(
+					_ctCollection1.getCtCollectionId())) {
+
+			folder = _dlAppLocalService.addFolder(
+				null, TestPropsValues.getUserId(), _group.getGroupId(),
+				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				serviceContext);
+
+			_dlAppLocalService.addFileEntry(
+				externalReferenceCode, TestPropsValues.getUserId(),
+				_group.getGroupId(), folder.getFolderId(),
+				RandomTestUtil.randomString() + ".txt", ContentTypes.TEXT_PLAIN,
+				RandomTestUtil.randomBytes(), null, null, null, serviceContext);
+		}
+
+		_dlAppLocalService.addFileEntry(
+			externalReferenceCode, TestPropsValues.getUserId(),
+			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			RandomTestUtil.randomString() + ".txt", ContentTypes.TEXT_PLAIN,
+			RandomTestUtil.randomBytes(), null, null, null, serviceContext);
+
+		Map<Long, List<ConflictInfo>> conflictInfoMap =
+			_ctCollectionLocalService.checkConflicts(_ctCollection1);
+
+		List<ConflictInfo> conflictInfos = conflictInfoMap.get(
+			_classNameLocalService.getClassNameId(DLFileEntry.class));
+
+		Assert.assertEquals(
+			conflictInfoMap.toString(), 1, conflictInfos.size());
+
+		ConflictInfo conflictInfo = conflictInfos.get(0);
+
+		Assert.assertFalse(conflictInfo.isResolved());
+
+		_ctCollection2 = _ctCollectionLocalService.addCTCollection(
+			null, TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
+			0, RandomTestUtil.randomString(), null);
+
+		_ctCollections.add(_ctCollection2);
+
+		try {
+			_ctCollectionService.moveCTEntry(
+				_ctCollection1.getCtCollectionId(),
+				_ctCollection2.getCtCollectionId(),
+				_classNameLocalService.getClassNameId(DLFolder.class),
+				folder.getFolderId());
+
+			Assert.fail();
+		}
+		catch (CTPublishConflictException ctPublishConflictException) {
+			Assert.assertEquals(
+				"Conflict detected", ctPublishConflictException.getMessage());
+		}
+
+		CTClosure ctClosure = _ctClosureFactory.create(
+			_ctCollection2.getCtCollectionId(),
+			_classNameLocalService.getClassNameId(DLFolder.class));
+
+		Map<Long, List<Long>> rootPKsMap = ctClosure.getRootPKsMap();
+
+		Assert.assertTrue(rootPKsMap.toString(), rootPKsMap.isEmpty());
+	}
+
+	@Test
 	public void testRelatedCTEntriesMapWithConflictedCTEntries()
 		throws Exception {
 
@@ -774,6 +949,12 @@ public class CTCollectionLocalServiceTest {
 	@Inject
 	private ClassNameLocalService _classNameLocalService;
 
+	@Inject
+	private CompanyLocalService _companyLocalService;
+
+	@Inject
+	private CTClosureFactory _ctClosureFactory;
+
 	private CTCollection _ctCollection1;
 	private CTCollection _ctCollection2;
 	private CTCollection _ctCollection3;
@@ -785,6 +966,9 @@ public class CTCollectionLocalServiceTest {
 	@Inject
 	private CTCollectionService _ctCollectionService;
 
+	@Inject
+	private CTCollectionTemplateLocalService _ctCollectionTemplateLocalService;
+
 	@DeleteAfterTestRun
 	private final List<CTCollection> _ctCollections = new ArrayList<>();
 
@@ -792,7 +976,22 @@ public class CTCollectionLocalServiceTest {
 	private CTEntryLocalService _ctEntryLocalService;
 
 	@Inject
+	private CTPreferencesLocalService _ctPreferencesLocalService;
+
+	@Inject
 	private CTProcessLocalService _ctProcessLocalService;
+
+	@Inject
+	private CTRemoteLocalService _ctRemoteLocalService;
+
+	@Inject
+	private CTSchemaVersionLocalService _ctSchemaVersionLocalService;
+
+	@Inject
+	private CTSContentLocalService _ctsContentLocalService;
+
+	@Inject
+	private DLAppLocalService _dlAppLocalService;
 
 	private Group _group;
 	private long _journalArticleClassNameId;
@@ -809,6 +1008,9 @@ public class CTCollectionLocalServiceTest {
 
 	@Inject
 	private LayoutLocalService _layoutLocalService;
+
+	@Inject
+	private UserLocalService _userLocalService;
 
 	@Inject
 	private WorkflowDefinitionLinkLocalService

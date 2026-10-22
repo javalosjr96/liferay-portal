@@ -1089,7 +1089,8 @@ export default function ChangeTrackingRenderView({
 				title = state.renderData.rightTitle;
 
 				if (state.renderData.changeType === CHANGE_TYPE_ADDED) {
-					title += ' (' + Liferay.Language.get('new') + ')';
+					title +=
+						' (' + Liferay.Language.get('new[adjective]') + ')';
 				}
 			}
 
@@ -1205,17 +1206,13 @@ export default function ChangeTrackingRenderView({
 						</td>
 					</tr>
 					<tr className="publications-render-view-divider table-divider">
-						{
-							<td className="publications-render-view-divider">
-								{Liferay.Language.get('production')}
-							</td>
-						}
+						<td className="publications-render-view-divider">
+							{Liferay.Language.get('production')}
+						</td>
 
-						{
-							<td className="publications-render-view-divider">
-								{state.renderData.rightTitle}
-							</td>
-						}
+						<td className="publications-render-view-divider">
+							{state.renderData.rightTitle}
+						</td>
 					</tr>
 				</>
 			);

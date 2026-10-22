@@ -210,12 +210,6 @@ public class SiteResourceImpl
 	public Response getSiteSiteInitializer(String externalReferenceCode)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled(
-				contextCompany.getCompanyId(), "LPD-19870")) {
-
-			throw new UnsupportedOperationException();
-		}
-
 		Group group = _groupService.getGroupByExternalReferenceCode(
 			externalReferenceCode, contextCompany.getCompanyId());
 
@@ -836,12 +830,14 @@ public class SiteResourceImpl
 		List<Site> selectedSites = new ArrayList<>();
 
 		for (Site site : sites) {
-			if (ArrayUtil.contains(
+			if (!ArrayUtil.contains(
 					selectedExternalReferenceCodes,
 					site.getExternalReferenceCode())) {
 
-				selectedSites.add(site);
+				continue;
 			}
+
+			selectedSites.add(site);
 		}
 
 		return selectedSites;
@@ -1066,9 +1062,11 @@ public class SiteResourceImpl
 			String typeSettingValue = oldUnicodeProperties.get(
 				excludedTypeSetting);
 
-			if (typeSettingValue != null) {
-				unicodeProperties.put(excludedTypeSetting, typeSettingValue);
+			if (typeSettingValue == null) {
+				continue;
 			}
+
+			unicodeProperties.put(excludedTypeSetting, typeSettingValue);
 		}
 
 		return unicodeProperties.toString();

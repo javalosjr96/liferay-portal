@@ -2,12 +2,12 @@ import * as breadcrumbs from 'shared/util/breadcrumbs';
 import BasePage from 'settings/components/base-page/BasePage';
 import ClayAlert, {DisplayType} from '@clayui/alert';
 import ClayButton from '@clayui/button';
-import ClayIcon from '@clayui/icon';
+import ClayIcon from 'shared/components/Icon';
 import ClayLink from '@clayui/link';
 import ErrorDisplay from 'shared/components/ErrorDisplay';
 import Loading from 'shared/components/Loading';
 import React, {useEffect, useRef, useState} from 'react';
-import SalesforceAccountsAndIndividuals from './SalesforceAccountsAndIndividuals';
+import SalesforceEntities from './SalesforceEntities';
 import URLConstants from 'shared/util/url-constants';
 import {addAlert} from 'shared/actions/alerts';
 import {Alert} from 'shared/types';
@@ -276,7 +276,7 @@ const SalesforceOverview: React.FC<ISalesforceOverviewProps> = ({
 			</Card>
 
 			<Card title={Liferay.Language.get('synced-data')}>
-				<AccountAndIndividuals
+				<SyncedDataSection
 					currentUser={currentUser}
 					dataSource={dataSource}
 					groupId={groupId}
@@ -334,7 +334,7 @@ const SalesforceOverview: React.FC<ISalesforceOverviewProps> = ({
 	);
 };
 
-const AccountAndIndividuals = ({
+const SyncedDataSection = ({
 	currentUser,
 	dataSource,
 	groupId,
@@ -374,6 +374,12 @@ const AccountAndIndividuals = ({
 		variables: {groupId, id: dataSource.id!},
 	});
 
+	const campaignsCountResponse = useRequest({
+		dataSourceFn: (params) =>
+			fetchConnectorEntityCount(Entity.Campaigns, params),
+		variables: {groupId, id: dataSource.id!},
+	});
+
 	const userCountResponse = useRequest({
 		dataSourceFn: (params) =>
 			fetchConnectorEntityCount(Entity.Users, params),
@@ -386,11 +392,19 @@ const AccountAndIndividuals = ({
 
 	const dataSourceActive = dataSource.status === DataSourceStatuses.Active;
 
-	if (accountsCountResponse.error || userCountResponse.error) {
+	if (
+		accountsCountResponse.error ||
+		campaignsCountResponse.error ||
+		userCountResponse.error
+	) {
 		return <ErrorDisplay />;
 	}
 
-	if (accountsCountResponse.loading || userCountResponse.loading) {
+	if (
+		accountsCountResponse.loading ||
+		campaignsCountResponse.loading ||
+		userCountResponse.loading
+	) {
 		return <Loading spacer />;
 	}
 
@@ -432,8 +446,9 @@ const AccountAndIndividuals = ({
 				</Text>
 			</div>
 
-			<SalesforceAccountsAndIndividuals
+			<SalesforceEntities
 				accountsSyncedCount={accountsCountResponse.data}
+				campaignsSyncedCount={campaignsCountResponse.data}
 				disabled={!dataSourceActive || !currentUser.isAdmin()}
 				enabledAccounts={enabledAllAccounts}
 				enabledIndividuals={enabledAllIndividuals}

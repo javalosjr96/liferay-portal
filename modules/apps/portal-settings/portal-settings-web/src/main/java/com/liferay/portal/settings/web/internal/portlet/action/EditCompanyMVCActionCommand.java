@@ -8,6 +8,7 @@ package com.liferay.portal.settings.web.internal.portlet.action;
 import com.liferay.configuration.admin.constants.ConfigurationAdminPortletKeys;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.google.places.constants.GooglePlacesWebKeys;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.Disjunction;
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
@@ -184,7 +185,9 @@ public class EditCompanyMVCActionCommand extends BaseFormMVCActionCommand {
 		unicodeProperties.setProperty(
 			key,
 			_secretResolver.store(
-				companyId, key, "company/" + companyId,
+				companyId,
+				StringBundler.concat(
+					"preference/company/", companyId, StringPool.SLASH, key),
 				unicodeProperties.getProperty(key)));
 	}
 
@@ -291,14 +294,16 @@ public class EditCompanyMVCActionCommand extends BaseFormMVCActionCommand {
 				String curName = enumeration.nextElement();
 
 				for (String discardLegacyKey : discardLegacyKeys) {
-					if (curName.startsWith(discardLegacyKey + "_")) {
-						if (_log.isDebugEnabled()) {
-							_log.debug("Discarding property key " + curName);
-						}
-
-						portletPreferences.reset(curName);
-						unicodeProperties.remove(curName);
+					if (!curName.startsWith(discardLegacyKey + "_")) {
+						continue;
 					}
+
+					if (_log.isDebugEnabled()) {
+						_log.debug("Discarding property key " + curName);
+					}
+
+					portletPreferences.reset(curName);
+					unicodeProperties.remove(curName);
 				}
 			}
 

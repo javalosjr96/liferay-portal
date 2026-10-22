@@ -123,6 +123,8 @@ import com.liferay.segments.SegmentsEntryRetriever;
 import com.liferay.segments.constants.SegmentsEntryConstants;
 import com.liferay.segments.constants.SegmentsWebKeys;
 import com.liferay.segments.context.RequestContextMapper;
+import com.liferay.staging.StagingGroupHelper;
+import com.liferay.staging.StagingGroupHelperUtil;
 
 import jakarta.portlet.PortletConfig;
 import jakarta.portlet.PortletPreferences;
@@ -435,12 +437,16 @@ public class AssetPublisherDisplayContext {
 		return _assetEntryResults;
 	}
 
-	public JSONArray getAssetEntryTypesJSONArray() throws Exception {
+	public JSONArray getAssetEntryTypesJSONArray(long groupId)
+		throws Exception {
+
 		List<AssetRendererFactory<?>> assetRendererFactories = ListUtil.sort(
 			AssetRendererFactoryRegistryUtil.getAssetRendererFactories(
 				_themeDisplay.getCompanyId()),
 			new AssetRendererFactoryTypeNameComparator(
 				_themeDisplay.getLocale()));
+
+		Map<Long, JSONArray> groupIdsJSONArrays = new HashMap<>();
 
 		return JSONUtil.toJSONArray(
 			assetRendererFactories,
@@ -452,6 +458,11 @@ public class AssetPublisherDisplayContext {
 				return JSONUtil.put(
 					"classNameId",
 					_portal.getClassNameId(assetRendererFactory.getClassName())
+				).put(
+					"groupIds",
+					_getGroupIdsJSONArray(
+						groupId, groupIdsJSONArrays,
+						assetRendererFactory.getPortletId())
 				).put(
 					"label",
 					assetRendererFactory.getTypeName(_themeDisplay.getLocale())
@@ -510,15 +521,17 @@ public class AssetPublisherDisplayContext {
 		for (Map.Entry<String, String[]> entry : parameters.entrySet()) {
 			String[] values = entry.getValue();
 
-			if (ArrayUtil.isNotEmpty(values)) {
-				String name = entry.getKey();
+			if (ArrayUtil.isEmpty(values)) {
+				continue;
+			}
 
-				if (values.length == 1) {
-					_attributes.put(name, values[0]);
-				}
-				else {
-					_attributes.put(name, values);
-				}
+			String name = entry.getKey();
+
+			if (values.length == 1) {
+				_attributes.put(name, values[0]);
+			}
+			else {
+				_attributes.put(name, values);
 			}
 		}
 
@@ -1294,16 +1307,18 @@ public class AssetPublisherDisplayContext {
 			return _searchContainer;
 		}
 
-		SearchContainer<AssetEntry> searchContainer = new SearchContainer(
-			_portletRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM,
-			getDelta(), getPortletURL(), null, null);
+		if (isPaginationTypeNone()) {
+			_searchContainer = new SearchContainer<>();
+		}
+		else {
+			_searchContainer = new SearchContainer<>(
+				_portletRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM,
+				getDelta(), getPortletURL(), null, null);
 
-		if (!isPaginationTypeNone()) {
-			searchContainer.setDelta(getDelta());
-			searchContainer.setDeltaConfigurable(false);
+			_searchContainer.setDeltaConfigurable(false);
 		}
 
-		_searchContainer = searchContainer;
+		_searchContainer.setDelta(getDelta());
 
 		return _searchContainer;
 	}
@@ -2208,9 +2223,13 @@ public class AssetPublisherDisplayContext {
 				assetEntryAssetTagNames[i] = assetTag.getName();
 			}
 
-			if (ArrayUtil.containsAll(assetEntryAssetTagNames, assetTagNames)) {
-				filteredAssetEntries.add(assetEntry);
+			if (!ArrayUtil.containsAll(
+					assetEntryAssetTagNames, assetTagNames)) {
+
+				continue;
 			}
+
+			filteredAssetEntries.add(assetEntry);
 		}
 
 		return filteredAssetEntries;
@@ -2236,6 +2255,36 @@ public class AssetPublisherDisplayContext {
 			_themeDisplay.getLocale());
 
 		return _classTypeComparator;
+	}
+
+	private JSONArray _getGroupIdsJSONArray(
+			long groupId, Map<Long, JSONArray> groupIdsJSONArrays,
+			String portletId)
+		throws PortalException {
+
+		StagingGroupHelper stagingGroupHelper =
+			StagingGroupHelperUtil.getStagingGroupHelper();
+
+		long stagedPortletGroupId = stagingGroupHelper.getStagedPortletGroupId(
+			groupId, portletId);
+
+		JSONArray groupIdsJSONArray = groupIdsJSONArrays.get(
+			stagedPortletGroupId);
+
+		if (groupIdsJSONArray != null) {
+			return groupIdsJSONArray;
+		}
+
+		long[] groupIds =
+			SiteConnectedGroupGroupProviderUtil.
+				getCurrentAndAncestorSiteAndDepotGroupIds(
+					new long[] {stagedPortletGroupId});
+
+		groupIdsJSONArray = JSONUtil.putAll(ArrayUtil.toArray(groupIds));
+
+		groupIdsJSONArrays.put(stagedPortletGroupId, groupIdsJSONArray);
+
+		return groupIdsJSONArray;
 	}
 
 	private InfoPage<AssetEntry> _getInfoPage(

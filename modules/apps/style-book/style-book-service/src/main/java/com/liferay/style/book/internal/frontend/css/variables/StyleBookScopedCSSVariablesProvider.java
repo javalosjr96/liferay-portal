@@ -26,6 +26,7 @@ import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.style.book.constants.StyleBookConstants;
 import com.liferay.style.book.model.StyleBookEntry;
 import com.liferay.style.book.util.DefaultStyleBookEntryUtil;
+import com.liferay.style.book.util.FrontendTokensValuesUtil;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -83,8 +84,9 @@ public class StyleBookScopedCSSVariablesProvider
 							cssVariables.put(
 								frontendTokenValueJSONObject.getString(
 									"cssVariableMapping"),
-								frontendTokenValueJSONObject.getString(
-									"value"));
+								FrontendTokensValuesUtil.getFrontendTokenValue(
+									Collections.emptyMap(),
+									frontendTokensValuesJSONObject, key));
 						}
 					}
 					catch (JSONException jsonException) {
@@ -157,7 +159,7 @@ public class StyleBookScopedCSSVariablesProvider
 
 			if (Objects.equals(
 					tokenDefinitionId,
-					StyleBookConstants.CUSTOM_FRONTEND_TOKEN_DEFINITION_ID)) {
+					StyleBookConstants.FRONTEND_TOKEN_DEFINITION_ID_CUSTOM)) {
 
 				priorities.put(
 					key, FrontendTokenDefinitionConstants.PRIORITY_CUSTOM);

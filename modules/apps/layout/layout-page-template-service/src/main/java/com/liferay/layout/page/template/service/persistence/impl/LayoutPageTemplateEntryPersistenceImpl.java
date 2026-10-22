@@ -816,134 +816,6 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 	private FilterCollectionPersistenceFinder
 		<LayoutPageTemplateEntry, NoSuchPageTemplateEntryException>
-			_collectionPersistenceFinderByG_N;
-
-	/**
-	 * Returns an ordered range of all the layout page template entries where groupId = &#63; and name = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>LayoutPageTemplateEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param start the lower bound of the range of layout page template entries
-	 * @param end the upper bound of the range of layout page template entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching layout page template entries
-	 */
-	@Override
-	public List<LayoutPageTemplateEntry> findByG_N(
-		long groupId, String name, int start, int end,
-		OrderByComparator<LayoutPageTemplateEntry> orderByComparator,
-		boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByG_N.find(
-			finderCache, new Object[] {groupId, name}, start, end,
-			orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first layout page template entry in the ordered set where groupId = &#63; and name = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching layout page template entry
-	 * @throws NoSuchPageTemplateEntryException if a matching layout page template entry could not be found
-	 */
-	@Override
-	public LayoutPageTemplateEntry findByG_N_First(
-			long groupId, String name,
-			OrderByComparator<LayoutPageTemplateEntry> orderByComparator)
-		throws NoSuchPageTemplateEntryException {
-
-		return _collectionPersistenceFinderByG_N.findFirst(
-			finderCache, new Object[] {groupId, name}, orderByComparator);
-	}
-
-	/**
-	 * Returns the first layout page template entry in the ordered set where groupId = &#63; and name = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching layout page template entry, or <code>null</code> if a matching layout page template entry could not be found
-	 */
-	@Override
-	public LayoutPageTemplateEntry fetchByG_N_First(
-		long groupId, String name,
-		OrderByComparator<LayoutPageTemplateEntry> orderByComparator) {
-
-		return _collectionPersistenceFinderByG_N.fetchFirst(
-			finderCache, new Object[] {groupId, name}, orderByComparator);
-	}
-
-	/**
-	 * Returns an ordered range of all the layout page template entries that the user has permissions to view where groupId = &#63; and name = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>LayoutPageTemplateEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @param start the lower bound of the range of layout page template entries
-	 * @param end the upper bound of the range of layout page template entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching layout page template entries that the user has permission to view
-	 */
-	@Override
-	public List<LayoutPageTemplateEntry> filterFindByG_N(
-		long groupId, String name, int start, int end,
-		OrderByComparator<LayoutPageTemplateEntry> orderByComparator) {
-
-		return _collectionPersistenceFinderByG_N.filterFind(
-			finderCache, new Object[] {groupId, name}, start, end,
-			orderByComparator, groupId);
-	}
-
-	/**
-	 * Removes all the layout page template entries where groupId = &#63; and name = &#63; from the database.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 */
-	@Override
-	public void removeByG_N(long groupId, String name) {
-		_collectionPersistenceFinderByG_N.remove(
-			finderCache, new Object[] {groupId, name});
-	}
-
-	/**
-	 * Returns the number of layout page template entries where groupId = &#63; and name = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @return the number of matching layout page template entries
-	 */
-	@Override
-	public int countByG_N(long groupId, String name) {
-		return _collectionPersistenceFinderByG_N.count(
-			finderCache, new Object[] {groupId, name});
-	}
-
-	/**
-	 * Returns the number of layout page template entries that the user has permission to view where groupId = &#63; and name = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param name the name
-	 * @return the number of matching layout page template entries that the user has permission to view
-	 */
-	@Override
-	public int filterCountByG_N(long groupId, String name) {
-		return _collectionPersistenceFinderByG_N.filterCount(
-			finderCache, new Object[] {groupId, name}, groupId);
-	}
-
-	private FilterCollectionPersistenceFinder
-		<LayoutPageTemplateEntry, NoSuchPageTemplateEntryException>
 			_collectionPersistenceFinderByG_T;
 
 	/**
@@ -5058,192 +4930,6 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 	private FilterCollectionPersistenceFinder
 		<LayoutPageTemplateEntry, NoSuchPageTemplateEntryException>
-			_collectionPersistenceFinderByG_C_C_D_S;
-
-	/**
-	 * Returns an ordered range of all the layout page template entries where groupId = &#63; and classNameId = &#63; and classTypeKey = &#63; and defaultTemplate = &#63; and status = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>LayoutPageTemplateEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classTypeKey the class type key
-	 * @param defaultTemplate the default template
-	 * @param status the status
-	 * @param start the lower bound of the range of layout page template entries
-	 * @param end the upper bound of the range of layout page template entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching layout page template entries
-	 */
-	@Override
-	public List<LayoutPageTemplateEntry> findByG_C_C_D_S(
-		long groupId, long classNameId, String classTypeKey,
-		boolean defaultTemplate, int status, int start, int end,
-		OrderByComparator<LayoutPageTemplateEntry> orderByComparator,
-		boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByG_C_C_D_S.find(
-			finderCache,
-			new Object[] {
-				groupId, classNameId, classTypeKey, defaultTemplate, status
-			},
-			start, end, orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first layout page template entry in the ordered set where groupId = &#63; and classNameId = &#63; and classTypeKey = &#63; and defaultTemplate = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classTypeKey the class type key
-	 * @param defaultTemplate the default template
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching layout page template entry
-	 * @throws NoSuchPageTemplateEntryException if a matching layout page template entry could not be found
-	 */
-	@Override
-	public LayoutPageTemplateEntry findByG_C_C_D_S_First(
-			long groupId, long classNameId, String classTypeKey,
-			boolean defaultTemplate, int status,
-			OrderByComparator<LayoutPageTemplateEntry> orderByComparator)
-		throws NoSuchPageTemplateEntryException {
-
-		return _collectionPersistenceFinderByG_C_C_D_S.findFirst(
-			finderCache,
-			new Object[] {
-				groupId, classNameId, classTypeKey, defaultTemplate, status
-			},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the first layout page template entry in the ordered set where groupId = &#63; and classNameId = &#63; and classTypeKey = &#63; and defaultTemplate = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classTypeKey the class type key
-	 * @param defaultTemplate the default template
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching layout page template entry, or <code>null</code> if a matching layout page template entry could not be found
-	 */
-	@Override
-	public LayoutPageTemplateEntry fetchByG_C_C_D_S_First(
-		long groupId, long classNameId, String classTypeKey,
-		boolean defaultTemplate, int status,
-		OrderByComparator<LayoutPageTemplateEntry> orderByComparator) {
-
-		return _collectionPersistenceFinderByG_C_C_D_S.fetchFirst(
-			finderCache,
-			new Object[] {
-				groupId, classNameId, classTypeKey, defaultTemplate, status
-			},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns an ordered range of all the layout page template entries that the user has permissions to view where groupId = &#63; and classNameId = &#63; and classTypeKey = &#63; and defaultTemplate = &#63; and status = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>LayoutPageTemplateEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classTypeKey the class type key
-	 * @param defaultTemplate the default template
-	 * @param status the status
-	 * @param start the lower bound of the range of layout page template entries
-	 * @param end the upper bound of the range of layout page template entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching layout page template entries that the user has permission to view
-	 */
-	@Override
-	public List<LayoutPageTemplateEntry> filterFindByG_C_C_D_S(
-		long groupId, long classNameId, String classTypeKey,
-		boolean defaultTemplate, int status, int start, int end,
-		OrderByComparator<LayoutPageTemplateEntry> orderByComparator) {
-
-		return _collectionPersistenceFinderByG_C_C_D_S.filterFind(
-			finderCache,
-			new Object[] {
-				groupId, classNameId, classTypeKey, defaultTemplate, status
-			},
-			start, end, orderByComparator, groupId);
-	}
-
-	/**
-	 * Removes all the layout page template entries where groupId = &#63; and classNameId = &#63; and classTypeKey = &#63; and defaultTemplate = &#63; and status = &#63; from the database.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classTypeKey the class type key
-	 * @param defaultTemplate the default template
-	 * @param status the status
-	 */
-	@Override
-	public void removeByG_C_C_D_S(
-		long groupId, long classNameId, String classTypeKey,
-		boolean defaultTemplate, int status) {
-
-		_collectionPersistenceFinderByG_C_C_D_S.remove(
-			finderCache,
-			new Object[] {
-				groupId, classNameId, classTypeKey, defaultTemplate, status
-			});
-	}
-
-	/**
-	 * Returns the number of layout page template entries where groupId = &#63; and classNameId = &#63; and classTypeKey = &#63; and defaultTemplate = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classTypeKey the class type key
-	 * @param defaultTemplate the default template
-	 * @param status the status
-	 * @return the number of matching layout page template entries
-	 */
-	@Override
-	public int countByG_C_C_D_S(
-		long groupId, long classNameId, String classTypeKey,
-		boolean defaultTemplate, int status) {
-
-		return _collectionPersistenceFinderByG_C_C_D_S.count(
-			finderCache,
-			new Object[] {
-				groupId, classNameId, classTypeKey, defaultTemplate, status
-			});
-	}
-
-	/**
-	 * Returns the number of layout page template entries that the user has permission to view where groupId = &#63; and classNameId = &#63; and classTypeKey = &#63; and defaultTemplate = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param classNameId the class name ID
-	 * @param classTypeKey the class type key
-	 * @param defaultTemplate the default template
-	 * @param status the status
-	 * @return the number of matching layout page template entries that the user has permission to view
-	 */
-	@Override
-	public int filterCountByG_C_C_D_S(
-		long groupId, long classNameId, String classTypeKey,
-		boolean defaultTemplate, int status) {
-
-		return _collectionPersistenceFinderByG_C_C_D_S.filterCount(
-			finderCache,
-			new Object[] {
-				groupId, classNameId, classTypeKey, defaultTemplate, status
-			},
-			groupId);
-	}
-
-	private FilterCollectionPersistenceFinder
-		<LayoutPageTemplateEntry, NoSuchPageTemplateEntryException>
 			_collectionPersistenceFinderByG_C_C_LikeN_T_S;
 
 	/**
@@ -6014,6 +5700,9 @@ public class LayoutPageTemplateEntryPersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					layoutPageTemplateEntry.getUuid(),
+					layoutPageTemplateEntry.getExternalReferenceCode()) &&
+				!Objects.equals(
 					layoutPageTemplateEntryModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					layoutPageTemplateEntry.getExternalReferenceCode())) {
@@ -6371,7 +6060,13 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByGroupId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
+					new String[] {Long.class.getName()},
+					new String[] {"groupId"}, false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByGroupId",
 					new String[] {
@@ -6380,18 +6075,13 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId"}, true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByGroupId",
 					new String[] {Long.class.getName()},
 					new String[] {"groupId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
-					new String[] {Long.class.getName()},
-					new String[] {"groupId"}, false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -6441,7 +6131,14 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_L =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_L",
+					new String[] {Long.class.getName(), Long.class.getName()},
+					new String[] {"groupId", "layoutPageTemplateCollectionId"},
+					false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_L",
 					new String[] {
@@ -6451,20 +6148,14 @@ public class LayoutPageTemplateEntryPersistenceImpl
 					},
 					new String[] {"groupId", "layoutPageTemplateCollectionId"},
 					true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_L",
 					new String[] {Long.class.getName(), Long.class.getName()},
 					new String[] {"groupId", "layoutPageTemplateCollectionId"},
 					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_L",
-					new String[] {Long.class.getName(), Long.class.getName()},
-					new String[] {"groupId", "layoutPageTemplateCollectionId"},
-					false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -6494,41 +6185,17 @@ public class LayoutPageTemplateEntryPersistenceImpl
 				FinderColumn.Type.STRING, "=", true, true,
 				LayoutPageTemplateEntry::getLayoutPageTemplateEntryKey));
 
-		_collectionPersistenceFinderByG_N =
-			new FilterCollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_N",
-					new String[] {
-						Long.class.getName(), String.class.getName(),
-						Integer.class.getName(), Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"groupId", "name"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_N",
-					new String[] {Long.class.getName(), String.class.getName()},
-					new String[] {"groupId", "name"}, 0, 2, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_N",
-					new String[] {Long.class.getName(), String.class.getName()},
-					new String[] {"groupId", "name"}, 0, 2, false, null),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
-				new FinderColumn<>(
-					"layoutPageTemplateEntry.", "groupId",
-					FinderColumn.Type.LONG, "=", true, true,
-					LayoutPageTemplateEntry::getGroupId),
-				new FinderColumn<>(
-					"layoutPageTemplateEntry.", "name",
-					FinderColumn.Type.STRING, "=", true, true,
-					LayoutPageTemplateEntry::getName));
-
 		_collectionPersistenceFinderByG_T =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_T",
+					new String[] {
+						Long.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "type_"}, false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_T",
 					new String[] {
@@ -6537,22 +6204,15 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "type_"}, true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_T",
 					new String[] {
 						Long.class.getName(), Integer.class.getName()
 					},
 					new String[] {"groupId", "type_"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_T",
-					new String[] {
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "type_"}, false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -6564,7 +6224,15 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_S",
+					new String[] {
+						Long.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "status"}, false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_S",
 					new String[] {
@@ -6573,22 +6241,15 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "status"}, true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_S",
 					new String[] {
 						Long.class.getName(), Integer.class.getName()
 					},
 					new String[] {"groupId", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_S",
-					new String[] {
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "status"}, false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -6600,7 +6261,19 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_L_LikeN =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_L_LikeN",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						String.class.getName()
+					},
+					new String[] {
+						"groupId", "layoutPageTemplateCollectionId", "name"
+					},
+					false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_L_LikeN",
 					new String[] {
@@ -6613,21 +6286,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"groupId", "layoutPageTemplateCollectionId", "name"
 					},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_L_LikeN",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName()
-					},
-					new String[] {
-						"groupId", "layoutPageTemplateCollectionId", "name"
-					},
-					false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
 				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null, null, "",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -6644,7 +6304,19 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_L_T =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_L_T",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {
+						"groupId", "layoutPageTemplateCollectionId", "type_"
+					},
+					false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_L_T",
 					new String[] {
@@ -6657,6 +6329,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"groupId", "layoutPageTemplateCollectionId", "type_"
 					},
 					true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_L_T",
 					new String[] {
@@ -6667,20 +6341,7 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"groupId", "layoutPageTemplateCollectionId", "type_"
 					},
 					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_L_T",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "layoutPageTemplateCollectionId", "type_"
-					},
-					false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -6697,7 +6358,19 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_L_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_L_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {
+						"groupId", "layoutPageTemplateCollectionId", "status"
+					},
+					false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_L_S",
 					new String[] {
@@ -6710,6 +6383,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"groupId", "layoutPageTemplateCollectionId", "status"
 					},
 					true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_L_S",
 					new String[] {
@@ -6720,20 +6395,7 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"groupId", "layoutPageTemplateCollectionId", "status"
 					},
 					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_L_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "layoutPageTemplateCollectionId", "status"
-					},
-					false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -6750,7 +6412,17 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_N_T =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_N_T",
+					new String[] {
+						Long.class.getName(), String.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "name", "type_"}, 0, 2, false,
+					null),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_N_T",
 					new String[] {
@@ -6760,6 +6432,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "name", "type_"}, true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_N_T",
 					new String[] {
@@ -6768,18 +6442,7 @@ public class LayoutPageTemplateEntryPersistenceImpl
 					},
 					new String[] {"groupId", "name", "type_"}, 0, 2, true,
 					null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_N_T",
-					new String[] {
-						Long.class.getName(), String.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "name", "type_"}, 0, 2, false,
-					null),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -6795,7 +6458,16 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_T_LikeN =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_T_LikeN",
+					new String[] {
+						Long.class.getName(), String.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "name", "type_"}, false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_T_LikeN",
 					new String[] {
@@ -6805,18 +6477,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "name", "type_"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_T_LikeN",
-					new String[] {
-						Long.class.getName(), String.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "name", "type_"}, false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
 				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null, null, "",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -6832,7 +6494,16 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_T_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_T_S",
+					new String[] {
+						Long.class.getName(), Integer.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "type_", "status"}, false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_T_S",
 					new String[] {
@@ -6842,6 +6513,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "type_", "status"}, true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_T_S",
 					new String[] {
@@ -6849,17 +6522,7 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						Integer.class.getName()
 					},
 					new String[] {"groupId", "type_", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_T_S",
-					new String[] {
-						Long.class.getName(), Integer.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "type_", "status"}, false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -6906,7 +6569,21 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_L_LikeN_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
+					"countByG_L_LikeN_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						String.class.getName(), Integer.class.getName()
+					},
+					new String[] {
+						"groupId", "layoutPageTemplateCollectionId", "name",
+						"status"
+					},
+					false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_L_LikeN_S",
 					new String[] {
@@ -6920,23 +6597,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"status"
 					},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
-					"countByG_L_LikeN_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName(), Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "layoutPageTemplateCollectionId", "name",
-						"status"
-					},
-					false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
 				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null, null, "",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -6957,7 +6619,19 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_C_C_T =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_C_C_T",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						String.class.getName(), Integer.class.getName()
+					},
+					new String[] {
+						"groupId", "classNameId", "classTypeKey", "type_"
+					},
+					0, 4, false, null),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_C_C_T",
 					new String[] {
@@ -6970,6 +6644,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"groupId", "classNameId", "classTypeKey", "type_"
 					},
 					true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_C_C_T",
 					new String[] {
@@ -6980,20 +6656,7 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"groupId", "classNameId", "classTypeKey", "type_"
 					},
 					0, 4, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_C_C_T",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName(), Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "classNameId", "classTypeKey", "type_"
-					},
-					0, 4, false, null),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new ArrayableFinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", false, true, true,
@@ -7013,7 +6676,20 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_C_C_D =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_C_C_D",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						String.class.getName(), Boolean.class.getName()
+					},
+					new String[] {
+						"groupId", "classNameId", "classTypeKey",
+						"defaultTemplate"
+					},
+					0, 4, false, null),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_C_C_D",
 					new String[] {
@@ -7027,6 +6703,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"defaultTemplate"
 					},
 					true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_C_C_D",
 					new String[] {
@@ -7038,21 +6716,7 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"defaultTemplate"
 					},
 					0, 4, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_C_C_D",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName(), Boolean.class.getName()
-					},
-					new String[] {
-						"groupId", "classNameId", "classTypeKey",
-						"defaultTemplate"
-					},
-					0, 4, false, null),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -7072,7 +6736,19 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_C_T_D =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_C_T_D",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Integer.class.getName(), Boolean.class.getName()
+					},
+					new String[] {
+						"groupId", "classNameId", "type_", "defaultTemplate"
+					},
+					false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_C_T_D",
 					new String[] {
@@ -7085,6 +6761,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"groupId", "classNameId", "type_", "defaultTemplate"
 					},
 					true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_C_T_D",
 					new String[] {
@@ -7095,20 +6773,7 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"groupId", "classNameId", "type_", "defaultTemplate"
 					},
 					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_C_T_D",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName(), Boolean.class.getName()
-					},
-					new String[] {
-						"groupId", "classNameId", "type_", "defaultTemplate"
-					},
-					false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -7128,7 +6793,17 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_T_LikeN_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
+					"countByG_T_LikeN_S",
+					new String[] {
+						Long.class.getName(), String.class.getName(),
+						Integer.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "name", "type_", "status"}, false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_T_LikeN_S",
 					new String[] {
@@ -7138,19 +6813,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "name", "type_", "status"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
-					"countByG_T_LikeN_S",
-					new String[] {
-						Long.class.getName(), String.class.getName(),
-						Integer.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "name", "type_", "status"}, false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
 				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null, null, "",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -7170,7 +6834,19 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_T_D_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_T_D_S",
+					new String[] {
+						Long.class.getName(), Integer.class.getName(),
+						Boolean.class.getName(), Integer.class.getName()
+					},
+					new String[] {
+						"groupId", "type_", "defaultTemplate", "status"
+					},
+					false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_T_D_S",
 					new String[] {
@@ -7183,6 +6859,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"groupId", "type_", "defaultTemplate", "status"
 					},
 					true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_T_D_S",
 					new String[] {
@@ -7193,20 +6871,7 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"groupId", "type_", "defaultTemplate", "status"
 					},
 					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_T_D_S",
-					new String[] {
-						Long.class.getName(), Integer.class.getName(),
-						Boolean.class.getName(), Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "type_", "defaultTemplate", "status"
-					},
-					false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -7226,7 +6891,22 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_C_C_LikeN_T =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
+					"countByG_C_C_LikeN_T",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						String.class.getName(), String.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {
+						"groupId", "classNameId", "classTypeKey", "name",
+						"type_"
+					},
+					false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
 					"findByG_C_C_LikeN_T",
@@ -7242,24 +6922,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"type_"
 					},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
-					"countByG_C_C_LikeN_T",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName(), String.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "classNameId", "classTypeKey", "name",
-						"type_"
-					},
-					false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
 				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null, null, "",
 				new ArrayableFinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", false, true, true,
@@ -7283,7 +6947,21 @@ public class LayoutPageTemplateEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_C_C_T_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_C_C_T_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						String.class.getName(), Integer.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {
+						"groupId", "classNameId", "classTypeKey", "type_",
+						"status"
+					},
+					0, 4, false, null),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_C_C_T_S",
 					new String[] {
@@ -7298,6 +6976,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"status"
 					},
 					true),
+				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
 					"findByG_C_C_T_S",
@@ -7311,22 +6991,7 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"status"
 					},
 					0, 4, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_C_C_T_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName(), Integer.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "classNameId", "classTypeKey", "type_",
-						"status"
-					},
-					0, 4, false, null),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new ArrayableFinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", false, true, true,
@@ -7348,77 +7013,24 @@ public class LayoutPageTemplateEntryPersistenceImpl
 					FinderColumn.Type.INTEGER, "=", true, true,
 					LayoutPageTemplateEntry::getStatus));
 
-		_collectionPersistenceFinderByG_C_C_D_S =
-			new FilterCollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_C_C_D_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName(), Boolean.class.getName(),
-						Integer.class.getName(), Integer.class.getName(),
-						Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {
-						"groupId", "classNameId", "classTypeKey",
-						"defaultTemplate", "status"
-					},
-					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"findByG_C_C_D_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName(), Boolean.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "classNameId", "classTypeKey",
-						"defaultTemplate", "status"
-					},
-					0, 4, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByG_C_C_D_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName(), Boolean.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "classNameId", "classTypeKey",
-						"defaultTemplate", "status"
-					},
-					0, 4, false, null),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
-				new FinderColumn<>(
-					"layoutPageTemplateEntry.", "groupId",
-					FinderColumn.Type.LONG, "=", true, true,
-					LayoutPageTemplateEntry::getGroupId),
-				new FinderColumn<>(
-					"layoutPageTemplateEntry.", "classNameId",
-					FinderColumn.Type.LONG, "=", true, true,
-					LayoutPageTemplateEntry::getClassNameId),
-				new FinderColumn<>(
-					"layoutPageTemplateEntry.", "classTypeKey",
-					FinderColumn.Type.STRING, "=", true, true,
-					LayoutPageTemplateEntry::getClassTypeKey),
-				new FinderColumn<>(
-					"layoutPageTemplateEntry.", "defaultTemplate",
-					FinderColumn.Type.BOOLEAN, "=", true, true,
-					LayoutPageTemplateEntry::isDefaultTemplate),
-				new FinderColumn<>(
-					"layoutPageTemplateEntry.", "status",
-					FinderColumn.Type.INTEGER, "=", true, true,
-					LayoutPageTemplateEntry::getStatus));
-
 		_collectionPersistenceFinderByG_C_C_LikeN_T_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, LayoutPageTemplateEntry::getLayoutPageTemplateEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
+					"countByG_C_C_LikeN_T_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						String.class.getName(), String.class.getName(),
+						Integer.class.getName(), Integer.class.getName()
+					},
+					new String[] {
+						"groupId", "classNameId", "classTypeKey", "name",
+						"type_", "status"
+					},
+					false),
+				"", LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
 					"findByG_C_C_LikeN_T_S",
@@ -7434,24 +7046,8 @@ public class LayoutPageTemplateEntryPersistenceImpl
 						"type_", "status"
 					},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
-					"countByG_C_C_LikeN_T_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName(), String.class.getName(),
-						Integer.class.getName(), Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "classNameId", "classTypeKey", "name",
-						"type_", "status"
-					},
-					false),
-				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE,
 				_SQL_COUNT_LAYOUTPAGETEMPLATEENTRY_WHERE,
-				LayoutPageTemplateEntryModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				_SQL_SELECT_LAYOUTPAGETEMPLATEENTRY_WHERE, null, null, "",
 				new ArrayableFinderColumn<>(
 					"layoutPageTemplateEntry.", "groupId",
 					FinderColumn.Type.LONG, "=", false, true, true,
@@ -7561,4 +7157,4 @@ public class LayoutPageTemplateEntryPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-642785642
+// LIFERAY-SERVICE-BUILDER-HASH:1910497584

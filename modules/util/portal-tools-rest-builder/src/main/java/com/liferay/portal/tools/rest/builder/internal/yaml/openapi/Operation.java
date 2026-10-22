@@ -18,6 +18,10 @@ public class Operation {
 		return _description;
 	}
 
+	public String getFeatureFlag() {
+		return _featureFlag;
+	}
+
 	public String getOperationId() {
 		return _operationId;
 	}
@@ -38,8 +42,16 @@ public class Operation {
 		return _tags;
 	}
 
+	public boolean isCalculatedOperationId() {
+		return _calculatedOperationId;
+	}
+
 	public boolean isDeprecated() {
 		return _deprecated;
+	}
+
+	public void setCalculatedOperationId(boolean calculatedOperationId) {
+		_calculatedOperationId = calculatedOperationId;
 	}
 
 	public void setDeprecated(boolean deprecated) {
@@ -48,6 +60,10 @@ public class Operation {
 
 	public void setDescription(String description) {
 		_description = description;
+	}
+
+	public void setFeatureFlag(String featureFlag) {
+		_featureFlag = featureFlag;
 	}
 
 	public void setOperationId(String operationId) {
@@ -70,8 +86,10 @@ public class Operation {
 		_tags = tags;
 	}
 
+	private boolean _calculatedOperationId;
 	private boolean _deprecated;
 	private String _description;
+	private String _featureFlag;
 	private String _operationId;
 	private List<Parameter> _parameters = new ArrayList<>();
 	private RequestBody _requestBody;

@@ -77,9 +77,11 @@ public class AccountFaroController extends BaseFaroController {
 				FieldMappingConstants.getAccountFieldMappingLanguageKey(
 					fieldName);
 
-			if (languageKey != null) {
-				field.setName(languageKey);
+			if (languageKey == null) {
+				continue;
 			}
+
+			field.setName(languageKey);
 		}
 
 		return new FaroFDSResultsDisplay(
@@ -238,7 +240,7 @@ public class AccountFaroController extends BaseFaroController {
 
 		return new FaroFDSResultsDisplay<>(
 			contactsEngineClient.getAccounts(
-				faroProjectLocalService.getFaroProjectByGroupId(groupId),
+				faroProjectLocalService.getFaroProjectByGroupId(groupId), null,
 				channelId, filterString, includeAnonymousUsers, search,
 				rangeEnd, rangeKey, rangeStart, segmentId, page, pageSize,
 				sortString),
@@ -267,6 +269,8 @@ public class AccountFaroController extends BaseFaroController {
 			List<Map<String, String>> items = TransformUtil.transform(
 				accountLifecycle.getStages(),
 				stage -> HashMapBuilder.put(
+					"externalReferenceCode", stage.getExternalReferenceCode()
+				).put(
 					"id", stage.getId()
 				).put(
 					"stageType", stage.getStageType()

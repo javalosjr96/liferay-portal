@@ -572,137 +572,6 @@ public class OAuthClientEntryPersistenceImpl
 			finderCache, new Object[] {userId});
 	}
 
-	private FilterCollectionPersistenceFinder
-		<OAuthClientEntry, NoSuchOAuthClientEntryException>
-			_collectionPersistenceFinderByC_A;
-
-	/**
-	 * Returns an ordered range of all the o auth client entries where companyId = &#63; and authServerWellKnownURI = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OAuthClientEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @param start the lower bound of the range of o auth client entries
-	 * @param end the upper bound of the range of o auth client entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching o auth client entries
-	 */
-	@Override
-	public List<OAuthClientEntry> findByC_A(
-		long companyId, String authServerWellKnownURI, int start, int end,
-		OrderByComparator<OAuthClientEntry> orderByComparator,
-		boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByC_A.find(
-			finderCache, new Object[] {companyId, authServerWellKnownURI},
-			start, end, orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first o auth client entry in the ordered set where companyId = &#63; and authServerWellKnownURI = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching o auth client entry
-	 * @throws NoSuchOAuthClientEntryException if a matching o auth client entry could not be found
-	 */
-	@Override
-	public OAuthClientEntry findByC_A_First(
-			long companyId, String authServerWellKnownURI,
-			OrderByComparator<OAuthClientEntry> orderByComparator)
-		throws NoSuchOAuthClientEntryException {
-
-		return _collectionPersistenceFinderByC_A.findFirst(
-			finderCache, new Object[] {companyId, authServerWellKnownURI},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the first o auth client entry in the ordered set where companyId = &#63; and authServerWellKnownURI = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching o auth client entry, or <code>null</code> if a matching o auth client entry could not be found
-	 */
-	@Override
-	public OAuthClientEntry fetchByC_A_First(
-		long companyId, String authServerWellKnownURI,
-		OrderByComparator<OAuthClientEntry> orderByComparator) {
-
-		return _collectionPersistenceFinderByC_A.fetchFirst(
-			finderCache, new Object[] {companyId, authServerWellKnownURI},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns an ordered range of all the o auth client entries that the user has permissions to view where companyId = &#63; and authServerWellKnownURI = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>OAuthClientEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @param start the lower bound of the range of o auth client entries
-	 * @param end the upper bound of the range of o auth client entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching o auth client entries that the user has permission to view
-	 */
-	@Override
-	public List<OAuthClientEntry> filterFindByC_A(
-		long companyId, String authServerWellKnownURI, int start, int end,
-		OrderByComparator<OAuthClientEntry> orderByComparator) {
-
-		return _collectionPersistenceFinderByC_A.filterFind(
-			finderCache, new Object[] {companyId, authServerWellKnownURI},
-			start, end, orderByComparator, companyId, 0);
-	}
-
-	/**
-	 * Removes all the o auth client entries where companyId = &#63; and authServerWellKnownURI = &#63; from the database.
-	 *
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 */
-	@Override
-	public void removeByC_A(long companyId, String authServerWellKnownURI) {
-		_collectionPersistenceFinderByC_A.remove(
-			finderCache, new Object[] {companyId, authServerWellKnownURI});
-	}
-
-	/**
-	 * Returns the number of o auth client entries where companyId = &#63; and authServerWellKnownURI = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @return the number of matching o auth client entries
-	 */
-	@Override
-	public int countByC_A(long companyId, String authServerWellKnownURI) {
-		return _collectionPersistenceFinderByC_A.count(
-			finderCache, new Object[] {companyId, authServerWellKnownURI});
-	}
-
-	/**
-	 * Returns the number of o auth client entries that the user has permission to view where companyId = &#63; and authServerWellKnownURI = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param authServerWellKnownURI the auth server well known uri
-	 * @return the number of matching o auth client entries that the user has permission to view
-	 */
-	@Override
-	public int filterCountByC_A(long companyId, String authServerWellKnownURI) {
-		return _collectionPersistenceFinderByC_A.filterCount(
-			finderCache, new Object[] {companyId, authServerWellKnownURI},
-			companyId, 0);
-	}
-
 	private UniquePersistenceFinder
 		<OAuthClientEntry, NoSuchOAuthClientEntryException>
 			_uniquePersistenceFinderByC_A_C;
@@ -969,6 +838,9 @@ public class OAuthClientEntryPersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					oAuthClientEntry.getUuid(),
+					oAuthClientEntry.getExternalReferenceCode()) &&
+				!Objects.equals(
 					oAuthClientEntryModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					oAuthClientEntry.getExternalReferenceCode())) {
@@ -1142,7 +1014,13 @@ public class OAuthClientEntryPersistenceImpl
 	public void activate() {
 		_collectionPersistenceFinderByUuid =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, OAuthClientEntry::getOAuthClientEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid",
+					new String[] {String.class.getName()},
+					new String[] {"uuid_"}, 0, 1, false, null),
+				"", OAuthClientEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid",
 					new String[] {
@@ -1151,18 +1029,13 @@ public class OAuthClientEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"uuid_"}, true),
+				_SQL_COUNT_OAUTHCLIENTENTRY_WHERE,
+				_SQL_SELECT_OAUTHCLIENTENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid",
 					new String[] {String.class.getName()},
 					new String[] {"uuid_"}, 0, 1, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid",
-					new String[] {String.class.getName()},
-					new String[] {"uuid_"}, 0, 1, false, null),
-				_SQL_SELECT_OAUTHCLIENTENTRY_WHERE,
-				_SQL_COUNT_OAUTHCLIENTENTRY_WHERE,
-				OAuthClientEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"", "", null,
+				"",
 				new FinderColumn<>(
 					"oAuthClientEntry.", "uuid", "uuid_",
 					FinderColumn.Type.STRING, "=", true, true,
@@ -1170,7 +1043,13 @@ public class OAuthClientEntryPersistenceImpl
 
 		_collectionPersistenceFinderByUuid_C =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, OAuthClientEntry::getOAuthClientEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid_C",
+					new String[] {String.class.getName(), Long.class.getName()},
+					new String[] {"uuid_", "companyId"}, 0, 1, false, null),
+				"", OAuthClientEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid_C",
 					new String[] {
@@ -1179,18 +1058,13 @@ public class OAuthClientEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"uuid_", "companyId"}, true),
+				_SQL_COUNT_OAUTHCLIENTENTRY_WHERE,
+				_SQL_SELECT_OAUTHCLIENTENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid_C",
 					new String[] {String.class.getName(), Long.class.getName()},
 					new String[] {"uuid_", "companyId"}, 0, 1, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid_C",
-					new String[] {String.class.getName(), Long.class.getName()},
-					new String[] {"uuid_", "companyId"}, 0, 1, false, null),
-				_SQL_SELECT_OAUTHCLIENTENTRY_WHERE,
-				_SQL_COUNT_OAUTHCLIENTENTRY_WHERE,
-				OAuthClientEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"", "", null,
+				"",
 				new FinderColumn<>(
 					"oAuthClientEntry.", "uuid", "uuid_",
 					FinderColumn.Type.STRING, "=", true, true,
@@ -1201,7 +1075,13 @@ public class OAuthClientEntryPersistenceImpl
 
 		_collectionPersistenceFinderByCompanyId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, OAuthClientEntry::getOAuthClientEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+					"countByCompanyId", new String[] {Long.class.getName()},
+					new String[] {"companyId"}, false),
+				"", OAuthClientEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCompanyId",
 					new String[] {
@@ -1210,25 +1090,26 @@ public class OAuthClientEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"companyId"}, true),
+				_SQL_COUNT_OAUTHCLIENTENTRY_WHERE,
+				_SQL_SELECT_OAUTHCLIENTENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
 					"findByCompanyId", new String[] {Long.class.getName()},
 					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByCompanyId", new String[] {Long.class.getName()},
-					new String[] {"companyId"}, false),
-				_SQL_SELECT_OAUTHCLIENTENTRY_WHERE,
-				_SQL_COUNT_OAUTHCLIENTENTRY_WHERE,
-				OAuthClientEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"", "", null,
+				"",
 				new FinderColumn<>(
 					"oAuthClientEntry.", "companyId", FinderColumn.Type.LONG,
 					"=", true, true, OAuthClientEntry::getCompanyId));
 
 		_collectionPersistenceFinderByUserId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, OAuthClientEntry::getOAuthClientEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUserId",
+					new String[] {Long.class.getName()},
+					new String[] {"userId"}, false),
+				"", OAuthClientEntryModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUserId",
 					new String[] {
@@ -1237,54 +1118,16 @@ public class OAuthClientEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"userId"}, true),
+				_SQL_COUNT_OAUTHCLIENTENTRY_WHERE,
+				_SQL_SELECT_OAUTHCLIENTENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUserId",
 					new String[] {Long.class.getName()},
 					new String[] {"userId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUserId",
-					new String[] {Long.class.getName()},
-					new String[] {"userId"}, false),
-				_SQL_SELECT_OAUTHCLIENTENTRY_WHERE,
-				_SQL_COUNT_OAUTHCLIENTENTRY_WHERE,
-				OAuthClientEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"", "", null,
+				"",
 				new FinderColumn<>(
 					"oAuthClientEntry.", "userId", FinderColumn.Type.LONG, "=",
 					true, true, OAuthClientEntry::getUserId));
-
-		_collectionPersistenceFinderByC_A =
-			new FilterCollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_A",
-					new String[] {
-						Long.class.getName(), String.class.getName(),
-						Integer.class.getName(), Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"companyId", "authServerWellKnownURI"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_A",
-					new String[] {Long.class.getName(), String.class.getName()},
-					new String[] {"companyId", "authServerWellKnownURI"}, 0, 2,
-					true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_A",
-					new String[] {Long.class.getName(), String.class.getName()},
-					new String[] {"companyId", "authServerWellKnownURI"}, 0, 2,
-					false, null),
-				_SQL_SELECT_OAUTHCLIENTENTRY_WHERE,
-				_SQL_COUNT_OAUTHCLIENTENTRY_WHERE,
-				OAuthClientEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"", "", null,
-				new FinderColumn<>(
-					"oAuthClientEntry.", "companyId", FinderColumn.Type.LONG,
-					"=", true, true, OAuthClientEntry::getCompanyId),
-				new FinderColumn<>(
-					"oAuthClientEntry.", "authServerWellKnownURI",
-					FinderColumn.Type.STRING, "=", true, true,
-					OAuthClientEntry::getAuthServerWellKnownURI));
 
 		_uniquePersistenceFinderByC_A_C = new UniquePersistenceFinder<>(
 			this,
@@ -1394,4 +1237,4 @@ public class OAuthClientEntryPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:987000133
+// LIFERAY-SERVICE-BUILDER-HASH:-933803508

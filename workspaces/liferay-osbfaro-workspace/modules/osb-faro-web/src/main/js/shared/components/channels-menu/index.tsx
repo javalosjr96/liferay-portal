@@ -1,4 +1,4 @@
-import ClayIcon from '@clayui/icon';
+import ClayIcon from 'shared/components/Icon';
 import getCN from 'classnames';
 import PickerTriggerButton from '../PickerTriggerButton';
 import React from 'react';
@@ -42,6 +42,12 @@ export const getDefaultChannel = (
 
 	return null;
 };
+
+export const isValidChannel = (
+	channelId: string | undefined,
+	channels: Channel[]
+) =>
+	!channelId || !channels.length || channels.some(({id}) => id === channelId);
 
 /**
  * Built on `Picker` (`@clayui/core`) with `searchable`, the same idiomatic

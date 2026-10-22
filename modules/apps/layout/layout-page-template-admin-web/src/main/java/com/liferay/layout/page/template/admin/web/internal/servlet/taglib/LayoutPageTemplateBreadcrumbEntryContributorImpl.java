@@ -7,9 +7,13 @@ package com.liferay.layout.page.template.admin.web.internal.servlet.taglib;
 
 import com.liferay.design.library.util.DesignLibraryUtil;
 import com.liferay.layout.page.template.admin.constants.LayoutPageTemplateAdminPortletKeys;
+import com.liferay.layout.page.template.admin.web.internal.security.permission.resource.LayoutPageTemplateCollectionPermission;
 import com.liferay.layout.page.template.admin.web.internal.util.LayoutPageTemplatePortletUtil;
+import com.liferay.layout.page.template.constants.LayoutPageTemplateCollectionTypeConstants;
 import com.liferay.layout.page.template.model.LayoutPageTemplateCollection;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.servlet.taglib.ui.BreadcrumbEntry;
 import com.liferay.portal.kernel.servlet.taglib.ui.BreadcrumbEntryContributor;
 import com.liferay.portal.kernel.theme.PortletDisplay;
@@ -21,7 +25,7 @@ import jakarta.portlet.PortletRequest;
 
 import jakarta.servlet.http.HttpServletRequest;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -66,12 +70,25 @@ public class LayoutPageTemplateBreadcrumbEntryContributorImpl
 			return originalBreadcrumbEntries;
 		}
 
-		List<BreadcrumbEntry> breadcrumbEntries = new ArrayList<>();
+		List<LayoutPageTemplateCollection> layoutPageTemplateCollections =
+			layoutPageTemplateCollection.getAncestors();
 
-		breadcrumbEntries.add(
-			_createLayoutPageTemplateCollectionBreadcrumbEntry(
-				httpServletRequest, layoutPageTemplateCollection,
-				themeDisplay));
+		Collections.reverse(layoutPageTemplateCollections);
+
+		List<BreadcrumbEntry> breadcrumbEntries = TransformUtil.transform(
+			layoutPageTemplateCollections,
+			curLayoutPageTemplateCollection -> {
+				if (!LayoutPageTemplateCollectionPermission.contains(
+						themeDisplay.getPermissionChecker(),
+						curLayoutPageTemplateCollection, ActionKeys.VIEW)) {
+
+					return null;
+				}
+
+				return _createLayoutPageTemplateCollectionBreadcrumbEntry(
+					httpServletRequest, curLayoutPageTemplateCollection,
+					themeDisplay);
+			});
 
 		breadcrumbEntries.addAll(originalBreadcrumbEntries);
 
@@ -93,13 +110,25 @@ public class LayoutPageTemplateBreadcrumbEntryContributorImpl
 					LayoutPageTemplateAdminPortletKeys.LAYOUT_PAGE_TEMPLATES, 0,
 					0, PortletRequest.RENDER_PHASE)
 			).setTabs1(
-				"page-templates"
+				_getTabs1(layoutPageTemplateCollection)
 			).setParameter(
 				"layoutPageTemplateCollectionId",
 				layoutPageTemplateCollection.getLayoutPageTemplateCollectionId()
 			).buildString());
 
 		return breadcrumbEntry;
+	}
+
+	private String _getTabs1(
+		LayoutPageTemplateCollection layoutPageTemplateCollection) {
+
+		if (layoutPageTemplateCollection.getType() ==
+				LayoutPageTemplateCollectionTypeConstants.DISPLAY_PAGE) {
+
+			return "display-page-templates";
+		}
+
+		return "page-templates";
 	}
 
 	@Reference

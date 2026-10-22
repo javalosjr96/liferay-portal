@@ -21,6 +21,7 @@ import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Pavel Savinov
+ * @author Thiago Buarque
  */
 @Component(
 	property = "model.class.name=com.liferay.style.book.model.StyleBookEntry",
@@ -129,6 +130,13 @@ public class StylebookEntryStagedModelRepository
 			StyleBookEntry styleBookEntry)
 		throws PortalException {
 
+		ServiceContext serviceContext = portletDataContext.createServiceContext(
+			styleBookEntry);
+
+		if (portletDataContext.isDataStrategyMirror()) {
+			serviceContext.setUuid(styleBookEntry.getUuid());
+		}
+
 		return _styleBookEntryLocalService.updateStyleBookEntry(
 			portletDataContext.getUserId(styleBookEntry.getUserUuid()),
 			styleBookEntry.getStyleBookEntryId(),
@@ -136,8 +144,8 @@ public class StylebookEntryStagedModelRepository
 			styleBookEntry.getFrontendTokenDefinition(),
 			styleBookEntry.getFrontendTokensValues(), styleBookEntry.getName(),
 			styleBookEntry.getStyleBookEntryKey(),
-			styleBookEntry.getPreviewFileEntryId(),
-			portletDataContext.createServiceContext(styleBookEntry));
+			styleBookEntry.getPreviewFileEntryId(), styleBookEntry.getThemeId(),
+			serviceContext);
 	}
 
 	@Reference

@@ -315,7 +315,7 @@ export default function ({
 											{getClassDisplayName(className)}
 										</ClayList.ItemTitle>
 
-										<ClayList.ItemText>
+										<ClayList.ItemText className="text-secondary">
 											{className}
 										</ClayList.ItemText>
 									</ClayList.ItemField>
@@ -326,7 +326,9 @@ export default function ({
 												frameworkConfig.clauseContributorsIncludes.includes(
 													className
 												)
-													? Liferay.Language.get('on')
+													? Liferay.Language.get(
+															'on[toggle]'
+														)
 													: Liferay.Language.get(
 															'off'
 														)

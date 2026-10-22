@@ -6,6 +6,8 @@
 package com.liferay.jenkins.results.parser;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.junit.Test;
 
@@ -69,6 +71,59 @@ public class JobFactoryTest extends com.liferay.jenkins.results.parser.Test {
 		).getPortalUpstreamBranchName();
 
 		_testNewJob(job, portalUpstreamBranchName, upstreamPortalTopLevelBuild);
+	}
+
+	@Test
+	public void testNewJobReusesCachedJob() {
+		Map<String, String> environmentMap = new HashMap<>();
+
+		environmentMap.put("BUILD_CACHING_ENABLED", "true");
+		environmentMap.put("JENKINS_URL", RandomTestUtil.randomString());
+		environmentMap.put("MASTER_NETWORK_NAME", "aws-network");
+
+		mockEnvironment(environmentMap);
+
+		BuildDatabase buildDatabase = Mockito.mock(BuildDatabase.class);
+
+		Mockito.doReturn(
+			false
+		).when(
+			buildDatabase
+		).hasJob(
+			Mockito.anyString()
+		);
+
+		BuildDatabaseUtil.setBuildDatabase(buildDatabase);
+
+		String testSuiteName = RandomTestUtil.randomString();
+
+		try (MockedStatic<JobCacheUtil> jobCacheUtilMockedStatic =
+				Mockito.mockStatic(JobCacheUtil.class)) {
+
+			jobCacheUtilMockedStatic.when(
+				() -> JobCacheUtil.getCachedJobJSONObject(
+					Mockito.anyString(),
+					Mockito.nullable(PortalGitWorkingDirectory.class),
+					Mockito.anyString())
+			).thenReturn(
+				null
+			);
+
+			Job firstJob = JobFactory.newJob(
+				Job.BuildProfile.DXP, "test-poshi-release", testSuiteName);
+
+			Job secondJob = JobFactory.newJob(
+				Job.BuildProfile.DXP, "test-poshi-release", testSuiteName);
+
+			testSame(firstJob, secondJob);
+
+			jobCacheUtilMockedStatic.verify(
+				() -> JobCacheUtil.getCachedJobJSONObject(
+					Mockito.anyString(),
+					Mockito.nullable(PortalGitWorkingDirectory.class),
+					Mockito.anyString()),
+				Mockito.times(1));
+		}
 	}
 
 	private void _testNewJob(

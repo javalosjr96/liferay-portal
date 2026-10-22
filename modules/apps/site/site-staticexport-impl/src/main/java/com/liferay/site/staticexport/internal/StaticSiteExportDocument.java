@@ -12,18 +12,22 @@ import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Function;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 
 /**
  * @author Víctor Galán
@@ -36,24 +40,24 @@ public class StaticSiteExportDocument {
 		_document = Jsoup.parse(html);
 	}
 
-	public String getHTML() {
-		return _document.outerHtml();
-	}
-
-	public Set<String> getURLs() {
-		Set<String> urls = new LinkedHashSet<>();
+	public Set<String> getEmbeddedURLs() {
+		Set<String> embeddedURLs = new LinkedHashSet<>();
 
 		for (String attributeName : _ATTRIBUTE_NAMES) {
 			for (Element element :
 					_document.select("[" + attributeName + "]")) {
 
-				urls.add(element.attr(attributeName));
+				if (!_isEmbedded(attributeName, element)) {
+					continue;
+				}
+
+				embeddedURLs.add(element.attr(attributeName));
 			}
 		}
 
 		for (Element element : _document.select("[srcset]")) {
 			for (String candidate : _getSrcsetCandidates(element)) {
-				urls.add(_getCandidateURL(candidate));
+				embeddedURLs.add(_getCandidateURL(candidate));
 			}
 		}
 
@@ -69,13 +73,84 @@ public class StaticSiteExportDocument {
 			while (iterator.hasNext()) {
 				String url = importsJSONObject.getString(iterator.next());
 
-				if (!url.endsWith(StringPool.SLASH)) {
-					urls.add(url);
+				if (url.endsWith(StringPool.SLASH)) {
+					continue;
 				}
+
+				embeddedURLs.add(url);
 			}
 		}
 
+		return embeddedURLs;
+	}
+
+	public String getHTML() {
+		return _document.outerHtml();
+	}
+
+	public Set<String> getURLs() {
+		Set<String> urls = getEmbeddedURLs();
+
+		for (Element element : _document.select("[href]")) {
+			urls.add(element.attr("href"));
+		}
+
 		return urls;
+	}
+
+	public void replaceLinks(
+		Map<String, String> alternatePaths, String canonicalPath) {
+
+		Elements elements = _document.select(
+			"link[rel=alternate][hreflang], link[rel=canonical]");
+
+		elements.remove();
+
+		Element headElement = _document.head();
+
+		Element canonicalElement = headElement.appendElement("link");
+
+		canonicalElement.attr("href", canonicalPath);
+		canonicalElement.attr("rel", "canonical");
+
+		for (Map.Entry<String, String> entry : alternatePaths.entrySet()) {
+			Element alternateElement = headElement.appendElement("link");
+
+			alternateElement.attr("href", entry.getValue());
+			alternateElement.attr("hreflang", entry.getKey());
+			alternateElement.attr("rel", "alternate");
+		}
+	}
+
+	public void replaceOpenGraphMetaTags(
+		String canonicalPath, List<String> openGraphLocaleAlternates) {
+
+		for (Element element :
+				_document.select(
+					"meta[name=\"twitter:url\"], meta[property=\"og:url\"]")) {
+
+			element.attr("content", canonicalPath);
+		}
+
+		Elements elements = _document.select(
+			"meta[property=\"og:locale:alternate\"]");
+
+		if (elements.isEmpty()) {
+			return;
+		}
+
+		Element firstElement = elements.first();
+
+		for (String openGraphLocaleAlternate : openGraphLocaleAlternates) {
+			Element element = new Element("meta");
+
+			element.attr("content", openGraphLocaleAlternate);
+			element.attr("property", "og:locale:alternate");
+
+			firstElement.before(element);
+		}
+
+		elements.remove();
 	}
 
 	public void rewrite(Function<String, String> pathFunction) {
@@ -87,9 +162,11 @@ public class StaticSiteExportDocument {
 
 				String path = pathFunction.apply(url);
 
-				if (path != null) {
-					element.attr(attributeName, path);
+				if (path == null) {
+					continue;
 				}
+
+				element.attr(attributeName, path);
 			}
 		}
 
@@ -132,9 +209,11 @@ public class StaticSiteExportDocument {
 				String path = pathFunction.apply(
 					importsJSONObject.getString(specifier));
 
-				if (path != null) {
-					importsJSONObject.put(specifier, path);
+				if (path == null) {
+					continue;
 				}
+
+				importsJSONObject.put(specifier, path);
 			}
 
 			element.text(jsonObject.toString());
@@ -180,6 +259,29 @@ public class StaticSiteExportDocument {
 		}
 
 		return candidates;
+	}
+
+	private boolean _isEmbedded(String attributeName, Element element) {
+		if (!Objects.equals(attributeName, "href")) {
+			return true;
+		}
+
+		String tagName = element.normalName();
+
+		if (Objects.equals(tagName, "a") || Objects.equals(tagName, "area") ||
+			Objects.equals(tagName, "base")) {
+
+			return false;
+		}
+
+		if (!Objects.equals(tagName, "link")) {
+			return true;
+		}
+
+		String[] rels = StringUtil.split(
+			StringUtil.toLowerCase(element.attr("rel")), CharPool.SPACE);
+
+		return ArrayUtil.contains(rels, "stylesheet");
 	}
 
 	private static final String[] _ATTRIBUTE_NAMES = {

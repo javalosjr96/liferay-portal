@@ -465,14 +465,6 @@ public class DDMStructureLayoutLocalServiceUtil {
 	}
 
 	public static List<DDMStructureLayout> getStructureLayouts(
-		long groupId, long classNameId, int start, int end,
-		OrderByComparator<DDMStructureLayout> orderByComparator) {
-
-		return getService().getStructureLayouts(
-			groupId, classNameId, start, end, orderByComparator);
-	}
-
-	public static List<DDMStructureLayout> getStructureLayouts(
 		long groupId, long classNameId, long structureVersionId) {
 
 		return getService().getStructureLayouts(
@@ -492,34 +484,11 @@ public class DDMStructureLayoutLocalServiceUtil {
 		return getService().getStructureLayoutsCount(groupId);
 	}
 
-	public static int getStructureLayoutsCount(long groupId, long classNameId) {
-		return getService().getStructureLayoutsCount(groupId, classNameId);
-	}
-
 	public static int getStructureLayoutsCount(
 		long groupId, long classNameId, long structureVersionId) {
 
 		return getService().getStructureLayoutsCount(
 			groupId, classNameId, structureVersionId);
-	}
-
-	public static List<DDMStructureLayout> search(
-			long companyId, long[] groupIds, long classNameId, String keywords,
-			int start, int end,
-			OrderByComparator<DDMStructureLayout> orderByComparator)
-		throws PortalException {
-
-		return getService().search(
-			companyId, groupIds, classNameId, keywords, start, end,
-			orderByComparator);
-	}
-
-	public static int searchCount(
-			long companyId, long[] groupIds, long classNameId, String keywords)
-		throws PortalException {
-
-		return getService().searchCount(
-			companyId, groupIds, classNameId, keywords);
 	}
 
 	/**
@@ -570,4 +539,4 @@ public class DDMStructureLayoutLocalServiceUtil {
 			DDMStructureLayoutLocalService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:558557384
+// LIFERAY-SERVICE-BUILDER-HASH:-858363400

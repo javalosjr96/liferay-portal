@@ -20,8 +20,10 @@ import com.liferay.client.extension.type.manager.CETManager;
 import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
 import com.liferay.depot.service.DepotEntryGroupRelLocalService;
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.document.library.helper.DLURLHelper;
+import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
-import com.liferay.document.library.util.DLURLHelper;
+import com.liferay.document.library.kernel.service.DLFolderLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
 import com.liferay.dynamic.data.mapping.util.DefaultDDMStructureHelper;
@@ -77,7 +79,6 @@ import com.liferay.portal.kernel.service.ThemeLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
-import com.liferay.portal.kernel.settings.ArchivedSettingsFactory;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -133,20 +134,20 @@ public class SiteInitializerFactoryImpl implements SiteInitializerFactory {
 			_accountEntryLocalService, _accountEntryOrganizationRelLocalService,
 			_accountGroupLocalService, _accountGroupRelService,
 			_accountResourceFactory, _accountRoleLocalService,
-			_accountRoleResourceFactory, _archivedSettingsFactory,
-			_assetCategoryLocalService, _assetEntryLocalService,
-			_assetLinkLocalService, _assetListEntryLocalService,
-			_blogPostingResourceFactory, _cetManager,
-			_clientExtensionEntryLocalService, _companyLocalService,
-			_configurationProvider, _dataDefinitionResourceFactory,
-			_ddmStructureLocalService, _ddmTemplateLocalService,
-			_defaultDDMStructureHelper, _depotEntryGroupRelLocalService,
-			_depotEntryLocalService, _dlFileEntryTypeLocalService, _dlURLHelper,
-			_documentFolderResourceFactory, _documentResourceFactory,
-			_expandoValueLocalService, _fragmentEntryLinkLocalService,
-			_fragmentsImporter, _groupLocalService, _journalArticleLocalService,
-			_jsonFactory, _keywordResourceFactory,
-			_knowledgeBaseArticleResourceFactory,
+			_accountRoleResourceFactory, _assetCategoryLocalService,
+			_assetEntryLocalService, _assetLinkLocalService,
+			_assetListEntryLocalService, _blogPostingResourceFactory,
+			_cetManager, _clientExtensionEntryLocalService,
+			_companyLocalService, _configurationProvider,
+			_dataDefinitionResourceFactory, _ddmStructureLocalService,
+			_ddmTemplateLocalService, _defaultDDMStructureHelper,
+			_depotEntryGroupRelLocalService, _depotEntryLocalService,
+			_dlFileEntryLocalService, _dlFileEntryTypeLocalService,
+			_dlFolderLocalService, _dlURLHelper, _documentFolderResourceFactory,
+			_documentResourceFactory, _expandoValueLocalService,
+			_fragmentEntryLinkLocalService, _fragmentsImporter,
+			_groupLocalService, _journalArticleLocalService, _jsonFactory,
+			_keywordResourceFactory, _knowledgeBaseArticleResourceFactory,
 			_knowledgeBaseFolderResourceFactory, _languageKeyResolver,
 			_layoutLocalService, _layoutPageTemplateEntryLocalService,
 			_layoutsImporter, _layoutPageTemplateStructureLocalService,
@@ -216,9 +217,6 @@ public class SiteInitializerFactoryImpl implements SiteInitializerFactory {
 	private AccountRoleResource.Factory _accountRoleResourceFactory;
 
 	@Reference
-	private ArchivedSettingsFactory _archivedSettingsFactory;
-
-	@Reference
 	private AssetCategoryLocalService _assetCategoryLocalService;
 
 	@Reference
@@ -266,7 +264,13 @@ public class SiteInitializerFactoryImpl implements SiteInitializerFactory {
 	private DepotEntryLocalService _depotEntryLocalService;
 
 	@Reference
+	private DLFileEntryLocalService _dlFileEntryLocalService;
+
+	@Reference
 	private DLFileEntryTypeLocalService _dlFileEntryTypeLocalService;
+
+	@Reference
+	private DLFolderLocalService _dlFolderLocalService;
 
 	@Reference
 	private DLURLHelper _dlURLHelper;

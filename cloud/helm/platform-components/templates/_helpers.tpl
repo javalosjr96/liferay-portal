@@ -29,6 +29,12 @@ instrumentation.opentelemetry.io/inject-python: "false"
 sidecar.opentelemetry.io/inject: "false"
 {{- end -}}
 
+{{- define "liferay-platform.dxpOperatorServiceAccountName" -}}
+{{- $values := .Values.operatorApplications.dxpOperator.values | default dict -}}
+{{- dig "serviceAccount" "name" "" $values | default (dig "fullnameOverride" "" $values) | required (printf "The value %q must not be empty when %q is true"
+    "operatorApplications.dxpOperator.values.fullnameOverride" "operatorApplications.dxpOperator.values.clientExtensions.enabled") -}}
+{{- end -}}
+
 {{- define "liferay-platform.environmentNamespaceLabels" -}}
 licensing.liferay.com/environment: "true"
 liferay.com/observable: "true"
@@ -45,6 +51,12 @@ pod-security.kubernetes.io/enforce: restricted
 
 {{- define "liferay-platform.labels" -}}
 liferay.com/project: liferay-cloud-native
+{{- end -}}
+
+{{- define "liferay-platform.requireAPIServerSources" -}}
+{{- if not .apiServerSources -}}
+{{- fail (printf "The value \"networkPolicy.apiServerSources\" must not be empty when \"operatorApplications.%s.enabled\" is true" .operatorApplication) -}}
+{{- end -}}
 {{- end -}}
 
 {{- define "liferay-platform.sourceRepoBase" -}}

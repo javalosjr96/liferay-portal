@@ -156,6 +156,17 @@ public class DLFileShortcutServiceImpl extends DLFileShortcutServiceBaseImpl {
 		fileShortcutModelResourcePermission.check(
 			getPermissionChecker(), fileShortcutId, ActionKeys.UPDATE);
 
+		DLFileShortcut dlFileShortcut =
+			dlFileShortcutPersistence.findByPrimaryKey(fileShortcutId);
+
+		if (dlFileShortcut.getFolderId() != folderId) {
+			ModelResourcePermissionUtil.check(
+				ModelResourcePermissionRegistryUtil.
+					<Folder>getModelResourcePermission(Folder.class.getName()),
+				getPermissionChecker(), dlFileShortcut.getGroupId(), folderId,
+				ActionKeys.ADD_SHORTCUT);
+		}
+
 		try {
 			ModelResourcePermission<FileEntry>
 				fileEntryModelResourcePermission =
@@ -178,6 +189,20 @@ public class DLFileShortcutServiceImpl extends DLFileShortcutServiceBaseImpl {
 	public void updateFileShortcuts(
 			long oldToFileEntryId, long newToFileEntryId)
 		throws PortalException {
+
+		ModelResourcePermission<FileShortcut>
+			fileShortcutModelResourcePermission =
+				ModelResourcePermissionRegistryUtil.getModelResourcePermission(
+					FileShortcut.class.getName());
+
+		for (DLFileShortcut fileShortcut :
+				dlFileShortcutPersistence.findByToFileEntryId(
+					oldToFileEntryId)) {
+
+			fileShortcutModelResourcePermission.check(
+				getPermissionChecker(), fileShortcut.getFileShortcutId(),
+				ActionKeys.UPDATE);
+		}
 
 		try {
 			ModelResourcePermission<FileEntry>

@@ -93,6 +93,10 @@ public abstract class SecretsUtil {
 	}
 
 	public static String getSecret(String key) {
+		if (key == null) {
+			return key;
+		}
+
 		Matcher matcher = _secretReferencePattern.matcher(key);
 
 		if (matcher.matches()) {
@@ -186,7 +190,18 @@ public abstract class SecretsUtil {
 			throw new RuntimeException("Unable to find vault " + vaultName);
 		}
 
-		return vault.getItem(matcher.group("itemTitle"));
+		String itemTitle = matcher.group("itemTitle");
+
+		Item item = vault.getItem(itemTitle);
+
+		if (item == null) {
+			throw new RuntimeException(
+				JenkinsResultsParserUtil.combine(
+					"Unable to find item ", itemTitle, " in vault ",
+					vaultName));
+		}
+
+		return item;
 	}
 
 	protected static class Item {
@@ -596,6 +611,11 @@ public abstract class SecretsUtil {
 		if (!JenkinsResultsParserUtil.isNullOrEmpty(accessToken)) {
 			JenkinsResultsParserUtil.addRedactToken(accessToken);
 		}
+		else {
+			System.out.println(
+				"Unable to get the op connect access token from the property " +
+					"\"one.password.access.token.key\"");
+		}
 
 		_accessToken = accessToken;
 
@@ -629,6 +649,10 @@ public abstract class SecretsUtil {
 
 			return _connectURL;
 		}
+
+		System.out.println(
+			"Unable to get the op connect URL from the property " +
+				"\"one.password.connect.url.key\"");
 
 		try {
 			connectURL = JenkinsResultsParserUtil.getBuildProperty(
@@ -724,13 +748,7 @@ public abstract class SecretsUtil {
 		try {
 			for (Vault vault : Vault.getInstances()) {
 				for (Item item : vault.getItems()) {
-					for (ItemField itemField : item.getItemFields()) {
-						_loadItemField(item, itemField, vault);
-					}
-
-					for (ItemFile itemFile : item.getItemFiles()) {
-						_loadItemFile(item, itemFile, vault);
-					}
+					_loadItem(item, vault);
 				}
 			}
 
@@ -745,6 +763,28 @@ public abstract class SecretsUtil {
 			exception.printStackTrace();
 
 			_connectSecrets.clear();
+
+			Vault.clear();
+		}
+	}
+
+	private static void _loadItem(Item item, Vault vault) {
+		List<Item> sourceItems = new ArrayList<>();
+
+		Item sourceItem = item;
+
+		while ((sourceItem != null) && !sourceItems.contains(sourceItem)) {
+			for (ItemField itemField : sourceItem.getItemFields()) {
+				_loadItemField(item, itemField, vault);
+			}
+
+			for (ItemFile itemFile : sourceItem.getItemFiles()) {
+				_loadItemFile(item, itemFile, vault);
+			}
+
+			sourceItems.add(sourceItem);
+
+			sourceItem = sourceItem._linkedItem;
 		}
 	}
 
@@ -763,10 +803,10 @@ public abstract class SecretsUtil {
 		String vaultName = vault.getName();
 
 		if (!JenkinsResultsParserUtil.isNullOrEmpty(itemFieldId)) {
-			_connectSecrets.put(
+			_connectSecrets.putIfAbsent(
 				_getSecretReference(itemFieldId, itemId, vaultName),
 				itemFieldValue);
-			_connectSecrets.put(
+			_connectSecrets.putIfAbsent(
 				_getSecretReference(itemFieldId, itemTitle, vaultName),
 				itemFieldValue);
 		}
@@ -774,10 +814,10 @@ public abstract class SecretsUtil {
 		String itemFieldLabel = itemField.getLabel();
 
 		if (!JenkinsResultsParserUtil.isNullOrEmpty(itemFieldLabel)) {
-			_connectSecrets.put(
+			_connectSecrets.putIfAbsent(
 				_getSecretReference(itemFieldLabel, itemId, vaultName),
 				itemFieldValue);
-			_connectSecrets.put(
+			_connectSecrets.putIfAbsent(
 				_getSecretReference(itemFieldLabel, itemTitle, vaultName),
 				itemFieldValue);
 		}
@@ -797,10 +837,10 @@ public abstract class SecretsUtil {
 		String itemTitle = item.getTitle();
 		String vaultName = vault.getName();
 
-		_connectSecrets.put(
+		_connectSecrets.putIfAbsent(
 			_getSecretReference(itemFileName, itemId, vaultName),
 			itemFieldValue);
-		_connectSecrets.put(
+		_connectSecrets.putIfAbsent(
 			_getSecretReference(itemFileName, itemTitle, vaultName),
 			itemFieldValue);
 	}
@@ -825,11 +865,7 @@ public abstract class SecretsUtil {
 				_getConnectURL() + path, null, _getHTTPAuthorization());
 		}
 		catch (IOException ioException) {
-			System.out.println(ioException.getMessage());
-
-			ioException.printStackTrace();
-
-			return new JSONArray();
+			throw new RuntimeException("Unable to read " + path, ioException);
 		}
 	}
 
@@ -843,11 +879,7 @@ public abstract class SecretsUtil {
 				_getConnectURL() + path, null, _getHTTPAuthorization());
 		}
 		catch (IOException ioException) {
-			System.out.println(ioException.getMessage());
-
-			ioException.printStackTrace();
-
-			return null;
+			throw new RuntimeException("Unable to read " + path, ioException);
 		}
 	}
 
@@ -880,11 +912,7 @@ public abstract class SecretsUtil {
 				_getConnectURL() + path, null, _getHTTPAuthorization());
 		}
 		catch (IOException ioException) {
-			System.out.println(ioException.getMessage());
-
-			ioException.printStackTrace();
-
-			return "";
+			throw new RuntimeException("Unable to read " + path, ioException);
 		}
 	}
 
@@ -909,6 +937,12 @@ public abstract class SecretsUtil {
 
 	private static class Vault {
 
+		public static void clear() {
+			synchronized (_vaultsMap) {
+				_vaultsMap.clear();
+			}
+		}
+
 		public static Vault getInstance(String name) {
 			Map<String, Vault> vaultsMap = _getVaultsMap();
 
@@ -921,9 +955,11 @@ public abstract class SecretsUtil {
 			List<Vault> vaults = new ArrayList<>();
 
 			for (Vault vault : vaultsMap.values()) {
-				if (!vaults.contains(vault)) {
-					vaults.add(vault);
+				if (vaults.contains(vault)) {
+					continue;
 				}
+
+				vaults.add(vault);
 			}
 
 			return vaults;

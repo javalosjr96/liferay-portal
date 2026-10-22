@@ -576,88 +576,6 @@ public class WikiPagePersistenceImpl
 	}
 
 	private CollectionPersistenceFinder<WikiPage, NoSuchPageException>
-		_collectionPersistenceFinderByFormat;
-
-	/**
-	 * Returns an ordered range of all the wiki pages where format = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>WikiPageModelImpl</code>.
-	 * </p>
-	 *
-	 * @param format the format
-	 * @param start the lower bound of the range of wiki pages
-	 * @param end the upper bound of the range of wiki pages (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching wiki pages
-	 */
-	@Override
-	public List<WikiPage> findByFormat(
-		String format, int start, int end,
-		OrderByComparator<WikiPage> orderByComparator, boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByFormat.find(
-			finderCache, new Object[] {format}, start, end, orderByComparator,
-			useFinderCache);
-	}
-
-	/**
-	 * Returns the first wiki page in the ordered set where format = &#63;.
-	 *
-	 * @param format the format
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching wiki page
-	 * @throws NoSuchPageException if a matching wiki page could not be found
-	 */
-	@Override
-	public WikiPage findByFormat_First(
-			String format, OrderByComparator<WikiPage> orderByComparator)
-		throws NoSuchPageException {
-
-		return _collectionPersistenceFinderByFormat.findFirst(
-			finderCache, new Object[] {format}, orderByComparator);
-	}
-
-	/**
-	 * Returns the first wiki page in the ordered set where format = &#63;.
-	 *
-	 * @param format the format
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching wiki page, or <code>null</code> if a matching wiki page could not be found
-	 */
-	@Override
-	public WikiPage fetchByFormat_First(
-		String format, OrderByComparator<WikiPage> orderByComparator) {
-
-		return _collectionPersistenceFinderByFormat.fetchFirst(
-			finderCache, new Object[] {format}, orderByComparator);
-	}
-
-	/**
-	 * Removes all the wiki pages where format = &#63; from the database.
-	 *
-	 * @param format the format
-	 */
-	@Override
-	public void removeByFormat(String format) {
-		_collectionPersistenceFinderByFormat.remove(
-			finderCache, new Object[] {format});
-	}
-
-	/**
-	 * Returns the number of wiki pages where format = &#63;.
-	 *
-	 * @param format the format
-	 * @return the number of matching wiki pages
-	 */
-	@Override
-	public int countByFormat(String format) {
-		return _collectionPersistenceFinderByFormat.count(
-			finderCache, new Object[] {format});
-	}
-
-	private CollectionPersistenceFinder<WikiPage, NoSuchPageException>
 		_collectionPersistenceFinderByR_N;
 
 	/**
@@ -1326,95 +1244,6 @@ public class WikiPagePersistenceImpl
 			finderCache, new Object[] {nodeId, redirectTitle});
 	}
 
-	private CollectionPersistenceFinder<WikiPage, NoSuchPageException>
-		_collectionPersistenceFinderByN_S;
-
-	/**
-	 * Returns an ordered range of all the wiki pages where nodeId = &#63; and status = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>WikiPageModelImpl</code>.
-	 * </p>
-	 *
-	 * @param nodeId the node ID
-	 * @param status the status
-	 * @param start the lower bound of the range of wiki pages
-	 * @param end the upper bound of the range of wiki pages (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching wiki pages
-	 */
-	@Override
-	public List<WikiPage> findByN_S(
-		long nodeId, int status, int start, int end,
-		OrderByComparator<WikiPage> orderByComparator, boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByN_S.find(
-			finderCache, new Object[] {nodeId, status}, start, end,
-			orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first wiki page in the ordered set where nodeId = &#63; and status = &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching wiki page
-	 * @throws NoSuchPageException if a matching wiki page could not be found
-	 */
-	@Override
-	public WikiPage findByN_S_First(
-			long nodeId, int status,
-			OrderByComparator<WikiPage> orderByComparator)
-		throws NoSuchPageException {
-
-		return _collectionPersistenceFinderByN_S.findFirst(
-			finderCache, new Object[] {nodeId, status}, orderByComparator);
-	}
-
-	/**
-	 * Returns the first wiki page in the ordered set where nodeId = &#63; and status = &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching wiki page, or <code>null</code> if a matching wiki page could not be found
-	 */
-	@Override
-	public WikiPage fetchByN_S_First(
-		long nodeId, int status,
-		OrderByComparator<WikiPage> orderByComparator) {
-
-		return _collectionPersistenceFinderByN_S.fetchFirst(
-			finderCache, new Object[] {nodeId, status}, orderByComparator);
-	}
-
-	/**
-	 * Removes all the wiki pages where nodeId = &#63; and status = &#63; from the database.
-	 *
-	 * @param nodeId the node ID
-	 * @param status the status
-	 */
-	@Override
-	public void removeByN_S(long nodeId, int status) {
-		_collectionPersistenceFinderByN_S.remove(
-			finderCache, new Object[] {nodeId, status});
-	}
-
-	/**
-	 * Returns the number of wiki pages where nodeId = &#63; and status = &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param status the status
-	 * @return the number of matching wiki pages
-	 */
-	@Override
-	public int countByN_S(long nodeId, int status) {
-		return _collectionPersistenceFinderByN_S.count(
-			finderCache, new Object[] {nodeId, status});
-	}
-
 	private UniquePersistenceFinder<WikiPage, NoSuchPageException>
 		_uniquePersistenceFinderByR_N_V;
 
@@ -2024,102 +1853,6 @@ public class WikiPagePersistenceImpl
 	public int filterCountByG_N_S(long groupId, long nodeId, int status) {
 		return _collectionPersistenceFinderByG_N_S.filterCount(
 			finderCache, new Object[] {groupId, nodeId, status}, groupId);
-	}
-
-	private CollectionPersistenceFinder<WikiPage, NoSuchPageException>
-		_collectionPersistenceFinderByU_N_S;
-
-	/**
-	 * Returns an ordered range of all the wiki pages where userId = &#63; and nodeId = &#63; and status = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>WikiPageModelImpl</code>.
-	 * </p>
-	 *
-	 * @param userId the user ID
-	 * @param nodeId the node ID
-	 * @param status the status
-	 * @param start the lower bound of the range of wiki pages
-	 * @param end the upper bound of the range of wiki pages (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching wiki pages
-	 */
-	@Override
-	public List<WikiPage> findByU_N_S(
-		long userId, long nodeId, int status, int start, int end,
-		OrderByComparator<WikiPage> orderByComparator, boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByU_N_S.find(
-			finderCache, new Object[] {userId, nodeId, status}, start, end,
-			orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first wiki page in the ordered set where userId = &#63; and nodeId = &#63; and status = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param nodeId the node ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching wiki page
-	 * @throws NoSuchPageException if a matching wiki page could not be found
-	 */
-	@Override
-	public WikiPage findByU_N_S_First(
-			long userId, long nodeId, int status,
-			OrderByComparator<WikiPage> orderByComparator)
-		throws NoSuchPageException {
-
-		return _collectionPersistenceFinderByU_N_S.findFirst(
-			finderCache, new Object[] {userId, nodeId, status},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the first wiki page in the ordered set where userId = &#63; and nodeId = &#63; and status = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param nodeId the node ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching wiki page, or <code>null</code> if a matching wiki page could not be found
-	 */
-	@Override
-	public WikiPage fetchByU_N_S_First(
-		long userId, long nodeId, int status,
-		OrderByComparator<WikiPage> orderByComparator) {
-
-		return _collectionPersistenceFinderByU_N_S.fetchFirst(
-			finderCache, new Object[] {userId, nodeId, status},
-			orderByComparator);
-	}
-
-	/**
-	 * Removes all the wiki pages where userId = &#63; and nodeId = &#63; and status = &#63; from the database.
-	 *
-	 * @param userId the user ID
-	 * @param nodeId the node ID
-	 * @param status the status
-	 */
-	@Override
-	public void removeByU_N_S(long userId, long nodeId, int status) {
-		_collectionPersistenceFinderByU_N_S.remove(
-			finderCache, new Object[] {userId, nodeId, status});
-	}
-
-	/**
-	 * Returns the number of wiki pages where userId = &#63; and nodeId = &#63; and status = &#63;.
-	 *
-	 * @param userId the user ID
-	 * @param nodeId the node ID
-	 * @param status the status
-	 * @return the number of matching wiki pages
-	 */
-	@Override
-	public int countByU_N_S(long userId, long nodeId, int status) {
-		return _collectionPersistenceFinderByU_N_S.count(
-			finderCache, new Object[] {userId, nodeId, status});
 	}
 
 	private UniquePersistenceFinder<WikiPage, NoSuchPageException>
@@ -3378,180 +3111,6 @@ public class WikiPagePersistenceImpl
 	}
 
 	private CollectionPersistenceFinder<WikiPage, NoSuchPageException>
-		_collectionPersistenceFinderByN_H_P_NotS;
-
-	/**
-	 * Returns all the wiki pages where nodeId = &#63; and head = &#63; and parentTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param parentTitle the parent title
-	 * @param status the status
-	 * @return the matching wiki pages
-	 */
-	@Override
-	public List<WikiPage> findByN_H_P_NotS(
-		long nodeId, boolean head, String parentTitle, int status) {
-
-		return findByN_H_P_NotS(
-			nodeId, head, parentTitle, status, QueryUtil.ALL_POS,
-			QueryUtil.ALL_POS, null);
-	}
-
-	/**
-	 * Returns a range of all the wiki pages where nodeId = &#63; and head = &#63; and parentTitle = &#63; and status &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>WikiPageModelImpl</code>.
-	 * </p>
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param parentTitle the parent title
-	 * @param status the status
-	 * @param start the lower bound of the range of wiki pages
-	 * @param end the upper bound of the range of wiki pages (not inclusive)
-	 * @return the range of matching wiki pages
-	 */
-	@Override
-	public List<WikiPage> findByN_H_P_NotS(
-		long nodeId, boolean head, String parentTitle, int status, int start,
-		int end) {
-
-		return findByN_H_P_NotS(
-			nodeId, head, parentTitle, status, start, end, null);
-	}
-
-	/**
-	 * Returns an ordered range of all the wiki pages where nodeId = &#63; and head = &#63; and parentTitle = &#63; and status &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>WikiPageModelImpl</code>.
-	 * </p>
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param parentTitle the parent title
-	 * @param status the status
-	 * @param start the lower bound of the range of wiki pages
-	 * @param end the upper bound of the range of wiki pages (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching wiki pages
-	 */
-	@Override
-	public List<WikiPage> findByN_H_P_NotS(
-		long nodeId, boolean head, String parentTitle, int status, int start,
-		int end, OrderByComparator<WikiPage> orderByComparator) {
-
-		return findByN_H_P_NotS(
-			nodeId, head, parentTitle, status, start, end, orderByComparator,
-			true);
-	}
-
-	/**
-	 * Returns an ordered range of all the wiki pages where nodeId = &#63; and head = &#63; and parentTitle = &#63; and status &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>WikiPageModelImpl</code>.
-	 * </p>
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param parentTitle the parent title
-	 * @param status the status
-	 * @param start the lower bound of the range of wiki pages
-	 * @param end the upper bound of the range of wiki pages (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching wiki pages
-	 */
-	@Override
-	public List<WikiPage> findByN_H_P_NotS(
-		long nodeId, boolean head, String parentTitle, int status, int start,
-		int end, OrderByComparator<WikiPage> orderByComparator,
-		boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByN_H_P_NotS.find(
-			finderCache, new Object[] {nodeId, head, parentTitle, status},
-			start, end, orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first wiki page in the ordered set where nodeId = &#63; and head = &#63; and parentTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param parentTitle the parent title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching wiki page
-	 * @throws NoSuchPageException if a matching wiki page could not be found
-	 */
-	@Override
-	public WikiPage findByN_H_P_NotS_First(
-			long nodeId, boolean head, String parentTitle, int status,
-			OrderByComparator<WikiPage> orderByComparator)
-		throws NoSuchPageException {
-
-		return _collectionPersistenceFinderByN_H_P_NotS.findFirst(
-			finderCache, new Object[] {nodeId, head, parentTitle, status},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the first wiki page in the ordered set where nodeId = &#63; and head = &#63; and parentTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param parentTitle the parent title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching wiki page, or <code>null</code> if a matching wiki page could not be found
-	 */
-	@Override
-	public WikiPage fetchByN_H_P_NotS_First(
-		long nodeId, boolean head, String parentTitle, int status,
-		OrderByComparator<WikiPage> orderByComparator) {
-
-		return _collectionPersistenceFinderByN_H_P_NotS.fetchFirst(
-			finderCache, new Object[] {nodeId, head, parentTitle, status},
-			orderByComparator);
-	}
-
-	/**
-	 * Removes all the wiki pages where nodeId = &#63; and head = &#63; and parentTitle = &#63; and status &ne; &#63; from the database.
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param parentTitle the parent title
-	 * @param status the status
-	 */
-	@Override
-	public void removeByN_H_P_NotS(
-		long nodeId, boolean head, String parentTitle, int status) {
-
-		_collectionPersistenceFinderByN_H_P_NotS.remove(
-			finderCache, new Object[] {nodeId, head, parentTitle, status});
-	}
-
-	/**
-	 * Returns the number of wiki pages where nodeId = &#63; and head = &#63; and parentTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param parentTitle the parent title
-	 * @param status the status
-	 * @return the number of matching wiki pages
-	 */
-	@Override
-	public int countByN_H_P_NotS(
-		long nodeId, boolean head, String parentTitle, int status) {
-
-		return _collectionPersistenceFinderByN_H_P_NotS.count(
-			finderCache, new Object[] {nodeId, head, parentTitle, status});
-	}
-
-	private CollectionPersistenceFinder<WikiPage, NoSuchPageException>
 		_collectionPersistenceFinderByN_H_R_S;
 
 	/**
@@ -3654,180 +3213,6 @@ public class WikiPagePersistenceImpl
 		long nodeId, boolean head, String redirectTitle, int status) {
 
 		return _collectionPersistenceFinderByN_H_R_S.count(
-			finderCache, new Object[] {nodeId, head, redirectTitle, status});
-	}
-
-	private CollectionPersistenceFinder<WikiPage, NoSuchPageException>
-		_collectionPersistenceFinderByN_H_R_NotS;
-
-	/**
-	 * Returns all the wiki pages where nodeId = &#63; and head = &#63; and redirectTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param redirectTitle the redirect title
-	 * @param status the status
-	 * @return the matching wiki pages
-	 */
-	@Override
-	public List<WikiPage> findByN_H_R_NotS(
-		long nodeId, boolean head, String redirectTitle, int status) {
-
-		return findByN_H_R_NotS(
-			nodeId, head, redirectTitle, status, QueryUtil.ALL_POS,
-			QueryUtil.ALL_POS, null);
-	}
-
-	/**
-	 * Returns a range of all the wiki pages where nodeId = &#63; and head = &#63; and redirectTitle = &#63; and status &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>WikiPageModelImpl</code>.
-	 * </p>
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param redirectTitle the redirect title
-	 * @param status the status
-	 * @param start the lower bound of the range of wiki pages
-	 * @param end the upper bound of the range of wiki pages (not inclusive)
-	 * @return the range of matching wiki pages
-	 */
-	@Override
-	public List<WikiPage> findByN_H_R_NotS(
-		long nodeId, boolean head, String redirectTitle, int status, int start,
-		int end) {
-
-		return findByN_H_R_NotS(
-			nodeId, head, redirectTitle, status, start, end, null);
-	}
-
-	/**
-	 * Returns an ordered range of all the wiki pages where nodeId = &#63; and head = &#63; and redirectTitle = &#63; and status &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>WikiPageModelImpl</code>.
-	 * </p>
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param redirectTitle the redirect title
-	 * @param status the status
-	 * @param start the lower bound of the range of wiki pages
-	 * @param end the upper bound of the range of wiki pages (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching wiki pages
-	 */
-	@Override
-	public List<WikiPage> findByN_H_R_NotS(
-		long nodeId, boolean head, String redirectTitle, int status, int start,
-		int end, OrderByComparator<WikiPage> orderByComparator) {
-
-		return findByN_H_R_NotS(
-			nodeId, head, redirectTitle, status, start, end, orderByComparator,
-			true);
-	}
-
-	/**
-	 * Returns an ordered range of all the wiki pages where nodeId = &#63; and head = &#63; and redirectTitle = &#63; and status &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>WikiPageModelImpl</code>.
-	 * </p>
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param redirectTitle the redirect title
-	 * @param status the status
-	 * @param start the lower bound of the range of wiki pages
-	 * @param end the upper bound of the range of wiki pages (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching wiki pages
-	 */
-	@Override
-	public List<WikiPage> findByN_H_R_NotS(
-		long nodeId, boolean head, String redirectTitle, int status, int start,
-		int end, OrderByComparator<WikiPage> orderByComparator,
-		boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByN_H_R_NotS.find(
-			finderCache, new Object[] {nodeId, head, redirectTitle, status},
-			start, end, orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first wiki page in the ordered set where nodeId = &#63; and head = &#63; and redirectTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param redirectTitle the redirect title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching wiki page
-	 * @throws NoSuchPageException if a matching wiki page could not be found
-	 */
-	@Override
-	public WikiPage findByN_H_R_NotS_First(
-			long nodeId, boolean head, String redirectTitle, int status,
-			OrderByComparator<WikiPage> orderByComparator)
-		throws NoSuchPageException {
-
-		return _collectionPersistenceFinderByN_H_R_NotS.findFirst(
-			finderCache, new Object[] {nodeId, head, redirectTitle, status},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the first wiki page in the ordered set where nodeId = &#63; and head = &#63; and redirectTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param redirectTitle the redirect title
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching wiki page, or <code>null</code> if a matching wiki page could not be found
-	 */
-	@Override
-	public WikiPage fetchByN_H_R_NotS_First(
-		long nodeId, boolean head, String redirectTitle, int status,
-		OrderByComparator<WikiPage> orderByComparator) {
-
-		return _collectionPersistenceFinderByN_H_R_NotS.fetchFirst(
-			finderCache, new Object[] {nodeId, head, redirectTitle, status},
-			orderByComparator);
-	}
-
-	/**
-	 * Removes all the wiki pages where nodeId = &#63; and head = &#63; and redirectTitle = &#63; and status &ne; &#63; from the database.
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param redirectTitle the redirect title
-	 * @param status the status
-	 */
-	@Override
-	public void removeByN_H_R_NotS(
-		long nodeId, boolean head, String redirectTitle, int status) {
-
-		_collectionPersistenceFinderByN_H_R_NotS.remove(
-			finderCache, new Object[] {nodeId, head, redirectTitle, status});
-	}
-
-	/**
-	 * Returns the number of wiki pages where nodeId = &#63; and head = &#63; and redirectTitle = &#63; and status &ne; &#63;.
-	 *
-	 * @param nodeId the node ID
-	 * @param head the head
-	 * @param redirectTitle the redirect title
-	 * @param status the status
-	 * @return the number of matching wiki pages
-	 */
-	@Override
-	public int countByN_H_R_NotS(
-		long nodeId, boolean head, String redirectTitle, int status) {
-
-		return _collectionPersistenceFinderByN_H_R_NotS.count(
 			finderCache, new Object[] {nodeId, head, redirectTitle, status});
 	}
 
@@ -4109,6 +3494,8 @@ public class WikiPagePersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					wikiPage.getUuid(), wikiPage.getExternalReferenceCode()) &&
+				!Objects.equals(
 					wikiPageModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					wikiPage.getExternalReferenceCode())) {
@@ -4517,32 +3904,6 @@ public class WikiPagePersistenceImpl
 					"wikiPage.", "nodeId", FinderColumn.Type.LONG, "=", true,
 					true, WikiPage::getNodeId));
 
-		_collectionPersistenceFinderByFormat =
-			new CollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByFormat",
-					new String[] {
-						String.class.getName(), Integer.class.getName(),
-						Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"format"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByFormat",
-					new String[] {String.class.getName()},
-					new String[] {"format"}, 0, 1, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByFormat",
-					new String[] {String.class.getName()},
-					new String[] {"format"}, 0, 1, false, null),
-				_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-				WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
-				new FinderColumn<>(
-					"wikiPage.", "format", FinderColumn.Type.STRING, "=", true,
-					true, WikiPage::getFormat));
-
 		_collectionPersistenceFinderByR_N = new CollectionPersistenceFinder<>(
 			this,
 			new FinderPath(
@@ -4599,7 +3960,13 @@ public class WikiPagePersistenceImpl
 
 		_collectionPersistenceFinderByG_ERC =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, WikiPage::getResourcePrimKey,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_ERC",
+					new String[] {Long.class.getName(), String.class.getName()},
+					new String[] {"groupId", "externalReferenceCode"}, 0, 2,
+					false, null),
+				"", WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_ERC",
 					new String[] {
@@ -4608,19 +3975,13 @@ public class WikiPagePersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "externalReferenceCode"}, true),
+				_SQL_COUNT_WIKIPAGE_WHERE, _SQL_SELECT_WIKIPAGE_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_ERC",
 					new String[] {Long.class.getName(), String.class.getName()},
 					new String[] {"groupId", "externalReferenceCode"}, 0, 2,
 					true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_ERC",
-					new String[] {Long.class.getName(), String.class.getName()},
-					new String[] {"groupId", "externalReferenceCode"}, 0, 2,
-					false, null),
-				_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-				WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"wikiPage.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, WikiPage::getGroupId),
@@ -4736,33 +4097,6 @@ public class WikiPagePersistenceImpl
 			new FinderColumn<>(
 				"wikiPage.", "redirectTitle", FinderColumn.Type.STRING, "=",
 				false, true, WikiPage::getRedirectTitle));
-
-		_collectionPersistenceFinderByN_S = new CollectionPersistenceFinder<>(
-			this,
-			new FinderPath(
-				FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByN_S",
-				new String[] {
-					Long.class.getName(), Integer.class.getName(),
-					Integer.class.getName(), Integer.class.getName(),
-					OrderByComparator.class.getName()
-				},
-				new String[] {"nodeId", "status"}, true),
-			new FinderPath(
-				FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByN_S",
-				new String[] {Long.class.getName(), Integer.class.getName()},
-				new String[] {"nodeId", "status"}, true),
-			new FinderPath(
-				FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByN_S",
-				new String[] {Long.class.getName(), Integer.class.getName()},
-				new String[] {"nodeId", "status"}, false),
-			_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-			WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "", null,
-			new FinderColumn<>(
-				"wikiPage.", "nodeId", FinderColumn.Type.LONG, "=", true, true,
-				WikiPage::getNodeId),
-			new FinderColumn<>(
-				"wikiPage.", "status", FinderColumn.Type.INTEGER, "=", true,
-				true, WikiPage::getStatus));
 
 		_uniquePersistenceFinderByR_N_V = new UniquePersistenceFinder<>(
 			this,
@@ -4883,7 +4217,15 @@ public class WikiPagePersistenceImpl
 
 		_collectionPersistenceFinderByG_N_H =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, WikiPage::getResourcePrimKey,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_N_H",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Boolean.class.getName()
+					},
+					new String[] {"groupId", "nodeId", "head"}, false),
+				"", WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_N_H",
 					new String[] {
@@ -4893,6 +4235,7 @@ public class WikiPagePersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "nodeId", "head"}, true),
+				_SQL_COUNT_WIKIPAGE_WHERE, _SQL_SELECT_WIKIPAGE_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_N_H",
 					new String[] {
@@ -4900,16 +4243,7 @@ public class WikiPagePersistenceImpl
 						Boolean.class.getName()
 					},
 					new String[] {"groupId", "nodeId", "head"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_N_H",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Boolean.class.getName()
-					},
-					new String[] {"groupId", "nodeId", "head"}, false),
-				_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-				WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"wikiPage.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, WikiPage::getGroupId),
@@ -4922,7 +4256,15 @@ public class WikiPagePersistenceImpl
 
 		_collectionPersistenceFinderByG_N_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, WikiPage::getResourcePrimKey,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_N_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "nodeId", "status"}, false),
+				"", WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_N_S",
 					new String[] {
@@ -4932,6 +4274,7 @@ public class WikiPagePersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "nodeId", "status"}, true),
+				_SQL_COUNT_WIKIPAGE_WHERE, _SQL_SELECT_WIKIPAGE_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_N_S",
 					new String[] {
@@ -4939,16 +4282,7 @@ public class WikiPagePersistenceImpl
 						Integer.class.getName()
 					},
 					new String[] {"groupId", "nodeId", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_N_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "nodeId", "status"}, false),
-				_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-				WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"wikiPage.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, WikiPage::getGroupId),
@@ -4958,42 +4292,6 @@ public class WikiPagePersistenceImpl
 				new FinderColumn<>(
 					"wikiPage.", "status", FinderColumn.Type.INTEGER, "=", true,
 					true, WikiPage::getStatus));
-
-		_collectionPersistenceFinderByU_N_S = new CollectionPersistenceFinder<>(
-			this,
-			new FinderPath(
-				FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_N_S",
-				new String[] {
-					Long.class.getName(), Long.class.getName(),
-					Integer.class.getName(), Integer.class.getName(),
-					Integer.class.getName(), OrderByComparator.class.getName()
-				},
-				new String[] {"userId", "nodeId", "status"}, true),
-			new FinderPath(
-				FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_N_S",
-				new String[] {
-					Long.class.getName(), Long.class.getName(),
-					Integer.class.getName()
-				},
-				new String[] {"userId", "nodeId", "status"}, true),
-			new FinderPath(
-				FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_N_S",
-				new String[] {
-					Long.class.getName(), Long.class.getName(),
-					Integer.class.getName()
-				},
-				new String[] {"userId", "nodeId", "status"}, false),
-			_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-			WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "", null,
-			new FinderColumn<>(
-				"wikiPage.", "userId", FinderColumn.Type.LONG, "=", true, true,
-				WikiPage::getUserId),
-			new FinderColumn<>(
-				"wikiPage.", "nodeId", FinderColumn.Type.LONG, "=", true, true,
-				WikiPage::getNodeId),
-			new FinderColumn<>(
-				"wikiPage.", "status", FinderColumn.Type.INTEGER, "=", true,
-				true, WikiPage::getStatus));
 
 		_uniquePersistenceFinderByN_T_V = new UniquePersistenceFinder<>(
 			this,
@@ -5236,7 +4534,16 @@ public class WikiPagePersistenceImpl
 
 		_collectionPersistenceFinderByG_U_N_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, WikiPage::getResourcePrimKey,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_U_N_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Long.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "userId", "nodeId", "status"},
+					false),
+				"", WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_U_N_S",
 					new String[] {
@@ -5247,6 +4554,7 @@ public class WikiPagePersistenceImpl
 					},
 					new String[] {"groupId", "userId", "nodeId", "status"},
 					true),
+				_SQL_COUNT_WIKIPAGE_WHERE, _SQL_SELECT_WIKIPAGE_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_U_N_S",
 					new String[] {
@@ -5255,17 +4563,7 @@ public class WikiPagePersistenceImpl
 					},
 					new String[] {"groupId", "userId", "nodeId", "status"},
 					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_U_N_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "userId", "nodeId", "status"},
-					false),
-				_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-				WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"wikiPage.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, WikiPage::getGroupId),
@@ -5281,7 +4579,16 @@ public class WikiPagePersistenceImpl
 
 		_collectionPersistenceFinderByG_N_T_H =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, WikiPage::getResourcePrimKey,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_N_T_H",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						String.class.getName(), Boolean.class.getName()
+					},
+					new String[] {"groupId", "nodeId", "title", "head"}, 4, 4,
+					false, null),
+				"", WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_N_T_H",
 					new String[] {
@@ -5291,6 +4598,7 @@ public class WikiPagePersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "nodeId", "title", "head"}, true),
+				_SQL_COUNT_WIKIPAGE_WHERE, _SQL_SELECT_WIKIPAGE_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_N_T_H",
 					new String[] {
@@ -5299,17 +4607,7 @@ public class WikiPagePersistenceImpl
 					},
 					new String[] {"groupId", "nodeId", "title", "head"}, 4, 4,
 					true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_N_T_H",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName(), Boolean.class.getName()
-					},
-					new String[] {"groupId", "nodeId", "title", "head"}, 4, 4,
-					false, null),
-				_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-				WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"wikiPage.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, WikiPage::getGroupId),
@@ -5325,7 +4623,16 @@ public class WikiPagePersistenceImpl
 
 		_collectionPersistenceFinderByG_N_H_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, WikiPage::getResourcePrimKey,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_N_H_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Boolean.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "nodeId", "head", "status"},
+					false),
+				"", WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_N_H_S",
 					new String[] {
@@ -5335,6 +4642,7 @@ public class WikiPagePersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "nodeId", "head", "status"}, true),
+				_SQL_COUNT_WIKIPAGE_WHERE, _SQL_SELECT_WIKIPAGE_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_N_H_S",
 					new String[] {
@@ -5342,17 +4650,7 @@ public class WikiPagePersistenceImpl
 						Boolean.class.getName(), Integer.class.getName()
 					},
 					new String[] {"groupId", "nodeId", "head", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_N_H_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Boolean.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "nodeId", "head", "status"},
-					false),
-				_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-				WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"wikiPage.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, WikiPage::getGroupId),
@@ -5411,44 +4709,6 @@ public class WikiPagePersistenceImpl
 					"wikiPage.", "status", FinderColumn.Type.INTEGER, "=", true,
 					true, WikiPage::getStatus));
 
-		_collectionPersistenceFinderByN_H_P_NotS =
-			new CollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByN_H_P_NotS",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						String.class.getName(), Integer.class.getName(),
-						Integer.class.getName(), Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"nodeId", "head", "parentTitle", "status"},
-					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByN_H_P_NotS",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						String.class.getName(), Integer.class.getName()
-					},
-					new String[] {"nodeId", "head", "parentTitle", "status"},
-					false),
-				_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-				WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
-				new FinderColumn<>(
-					"wikiPage.", "nodeId", FinderColumn.Type.LONG, "=", true,
-					true, WikiPage::getNodeId),
-				new FinderColumn<>(
-					"wikiPage.", "head", FinderColumn.Type.BOOLEAN, "=", true,
-					true, WikiPage::isHead),
-				new FinderColumn<>(
-					"wikiPage.", "parentTitle", FinderColumn.Type.STRING, "=",
-					false, true, WikiPage::getParentTitle),
-				new FinderColumn<>(
-					"wikiPage.", "status", FinderColumn.Type.INTEGER, "!=",
-					true, true, WikiPage::getStatus));
-
 		_collectionPersistenceFinderByN_H_R_S =
 			new CollectionPersistenceFinder<>(
 				this,
@@ -5494,47 +4754,22 @@ public class WikiPagePersistenceImpl
 					"wikiPage.", "status", FinderColumn.Type.INTEGER, "=", true,
 					true, WikiPage::getStatus));
 
-		_collectionPersistenceFinderByN_H_R_NotS =
-			new CollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByN_H_R_NotS",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						String.class.getName(), Integer.class.getName(),
-						Integer.class.getName(), Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"nodeId", "head", "redirectTitle", "status"},
-					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByN_H_R_NotS",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						String.class.getName(), Integer.class.getName()
-					},
-					new String[] {"nodeId", "head", "redirectTitle", "status"},
-					false),
-				_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-				WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
-				new FinderColumn<>(
-					"wikiPage.", "nodeId", FinderColumn.Type.LONG, "=", true,
-					true, WikiPage::getNodeId),
-				new FinderColumn<>(
-					"wikiPage.", "head", FinderColumn.Type.BOOLEAN, "=", true,
-					true, WikiPage::isHead),
-				new FinderColumn<>(
-					"wikiPage.", "redirectTitle", FinderColumn.Type.STRING, "=",
-					false, true, WikiPage::getRedirectTitle),
-				new FinderColumn<>(
-					"wikiPage.", "status", FinderColumn.Type.INTEGER, "!=",
-					true, true, WikiPage::getStatus));
-
 		_collectionPersistenceFinderByG_N_H_P_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, WikiPage::getResourcePrimKey,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+					"countByG_N_H_P_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Boolean.class.getName(), String.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {
+						"groupId", "nodeId", "head", "parentTitle", "status"
+					},
+					8, 8, false, null),
+				"", WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_N_H_P_S",
 					new String[] {
@@ -5548,6 +4783,7 @@ public class WikiPagePersistenceImpl
 						"groupId", "nodeId", "head", "parentTitle", "status"
 					},
 					true),
+				_SQL_COUNT_WIKIPAGE_WHERE, _SQL_SELECT_WIKIPAGE_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
 					"findByG_N_H_P_S",
@@ -5560,21 +4796,7 @@ public class WikiPagePersistenceImpl
 						"groupId", "nodeId", "head", "parentTitle", "status"
 					},
 					8, 8, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByG_N_H_P_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Boolean.class.getName(), String.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "nodeId", "head", "parentTitle", "status"
-					},
-					8, 8, false, null),
-				_SQL_SELECT_WIKIPAGE_WHERE, _SQL_COUNT_WIKIPAGE_WHERE,
-				WikiPageModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"wikiPage.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, WikiPage::getGroupId),
@@ -5657,4 +4879,4 @@ public class WikiPagePersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1242694185
+// LIFERAY-SERVICE-BUILDER-HASH:1757051065

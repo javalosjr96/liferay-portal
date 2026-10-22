@@ -121,10 +121,19 @@ public class LayoutPageTemplatesAdminDisplayContext {
 
 		Group group = _themeDisplay.getScopeGroup();
 
-		if (group.isCompany() ||
-			DesignLibraryUtil.isDesignLibraryScope(group)) {
-
+		if (group.isCompany()) {
 			_tabs1 = "page-templates";
+
+			return _tabs1;
+		}
+
+		if (DesignLibraryUtil.isDesignLibraryScope(group)) {
+			_tabs1 = ParamUtil.getString(
+				_liferayPortletRequest, "tabs1", "page-templates");
+
+			if (!Objects.equals(_tabs1, "display-page-templates")) {
+				_tabs1 = "page-templates";
+			}
 
 			return _tabs1;
 		}

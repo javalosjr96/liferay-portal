@@ -21,6 +21,9 @@ public interface Rels {
 	public static final String ACCOUNT_LIFECYCLE_ACCOUNTS =
 		"account-lifecycle-accounts";
 
+	public static final String ACCOUNT_LIFECYCLE_NEW_ACCOUNTS =
+		"account-lifecycle-new-accounts";
+
 	public static final String ACCOUNT_LIFECYCLE_OVERVIEW =
 		"account-lifecycle-overview";
 
@@ -32,6 +35,9 @@ public interface Rels {
 
 	public static final String ACCOUNT_LIFECYCLE_STAGES =
 		"account-lifecycle-stages";
+
+	public static final String ACCOUNT_LIFECYCLE_STALLED_ACCOUNTS =
+		"account-lifecycle-stalled-accounts";
 
 	public static final String ACCOUNT_LIFECYCLE_STATUS =
 		"account-lifecycle-status";
@@ -150,6 +156,9 @@ public interface Rels {
 
 	public static final String DATA_SOURCE_METRICS_ACCOUNTS_COUNT =
 		"data-source-metrics-accounts-count";
+
+	public static final String DATA_SOURCE_METRICS_CAMPAIGNS_COUNT =
+		"data-source-metrics-campaigns-count";
 
 	public static final String DATA_SOURCE_METRICS_EVENTS_COUNT =
 		"data-source-metrics-events-count";
@@ -292,6 +301,9 @@ public interface Rels {
 
 	public static final String REPORTS_EXPORT_CSV_COUNT =
 		"reports-export-csv-count";
+
+	public static final String SEGMENT_NEW_MEMBERS_COUNT =
+		"segment-new-members-count";
 
 	public static final String SESSION_ACQUISITION_PROPERTIES =
 		"session-acquisition-properties";

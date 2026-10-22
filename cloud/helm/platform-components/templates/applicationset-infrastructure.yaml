@@ -47,8 +47,6 @@ spec:
                                 value: {{ printf "%s-%s-gateway" $layout.projectId $layout.environmentId | quote }}
                             -   name: projectId
                                 value: {{ $layout.projectId | quote }}
-                            -   name: region
-                                value: {{ .Values.deploymentContext.region | quote }}
                             {{- with .Values.infrastructure.parameters }}
                             {{- toYaml . | nindent 28 }}
                             {{- end }}

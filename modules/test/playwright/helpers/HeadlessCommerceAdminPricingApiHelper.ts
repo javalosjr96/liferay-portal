@@ -169,6 +169,12 @@ export class HeadlessCommerceAdminPricingApiHelper {
 		);
 	}
 
+	async getPriceListChannels(priceListId: number) {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/price-lists/${priceListId}/price-list-channels`
+		);
+	}
+
 	async getPriceListEntries(
 		priceListId: number,
 		{pageSize = 200}: {pageSize?: number} = {}
@@ -184,6 +190,12 @@ export class HeadlessCommerceAdminPricingApiHelper {
 	) {
 		return this.apiHelpers.get(
 			`${this.apiHelpers.baseUrl}${this.basePath}/price-lists/${priceListId}/price-modifiers?pageSize=${pageSize}`
+		);
+	}
+
+	async getPriceListOrderTypes(priceListId: number) {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/price-lists/${priceListId}/price-list-order-types`
 		);
 	}
 
@@ -262,7 +274,11 @@ export class HeadlessCommerceAdminPricingApiHelper {
 
 	async postBasePriceEntries(
 		catalogId: number,
-		priceEntries: Array<{price: number; skuId: number}>
+		priceEntries: Array<{
+			price: number;
+			priceOnApplication?: boolean;
+			skuId: number;
+		}>
 	) {
 		const basePriceLists = await this.getBasePriceListId(catalogId);
 

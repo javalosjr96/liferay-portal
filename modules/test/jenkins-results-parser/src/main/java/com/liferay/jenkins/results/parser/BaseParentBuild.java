@@ -9,6 +9,8 @@ import com.google.common.collect.Lists;
 
 import java.io.IOException;
 
+import java.net.URL;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -17,6 +19,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -73,54 +80,55 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 
 			url = JenkinsResultsParserUtil.getLocalURL(url);
 
-			if (!hasBuildURL(url)) {
-				final String axisName = urlEntry.getValue();
-
-				final String buildURL = url;
-
-				Matcher matcher = _buildURLPattern.matcher(buildURL);
-
-				String hostname = null;
-
-				if (matcher.matches()) {
-					hostname = matcher.group("hostname");
-				}
-
-				ParallelExecutor.SequentialCallable<Build> callable =
-					new ParallelExecutor.SequentialCallable<Build>(hostname) {
-
-						@Override
-						public Build call() {
-							try {
-								return BuildFactory.newBuild(
-									buildURL, axisName, thisBuild);
-							}
-							catch (RuntimeException runtimeException) {
-								if (!isFromArchive()) {
-									String shortStackTrace =
-										JenkinsResultsParserUtil.getStackTrace(
-											runtimeException, 10);
-
-									System.out.println(
-										"WARNING: Build object failure:\n" +
-											shortStackTrace);
-
-									NotificationUtil.sendSlackNotification(
-										JenkinsResultsParserUtil.combine(
-											shortStackTrace, "\nBuild URL: ",
-											thisBuild.getBuildURL()),
-										"ci-notifications",
-										"Build object failure");
-								}
-
-								return null;
-							}
-						}
-
-					};
-
-				callables.add(callable);
+			if (hasBuildURL(url)) {
+				continue;
 			}
+
+			final String axisName = urlEntry.getValue();
+
+			final String buildURL = url;
+
+			Matcher matcher = _buildURLPattern.matcher(buildURL);
+
+			String hostname = null;
+
+			if (matcher.matches()) {
+				hostname = matcher.group("hostname");
+			}
+
+			ParallelExecutor.SequentialCallable<Build> callable =
+				new ParallelExecutor.SequentialCallable<Build>(hostname) {
+
+					@Override
+					public Build call() {
+						try {
+							return BuildFactory.newBuild(
+								buildURL, axisName, thisBuild);
+						}
+						catch (RuntimeException runtimeException) {
+							if (!isFromArchive()) {
+								String shortStackTrace =
+									JenkinsResultsParserUtil.getStackTrace(
+										runtimeException, 10);
+
+								System.out.println(
+									"WARNING: Build object failure:\n" +
+										shortStackTrace);
+
+								NotificationUtil.sendSlackNotification(
+									JenkinsResultsParserUtil.combine(
+										shortStackTrace, "\nBuild URL: ",
+										thisBuild.getBuildURL()),
+									"ci-notifications", "Build object failure");
+							}
+
+							return null;
+						}
+					}
+
+				};
+
+			callables.add(callable);
 		}
 
 		ParallelExecutor<Build> parallelExecutor = new ParallelExecutor<>(
@@ -187,13 +195,15 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 		}
 
 		for (Build downstreamBuild : downstreamBuilds) {
-			if (((status == null) ||
-				 status.equals(downstreamBuild.getStatus())) &&
-				((result == null) ||
-				 result.equals(downstreamBuild.getResult()))) {
+			if (((status != null) &&
+				 !status.equals(downstreamBuild.getStatus())) ||
+				((result != null) &&
+				 !result.equals(downstreamBuild.getResult()))) {
 
-				filteredDownstreamBuilds.add(downstreamBuild);
+				continue;
 			}
+
+			filteredDownstreamBuilds.add(downstreamBuild);
 		}
 
 		return filteredDownstreamBuilds;
@@ -258,11 +268,13 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 				longestDelayedDownstreamBuild = downstreamBuild;
 			}
 
-			if (longestDelayedDownstreamBuild.getDelayTime() >
+			if (longestDelayedDownstreamBuild.getDelayTime() <=
 					longestDelayedBuild.getDelayTime()) {
 
-				longestDelayedBuild = longestDelayedDownstreamBuild;
+				continue;
 			}
+
+			longestDelayedBuild = longestDelayedDownstreamBuild;
 		}
 
 		return longestDelayedBuild;
@@ -273,12 +285,14 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 		Build longestRunningDownstreamBuild = null;
 
 		for (Build downstreamBuild : getDownstreamBuilds(null)) {
-			if ((longestRunningDownstreamBuild == null) ||
-				(downstreamBuild.getDuration() >
+			if ((longestRunningDownstreamBuild != null) &&
+				(downstreamBuild.getDuration() <=
 					longestRunningDownstreamBuild.getDuration())) {
 
-				longestRunningDownstreamBuild = downstreamBuild;
+				continue;
 			}
+
+			longestRunningDownstreamBuild = downstreamBuild;
 		}
 
 		return longestRunningDownstreamBuild;
@@ -306,9 +320,11 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 
 			ParentBuild parentBuild = (ParentBuild)downstreamBuild;
 
-			if (parentBuild.hasModifiedDownstreamBuilds()) {
-				modifiedDownstreamBuilds.add(parentBuild);
+			if (!parentBuild.hasModifiedDownstreamBuilds()) {
+				continue;
 			}
+
+			modifiedDownstreamBuilds.add(parentBuild);
 		}
 
 		if (status != null) {
@@ -326,9 +342,11 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 			List<TestResult> downstreamTestResults =
 				downstreamBuild.getTestResults(testStatus);
 
-			if (!(downstreamTestResults == null)) {
-				testResults.addAll(downstreamTestResults);
+			if (downstreamTestResults == null) {
+				continue;
 			}
+
+			testResults.addAll(downstreamTestResults);
 		}
 
 		return testResults;
@@ -513,6 +531,8 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 			String status = downstreamBuild.getStatus();
 
 			if (status.equals("completed")) {
+				_generateTestrayCaseResult(downstreamBuild);
+
 				continue;
 			}
 
@@ -595,6 +615,48 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 		super.update();
 	}
 
+	@Override
+	public void waitForDownstreamTestrayCaseResultURLs() {
+		long timeout =
+			JenkinsResultsParserUtil.getCurrentTimeMillis() +
+				_TESTRAY_CASE_RESULT_URLS_TIMEOUT;
+
+		Map<String, Future<URL>> downstreamTestrayCaseResultURLFutures =
+			_getDownstreamTestrayCaseResultURLFutures();
+
+		for (Map.Entry<String, Future<URL>> entry :
+				downstreamTestrayCaseResultURLFutures.entrySet()) {
+
+			Future<URL> future = entry.getValue();
+
+			long remaining =
+				timeout - JenkinsResultsParserUtil.getCurrentTimeMillis();
+
+			try {
+				future.get(Math.max(remaining, 0), TimeUnit.MILLISECONDS);
+			}
+			catch (ExecutionException executionException) {
+				System.out.println(
+					JenkinsResultsParserUtil.combine(
+						"Unable to create Testray case result for ",
+						entry.getKey(), ":\n",
+						String.valueOf(executionException.getCause())));
+			}
+			catch (InterruptedException interruptedException) {
+				Thread currentThread = Thread.currentThread();
+
+				currentThread.interrupt();
+
+				return;
+			}
+			catch (TimeoutException timeoutException) {
+				System.out.println(
+					"Timed out waiting for the Testray case result for " +
+						entry.getKey());
+			}
+		}
+	}
+
 	protected BaseParentBuild(String buildURL) {
 		super(buildURL);
 	}
@@ -629,12 +691,14 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 
 		if ((downstreamBuilds != null) && !downstreamBuilds.isEmpty()) {
 			for (Build downstreamBuild : downstreamBuilds) {
-				if (downstreamBuild instanceof BaseBuild) {
-					BaseBuild downstreamBaseBuild = (BaseBuild)downstreamBuild;
-
-					archiveCallables.addAll(
-						downstreamBaseBuild.getArchiveCallables());
+				if (!(downstreamBuild instanceof BaseBuild)) {
+					continue;
 				}
+
+				BaseBuild downstreamBaseBuild = (BaseBuild)downstreamBuild;
+
+				archiveCallables.addAll(
+					downstreamBaseBuild.getArchiveCallables());
 			}
 		}
 
@@ -653,9 +717,11 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 		for (Build downstreamBuild : downstreamBuilds) {
 			String downstreamBuildResult = downstreamBuild.getResult();
 
-			if (Objects.equals(downstreamBuildResult, result)) {
-				count++;
+			if (!Objects.equals(downstreamBuildResult, result)) {
+				continue;
 			}
+
+			count++;
 		}
 
 		return count;
@@ -745,6 +811,17 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 		return tableRowElements;
 	}
 
+	protected void removeTestrayCaseResultURL(String axisName) {
+		if (axisName == null) {
+			return;
+		}
+
+		Map<String, Future<URL>> downstreamTestrayCaseResultURLFutures =
+			_getDownstreamTestrayCaseResultURLFutures();
+
+		downstreamTestrayCaseResultURLFutures.remove(axisName);
+	}
+
 	@Override
 	protected boolean skipUpdate() {
 		boolean skipUpdate = super.skipUpdate();
@@ -759,6 +836,52 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 	protected void sortDownstreamBuilds() {
 		Collections.sort(
 			_downstreamBuilds, new BaseBuild.BuildDisplayNameComparator());
+	}
+
+	private void _generateTestrayCaseResult(Build build) {
+		if (!(build instanceof DownstreamBuild) || build.isFromArchive()) {
+			return;
+		}
+
+		final DownstreamBuild downstreamBuild = (DownstreamBuild)build;
+
+		String axisName = downstreamBuild.getAxisName();
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(axisName)) {
+			return;
+		}
+
+		Map<String, Future<URL>> downstreamTestrayCaseResultURLFutures =
+			_getDownstreamTestrayCaseResultURLFutures();
+
+		downstreamTestrayCaseResultURLFutures.computeIfAbsent(
+			axisName,
+			key -> _testrayCaseResultExecutorService.submit(
+				new Callable<URL>() {
+
+					@Override
+					public URL call() {
+						return downstreamBuild.getTestrayCaseResultURL();
+					}
+
+				}));
+	}
+
+	private Map<String, Future<URL>>
+		_getDownstreamTestrayCaseResultURLFutures() {
+
+		if (_downstreamTestrayCaseResultURLFutures != null) {
+			return _downstreamTestrayCaseResultURLFutures;
+		}
+
+		synchronized (_downstreamTestrayCaseResultURLFuturesLock) {
+			if (_downstreamTestrayCaseResultURLFutures == null) {
+				_downstreamTestrayCaseResultURLFutures =
+					new ConcurrentHashMap<>();
+			}
+
+			return _downstreamTestrayCaseResultURLFutures;
+		}
 	}
 
 	private int _getInvokedGroupSize() {
@@ -779,9 +902,17 @@ public abstract class BaseParentBuild extends BaseBuild implements ParentBuild {
 
 	private static final int _INVOKED_GROUP_SIZE_DEFAULT = 500;
 
+	private static final long _TESTRAY_CASE_RESULT_URLS_TIMEOUT = 5 * 60 * 1000;
+
 	private static final Pattern _buildURLPattern = Pattern.compile(
 		"http[s]?\\:\\/\\/(?<hostname>[^\\/]+)\\/.*");
+	private static final Object _downstreamTestrayCaseResultURLFuturesLock =
+		new Object();
+	private static final ExecutorService _testrayCaseResultExecutorService =
+		JenkinsResultsParserUtil.getNewThreadPoolExecutor(10, true);
 
 	private List<Build> _downstreamBuilds;
+	private volatile Map<String, Future<URL>>
+		_downstreamTestrayCaseResultURLFutures;
 
 }

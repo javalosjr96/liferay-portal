@@ -9,6 +9,7 @@ import com.liferay.jenkins.results.parser.history.JobHistory;
 import com.liferay.jenkins.results.parser.test.clazz.group.AxisTestClassGroup;
 import com.liferay.jenkins.results.parser.test.clazz.group.BatchTestClassGroup;
 import com.liferay.jenkins.results.parser.test.clazz.group.SegmentTestClassGroup;
+import com.liferay.jenkins.results.parser.testray.TestrayContext;
 
 import java.io.File;
 
@@ -97,7 +98,13 @@ public interface Job {
 
 	public String getTestPropertiesContent();
 
+	public String getTestSuiteName();
+
+	public TestrayContext getTestrayContext();
+
 	public int getTimeoutMinutes(JenkinsMaster jenkinsMaster);
+
+	public Set<String> getWorkspaceNames();
 
 	public boolean isBuildCachingEnabled();
 
@@ -122,6 +129,8 @@ public interface Job {
 	public boolean isTestRelevantChangesInStable();
 
 	public boolean isValidationRequired();
+
+	public void setTestrayContext(TestrayContext testrayContext);
 
 	public static enum BuildProfile {
 

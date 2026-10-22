@@ -77,6 +77,50 @@ components:
             description:
                 The type-specific options of a `checkbox` fragment configuration field.
             type: object
+        CollectionFragmentConfigurationFieldDefaultValue:
+            description:
+                The default value of a `collectionSelector` fragment configuration field. It mirrors the shape of the corresponding fragment configuration field value of the headless admin site API.
+            properties:
+                value:
+                    $ref: ../../headless-admin-site/headless-admin-site-impl/rest-openapi.yaml#CollectionReference
+                    description:
+                        A reference to the selected collection (`Collection`), collection provider (`CollectionProvider`, including related items collection providers), or repeatable fields collection provider (`RepeatableFieldsCollectionProvider`).
+            type: object
+        CollectionSelectorField:
+            allOf:
+                -   $ref: "#/components/schemas/Field"
+                -   properties:
+                        defaultValue:
+                            $ref: "#/components/schemas/CollectionFragmentConfigurationFieldDefaultValue"
+                            description:
+                                The field's default value.
+                        typeOptions:
+                            $ref: "#/components/schemas/CollectionSelectorTypeOptions"
+                            description:
+                                The field's type-specific options.
+            description:
+                A `collectionSelector` field of a fragment configuration's field set.
+            type: object
+        CollectionSelectorTypeOptions:
+            allOf:
+                -   $ref: "#/components/schemas/TypeOptions"
+                -   properties:
+                        itemSubtype:
+                            description:
+                                The subtype of the items the selectable collections contain.
+                            type: string
+                        itemType:
+                            description:
+                                The type of the items the selectable collections contain.
+                            type: string
+                        numberOfItems:
+                            description:
+                                The number of collection items made available to the fragment.
+                            minimum: 1
+                            type: integer
+            description:
+                The type-specific options of a `collectionSelector` fragment configuration field.
+            type: object
         ColorPaletteField:
             allOf:
                 -   $ref: "#/components/schemas/Field"
@@ -173,13 +217,17 @@ components:
                 mapping:
                     categoryTreeNodeSelector: "#/components/schemas/CategoryTreeNodeSelectorField"
                     checkbox: "#/components/schemas/CheckboxField"
+                    collectionSelector: "#/components/schemas/CollectionSelectorField"
                     colorPalette: "#/components/schemas/ColorPaletteField"
                     colorPicker: "#/components/schemas/ColorPickerField"
                     itemSelector: "#/components/schemas/ItemSelectorField"
                     length: "#/components/schemas/LengthField"
+                    navigationMenuSelector: "#/components/schemas/NavigationMenuSelectorField"
                     select: "#/components/schemas/SelectField"
+                    targetCollectionDisplay: "#/components/schemas/TargetCollectionDisplayField"
                     text: "#/components/schemas/TextField"
                     url: "#/components/schemas/URLField"
+                    videoSelector: "#/components/schemas/VideoSelectorField"
                 propertyName: type
             properties:
                 dataType:
@@ -208,7 +256,7 @@ components:
                 type:
                     description:
                         The field's type.
-                    enum: [categoryTreeNodeSelector, checkbox, colorPalette, colorPicker, itemSelector, length, select, text, url]
+                    enum: [categoryTreeNodeSelector, checkbox, collectionSelector, colorPalette, colorPicker, itemSelector, length, navigationMenuSelector, select, targetCollectionDisplay, text, url, videoSelector]
                     type: string
             required:
                 -   name
@@ -504,6 +552,30 @@ components:
                         A CSS length value, such as `12px` or `50%`, or any CSS expression the page editor's length input accepts as a custom unit, such as `auto`.
                     type: string
             type: object
+        NavigationMenuFragmentConfigurationFieldDefaultValue:
+            description:
+                The default value of a `navigationMenuSelector` fragment configuration field. It mirrors the shape of the corresponding fragment configuration field value of the headless admin site API.
+            properties:
+                value:
+                    $ref: ../../headless-admin-site/headless-admin-site-impl/rest-openapi.yaml#NavigationMenuValue
+                    description:
+                        Either a contextual menu (`ContextualMenu`), a site navigation menu referenced by external reference code (`SiteMenu`), or the site's page hierarchy (`SitePages`).
+            type: object
+        NavigationMenuSelectorField:
+            allOf:
+                -   $ref: "#/components/schemas/Field"
+                -   properties:
+                        defaultValue:
+                            $ref: "#/components/schemas/NavigationMenuFragmentConfigurationFieldDefaultValue"
+                            description:
+                                The field's default value.
+                        typeOptions:
+                            $ref: "#/components/schemas/TypeOptions"
+                            description:
+                                The field's type-specific options.
+            description:
+                A `navigationMenuSelector` field of a fragment configuration's field set.
+            type: object
         NumberValidation:
             allOf:
                 -   $ref: "#/components/schemas/Validation"
@@ -664,6 +736,43 @@ components:
             description:
                 The type-specific options of a `select` fragment configuration field.
             type: object
+        TargetCollectionDisplayField:
+            allOf:
+                -   $ref: "#/components/schemas/Field"
+                -   properties:
+                        defaultValue:
+                            $ref: "#/components/schemas/TargetCollectionDisplayFragmentConfigurationFieldDefaultValue"
+                            description:
+                                The field's default value.
+                        typeOptions:
+                            $ref: "#/components/schemas/TargetCollectionDisplayTypeOptions"
+                            description:
+                                The field's type-specific options.
+            description:
+                A `targetCollectionDisplay` field of a fragment configuration's field set.
+            type: object
+        TargetCollectionDisplayFragmentConfigurationFieldDefaultValue:
+            description:
+                The default value of a `targetCollectionDisplay` fragment configuration field. It mirrors the shape of the corresponding fragment configuration field value of the headless admin site API.
+            properties:
+                value:
+                    description:
+                        The page element external reference codes of the collection displays the field targets.
+                    items:
+                        type: string
+                    type: array
+            type: object
+        TargetCollectionDisplayTypeOptions:
+            allOf:
+                -   $ref: "#/components/schemas/TypeOptions"
+                -   properties:
+                        enableCompatibleCollections:
+                            description:
+                                Whether the page editor, once some collection displays are selected in this field, only lets you add collection displays that share at least one supported filter with all of the selected ones. Only the page editor's selector applies it, so the default value is not checked against it.
+                            type: boolean
+            description:
+                The type-specific options of a `targetCollectionDisplay` fragment configuration field.
+            type: object
         TextField:
             allOf:
                 -   $ref: "#/components/schemas/Field"
@@ -798,9 +907,33 @@ components:
             required:
                 -   type
             type: object
+        VideoFragmentConfigurationFieldDefaultValue:
+            description:
+                The default value of a `videoSelector` fragment configuration field. It mirrors the shape of the corresponding fragment configuration field value of the headless admin site API.
+            properties:
+                value:
+                    $ref: ../../headless-admin-site/headless-admin-site-impl/rest-openapi.yaml#VideoValue
+                    description:
+                        The selected video's embeddable HTML and title.
+            type: object
+        VideoSelectorField:
+            allOf:
+                -   $ref: "#/components/schemas/Field"
+                -   properties:
+                        defaultValue:
+                            $ref: "#/components/schemas/VideoFragmentConfigurationFieldDefaultValue"
+                            description:
+                                The field's default value.
+                        typeOptions:
+                            $ref: "#/components/schemas/TypeOptions"
+                            description:
+                                The field's type-specific options.
+            description:
+                A `videoSelector` field of a fragment configuration's field set.
+            type: object
 info:
     description:
-        "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.headless.admin.fragment.client', and version '1.0.6'."
+        "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.headless.admin.fragment.client', and version '1.0.7'."
     license:
         name: Apache 2.0
         url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -853,6 +986,7 @@ paths:
                                     $ref: "#/components/schemas/FragmentSet"
                                 type: array
             tags: ["FragmentSet"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/fragment-sets/{fragmentSetExternalReferenceCode}":
         delete:
             description:
@@ -875,6 +1009,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["FragmentSet"]
+            x-feature-flag: LPD-57283
         get:
             description:
                 Retrieves a specific fragment set of a design library.
@@ -908,6 +1043,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/FragmentSet"
             tags: ["FragmentSet"]
+            x-feature-flag: LPD-57283
     "/sites/{siteExternalReferenceCode}/fragment-sets":
         get:
             description:
@@ -953,6 +1089,7 @@ paths:
                                     $ref: "#/components/schemas/FragmentSet"
                                 type: array
             tags: ["FragmentSet"]
+            x-feature-flag: LPD-39244
         post:
             description:
                 Adds a new fragment set.
@@ -981,6 +1118,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/FragmentSet"
             tags: ["FragmentSet"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/fragment-sets/{fragmentSetExternalReferenceCode}":
         delete:
             description:
@@ -1003,6 +1141,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["FragmentSet"]
+            x-feature-flag: LPD-39244
         get:
             description:
                 Retrieves a specific fragment set of a site.
@@ -1036,6 +1175,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/FragmentSet"
             tags: ["FragmentSet"]
+            x-feature-flag: LPD-39244
         put:
             description:
                 Updates the fragment set with the given external reference code, or creates it if it does not exist. On update, `dateModified`, `description`, and `name` are honored; any values sent for `dateCreated`, `externalReferenceCode`, `key`, and `marketplace` are ignored.
@@ -1077,6 +1217,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/FragmentSet"
             tags: ["FragmentSet"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/fragment-sets/{fragmentSetExternalReferenceCode}/fragments":
         get:
             description:
@@ -1123,6 +1264,7 @@ paths:
                                     $ref: "#/components/schemas/Fragment"
                                 type: array
             tags: ["Fragment"]
+            x-feature-flag: LPD-39244
         post:
             description:
                 Adds a new fragment to a fragment set.
@@ -1156,6 +1298,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/Fragment"
             tags: ["Fragment"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/fragment-sets/{fragmentSetExternalReferenceCode}/resource-files":
         get:
             description:
@@ -1202,6 +1345,7 @@ paths:
                                     $ref: "#/components/schemas/ResourceFile"
                                 type: array
             tags: ["ResourceFile"]
+            x-feature-flag: LPD-39244
         post:
             description:
                 Adds a new resource file to a fragment set.
@@ -1235,6 +1379,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/ResourceFile"
             tags: ["ResourceFile"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/fragment-sets/{fragmentSetExternalReferenceCode}/resource-folders":
         get:
             description:
@@ -1281,6 +1426,7 @@ paths:
                                     $ref: "#/components/schemas/ResourceFolder"
                                 type: array
             tags: ["ResourceFolder"]
+            x-feature-flag: LPD-39244
         post:
             description:
                 Adds a new resource folder to a fragment set.
@@ -1314,6 +1460,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/ResourceFolder"
             tags: ["ResourceFolder"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/fragments":
         get:
             description:
@@ -1359,6 +1506,7 @@ paths:
                                     $ref: "#/components/schemas/Fragment"
                                 type: array
             tags: ["Fragment"]
+            x-feature-flag: LPD-39244
         post:
             description:
                 Adds a new fragment to a site.
@@ -1387,6 +1535,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/Fragment"
             tags: ["Fragment"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/fragments/{fragmentExternalReferenceCode}":
         delete:
             description:
@@ -1409,6 +1558,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["Fragment"]
+            x-feature-flag: LPD-39244
         get:
             description:
                 Retrieves a specific fragment of a site.
@@ -1442,6 +1592,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/Fragment"
             tags: ["Fragment"]
+            x-feature-flag: LPD-39244
         put:
             description:
                 Updates the fragment with the given external reference code, or creates it if it does not exist.
@@ -1483,6 +1634,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/Fragment"
             tags: ["Fragment"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/resource-files":
         get:
             description:
@@ -1528,6 +1680,7 @@ paths:
                                     $ref: "#/components/schemas/ResourceFile"
                                 type: array
             tags: ["ResourceFile"]
+            x-feature-flag: LPD-39244
         post:
             description:
                 Adds a new resource file to the site.
@@ -1556,6 +1709,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/ResourceFile"
             tags: ["ResourceFile"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/resource-files/{resourceFileExternalReferenceCode}":
         delete:
             description:
@@ -1578,6 +1732,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["ResourceFile"]
+            x-feature-flag: LPD-39244
         get:
             description:
                 Retrieves a specific resource file of a site.
@@ -1611,6 +1766,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/ResourceFile"
             tags: ["ResourceFile"]
+            x-feature-flag: LPD-39244
         put:
             description:
                 Updates the resource file with the given external reference code, or creates it if it does not exist. On update, `fileURLReference` and `name` are required, `dateModified` is honored, and any values sent for `dateCreated`, `externalReferenceCode`, `fragmentSet`, `fragmentSetExternalReferenceCode`, `resourceFolder`, and `resourceFolderExternalReferenceCode` are ignored.
@@ -1652,6 +1808,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/ResourceFile"
             tags: ["ResourceFile"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/resource-folders":
         get:
             description:
@@ -1697,6 +1854,7 @@ paths:
                                     $ref: "#/components/schemas/ResourceFolder"
                                 type: array
             tags: ["ResourceFolder"]
+            x-feature-flag: LPD-39244
         post:
             description:
                 Adds a new resource folder to the site.
@@ -1725,6 +1883,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/ResourceFolder"
             tags: ["ResourceFolder"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/resource-folders/{resourceFolderExternalReferenceCode}":
         delete:
             description:
@@ -1747,6 +1906,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["ResourceFolder"]
+            x-feature-flag: LPD-39244
         get:
             description:
                 Retrieves a specific resource folder of a site.
@@ -1780,6 +1940,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/ResourceFolder"
             tags: ["ResourceFolder"]
+            x-feature-flag: LPD-39244
         put:
             description:
                 Updates the resource folder with the given external reference code, or creates it if it does not exist. On update, `dateModified` and `name` are honored; any values sent for `dateCreated`, `externalReferenceCode`, `fragmentSet`, `fragmentSetExternalReferenceCode`, `parentResourceFolder`, and `parentResourceFolderExternalReferenceCode` are ignored.
@@ -1821,6 +1982,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/ResourceFolder"
             tags: ["ResourceFolder"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/resource-folders/{resourceFolderExternalReferenceCode}/resource-files":
         get:
             description:
@@ -1867,6 +2029,7 @@ paths:
                                     $ref: "#/components/schemas/ResourceFile"
                                 type: array
             tags: ["ResourceFile"]
+            x-feature-flag: LPD-39244
     "/sites/{siteExternalReferenceCode}/resource-folders/{resourceFolderExternalReferenceCode}/resource-folders":
         get:
             description:
@@ -1913,3 +2076,4 @@ paths:
                                     $ref: "#/components/schemas/ResourceFolder"
                                 type: array
             tags: ["ResourceFolder"]
+            x-feature-flag: LPD-39244

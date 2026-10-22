@@ -1,0 +1,55 @@
+artifact:
+    mounts: []
+    pullPolicy: IfNotPresent
+    reference: ""
+clientExtension:
+    configs: {}
+    domain: ""
+    dxpNamespace: ""
+    serviceId: ""
+    virtualInstanceId: liferay.com
+fullnameOverride: ""
+image:
+    pullPolicy: IfNotPresent
+    repository: ""
+    tag: ""
+imagePullSecrets: []
+labels: {}
+nameOverride: ""
+network:
+    enabled: false
+    endpointRef: http
+    gatewayName: ""
+    hostnames: []
+operatorServiceAccount:
+    name: dxp-operator
+    namespace: dxp-operator-system
+podAnnotations: {}
+podLabels: {}
+service:
+    enabled: false
+    port: 80
+    type: ClusterIP
+serviceAccount:
+    annotations: {}
+    create: false
+    name: ""
+workload:
+    affinity: {}
+    backoffLimit: 6
+    containerPort: 80
+    enabled: true
+    env: {}
+    kind: Deployment
+    livenessProbe: {}
+    nodeSelector: {}
+    podSecurityContext: {}
+    readinessProbe: {}
+    replicas: 1
+    resources: {}
+    schedule: ""
+    securityContext: {}
+    startupProbe: {}
+    tolerations: []
+    volumeMounts: []
+    volumes: []

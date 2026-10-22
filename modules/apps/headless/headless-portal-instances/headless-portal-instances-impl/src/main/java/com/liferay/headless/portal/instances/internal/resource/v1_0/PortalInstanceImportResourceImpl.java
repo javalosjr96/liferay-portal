@@ -7,15 +7,18 @@ package com.liferay.headless.portal.instances.internal.resource.v1_0;
 
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstance;
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstanceImport;
+import com.liferay.headless.portal.instances.internal.dto.v1_0.converter.constants.DTOConverterConstants;
+import com.liferay.headless.portal.instances.internal.notifications.PortalInstanceNotificationUtil;
+import com.liferay.headless.portal.instances.internal.security.permission.PortalInstancePermissionUtil;
 import com.liferay.headless.portal.instances.resource.v1_0.PortalInstanceImportResource;
+import com.liferay.portal.instances.constants.PortalInstancesNotificationConstants;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
-import com.liferay.portal.kernel.security.auth.PrincipalException;
-import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 
 import jakarta.ws.rs.BadRequestException;
 
@@ -38,19 +41,25 @@ public class PortalInstanceImportResourceImpl
 			PortalInstanceImport portalInstanceImport)
 		throws Exception {
 
-		_checkPermission();
+		PortalInstancePermissionUtil.check();
 
 		if (Validator.isNull(portalInstanceImport.getSchemaName())) {
 			throw new BadRequestException("Schema name is required");
 		}
 
 		try {
-			return _toPortalInstance(
+			PortalInstance portalInstance = _portalInstanceDTOConverter.toDTO(
 				_companyService.addDBPartitionCompany(
 					portalInstanceImport.getSchemaName(),
 					portalInstanceImport.getName(),
 					portalInstanceImport.getVirtualHost(),
 					portalInstanceImport.getWebId()));
+
+			_sendUserNotificationEvent(
+				portalInstance.getPortalInstanceId(),
+				portalInstanceImport.getSchemaName());
+
+			return portalInstance;
 		}
 		catch (Exception exception) {
 			_log.error(
@@ -62,25 +71,21 @@ public class PortalInstanceImportResourceImpl
 		}
 	}
 
-	private void _checkPermission() throws Exception {
-		PermissionChecker permissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
+	private void _sendUserNotificationEvent(
+		String portalInstanceId, String schemaName) {
 
-		if (!permissionChecker.isOmniadmin()) {
-			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
-		}
-	}
-
-	private PortalInstance _toPortalInstance(Company company) {
-		return new PortalInstance() {
-			{
-				setActive(company::isActive);
-				setCompanyId(company::getCompanyId);
-				setDomain(company::getMx);
-				setPortalInstanceId(company::getWebId);
-				setVirtualHost(company::getVirtualHostname);
-			}
-		};
+		PortalInstanceNotificationUtil.sendUserNotificationEvent(
+			contextUser.getUserId(),
+			JSONUtil.put(
+				"operationType",
+				PortalInstancesNotificationConstants.OPERATION_TYPE_IMPORT
+			).put(
+				"portalInstanceId", portalInstanceId
+			).put(
+				"schemaName", schemaName
+			).put(
+				"status", PortalInstancesNotificationConstants.STATUS_SUCCESS
+			));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -88,5 +93,8 @@ public class PortalInstanceImportResourceImpl
 
 	@Reference
 	private CompanyService _companyService;
+
+	@Reference(target = DTOConverterConstants.PORTAL_INSTANCE_DTO_CONVERTER)
+	private DTOConverter<Company, PortalInstance> _portalInstanceDTOConverter;
 
 }

@@ -17,25 +17,37 @@ tests:
             value: StatefulSet
         it: Adds the marketplace sync sidecar when marketplace is enabled
         set:
+            licensing.enabled: true
             marketplace.enabled: true
     -   asserts:
-            -   equal:
-                    path: spec.template.spec.initContainers[?(@.name=="liferay-marketplace-sync")].restartPolicy
-                    value: Always
+            -   failedTemplate:
+                    errorMessage: The marketplace sync runs the deploy-sync script that the operator publishes, so licensing.enabled must be true when marketplace.enabled is true
+        it: Fails when marketplace is enabled without licensing
+        set:
+            marketplace.enabled: true
+        template: templates/workloads.yaml
+    -   asserts:
+            -   contains:
+                    any: true
+                    content:
+                        name: liferay-marketplace
+                        persistentVolumeClaim:
+                            claimName: liferay-default-marketplace
+                    path: spec.template.spec.volumes
         documentSelector:
             path: kind
             skipEmptyTemplates: true
             value: StatefulSet
-        it: Runs the marketplace sync sidecar as a native sidecar
+        it: Links the marketplace volume with the marketplace claim
         set:
+            licensing.enabled: true
             marketplace.enabled: true
     -   asserts:
             -   contains:
                     any: true
                     content:
-                        mountPath: /liferay-init-scripts/deploy-sync.sh
-                        name: liferay-init-scripts-default
-                        subPath: deploy-sync.sh
+                        mountPath: /liferay-init-scripts
+                        name: liferay-deploy-sync
                     path: spec.template.spec.initContainers[?(@.name=="liferay-marketplace-sync")].volumeMounts
             -   contains:
                     any: true
@@ -57,22 +69,21 @@ tests:
             value: StatefulSet
         it: Mounts the marketplace volume, sync script, and deploy folder
         set:
+            licensing.enabled: true
             marketplace.enabled: true
     -   asserts:
-            -   contains:
+            -   notContains:
                     any: true
                     content:
-                        name: liferay-marketplace
-                        persistentVolumeClaim:
-                            claimName: liferay-default-marketplace
-                    path: spec.template.spec.volumes
+                        name: liferay-marketplace-sync
+                    path: spec.template.spec.initContainers
         documentSelector:
             path: kind
             skipEmptyTemplates: true
             value: StatefulSet
-        it: Links the marketplace volume with the marketplace claim
+        it: Omits the marketplace sync sidecar when marketplace is disabled
         set:
-            marketplace.enabled: true
+            marketplace.enabled: false
     -   asserts:
             -   contains:
                     any: true
@@ -104,26 +115,18 @@ tests:
             value: StatefulSet
         it: Passes the marketplace sync configuration to the sidecar
         set:
+            licensing.enabled: true
             marketplace.enabled: true
             marketplace.syncInterval: 120
     -   asserts:
-            -   notContains:
-                    any: true
-                    content:
-                        name: liferay-marketplace-sync
-                    path: spec.template.spec.initContainers
+            -   equal:
+                    path: spec.template.spec.initContainers[?(@.name=="liferay-marketplace-sync")].restartPolicy
+                    value: Always
         documentSelector:
             path: kind
             skipEmptyTemplates: true
             value: StatefulSet
-        it: Omits the marketplace sync sidecar when marketplace is disabled
+        it: Runs the marketplace sync sidecar as a native sidecar
         set:
-            marketplace.enabled: false
-    -   asserts:
-            -   isNotEmpty:
-                    path: data['deploy-sync.sh']
-        documentSelector:
-            path: metadata.name
-            skipEmptyTemplates: true
-            value: liferay-init-scripts-default
-        it: Publishes the deploy sync script in the init scripts ConfigMap
+            licensing.enabled: true
+            marketplace.enabled: true

@@ -2063,6 +2063,9 @@ public class OrganizationPersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					organization.getUuid(),
+					organization.getExternalReferenceCode()) &&
+				!Objects.equals(
 					organizationModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					organization.getExternalReferenceCode())) {
@@ -2970,7 +2973,12 @@ public class OrganizationPersistenceImpl
 
 		_collectionPersistenceFinderByUuid =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Organization::getOrganizationId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid",
+					new String[] {String.class.getName()},
+					new String[] {"uuid_"}, 0, 1, false, null),
+				"", OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid",
 					new String[] {
@@ -2979,24 +2987,25 @@ public class OrganizationPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"uuid_"}, true),
+				_SQL_COUNT_ORGANIZATION_WHERE, _SQL_SELECT_ORGANIZATION_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid",
 					new String[] {String.class.getName()},
 					new String[] {"uuid_"}, 0, 1, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid",
-					new String[] {String.class.getName()},
-					new String[] {"uuid_"}, 0, 1, false, null),
-				_SQL_SELECT_ORGANIZATION_WHERE, _SQL_COUNT_ORGANIZATION_WHERE,
-				OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"organization.", "uuid", "uuid_", FinderColumn.Type.STRING,
 					"=", true, true, Organization::getUuid));
 
 		_collectionPersistenceFinderByUuid_C =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Organization::getOrganizationId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid_C",
+					new String[] {String.class.getName(), Long.class.getName()},
+					new String[] {"uuid_", "companyId"}, 0, 1, false, null),
+				"", OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid_C",
 					new String[] {
@@ -3005,17 +3014,13 @@ public class OrganizationPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"uuid_", "companyId"}, true),
+				_SQL_COUNT_ORGANIZATION_WHERE, _SQL_SELECT_ORGANIZATION_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid_C",
 					new String[] {String.class.getName(), Long.class.getName()},
 					new String[] {"uuid_", "companyId"}, 0, 1, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid_C",
-					new String[] {String.class.getName(), Long.class.getName()},
-					new String[] {"uuid_", "companyId"}, 0, 1, false, null),
-				_SQL_SELECT_ORGANIZATION_WHERE, _SQL_COUNT_ORGANIZATION_WHERE,
-				OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"organization.", "uuid", "uuid_", FinderColumn.Type.STRING,
 					"=", true, true, Organization::getUuid),
@@ -3025,7 +3030,12 @@ public class OrganizationPersistenceImpl
 
 		_collectionPersistenceFinderByCompanyId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Organization::getOrganizationId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+					"countByCompanyId", new String[] {Long.class.getName()},
+					new String[] {"companyId"}, false),
+				"", OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCompanyId",
 					new String[] {
@@ -3034,24 +3044,27 @@ public class OrganizationPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"companyId"}, true),
+				_SQL_COUNT_ORGANIZATION_WHERE, _SQL_SELECT_ORGANIZATION_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
 					"findByCompanyId", new String[] {Long.class.getName()},
 					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByCompanyId", new String[] {Long.class.getName()},
-					new String[] {"companyId"}, false),
-				_SQL_SELECT_ORGANIZATION_WHERE, _SQL_COUNT_ORGANIZATION_WHERE,
-				OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"organization.", "companyId", FinderColumn.Type.LONG, "=",
 					true, true, Organization::getCompanyId));
 
 		_collectionPersistenceFinderByCompanyIdLocations =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Organization::getOrganizationId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+					"countByCompanyIdLocations",
+					new String[] {Long.class.getName()},
+					new String[] {"companyId"}, false),
+				"organization.parentOrganizationId != 0",
+				OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
 					"findByCompanyIdLocations",
@@ -3061,27 +3074,26 @@ public class OrganizationPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"companyId"}, true),
+				_SQL_COUNT_ORGANIZATION_WHERE, _SQL_SELECT_ORGANIZATION_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
 					"findByCompanyIdLocations",
 					new String[] {Long.class.getName()},
 					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByCompanyIdLocations",
-					new String[] {Long.class.getName()},
-					new String[] {"companyId"}, false),
-				_SQL_SELECT_ORGANIZATION_WHERE, _SQL_COUNT_ORGANIZATION_WHERE,
-				OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				"organization.parentOrganizationId != 0",
-				"organization.parentOrganizationId != 0", null,
 				new FinderColumn<>(
 					"organization.", "companyId", FinderColumn.Type.LONG, "=",
 					true, true, Organization::getCompanyId));
 
 		_collectionPersistenceFinderByLogoId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Organization::getOrganizationId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByLogoId",
+					new String[] {Long.class.getName()},
+					new String[] {"logoId"}, false),
+				"", OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByLogoId",
 					new String[] {
@@ -3090,24 +3102,25 @@ public class OrganizationPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"logoId"}, true),
+				_SQL_COUNT_ORGANIZATION_WHERE, _SQL_SELECT_ORGANIZATION_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByLogoId",
 					new String[] {Long.class.getName()},
 					new String[] {"logoId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByLogoId",
-					new String[] {Long.class.getName()},
-					new String[] {"logoId"}, false),
-				_SQL_SELECT_ORGANIZATION_WHERE, _SQL_COUNT_ORGANIZATION_WHERE,
-				OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"organization.", "logoId", FinderColumn.Type.LONG, "=",
 					true, true, Organization::getLogoId));
 
 		_collectionPersistenceFinderByC_P =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Organization::getOrganizationId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_P",
+					new String[] {Long.class.getName(), Long.class.getName()},
+					new String[] {"companyId", "parentOrganizationId"}, false),
+				"", OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_P",
 					new String[] {
@@ -3116,17 +3129,13 @@ public class OrganizationPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"companyId", "parentOrganizationId"}, true),
+				_SQL_COUNT_ORGANIZATION_WHERE, _SQL_SELECT_ORGANIZATION_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_P",
 					new String[] {Long.class.getName(), Long.class.getName()},
 					new String[] {"companyId", "parentOrganizationId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_P",
-					new String[] {Long.class.getName(), Long.class.getName()},
-					new String[] {"companyId", "parentOrganizationId"}, false),
-				_SQL_SELECT_ORGANIZATION_WHERE, _SQL_COUNT_ORGANIZATION_WHERE,
-				OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"organization.", "companyId", FinderColumn.Type.LONG, "=",
 					true, true, Organization::getCompanyId),
@@ -3137,7 +3146,12 @@ public class OrganizationPersistenceImpl
 
 		_collectionPersistenceFinderByC_LikeT =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Organization::getOrganizationId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByC_LikeT",
+					new String[] {Long.class.getName(), String.class.getName()},
+					new String[] {"companyId", "treePath"}, false),
+				"", OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_LikeT",
 					new String[] {
@@ -3146,14 +3160,8 @@ public class OrganizationPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"companyId", "treePath"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByC_LikeT",
-					new String[] {Long.class.getName(), String.class.getName()},
-					new String[] {"companyId", "treePath"}, false),
-				_SQL_SELECT_ORGANIZATION_WHERE, _SQL_COUNT_ORGANIZATION_WHERE,
-				OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				_SQL_COUNT_ORGANIZATION_WHERE, _SQL_SELECT_ORGANIZATION_WHERE,
+				null, null, "",
 				new FinderColumn<>(
 					"organization.", "companyId", FinderColumn.Type.LONG, "=",
 					true, true, Organization::getCompanyId),
@@ -3179,7 +3187,12 @@ public class OrganizationPersistenceImpl
 
 		_collectionPersistenceFinderByC_LikeN =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Organization::getOrganizationId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByC_LikeN",
+					new String[] {Long.class.getName(), String.class.getName()},
+					new String[] {"companyId", "name"}, false),
+				"", OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_LikeN",
 					new String[] {
@@ -3188,14 +3201,8 @@ public class OrganizationPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"companyId", "name"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByC_LikeN",
-					new String[] {Long.class.getName(), String.class.getName()},
-					new String[] {"companyId", "name"}, false),
-				_SQL_SELECT_ORGANIZATION_WHERE, _SQL_COUNT_ORGANIZATION_WHERE,
-				OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				_SQL_COUNT_ORGANIZATION_WHERE, _SQL_SELECT_ORGANIZATION_WHERE,
+				null, null, "",
 				new FinderColumn<>(
 					"organization.", "companyId", FinderColumn.Type.LONG, "=",
 					true, true, Organization::getCompanyId),
@@ -3205,7 +3212,18 @@ public class OrganizationPersistenceImpl
 
 		_collectionPersistenceFinderByGtO_C_P =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Organization::getOrganizationId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByGtO_C_P",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Long.class.getName()
+					},
+					new String[] {
+						"organizationId", "companyId", "parentOrganizationId"
+					},
+					false),
+				"", OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByGtO_C_P",
 					new String[] {
@@ -3218,20 +3236,8 @@ public class OrganizationPersistenceImpl
 						"organizationId", "companyId", "parentOrganizationId"
 					},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByGtO_C_P",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Long.class.getName()
-					},
-					new String[] {
-						"organizationId", "companyId", "parentOrganizationId"
-					},
-					false),
-				_SQL_SELECT_ORGANIZATION_WHERE, _SQL_COUNT_ORGANIZATION_WHERE,
-				OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				_SQL_COUNT_ORGANIZATION_WHERE, _SQL_SELECT_ORGANIZATION_WHERE,
+				null, null, "",
 				new FinderColumn<>(
 					"organization.", "organizationId", FinderColumn.Type.LONG,
 					">", true, true, Organization::getOrganizationId),
@@ -3245,7 +3251,16 @@ public class OrganizationPersistenceImpl
 
 		_collectionPersistenceFinderByC_P_LikeN =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Organization::getOrganizationId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByC_P_LikeN",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						String.class.getName()
+					},
+					new String[] {"companyId", "parentOrganizationId", "name"},
+					false),
+				"", OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_P_LikeN",
 					new String[] {
@@ -3256,18 +3271,8 @@ public class OrganizationPersistenceImpl
 					},
 					new String[] {"companyId", "parentOrganizationId", "name"},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByC_P_LikeN",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						String.class.getName()
-					},
-					new String[] {"companyId", "parentOrganizationId", "name"},
-					false),
-				_SQL_SELECT_ORGANIZATION_WHERE, _SQL_COUNT_ORGANIZATION_WHERE,
-				OrganizationModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				_SQL_COUNT_ORGANIZATION_WHERE, _SQL_SELECT_ORGANIZATION_WHERE,
+				null, null, "",
 				new FinderColumn<>(
 					"organization.", "companyId", FinderColumn.Type.LONG, "=",
 					true, true, Organization::getCompanyId),
@@ -3342,4 +3347,4 @@ public class OrganizationPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1163701549
+// LIFERAY-SERVICE-BUILDER-HASH:-600075044

@@ -31,11 +31,11 @@ public class ProductsSectionTableFDSView extends BasePIMTableFDSView {
 			_fdsTableSchemaBuilderFactory.create();
 
 		return fdsTableSchemaBuilder.add(
-			"embedded.name", "name",
+			"embedded.title", "title",
 			fdsTableSchemaField -> fdsTableSchemaField.setContentRenderer(
-				"nameTableCellRenderer")
+				"titleTableCellRenderer")
 		).add(
-			"embedded.code", "code"
+			"embedded.sku", "sku"
 		).add(
 			"embedded.systemProperties.objectDefinitionBrief.label", "type"
 		).add(
@@ -51,7 +51,7 @@ public class ProductsSectionTableFDSView extends BasePIMTableFDSView {
 		).add(
 			"embedded.status", "status",
 			fdsTableSchemaField -> fdsTableSchemaField.setContentRenderer(
-				"status")
+				"statusTableCellRenderer")
 		).build();
 	}
 

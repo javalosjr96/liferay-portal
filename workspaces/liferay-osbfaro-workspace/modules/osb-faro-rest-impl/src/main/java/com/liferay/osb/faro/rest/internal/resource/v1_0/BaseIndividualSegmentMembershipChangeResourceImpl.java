@@ -53,25 +53,22 @@ public abstract class BaseIndividualSegmentMembershipChangeResourceImpl
 	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/faro-rest/v1.0/workspace/{groupId}/individual-segments/{individualSegmentId}/membership-changes'  -u 'test@liferay.com:test'
 	 */
+	@Deprecated
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "List the individuals who entered or left an individual segment over a date range, most recent change first, with each individual's name and email resolved. Use this to answer 'who has exited this segment recently'. For date range filtering pass `rangeKey` as one of LAST_24_HOURS, YESTERDAY, LAST_7_DAYS, LAST_28_DAYS, LAST_30_DAYS, LAST_90_DAYS, LAST_180_DAYS, LAST_YEAR. Alternatively, pass `rangeStart` and `rangeEnd` as dates for a custom window. For the current membership list, use `getWorkspaceGroupIndividualSegmentMembershipsPage`."
+		deprecated = true,
+		description = "Deprecated: always returns an empty page. The analytics engine does not record which individuals entered or left a segment, so do not use this to find who joined or exited a segment. `rangeStart` and `rangeEnd` must be given together; a request with only one of them fails. For how a segment grew or shrank over a date range, use `getWorkspaceGroupIndividualSegmentMembershipChangeMetric`. For the current members, use `getWorkspaceGroupChannelIndividualsPage` with `individualSegmentId`."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				description = "ID of the Liferay site that owns the Analytics Cloud workspace.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "groupId"
+				name = "groupId", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				description = "ID of the individual segment whose membership changes should be listed.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "individualSegmentId"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
-				description = "Optional change kind to keep. ADDED keeps only individuals entering the segment; the analytics engine defines the value for individuals leaving.",
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "operation"
+				name = "individualSegmentId", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				description = "Page number (starts at 1).",
@@ -84,7 +81,7 @@ public abstract class BaseIndividualSegmentMembershipChangeResourceImpl
 				name = "pageSize"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
-				description = "Custom range end as date (e.g. 2026-01-01). Use with rangeStart as a rangeKey alternative.",
+				description = "Custom range end as date (e.g. 2026-01-01). Must be set together with rangeStart, as a rangeKey alternative.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "rangeEnd"
 			),
@@ -95,7 +92,7 @@ public abstract class BaseIndividualSegmentMembershipChangeResourceImpl
 				name = "rangeKey"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
-				description = "Custom range start as date (e.g. 2026-01-01). Use with rangeEnd as a rangeKey alternative.",
+				description = "Custom range start as date (e.g. 2026-01-01). Must be set together with rangeEnd, as a rangeKey alternative.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "rangeStart"
 			),
@@ -135,9 +132,6 @@ public abstract class BaseIndividualSegmentMembershipChangeResourceImpl
 				@jakarta.validation.constraints.NotNull
 				@jakarta.ws.rs.PathParam("individualSegmentId")
 				String individualSegmentId,
-				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-				@jakarta.ws.rs.QueryParam("operation")
-				String operation,
 				@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 				@jakarta.ws.rs.QueryParam("rangeEnd")
 				String rangeEnd,
@@ -611,4 +605,4 @@ public abstract class BaseIndividualSegmentMembershipChangeResourceImpl
 			BaseIndividualSegmentMembershipChangeResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1161752341
+// LIFERAY-REST-BUILDER-HASH:-523097739

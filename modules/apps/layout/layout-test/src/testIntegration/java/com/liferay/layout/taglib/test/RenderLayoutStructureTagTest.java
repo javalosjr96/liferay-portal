@@ -16,9 +16,9 @@ import com.liferay.asset.list.service.AssetListEntrySegmentsEntryRelLocalService
 import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
-import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.dynamic.data.mapping.constants.DDMStructureConstants;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializerDeserializeRequest;
@@ -2933,7 +2933,7 @@ public class RenderLayoutStructureTagTest {
 	}
 
 	@Test
-	@TestInfo("LPS-120094")
+	@TestInfo({"LPD-109694", "LPS-120094"})
 	public void testRenderFragmentEntryLinkWithImageLinkToURL()
 		throws Exception {
 
@@ -3003,7 +3003,7 @@ public class RenderLayoutStructureTagTest {
 					HtmlUtil.escape(
 						_dlURLHelper.getPreviewURL(
 							fileEntry, fileEntry.getFileVersion(), themeDisplay,
-							StringPool.BLANK)),
+							StringPool.BLANK, true, false)),
 					"\" data-fileentryid=\"", fileEntry.getFileEntryId(),
 					"\"")));
 	}

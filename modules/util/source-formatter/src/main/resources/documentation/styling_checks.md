@@ -29,6 +29,7 @@ ContractionsCheck | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Finds contra
 [DefaultComesLastCheck](https://checkstyle.sourceforge.io/checks/coding/defaultcomeslast.html) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Checks that the `default` is after all the cases in a `switch` statement. |
 DockerfileEmptyLinesCheck | Dockerfile | Finds missing and unnecessary empty lines. |
 DockerfileInstructionCheck | Dockerfile | Performs styling rules on instructions in `Dockerfile` files. |
+[EarlyLoopExitCheck](check/early_loop_exit_check.md#earlyloopexitcheck) | .java | Finds if-statements at the end of a loop body that can be inverted to use `break`, `continue`, `return`, or `throw` as early as possible. |
 EmbeddedJSONCheck | .action, .function, .jelly, .jrxml, .macro, .markdown, .md, .pom, .project, .properties, .qti, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, or .xsd | Ensures consistent formatting for embedded JSON. |
 EmptyCollectionCheck | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Checks that there are no calls to `Collections.EMPTY_LIST`, `Collections.EMPTY_MAP` or `Collections.EMPTY_SET`. |
 EnumConstantDividerCheck | .java | Find unnecessary empty lines between enum constants. |
@@ -59,9 +60,8 @@ HTMLWhitespaceCheck | .html or .path | Finds missing and unnecessary whitespace 
 [IfStatementCheck](check/if_statement_check.md#ifstatementcheck) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Finds empty if-statements and consecutive if-statements with identical bodies. |
 [InstanceInitializerCheck](check/instance_initializer_check.md#instanceinitializercheck) | .java | Performs several checks on class instance initializer. |
 InstanceofOrderCheck | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Check the order of `instanceof` calls. |
-JSONBatchEngineDataFileCheck | .ipynb, .json, or .npmbridgerc | Remove elements in `*.batch-engine-data.json` files. |
+JSONBatchEngineDataFileCheck | .ipynb, .json, or .npmbridgerc | Performs several checks on `*.batch-engine-data.json` files. |
 JSONCommerceCatalogFileCheck | .ipynb, .json, or .npmbridgerc | Sorts `*.options.json`, `*.products.json`, and `*.products.specifications.json` files. |
-JSONObjectDefinitionFileCheck | .ipynb, .json, or .npmbridgerc | Applies rules to enforce consistency in code style. |
 JSONPageFileCheck | .ipynb, .json, or .npmbridgerc | Sorts by `roleName` in `page.json` files. |
 JSONPortletResponseUtilCheck | .java | Checks if `JSONPortletResponseUtil.writeJSON ` should come before method calling `hideDefaultSuccessMessage`. |
 JSONReplacementsFileCheck | .ipynb, .json, or .npmbridgerc | Sorts by `issueKey`, `from` and `to` in `replacements.json` file. |
@@ -153,18 +153,17 @@ PoshiPropertiesOrderCheck | .function, .jar, .lar, .macro, .path, .testcase, .wa
 PoshiStylingCheck | .function, .jar, .lar, .macro, .path, .testcase, .war, or .zip | Applies rules to enforce consistency in code style. |
 PoshiVariableNameCheck | .function, .jar, .lar, .macro, .path, .testcase, .war, or .zip | Checks variable names for correct use of `camelCase`. |
 PoshiWhitespaceCheck | .function, .jar, .lar, .macro, .path, .testcase, .war, or .zip | Finds missing and unnecessary whitespace. |
-PropertiesCommentsCheck | .eslintignore, .prettierignore, or .properties | Validates comments in `.properties` files. |
-PropertiesDefinitionKeysCheck | .eslintignore, .prettierignore, or .properties | Sorts definition keys in `liferay-plugin-package.properties` file. |
-PropertiesDependenciesFileCheck | .eslintignore, .prettierignore, or .properties | Sorts the properties in `dependencies.properties` file. |
-PropertiesEmptyLinesCheck | .eslintignore, .prettierignore, or .properties | Finds missing and unnecessary empty lines. |
-PropertiesLanguageContractionsCheck | .eslintignore, .prettierignore, or .properties | Finds contractions (such as `can't` or `you're`). |
-PropertiesLanguageKeysOrderCheck | .eslintignore, .prettierignore, or .properties | Sort language keys in `Language.properties` file. |
-PropertiesLanguageStylingCheck | .eslintignore, .prettierignore, or .properties | Applies rules to enforce consistency in code style. |
-PropertiesLongLinesCheck | .eslintignore, .prettierignore, or .properties | Finds lines that are longer than the specified maximum line length. |
-PropertiesMultiLineValuesOrderCheck | .eslintignore, .prettierignore, or .properties | Verifies that property with multiple values is not on a single line. |
-PropertiesStylingCheck | .eslintignore, .prettierignore, or .properties | Applies rules to enforce consistency in code style. |
-PropertiesTestFileCheck | .eslintignore, .prettierignore, or .properties | Checks the order of properties in `test.properties` file. |
-PropertiesWhitespaceCheck | .eslintignore, .prettierignore, or .properties | Finds missing and unnecessary whitespace in `.properties` files. |
+PropertiesCommentsCheck | .properties | Validates comments in `.properties` files and wraps them to the maximum line length. |
+PropertiesDefinitionKeysCheck | .properties | Sorts definition keys in `liferay-plugin-package.properties` file. |
+PropertiesDependenciesFileCheck | .properties | Sorts the properties in `dependencies.properties` file. |
+PropertiesEmptyLinesCheck | .properties | Finds missing and unnecessary empty lines. |
+PropertiesLanguageContractionsCheck | .properties | Finds contractions (such as `can't` or `you're`). |
+PropertiesLanguageKeysOrderCheck | .properties | Sort language keys in `Language.properties` file. |
+PropertiesLanguageStylingCheck | .properties | Applies rules to enforce consistency in code style. |
+PropertiesMultiLineValuesOrderCheck | .properties | Verifies that property with multiple values is not on a single line. |
+PropertiesStylingCheck | .properties | Applies rules to enforce consistency in code style. |
+PropertiesTestFileCheck | .properties | Checks the order of properties in `test.properties` file. |
+PropertiesWhitespaceCheck | .properties | Finds missing and unnecessary whitespace in `.properties` files. |
 PythonClassesAndMethodsOrderCheck | .py | Checks the order of classes and methods. |
 PythonImportsCheck | .py | Sorts and groups imports in `.py` files. |
 PythonStylingCheck | .py | Applies rules to enforce consistency in code style. |
@@ -188,7 +187,7 @@ TextBlockCheck | .java | Finds usage of text block. |
 UnnecessaryMethodCallCheck | .java | Finds unnecessary method calls. |
 [WhitespaceAfterCheck](https://checkstyle.sourceforge.io/checks/whitespace/whitespaceafter.html) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Checks that a token is followed by whitespace, with the exception that it does not check for whitespace after the semicolon of an empty for iterator. |
 [WhitespaceAroundCheck](https://checkstyle.sourceforge.io/checks/whitespace/whitespacearound.html) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Checks that a token is surrounded by whitespace. |
-WhitespaceCheck | .cql, .css, .dtd, .expect, .groovy, .scss, .sh, .soy, .sql, .tld, .tpl, .ts, .tsx, Dockerfile, or packageinfo | Finds missing and unnecessary whitespace. |
+WhitespaceCheck | .*ignore, .cql, .css, .dtd, .expect, .groovy, .scss, .sh, .soy, .sql, .tld, .tpl, .ts, .tsx, Dockerfile, or packageinfo | Finds missing and unnecessary whitespace. |
 XMLCustomSQLOrderCheck | .action, .function, .jelly, .jrxml, .macro, .pom, .project, .properties, .qti, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, or .xsd | Checks the order of attributes in `custom-sql` file. |
 XMLCustomSQLStylingCheck | .action, .function, .jelly, .jrxml, .macro, .pom, .project, .properties, .qti, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, or .xsd | Applies rules to enforce consistency in code style for `.xml` files in directory `custom-sql`. |
 XMLDDLStructuresFileCheck | .action, .function, .jelly, .jrxml, .macro, .pom, .project, .properties, .qti, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, or .xsd | Checks the order of attributes in `-structures.xml` file. |

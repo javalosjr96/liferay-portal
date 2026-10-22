@@ -193,7 +193,7 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 		return _getPortlets(
 			companyId,
 			new DataLevel[] {DataLevel.PORTLET_INSTANCE, DataLevel.SITE},
-			excludeDataAlwaysStaged);
+			excludeDataAlwaysStaged, 0);
 	}
 
 	@Override
@@ -236,7 +236,7 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 
 		return _getPortlets(
 			companyId, new DataLevel[] {DataLevel.SITE},
-			excludeDataAlwaysStaged);
+			excludeDataAlwaysStaged, 0);
 	}
 
 	@Override
@@ -299,28 +299,12 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 		if (stagingGroupHelper.isCompanyGroup(companyId, groupId)) {
 			return _getPortlets(
 				companyId, new DataLevel[] {DataLevel.PORTAL},
-				excludeDataAlwaysStaged);
-		}
-
-		if (stagingGroupHelper.isDepotGroup(groupId)) {
-			return ListUtil.filter(
-				_getPortlets(
-					companyId,
-					new DataLevel[] {DataLevel.DEPOT, DataLevel.SITE},
-					excludeDataAlwaysStaged),
-				portlet -> {
-					PortletDataHandler portletDataHandler =
-						portlet.getPortletDataHandlerInstance();
-
-					return portletDataHandler.isDataDepotLevel() ||
-						   (portletDataHandler.isDataSiteLevel() &&
-							!portletDataHandler.isBatch());
-				});
+				excludeDataAlwaysStaged, groupId);
 		}
 
 		return _getPortlets(
 			companyId, new DataLevel[] {DataLevel.SITE},
-			excludeDataAlwaysStaged);
+			excludeDataAlwaysStaged, groupId);
 	}
 
 	@Override
@@ -486,9 +470,11 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			}
 
 			for (Layout parentLayout : parentLayouts) {
-				if (!layouts.contains(parentLayout)) {
-					layouts.add(parentLayout);
+				if (layouts.contains(parentLayout)) {
+					continue;
 				}
+
+				layouts.add(parentLayout);
 			}
 
 			boolean includeChildren = entry.getValue();
@@ -498,9 +484,11 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			}
 
 			for (Layout childLayout : layout.getAllChildren()) {
-				if (!layouts.contains(childLayout)) {
-					layouts.add(childLayout);
+				if (layouts.contains(childLayout)) {
+					continue;
 				}
+
+				layouts.add(childLayout);
 			}
 		}
 
@@ -1208,10 +1196,12 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			long modelDeletionCount = manifestSummary.getModelDeletionCount(
 				manifestSummaryKey);
 
-			if (modelDeletionCount > 0) {
-				element.addAttribute(
-					"deletion-count", String.valueOf(modelDeletionCount));
+			if (modelDeletionCount <= 0) {
+				continue;
 			}
+
+			element.addAttribute(
+				"deletion-count", String.valueOf(modelDeletionCount));
 		}
 	}
 
@@ -1561,8 +1551,8 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 	}
 
 	private List<Portlet> _getPortlets(
-		long companyId, DataLevel[] dataLevels,
-		boolean excludeDataAlwaysStaged) {
+		long companyId, DataLevel[] dataLevels, boolean excludeDataAlwaysStaged,
+		long groupId) {
 
 		List<Portlet> portlets = new ArrayList<>();
 
@@ -1583,6 +1573,16 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 				 portletDataHandler.isDataPortalLevel()) ||
 				(excludeDataAlwaysStaged &&
 				 portletDataHandler.isDataAlwaysStaged())) {
+
+				continue;
+			}
+
+			if ((groupId > 0) &&
+				(portletDataHandler instanceof
+					BatchEnginePortletDataHandler
+						batchEnginePortletDataHandler) &&
+				!batchEnginePortletDataHandler.isScopeSupported(
+					companyId, groupId)) {
 
 				continue;
 			}
@@ -1679,12 +1679,14 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 			childLayoutsJSONArray = _jsonFactory.createJSONArray();
 
 			for (Layout childLayout : childLayouts) {
-				if (!_populateLayoutsJSON(
+				if (_populateLayoutsJSON(
 						childLayoutsJSONArray, childLayout,
 						selectedLayoutIds)) {
 
-					includeChildren = false;
+					continue;
 				}
+
+				includeChildren = false;
 			}
 		}
 
@@ -1891,7 +1893,6 @@ public class ExportImportHelperImpl implements ExportImportHelper {
 						DefaultConfigurationPortletDataHandler) &&
 					((portletDataHandler.isBatch() &&
 					  portletDataHandler.isDataPortalLevel()) ||
-					 portletDataHandler.isDataDepotLevel() ||
 					 portletDataHandler.isDataSiteLevel()) &&
 					portletElementHandler.isPortletData()) {
 

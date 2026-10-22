@@ -5,6 +5,7 @@
 
 package com.liferay.dynamic.data.mapping.internal.exportimport.content.processor;
 
+import com.liferay.document.library.helper.DLFileEntryJSONHelper;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
@@ -175,32 +176,35 @@ public class DDMFormValuesExportImportContentProcessor
 				for (Element element : elements) {
 					String className = element.attributeValue("class-name");
 
-					if (className.equals(Layout.class.getName())) {
-						String uuid = element.attributeValue("uuid");
-
-						if (jsonObject.has("id") &&
-							!Objects.equals(uuid, jsonObject.getString("id"))) {
-
-							continue;
-						}
-
-						String privateLayout = element.attributeValue(
-							"private-layout");
-
-						importedLayout =
-							_layoutLocalService.fetchLayoutByUuidAndGroupId(
-								uuid, _portletDataContext.getScopeGroupId(),
-								Boolean.valueOf(privateLayout));
+					if (!className.equals(Layout.class.getName())) {
+						continue;
 					}
+
+					String uuid = element.attributeValue("uuid");
+
+					if (jsonObject.has("id") &&
+						!Objects.equals(uuid, jsonObject.getString("id"))) {
+
+						continue;
+					}
+
+					String privateLayout = element.attributeValue(
+						"private-layout");
+
+					importedLayout =
+						_layoutLocalService.fetchLayoutByUuidAndGroupId(
+							uuid, _portletDataContext.getScopeGroupId(),
+							Boolean.valueOf(privateLayout));
 				}
 
-				if (importedLayout != null) {
-					value.addString(
-						locale,
-						toJSON(
-							importedLayout, locale,
-							jsonObject.getString("name")));
+				if (importedLayout == null) {
+					continue;
 				}
+
+				value.addString(
+					locale,
+					toJSON(
+						importedLayout, locale, jsonObject.getString("name")));
 			}
 		}
 
@@ -277,6 +281,9 @@ public class DDMFormValuesExportImportContentProcessor
 
 	@Reference
 	private DLAppLocalService _dlAppLocalService;
+
+	@Reference
+	private DLFileEntryJSONHelper _dlFileEntryJSONHelper;
 
 	@Reference
 	private JournalArticleLocalService _journalArticleLocalService;
@@ -420,8 +427,6 @@ public class DDMFormValuesExportImportContentProcessor
 					continue;
 				}
 
-				String type = jsonObject.getString("type");
-
 				FileEntry importedFileEntry = fetchImportedFileEntry(
 					_portletDataContext, jsonObject);
 
@@ -429,7 +434,12 @@ public class DDMFormValuesExportImportContentProcessor
 					continue;
 				}
 
-				value.addString(locale, toJSON(importedFileEntry, type));
+				jsonObject.remove("html");
+
+				value.addString(
+					locale,
+					_dlFileEntryJSONHelper.getFileEntryJSON(
+						importedFileEntry, jsonObject));
 			}
 		}
 
@@ -485,20 +495,6 @@ public class DDMFormValuesExportImportContentProcessor
 			}
 
 			return null;
-		}
-
-		protected String toJSON(FileEntry fileEntry, String type) {
-			return JSONUtil.put(
-				"classPK", fileEntry.getFileEntryId()
-			).put(
-				"groupId", fileEntry.getGroupId()
-			).put(
-				"title", fileEntry.getTitle()
-			).put(
-				"type", type
-			).put(
-				"uuid", fileEntry.getUuid()
-			).toString();
 		}
 
 		private final PortletDataContext _portletDataContext;

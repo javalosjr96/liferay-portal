@@ -37,6 +37,18 @@ components:
                     format: int64
                     readOnly: true
                     type: integer
+                longStandingDraftsCount:
+                    format: int64
+                    readOnly: true
+                    type: integer
+                missingRequiredFieldsCount:
+                    format: int64
+                    readOnly: true
+                    type: integer
+                overdueWorkflowTasksCount:
+                    format: int64
+                    readOnly: true
+                    type: integer
                 pendingCount:
                     format: int64
                     readOnly: true
@@ -49,11 +61,19 @@ components:
                     format: int64
                     readOnly: true
                     type: integer
+                slaBreachedWorkflowTasksCount:
+                    format: int64
+                    readOnly: true
+                    type: integer
                 totalCount:
                     format: int64
                     readOnly: true
                     type: integer
                 upcomingReviewCount:
+                    format: int64
+                    readOnly: true
+                    type: integer
+                workflowTasksCount:
                     format: int64
                     readOnly: true
                     type: integer
@@ -81,10 +101,52 @@ components:
                     format: int64
                     readOnly: true
                     type: integer
+                deletedBrokenLinksCount:
+                    format: int64
+                    readOnly: true
+                    type: integer
+                draftBrokenLinksCount:
+                    format: int64
+                    readOnly: true
+                    type: integer
+                expiredBrokenLinksCount:
+                    format: int64
+                    readOnly: true
+                    type: integer
                 href:
                     readOnly: true
                     type: string
                 id:
+                    format: int64
+                    readOnly: true
+                    type: integer
+                inTrashBrokenLinksCount:
+                    format: int64
+                    readOnly: true
+                    type: integer
+                objectDefinitionExternalReferenceCode:
+                    readOnly: true
+                    type: string
+                title:
+                    readOnly: true
+                    type: string
+        MissingRequiredFieldsAsset:
+            properties:
+                actions:
+                    additionalProperties:
+                        additionalProperties:
+                            type: string
+                        type: object
+                    readOnly: true
+                    type: object
+                href:
+                    readOnly: true
+                    type: string
+                id:
+                    format: int64
+                    readOnly: true
+                    type: integer
+                missingRequiredFieldsCount:
                     format: int64
                     readOnly: true
                     type: integer
@@ -226,3 +288,44 @@ paths:
                                     $ref: "#/components/schemas/BrokenLinkAsset"
                                 type: array
             tags: ["BrokenLinkAsset"]
+            x-feature-flag: LPD-82226
+    "/missing-required-fields-assets":
+        get:
+            operationId: getMissingRequiredFieldsAssetsPage
+            parameters:
+                -   in: query
+                    name: assetLibraryId
+                    schema:
+                        format: int64
+                        type: integer
+                -   in: query
+                    name: page
+                    schema:
+                        type: integer
+                -   in: query
+                    name: pageSize
+                    schema:
+                        type: integer
+                -   in: query
+                    name: search
+                    schema:
+                        type: string
+                -   in: query
+                    name: sort
+                    schema:
+                        type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/MissingRequiredFieldsAsset"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/MissingRequiredFieldsAsset"
+                                type: array
+            tags: ["MissingRequiredFieldsAsset"]
+            x-feature-flag: LPD-82226

@@ -34,6 +34,7 @@ import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DataGuard;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.HTTPTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
@@ -200,6 +201,8 @@ public class WorkflowDefinitionResourceTest
 					workflowDefinition.getVersion()));
 
 		_workflowDefinitions.remove(workflowDefinition.getName());
+
+		_testDeleteWorkflowDefinitionUndeployWithoutPermission();
 	}
 
 	@Override
@@ -339,6 +342,14 @@ public class WorkflowDefinitionResourceTest
 
 		_testPostWorkflowDefinitionSaveWithScope();
 		_testPostWorkflowDefinitionSaveWithSystem();
+	}
+
+	@Override
+	@Test
+	public void testPostWorkflowDefinitionUpdateActive() throws Exception {
+		super.testPostWorkflowDefinitionUpdateActive();
+
+		_testPostWorkflowDefinitionUpdateActiveWithoutPermission();
 	}
 
 	@Override
@@ -740,6 +751,24 @@ public class WorkflowDefinitionResourceTest
 		return group.getExternalReferenceCode();
 	}
 
+	private WorkflowDefinitionResource _getUserWorkflowDefinitionResource()
+		throws Exception {
+
+		String password = RandomTestUtil.randomString();
+
+		_user = UserTestUtil.addUser(testCompany, password);
+
+		return WorkflowDefinitionResource.builder(
+		).authentication(
+			_user.getEmailAddress(), password
+		).endpoint(
+			testCompany.getVirtualHostname(),
+			PortalUtil.getPortalServerPort(false), "http"
+		).locale(
+			LocaleUtil.getDefault()
+		).build();
+	}
+
 	private JSONObject _getWorkflowDefinitionJSONObject(String fileName)
 		throws Exception {
 
@@ -755,10 +784,78 @@ public class WorkflowDefinitionResourceTest
 			JSONObject workflowDefinitionJSONObject)
 		throws Exception {
 
-		return HTTPTestUtil.invokeToJSONObject(
+		JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
 			workflowDefinitionJSONObject.toString(),
 			"headless-admin-workflow/v1.0/workflow-definitions",
 			Http.Method.POST);
+
+		WorkflowDefinition workflowDefinition = WorkflowDefinitionSerDes.toDTO(
+			jsonObject.toString());
+
+		_workflowDefinitions.put(
+			workflowDefinition.getName(), workflowDefinition);
+
+		return jsonObject;
+	}
+
+	private void _testDeleteWorkflowDefinitionUndeployWithoutPermission()
+		throws Exception {
+
+		WorkflowDefinitionResource userWorkflowDefinitionResource =
+			_getUserWorkflowDefinitionResource();
+
+		WorkflowDefinition draftWorkflowDefinition =
+			testPostWorkflowDefinitionSave_addWorkflowDefinition(
+				randomWorkflowDefinition());
+
+		assertHttpResponseStatusCode(
+			403,
+			userWorkflowDefinitionResource.
+				deleteWorkflowDefinitionUndeployHttpResponse(
+					draftWorkflowDefinition.getName(),
+					draftWorkflowDefinition.getVersion()));
+
+		assertHttpResponseStatusCode(
+			200,
+			workflowDefinitionResource.getWorkflowDefinitionByNameHttpResponse(
+				draftWorkflowDefinition.getName(), null,
+				GetterUtil.getInteger(draftWorkflowDefinition.getVersion())));
+
+		WorkflowDefinition workflowDefinition =
+			testPostWorkflowDefinitionDeploy_addWorkflowDefinition(
+				randomWorkflowDefinition());
+
+		assertHttpResponseStatusCode(
+			403,
+			userWorkflowDefinitionResource.
+				deleteWorkflowDefinitionUndeployHttpResponse(
+					workflowDefinition.getName(),
+					workflowDefinition.getVersion()));
+
+		workflowDefinition =
+			workflowDefinitionResource.getWorkflowDefinitionByName(
+				workflowDefinition.getName(), null,
+				GetterUtil.getInteger(workflowDefinition.getVersion()));
+
+		Assert.assertTrue(workflowDefinition.getActive());
+
+		workflowDefinitionResource.postWorkflowDefinitionUpdateActive(
+			false, workflowDefinition.getName(),
+			workflowDefinition.getVersion());
+
+		assertHttpResponseStatusCode(
+			403,
+			userWorkflowDefinitionResource.
+				deleteWorkflowDefinitionUndeployHttpResponse(
+					workflowDefinition.getName(),
+					workflowDefinition.getVersion()));
+
+		workflowDefinition =
+			workflowDefinitionResource.getWorkflowDefinitionByName(
+				workflowDefinition.getName(), null,
+				GetterUtil.getInteger(workflowDefinition.getVersion()));
+
+		Assert.assertFalse(workflowDefinition.getActive());
 	}
 
 	private void _testPostWorkflowDefinitionSaveWithScope() throws Exception {
@@ -817,6 +914,31 @@ public class WorkflowDefinitionResourceTest
 		Assert.assertFalse(workflowDefinition.getSystem());
 	}
 
+	private void _testPostWorkflowDefinitionUpdateActiveWithoutPermission()
+		throws Exception {
+
+		WorkflowDefinitionResource userWorkflowDefinitionResource =
+			_getUserWorkflowDefinitionResource();
+
+		WorkflowDefinition workflowDefinition =
+			testGetWorkflowDefinitionsPage_addWorkflowDefinition(
+				randomWorkflowDefinition());
+
+		assertHttpResponseStatusCode(
+			403,
+			userWorkflowDefinitionResource.
+				postWorkflowDefinitionUpdateActiveHttpResponse(
+					false, workflowDefinition.getName(),
+					workflowDefinition.getVersion()));
+
+		workflowDefinition =
+			workflowDefinitionResource.getWorkflowDefinitionByName(
+				workflowDefinition.getName(), null,
+				GetterUtil.getInteger(workflowDefinition.getVersion()));
+
+		Assert.assertTrue(workflowDefinition.getActive());
+	}
+
 	private static com.liferay.portal.kernel.workflow.WorkflowDefinition
 		_workflowDefinition;
 
@@ -832,6 +954,9 @@ public class WorkflowDefinitionResourceTest
 	private GroupLocalService _groupLocalService;
 
 	private WorkflowDefinitionResource _permissionsWorkflowDefinitionResource;
+
+	@DeleteAfterTestRun
+	private User _user;
 
 	@Inject
 	private WorkflowDefinitionLinkLocalService

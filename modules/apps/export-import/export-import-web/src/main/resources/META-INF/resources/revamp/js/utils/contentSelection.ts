@@ -95,13 +95,14 @@ export function isSelected(
 }
 
 export function getPortletDataHandlerSelection(
-	previewPortletDataHandlerControl: PreviewPortletDataHandlerControl
+	previewPortletDataHandlerControl: PreviewPortletDataHandlerControl,
+	{privateLayout = false}: {privateLayout?: boolean} = {}
 ): PortletDataHandlerSelection {
 	if (
 		previewPortletDataHandlerControl.name ===
 		LAYOUT_SET_LAYOUTS_PORTLET_DATA_KEY
 	) {
-		return {privateLayout: false};
+		return {privateLayout};
 	}
 
 	if (previewPortletDataHandlerControl.type === 'Choice') {
@@ -116,19 +117,22 @@ export function getPortletDataHandlerSelection(
 	}
 
 	return getPortletDataHandlerSelections(
-		previewPortletDataHandlerControl.previewPortletDataHandlerControls
+		previewPortletDataHandlerControl.previewPortletDataHandlerControls,
+		{privateLayout}
 	);
 }
 
 export function getPortletDataHandlerSelections(
-	previewPortletDataHandlerControls: PreviewPortletDataHandlerControl[]
+	previewPortletDataHandlerControls: PreviewPortletDataHandlerControl[],
+	{privateLayout = false}: {privateLayout?: boolean} = {}
 ): Record<string, PortletDataHandlerSelection> {
 	return Object.fromEntries(
 		previewPortletDataHandlerControls.map(
 			(previewPortletDataHandlerControl) => [
 				previewPortletDataHandlerControl.name,
 				getPortletDataHandlerSelection(
-					previewPortletDataHandlerControl
+					previewPortletDataHandlerControl,
+					{privateLayout}
 				),
 			]
 		)
@@ -193,12 +197,18 @@ export function getSectionSelection(
 	{
 		commentsAndRatingsEnabled = false,
 		lookAndFeelEnabled = false,
-	}: {commentsAndRatingsEnabled?: boolean; lookAndFeelEnabled?: boolean} = {}
+		privateLayout = false,
+	}: {
+		commentsAndRatingsEnabled?: boolean;
+		lookAndFeelEnabled?: boolean;
+		privateLayout?: boolean;
+	} = {}
 ): Record<string, PortletDataHandlerSelection> {
 	const portletDataHandlerSelections = getPortletDataHandlerSelections(
 		getSectionPreviewPortletDataHandlers(previewPortletDataHandlerSection, {
 			lookAndFeelEnabled,
-		})
+		}),
+		{privateLayout}
 	);
 
 	if (
@@ -221,10 +231,12 @@ export function getFullDataSelection(
 	{
 		commentsAndRatingsEnabled = false,
 		lookAndFeelEnabled = false,
+		privateLayout = false,
 		showDeletions = false,
 	}: {
 		commentsAndRatingsEnabled?: boolean;
 		lookAndFeelEnabled?: boolean;
+		privateLayout?: boolean;
 		showDeletions?: boolean;
 	} = {}
 ): ContentSelection {
@@ -237,6 +249,7 @@ export function getFullDataSelection(
 			getSectionSelection(previewPortletDataHandlerSection, {
 				commentsAndRatingsEnabled,
 				lookAndFeelEnabled,
+				privateLayout,
 			}),
 		])
 	);
@@ -343,7 +356,7 @@ export function getVisibleSections(
 }
 
 export function toProcessRequestFlags(
-	contentSelection: ContentSelection | undefined
+	contentSelection: ContentSelection | null | undefined
 ) {
 	const commentsAndRatings = (contentSelection?.[SECTION_KEY_CONTENT]
 		?.commentsAndRatings ??
@@ -418,7 +431,7 @@ export function getLayoutSetCount(
 }
 
 export function isPrivateLayoutSelected(
-	contentSelection: ContentSelection | undefined
+	contentSelection: ContentSelection | null | undefined
 ): boolean {
 	if (!contentSelection) {
 		return false;
@@ -440,7 +453,7 @@ export function isPrivateLayoutSelected(
 export function getSelectedItemsCount(
 	additionCount: number | undefined,
 	previewPortletDataHandlerSections: PreviewPortletDataHandlerSection[],
-	contentSelection: ContentSelection | undefined
+	contentSelection: ContentSelection | null | undefined
 ): number | undefined {
 	if (additionCount === undefined) {
 		return undefined;
@@ -459,7 +472,7 @@ export function getSelectedItemsCount(
 export function getSelectedDeletionCount(
 	deletionCount: number | undefined,
 	previewPortletDataHandlerSections: PreviewPortletDataHandlerSection[],
-	contentSelection: ContentSelection | undefined
+	contentSelection: ContentSelection | null | undefined
 ): number | undefined {
 	if (deletionCount === undefined) {
 		return undefined;
@@ -477,7 +490,7 @@ export function getSelectedDeletionCount(
 
 export function getLayoutSetCountDelta(
 	previewPortletDataHandlerSections: PreviewPortletDataHandlerSection[],
-	contentSelection: ContentSelection | undefined,
+	contentSelection: ContentSelection | null | undefined,
 	key: 'additionCount' | 'deletionCount' = 'additionCount'
 ): number {
 	const privateLayout = isPrivateLayoutSelected(contentSelection);
@@ -496,7 +509,7 @@ export function getLayoutSetCountDelta(
 
 export function withSelectedLayoutSetCount(
 	previewPortletDataHandlerSections: PreviewPortletDataHandlerSection[],
-	contentSelection: ContentSelection | undefined
+	contentSelection: ContentSelection | null | undefined
 ): PreviewPortletDataHandlerSection[] {
 	const additionCountDelta = getLayoutSetCountDelta(
 		previewPortletDataHandlerSections,

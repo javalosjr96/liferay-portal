@@ -4,6 +4,7 @@
  */
 
 import '@testing-library/jest-dom';
+import {ClayIconIllustrationSpriteContext} from '@clayui/icon';
 import {
 	fireEvent,
 	render,
@@ -17,6 +18,22 @@ import ApiHelper from '../../../../src/main/resources/META-INF/resources/js/comm
 import {initialSpace} from '../../../../src/main/resources/META-INF/resources/js/main_view/dashboard/common/SpacePicker';
 import {InventoryContextProvider} from '../../../../src/main/resources/META-INF/resources/js/main_view/dashboard/inventory/InventoryContext';
 import {ExpiredAssetsCard} from '../../../../src/main/resources/META-INF/resources/js/main_view/dashboard/inventory/components/ExpiredAssetsCard';
+
+jest.mock(
+	'../../../../src/main/resources/META-INF/resources/js/common/utils/constants',
+	() => ({
+		...jest.requireActual<
+			typeof import('../../../../src/main/resources/META-INF/resources/js/common/utils/constants')
+		>(
+			'../../../../src/main/resources/META-INF/resources/js/common/utils/constants'
+		),
+		PAGINATION_BAR_LABELS: {
+			paginationResults: 'Showing {0} to {1} of {2} entries.',
+			perPageItems: '{0} Items',
+			selectPerPageItems: '{0} Items',
+		},
+	})
+);
 
 const assetsList = [
 	{
@@ -200,7 +217,9 @@ describe('[CMS Dashboard] ExpiredAssetsCard', () => {
 
 		expect(items.length).toBe(20);
 
-		expect(screen.getByText('Showing 1 to 20 of 24')).toBeInTheDocument();
+		expect(
+			screen.getByText('Showing 1 to 20 of 24 entries.')
+		).toBeInTheDocument();
 
 		expect(screen.getByText(assetsList[19].title)).toBeInTheDocument();
 
@@ -232,7 +251,7 @@ describe('[CMS Dashboard] ExpiredAssetsCard', () => {
 
 		await waitFor(() => {
 			expect(
-				screen.getByText('Showing 21 to 24 of 24')
+				screen.getByText('Showing 21 to 24 of 24 entries.')
 			).toBeInTheDocument();
 		});
 
@@ -300,9 +319,13 @@ describe('[CMS Dashboard] ExpiredAssetsCard', () => {
 		};
 
 		render(
-			<InventoryContextProvider value={customValue}>
-				<ExpiredAssetsCard />
-			</InventoryContextProvider>
+			<ClayIconIllustrationSpriteContext.Provider
+				value={Liferay.ThemeDisplay.getPathThemeEmptyStatesSpritemap()}
+			>
+				<InventoryContextProvider value={customValue}>
+					<ExpiredAssetsCard />
+				</InventoryContextProvider>
+			</ClayIconIllustrationSpriteContext.Provider>
 		);
 
 		await waitForElementToBeRemoved(() => screen.getByTestId('loading'));
@@ -314,11 +337,14 @@ describe('[CMS Dashboard] ExpiredAssetsCard', () => {
 
 		expect(screen.getByText('clear-filters')).toBeInTheDocument();
 
-		const images = screen.getAllByRole('presentation');
-		const emptyStateImage = images.find((image) =>
-			image.getAttribute('src')?.includes('search_state.svg')
+		const illustrations = screen.getAllByRole('presentation');
+		const emptyStateIllustration = illustrations.find((illustration) =>
+			illustration
+				.querySelector('use')
+				?.getAttribute('href')
+				?.endsWith('/clay/empty_states.svg#search-state')
 		);
 
-		expect(emptyStateImage).toBeInTheDocument();
+		expect(emptyStateIllustration).toBeInTheDocument();
 	});
 });

@@ -312,9 +312,7 @@ test(
 
 			await exportImportPage.exportButton.click();
 
-			await expect(
-				exportImportPage.taskStatusLabel(exportName)
-			).toBeVisible();
+			await exportImportPage.taskStatusLabel(exportName).waitFor();
 
 			folderPath = await exportImportPage.download(exportName);
 		});

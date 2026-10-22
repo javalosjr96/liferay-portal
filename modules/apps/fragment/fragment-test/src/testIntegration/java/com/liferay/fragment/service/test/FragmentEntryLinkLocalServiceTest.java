@@ -55,6 +55,9 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.transaction.Propagation;
+import com.liferay.portal.kernel.transaction.TransactionConfig;
+import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.JavaConstants;
@@ -945,54 +948,8 @@ public class FragmentEntryLinkLocalServiceTest {
 	@Test
 	@TestInfo("LPS-128652")
 	public void testUpdateLatestChanges() throws Exception {
-		FragmentEntry fragmentEntry = _addFragmentEntry(
-			_group.getGroupId(), _fragmentCollection.getFragmentCollectionId(),
-			RandomTestUtil.randomString(),
-			_read("fragment-freemarker-with-configuration.html"),
-			_read("configuration-tabs.json"), FragmentConstants.TYPE_COMPONENT,
-			_serviceContext);
-
-		FragmentEntryLink fragmentEntryLink1 = _addFragmentEntryLink(
-			fragmentEntry, null, _defaultSegmentsExperienceId,
-			_layout.getPlid(),
-			JSONUtil.put(
-				FragmentEntryProcessorConstants.
-					KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR,
-				JSONUtil.put(
-					"title4",
-					JSONUtil.put(
-						"defaultValue", "title4"
-					).put(
-						"en_US", RandomTestUtil.randomString()
-					))
-			).put(
-				FragmentEntryProcessorConstants.
-					KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR,
-				JSONUtil.put("numberOfTabs", "4")
-			).toString(),
-			0, null);
-
-		FragmentEntryLink fragmentEntryLink2 = _addFragmentEntryLink(
-			fragmentEntry, null, _defaultSegmentsExperienceId,
-			_layout.getPlid(), StringPool.BLANK, 0, null);
-
-		_fragmentEntryLinkLocalService.updateLatestChanges(
-			fragmentEntryLink1.getFragmentEntryLinkId());
-
-		fragmentEntryLink2 =
-			_fragmentEntryLinkLocalService.fetchFragmentEntryLink(
-				fragmentEntryLink2.getFragmentEntryLinkId());
-
-		JSONObject configurationValuesJSONObject =
-			_jsonFactory.createJSONObject(
-				fragmentEntryLink2.getEditableValues());
-
-		JSONObject editableJSONObject =
-			configurationValuesJSONObject.getJSONObject(
-				FragmentEntryProcessorConstants.
-					KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR);
-
-		Assert.assertNull(editableJSONObject.getJSONObject("title4"));
+		_testUpdateLatestChanges();
+		_testUpdateLatestChangesWithRollback();
 	}
 
 	@Test
@@ -1393,6 +1350,103 @@ public class FragmentEntryLinkLocalServiceTest {
 			groupFragmentEntryUsageCounts2.size());
 	}
 
+	private void _testUpdateLatestChanges() throws Exception {
+		FragmentEntry fragmentEntry = _addFragmentEntry(
+			_group.getGroupId(), _fragmentCollection.getFragmentCollectionId(),
+			RandomTestUtil.randomString(),
+			_read("fragment-freemarker-with-configuration.html"),
+			_read("configuration-tabs.json"), FragmentConstants.TYPE_COMPONENT,
+			_serviceContext);
+
+		FragmentEntryLink fragmentEntryLink1 = _addFragmentEntryLink(
+			fragmentEntry, null, _defaultSegmentsExperienceId,
+			_layout.getPlid(),
+			JSONUtil.put(
+				FragmentEntryProcessorConstants.
+					KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR,
+				JSONUtil.put(
+					"title4",
+					JSONUtil.put(
+						"defaultValue", "title4"
+					).put(
+						"en_US", RandomTestUtil.randomString()
+					))
+			).put(
+				FragmentEntryProcessorConstants.
+					KEY_FREEMARKER_FRAGMENT_ENTRY_PROCESSOR,
+				JSONUtil.put("numberOfTabs", "4")
+			).toString(),
+			0, null);
+
+		FragmentEntryLink fragmentEntryLink2 = _addFragmentEntryLink(
+			fragmentEntry, null, _defaultSegmentsExperienceId,
+			_layout.getPlid(), StringPool.BLANK, 0, null);
+
+		_fragmentEntryLinkLocalService.updateLatestChanges(
+			fragmentEntryLink1.getFragmentEntryLinkId());
+
+		fragmentEntryLink2 =
+			_fragmentEntryLinkLocalService.fetchFragmentEntryLink(
+				fragmentEntryLink2.getFragmentEntryLinkId());
+
+		JSONObject configurationValuesJSONObject =
+			_jsonFactory.createJSONObject(
+				fragmentEntryLink2.getEditableValues());
+
+		JSONObject editableJSONObject =
+			configurationValuesJSONObject.getJSONObject(
+				FragmentEntryProcessorConstants.
+					KEY_EDITABLE_FRAGMENT_ENTRY_PROCESSOR);
+
+		Assert.assertNull(editableJSONObject.getJSONObject("title4"));
+	}
+
+	private void _testUpdateLatestChangesWithRollback() throws Exception {
+		FragmentEntry fragmentEntry = _addFragmentEntry(
+			_group.getGroupId(), _fragmentCollection.getFragmentCollectionId(),
+			RandomTestUtil.randomString(), "<div>test</div>",
+			_read("configuration-light.json"), FragmentConstants.TYPE_COMPONENT,
+			_serviceContext);
+
+		FragmentEntryLink fragmentEntryLink = _addFragmentEntryLink(
+			fragmentEntry, null, _defaultSegmentsExperienceId,
+			_layout.getPlid(), StringPool.BLANK, 0, null);
+
+		_updateFragmentEntry(
+			fragmentEntry, fragmentEntry.getCss(), StringUtil.randomString(),
+			fragmentEntry.getJs(), _read("configuration-dark.json"));
+
+		long fragmentEntryLinkId = fragmentEntryLink.getFragmentEntryLinkId();
+
+		_fragmentEntryLinkLocalService.getFragmentEntryLink(
+			fragmentEntryLinkId);
+
+		try {
+			TransactionInvokerUtil.invoke(
+				_transactionConfig,
+				() -> {
+					_fragmentEntryLinkLocalService.updateLatestChanges(
+						fragmentEntryLinkId);
+
+					throw new PortalException("Roll back");
+				});
+
+			Assert.fail();
+		}
+		catch (Throwable throwable) {
+			Assert.assertEquals("Roll back", throwable.getMessage());
+		}
+
+		fragmentEntryLink = _fragmentEntryLinkLocalService.getFragmentEntryLink(
+			fragmentEntryLinkId);
+
+		Assert.assertEquals(
+			_objectMapper.readTree(fragmentEntryLink.getConfiguration()),
+			_objectMapper.readTree(
+				String.valueOf(
+					fragmentEntryLink.getConfigurationJSONObject())));
+	}
+
 	private void _updateFragmentEntry(
 			FragmentEntry fragmentEntry, String css, String html, String js,
 			String configuration)
@@ -1405,6 +1459,10 @@ public class FragmentEntryLinkLocalServiceTest {
 			fragmentEntry.getPreviewFileEntryId(), false,
 			fragmentEntry.getTypeOptions(), WorkflowConstants.STATUS_APPROVED);
 	}
+
+	private static final TransactionConfig _transactionConfig =
+		TransactionConfig.Factory.create(
+			Propagation.REQUIRES_NEW, new Class<?>[] {Exception.class});
 
 	@Inject
 	private CompanyLocalService _companyLocalService;

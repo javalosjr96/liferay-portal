@@ -1,24 +1,24 @@
 # Baseline
 
-## Trigger
+Compares each exported API against its last release and fails on a missing, excessive, or insufficient `Bundle-Version` or `packageinfo` bump.
 
-Always, apart from a diff confined to the trees **Match** excludes. None of those trees can require a version bump. The bnd baseline task diffs each exported API against the last release and fails on a missing, excessive, or insufficient `Bundle-Version` or `packageinfo` bump. `maven-executor` is the one module under `modules/test` the baseline task actually runs, so it stays selected.
+The comparison covers the whole repository because the release it compares against comes from Nexus and can change between runs. Only a module the branch changed can fail it, so one stale version on master does not fail every pull request. It runs on every diff apart from one confined to `.claude`, `portal-web/test`, or the `jenkins-results-parser`, `playwright`, and `poshi` trees under `modules/test`, none of which can require a version bump.
 
-Do not narrow the run to the branch diff. The comparison target is resolved from Nexus on every run, so a module the branch never touched can start failing between one run and the next. Narrow the verdict instead, as **Command** sets out: only a module the branch changed can fail it. Otherwise one stale version on master fails every pull request at once, stopping the developer least able to judge whether the bump is right.
+Shuyang Zhou must approve every change to this validation, including its `## Match`, since narrowing either the `## Match` or the whole repository run reopens the release drift that commit `3c27d38` fixed.
 
 ## Match
 
-`. &! ^modules/test/jenkins-results-parser/|^modules/test/playwright/|^modules/test/poshi/|^portal-web/test/`
+`. &! ^\.claude/|^modules/test/jenkins-results-parser/|^modules/test/playwright/|^modules/test/poshi/|^portal-web/test/`
+
+## Preconditions
+
+- Portal Snapshots
 
 ## Command
 
-Install the portal snapshot, then baseline:
+Every module baselines against the portal snapshot, which installs under `${REPO_ROOT}/.m2` rather than the home Maven repository, and with no `repository` segment in the path. Check for it at `${REPO_ROOT}/.m2/com/liferay/portal/com.liferay.portal.impl`, since probing the conventional `.m2/repository/com/liferay/...` reports a healthy tree as missing. A genuinely missing or stale one fails the module run with `Could not find com.liferay.portal.impl`, an environment failure rather than a versioning one.
 
-```bash
-(cd "${REPO_ROOT}" && ant compile install-portal-snapshots)
-```
-
-Every module baselines against that snapshot, which installs under `${REPO_ROOT}/.m2` rather than the home Maven repository, and with no `repository` segment in the path. Check for it at `${REPO_ROOT}/.m2/com/liferay/portal/com.liferay.portal.impl`, since probing the conventional `.m2/repository/com/liferay/...` reports a healthy tree as missing. A genuinely missing or stale one fails the module run with `Could not find com.liferay.portal.impl`, an environment failure rather than a versioning one.
+Run the baseline:
 
 ```bash
 (cd "${REPO_ROOT}" && ant baseline-all)
@@ -29,7 +29,7 @@ Leave `baseline.all.ant.projects` at its default of `true`. Passing `false` drop
 Prerequisites:
 
 - Each baseline resolves the last released artifact from Nexus, so the run needs network access. Use the local check below when there is none.
-- A project that has not been cleanly built on this branch cannot be baselined at all. Rerun after `ant all`, which rebuilds all seven and baselines each one through the `jar` target.
+- A project that has not been built on this branch cannot be baselined at all. The **Portal Snapshots** precondition builds the jar of each of the seven and stops the run when one is missing, so an unbuilt checkout never reaches this validation and is never the branch's failure.
 - Silence is not a pass, but a `baseline-all` that reports something is worth reading. [build.xml](../../../../../build.xml) passes `--quiet` to both of its Gradle calls, which suppresses lifecycle output and so deletes every `> Task` line. Warning rows are logged at `WARN` and survive, so a run that finds something prints its table and names the failing task. Take the findings from there when they are present.
 
 	A `BUILD SUCCESSFUL` from `baseline-all` is what proves nothing. The modules half runs `--continue --parallel` with no `--rerun`, so a cached `UP-TO-DATE` verdict is indistinguishable from a comparison, the seven Ant projects run under `failonerror="false"`, and `<parallel threadCount="2">` interleaves the two halves so nothing in the output can be attributed to a project. Use the standalone runs below to prove a project compared something, not to find what it found.
@@ -42,14 +42,24 @@ Confirm each Ant project actually baselined by running it alone, where nothing i
 ("${REPO_ROOT}/gradlew" --console=plain --project-dir "${REPO_ROOT}/<project>" baseline --rerun)
 ```
 
-Keep `--rerun`. Without it the task reports `UP-TO-DATE` and exits 0 in half a second, a cached verdict rather than a comparison. A genuine run prints `1 executed`. Fail when one of the seven is missing its jar, reports `Could not resolve`, or never prints `1 executed` — a baseline that did not run is not one that passed. A nonzero exit is not itself the verdict, since a project that ran and found something exits nonzero too.
+Keep `--rerun`. Without it the task reports `UP-TO-DATE` and exits 0 in half a second, a cached verdict rather than a comparison. A genuine run prints `1 executed`. Fail when one of the seven reports `Could not resolve` or never prints `1 executed` — a baseline that did not run is not one that passed. A nonzero exit is not itself the verdict, since a project that ran and found something exits nonzero too.
 
-Confirm the branch's own modules the same way, keeping `--rerun`, and passing each changed module whose `bnd.bnd` carries `Export-Package:` as the project directory. Take those modules from the diff, walking each changed file up to its nearest ancestor holding a `bnd.bnd`:
+Confirm the branch's own modules the same way, keeping `--rerun` and passing each as the project directory. Take the changed modules under `modules`, and keep those whose `bnd.bnd` carries `Export-Package` on the branch or on the merge base, since a module that exports nothing has no API to compare:
 
 ```bash
-MERGE_BASE=$(git merge-base HEAD master)
-
-git diff --name-only "${MERGE_BASE}...HEAD"
+bash "${SKILL_DIR}/select_paths.sh" "${MERGE_BASE}" "${VALIDATION_FILE}" \
+	| bash "${SKILL_DIR}/find_modules.sh" "${MERGE_BASE}" \
+	| cut -d " " -f1 \
+	| command grep '^modules/' \
+	| sort --unique \
+	| while IFS= read -r module
+do
+	if command grep '^Export-Package' "${REPO_ROOT}/${module}/bnd.bnd" > /dev/null 2>&1 ||
+	   git show "${MERGE_BASE}:${module}/bnd.bnd" 2> /dev/null | command grep '^Export-Package' > /dev/null
+	then
+		echo "${module}"
+	fi
+done
 ```
 
 `baseline-all` compares those too, and they are where a branch's changes land, so confirming only the seven leaves the half that matters unevidenced. A module builds its dependencies first and so reports an aggregate count rather than `1 executed`. Judge it by the `> Task :<path>:baseline` line, which a run that never compared anything does not print.
@@ -140,7 +150,6 @@ When several appear in one run, fail on the strictest the branch owns and leave 
 ## Checklist
 
 ```
-- [ ] Setup: ant compile install-portal-snapshots
 - [ ] Baseline
 ```
 

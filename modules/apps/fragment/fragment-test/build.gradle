@@ -1,7 +1,7 @@
 dependencies {
-	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-annotations", version: "2.18.9"
-	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.18.9"
-	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-databind", version: "2.18.9"
+	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-annotations", version: "2.18.11"
+	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.18.11"
+	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-databind", version: "2.18.11"
 	testIntegrationImplementation group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
 	testIntegrationImplementation group: "com.liferay.portal", name: "com.liferay.util.taglib", version: "default"
 	testIntegrationImplementation group: "jakarta.servlet", name: "jakarta.servlet-api", version: "6.0.0"
@@ -23,6 +23,7 @@ dependencies {
 	testIntegrationImplementation project(":apps:dynamic-data-mapping:dynamic-data-mapping-test-util")
 	testIntegrationImplementation project(":apps:export-import:export-import-test-util")
 	testIntegrationImplementation project(":apps:fragment:fragment-api")
+	testIntegrationImplementation project(":apps:fragment:fragment-collection-item-selector-api")
 	testIntegrationImplementation project(":apps:fragment:fragment-entry-processor:fragment-entry-processor-api")
 	testIntegrationImplementation project(":apps:fragment:fragment-service")
 	testIntegrationImplementation project(":apps:info:info-api")

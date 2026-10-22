@@ -275,62 +275,8 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 	}
 
 	@Override
-	public List<AssetEntry> getEntries(
-		long[] groupIds, long[] classNameIds, long[] classTypeIds,
-		String keywords, String userName, String title, String description,
-		Boolean listable, boolean advancedSearch, boolean andOperator,
-		int start, int end, String orderByCol1, String orderByCol2,
-		String orderByType1, String orderByType2) {
-
-		return getEntries(
-			getAssetEntryQuery(
-				groupIds, classNameIds, classTypeIds, keywords, userName, title,
-				description, listable, advancedSearch, andOperator, start, end,
-				orderByCol1, orderByCol2, orderByType1, orderByType2));
-	}
-
-	@Override
-	public List<AssetEntry> getEntries(
-		long[] groupIds, long[] classNameIds, String keywords, String userName,
-		String title, String description, Boolean listable,
-		boolean advancedSearch, boolean andOperator, int start, int end,
-		String orderByCol1, String orderByCol2, String orderByType1,
-		String orderByType2) {
-
-		return getEntries(
-			getAssetEntryQuery(
-				groupIds, classNameIds, keywords, userName, title, description,
-				listable, advancedSearch, andOperator, start, end, orderByCol1,
-				orderByCol2, orderByType1, orderByType2));
-	}
-
-	@Override
 	public int getEntriesCount(AssetEntryQuery entryQuery) {
 		return assetEntryFinder.countEntries(entryQuery);
-	}
-
-	@Override
-	public int getEntriesCount(
-		long[] groupIds, long[] classNameIds, long[] classTypeIds,
-		String keywords, String userName, String title, String description,
-		Boolean listable, boolean advancedSearch, boolean andOperator) {
-
-		return getEntriesCount(
-			getAssetEntryQuery(
-				groupIds, classNameIds, classTypeIds, keywords, userName, title,
-				description, listable, advancedSearch, andOperator,
-				QueryUtil.ALL_POS, QueryUtil.ALL_POS, null, null, null, null));
-	}
-
-	@Override
-	public int getEntriesCount(
-		long[] groupIds, long[] classNameIds, String keywords, String userName,
-		String title, String description, Boolean listable,
-		boolean advancedSearch, boolean andOperator) {
-
-		return getEntriesCount(
-			groupIds, classNameIds, new long[0], keywords, userName, title,
-			description, listable, advancedSearch, andOperator);
 	}
 
 	@Override
@@ -374,36 +320,6 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 	@Override
 	public List<AssetEntry> getGroupEntries(long groupId) {
 		return assetEntryPersistence.findByGroupId(groupId);
-	}
-
-	@Override
-	public List<AssetEntry> getTopViewedEntries(
-		String className, boolean asc, int start, int end) {
-
-		return getTopViewedEntries(new String[] {className}, asc, start, end);
-	}
-
-	@Override
-	public List<AssetEntry> getTopViewedEntries(
-		String[] className, boolean asc, int start, int end) {
-
-		long[] classNameIds = new long[className.length];
-
-		for (int i = 0; i < className.length; i++) {
-			classNameIds[i] = _classNameLocalService.getClassNameId(
-				className[i]);
-		}
-
-		AssetEntryQuery entryQuery = new AssetEntryQuery();
-
-		entryQuery.setClassNameIds(classNameIds);
-		entryQuery.setEnd(end);
-		entryQuery.setExcludeZeroViewCount(true);
-		entryQuery.setOrderByCol1("viewCount");
-		entryQuery.setOrderByType1(asc ? "ASC" : "DESC");
-		entryQuery.setStart(start);
-
-		return assetEntryFinder.findEntries(entryQuery);
 	}
 
 	@Override
@@ -843,17 +759,21 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 						entryId);
 
 					for (AssetTag oldTag : oldTags) {
-						if (!tags.contains(oldTag)) {
-							_assetTagLocalService.decrementAssetCount(
-								oldTag.getTagId(), classNameId);
+						if (tags.contains(oldTag)) {
+							continue;
 						}
+
+						_assetTagLocalService.decrementAssetCount(
+							oldTag.getTagId(), classNameId);
 					}
 
 					for (AssetTag tag : tags) {
-						if (!oldTags.contains(tag)) {
-							_assetTagLocalService.incrementAssetCount(
-								tag.getTagId(), classNameId);
+						if (oldTags.contains(tag)) {
+							continue;
 						}
+
+						_assetTagLocalService.incrementAssetCount(
+							tag.getTagId(), classNameId);
 					}
 				}
 			}
@@ -1226,13 +1146,15 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 			_assetCategoryLocalService.getCategories(className, classPK);
 
 		for (AssetCategory category : oldCategories) {
-			if (!ArrayUtil.contains(categoryIds, category.getCategoryId()) &&
-				!AssetCategoryPermission.contains(
+			if (ArrayUtil.contains(categoryIds, category.getCategoryId()) ||
+				AssetCategoryPermission.contains(
 					permissionChecker, category, ActionKeys.VIEW)) {
 
-				categoryIds = ArrayUtil.append(
-					categoryIds, category.getCategoryId());
+				continue;
 			}
+
+			categoryIds = ArrayUtil.append(
+				categoryIds, category.getCategoryId());
 		}
 
 		return categoryIds;
@@ -1304,56 +1226,6 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 		return baseSearcher.searchCount(searchContext);
 	}
 
-	protected AssetEntryQuery getAssetEntryQuery(
-		long[] groupIds, long[] classNameIds, long[] classTypeIds,
-		String keywords, String userName, String title, String description,
-		Boolean listable, boolean advancedSearch, boolean andOperator,
-		int start, int end, String orderByCol1, String orderByCol2,
-		String orderByType1, String orderByType2) {
-
-		AssetEntryQuery assetEntryQuery = new AssetEntryQuery();
-
-		assetEntryQuery.setClassNameIds(classNameIds);
-
-		if (ArrayUtil.isNotEmpty(classTypeIds)) {
-			assetEntryQuery.setClassTypeIds(classTypeIds);
-		}
-
-		assetEntryQuery.setEnd(end);
-		assetEntryQuery.setGroupIds(groupIds);
-		assetEntryQuery.setListable(listable);
-		assetEntryQuery.setOrderByCol1(orderByCol1);
-		assetEntryQuery.setOrderByCol2(orderByCol2);
-		assetEntryQuery.setOrderByType1(orderByType1);
-		assetEntryQuery.setOrderByType2(orderByType2);
-		assetEntryQuery.setStart(start);
-
-		if (advancedSearch) {
-			assetEntryQuery.setAndOperator(andOperator);
-			assetEntryQuery.setDescription(description);
-			assetEntryQuery.setTitle(title);
-			assetEntryQuery.setUserName(userName);
-		}
-		else {
-			assetEntryQuery.setKeywords(keywords);
-		}
-
-		return assetEntryQuery;
-	}
-
-	protected AssetEntryQuery getAssetEntryQuery(
-		long[] groupIds, long[] classNameIds, String keywords, String userName,
-		String title, String description, Boolean listable,
-		boolean advancedSearch, boolean andOperator, int start, int end,
-		String orderByCol1, String orderByCol2, String orderByType1,
-		String orderByType2) {
-
-		return getAssetEntryQuery(
-			groupIds, classNameIds, new long[0], keywords, userName, title,
-			description, listable, advancedSearch, andOperator, start, end,
-			orderByCol1, orderByCol2, orderByType1, orderByType2);
-	}
-
 	protected long[] getClassNameIds(long companyId, String className) {
 		if (Validator.isNotNull(className)) {
 			return new long[] {
@@ -1423,10 +1295,12 @@ public class AssetEntryLocalServiceImpl extends AssetEntryLocalServiceBaseImpl {
 				entry.getEntryId());
 
 			for (AssetTag tag : tags) {
-				if (entry.isVisible()) {
-					_assetTagLocalService.decrementAssetCount(
-						tag.getTagId(), entry.getClassNameId());
+				if (!entry.isVisible()) {
+					continue;
 				}
+
+				_assetTagLocalService.decrementAssetCount(
+					tag.getTagId(), entry.getClassNameId());
 			}
 
 			// Entry

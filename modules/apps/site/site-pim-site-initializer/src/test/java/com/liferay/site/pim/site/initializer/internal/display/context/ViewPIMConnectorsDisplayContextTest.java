@@ -15,6 +15,7 @@ import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.URLCodec;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
@@ -160,13 +161,6 @@ public class ViewPIMConnectorsDisplayContextTest {
 			HttpServletRequest.class);
 
 		Mockito.when(
-			language.get(
-				httpServletRequest, "are-you-sure-you-want-to-delete-this")
-		).thenReturn(
-			"Are you sure?"
-		);
-
-		Mockito.when(
 			language.get(httpServletRequest, "delete")
 		).thenReturn(
 			"Delete"
@@ -179,15 +173,31 @@ public class ViewPIMConnectorsDisplayContextTest {
 		);
 
 		Mockito.when(
-			language.get(httpServletRequest, "export")
+			language.get(httpServletRequest, "execute")
 		).thenReturn(
-			"Export"
+			"Execute"
 		);
 
 		Mockito.when(
 			language.get(httpServletRequest, "map-fields")
 		).thenReturn(
 			"Map Fields"
+		);
+
+		Mockito.when(
+			language.get(httpServletRequest, "schedule")
+		).thenReturn(
+			"Schedule"
+		);
+
+		Mockito.when(
+			language.get(
+				httpServletRequest,
+				"execution-has-started-successfully-and-will-continue-in-the-" +
+					"background")
+		).thenReturn(
+			"Execution has started successfully and will continue in the " +
+				"background."
 		);
 
 		languageUtil.setLanguage(language);
@@ -207,27 +217,11 @@ public class ViewPIMConnectorsDisplayContextTest {
 			viewPIMConnectorsDisplayContext.getFDSActionDropdownItems();
 
 		Assert.assertEquals(
-			fdsActionDropdownItems.toString(), 4,
+			fdsActionDropdownItems.toString(), 5,
 			fdsActionDropdownItems.size());
 
 		FDSActionDropdownItem fdsActionDropdownItem =
 			fdsActionDropdownItems.get(0);
-
-		Assert.assertEquals(
-			StringBundler.concat(
-				"/web/cms/edit-connector?backURL=",
-				URLCodec.encodeURL(_URL_CURRENT), "&objectEntryId={id}"),
-			fdsActionDropdownItem.get("href"));
-		Assert.assertEquals("pencil", fdsActionDropdownItem.get("icon"));
-		Assert.assertEquals("Edit", fdsActionDropdownItem.get("label"));
-
-		Map<?, ?> data = (Map<?, ?>)fdsActionDropdownItem.get("data");
-
-		Assert.assertEquals("edit", data.get("id"));
-		Assert.assertEquals("get", data.get("method"));
-		Assert.assertEquals("update", data.get("permissionKey"));
-
-		fdsActionDropdownItem = fdsActionDropdownItems.get(1);
 
 		Assert.assertEquals(
 			StringBundler.concat(
@@ -237,39 +231,78 @@ public class ViewPIMConnectorsDisplayContextTest {
 		Assert.assertEquals("sheets", fdsActionDropdownItem.get("icon"));
 		Assert.assertEquals("Map Fields", fdsActionDropdownItem.get("label"));
 
-		data = (Map<?, ?>)fdsActionDropdownItem.get("data");
+		Map<?, ?> data = (Map<?, ?>)fdsActionDropdownItem.get("data");
 
 		Assert.assertEquals("fieldMappings", data.get("id"));
+		Assert.assertEquals("get", data.get("method"));
+		Assert.assertEquals("update", data.get("permissionKey"));
+
+		fdsActionDropdownItem = fdsActionDropdownItems.get(1);
+
+		Assert.assertEquals(
+			StringBundler.concat(
+				"/web/cms/edit-connector?backURL=",
+				URLCodec.encodeURL(_URL_CURRENT), "&objectEntryId={id}"),
+			fdsActionDropdownItem.get("href"));
+		Assert.assertEquals("pencil", fdsActionDropdownItem.get("icon"));
+		Assert.assertEquals("Edit", fdsActionDropdownItem.get("label"));
+
+		data = (Map<?, ?>)fdsActionDropdownItem.get("data");
+
+		Assert.assertEquals("edit", data.get("id"));
 		Assert.assertEquals("get", data.get("method"));
 		Assert.assertEquals("update", data.get("permissionKey"));
 
 		fdsActionDropdownItem = fdsActionDropdownItems.get(2);
 
 		Assert.assertEquals(
-			"/o/pim/export-to-liferay-commerce",
+			"/o/pim/connector/execute?objectEntryId={id}",
 			fdsActionDropdownItem.get("href"));
-		Assert.assertEquals("download", fdsActionDropdownItem.get("icon"));
-		Assert.assertEquals("Export", fdsActionDropdownItem.get("label"));
-		Assert.assertEquals("blank", fdsActionDropdownItem.get("target"));
+		Assert.assertEquals("play", fdsActionDropdownItem.get("icon"));
+		Assert.assertEquals("Execute", fdsActionDropdownItem.get("label"));
+		Assert.assertEquals("async", fdsActionDropdownItem.get("target"));
 
 		data = (Map<?, ?>)fdsActionDropdownItem.get("data");
 
-		Assert.assertEquals("export", data.get("id"));
-		Assert.assertEquals("get", data.get("method"));
+		Assert.assertEquals("execute", data.get("id"));
+		Assert.assertEquals("post", data.get("method"));
+		Assert.assertEquals(
+			"Execution has started successfully and will continue in the " +
+				"background.",
+			data.get("successMessage"));
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"active", Boolean.TRUE
+			).build(),
+			data.get("visibilityFilters"));
 
 		fdsActionDropdownItem = fdsActionDropdownItems.get(3);
 
 		Assert.assertEquals(
-			"{actions.delete.href}", fdsActionDropdownItem.get("href"));
-		Assert.assertEquals("trash", fdsActionDropdownItem.get("icon"));
-		Assert.assertEquals("Delete", fdsActionDropdownItem.get("label"));
-		Assert.assertEquals("headless", fdsActionDropdownItem.get("target"));
+			StringBundler.concat(
+				"/o/pim/connector/schedule?backURL=",
+				URLCodec.encodeURL(_URL_CURRENT), "&objectEntryId={id}"),
+			fdsActionDropdownItem.get("href"));
+		Assert.assertEquals("date-time", fdsActionDropdownItem.get("icon"));
+		Assert.assertEquals("Schedule", fdsActionDropdownItem.get("label"));
+		Assert.assertNull(fdsActionDropdownItem.get("target"));
 
 		data = (Map<?, ?>)fdsActionDropdownItem.get("data");
 
-		Assert.assertEquals("Are you sure?", data.get("confirmationMessage"));
+		Assert.assertEquals("schedule", data.get("id"));
+		Assert.assertEquals("get", data.get("method"));
+
+		fdsActionDropdownItem = fdsActionDropdownItems.get(4);
+
+		Assert.assertNull(fdsActionDropdownItem.get("href"));
+		Assert.assertEquals("trash", fdsActionDropdownItem.get("icon"));
+		Assert.assertEquals("Delete", fdsActionDropdownItem.get("label"));
+		Assert.assertNull(fdsActionDropdownItem.get("target"));
+
+		data = (Map<?, ?>)fdsActionDropdownItem.get("data");
+
 		Assert.assertEquals("delete", data.get("id"));
-		Assert.assertEquals("delete", data.get("method"));
+		Assert.assertNull(data.get("method"));
 		Assert.assertEquals("delete", data.get("permissionKey"));
 	}
 

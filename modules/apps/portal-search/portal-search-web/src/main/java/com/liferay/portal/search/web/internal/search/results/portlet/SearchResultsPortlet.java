@@ -255,6 +255,8 @@ public class SearchResultsPortlet extends MVCPortlet {
 			searchResultsPortletPreferences.isShowPagination());
 		searchResultsPortletDisplayContext.setTotalHits(
 			searchResponse.getTotalHits());
+		searchResultsPortletDisplayContext.setTotalHitsRelation(
+			searchResponse.getTotalHitsRelation());
 
 		return searchResultsPortletDisplayContext;
 	}
@@ -414,12 +416,14 @@ public class SearchResultsPortlet extends MVCPortlet {
 					portletURLFactory, searchResultsPortletPreferences,
 					searchResultPreferences);
 
-			if ((searchResultSummaryDisplayContext != null) &&
-				!searchResultSummaryDisplayContext.isTemporarilyUnavailable()) {
+			if ((searchResultSummaryDisplayContext == null) ||
+				searchResultSummaryDisplayContext.isTemporarilyUnavailable()) {
 
-				searchResultsSummariesHolder.put(
-					document, searchResultSummaryDisplayContext);
+				continue;
 			}
+
+			searchResultsSummariesHolder.put(
+				document, searchResultSummaryDisplayContext);
 		}
 
 		return searchResultsSummariesHolder;

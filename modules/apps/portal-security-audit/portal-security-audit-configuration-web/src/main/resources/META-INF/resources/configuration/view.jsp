@@ -11,17 +11,11 @@
 AuditConfigurationDisplayContext auditConfigurationDisplayContext = (AuditConfigurationDisplayContext)request.getAttribute(AuditConfigurationDisplayContext.class.getName());
 %>
 
-<aui:input disabled="<%= auditConfigurationDisplayContext.isEnabledOverridden() %>" helpMessage="<%= auditConfigurationDisplayContext.getEnabledHelpMessage() %>" name="enabled" type="checkbox" value="<%= auditConfigurationDisplayContext.isEnabled() %>" />
+<c:if test="<%= auditConfigurationDisplayContext.isSystemScope() %>">
+	<aui:input disabled="<%= auditConfigurationDisplayContext.isEnabledOverridden() %>" helpMessage="<%= auditConfigurationDisplayContext.getEnabledHelpMessage() %>" name="enabled" type="checkbox" value="<%= auditConfigurationDisplayContext.isEnabled() %>" />
+</c:if>
 
 <aui:input disabled="<%= auditConfigurationDisplayContext.isPseudonymizationEnabledOverridden() %>" helpMessage="<%= auditConfigurationDisplayContext.getPseudonymizationEnabledHelpMessage() %>" label="pseudonymization-enabled" name="pseudonymizationEnabled" type="checkbox" value="<%= auditConfigurationDisplayContext.isPseudonymizationEnabled() %>" />
-
-<h3 class="sheet-subtitle"><liferay-ui:message key="database-processor" /></h3>
-
-<aui:input disabled="<%= auditConfigurationDisplayContext.isPersistentAuditMessageProcessorEnabledOverridden() %>" helpMessage="<%= auditConfigurationDisplayContext.getPersistentAuditMessageProcessorEnabledHelpMessage() %>" label="enable-database-processor" name="persistentAuditMessageProcessorEnabled" type="checkbox" value="<%= auditConfigurationDisplayContext.isPersistentAuditMessageProcessorEnabled() %>" />
-
-<aui:input disabled="<%= auditConfigurationDisplayContext.isPersistentAuditMessageProcessorBufferSizeOverridden() %>" helpMessage="<%= auditConfigurationDisplayContext.getPersistentAuditMessageProcessorBufferSizeHelpMessage() %>" label="buffer-size" min="0" name="persistentAuditMessageProcessorBufferSize" type="number" value="<%= auditConfigurationDisplayContext.getPersistentAuditMessageProcessorBufferSize() %>" />
-
-<aui:input disabled="<%= auditConfigurationDisplayContext.isPersistentAuditMessageProcessorFlushIntervalOverridden() %>" helpMessage="<%= auditConfigurationDisplayContext.getPersistentAuditMessageProcessorFlushIntervalHelpMessage() %>" label="flush-interval-in-milliseconds" min="1" name="persistentAuditMessageProcessorFlushInterval" type="number" value="<%= auditConfigurationDisplayContext.getPersistentAuditMessageProcessorFlushInterval() %>" />
 
 <h3 class="sheet-subtitle"><liferay-ui:message key="file-system-processor" /></h3>
 

@@ -18,8 +18,8 @@ import com.liferay.layout.page.template.model.LayoutPageTemplateStructureRel;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureLocalService;
 import com.liferay.layout.page.template.service.LayoutPageTemplateStructureRelLocalService;
 import com.liferay.layout.util.LayoutServiceContextHelper;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
@@ -33,12 +33,13 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverterRegistry;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.segments.constants.SegmentsActionKeys;
 import com.liferay.segments.constants.SegmentsConstants;
-import com.liferay.segments.exception.NoSuchExperienceException;
 import com.liferay.segments.model.SegmentsExperience;
 import com.liferay.segments.service.SegmentsExperienceService;
 
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
+
+import jakarta.ws.rs.NotFoundException;
 
 import java.util.Collections;
 
@@ -62,29 +63,26 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 			String pageExperienceExternalReferenceCode)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled(
-				contextCompany.getCompanyId(), "LPD-74328")) {
-
-			throw new UnsupportedOperationException();
-		}
-
 		long groupId = GroupUtil.getStagingAwareGroupId(
 			contextCompany.getCompanyId(), siteExternalReferenceCode);
 
 		SegmentsExperience segmentsExperience =
 			_segmentsExperienceService.
-				fetchSegmentsExperienceByExternalReferenceCode(
+				getSegmentsExperienceByExternalReferenceCode(
 					pageExperienceExternalReferenceCode, groupId);
 
-		if (segmentsExperience == null) {
-			throw new NoSuchExperienceException();
+		if (segmentsExperience.isDefault()) {
+			throw new IllegalArgumentException(
+				"The default page experience cannot be deleted or modified");
 		}
 
 		Layout layout = _layoutLocalService.fetchLayout(
 			segmentsExperience.getPlid());
 
 		if (!layout.isDraftLayout()) {
-			throw new UnsupportedOperationException();
+			throw new IllegalArgumentException(
+				"Page experiences can only be modified on a draft page " +
+					"specification");
 		}
 
 		_segmentsExperienceService.deleteSegmentsExperience(
@@ -96,12 +94,6 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 			String siteExternalReferenceCode,
 			String pageExperienceExternalReferenceCode)
 		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled(
-				contextCompany.getCompanyId(), "LPD-74328")) {
-
-			throw new UnsupportedOperationException();
-		}
 
 		return _toPageExperience(
 			_segmentsExperienceService.
@@ -117,12 +109,6 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 			String siteExternalReferenceCode,
 			String pageSpecificationExternalReferenceCode)
 		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled(
-				contextCompany.getCompanyId(), "LPD-74328")) {
-
-			throw new UnsupportedOperationException();
-		}
 
 		Layout layout = _layoutLocalService.fetchLayoutByExternalReferenceCode(
 			pageSpecificationExternalReferenceCode,
@@ -149,12 +135,6 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 			PageExperience pageExperience)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled(
-				contextCompany.getCompanyId(), "LPD-74328")) {
-
-			throw new UnsupportedOperationException();
-		}
-
 		long groupId = GroupUtil.getStagingAwareGroupId(
 			contextCompany.getCompanyId(), siteExternalReferenceCode);
 
@@ -163,7 +143,9 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 			groupId);
 
 		if (!layout.isDraftLayout()) {
-			throw new UnsupportedOperationException();
+			throw new IllegalArgumentException(
+				"Page experiences can only be modified on a draft page " +
+					"specification");
 		}
 
 		return _addPageExperience(layout, groupId, pageExperience);
@@ -176,12 +158,6 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 			PageExperience pageExperience)
 		throws Exception {
 
-		if (!FeatureFlagManagerUtil.isEnabled(
-				contextCompany.getCompanyId(), "LPD-74328")) {
-
-			throw new UnsupportedOperationException();
-		}
-
 		long groupId = GroupUtil.getStagingAwareGroupId(
 			contextCompany.getCompanyId(), siteExternalReferenceCode);
 
@@ -190,7 +166,9 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 			groupId);
 
 		if (!layout.isDraftLayout()) {
-			throw new UnsupportedOperationException();
+			throw new IllegalArgumentException(
+				"Page experiences can only be modified on a draft page " +
+					"specification");
 		}
 
 		SegmentsExperience segmentsExperience =
@@ -202,8 +180,15 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 			return _addPageExperience(layout, groupId, pageExperience);
 		}
 
+		if (segmentsExperience.isDefault()) {
+			throw new IllegalArgumentException(
+				"The default page experience cannot be deleted or modified");
+		}
+
 		if (layout.getPlid() != segmentsExperience.getPlid()) {
-			throw new UnsupportedOperationException();
+			throw new IllegalArgumentException(
+				"The page experience does not belong to this page " +
+					"specification");
 		}
 
 		_segmentsExperienceResourcePermission.check(
@@ -281,7 +266,11 @@ public class PageExperienceResourceImpl extends BasePageExperienceResourceImpl {
 					segmentsExperience.getSegmentsExperienceId());
 
 		if (layoutPageTemplateStructureRel == null) {
-			throw new UnsupportedOperationException();
+			throw new NotFoundException(
+				StringBundler.concat(
+					"No page experience exists with the external reference ",
+					"code \"", segmentsExperience.getExternalReferenceCode(),
+					"\""));
 		}
 
 		return _pageExperienceDTOConverter.toDTO(

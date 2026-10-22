@@ -7,6 +7,7 @@ package com.liferay.source.formatter.checkstyle.check;
 
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.TokenUtil;
 
 import java.util.HashMap;
 import java.util.List;
@@ -65,17 +66,20 @@ public class UnnecessaryMethodCallCheck extends BaseCheck {
 				parentDetailAST = parentDetailAST.getParent();
 			}
 
-			if (parentDetailAST.equals(detailAST)) {
-				String replacementValue = _getReplacementValue(
-					methodCallDetailAST,
-					returnVariableNamesMap.get(methodName));
-
-				if (replacementValue != null) {
-					log(
-						methodCallDetailAST, _MSG_UNNECESSARY_METHOD_CALL,
-						replacementValue, methodName);
-				}
+			if (!parentDetailAST.equals(detailAST)) {
+				continue;
 			}
+
+			String replacementValue = _getReplacementValue(
+				methodCallDetailAST, returnVariableNamesMap.get(methodName));
+
+			if (replacementValue == null) {
+				continue;
+			}
+
+			log(
+				methodCallDetailAST, _MSG_UNNECESSARY_METHOD_CALL,
+				replacementValue, methodName);
 		}
 	}
 
@@ -84,8 +88,9 @@ public class UnnecessaryMethodCallCheck extends BaseCheck {
 
 		DetailAST previousDetailAST = methodCallDetailAST.getParent();
 
-		while ((previousDetailAST.getType() != TokenTypes.METHOD_DEF) &&
-			   (previousDetailAST.getType() != TokenTypes.CTOR_DEF)) {
+		while (!TokenUtil.isOfType(
+					previousDetailAST, TokenTypes.CTOR_DEF,
+					TokenTypes.METHOD_DEF)) {
 
 			if ((previousDetailAST.getType() == TokenTypes.VARIABLE_DEF) &&
 				(previousDetailAST.branchContains(TokenTypes.LITERAL_PRIVATE) ||

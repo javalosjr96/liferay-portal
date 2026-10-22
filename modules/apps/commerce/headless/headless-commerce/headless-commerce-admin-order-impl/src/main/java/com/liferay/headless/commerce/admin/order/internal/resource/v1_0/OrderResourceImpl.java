@@ -313,6 +313,10 @@ public class OrderResourceImpl extends BaseOrderResourceImpl {
 			}
 		}
 
+		if (billingAddressId > 0) {
+			_commerceAddressService.getCommerceAddress(billingAddressId);
+		}
+
 		AccountEntry accountEntry = null;
 
 		if (order.getAccountId() != null) {
@@ -356,6 +360,10 @@ public class OrderResourceImpl extends BaseOrderResourceImpl {
 			if (commerceAddress != null) {
 				shippingAddressId = commerceAddress.getCommerceAddressId();
 			}
+		}
+
+		if (shippingAddressId > 0) {
+			_commerceAddressService.getCommerceAddress(shippingAddressId);
 		}
 
 		ServiceContext serviceContext = _serviceContextHelper.getServiceContext(
@@ -545,9 +553,11 @@ public class OrderResourceImpl extends BaseOrderResourceImpl {
 		for (OrderItem orderItem : orderItems) {
 			String externalReferenceCode = orderItem.getExternalReferenceCode();
 
-			if (Objects.nonNull(externalReferenceCode)) {
-				orderItemExternalReferenceCodes.add(externalReferenceCode);
+			if (Objects.isNull(externalReferenceCode)) {
+				continue;
 			}
+
+			orderItemExternalReferenceCodes.add(externalReferenceCode);
 		}
 
 		if (orderItemExternalReferenceCodes.isEmpty()) {
@@ -566,9 +576,11 @@ public class OrderResourceImpl extends BaseOrderResourceImpl {
 		for (OrderItem orderItem : orderItems) {
 			Long id = orderItem.getId();
 
-			if (Objects.nonNull(id)) {
-				orderItemIds.add(id);
+			if (Objects.isNull(id)) {
+				continue;
 			}
+
+			orderItemIds.add(id);
 		}
 
 		if (orderItemIds.isEmpty()) {
@@ -701,11 +713,13 @@ public class OrderResourceImpl extends BaseOrderResourceImpl {
 				Map<String, ?> expandoAttributes = _getExpandoBridgeAttributes(
 					orderItem);
 
-				if (MapUtil.isNotEmpty(expandoAttributes)) {
-					ExpandoUtil.updateExpando(
-						contextCompany.getCompanyId(), CommerceOrderItem.class,
-						commerceOrderItem.getPrimaryKey(), expandoAttributes);
+				if (MapUtil.isEmpty(expandoAttributes)) {
+					continue;
 				}
+
+				ExpandoUtil.updateExpando(
+					contextCompany.getCompanyId(), CommerceOrderItem.class,
+					commerceOrderItem.getPrimaryKey(), expandoAttributes);
 			}
 		}
 
@@ -752,6 +766,10 @@ public class OrderResourceImpl extends BaseOrderResourceImpl {
 			}
 		}
 
+		if (billingAddressId > 0) {
+			_commerceAddressService.getCommerceAddress(billingAddressId);
+		}
+
 		long commerceShippingMethodId =
 			commerceOrder.getCommerceShippingMethodId();
 
@@ -780,6 +798,10 @@ public class OrderResourceImpl extends BaseOrderResourceImpl {
 			else {
 				shippingAddressId = commerceAddress.getCommerceAddressId();
 			}
+		}
+
+		if (shippingAddressId > 0) {
+			_commerceAddressService.getCommerceAddress(shippingAddressId);
 		}
 
 		commerceOrder = _commerceOrderEngine.updateCommerceOrder(

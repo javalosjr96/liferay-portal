@@ -26,7 +26,6 @@ locals {
 		crossplaneIamPath=local.crossplane_iam_path
 		crossplaneIamRoleArn=aws_iam_role.crossplane_iam.arn
 		deploymentName=var.deployment_name
-		liferayServiceAccountRoleName=data.aws_iam_role.liferay.name
 		oidcIssuerUrl=data.aws_eks_cluster.eks.identity[0].oidc[0].issuer
 		partition=local.partition
 		region=var.region
@@ -43,6 +42,9 @@ locals {
 		} : {},
 		var.observability_config.enabled ? {
 			ack_prometheusservice="ack-system:ack-prometheusservice-controller"
+			alloy="observability:liferay-alloy"
+			grafana="observability:grafana"
+			rds_exporter="observability:liferay-rds-exporter"
 		} : {})
 	keda_enabled=var.keda_config.enabled && var.observability_config.enabled
 	marketplace_posix_id=1000

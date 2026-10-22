@@ -134,11 +134,23 @@ public class CommerceTaxFixedRateAddressRelModelImpl
 	public static final long COUNTRYID_COLUMN_BITMASK = 4L;
 
 	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long REGIONID_COLUMN_BITMASK = 8L;
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link #getColumnBitmask(String)}
+	 */
+	@Deprecated
+	public static final long ZIP_COLUMN_BITMASK = 16L;
+
+	/**
 	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
 	 *		#getColumnBitmask(String)}
 	 */
 	@Deprecated
-	public static final long CREATEDATE_COLUMN_BITMASK = 8L;
+	public static final long CREATEDATE_COLUMN_BITMASK = 32L;
 
 	/**
 	 * @deprecated As of Athanasius (7.3.x), with no direct replacement
@@ -610,6 +622,16 @@ public class CommerceTaxFixedRateAddressRelModelImpl
 		_regionId = regionId;
 	}
 
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public long getOriginalRegionId() {
+		return GetterUtil.getLong(
+			this.<Long>getColumnOriginalValue("regionId"));
+	}
+
 	@JSON
 	@Override
 	public String getZip() {
@@ -628,6 +650,15 @@ public class CommerceTaxFixedRateAddressRelModelImpl
 		}
 
 		_zip = zip;
+	}
+
+	/**
+	 * @deprecated As of Athanasius (7.3.x), replaced by {@link
+	 *             #getColumnOriginalValue(String)}
+	 */
+	@Deprecated
+	public String getOriginalZip() {
+		return getColumnOriginalValue("zip");
 	}
 
 	@JSON
@@ -1088,4 +1119,4 @@ public class CommerceTaxFixedRateAddressRelModelImpl
 	private CommerceTaxFixedRateAddressRel _escapedModel;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:361730370
+// LIFERAY-SERVICE-BUILDER-HASH:-601959657

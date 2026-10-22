@@ -1,9 +1,5 @@
 # Workspace Unit Tests
 
-## Trigger
-
-Always.
-
 ## Match
 
 `.`

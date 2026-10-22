@@ -14,26 +14,39 @@ import com.liferay.document.library.kernel.model.DLFolder;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeService;
+import com.liferay.document.library.kernel.service.DLFolderLocalService;
 import com.liferay.document.library.kernel.service.DLFolderService;
 import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.document.library.kernel.util.comparator.RepositoryModelReadCountComparator;
 import com.liferay.document.library.kernel.util.comparator.RepositoryModelTitleComparator;
+import com.liferay.document.library.test.util.DLTestUtil;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileShortcut;
 import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalServiceUtil;
+import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -43,6 +56,7 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portlet.documentlibrary.constants.DLConstants;
 import com.liferay.ratings.kernel.service.RatingsEntryLocalService;
 
 import java.util.ArrayList;
@@ -134,6 +148,73 @@ public class DLFolderServiceTest {
 			_dlFolderService.getFolders(
 				_group.getGroupId(), 1.0, QueryUtil.ALL_POS,
 				QueryUtil.ALL_POS));
+	}
+
+	@Test
+	public void testMoveFolderToRootFolderWhenItemGroupHasAddPermission()
+		throws Exception {
+
+		DLFolder dlFolder = DLTestUtil.addDLFolder(
+			_group.getGroupId(), _parentFolder.getFolderId(), false,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		_user = _addUser(dlFolder.getFolderId(), _group);
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user)) {
+
+			_dlFolderService.moveFolder(
+				dlFolder.getFolderId(),
+				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+				ServiceContextTestUtil.getServiceContext(
+					_alternativeGroup.getGroupId(), _user.getUserId()));
+		}
+
+		dlFolder = _dlFolderLocalService.getFolder(dlFolder.getFolderId());
+
+		Assert.assertEquals(
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			dlFolder.getParentFolderId());
+		Assert.assertEquals(_group.getGroupId(), dlFolder.getGroupId());
+	}
+
+	@Test
+	public void testMoveFolderToRootFolderWhenOnlyScopeGroupHasAddPermission()
+		throws Exception {
+
+		DLFolder dlFolder = DLTestUtil.addDLFolder(
+			_group.getGroupId(), _parentFolder.getFolderId(), false,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		long folderId = dlFolder.getFolderId();
+
+		_user = _addUser(folderId, _alternativeGroup);
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user)) {
+
+			PrincipalException.MustHavePermission mustHavePermission =
+				Assert.assertThrows(
+					PrincipalException.MustHavePermission.class,
+					() -> _dlFolderService.moveFolder(
+						folderId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+						ServiceContextTestUtil.getServiceContext(
+							_alternativeGroup.getGroupId(),
+							_user.getUserId())));
+
+			Assert.assertEquals(
+				DLConstants.RESOURCE_NAME, mustHavePermission.resourceName);
+			Assert.assertEquals(
+				_group.getGroupId(), mustHavePermission.resourceId);
+			Assert.assertArrayEquals(
+				new String[] {ActionKeys.ADD_FOLDER},
+				mustHavePermission.actionId);
+		}
+
+		dlFolder = _dlFolderLocalService.getFolder(folderId);
+
+		Assert.assertEquals(
+			_parentFolder.getFolderId(), dlFolder.getParentFolderId());
 	}
 
 	@Test
@@ -503,6 +584,23 @@ public class DLFolderServiceTest {
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
 	}
 
+	private User _addUser(long folderId, Group group) throws Exception {
+		User user = UserTestUtil.addGroupUser(group, RoleConstants.SITE_MEMBER);
+
+		_role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		ResourcePermissionLocalServiceUtil.setResourcePermissions(
+			_role.getCompanyId(), DLFolder.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL, String.valueOf(folderId),
+			_role.getRoleId(),
+			new String[] {ActionKeys.UPDATE, ActionKeys.VIEW});
+
+		RoleLocalServiceUtil.addUserRoles(
+			user.getUserId(), new long[] {_role.getRoleId()});
+
+		return user;
+	}
+
 	@DeleteAfterTestRun
 	private Group _alternativeGroup;
 
@@ -522,6 +620,9 @@ public class DLFolderServiceTest {
 	private DLFileEntryTypeService _dlFileEntryTypeService;
 
 	@Inject
+	private DLFolderLocalService _dlFolderLocalService;
+
+	@Inject
 	private DLFolderService _dlFolderService;
 
 	@DeleteAfterTestRun
@@ -531,6 +632,12 @@ public class DLFolderServiceTest {
 
 	@Inject
 	private RatingsEntryLocalService _ratingsEntryLocalService;
+
+	@DeleteAfterTestRun
+	private Role _role;
+
+	@DeleteAfterTestRun
+	private User _user;
 
 	@Inject
 	private ViewCountManager _viewCountManager;

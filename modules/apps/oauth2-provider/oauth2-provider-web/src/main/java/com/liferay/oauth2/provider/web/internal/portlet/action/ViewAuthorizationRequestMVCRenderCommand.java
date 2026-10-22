@@ -5,7 +5,7 @@
 
 package com.liferay.oauth2.provider.web.internal.portlet.action;
 
-import com.liferay.document.library.util.DLURLHelper;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.oauth2.provider.exception.NoSuchOAuth2ApplicationException;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ApplicationScopeAliases;
@@ -180,11 +180,13 @@ public class ViewAuthorizationRequestMVCRenderCommand
 		while (enumeration.hasMoreElements()) {
 			String name = enumeration.nextElement();
 
-			if (name.startsWith("oauth2_")) {
-				oAuth2Parameters.put(
-					name.substring("oauth2_".length()),
-					ParamUtil.getString(httpServletRequest, name));
+			if (!name.startsWith("oauth2_")) {
+				continue;
 			}
+
+			oAuth2Parameters.put(
+				name.substring("oauth2_".length()),
+				ParamUtil.getString(httpServletRequest, name));
 		}
 
 		return oAuth2Parameters;
@@ -221,9 +223,11 @@ public class ViewAuthorizationRequestMVCRenderCommand
 					oAuth2ScopeGrant.getApplicationName(),
 					oAuth2ScopeGrant.getScope());
 
-			if (liferayOAuth2Scopes.contains(liferayOAuth2Scope)) {
-				assignableScopes.addLiferayOAuth2Scope(liferayOAuth2Scope);
+			if (!liferayOAuth2Scopes.contains(liferayOAuth2Scope)) {
+				continue;
 			}
+
+			assignableScopes.addLiferayOAuth2Scope(liferayOAuth2Scope);
 		}
 	}
 

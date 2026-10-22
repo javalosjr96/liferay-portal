@@ -1,41 +1,35 @@
 # Module Registration
 
-## Trigger
-
-A `.lfrbuild-portal` or `.lfrbuild-ci` marker is added or removed. Either direction changes which modules a build deploys, and a marker only diff touches no source, so [per-module-compile.md](per-module-compile.md) does not fire.
-
-A plain `gradlew` invocation includes every module by its directory and ignores markers. `ant all` instead runs Gradle with `-Dbuild.profile=dxp`, and the profile leaves out a module carrying no portal family marker, so a `project(":...")` reference from a module inside the set to one outside it fails the whole invocation at configuration. `.lfrbuild-portal` also puts the module in the `ant all` deploy set, per the note above `build.include.dirs` in [build.properties](../../../../../build.properties). `.lfrbuild-ci` adds a `:<path>:deploy` task to the `marker.files.lfrbuild.ci.enabled` pass in [build.xml](../../../../../build.xml), which CI enables and a default `ant all` does not, and that pass runs Gradle without the profile.
+Checks an added or removed `.lfrbuild-portal` or `.lfrbuild-ci` marker, which changes the modules a build deploys without touching any source. `ant all` builds with the `dxp` profile, which leaves out a module with no portal family marker, so a `project(":...")` reference from a module inside the set to one outside it fails the whole build. A plain `gradlew` run ignores markers, so nothing else catches it.
 
 ## Match
 
 `(^|/)\.lfrbuild-(ci|portal(-private|-public)?)$`
 
+## Preconditions
+
+- Portal Snapshots
+
 ## Command
 
-Take the markers from the diff rather than from a `find`, which turns up marker copies under `node_modules` that are not modules:
+Take the changed markers rather than running a `find`, which turns up marker copies under `node_modules` that are not modules, and read their statuses from the diff:
 
 ```bash
 HEAD_SHA=$(git rev-parse HEAD)
-MERGE_BASE=$(git merge-base "${HEAD_SHA}" master) || exit 1
 
-git diff --name-status "${MERGE_BASE}...${HEAD_SHA}" -- '*.lfrbuild-*'
+bash "${SKILL_DIR}/select_paths.sh" "${MERGE_BASE}" "${VALIDATION_FILE}" \
+	| xargs git diff --name-status --no-renames "${MERGE_BASE}" "${HEAD_SHA}" --
 ```
-
-Stop when `git merge-base` fails rather than carrying on, since an unresolvable `master` leaves `${MERGE_BASE}` empty, the diff becomes `...${HEAD_SHA}`, and it exits zero with no output, which reads as a diff carrying no markers.
 
 Pin `${HEAD_SHA}` once here and read every later query at it, since a concurrent validation moves the working tree when it writes and the index when it stages.
 
-A marker's module directory is the marker path with its file name stripped, so `modules/apps/blogs/blogs-api/.lfrbuild-portal` gives `modules/apps/blogs/blogs-api`. Its Gradle project path, written `<path>` below, is that directory with `modules/` stripped and every `/` replaced by `:`, so the same marker gives `apps:blogs:blogs-api`. Both branches below need it.
+A marker's module directory is the directory holding it, and its Gradle project path, written `<path>` below, is that directory without `modules/` and with `:` for `/`, so `modules/apps/blogs/blogs-api/.lfrbuild-portal` gives `modules/apps/blogs/blogs-api` and `apps:blogs:blogs-api`. Both branches below need them.
 
-Split the markers by status before running anything, since the directions take different branches. Take `A` into the run below and `D` into the report further down. A rename (`R`) is both, so treat it as a removal at the old path and an addition at the new, and read its two tab separated paths rather than taking the second field, which is the old one. The pairing is an artifact rather than a move, since every marker is an empty file and git pairs any deleted marker with any added one, even across unrelated modules, so never simplify the split away by following the rename. A content change (`M`) to a marker changes no registration, so report it and run nothing.
+Split the markers by status before running anything, since the directions take different branches. Take `A` into the run below and `D` into the report further down. A content change (`M`) to a marker changes no registration, so report it and run nothing. A diff whose markers are all content changes has nothing to check, so report **NOT APPLICABLE**.
 
 This validation has tasks for four families. `.lfrbuild-portal`, `.lfrbuild-portal-private`, and `.lfrbuild-portal-public` are the portal family the profile reads, and `.lfrbuild-ci` is consumed without it. The filter above takes every family, so report a marker outside the four as unhandled rather than running anything for it.
 
-For each **added** marker, deploy the module. The build the marker registers it for is going to build it, and a module that fails to build is exactly what the marker just broke. Deploying needs the portal snapshot installed first, or it fails resolving `com.liferay.portal.kernel` before it reaches the module, which is an environment failure rather than a registration one. Run the snapshot build only when the runner has not already reported it satisfied.
-
-```bash
-(cd "${REPO_ROOT}" && ant compile install-portal-snapshots)
-```
+For each **added** marker, deploy the module. The build the marker registers it for is going to build it, and a module that fails to build is exactly what the marker just broke.
 
 Deploy a portal family addition under the profile, since the newly admitted module's own `project(":...")` references must resolve inside the profile set, and a run without the profile includes everything by directory and cannot see one that does not:
 
@@ -92,7 +86,7 @@ These are compile time consumers, which is the easier half of the question. A mo
 
 FAIL when a run reports `BUILD FAILED`, and report the module and the error. A failure of the form `project '<name>' not found in project ':...'` names the module itself and means the marker sits in a directory the build has no project for, so nothing registered. `Project with path ':...' could not be found` names a reference instead. In a profile run it means the referenced module is outside the profile set, which is the removal defect above when it names the removed module, and in a plain run it means the referenced directory does not exist, so the module's own `build.gradle` is broken. A diff containing no `.lfrbuild-*` marker at all should not have fired this validation, so that is a broken selection rather than a pass; report it as a FAIL too. PASS when every added marker reports `BUILD SUCCESSFUL` and no removal left a dangling reference.
 
-A diff carrying no addition and no removal with a marked consumer runs nothing, so it has no run to pass. Report **NOT VERIFIED** and give the consumer report as the reason, since reading it as a PASS makes the empty set vacuously true and turns the one case needing a developer's judgment into the one result that stops anyone looking. When a diff carries several markers, judge each on its own branch, FAIL when any fails, and carry every report alongside whatever the verdict.
+A diff carrying no addition and no removal with a marked consumer runs nothing, so it has no run to pass. Report **NO COVERAGE** and give the consumer report as the reason, since reading it as a PASS makes the empty set vacuously true and turns the one case needing a developer's judgment into the one result that stops anyone looking. When a diff carries several markers, judge each on its own branch, FAIL when any fails, and carry every report alongside whatever the verdict.
 
 ## Checklist
 
@@ -102,4 +96,4 @@ A diff carrying no addition and no removal with a marked consumer runs nothing, 
 
 ## Time Estimate
 
-~3 min for the snapshot when a marker was added, then ~1 min per added marker. A removal reads and at most configures one consumer, so it takes seconds.
+~1 min per added marker. A removal reads and at most configures one consumer, so it takes seconds.

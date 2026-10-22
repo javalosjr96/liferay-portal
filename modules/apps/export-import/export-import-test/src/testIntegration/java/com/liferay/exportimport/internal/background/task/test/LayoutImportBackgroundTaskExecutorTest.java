@@ -423,14 +423,12 @@ public class LayoutImportBackgroundTaskExecutorTest {
 			TestPropsValues.getCompanyId());
 
 		DLFileEntry dlFileEntry = _addDLFileEntry(
-			_OBJECT_FIELD_VALUE_ATTACHMENT_DOCS_AND_MEDIA,
-			company.getGroupId());
+			DLTestUtil.randomTextFileBytes(), company.getGroupId());
 
 		FileEntry tempFileEntry1 = _addTempFileEntry(
-			_OBJECT_FIELD_VALUE_ATTACHMENT_SHOW_FILES_IN_DOCS_AND_MEDIA,
-			objectDefinition);
+			DLTestUtil.randomTextFileBytes(), objectDefinition);
 		FileEntry tempFileEntry2 = _addTempFileEntry(
-			_OBJECT_FIELD_VALUE_ATTACHMENT_USER_COMPUTER, objectDefinition);
+			DLTestUtil.randomTextFileBytes(), objectDefinition);
 
 		return _objectEntryLocalService.addObjectEntry(
 			groupId, TestPropsValues.getUserId(),
@@ -482,9 +480,11 @@ public class LayoutImportBackgroundTaskExecutorTest {
 				objectEntry.getValues(),
 				_OBJECT_FIELD_NAME_ATTACHMENT_SHOW_FILES_IN_DOCS_AND_MEDIA);
 
-			if (fileEntryId != 0) {
-				_dlFileEntryLocalService.deleteFileEntry(fileEntryId);
+			if (fileEntryId == 0) {
+				continue;
 			}
+
+			_dlFileEntryLocalService.deleteFileEntry(fileEntryId);
 		}
 	}
 
@@ -576,16 +576,6 @@ public class LayoutImportBackgroundTaskExecutorTest {
 
 	private static final String _OBJECT_FIELD_NAME_TEXT =
 		"x" + RandomTestUtil.randomString();
-
-	private static final byte[] _OBJECT_FIELD_VALUE_ATTACHMENT_DOCS_AND_MEDIA =
-		DLTestUtil.randomTextFileBytes();
-
-	private static final byte[]
-		_OBJECT_FIELD_VALUE_ATTACHMENT_SHOW_FILES_IN_DOCS_AND_MEDIA =
-			DLTestUtil.randomTextFileBytes();
-
-	private static final byte[] _OBJECT_FIELD_VALUE_ATTACHMENT_USER_COMPUTER =
-		DLTestUtil.randomTextFileBytes();
 
 	@Inject
 	private BackgroundTaskLocalService _backgroundTaskLocalService;

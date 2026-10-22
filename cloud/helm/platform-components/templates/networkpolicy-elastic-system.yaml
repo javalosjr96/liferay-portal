@@ -1,29 +1,15 @@
-{{- if .Values.operatorApplications.eckOperator.enabled -}}
+{{- $eckOperator := .Values.operatorApplications.eckOperator -}}
+{{- if $eckOperator.enabled -}}
+{{- include "liferay-platform.requireAPIServerSources" (dict "apiServerSources" .Values.networkPolicy.apiServerSources "operatorApplication" "eckOperator") -}}
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
     labels:
         {{- include "liferay-platform.labels" $ | nindent 8 }}
-    name: elastic-operator-webhook-ingress
-    namespace: elastic-system
+    name: default-deny-ingress
+    namespace: {{ $eckOperator.namespace }}
 spec:
-    ingress:
-        -   from:
-                -   ipBlock:
-                        cidr: {{ .Values.operatorApplications.eckOperator.masterIpv4CidrBlock }}
-                -   namespaceSelector:
-                        matchLabels:
-                            kubernetes.io/metadata.name: kube-system
-                    podSelector:
-                        matchLabels:
-                            k8s-app: konnectivity-agent
-            ports:
-                -   port: https-webhook
-                    protocol: TCP
-    podSelector:
-        matchLabels:
-            app.kubernetes.io/instance: eck-operator
-            app.kubernetes.io/name: elastic-operator
+    podSelector: {}
     policyTypes:
         -   Ingress
 ---
@@ -32,10 +18,19 @@ kind: NetworkPolicy
 metadata:
     labels:
         {{- include "liferay-platform.labels" $ | nindent 8 }}
-    name: default-deny-ingress
-    namespace: elastic-system
+    name: elastic-operator-webhook-ingress
+    namespace: {{ $eckOperator.namespace }}
 spec:
-    podSelector: {}
+    ingress:
+        -   from:
+                {{- toYaml .Values.networkPolicy.apiServerSources | nindent 16 }}
+            ports:
+                -   port: https-webhook
+                    protocol: TCP
+    podSelector:
+        matchLabels:
+            app.kubernetes.io/instance: {{ $eckOperator.name }}
+            app.kubernetes.io/name: elastic-operator
     policyTypes:
         -   Ingress
 {{- end -}}

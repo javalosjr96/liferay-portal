@@ -15,6 +15,7 @@ import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.info.item.provider.InfoItemFormProvider;
 import com.liferay.info.item.updater.InfoItemFieldValuesUpdater;
 import com.liferay.object.constants.ObjectRelationshipConstants;
+import com.liferay.object.exception.NoSuchObjectEntryException;
 import com.liferay.object.info.item.util.ObjectEntryInfoItemUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
@@ -30,11 +31,17 @@ import com.liferay.object.rest.manager.v1_0.util.ObjectEntryManagerUtil;
 import com.liferay.object.scope.ObjectScopeProviderRegistry;
 import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
 import com.liferay.object.service.ObjectEntryLocalServiceUtil;
+import com.liferay.object.service.ObjectEntryServiceUtil;
 import com.liferay.object.service.ObjectRelationshipLocalServiceUtil;
+import com.liferay.object.tree.Edge;
+import com.liferay.object.tree.Node;
+import com.liferay.object.tree.ObjectEntryTreeFactory;
+import com.liferay.object.tree.Tree;
 import com.liferay.object.web.internal.info.item.handler.ObjectEntryInfoItemExceptionRequestHandler;
 import com.liferay.object.web.internal.util.ObjectEntryCMSInfoItemFieldValuesUtil;
 import com.liferay.object.web.internal.util.ObjectEntryUtil;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.InfoFormException;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -67,12 +74,10 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 
 	public ObjectEntryInfoItemFieldValuesUpdater(
 		InfoItemFormProvider<ObjectEntry> infoItemFormProvider,
-		ObjectDefinition objectDefinition,
 		ObjectEntryManagerRegistry objectEntryManagerRegistry,
 		ObjectScopeProviderRegistry objectScopeProviderRegistry) {
 
 		_infoItemFormProvider = infoItemFormProvider;
-		_objectDefinition = objectDefinition;
 		_objectEntryManagerRegistry = objectEntryManagerRegistry;
 		_objectScopeProviderRegistry = objectScopeProviderRegistry;
 	}
@@ -93,10 +98,12 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 			int statusInt)
 		throws InfoFormException {
 
+		ObjectDefinition objectDefinition = objectEntry.getObjectDefinition();
+
 		ObjectEntryManager objectEntryManager =
 			_objectEntryManagerRegistry.getObjectEntryManager(
-				_objectDefinition.getCompanyId(),
-				_objectDefinition.getStorageType());
+				objectDefinition.getCompanyId(),
+				objectDefinition.getStorageType());
 
 		ServiceContext serviceContext =
 			ServiceContextThreadLocal.getServiceContext();
@@ -112,10 +119,10 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 						_objectScopeProviderRegistry, serviceContext);
 
 			Map<String, Object> curProperties = _getProperties(
-				objectEntry, infoItemFieldValues);
+				infoItemFieldValues, objectDefinition, objectEntry);
 
 			String scopeKey = ObjectEntryInfoItemUtil.getScopeKey(
-				objectEntry.getGroupId(), _objectDefinition,
+				objectEntry.getGroupId(), objectDefinition,
 				_objectScopeProviderRegistry);
 
 			DTOConverterContext dtoConverterContext =
@@ -125,7 +132,7 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 
 			_deleteRelatedObjectEntries(
 				themeDisplay.getCompanyId(), dtoConverterContext,
-				infoItemFieldValues, scopeKey);
+				infoItemFieldValues, objectEntry, scopeKey);
 
 			com.liferay.object.rest.dto.v1_0.ObjectEntry dtoObjectEntry = null;
 
@@ -133,17 +140,17 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 					DefaultObjectEntryManager defaultObjectEntryManager) {
 
 				dtoObjectEntry = defaultObjectEntryManager.getObjectEntry(
-					dtoConverterContext, _objectDefinition, objectEntry);
+					dtoConverterContext, objectDefinition, objectEntry);
 			}
 			else {
 				dtoObjectEntry = objectEntryManager.getObjectEntry(
 					objectEntry.getCompanyId(), dtoConverterContext,
-					objectEntry.getExternalReferenceCode(), _objectDefinition,
+					objectEntry.getExternalReferenceCode(), objectDefinition,
 					scopeKey);
 			}
 
 			dtoObjectEntry = ObjectEntryManagerUtil.partialUpdateObjectEntry(
-				dtoObjectEntry, _objectDefinition.getObjectDefinitionId(),
+				dtoObjectEntry, objectDefinition.getObjectDefinitionId(),
 				new com.liferay.object.rest.dto.v1_0.ObjectEntry() {
 					{
 						setFriendlyUrlPath(
@@ -221,21 +228,21 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 					DefaultObjectEntryManager defaultObjectEntryManager) {
 
 				dtoObjectEntry = defaultObjectEntryManager.updateObjectEntry(
-					updateDTOConverterContext, _objectDefinition,
-					dtoObjectEntry, scopeKey, objectEntry);
+					updateDTOConverterContext, objectDefinition, dtoObjectEntry,
+					scopeKey, objectEntry);
 			}
 			else {
 				dtoObjectEntry = objectEntryManager.updateObjectEntry(
 					objectEntry.getCompanyId(), updateDTOConverterContext,
-					dtoObjectEntry.getExternalReferenceCode(),
-					_objectDefinition, dtoObjectEntry, scopeKey);
+					dtoObjectEntry.getExternalReferenceCode(), objectDefinition,
+					dtoObjectEntry, scopeKey);
 			}
 
 			ObjectEntry updatedObjectEntry = ObjectEntryUtil.toObjectEntry(
-				_objectDefinition, dtoObjectEntry);
+				objectDefinition, dtoObjectEntry);
 
 			_relateMainObjectEntry(
-				infoItemFieldValues, _objectDefinition, updatedObjectEntry,
+				infoItemFieldValues, objectDefinition, updatedObjectEntry,
 				serviceContext, themeDisplay.getUserId());
 
 			_relateNestedObjectEntries(
@@ -247,7 +254,7 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 		catch (Exception exception) {
 			ObjectEntryInfoItemExceptionRequestHandler.handleInfoFormException(
 				exception, objectEntry.getGroupId(), _infoItemFormProvider,
-				_objectDefinition);
+				objectDefinition.getObjectDefinitionId());
 		}
 
 		return null;
@@ -255,7 +262,8 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 
 	private void _deleteRelatedObjectEntries(
 			long companyId, DTOConverterContext dtoConverterContext,
-			InfoItemFieldValues infoItemFieldValues, String scopeKey)
+			InfoItemFieldValues infoItemFieldValues, ObjectEntry objectEntry,
+			String scopeKey)
 		throws Exception {
 
 		InfoFieldValue<Object> deletedItemIdentifiersInfoFieldValue =
@@ -267,6 +275,7 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 
 		String[] deletedItemIdentifiers = GetterUtil.getStringValues(
 			deletedItemIdentifiersInfoFieldValue.getValue());
+		Tree tree = null;
 
 		for (String deletedItemIdentifier : deletedItemIdentifiers) {
 			String[] split = StringUtil.split(
@@ -288,14 +297,65 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 
 			ObjectEntryManager objectEntryManager =
 				_objectEntryManagerRegistry.getObjectEntryManager(
-					_objectDefinition.getCompanyId(),
+					objectDefinition.getCompanyId(),
 					objectDefinition.getStorageType());
 
 			String externalReferenceCode = split[1];
 
-			objectEntryManager.deleteObjectEntry(
-				companyId, dtoConverterContext, externalReferenceCode,
-				objectDefinition, scopeKey);
+			if (!objectDefinition.isRootDescendantNode()) {
+				objectEntryManager.deleteObjectEntry(
+					companyId, dtoConverterContext, externalReferenceCode,
+					objectDefinition, scopeKey);
+
+				continue;
+			}
+
+			ObjectEntry relatedObjectEntry =
+				ObjectEntryServiceUtil.fetchObjectEntry(
+					externalReferenceCode, objectEntry.getGroupId(),
+					objectDefinition.getObjectDefinitionId());
+
+			if ((relatedObjectEntry == null) ||
+				!relatedObjectEntry.isRootDescendantNode()) {
+
+				objectEntryManager.deleteObjectEntry(
+					companyId, dtoConverterContext, externalReferenceCode,
+					objectDefinition, scopeKey);
+
+				continue;
+			}
+
+			if (tree == null) {
+				ObjectEntryTreeFactory objectEntryTreeFactory =
+					new ObjectEntryTreeFactory(
+						ObjectEntryLocalServiceUtil.getService(),
+						ObjectRelationshipLocalServiceUtil.getService());
+
+				tree = objectEntryTreeFactory.create(
+					objectEntry.getObjectEntryId());
+			}
+
+			Node node = tree.fetchNode(relatedObjectEntry.getObjectEntryId());
+
+			if (node == null) {
+				throw new NoSuchObjectEntryException(
+					StringBundler.concat(
+						"No ObjectEntry exists with the key ",
+						"{externalReferenceCode=", externalReferenceCode,
+						", rootObjectEntryId=",
+						objectEntry.getRootObjectEntryId(), "}"));
+			}
+
+			DefaultObjectEntryManager defaultObjectEntryManager =
+				DefaultObjectEntryManagerProvider.provide(objectEntryManager);
+			Edge edge = node.getEdge();
+			Node parentNode = node.getParentNode();
+
+			defaultObjectEntryManager.deleteRelatedObjectEntry(
+				node.getPrimaryKey(),
+				ObjectRelationshipLocalServiceUtil.getObjectRelationship(
+					edge.getObjectRelationshipId()),
+				parentNode.getPrimaryKey());
 		}
 	}
 
@@ -310,14 +370,15 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 	}
 
 	private Map<String, Object> _getProperties(
-		ObjectEntry objectEntry, InfoItemFieldValues infoItemFieldValues) {
+		InfoItemFieldValues infoItemFieldValues,
+		ObjectDefinition objectDefinition, ObjectEntry objectEntry) {
 
 		for (InfoFieldValue<Object> infoFieldValue :
 				infoItemFieldValues.getInfoFieldValues()) {
 
 			if (infoFieldValue.getValue() instanceof RelatedInfoFieldValue) {
 				return ObjectEntryUtil.toProperties(
-					infoItemFieldValues, _objectDefinition,
+					infoItemFieldValues, objectDefinition,
 					objectEntry.getValues());
 			}
 		}
@@ -384,18 +445,19 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 
 			Object value = infoFieldValue.getValue();
 
-			if (value instanceof List) {
-				List<String> relatedObjectEntryIds = (List<String>)value;
+			if (!(value instanceof List)) {
+				continue;
+			}
 
-				for (String relatedObjectEntryId : relatedObjectEntryIds) {
-					ObjectRelationshipLocalServiceUtil.
-						addObjectRelationshipMappingTableValues(
-							userId,
-							objectRelationship.getObjectRelationshipId(),
-							objectEntry.getPrimaryKey(),
-							GetterUtil.getLong(relatedObjectEntryId),
-							serviceContext);
-				}
+			List<String> relatedObjectEntryIds = (List<String>)value;
+
+			for (String relatedObjectEntryId : relatedObjectEntryIds) {
+				ObjectRelationshipLocalServiceUtil.
+					addObjectRelationshipMappingTableValues(
+						userId, objectRelationship.getObjectRelationshipId(),
+						objectEntry.getPrimaryKey(),
+						GetterUtil.getLong(relatedObjectEntryId),
+						serviceContext);
 			}
 		}
 	}
@@ -555,7 +617,6 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 		DateFormatFactoryUtil.getSimpleDateFormat("yyyy-MM-dd HH:mm");
 
 	private final InfoItemFormProvider<ObjectEntry> _infoItemFormProvider;
-	private final ObjectDefinition _objectDefinition;
 	private final ObjectEntryManagerRegistry _objectEntryManagerRegistry;
 	private final ObjectScopeProviderRegistry _objectScopeProviderRegistry;
 

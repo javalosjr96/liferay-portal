@@ -561,7 +561,10 @@ public class FileEntryStagedModelDataHandler
 										fileVersionUuid,
 										existingFileEntry.getGroupId());
 
-							if (alreadyExistingFileVersion != null) {
+							if ((alreadyExistingFileVersion != null) &&
+								(alreadyExistingFileVersion.getFileEntryId() ==
+									existingFileEntry.getFileEntryId())) {
+
 								serviceContext.setAttribute(
 									"existingDLFileVersionId",
 									alreadyExistingFileVersion.
@@ -1021,13 +1024,15 @@ public class FileEntryStagedModelDataHandler
 				_assetDisplayPageEntryLocalService.fetchAssetDisplayPageEntry(
 					assetDisplayPageEntryId);
 
-			if (existingAssetDisplayPageEntry != null) {
-				existingAssetDisplayPageEntry.setClassPK(
-					importedFileEntry.getFileEntryId());
-
-				_assetDisplayPageEntryLocalService.updateAssetDisplayPageEntry(
-					existingAssetDisplayPageEntry);
+			if (existingAssetDisplayPageEntry == null) {
+				continue;
 			}
+
+			existingAssetDisplayPageEntry.setClassPK(
+				importedFileEntry.getFileEntryId());
+
+			_assetDisplayPageEntryLocalService.updateAssetDisplayPageEntry(
+				existingAssetDisplayPageEntry);
 		}
 	}
 
@@ -1068,13 +1073,15 @@ public class FileEntryStagedModelDataHandler
 				_friendlyURLEntryLocalService.fetchFriendlyURLEntry(
 					friendlyURLEntryId);
 
-			if (existingFriendlyURLEntry != null) {
-				existingFriendlyURLEntry.setClassPK(
-					importedFileEntry.getFileEntryId());
-
-				_friendlyURLEntryLocalService.updateFriendlyURLEntry(
-					existingFriendlyURLEntry);
+			if (existingFriendlyURLEntry == null) {
+				continue;
 			}
+
+			existingFriendlyURLEntry.setClassPK(
+				importedFileEntry.getFileEntryId());
+
+			_friendlyURLEntryLocalService.updateFriendlyURLEntry(
+				existingFriendlyURLEntry);
 		}
 
 		if (ExportImportThreadLocal.isStagingInProcess() &&

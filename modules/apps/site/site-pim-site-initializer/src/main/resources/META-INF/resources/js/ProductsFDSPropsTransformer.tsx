@@ -7,14 +7,16 @@ import {
 	ACTIONS,
 	AuthorRenderer,
 	SpaceRendererWithCache,
+	StatusLabel,
 	addOnClickToCreationMenuItems,
 	deleteAssetEntriesBulkAction,
 	getScopeExternalReferenceCode,
+	styleDeleteAction,
 	transformFDSBulkActions,
 } from '@liferay/site-cms-site-initializer';
 import React from 'react';
 
-import ProductNameRenderer from './cell_renderers/ProductNameRenderer';
+import ProductTitleRenderer from './cell_renderers/ProductTitleRenderer';
 
 export default function propsTransformer({
 	bulkActions = [],
@@ -46,8 +48,8 @@ export default function propsTransformer({
 					type: 'internal',
 				},
 				{
-					component: ProductNameRenderer,
-					name: 'nameTableCellRenderer',
+					component: ProductTitleRenderer,
+					name: 'titleTableCellRenderer',
 					type: 'internal',
 				},
 				{
@@ -62,14 +64,22 @@ export default function propsTransformer({
 					name: 'spaceTableCellRenderer',
 					type: 'internal',
 				},
+				{
+					component: ({itemData, value}: any) => (
+						<StatusLabel
+							expirationDate={
+								itemData?.embedded?.expirationDate ?? undefined
+							}
+							label={value?.label}
+						/>
+					),
+					name: 'statusTableCellRenderer',
+					type: 'internal',
+				},
 			],
 		},
 		hideManagementBarInEmptyState: true,
-		itemsActions: itemsActions?.map((action) =>
-			action?.data?.id === 'delete'
-				? {...action, className: 'text-danger'}
-				: action
-		),
+		itemsActions: itemsActions?.map(styleDeleteAction),
 		onBulkActionItemClick: ({
 			action,
 			selectedData,

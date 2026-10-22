@@ -114,34 +114,43 @@ public class IndexUpdaterUtil {
 
 			});
 
+		FutureTask<Void> futureTask = new FutureTask<>(
+			() -> {
+				try {
+					PrimaryKeyUpdaterUtil.updateAllPrimaryKeys();
+				}
+				catch (Exception exception) {
+					_log.error(exception);
+				}
+
+				bundleTracker.open();
+
+				return null;
+			});
+
 		DependencyManagerSyncUtil.registerSyncFutureTask(
-			new FutureTask<>(
-				() -> {
-					try {
-						PrimaryKeyUpdaterUtil.updateAllPrimaryKeys();
-					}
-					catch (Exception exception) {
-						_log.error(exception);
-					}
-
-					bundleTracker.open();
-
-					DependencyManagerSyncUtil.registerSyncCallable(
-						() -> {
-							bundleTracker.close();
-
-							_clearProcessedServletContextNames();
-
-							_awaitFuturesTermination();
-
-							loggingTimer.close();
-
-							return null;
-						});
-
-					return null;
-				}),
+			futureTask,
 			IndexUpdaterUtil.class.getName() + "-BundleTrackerOpener");
+
+		DependencyManagerSyncUtil.registerSyncCallable(
+			() -> {
+				try {
+					futureTask.get();
+				}
+				catch (Exception exception) {
+					_log.error(exception);
+				}
+
+				bundleTracker.close();
+
+				_clearProcessedServletContextNames();
+
+				_awaitFuturesTermination();
+
+				loggingTimer.close();
+
+				return null;
+			});
 	}
 
 	public static void updateIndexes(Bundle bundle) {
@@ -269,9 +278,11 @@ public class IndexUpdaterUtil {
 						StringPool.COMMA_AND_SPACE),
 					orderByColumns + " asc");
 
-			if (duplicateUniqueFinderRowsCleaner.deleteDuplicates()) {
-				duplicatesDeleted = true;
+			if (!duplicateUniqueFinderRowsCleaner.deleteDuplicates()) {
+				continue;
 			}
+
+			duplicatesDeleted = true;
 		}
 
 		return duplicatesDeleted;

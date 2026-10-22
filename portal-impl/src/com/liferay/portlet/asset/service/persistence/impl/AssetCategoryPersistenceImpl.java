@@ -2499,6 +2499,9 @@ public class AssetCategoryPersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					assetCategory.getUuid(),
+					assetCategory.getExternalReferenceCode()) &&
+				!Objects.equals(
 					assetCategoryModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					assetCategory.getExternalReferenceCode())) {
@@ -2823,7 +2826,12 @@ public class AssetCategoryPersistenceImpl
 
 		_collectionPersistenceFinderByGroupId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, AssetCategory::getCategoryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
+					new String[] {Long.class.getName()},
+					new String[] {"groupId"}, false),
+				"", AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByGroupId",
 					new String[] {
@@ -2832,17 +2840,13 @@ public class AssetCategoryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId"}, true),
+				_SQL_COUNT_ASSETCATEGORY_WHERE, _SQL_SELECT_ASSETCATEGORY_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByGroupId",
 					new String[] {Long.class.getName()},
 					new String[] {"groupId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
-					new String[] {Long.class.getName()},
-					new String[] {"groupId"}, false),
-				_SQL_SELECT_ASSETCATEGORY_WHERE, _SQL_COUNT_ASSETCATEGORY_WHERE,
-				AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"assetCategory.", "groupId", FinderColumn.Type.LONG, "=",
 					true, true, AssetCategory::getGroupId));
@@ -2932,7 +2936,12 @@ public class AssetCategoryPersistenceImpl
 
 		_collectionPersistenceFinderByG_P =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, AssetCategory::getCategoryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P",
+					new String[] {Long.class.getName(), Long.class.getName()},
+					new String[] {"groupId", "parentCategoryId"}, false),
+				"", AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P",
 					new String[] {
@@ -2941,17 +2950,13 @@ public class AssetCategoryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "parentCategoryId"}, true),
+				_SQL_COUNT_ASSETCATEGORY_WHERE, _SQL_SELECT_ASSETCATEGORY_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_P",
 					new String[] {Long.class.getName(), Long.class.getName()},
 					new String[] {"groupId", "parentCategoryId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P",
-					new String[] {Long.class.getName(), Long.class.getName()},
-					new String[] {"groupId", "parentCategoryId"}, false),
-				_SQL_SELECT_ASSETCATEGORY_WHERE, _SQL_COUNT_ASSETCATEGORY_WHERE,
-				AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"assetCategory.", "groupId", FinderColumn.Type.LONG, "=",
 					true, true, AssetCategory::getGroupId),
@@ -2962,7 +2967,12 @@ public class AssetCategoryPersistenceImpl
 
 		_collectionPersistenceFinderByG_V =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, AssetCategory::getCategoryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_V",
+					new String[] {Long.class.getName(), Long.class.getName()},
+					new String[] {"groupId", "vocabularyId"}, false),
+				"", AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_V",
 					new String[] {
@@ -2971,17 +2981,13 @@ public class AssetCategoryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "vocabularyId"}, true),
+				_SQL_COUNT_ASSETCATEGORY_WHERE, _SQL_SELECT_ASSETCATEGORY_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_V",
 					new String[] {Long.class.getName(), Long.class.getName()},
 					new String[] {"groupId", "vocabularyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_V",
-					new String[] {Long.class.getName(), Long.class.getName()},
-					new String[] {"groupId", "vocabularyId"}, false),
-				_SQL_SELECT_ASSETCATEGORY_WHERE, _SQL_COUNT_ASSETCATEGORY_WHERE,
-				AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new ArrayableFinderColumn<>(
 					"assetCategory.", "groupId", FinderColumn.Type.LONG, "=",
 					false, true, true, AssetCategory::getGroupId),
@@ -3075,7 +3081,18 @@ public class AssetCategoryPersistenceImpl
 
 		_collectionPersistenceFinderByG_P_V =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, AssetCategory::getCategoryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P_V",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Long.class.getName()
+					},
+					new String[] {
+						"groupId", "parentCategoryId", "vocabularyId"
+					},
+					false),
+				"", AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P_V",
 					new String[] {
@@ -3088,6 +3105,8 @@ public class AssetCategoryPersistenceImpl
 						"groupId", "parentCategoryId", "vocabularyId"
 					},
 					true),
+				_SQL_COUNT_ASSETCATEGORY_WHERE, _SQL_SELECT_ASSETCATEGORY_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_P_V",
 					new String[] {
@@ -3098,19 +3117,7 @@ public class AssetCategoryPersistenceImpl
 						"groupId", "parentCategoryId", "vocabularyId"
 					},
 					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P_V",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Long.class.getName()
-					},
-					new String[] {
-						"groupId", "parentCategoryId", "vocabularyId"
-					},
-					false),
-				_SQL_SELECT_ASSETCATEGORY_WHERE, _SQL_COUNT_ASSETCATEGORY_WHERE,
-				AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"assetCategory.", "groupId", FinderColumn.Type.LONG, "=",
 					true, true, AssetCategory::getGroupId),
@@ -3124,7 +3131,16 @@ public class AssetCategoryPersistenceImpl
 
 		_collectionPersistenceFinderByG_LikeT_V =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, AssetCategory::getCategoryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LikeT_V",
+					new String[] {
+						Long.class.getName(), String.class.getName(),
+						Long.class.getName()
+					},
+					new String[] {"groupId", "treePath", "vocabularyId"},
+					false),
+				"", AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_LikeT_V",
 					new String[] {
@@ -3134,18 +3150,8 @@ public class AssetCategoryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "treePath", "vocabularyId"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LikeT_V",
-					new String[] {
-						Long.class.getName(), String.class.getName(),
-						Long.class.getName()
-					},
-					new String[] {"groupId", "treePath", "vocabularyId"},
-					false),
-				_SQL_SELECT_ASSETCATEGORY_WHERE, _SQL_COUNT_ASSETCATEGORY_WHERE,
-				AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				_SQL_COUNT_ASSETCATEGORY_WHERE, _SQL_SELECT_ASSETCATEGORY_WHERE,
+				null, null, "",
 				new FinderColumn<>(
 					"assetCategory.", "groupId", FinderColumn.Type.LONG, "=",
 					true, true, AssetCategory::getGroupId),
@@ -3158,7 +3164,15 @@ public class AssetCategoryPersistenceImpl
 
 		_collectionPersistenceFinderByG_LikeN_V =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, AssetCategory::getCategoryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LikeN_V",
+					new String[] {
+						Long.class.getName(), String.class.getName(),
+						Long.class.getName()
+					},
+					new String[] {"groupId", "name", "vocabularyId"}, false),
+				"", AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_LikeN_V",
 					new String[] {
@@ -3168,17 +3182,8 @@ public class AssetCategoryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "name", "vocabularyId"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LikeN_V",
-					new String[] {
-						Long.class.getName(), String.class.getName(),
-						Long.class.getName()
-					},
-					new String[] {"groupId", "name", "vocabularyId"}, false),
-				_SQL_SELECT_ASSETCATEGORY_WHERE, _SQL_COUNT_ASSETCATEGORY_WHERE,
-				AssetCategoryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				_SQL_COUNT_ASSETCATEGORY_WHERE, _SQL_SELECT_ASSETCATEGORY_WHERE,
+				null, null, "",
 				new ArrayableFinderColumn<>(
 					"assetCategory.", "groupId", FinderColumn.Type.LONG, "=",
 					false, true, true, AssetCategory::getGroupId),
@@ -3259,4 +3264,4 @@ public class AssetCategoryPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-2068111641
+// LIFERAY-SERVICE-BUILDER-HASH:647039654

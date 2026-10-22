@@ -40,6 +40,38 @@ public class ProductTypesCMSStructureObjectFolderContributorTest {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Test
+	public void testGetBaseObjectDefinitionExternalReferenceCode() {
+		try (MockedStatic<FeatureFlagManagerUtil>
+				featureFlagManagerUtilMockedStatic = Mockito.mockStatic(
+					FeatureFlagManagerUtil.class)) {
+
+			featureFlagManagerUtilMockedStatic.when(
+				() -> FeatureFlagManagerUtil.isEnabled(
+					Mockito.anyLong(), Mockito.eq("LPD-96666"))
+			).thenReturn(
+				false
+			);
+
+			Assert.assertNull(
+				_productTypesCMSStructureObjectFolderContributor.
+					getBaseObjectDefinitionExternalReferenceCode());
+
+			featureFlagManagerUtilMockedStatic.when(
+				() -> FeatureFlagManagerUtil.isEnabled(
+					Mockito.anyLong(), Mockito.eq("LPD-96666"))
+			).thenReturn(
+				true
+			);
+
+			Assert.assertEquals(
+				PIMObjectDefinitionConstants.
+					EXTERNAL_REFERENCE_CODE_BASIC_PRODUCT,
+				_productTypesCMSStructureObjectFolderContributor.
+					getBaseObjectDefinitionExternalReferenceCode());
+		}
+	}
+
+	@Test
 	public void testGetLabel() {
 		Assert.assertEquals(
 			"product",
@@ -120,7 +152,7 @@ public class ProductTypesCMSStructureObjectFolderContributorTest {
 					fetchObjectDefinitionByExternalReferenceCode(
 						Mockito.eq(
 							PIMObjectDefinitionConstants.
-								EXTERNAL_REFERENCE_CODE_BASE_SKU),
+								EXTERNAL_REFERENCE_CODE_BASIC_PRODUCT),
 						Mockito.anyLong())
 			).thenReturn(
 				objectDefinition
@@ -134,10 +166,12 @@ public class ProductTypesCMSStructureObjectFolderContributorTest {
 				ObjectFieldLocalService.class);
 
 			List<ObjectField> objectFields = Arrays.asList(
-				_mockObjectField("Text", "code", "false", true),
 				_mockObjectField("DateTime", "displayDate", "false", true),
+				_mockObjectField(
+					"Text", "externalReferenceCode", "false", true),
 				_mockObjectField("LongInteger", "id", "true", true),
-				_mockObjectField("Text", "name", "false", true),
+				_mockObjectField("Text", "sku", "false", true),
+				_mockObjectField("Text", "title", "false", true),
 				_mockObjectField(
 					"Text", RandomTestUtil.randomString(), "false", false));
 
@@ -154,8 +188,8 @@ public class ProductTypesCMSStructureObjectFolderContributorTest {
 			Assert.assertEquals(
 				Collections.singletonMap(
 					PIMObjectDefinitionConstants.
-						EXTERNAL_REFERENCE_CODE_BASE_SKU,
-					Arrays.asList("code", "name")),
+						EXTERNAL_REFERENCE_CODE_BASIC_PRODUCT,
+					Arrays.asList("sku", "title")),
 				_productTypesCMSStructureObjectFolderContributor.
 					getSystemObjectFieldNames());
 		}

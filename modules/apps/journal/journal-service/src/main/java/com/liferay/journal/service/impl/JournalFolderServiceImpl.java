@@ -379,11 +379,12 @@ public class JournalFolderServiceImpl extends JournalFolderServiceBaseImpl {
 		for (JournalFolder folder : folders) {
 			folderIds.add(folder.getFolderId());
 
-			if (recurse) {
-				getSubfolderIds(
-					folderIds, folder.getGroupId(), folder.getFolderId(),
-					recurse);
+			if (!recurse) {
+				continue;
 			}
+
+			getSubfolderIds(
+				folderIds, folder.getGroupId(), folder.getFolderId(), recurse);
 		}
 	}
 
@@ -403,10 +404,15 @@ public class JournalFolderServiceImpl extends JournalFolderServiceBaseImpl {
 			long folderId, long parentFolderId, ServiceContext serviceContext)
 		throws PortalException {
 
+		JournalFolder folder = journalFolderPersistence.findByPrimaryKey(
+			folderId);
+
 		_journalFolderModelResourcePermission.check(
-			getPermissionChecker(),
-			journalFolderPersistence.findByPrimaryKey(folderId),
-			ActionKeys.UPDATE);
+			getPermissionChecker(), folder, ActionKeys.UPDATE);
+
+		ModelResourcePermissionUtil.check(
+			_journalFolderModelResourcePermission, getPermissionChecker(),
+			folder.getGroupId(), parentFolderId, ActionKeys.ADD_FOLDER);
 
 		return journalFolderLocalService.moveFolder(
 			folderId, parentFolderId, serviceContext);
@@ -417,10 +423,15 @@ public class JournalFolderServiceImpl extends JournalFolderServiceBaseImpl {
 			long folderId, long parentFolderId, ServiceContext serviceContext)
 		throws PortalException {
 
+		JournalFolder folder = journalFolderPersistence.findByPrimaryKey(
+			folderId);
+
 		_journalFolderModelResourcePermission.check(
-			getPermissionChecker(),
-			journalFolderPersistence.findByPrimaryKey(folderId),
-			ActionKeys.UPDATE);
+			getPermissionChecker(), folder, ActionKeys.UPDATE);
+
+		ModelResourcePermissionUtil.check(
+			_journalFolderModelResourcePermission, getPermissionChecker(),
+			folder.getGroupId(), parentFolderId, ActionKeys.ADD_FOLDER);
 
 		return journalFolderLocalService.moveFolderFromTrash(
 			getUserId(), folderId, parentFolderId, serviceContext);
@@ -609,6 +620,12 @@ public class JournalFolderServiceImpl extends JournalFolderServiceBaseImpl {
 				description = folder.getDescription();
 			}
 
+			if (parentFolderId != folder.getParentFolderId()) {
+				ModelResourcePermissionUtil.check(
+					_journalFolderModelResourcePermission, permissionChecker,
+					folder.getGroupId(), parentFolderId, ActionKeys.ADD_FOLDER);
+			}
+
 			return journalFolderLocalService.updateFolder(
 				getUserId(), groupId, folderId, parentFolderId, name,
 				description, ddmStructureIds, restrictionType,
@@ -633,11 +650,13 @@ public class JournalFolderServiceImpl extends JournalFolderServiceBaseImpl {
 		while (iterator.hasNext()) {
 			DDMStructure ddmStructure = iterator.next();
 
-			if (!_ddmStructureModelResourcePermission.contains(
+			if (_ddmStructureModelResourcePermission.contains(
 					permissionChecker, ddmStructure, ActionKeys.VIEW)) {
 
-				iterator.remove();
+				continue;
 			}
+
+			iterator.remove();
 		}
 
 		return ddmStructures;

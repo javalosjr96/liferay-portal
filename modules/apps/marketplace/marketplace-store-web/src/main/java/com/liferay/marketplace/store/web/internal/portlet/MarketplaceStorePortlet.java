@@ -90,6 +90,7 @@ import org.scribe.oauth.OAuthService;
  * @author Joan Kim
  */
 @Component(
+	enabled = false,
 	property = {
 		"com.liferay.portlet.css-class-wrapper=marketplace-portlet",
 		"com.liferay.portlet.display-category=category.hidden",
@@ -765,9 +766,11 @@ public class MarketplaceStorePortlet extends MVCPortlet {
 		List<App> apps = appLocalService.getInstalledApps();
 
 		for (App app : apps) {
-			if (app.getRemoteAppId() > 0) {
-				jsonArray.put(_getAppJSONObject(app));
+			if (app.getRemoteAppId() <= 0) {
+				continue;
 			}
+
+			jsonArray.put(_getAppJSONObject(app));
 		}
 
 		return jsonArray;

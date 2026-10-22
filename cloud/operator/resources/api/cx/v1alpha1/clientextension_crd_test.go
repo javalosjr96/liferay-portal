@@ -39,6 +39,18 @@ func TestCRDAcceptsConfigurationOnlyClientExtension(t *testing.T) {
 	}
 }
 
+func TestCRDAcceptsDomain(t *testing.T) {
+	testClient := startEnvironment(t)
+
+	clientExtension := validClientExtension("domain")
+
+	clientExtension.Spec.Domain = "liferay-sample-etc-spring-boot.example.com"
+
+	if error := testClient.Create(context.Background(), clientExtension); error != nil {
+		t.Errorf("Expected a ClientExtension naming its domain to be accepted, got %v", error)
+	}
+}
+
 func TestCRDAcceptsDxpNamespace(t *testing.T) {
 	testClient := startEnvironment(t)
 
@@ -121,6 +133,31 @@ func TestCRDRejectsInvalidClientExtensions(t *testing.T) {
 	testCases := map[string]struct {
 		mutate func(object map[string]any)
 	}{
+		"a configuration that is not an object": {
+			mutate: func(object map[string]any) {
+				spec(object)["configs"] = map[string]any{"CETConfiguration~sample": 5}
+			},
+		},
+		"a domain that is a URL": {
+			mutate: func(object map[string]any) {
+				spec(object)["domain"] = "https://liferay-sample.example.com"
+			},
+		},
+		"a domain with a path": {
+			mutate: func(object map[string]any) {
+				spec(object)["domain"] = "liferay-sample.example.com/o/sample"
+			},
+		},
+		"a domain with a port": {
+			mutate: func(object map[string]any) {
+				spec(object)["domain"] = "liferay-sample.example.com:8443"
+			},
+		},
+		"a domain with uppercase letters": {
+			mutate: func(object map[string]any) {
+				spec(object)["domain"] = "Liferay-Sample.example.com"
+			},
+		},
 		"a dxpNamespace longer than a namespace name": {
 			mutate: func(object map[string]any) {
 				spec(object)["dxpNamespace"] = strings.Repeat("a", 64)
@@ -131,9 +168,34 @@ func TestCRDRejectsInvalidClientExtensions(t *testing.T) {
 				spec(object)["dxpNamespace"] = "Liferay_Prod"
 			},
 		},
+		"a serviceId longer than a label value": {
+			mutate: func(object map[string]any) {
+				spec(object)["serviceId"] = strings.Repeat("a", 64)
+			},
+		},
+		"a serviceId that is not a DNS label": {
+			mutate: func(object map[string]any) {
+				spec(object)["serviceId"] = "Sample_Service"
+			},
+		},
+		"a virtualInstanceId longer than a label value": {
+			mutate: func(object map[string]any) {
+				spec(object)["virtualInstanceId"] = strings.Repeat("a", 64)
+			},
+		},
+		"a virtualInstanceId that is not a DNS name": {
+			mutate: func(object map[string]any) {
+				spec(object)["virtualInstanceId"] = "Liferay.com"
+			},
+		},
 		"a workloadRef with no name": {
 			mutate: func(object map[string]any) {
 				delete(spec(object)["workloadRef"].(map[string]any), "name")
+			},
+		},
+		"an empty configs": {
+			mutate: func(object map[string]any) {
+				spec(object)["configs"] = map[string]any{}
 			},
 		},
 		"an empty serviceId": {
@@ -149,6 +211,11 @@ func TestCRDRejectsInvalidClientExtensions(t *testing.T) {
 		"an unsupported workload kind": {
 			mutate: func(object map[string]any) {
 				spec(object)["workloadRef"].(map[string]any)["kind"] = "StatefulSet"
+			},
+		},
+		"no configs": {
+			mutate: func(object map[string]any) {
+				delete(spec(object), "configs")
 			},
 		},
 		"no serviceId": {
@@ -287,7 +354,11 @@ func validClientExtension(name string) *ClientExtension {
 			Namespace: namespace,
 		},
 		Spec: ClientExtensionSpec{
-			Configs:           []string{`{"com.liferay.client.extension.type.configuration.CETConfiguration~sample": {}}`},
+			Configs: map[string]Configuration{
+				"com.liferay.client.extension.type.configuration.CETConfiguration~sample": {
+					JSON: apiextensionsv1.JSON{Raw: []byte(`{}`)},
+				},
+			},
 			ServiceID:         "liferay-sample-cx",
 			VirtualInstanceID: "liferay.com",
 			WorkloadRef: &WorkloadRef{

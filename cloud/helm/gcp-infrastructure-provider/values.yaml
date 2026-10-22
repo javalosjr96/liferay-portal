@@ -29,6 +29,8 @@ gateway:
 global:
     gcp: {}
 liferay-dxp-operator:
+    clientExtensions:
+        enabled: true
     enabled: true
     fullnameOverride: dxp-operator
     marketplace:
@@ -41,6 +43,8 @@ liferay-dxp-operator:
         enabled: true
         mountPath: /marketplace
     namespaceOverride: dxp-operator-system
+    onlineActivationWorkflow:
+        enabled: true
     podSecurityContext:
         fsGroup: 1000
         fsGroupChangePolicy: OnRootMismatch

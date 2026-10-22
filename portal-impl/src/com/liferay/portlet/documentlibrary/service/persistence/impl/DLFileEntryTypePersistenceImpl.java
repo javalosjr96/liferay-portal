@@ -961,6 +961,9 @@ public class DLFileEntryTypePersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					dlFileEntryType.getUuid(),
+					dlFileEntryType.getExternalReferenceCode()) &&
+				!Objects.equals(
 					dlFileEntryTypeModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					dlFileEntryType.getExternalReferenceCode())) {
@@ -1639,7 +1642,13 @@ public class DLFileEntryTypePersistenceImpl
 
 		_collectionPersistenceFinderByGroupId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, DLFileEntryType::getFileEntryTypeId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByGroupId",
+					new String[] {Long.class.getName()},
+					new String[] {"groupId"}, false),
+				"", DLFileEntryTypeModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByGroupId",
 					new String[] {
@@ -1648,18 +1657,13 @@ public class DLFileEntryTypePersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId"}, true),
+				_SQL_COUNT_DLFILEENTRYTYPE_WHERE,
+				_SQL_SELECT_DLFILEENTRYTYPE_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByGroupId",
 					new String[] {Long.class.getName()},
 					new String[] {"groupId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByGroupId",
-					new String[] {Long.class.getName()},
-					new String[] {"groupId"}, false),
-				_SQL_SELECT_DLFILEENTRYTYPE_WHERE,
-				_SQL_COUNT_DLFILEENTRYTYPE_WHERE,
-				DLFileEntryTypeModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"", "", null,
+				"",
 				new ArrayableFinderColumn<>(
 					"dlFileEntryType.", "groupId", FinderColumn.Type.LONG, "=",
 					false, true, true, DLFileEntryType::getGroupId));
@@ -1780,4 +1784,4 @@ public class DLFileEntryTypePersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:309385517
+// LIFERAY-SERVICE-BUILDER-HASH:1244268265

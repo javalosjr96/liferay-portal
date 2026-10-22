@@ -17,6 +17,8 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,54 +30,66 @@ import org.json.JSONObject;
 public class JUnitTestClass extends BaseTestClass {
 
 	public DownstreamBuildReport getCachedDownstreamBuildReport() {
-		if (isBuildCachingEnabled() && !_cachedTestReportSearched) {
-			getCachedTestClassReports();
+		return getCachedDownstreamBuildReport(getBatchTestClassGroup());
+	}
+
+	public DownstreamBuildReport getCachedDownstreamBuildReport(
+		BatchTestClassGroup batchTestClassGroup) {
+
+		List<TestClassReport> cachedTestClassReports =
+			getCachedTestClassReports(batchTestClassGroup);
+
+		if (cachedTestClassReports == null) {
+			return null;
 		}
 
-		return _cachedDownstreamBuildReport;
+		TestClassReport testClassReport = cachedTestClassReports.get(0);
+
+		return testClassReport.getDownstreamBuildReport();
 	}
 
 	public List<TestClassReport> getCachedTestClassReports() {
-		if (!isBuildCachingEnabled() || _cachedTestReportSearched) {
-			return _cachedTestClassReports;
+		return getCachedTestClassReports(getBatchTestClassGroup());
+	}
+
+	public List<TestClassReport> getCachedTestClassReports(
+		BatchTestClassGroup batchTestClassGroup) {
+
+		if (!isBuildCachingEnabled()) {
+			return null;
 		}
 
-		BatchTestClassGroup batchTestClassGroup = getBatchTestClassGroup();
+		String batchName = batchTestClassGroup.getBatchName();
+
+		List<TestClassReport> cachedTestClassReports =
+			_cachedTestClassReportsMap.get(batchName);
+
+		if (cachedTestClassReports != null) {
+			return cachedTestClassReports;
+		}
 
 		String testClassName = getTestClassName();
 
-		List<TestClassReport> cachedTestClassReports = new ArrayList<>();
+		cachedTestClassReports = new ArrayList<>();
 
 		TestClassReport testClassReport =
 			batchTestClassGroup.getCachedTestClassReport(testClassName);
 
 		if (testClassReport != null) {
-			cachedTestClassReports.add(
-				batchTestClassGroup.getCachedTestClassReport(testClassName));
+			cachedTestClassReports.add(testClassReport);
 		}
 
 		cachedTestClassReports.addAll(
 			batchTestClassGroup.getCachedTestClassReportByPrefix(
 				testClassName + "$"));
 
-		if ((cachedTestClassReports != null) &&
-			!cachedTestClassReports.isEmpty()) {
-
-			_cachedTestClassReports = cachedTestClassReports;
-
-			for (TestClassReport cachedTestClassReport :
-					cachedTestClassReports) {
-
-				_cachedDownstreamBuildReport =
-					cachedTestClassReport.getDownstreamBuildReport();
-
-				break;
-			}
-
-			_cachedTestReportSearched = true;
+		if (cachedTestClassReports.isEmpty()) {
+			return null;
 		}
 
-		return _cachedTestClassReports;
+		_cachedTestClassReportsMap.put(batchName, cachedTestClassReports);
+
+		return cachedTestClassReports;
 	}
 
 	@Override
@@ -493,28 +507,29 @@ public class JUnitTestClass extends BaseTestClass {
 				methodIgnored = true;
 			}
 
-			if (annotations.contains("@Test")) {
-				String methodName = methodHeaderMatcher.group("methodName");
+			if (!annotations.contains("@Test")) {
+				continue;
+			}
 
-				if (annotations.contains("@TestInfo")) {
-					List<String> issuesList = new ArrayList<>();
+			String methodName = methodHeaderMatcher.group("methodName");
 
-					String testInfo = annotations.substring(
-						annotations.indexOf("@TestInfo"));
+			if (annotations.contains("@TestInfo")) {
+				List<String> issuesList = new ArrayList<>();
 
-					Matcher matcher = _issuesPattern.matcher(testInfo);
+				String testInfo = annotations.substring(
+					annotations.indexOf("@TestInfo"));
 
-					while (matcher.find()) {
-						issuesList.add(matcher.group());
-					}
+				Matcher matcher = _issuesPattern.matcher(testInfo);
 
-					addTestClassMethod(
-						methodIgnored, methodName,
-						String.join(", ", issuesList));
+				while (matcher.find()) {
+					issuesList.add(matcher.group());
 				}
-				else {
-					addTestClassMethod(methodIgnored, methodName);
-				}
+
+				addTestClassMethod(
+					methodIgnored, methodName, String.join(", ", issuesList));
+			}
+			else {
+				addTestClassMethod(methodIgnored, methodName);
 			}
 		}
 
@@ -565,9 +580,8 @@ public class JUnitTestClass extends BaseTestClass {
 	private static final Pattern _testClassFileNamePattern = Pattern.compile(
 		".*/(?<testClassFileName>com/.*)");
 
-	private DownstreamBuildReport _cachedDownstreamBuildReport;
-	private List<TestClassReport> _cachedTestClassReports;
-	private boolean _cachedTestReportSearched;
+	private final Map<String, List<TestClassReport>>
+		_cachedTestClassReportsMap = new ConcurrentHashMap<>();
 	private boolean _classIgnored;
 	private final File _modulesBaseDir;
 	private final List<String> _testClassMethodNames = new ArrayList<>();

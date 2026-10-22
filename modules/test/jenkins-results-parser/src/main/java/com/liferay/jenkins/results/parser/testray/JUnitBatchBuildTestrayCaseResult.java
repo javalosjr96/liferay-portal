@@ -343,8 +343,11 @@ public class JUnitBatchBuildTestrayCaseResult
 		JUnitTestClass jUnitTestClass = getTestClass();
 
 		if (jUnitTestClass.isBuildCachingEnabled()) {
+			AxisTestClassGroup axisTestClassGroup = getAxisTestClassGroup();
+
 			List<TestClassReport> cachedTestClassReports =
-				jUnitTestClass.getCachedTestClassReports();
+				jUnitTestClass.getCachedTestClassReports(
+					axisTestClassGroup.getBatchTestClassGroup());
 
 			if ((cachedTestClassReports != null) &&
 				!cachedTestClassReports.isEmpty()) {
@@ -377,15 +380,17 @@ public class JUnitBatchBuildTestrayCaseResult
 				continue;
 			}
 
-			if (testClassName.equals("junit.framework.TestSuite")) {
-				for (TestReport testReport : testClassReport.getTestReports()) {
-					String testName = testReport.getTestName();
+			if (!testClassName.equals("junit.framework.TestSuite")) {
+				continue;
+			}
 
-					if (testName.equals(getName())) {
-						_testClassReports.add(testClassReport);
+			for (TestReport testReport : testClassReport.getTestReports()) {
+				String testName = testReport.getTestName();
 
-						break;
-					}
+				if (testName.equals(getName())) {
+					_testClassReports.add(testClassReport);
+
+					break;
 				}
 			}
 		}
@@ -408,9 +413,11 @@ public class JUnitBatchBuildTestrayCaseResult
 			for (TestReport testReport : testClassReport.getTestReports()) {
 				String testName = testReport.getTestName();
 
-				if (testName.equals(getName())) {
-					testReports.add(testReport);
+				if (!testName.equals(getName())) {
+					continue;
 				}
+
+				testReports.add(testReport);
 			}
 		}
 
@@ -422,8 +429,11 @@ public class JUnitBatchBuildTestrayCaseResult
 		JUnitTestClass jUnitTestClass = getTestClass();
 
 		if (jUnitTestClass.isBuildCachingEnabled()) {
+			AxisTestClassGroup axisTestClassGroup = getAxisTestClassGroup();
+
 			DownstreamBuildReport cachedDownstreamBuildReport =
-				jUnitTestClass.getCachedDownstreamBuildReport();
+				jUnitTestClass.getCachedDownstreamBuildReport(
+					axisTestClassGroup.getBatchTestClassGroup());
 
 			if (cachedDownstreamBuildReport != null) {
 				setBuildReport(cachedDownstreamBuildReport);

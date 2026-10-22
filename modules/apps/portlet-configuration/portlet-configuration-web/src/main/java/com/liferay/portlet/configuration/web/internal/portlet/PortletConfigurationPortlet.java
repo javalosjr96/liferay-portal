@@ -90,6 +90,7 @@ import jakarta.portlet.PortletConfig;
 import jakarta.portlet.PortletException;
 import jakarta.portlet.PortletPreferences;
 import jakarta.portlet.PortletRequest;
+import jakarta.portlet.PortletResponse;
 import jakarta.portlet.RenderRequest;
 import jakarta.portlet.RenderResponse;
 import jakarta.portlet.ResourceRequest;
@@ -97,6 +98,7 @@ import jakarta.portlet.ResourceResponse;
 
 import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
@@ -233,13 +235,15 @@ public class PortletConfigurationPortlet extends MVCPortlet {
 		while (enumeration.hasMoreElements()) {
 			String name = enumeration.nextElement();
 
-			if (name.startsWith(
-					PublicRenderParameterConfiguration.IGNORE_PREFIX) ||
-				name.startsWith(
+			if (!name.startsWith(
+					PublicRenderParameterConfiguration.IGNORE_PREFIX) &&
+				!name.startsWith(
 					PublicRenderParameterConfiguration.MAPPING_PREFIX)) {
 
-				portletPreferences.reset(name);
+				continue;
 			}
+
+			portletPreferences.reset(name);
 		}
 
 		for (PublicRenderParameter publicRenderParameter :
@@ -473,6 +477,21 @@ public class PortletConfigurationPortlet extends MVCPortlet {
 		resourceRequest.setAttribute(
 			JavaConstants.JAKARTA_PORTLET_CONFIG, getPortletConfig());
 
+		try {
+			_checkPermissions(resourceRequest, resourceResponse);
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+
+			resourceResponse.setProperty(
+				ResourceResponse.HTTP_STATUS_CODE,
+				String.valueOf(HttpServletResponse.SC_FORBIDDEN));
+
+			return;
+		}
+
 		super.serveResource(resourceRequest, resourceResponse);
 	}
 
@@ -591,10 +610,12 @@ public class PortletConfigurationPortlet extends MVCPortlet {
 					resourcePrimKey, roleIdActionIdsMap);
 			}
 
-			if (permissionPropagator != null) {
-				permissionPropagator.propagateRolePermissions(
-					actionRequest, modelResource, resourcePrimKey, roleIds);
+			if (permissionPropagator == null) {
+				continue;
 			}
+
+			permissionPropagator.propagateRolePermissions(
+				actionRequest, modelResource, resourcePrimKey, roleIds);
 		}
 
 		if (Validator.isNull(modelResource)) {
@@ -648,7 +669,11 @@ public class PortletConfigurationPortlet extends MVCPortlet {
 		throws IOException, PortletException {
 
 		try {
-			String mvcPath = renderRequest.getParameter("mvcPath");
+			String mvcPath = getPath(renderRequest, renderResponse);
+
+			if (mvcPath == null) {
+				mvcPath = StringPool.BLANK;
+			}
 
 			if (mvcPath.equals("/edit_permissions.jsp")) {
 				_checkEditPermissionsJSP(renderRequest);
@@ -783,6 +808,25 @@ public class PortletConfigurationPortlet extends MVCPortlet {
 			portletResource, ActionKeys.PERMISSIONS);
 	}
 
+	private void _checkPermissions(
+			PortletRequest portletRequest, PortletResponse portletResponse)
+		throws PortalException {
+
+		String path = getPath(portletRequest, portletResponse);
+
+		if (path == null) {
+			return;
+		}
+
+		if (path.equals("/edit_permissions.jsp")) {
+			_checkEditPermissionsJSP(portletRequest);
+
+			return;
+		}
+
+		ActionUtil.checkConfigurationPermission(portletRequest);
+	}
+
 	private List<String> _getCheckedActionIds(
 		ActionRequest actionRequest, long roleId,
 		Predicate<String> valuePredicate) {
@@ -792,18 +836,17 @@ public class PortletConfigurationPortlet extends MVCPortlet {
 		ActionParameters actionParameters = actionRequest.getActionParameters();
 
 		for (String name : actionParameters.getNames()) {
-			if (!name.startsWith(roleId + ActionUtil.ACTION)) {
+			if (!name.startsWith(roleId + ActionUtil.ACTION) ||
+				!valuePredicate.test(actionParameters.getValue(name))) {
+
 				continue;
 			}
 
-			if (valuePredicate.test(actionParameters.getValue(name))) {
-				int pos = name.indexOf(ActionUtil.ACTION);
+			int pos = name.indexOf(ActionUtil.ACTION);
 
-				String actionId = name.substring(
-					pos + ActionUtil.ACTION.length());
+			String actionId = name.substring(pos + ActionUtil.ACTION.length());
 
-				actionIds.add(actionId);
-			}
+			actionIds.add(actionId);
 		}
 
 		return actionIds;
@@ -1016,10 +1059,12 @@ public class PortletConfigurationPortlet extends MVCPortlet {
 		portletPreferences.setValue(
 			"lfrFacebookApiKey",
 			_secretResolver.store(
-				themeDisplay.getCompanyId(), "lfrFacebookApiKey",
+				themeDisplay.getCompanyId(),
 				StringBundler.concat(
-					"portlet/", themeDisplay.getPlid(), StringPool.SLASH,
-					ParamUtil.getString(actionRequest, "portletResource")),
+					"preference/portlet/", themeDisplay.getPlid(),
+					StringPool.SLASH,
+					ParamUtil.getString(actionRequest, "portletResource"),
+					"/lfrFacebookApiKey"),
 				facebookAPIKey));
 
 		portletPreferences.setValue(

@@ -118,12 +118,16 @@ public class AddAssetListMVCActionCommandTest {
 			Group expectedGroup, Layout layout, Group themeDisplayGroup)
 		throws Exception {
 
+		String classNameIds =
+			PortalUtil.getClassNameId(Layout.class) + StringPool.COMMA +
+				RandomTestUtil.randomLong();
+
 		String portletId = LayoutTestUtil.addPortletToLayout(
 			layout, AssetPublisherPortletKeys.ASSET_PUBLISHER,
 			HashMapBuilder.put(
 				"anyAssetType", new String[] {_CLASS_NAME_ID_NONEXISTENT}
 			).put(
-				"classNameIds", new String[] {_CLASS_NAME_IDS}
+				"classNameIds", new String[] {classNameIds}
 			).put(
 				"selectionStyle", new String[] {"dynamic"}
 			).build());
@@ -171,8 +175,7 @@ public class AddAssetListMVCActionCommandTest {
 			_CLASS_NAME_ID_NONEXISTENT,
 			unicodeProperties.getProperty("anyAssetType", null));
 		Assert.assertEquals(
-			_CLASS_NAME_IDS,
-			unicodeProperties.getProperty("classNameIds", null));
+			classNameIds, unicodeProperties.getProperty("classNameIds", null));
 	}
 
 	private void _testAddAssetListFromManualCollection(
@@ -215,11 +218,7 @@ public class AddAssetListMVCActionCommandTest {
 	}
 
 	private static final String _CLASS_NAME_ID_NONEXISTENT = String.valueOf(
-		RandomTestUtil.nextLong());
-
-	private static final String _CLASS_NAME_IDS =
-		PortalUtil.getClassNameId(Layout.class) + StringPool.COMMA +
-			RandomTestUtil.nextLong();
+		RandomTestUtil.randomLong());
 
 	@Inject
 	private AssetListEntryLocalService _assetListEntryLocalService;

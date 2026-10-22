@@ -406,7 +406,7 @@ public class JSUnitModulesBatchTestClassGroupTest
 		try {
 			_newJSUnitModulesBatchTestClassGroup(jobProperties);
 
-			Assert.fail("Expected RuntimeException");
+			Assert.fail();
 		}
 		catch (RuntimeException runtimeException) {
 			String message = runtimeException.getMessage();

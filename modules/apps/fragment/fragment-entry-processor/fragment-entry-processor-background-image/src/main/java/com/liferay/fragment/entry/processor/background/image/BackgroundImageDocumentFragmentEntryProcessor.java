@@ -6,8 +6,8 @@
 package com.liferay.fragment.entry.processor.background.image;
 
 import com.liferay.analytics.settings.rest.manager.AnalyticsSettingsManager;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
-import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.fragment.entry.processor.constants.FragmentEntryProcessorConstants;
 import com.liferay.fragment.entry.processor.helper.FragmentEntryProcessorHelper;
 import com.liferay.fragment.entry.processor.util.AnalyticsAttributesUtil;
@@ -179,16 +179,18 @@ public class BackgroundImageDocumentFragmentEntryProcessor
 				element.removeAttr("data-lfr-background-image-id");
 			}
 
-			if (analyticsEnabled &&
-				fragmentEntryProcessorContext.isViewMode()) {
+			if (!analyticsEnabled ||
+				!fragmentEntryProcessorContext.isViewMode()) {
 
-				_setAnalyticsAttributes(
-					element,
-					AnalyticsAttributesUtil.getAnalyticsAttributes(
-						editableValueJSONObject, fragmentEntryProcessorContext,
-						_fragmentEntryProcessorHelper, infoDisplaysFieldValues,
-						_infoItemServiceRegistry));
+				continue;
 			}
+
+			_setAnalyticsAttributes(
+				element,
+				AnalyticsAttributesUtil.getAnalyticsAttributes(
+					editableValueJSONObject, fragmentEntryProcessorContext,
+					_fragmentEntryProcessorHelper, infoDisplaysFieldValues,
+					_infoItemServiceRegistry));
 		}
 	}
 

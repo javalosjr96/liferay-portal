@@ -406,7 +406,7 @@ public class SearchResponseResourceImplTest {
 
 		Assert.assertEquals(
 			"{field1st={\"values\": [\"Lone Value\"]}, field2nd={\"values\": " +
-				"[\"4\", \"8\", \"15\", \"16\", \"23\", \"42\"]}}",
+				"[4, 8, 15, 16, 23, 42]}}",
 			String.valueOf(hit.getDocumentFields()));
 		Assert.assertEquals(
 			portalSearchHit.getExplanation(), hit.getExplanation());
@@ -483,9 +483,11 @@ public class SearchResponseResourceImplTest {
 		Map<String, String> map = new HashMap<>();
 
 		for (Map.Entry<String, String> entry : actualMap.entrySet()) {
-			if (expectedMap.containsKey(entry.getKey())) {
-				map.put(entry.getKey(), entry.getValue());
+			if (!expectedMap.containsKey(entry.getKey())) {
+				continue;
 			}
+
+			map.put(entry.getKey(), entry.getValue());
 		}
 
 		AssertUtils.assertEquals(

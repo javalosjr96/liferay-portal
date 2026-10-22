@@ -41,7 +41,6 @@ import com.liferay.layout.util.LayoutServiceContextHelper;
 import com.liferay.layout.util.structure.LayoutStructure;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
@@ -115,10 +114,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -265,10 +260,6 @@ public class SitePageResourceImpl
 	@Override
 	public SitePage postSiteSitePage(Long siteId, SitePage sitePage)
 		throws Exception {
-
-		if (!FeatureFlagManagerUtil.isEnabled("LPS-178052")) {
-			throw new UnsupportedOperationException();
-		}
 
 		Map<Locale, String> titleMap = LocalizedMapUtil.getLocalizedMap(
 			contextAcceptLanguage.getPreferredLocale(), sitePage.getTitle(),
@@ -802,17 +793,12 @@ public class SitePageResourceImpl
 
 			LayoutSet layoutSet = layout.getLayoutSet();
 
-			Document document = Jsoup.parse(
-				ThemeUtil.include(
-					ServletContextPool.get(StringPool.BLANK),
-					httpServletRequest, contextHttpServletResponse,
-					"portal_normal.ftl", layoutSet.getTheme(), false));
+			String html = ThemeUtil.include(
+				ServletContextPool.get(StringPool.BLANK), httpServletRequest,
+				contextHttpServletResponse, "portal_normal.ftl",
+				layoutSet.getTheme(), false);
 
-			Element bodyElement = document.body();
-
-			bodyElement.html(sb.toString());
-
-			return document.html();
+			return ThemeUtil.replaceBodyContent(html, sb.toString());
 		}
 	}
 

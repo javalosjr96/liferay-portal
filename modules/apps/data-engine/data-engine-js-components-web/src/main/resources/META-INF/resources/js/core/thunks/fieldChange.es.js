@@ -15,9 +15,10 @@ const needsPageEvaluation = (
 	containerId,
 	defaultLanguageId,
 	editingLanguageId,
-	fieldName
+	fieldName,
+	portletNamespace
 ) => {
-	if (containerId === 'editObjectEntry') {
+	if (containerId === `${portletNamespace}editObjectEntry`) {
 		return editingLanguageId === defaultLanguageId;
 	}
 
@@ -25,6 +26,7 @@ const needsPageEvaluation = (
 };
 
 const getEditedPages = ({
+	defaultLanguageId,
 	editingLanguageId,
 	key = 'value',
 	name,
@@ -40,6 +42,33 @@ const getEditedPages = ({
 					return {
 						...field,
 						[key]: value,
+					};
+				}
+
+				// A nonlocalizable field has no value translations, so writing
+				// one under the editing language would make the field look
+				// localized, which hides the translation-is-disabled help icon.
+
+				if (!field.localizable) {
+					return {
+						...field,
+						value,
+					};
+				}
+
+				// The value shown for a locale with no translation of its
+				// own is the default locale's, so compare against that to
+				// avoid recording an edit the user never made.
+
+				const currentValue =
+					field.localizedValue?.[editingLanguageId] ??
+					field.localizedValue?.[defaultLanguageId] ??
+					'';
+
+				if (value === currentValue) {
+					return {
+						...field,
+						value,
 					};
 				}
 
@@ -85,6 +114,7 @@ export default function fieldChange({
 		const {evaluable, fieldName} = fieldInstance;
 
 		const editedPages = getEditedPages({
+			defaultLanguageId,
 			editingLanguageId,
 			key,
 			name: fieldInstance.name,
@@ -123,7 +153,8 @@ export default function fieldChange({
 					containerId,
 					defaultLanguageId,
 					editingLanguageId,
-					fieldName
+					fieldName,
+					portletNamespace
 				))
 		) {
 			try {
@@ -199,6 +230,7 @@ export default function fieldChange({
 			});
 
 			REVALIDATE_UPDATES.push({
+				defaultLanguageId,
 				editingLanguageId,
 				name: fieldInstance.name,
 				value,

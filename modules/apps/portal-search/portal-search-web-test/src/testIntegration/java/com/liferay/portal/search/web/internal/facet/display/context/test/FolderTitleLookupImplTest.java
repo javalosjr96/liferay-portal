@@ -72,6 +72,10 @@ public class FolderTitleLookupImplTest {
 
 		_folderSearcherConstructor = clazz.getConstructor(Long.TYPE);
 
+		clazz = bundle.loadClass(
+			"com.liferay.portal.search.web.internal.facet.display.context." +
+				"FolderTitleLookupImpl");
+
 		_folderTitleLookupImplConstructor = clazz.getConstructor(
 			LongFunction.class, HttpServletRequest.class);
 	}

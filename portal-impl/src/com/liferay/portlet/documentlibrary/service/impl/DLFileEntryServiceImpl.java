@@ -14,6 +14,7 @@ import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.model.DLVersionNumberIncrease;
 import com.liferay.document.library.kernel.service.DLFileVersionLocalService;
 import com.liferay.document.library.kernel.service.DLFolderService;
+import com.liferay.document.library.kernel.util.DLUtil;
 import com.liferay.dynamic.data.mapping.kernel.DDMFormValues;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.portal.kernel.bean.BeanReference;
@@ -22,6 +23,7 @@ import com.liferay.portal.kernel.dao.orm.QueryDefinition;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.lock.Lock;
 import com.liferay.portal.kernel.lock.LockManagerUtil;
+import com.liferay.portal.kernel.lock.NoSuchLockException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -37,6 +39,7 @@ import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermi
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -53,6 +56,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Provides the remote service for accessing, adding, checking in/out, deleting,
@@ -645,6 +649,17 @@ public class DLFileEntryServiceImpl extends DLFileEntryServiceBaseImpl {
 	@Override
 	public Lock getFileEntryLock(long fileEntryId) {
 		try {
+			ModelResourcePermission<FileEntry>
+				fileEntryModelResourcePermission =
+					ModelResourcePermissionRegistryUtil.
+						getModelResourcePermission(FileEntry.class.getName());
+
+			if (!fileEntryModelResourcePermission.contains(
+					getPermissionChecker(), fileEntryId, ActionKeys.VIEW)) {
+
+				return null;
+			}
+
 			return LockManagerUtil.getLock(
 				DLFileEntry.class.getName(), fileEntryId);
 		}
@@ -842,10 +857,13 @@ public class DLFileEntryServiceImpl extends DLFileEntryServiceBaseImpl {
 		fileEntryModelResourcePermission.check(
 			permissionChecker, fileEntryId, ActionKeys.UPDATE);
 
+		DLFileEntry dlFileEntry = dlFileEntryPersistence.findByPrimaryKey(
+			fileEntryId);
+
 		ModelResourcePermissionUtil.check(
 			ModelResourcePermissionRegistryUtil.
 				<Folder>getModelResourcePermission(Folder.class.getName()),
-			permissionChecker, serviceContext.getScopeGroupId(), newFolderId,
+			permissionChecker, dlFileEntry.getGroupId(), newFolderId,
 			ActionKeys.ADD_DOCUMENT);
 
 		return dlFileEntryLocalService.moveFileEntry(
@@ -856,6 +874,31 @@ public class DLFileEntryServiceImpl extends DLFileEntryServiceBaseImpl {
 	public Lock refreshFileEntryLock(
 			String lockUuid, long companyId, long expirationTime)
 		throws PortalException {
+
+		Lock lock = LockManagerUtil.getLockByUuidAndCompanyId(
+			lockUuid, companyId);
+
+		if (!Objects.equals(lock.getClassName(), DLFileEntry.class.getName())) {
+			throw new NoSuchLockException(
+				"No file entry lock exists with UUID " + lockUuid);
+		}
+
+		long fileEntryId = GetterUtil.getLong(lock.getKey());
+
+		if (!LockManagerUtil.hasLock(
+				getUserId(), DLFileEntry.class.getName(), fileEntryId) &&
+			!_hasOverrideCheckoutPermission(fileEntryId)) {
+
+			throw new PrincipalException.MustHavePermission(
+				getUserId(), DLFileEntry.class.getName(), fileEntryId,
+				ActionKeys.OVERRIDE_CHECKOUT);
+		}
+
+		if ((expirationTime <= 0) ||
+			(expirationTime > DLFileEntryImpl.LOCK_EXPIRATION_TIME)) {
+
+			expirationTime = DLFileEntryImpl.LOCK_EXPIRATION_TIME;
+		}
 
 		return LockManagerUtil.refresh(lockUuid, companyId, expirationTime);
 	}
@@ -948,6 +991,20 @@ public class DLFileEntryServiceImpl extends DLFileEntryServiceBaseImpl {
 		fileEntryModelResourcePermission.check(
 			getPermissionChecker(), dlFileVersion.getFileEntryId(),
 			ActionKeys.UPDATE);
+
+		if (userId != getUserId()) {
+			throw new PrincipalException();
+		}
+
+		DLFileEntry dlFileEntry = dlFileEntryPersistence.findByPrimaryKey(
+			dlFileVersion.getFileEntryId());
+
+		if (DLUtil.hasWorkflowDefinitionLink(
+				dlFileEntry.getCompanyId(), dlFileEntry.getGroupId(),
+				dlFileEntry.getFolderId(), dlFileEntry.getFileEntryTypeId())) {
+
+			throw new PrincipalException();
+		}
 
 		return dlFileEntryLocalService.updateStatus(
 			userId, fileVersionId, status, serviceContext, workflowContext);

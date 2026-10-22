@@ -5,7 +5,8 @@
 
 import {Key} from 'react';
 
-import {JSONSchema} from '../../types';
+import {JSONSchema, TreeFilter} from '../../types';
+import {filterTree} from '../../utils';
 import {FieldTreeItem} from './types';
 
 const EXCLUDED_FIELD_NAMES = new Set([
@@ -26,6 +27,25 @@ export function buildFieldTree(
 
 	return buildFieldTreeItems(
 		itemsSchema?.type === 'array' ? itemsSchema.items : schema
+	);
+}
+
+export function filterFieldTree(
+	tree: FieldTreeItem[],
+	query: string
+): TreeFilter {
+	const loweredQuery = query.trim().toLowerCase();
+
+	if (!loweredQuery) {
+		return {
+			expandedKeys: new Set<string>(),
+			matchCount: 0,
+			visibleKeys: new Set<string>(),
+		};
+	}
+
+	return filterTree(tree, (item) =>
+		item.name.toLowerCase().includes(loweredQuery)
 	);
 }
 
@@ -85,7 +105,14 @@ function buildFieldTreeItems(
 				id
 			);
 
-			return children.length ? {children, id, name} : {id, name};
+			const fieldCount = children.reduce(
+				(count, child) => count + child.fieldCount,
+				1
+			);
+
+			return children.length
+				? {children, fieldCount, id, name}
+				: {fieldCount, id, name};
 		});
 }
 

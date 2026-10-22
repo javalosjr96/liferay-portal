@@ -6,6 +6,7 @@
 package com.liferay.change.tracking.internal.notification.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.change.tracking.constants.CTDestinationNames;
 import com.liferay.change.tracking.constants.CTPortletKeys;
 import com.liferay.change.tracking.internal.test.util.CTCollectionTestUtil;
 import com.liferay.change.tracking.model.CTCollection;
@@ -31,6 +32,7 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.Sync;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
@@ -68,6 +70,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
  * @author Brooke Dalton
  */
 @RunWith(Arquillian.class)
+@Sync(destinationNames = CTDestinationNames.CT_SCORE)
 public class PublicationUserNotificationHandlerTest {
 
 	@ClassRule
@@ -392,20 +395,21 @@ public class PublicationUserNotificationHandlerTest {
 			JSONObject jsonObject = _jsonFactory.createJSONObject(
 				userNotificationEvent.getPayload());
 
-			if (jsonObject.getLong("ctCollectionId") == ctCollectionId) {
-				int notificationType = jsonObject.getInt("notificationType");
+			if (jsonObject.getLong("ctCollectionId") != ctCollectionId) {
+				continue;
+			}
 
-				if (((notificationType ==
-						UserNotificationDefinition.
-							NOTIFICATION_TYPE_REVIEW_ENTRY) &&
-					 (jsonObject.getBoolean("showConflicts") ==
-						 showConflicts)) ||
-					(notificationType ==
-						UserNotificationDefinition.
-							NOTIFICATION_TYPE_UPDATE_ENTRY)) {
+			int notificationType = jsonObject.getInt("notificationType");
 
-					return userNotificationEvent;
-				}
+			if (((notificationType ==
+					UserNotificationDefinition.
+						NOTIFICATION_TYPE_REVIEW_ENTRY) &&
+				 (jsonObject.getBoolean("showConflicts") == showConflicts)) ||
+				(notificationType ==
+					UserNotificationDefinition.
+						NOTIFICATION_TYPE_UPDATE_ENTRY)) {
+
+				return userNotificationEvent;
 			}
 		}
 

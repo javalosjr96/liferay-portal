@@ -1,8 +1,6 @@
 # PQL Validation
 
-## Trigger
-
-A `test.properties` file changed. These files contain PQL expressions in `test.batch.run.property.query` properties; a malformed one is otherwise caught only when the batch runs after merging.
+Validates the PQL in `test.batch.run.property.query` properties, which would otherwise fail only when the batch runs after the merge.
 
 ## Match
 

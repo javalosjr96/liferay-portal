@@ -5,7 +5,7 @@
 
 package com.liferay.oauth2.provider.web.internal.display.context;
 
-import com.liferay.document.library.util.DLURLHelper;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.oauth2.provider.configuration.OAuth2ProviderConfiguration;
 import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2ScopeGrant;
@@ -121,9 +121,11 @@ public class AssignScopesTreeDisplayContext
 		Set<String> assignedDeletedScopeAliases = new HashSet<>();
 
 		for (String assignedScopeAlias : _assignedScopeAliases) {
-			if (!scopeAliases.contains(assignedScopeAlias)) {
-				assignedDeletedScopeAliases.add(assignedScopeAlias);
+			if (scopeAliases.contains(assignedScopeAlias)) {
+				continue;
 			}
+
+			assignedDeletedScopeAliases.add(assignedScopeAlias);
 		}
 
 		return assignedDeletedScopeAliases;

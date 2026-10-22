@@ -4,7 +4,10 @@
  */
 
 import {Provider} from '@clayui/core';
-import {ClayIconSpriteContext} from '@clayui/icon';
+import {
+	ClayIconIllustrationSpriteContext,
+	ClayIconSpriteContext,
+} from '@clayui/icon';
 import {
 	CONSTANTS,
 	accessibilityMenuAtom,
@@ -120,7 +123,10 @@ export default function render(
 				: null;
 
 		const App = (
-			<LiferayProvider spritemap={Liferay.Icons.spritemap}>
+			<LiferayProvider
+				illustrationSpritemap={Liferay.ThemeDisplay.getPathThemeEmptyStatesSpritemap()}
+				spritemap={Liferay.Icons.spritemap}
+			>
 				{
 					(Component ? (
 						<Component {...componentProps} portletId={portletId} />
@@ -163,11 +169,17 @@ export default function render(
 
 type Props = {
 	children: React.ReactNode;
+	illustrationSpritemap: string;
 	spritemap: string;
 };
 
-function LiferayProvider({children, spritemap}: Props) {
+function LiferayProvider({children, illustrationSpritemap, spritemap}: Props) {
 	const [accessibilityMenu] = useLiferayState(accessibilityMenuAtom);
+
+	const persistentAlerts =
+		accessibilityMenu[
+			CONSTANTS.ACCESSIBILITY_SETTING_PERSISTENT_NOTIFICATIONS
+		]?.value;
 
 	const reducedMotion = useMemo(() => {
 		const reducedMotion =
@@ -182,9 +194,17 @@ function LiferayProvider({children, spritemap}: Props) {
 	}, [accessibilityMenu]);
 
 	return (
-		<Provider reducedMotion={reducedMotion} spritemap={spritemap}>
+		<Provider
+			persistentAlerts={persistentAlerts}
+			reducedMotion={reducedMotion}
+			spritemap={spritemap}
+		>
 			<ClayIconSpriteContext.Provider value={spritemap}>
-				{children}
+				<ClayIconIllustrationSpriteContext.Provider
+					value={illustrationSpritemap}
+				>
+					{children}
+				</ClayIconIllustrationSpriteContext.Provider>
 			</ClayIconSpriteContext.Provider>
 		</Provider>
 	);

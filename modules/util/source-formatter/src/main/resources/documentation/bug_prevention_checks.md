@@ -5,7 +5,7 @@ Check | File Extensions | Description
 [AnonymousClassCheck](check/anonymous_class_check.md#anonymousclasscheck) | .java | Checks for serialization issue when using anonymous class. |
 ArquillianCheck | .java | Checks for correct use of `com.liferay.arquillian.extension.junit.bridge.junit.Arquillian`. |
 AssertFailCheck | .java | Checks that calls to `Assert.fail` can be only used inside a try block as the last statement. |
-[AutoBatchPreparedStatementUtilCheck](check/auto_batch_prepared_statement_util_check.md#autobatchpreparedstatementutilcheck) | .java | Finds cases where `AutoBatchPreparedStatementUtil.autoBatch` or `AutoBatchPreparedStatementUtil.concurrentAutoBatch` should be used. |
+[AutoBatchPreparedStatementUtilCheck](check/auto_batch_prepared_statement_util_check.md#autobatchpreparedstatementutilcheck) | .java | Finds cases where `AutoBatchPreparedStatementUtil.autoBatch`, `AutoBatchPreparedStatementUtil.autoBatchWithResults`, or `AutoBatchPreparedStatementUtil.concurrentAutoBatch` should be used. |
 [AvoidStarImportCheck](https://checkstyle.sourceforge.io/checks/imports/avoidstarimport.html) | .java | Checks that there are no import statements that use the * notation. |
 BNDBreakingChangeCommitMessageCheck | .bnd | Checks that commit message should contain the schematized breaking changes. |
 [BNDBundleActivatorCheck](check/bnd_bundle_activator_check.md#bndbundleactivatorcheck) | .bnd | Validates property value for `Bundle-Activator`. |
@@ -53,7 +53,7 @@ FactoryCheck | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Finds cases where
 FilterStringWhitespaceCheck | .java | Finds missing and unnecessary whitespace in the value of the filter string in `ServiceTrackerFactory.open` or `WaiterUtil.waitForFilter`. |
 [GenericTypeCheck](check/generic_type_check.md#generictypecheck) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Checks that generics are always specified to provide compile-time checking and removing the risk of `ClassCastException` during runtime. |
 GradleCommerceDependenciesCheck | .gradle | Checks the modules that are outside of Commerce are not allowed to depend on Commerce modules. |
-[GradleDependencyArtifactsCheck](check/gradle_dependency_artifacts_check.md#gradledependencyartifactscheck) | .eslintignore, .gradle, .prettierignore, or .properties | Performs several checks on dependencies artifacts. |
+[GradleDependencyArtifactsCheck](check/gradle_dependency_artifacts_check.md#gradledependencyartifactscheck) | .gradle or .properties | Performs several checks on dependencies artifacts. |
 GradleDependencyConfigurationCheck | .gradle | Validates the scope of dependencies in build gradle files. |
 GradleDependencyVersionCheck | .gradle | Checks the version for dependencies in gradle build files. |
 GradleExportedPackageDependenciesCheck | .gradle | Validates dependencies in gradle build files. |
@@ -73,8 +73,8 @@ IllegalTaglibsCheck | .ftl, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Finds cases
 [IncorrectFileLocationCheck](check/incorrect_file_location_check.md#incorrectfilelocationcheck) | | Checks that `/src/*/java/` only contains `.java` files. |
 IncorrectFilePathCheck | | Checks that file path contains illegal characters. |
 InnerExceptionClassCheck | .java | Checks that classes that should have either public constructors or inner classes. |
-JDKDynamicAgentLoadingCheck | .action, .eslintignore, .expect, .function, .gotmpl, .jelly, .jrxml, .macro, .pom, .prettierignore, .project, .properties, .qti, .sh, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, .xsd, .yaml, or .yml | Checks that dynamic loading of agents is not used. |
-JDKPreviewFeaturesCheck | .action, .eslintignore, .expect, .function, .gotmpl, .jelly, .jrxml, .macro, .pom, .prettierignore, .project, .properties, .qti, .sh, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, .xsd, .yaml, or .yml | Checks that preview features are not used. |
+JDKDynamicAgentLoadingCheck | .action, .expect, .function, .gotmpl, .jelly, .jrxml, .macro, .pom, .project, .properties, .qti, .sh, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, .xsd, .yaml, or .yml | Checks that dynamic loading of agents is not used. |
+JDKPreviewFeaturesCheck | .action, .expect, .function, .gotmpl, .jelly, .jrxml, .macro, .pom, .project, .properties, .qti, .sh, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, .xsd, .yaml, or .yml | Checks that preview features are not used. |
 JSCompatibilityCheck | | Checks for JavaScript compatibility. |
 [JSLodashDependencyCheck](check/js_lodash_dependency_check.md#jslodashdependencycheck) | .js or .jsx | Finds incorrect use of `AUI._`. |
 [JSONDeprecatedPackagesCheck](check/json_deprecated_packages_check.md#jsondeprecatedpackagescheck) | .ipynb, .json, or .npmbridgerc | Finds incorrect use of deprecated packages in `package.json` files. |
@@ -113,6 +113,7 @@ JavaComponentAnnotationsCheck | .java | Performs several checks on classes with 
 [JavaConnectionTransactionCheck](check/java_connection_transaction_check.md#javaconnectiontransactioncheck) | .java | Checks that `commit`, `rollback`, and `setAutoCommit` are not called on a `java.sql.Connection`, see LPD-98668. |
 JavaDefaultAdminScreenNameCheck | .java | Checks that we do not use `PropsKeys.DEFAULT_ADMIN_SCREEN_NAME` or `PropsValues.DEFAULT_ADMIN_SCREEN_NAME`. |
 JavaExpandoBridgeAttributesCallOrderCheck | .java | Ensure `setExpandoBridgeAttributes` is the final setter called on a model before model persistence. |
+JavaFeatureFlagAnnotationCheck | .java | Checks that feature flags are declared with `x-feature-flag` in `rest-openapi.yaml` instead of using the annotation `@FeatureFlag`. |
 JavaFeatureFlagManagerUtilCheck | .java | Finds cases where `FeatureFlagManagerUtil.isEnabled` should be used and incorrect use of it. |
 [JavaFinderCacheCheck](check/java_finder_cache_check.md#javafindercachecheck) | .java | Checks that the method `BasePersistenceImpl.fetchByPrimaryKey` is overridden, when using `FinderPath`. |
 JavaFinderImplCustomSQLCheck | .java | Checks that hardcoded SQL values in `*FinderImpl` classes match the SQL in the `.xml` file in the `custom-sql` directory. |
@@ -208,24 +209,24 @@ PoshiPropsUtilCheck | .function, .jar, .lar, .macro, .path, .testcase, .war, or 
 PoshiSmokeTestCheck | .function, .jar, .lar, .macro, .path, .testcase, .war, or .zip | Checks for missing and unnecessary `property ci.retries.disabled = true` in smoke test. |
 PrimitiveWrapperInstantiationCheck | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Finds cases where `new Type` is used for primitive types (use `Type.valueOf` instead). |
 PrincipalExceptionCheck | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Finds calls to `PrincipalException.class.getName()` (use `PrincipalException.getNestedClasses()` instead). |
-PropertiesArchivedModulesCheck | .eslintignore, .prettierignore, or .properties | Finds `test.batch.class.names.includes` property value pointing to archived modules in `test.properties`. |
-PropertiesBuildIncludeDirsCheck | .eslintignore, .prettierignore, or .properties | Verifies property value of `build.include.dirs` in `build.properties`. |
-PropertiesDefaultAdminScreenNameCheck | .eslintignore, .prettierignore, or .properties | Checks that we do not use `default.admin.screen.name`. |
-PropertiesFeatureFlagsCheck | .eslintignore, .prettierignore, or .properties | Generate feature flags in `portal.properties` file. |
-PropertiesImportedFilesContentCheck | .eslintignore, .prettierignore, or .properties | Performs several checks on `imported-files.properties` file. |
-PropertiesJVMAttributesOrderCheck | .eslintignore, .prettierignore, or .properties | Sorts JVM attributes. |
-[PropertiesLanguageKeysCheck](check/properties_language_keys_check.md#propertieslanguagekeyscheck) | .eslintignore, .prettierignore, or .properties | Checks that there is no HTML markup in language keys. |
-PropertiesLanguageKeysContextCheck | .eslintignore, .prettierignore, or .properties | Checks if the language keys include a word of context to indicate specific meaning. |
-PropertiesLiferayPluginPackageFileCheck | .eslintignore, .prettierignore, or .properties | Performs several checks on `liferay-plugin-package.properties` file. |
-PropertiesLiferayPluginPackageLiferayVersionsCheck | .eslintignore, .prettierignore, or .properties | Validates the version in `liferay-plugin-package.properties` file. |
-PropertiesPlaywrightTestCheck | .eslintignore, .prettierignore, or .properties | Performs several checks on `test.properties` for Playwright test. |
-PropertiesPortalFileCheck | .eslintignore, .prettierignore, or .properties | Performs several checks on `portal.properties` or `portal-*.properties` file. |
-PropertiesPortletFileCheck | .eslintignore, .prettierignore, or .properties | Performs several checks on `portlet.properties` file. |
-PropertiesReleaseBuildCheck | .eslintignore, .prettierignore, or .properties | Verifies that the information in `release.properties` matches the information in `ReleaseInfo.java`. |
-PropertiesServiceKeysCheck | .eslintignore, .prettierignore, or .properties | Finds usage of legacy properties in `service.properties`. |
-PropertiesSourceFormatterContentCheck | .eslintignore, .prettierignore, or .properties | Performs several checks on `source-formatter.properties` file. |
-PropertiesSourceFormatterFileCheck | .eslintignore, .prettierignore, or .properties | Performs several checks on `source-formatter.properties` file. |
-PropertiesVerifyPropertiesCheck | .eslintignore, .prettierignore, or .properties | Finds usage of legacy properties in `portal.properties` or `system.properties`. |
+PropertiesArchivedModulesCheck | .properties | Finds `test.batch.class.names.includes` property value pointing to archived modules in `test.properties`. |
+PropertiesBuildIncludeDirsCheck | .properties | Verifies property value of `build.include.dirs` in `build.properties`. |
+PropertiesDefaultAdminScreenNameCheck | .properties | Checks that we do not use `default.admin.screen.name`. |
+PropertiesFeatureFlagsCheck | .properties | Generate feature flags in `portal.properties` file. |
+PropertiesImportedFilesContentCheck | .properties | Performs several checks on `imported-files.properties` file. |
+PropertiesJVMAttributesOrderCheck | .properties | Sorts JVM attributes. |
+[PropertiesLanguageKeysCheck](check/properties_language_keys_check.md#propertieslanguagekeyscheck) | .properties | Checks that there is no HTML markup in language keys. |
+PropertiesLanguageKeysContextCheck | .properties | Checks if the language keys include a word of context to indicate specific meaning. |
+PropertiesLiferayPluginPackageFileCheck | .properties | Performs several checks on `liferay-plugin-package.properties` file. |
+PropertiesLiferayPluginPackageLiferayVersionsCheck | .properties | Validates the version in `liferay-plugin-package.properties` file. |
+PropertiesPlaywrightTestCheck | .properties | Performs several checks on `test.properties` for Playwright test. |
+PropertiesPortalFileCheck | .properties | Performs several checks on `portal.properties` or `portal-*.properties` file. |
+PropertiesPortletFileCheck | .properties | Performs several checks on `portlet.properties` file. |
+PropertiesReleaseBuildCheck | .properties | Verifies that the information in `release.properties` matches the information in `ReleaseInfo.java`. |
+PropertiesServiceKeysCheck | .properties | Finds usage of legacy properties in `service.properties`. |
+PropertiesSourceFormatterContentCheck | .properties | Performs several checks on `source-formatter.properties` file. |
+PropertiesSourceFormatterFileCheck | .properties | Performs several checks on `source-formatter.properties` file. |
+PropertiesVerifyPropertiesCheck | .properties | Finds usage of legacy properties in `portal.properties` or `system.properties`. |
 ReferenceAnnotationCheck | .java | Performs several checks on classes with @Reference annotation. |
 [RequireThisCheck](https://checkstyle.sourceforge.io/checks/coding/requirethis.html) | .java | Checks that references to instance variables and methods of the present object are explicitly of the form 'this.varName' or 'this.methodName(args)' and that those references don't rely on the default behavior when 'this.' is absent. |
 [ResourceBundleCheck](check/resource_bundle_check.md#resourcebundlecheck) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Checks that there are no calls to `java.util.ResourceBundle.getBundle`. |
@@ -250,6 +251,7 @@ TSSpecFileLocationCheck | .ts or .tsx | Checks that `*.spec.ts` file should be i
 TestClassDBConnectionCheck | .java | Finds cases of incorrect use of database connection. |
 TestClassHardcodedPortCheck | .java | Checks usages of `PortalUtil.getPortalServerPort()` in test classes. |
 TestClassMissingLiferayUnitTestRuleCheck | .java | Finds missing LiferayUnitTestRule. |
+[TestClassStaticInitializerCheck](check/test_class_static_initializer_check.md#testclassstaticinitializercheck) | .java | Checks that static initializers of Arquillian tests do not call portal test utilities and service methods. |
 [ThreadContextClassLoaderCheck](check/thread_context_class_loader_check.md#threadcontextclassloadercheck) | .java | Checks usage of `Thread.setContextClassLoader`. |
 TransactionalTestRuleCheck | .java | Finds usage of `TransactionalTestRule` in `*StagedModelDataHandlerTest`. |
 URLInputStreamCheck | .java | Checks usages of `URL.openStream()`. |

@@ -383,11 +383,6 @@ public interface DDMStructureLayoutLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<DDMStructureLayout> getStructureLayouts(
-		long groupId, long classNameId, int start, int end,
-		OrderByComparator<DDMStructureLayout> orderByComparator);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<DDMStructureLayout> getStructureLayouts(
 		long groupId, long classNameId, long structureVersionId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
@@ -399,23 +394,8 @@ public interface DDMStructureLayoutLocalService
 	public int getStructureLayoutsCount(long groupId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int getStructureLayoutsCount(long groupId, long classNameId);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getStructureLayoutsCount(
 		long groupId, long classNameId, long structureVersionId);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<DDMStructureLayout> search(
-			long companyId, long[] groupIds, long classNameId, String keywords,
-			int start, int end,
-			OrderByComparator<DDMStructureLayout> orderByComparator)
-		throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int searchCount(
-			long companyId, long[] groupIds, long classNameId, String keywords)
-		throws PortalException;
 
 	/**
 	 * Updates the ddm structure layout in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
@@ -459,4 +439,4 @@ public interface DDMStructureLayoutLocalService
 		throws E;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1398355995
+// LIFERAY-SERVICE-BUILDER-HASH:1586769185

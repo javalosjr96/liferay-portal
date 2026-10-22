@@ -166,47 +166,36 @@ public class LayoutPageTemplatesAdminDisplayContextTest {
 	}
 
 	@Test
+	@TestInfo("LPD-108335")
 	public void testGetTabs1() {
 		_setUpGroup(false);
 
-		LayoutPageTemplatesAdminDisplayContext
-			layoutPageTemplatesAdminDisplayContext =
-				new LayoutPageTemplatesAdminDisplayContext(
-					_liferayPortletRequest, _liferayPortletResponse);
-
-		Assert.assertEquals(
-			"master-layouts",
-			layoutPageTemplatesAdminDisplayContext.getTabs1());
+		Assert.assertEquals("master-layouts", _getTabs1());
 	}
 
 	@Test
+	@TestInfo("LPD-108335")
 	public void testGetTabs1InCompanyGroup() {
 		_setUpGroup(true);
 
-		LayoutPageTemplatesAdminDisplayContext
-			layoutPageTemplatesAdminDisplayContext =
-				new LayoutPageTemplatesAdminDisplayContext(
-					_liferayPortletRequest, _liferayPortletResponse);
-
-		Assert.assertEquals(
-			"page-templates",
-			layoutPageTemplatesAdminDisplayContext.getTabs1());
+		Assert.assertEquals("page-templates", _getTabs1());
 	}
 
 	@Test
-	@TestInfo("LPD-104842")
+	@TestInfo({"LPD-104842", "LPD-108335"})
 	public void testGetTabs1InDesignLibraryGroup() {
 		_setUpDesignLibraryScope(true);
 		_setUpGroup(false);
 
-		LayoutPageTemplatesAdminDisplayContext
-			layoutPageTemplatesAdminDisplayContext =
-				new LayoutPageTemplatesAdminDisplayContext(
-					_liferayPortletRequest, _liferayPortletResponse);
+		Assert.assertEquals("page-templates", _getTabs1());
 
-		Assert.assertEquals(
-			"page-templates",
-			layoutPageTemplatesAdminDisplayContext.getTabs1());
+		_setUpTabs1("display-page-templates");
+
+		Assert.assertEquals("display-page-templates", _getTabs1());
+
+		_setUpTabs1("master-layouts");
+
+		Assert.assertEquals("page-templates", _getTabs1());
 	}
 
 	@Test
@@ -214,6 +203,15 @@ public class LayoutPageTemplatesAdminDisplayContextTest {
 		_testIsShowPageTemplates(false, 0, false);
 		_testIsShowPageTemplates(false, RandomTestUtil.randomInt(), true);
 		_testIsShowPageTemplates(true, RandomTestUtil.randomInt(), true);
+	}
+
+	private String _getTabs1() {
+		LayoutPageTemplatesAdminDisplayContext
+			layoutPageTemplatesAdminDisplayContext =
+				new LayoutPageTemplatesAdminDisplayContext(
+					_liferayPortletRequest, _liferayPortletResponse);
+
+		return layoutPageTemplatesAdminDisplayContext.getTabs1();
 	}
 
 	private void _setUpDesignLibraryScope(boolean designLibraryScope) {
@@ -298,6 +296,14 @@ public class LayoutPageTemplatesAdminDisplayContextTest {
 			stagingGroupHelper.isRemoteLiveGroup(_group)
 		).thenReturn(
 			removeLiveGroup
+		);
+	}
+
+	private void _setUpTabs1(String tabs1) {
+		Mockito.when(
+			_liferayPortletRequest.getParameter("tabs1")
+		).thenReturn(
+			tabs1
 		);
 	}
 

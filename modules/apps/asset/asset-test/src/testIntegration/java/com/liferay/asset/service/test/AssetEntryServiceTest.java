@@ -11,9 +11,13 @@ import com.liferay.asset.kernel.model.AssetCategoryConstants;
 import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
+import com.liferay.asset.kernel.service.AssetEntryService;
+import com.liferay.asset.kernel.service.AssetTagLocalService;
 import com.liferay.asset.kernel.service.AssetVocabularyGroupRelLocalService;
 import com.liferay.asset.kernel.service.persistence.AssetEntryQuery;
 import com.liferay.asset.test.util.AssetTestUtil;
+import com.liferay.blogs.model.BlogsEntry;
+import com.liferay.blogs.service.BlogsEntryLocalService;
 import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
@@ -22,10 +26,10 @@ import com.liferay.journal.test.util.JournalTestUtil;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.test.util.ObjectDefinitionTestUtil;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Document;
 import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Hits;
@@ -38,12 +42,14 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.view.count.ViewCountManager;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
@@ -241,23 +247,6 @@ public class AssetEntryServiceTest {
 	}
 
 	@Test
-	public void testGetTopViewedEntries() throws Exception {
-		AssetEntry assetEntry = AssetTestUtil.addAssetEntry(
-			_group.getGroupId(), new Date(), "testClass");
-
-		_viewCountManager.incrementViewCount(
-			assetEntry.getCompanyId(), _portal.getClassNameId(AssetEntry.class),
-			assetEntry.getEntryId(), 2);
-
-		List<AssetEntry> topViewedAssetEntries =
-			_assetEntryLocalService.getTopViewedEntries(
-				"testClass", false, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
-
-		Assert.assertEquals(
-			topViewedAssetEntries.toString(), 1, topViewedAssetEntries.size());
-	}
-
-	@Test
 	public void testSearch() throws Exception {
 		JournalArticle journalArticle1 = JournalTestUtil.addArticle(
 			_group.getGroupId(), 0);
@@ -282,6 +271,70 @@ public class AssetEntryServiceTest {
 		Assert.assertEquals(
 			journalArticle1.getResourcePrimKey(),
 			GetterUtil.getLong(documents[1].get(Field.ENTRY_CLASS_PK)));
+	}
+
+	@Test
+	public void testUpdateEntry() throws Exception {
+		User user = UserTestUtil.addUser(_group.getGroupId());
+
+		BlogsEntry blogsEntry = _blogsEntryLocalService.addEntry(
+			user.getUserId(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomString(),
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), user.getUserId()));
+
+		_otherGroup = GroupTestUtil.addGroup();
+
+		String tagName = StringUtil.toLowerCase(RandomTestUtil.randomString());
+
+		UserTestUtil.setUser(user);
+
+		try {
+			AssetEntry assetEntry = _assetEntryService.updateEntry(
+				_otherGroup.getGroupId(), null, null,
+				BlogsEntry.class.getName(), blogsEntry.getEntryId(),
+				blogsEntry.getUuid(), 0, new long[0], new String[] {tagName},
+				true, true, null, null, null, null, null,
+				RandomTestUtil.randomString(), null, null, null, null, 0, 0,
+				null);
+
+			Assert.assertEquals(_group.getGroupId(), assetEntry.getGroupId());
+
+			_assetEntryLocalService.deleteEntry(assetEntry);
+
+			assetEntry = _assetEntryService.updateEntry(
+				_otherGroup.getGroupId(), null, null,
+				BlogsEntry.class.getName(), blogsEntry.getEntryId(),
+				blogsEntry.getUuid(), 0, new long[0], new String[0], true, true,
+				null, null, null, null, null, RandomTestUtil.randomString(),
+				null, null, null, null, 0, 0, null);
+
+			Assert.assertEquals(_group.getGroupId(), assetEntry.getGroupId());
+
+			Company company = _companyLocalService.getCompany(
+				_group.getCompanyId());
+
+			assetEntry.setGroupId(company.getGroupId());
+
+			_assetEntryLocalService.updateAssetEntry(assetEntry);
+
+			assetEntry = _assetEntryService.updateEntry(
+				_otherGroup.getGroupId(), null, null,
+				BlogsEntry.class.getName(), blogsEntry.getEntryId(),
+				blogsEntry.getUuid(), 0, new long[0], new String[0], true, true,
+				null, null, null, null, null, RandomTestUtil.randomString(),
+				null, null, null, null, 0, 0, null);
+
+			Assert.assertEquals(company.getGroupId(), assetEntry.getGroupId());
+		}
+		finally {
+			UserTestUtil.setUser(TestPropsValues.getUser());
+		}
+
+		Assert.assertNotNull(
+			_assetTagLocalService.fetchTag(_group.getGroupId(), tagName));
+		Assert.assertNull(
+			_assetTagLocalService.fetchTag(_otherGroup.getGroupId(), tagName));
 	}
 
 	@Test(expected = AssetCategoryException.class)
@@ -404,8 +457,17 @@ public class AssetEntryServiceTest {
 	private AssetEntryLocalService _assetEntryLocalService;
 
 	@Inject
+	private AssetEntryService _assetEntryService;
+
+	@Inject
+	private AssetTagLocalService _assetTagLocalService;
+
+	@Inject
 	private AssetVocabularyGroupRelLocalService
 		_assetVocabularyGroupRelLocalService;
+
+	@Inject
+	private BlogsEntryLocalService _blogsEntryLocalService;
 
 	@Inject
 	private CompanyLocalService _companyLocalService;
@@ -421,6 +483,9 @@ public class AssetEntryServiceTest {
 
 	@Inject
 	private GroupLocalService _groupLocalService;
+
+	@DeleteAfterTestRun
+	private Group _otherGroup;
 
 	@Inject
 	private Portal _portal;

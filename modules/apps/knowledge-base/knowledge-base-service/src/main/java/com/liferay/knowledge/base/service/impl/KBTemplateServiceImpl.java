@@ -79,6 +79,18 @@ public class KBTemplateServiceImpl extends KBTemplateServiceBaseImpl {
 		_adminPortletResourcePermission.check(
 			getPermissionChecker(), groupId, KBActionKeys.DELETE_KB_TEMPLATES);
 
+		for (long kbTemplateId : kbTemplateIds) {
+			KBTemplate kbTemplate = kbTemplatePersistence.fetchByPrimaryKey(
+				kbTemplateId);
+
+			if ((kbTemplate == null) || (kbTemplate.getGroupId() == groupId)) {
+				continue;
+			}
+
+			_kbTemplateModelResourcePermission.check(
+				getPermissionChecker(), kbTemplate, KBActionKeys.DELETE);
+		}
+
 		kbTemplateLocalService.deleteKBTemplates(kbTemplateIds);
 	}
 

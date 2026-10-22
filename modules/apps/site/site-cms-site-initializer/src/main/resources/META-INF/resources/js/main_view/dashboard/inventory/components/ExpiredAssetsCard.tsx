@@ -6,6 +6,7 @@
 import ClayButton, {ClayButtonWithIcon} from '@clayui/button';
 import {Body, Cell, Row, Table, Text} from '@clayui/core';
 import ClayEmptyState from '@clayui/empty-state';
+import ClayIcon from '@clayui/icon';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import {ClayPaginationBarWithBasicItems} from '@clayui/pagination-bar';
 import {buildQueryString} from '@liferay/analytics-reports-js-components-web';
@@ -14,6 +15,7 @@ import {sub} from 'frontend-js-web';
 import React, {useContext, useEffect, useState} from 'react';
 
 import ApiHelper from '../../../../common/services/ApiHelper';
+import {PAGINATION_BAR_LABELS} from '../../../../common/utils/constants';
 import {openCMSModal} from '../../../../common/utils/openCMSModal';
 import {BaseCard} from '../../common/BaseCard';
 import {Item} from '../../common/filters/FilterDropdown';
@@ -168,9 +170,12 @@ const EmptyState = () => {
 				description={Liferay.Language.get(
 					'sorry,-no-results-were-found'
 				)}
-				imgSrc={
-					Liferay.ThemeDisplay.getPathThemeImages() +
-					'/states/search_state.svg'
+				image={
+					<ClayIcon
+						className="c-empty-state-icon c-empty-state-icon-search-state"
+						illustration
+						symbol="search-state"
+					/>
 				}
 				title={Liferay.Language.get('no-results-found')}
 			>
@@ -293,6 +298,7 @@ function ExpiredAssetsCard() {
 						'aria-label': Liferay.Language.get('more'),
 						'title': Liferay.Language.get('more'),
 					}}
+					labels={PAGINATION_BAR_LABELS}
 					onActiveChange={handlePageChange}
 					onDeltaChange={handleDeltaChange}
 					totalItems={expiredAssetsList?.totalCount || 0}

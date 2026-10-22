@@ -2,6 +2,14 @@ definition {
 
 	@summary = "Default summary"
 	macro addCP(maxUserNumber = null, instanceAdminLastName = null, maxUsers = null, portalInstanceActive = null, instanceAdminFirstName = null, webId = null, mailDomain = null, instanceScreenName = null, instancePassword = null, virtualHost = null, instanceAdminEmail = null) {
+		WaitForElementPresent(locator1 = "Button#PLUS");
+
+		var virtualInstancesAdminURL = Navigator.getCurrentURL();
+
+		Notifications.deleteAllNotifications();
+
+		Navigator.openSpecificURL(url = ${virtualInstancesAdminURL});
+
 		LexiconEntry.gotoAdd();
 
 		if (IsElementPresent(key_menuItem = "Add", locator1 = "MenuItem#ANY_MENU_ITEM")) {
@@ -62,9 +70,30 @@ definition {
 
 		Button.clickAdd();
 
-		Alert.viewSuccessMessage();
+		Alert.viewInfoMessageSpecific(infoMessage = "The instance ${webId} is being created. You will be notified when it finishes.");
 
 		WaitForElementNotPresent(locator1 = "IFrame#MODAL_BODY");
+
+		var key_contentBody = "The instance ${webId} is ready to use.";
+
+		Navigator.gotoNotifications();
+
+		while ((!(IsElementPresent(locator1 = "Notifications#NOTIFICATIONS_CONTENT"))) && (maxIterations = "60")) {
+
+			// Wait for the asynchronous creation to finish. The instance is listed as soon as its company row commits, so the notification is the only signal that the initialization is done. Needed for LPD-93373.
+
+			Pause(value1 = 5000);
+
+			Refresh();
+		}
+
+		AssertElementPresent(locator1 = "Notifications#NOTIFICATIONS_CONTENT");
+
+		Navigator.openSpecificURL(url = ${virtualInstancesAdminURL});
+
+		var key_virtualHost = ${virtualHost};
+
+		AssertElementPresent(locator1 = "PortalInstances#INSTANCE_TABLE_VIRTUAL_HOST");
 	}
 
 	@summary = "Default summary"
@@ -106,16 +135,14 @@ definition {
 			key_text = "Delete",
 			locator1 = "Modal#MODAL_FOOTER_BUTTON");
 
-		Alert.viewInfoMessage(infoMessage = "The instance ${webId} is being deleted. You will be notified when it finishes.");
+		Alert.viewInfoMessageSpecific(infoMessage = "The instance ${webId} is being deleted. You will be notified when it finishes.");
 
-		var deletionPauseCount = 0;
-
-		while ((IsElementPresent(locator1 = "PortalInstances#INSTANCE_TABLE_VIRTUAL_HOST")) && (${deletionPauseCount} != 60)) {
+		while ((IsElementPresent(locator1 = "PortalInstances#INSTANCE_TABLE_VIRTUAL_HOST")) && (maxIterations = "60")) {
 			Refresh();
 
-			var deletionPauseCount = ${deletionPauseCount} + 1;
+			// Wait for the page to settle before checking again, or a mid load page reads as a deleted instance. Needed for LPD-93374.
 
-			echo("Deletion pause count: ${deletionPauseCount}");
+			Pause(value1 = 5000);
 		}
 
 		AssertTextNotPresent(

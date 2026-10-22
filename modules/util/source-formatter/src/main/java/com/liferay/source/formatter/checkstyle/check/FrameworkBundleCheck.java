@@ -22,9 +22,7 @@ public class FrameworkBundleCheck extends BaseCheck {
 
 	@Override
 	protected void doVisitToken(DetailAST detailAST) {
-		DetailAST parentDetailAST = detailAST.getParent();
-
-		if (parentDetailAST != null) {
+		if (!isDirectChildOfCompilationUnit(detailAST)) {
 			return;
 		}
 
@@ -61,9 +59,11 @@ public class FrameworkBundleCheck extends BaseCheck {
 				methodCallDetailAST, getVariableName(methodCallDetailAST),
 				false);
 
-			if (variableTypeName.equals("Bundle")) {
-				log(methodCallDetailAST, _MSG_USE_BUNDLE_GET_HEADERS);
+			if (!variableTypeName.equals("Bundle")) {
+				continue;
 			}
+
+			log(methodCallDetailAST, _MSG_USE_BUNDLE_GET_HEADERS);
 		}
 	}
 

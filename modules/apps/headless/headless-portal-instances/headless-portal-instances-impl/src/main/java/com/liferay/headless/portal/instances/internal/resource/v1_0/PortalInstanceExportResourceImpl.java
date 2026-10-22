@@ -6,14 +6,15 @@
 package com.liferay.headless.portal.instances.internal.resource.v1_0;
 
 import com.liferay.headless.portal.instances.dto.v1_0.PortalInstanceExport;
+import com.liferay.headless.portal.instances.internal.notifications.PortalInstanceNotificationUtil;
+import com.liferay.headless.portal.instances.internal.security.permission.PortalInstancePermissionUtil;
 import com.liferay.headless.portal.instances.resource.v1_0.PortalInstanceExportResource;
+import com.liferay.portal.instances.constants.PortalInstancesNotificationConstants;
 import com.liferay.portal.instances.exporter.PortalInstanceExporter;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
-import com.liferay.portal.kernel.security.auth.PrincipalException;
-import com.liferay.portal.kernel.security.permission.PermissionChecker;
-import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyService;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -38,7 +39,7 @@ public class PortalInstanceExportResourceImpl
 			PortalInstanceExport portalInstanceExport)
 		throws Exception {
 
-		_checkPermission();
+		PortalInstancePermissionUtil.check();
 
 		if (Validator.isNull(portalInstanceExport.getPortalInstanceId())) {
 			throw new BadRequestException("Portal instance ID is required");
@@ -64,6 +65,8 @@ public class PortalInstanceExportResourceImpl
 			newPortalInstanceExport.setPortalInstanceId(() -> portalInstanceId);
 			newPortalInstanceExport.setSourceCompanyId(company::getCompanyId);
 
+			_sendUserNotificationEvent(portalInstanceId, exportedPartitionName);
+
 			return newPortalInstanceExport;
 		}
 		catch (Exception exception) {
@@ -76,13 +79,21 @@ public class PortalInstanceExportResourceImpl
 		}
 	}
 
-	private void _checkPermission() throws Exception {
-		PermissionChecker permissionChecker =
-			PermissionThreadLocal.getPermissionChecker();
+	private void _sendUserNotificationEvent(
+		String portalInstanceId, String schemaName) {
 
-		if (!permissionChecker.isOmniadmin()) {
-			throw new PrincipalException.MustBeOmniadmin(permissionChecker);
-		}
+		PortalInstanceNotificationUtil.sendUserNotificationEvent(
+			contextUser.getUserId(),
+			JSONUtil.put(
+				"operationType",
+				PortalInstancesNotificationConstants.OPERATION_TYPE_EXPORT
+			).put(
+				"portalInstanceId", portalInstanceId
+			).put(
+				"schemaName", schemaName
+			).put(
+				"status", PortalInstancesNotificationConstants.STATUS_SUCCESS
+			));
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

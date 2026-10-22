@@ -72,6 +72,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.Set;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -773,13 +774,15 @@ public class DataDefinitionResourceTest
 			for (DataDefinitionField dataDefinitionField :
 					dataDefinition.getDataDefinitionFields()) {
 
-				if (Validator.isNull(dataDefinitionField.getFieldType()) ||
-					Validator.isNull(dataDefinitionField.getLabel()) ||
-					Validator.isNull(dataDefinitionField.getName()) ||
-					Validator.isNull(dataDefinitionField.getTip())) {
+				if (Validator.isNotNull(dataDefinitionField.getFieldType()) &&
+					Validator.isNotNull(dataDefinitionField.getLabel()) &&
+					Validator.isNotNull(dataDefinitionField.getName()) &&
+					Validator.isNotNull(dataDefinitionField.getTip())) {
 
-					valid = false;
+					continue;
 				}
+
+				valid = false;
 			}
 		}
 		else {
@@ -999,10 +1002,12 @@ public class DataDefinitionResourceTest
 			DataDefinitionField[] nestedDataDefinitionFields =
 				dataDefinitionField.getNestedDataDefinitionFields();
 
-			if (nestedDataDefinitionFields != null) {
-				allDataDefinitionFields.addAll(
-					_getAllDataDefinitionFields(nestedDataDefinitionFields));
+			if (nestedDataDefinitionFields == null) {
+				continue;
 			}
+
+			allDataDefinitionFields.addAll(
+				_getAllDataDefinitionFields(nestedDataDefinitionFields));
 		}
 
 		return allDataDefinitionFields;
@@ -1094,14 +1099,16 @@ public class DataDefinitionResourceTest
 					customProperties2.get("fieldReference"));
 			}
 
-			if (!customProperties1.containsKey("structureId") &&
-				!Objects.equals(
+			if (customProperties1.containsKey("structureId") ||
+				Objects.equals(
 					dataDefinitionFields1[i].getFieldType(), "fieldset")) {
 
-				_testCopiedDataDefinitionFields(
-					dataDefinitionFields1[i].getNestedDataDefinitionFields(),
-					dataDefinitionFields2[i].getNestedDataDefinitionFields());
+				continue;
 			}
+
+			_testCopiedDataDefinitionFields(
+				dataDefinitionFields1[i].getNestedDataDefinitionFields(),
+				dataDefinitionFields2[i].getNestedDataDefinitionFields());
 		}
 	}
 
@@ -1162,22 +1169,21 @@ public class DataDefinitionResourceTest
 		List<String> names = TransformUtil.transform(
 			allDataDefinitionFields, DataDefinitionField::getName);
 
-		Assert.assertEquals(
-			names.toString(), names.size(),
-			SetUtil.fromCollection(
-				names
-			).size());
+		Set<String> namesSet = SetUtil.fromCollection(names);
+
+		Assert.assertEquals(names.toString(), names.size(), namesSet.size());
 
 		List<String> fieldReferences = TransformUtil.transform(
 			allDataDefinitionFields,
 			dataDefinitionField -> MapUtil.getString(
 				dataDefinitionField.getCustomProperties(), "fieldReference"));
 
+		Set<String> fieldReferencesSet = SetUtil.fromCollection(
+			fieldReferences);
+
 		Assert.assertEquals(
 			fieldReferences.toString(), fieldReferences.size(),
-			SetUtil.fromCollection(
-				fieldReferences
-			).size());
+			fieldReferencesSet.size());
 
 		DataDefinitionField fieldsetDataDefinitionField =
 			fieldsetDataDefinition.getDataDefinitionFields()[0];

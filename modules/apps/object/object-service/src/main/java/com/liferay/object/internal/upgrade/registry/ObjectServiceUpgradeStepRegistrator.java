@@ -713,8 +713,10 @@ public class ObjectServiceUpgradeStepRegistrator
 
 		registry.register("12.0.0", "12.0.1", new DummyUpgradeStep());
 
+		registry.register("12.0.1", "12.0.2", new DummyUpgradeStep());
+
 		registry.register(
-			"12.0.1", "12.1.0",
+			"12.0.2", "12.1.0",
 			new com.liferay.object.internal.upgrade.v12_1_0.
 				ObjectDefinitionSettingUpgradeProcess());
 
@@ -736,8 +738,10 @@ public class ObjectServiceUpgradeStepRegistrator
 
 		registry.register("13.1.0", "13.2.0", new DummyUpgradeStep());
 
+		registry.register("13.2.0", "13.2.1", new DummyUpgradeStep());
+
 		registry.register(
-			"13.2.0", "13.3.0",
+			"13.2.1", "13.3.0",
 			new com.liferay.object.internal.upgrade.v13_2_0.
 				ObjectDefinitionExternalReferenceCodeUpgradeProcess(
 					_systemObjectDefinitionManagerRegistry));
@@ -809,6 +813,15 @@ public class ObjectServiceUpgradeStepRegistrator
 
 		registry.register(
 			"13.11.0", "13.12.0", new ObjectActionDescriptionUpgradeProcess());
+
+		registry.register(
+			"13.12.0", "13.13.0",
+			UpgradeProcessFactory.runSQL(
+				StringBundler.concat(
+					"update ObjectDefinition set panelCategoryKey = '",
+					PanelCategoryKeys.CONTROL_PANEL_OBJECT,
+					"' where panelCategoryKey = ",
+					"'control_panel.configuration'")));
 	}
 
 	private static final String[] _REMOVED_PANEL_CATEGORY_KEYS = {

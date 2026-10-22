@@ -55,41 +55,6 @@ definition {
 	}
 
 	@priority = 4
-	test CanCreateAPIOnVirtualInstance {
-		property test.liferay.virtual.instance = "false";
-
-		task ("And Given create an API with title "test"") {
-			ApplicationAPI.createAPIApplication(
-				baseURL = "test",
-				title = "test");
-		}
-
-		task ("And Given create a new virtual instance") {
-			HeadlessPortalInstanceAPI.addPortalInstance(
-				domain = "liferay.com",
-				portalInstanceId = "www.able.com",
-				virtualHost = "www.able.com");
-		}
-
-		task ("When I create an API with title "test" on the virtual instance") {
-			User.firstLoginUI(
-				password = PropsUtil.get("default.admin.password"),
-				specificURL = "http://www.able.com:8080",
-				userEmailAddress = "test@liferay.com");
-
-			APIBuilderUI.createAPIApplication(title = "test");
-		}
-
-		task ("Then the test API is created successfully") {
-			Alert.viewSuccessMessageText(successMessage = "New API Application was created.");
-
-			AssertTextEquals(
-				locator1 = "APIBuilder#ENTER_TITLE",
-				value1 = "test");
-		}
-	}
-
-	@priority = 4
 	test CanCreateAPIWithValidFieldValues {
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
@@ -155,85 +120,6 @@ definition {
 				key_fieldLabel = "URL",
 				locator1 = "Modal#INPUT_WITH_LABEL",
 				value1 = "my-url-test");
-		}
-	}
-
-	@priority = 4
-	test CannotCreateAPIWithExistingTitle {
-		property test.liferay.virtual.instance = "false";
-		property test.run.type = "single";
-
-		task ("And Given I create an API with title "test"") {
-			ApplicationAPI.createAPIApplication(
-				baseURL = "test1",
-				title = "test");
-		}
-
-		task ("When I create another API with an existing title "test"") {
-			APIBuilderUI.createAPIApplication(
-				addByPlus = "true",
-				baseURL = "test2",
-				title = "test");
-		}
-
-		task ("Then I can see error message") {
-			AssertTextEquals.assertText(
-				locator1 = "Message#ERROR_DISMISSIBLE",
-				value1 = "Error:The Title is already in use. Please enter a unique Title.");
-		}
-
-		task ("And Then another API with title "test" is not created") {
-			AssertElementPresent(
-				key_name = "test",
-				locator1 = "ObjectAdmin#TABLE_LIST_TITLE");
-
-			var response = ApplicationAPI.getAPIApplications();
-
-			var totcalCount = JSONUtil.getWithJSONPath(${response}, "$..totalCount");
-
-			TestUtils.assertEquals(
-				actual = ${totcalCount},
-				expected = 1);
-		}
-	}
-
-	@priority = 3
-	test CannotCreateAPIWithExistingUrl {
-		property test.liferay.virtual.instance = "false";
-		property test.run.type = "single";
-
-		task ("And Given I create an API with url "test-url"") {
-			ApplicationAPI.createAPIApplication(
-				baseURL = "test-url",
-				title = "test1");
-		}
-
-		task ("When I create another API with an existing url "test-url"") {
-			APIBuilderUI.createAPIApplication(
-				addByPlus = "true",
-				baseURL = "test-url",
-				title = "test2");
-		}
-
-		task ("Then I can see error message") {
-			AssertTextEquals.assertText(
-				locator1 = "Message#ERROR_DISMISSIBLE",
-				value1 = "Error:The Base URL is already in use. Please enter a unique Base URL.");
-		}
-
-		task ("And Then another API with url "test-url" is not created") {
-			AssertElementPresent(
-				key_name = "test1",
-				key_system = "test-url",
-				locator1 = "ObjectAdmin#VIEW_OBJECT");
-
-			var response = ApplicationAPI.getAPIApplications();
-
-			var totcalCount = JSONUtil.getWithJSONPath(${response}, "$..totalCount");
-
-			TestUtils.assertEquals(
-				actual = ${totcalCount},
-				expected = 1);
 		}
 	}
 

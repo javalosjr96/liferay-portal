@@ -21,6 +21,7 @@ import com.liferay.headless.admin.site.resource.v1_0.test.util.LayoutUtilityPage
 import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
@@ -29,6 +30,7 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.test.util.FeatureFlagTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -142,6 +144,19 @@ public class StyleBookResourceTest extends BaseStyleBookResourceTestCase {
 		super.testPutSiteStyleBook();
 
 		_testPutSiteStyleBookWithNullDefaultStyleBook();
+	}
+
+	@Override
+	protected StyleBook randomStyleBook() throws Exception {
+		StyleBook styleBook = super.randomStyleBook();
+
+		styleBook.setFrontendTokensValues(
+			JSONUtil.put(
+				RandomTestUtil.randomString(),
+				JSONUtil.put("value", RandomTestUtil.randomString())
+			).toString());
+
+		return styleBook;
 	}
 
 	@Override
@@ -265,6 +280,18 @@ public class StyleBookResourceTest extends BaseStyleBookResourceTestCase {
 	}
 
 	private Group _addConnectedDesignLibraryGroup() throws Exception {
+		Group group = _addDesignLibraryGroup();
+
+		_depotEntryGroupRelLocalService.addDepotEntryGroupRel(
+			group.getClassPK(), testGroup.getGroupId());
+
+		return group;
+	}
+
+	private Group _addDesignLibraryGroup() throws Exception {
+		FeatureFlagTestUtil.invokeFeatureFlagListeners(
+			TestPropsValues.getCompanyId(), true, "LPD-57283");
+
 		DepotEntry depotEntry = _depotEntryLocalService.addDepotEntry(
 			Collections.singletonMap(
 				LocaleUtil.getDefault(), RandomTestUtil.randomString()),
@@ -273,9 +300,6 @@ public class StyleBookResourceTest extends BaseStyleBookResourceTestCase {
 			DepotConstants.TYPE_DESIGN_LIBRARY,
 			ServiceContextTestUtil.getServiceContext(
 				testGroup.getGroupId(), TestPropsValues.getUserId()));
-
-		_depotEntryGroupRelLocalService.addDepotEntryGroupRel(
-			depotEntry.getDepotEntryId(), testGroup.getGroupId());
 
 		return depotEntry.getGroup();
 	}
@@ -293,16 +317,7 @@ public class StyleBookResourceTest extends BaseStyleBookResourceTestCase {
 
 	private String _getDesignLibraryExternalReferenceCode() throws Exception {
 		if (_designLibraryGroup == null) {
-			DepotEntry depotEntry = _depotEntryLocalService.addDepotEntry(
-				Collections.singletonMap(
-					LocaleUtil.getDefault(), RandomTestUtil.randomString()),
-				Collections.singletonMap(
-					LocaleUtil.getDefault(), RandomTestUtil.randomString()),
-				DepotConstants.TYPE_DESIGN_LIBRARY,
-				ServiceContextTestUtil.getServiceContext(
-					testGroup.getGroupId(), TestPropsValues.getUserId()));
-
-			_designLibraryGroup = depotEntry.getGroup();
+			_designLibraryGroup = _addDesignLibraryGroup();
 		}
 
 		return _designLibraryGroup.getExternalReferenceCode();
@@ -312,16 +327,7 @@ public class StyleBookResourceTest extends BaseStyleBookResourceTestCase {
 		throws Exception {
 
 		if (_irrelevantDesignLibraryGroup == null) {
-			DepotEntry depotEntry = _depotEntryLocalService.addDepotEntry(
-				Collections.singletonMap(
-					LocaleUtil.getDefault(), RandomTestUtil.randomString()),
-				Collections.singletonMap(
-					LocaleUtil.getDefault(), RandomTestUtil.randomString()),
-				DepotConstants.TYPE_DESIGN_LIBRARY,
-				ServiceContextTestUtil.getServiceContext(
-					testGroup.getGroupId(), TestPropsValues.getUserId()));
-
-			_irrelevantDesignLibraryGroup = depotEntry.getGroup();
+			_irrelevantDesignLibraryGroup = _addDesignLibraryGroup();
 		}
 
 		return _irrelevantDesignLibraryGroup.getExternalReferenceCode();

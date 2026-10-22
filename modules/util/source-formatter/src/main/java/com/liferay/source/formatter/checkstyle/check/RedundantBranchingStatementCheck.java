@@ -7,6 +7,7 @@ package com.liferay.source.formatter.checkstyle.check;
 
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.TokenUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,15 +20,16 @@ public class RedundantBranchingStatementCheck extends BaseCheck {
 	@Override
 	public int[] getDefaultTokens() {
 		return new int[] {
-			TokenTypes.CTOR_DEF, TokenTypes.LITERAL_FOR,
+			TokenTypes.CTOR_DEF, TokenTypes.LITERAL_DO, TokenTypes.LITERAL_FOR,
 			TokenTypes.LITERAL_WHILE, TokenTypes.METHOD_DEF
 		};
 	}
 
 	@Override
 	protected void doVisitToken(DetailAST detailAST) {
-		if ((detailAST.getType() == TokenTypes.LITERAL_FOR) ||
-			(detailAST.getType() == TokenTypes.LITERAL_WHILE)) {
+		if (TokenUtil.isOfType(
+				detailAST, TokenTypes.LITERAL_DO, TokenTypes.LITERAL_FOR,
+				TokenTypes.LITERAL_WHILE)) {
 
 			_checkRedundantBranchingStatements(
 				detailAST, TokenTypes.LITERAL_CONTINUE);
@@ -63,13 +65,15 @@ public class RedundantBranchingStatementCheck extends BaseCheck {
 			DetailAST firstChildDetailAST =
 				lastStatementDetailAST.getFirstChild();
 
-			if ((firstChildDetailAST != null) &&
-				(firstChildDetailAST.getType() == TokenTypes.SEMI)) {
+			if ((firstChildDetailAST == null) ||
+				(firstChildDetailAST.getType() != TokenTypes.SEMI)) {
 
-				log(
-					lastStatementDetailAST, _MSG_REDUNDANT_BRANCHING_STATEMENT,
-					lastStatementDetailAST.getText());
+				continue;
 			}
+
+			log(
+				lastStatementDetailAST, _MSG_REDUNDANT_BRANCHING_STATEMENT,
+				lastStatementDetailAST.getText());
 		}
 	}
 
@@ -129,8 +133,9 @@ public class RedundantBranchingStatementCheck extends BaseCheck {
 			return lastStatementDetailASTs;
 		}
 
-		if ((previousSiblingDetailAST.getType() == TokenTypes.LITERAL_IF) ||
-			(previousSiblingDetailAST.getType() == TokenTypes.LITERAL_TRY)) {
+		if (TokenUtil.isOfType(
+				previousSiblingDetailAST, TokenTypes.LITERAL_IF,
+				TokenTypes.LITERAL_TRY)) {
 
 			lastStatementDetailASTs.addAll(
 				_getLastStatementDetailASTs(

@@ -59,6 +59,99 @@
 		</sequential>
 	</macrodef>
 
+	<macrodef name="create-workspace-bundle">
+		<attribute name="database.type" />
+		<attribute name="workspace.dir" />
+		<attribute name="workspace.name" />
+
+		<sequential>
+			<loadproperties prefix="workspace.portal.env" srcFile="@{workspace.dir}/configs/local/portal-env.properties" />
+
+			<local name="workspace.database.type" />
+
+			<propertyregex
+				input="${workspace.portal.env.jdbc.default.url}"
+				property="workspace.database.type"
+				regexp="^jdbc:([^:]+):.*"
+				select="\1"
+			/>
+
+			<fail message="Unable to find &quot;jdbc.default.url&quot; in @{workspace.dir}/configs/local/portal-env.properties." unless="workspace.database.type" />
+
+			<fail message="Unable to run the @{workspace.name} workspace on a @{database.type} batch because it runs on ${workspace.database.type}.">
+				<condition>
+					<not>
+						<equals arg1="${workspace.database.type}" arg2="@{database.type}" />
+					</not>
+				</condition>
+			</fail>
+
+			<fail message="Unable to create an empty ${workspace.database.type} database for the @{workspace.name} workspace.">
+				<condition>
+					<not>
+						<equals arg1="${workspace.database.type}" arg2="postgresql" />
+					</not>
+				</condition>
+			</fail>
+
+			<exec executable="docker" failonerror="true">
+				<arg value="load" />
+				<arg value="--input" />
+				<arg value="${project.dir}/dist/liferay-docker-@{workspace.name}.tar" />
+			</exec>
+
+			<exec executable="docker" failonerror="true">
+				<arg value="exec" />
+				<arg value="${database.postgresql.host}" />
+				<arg value="psql" />
+				<arg value="--command" />
+				<arg value="DROP DATABASE IF EXISTS lportal_workspace;" />
+				<arg value="--command" />
+				<arg value="CREATE DATABASE lportal_workspace;" />
+				<arg value="--dbname" />
+				<arg value="postgres" />
+				<arg value="--username" />
+				<arg value="${database.postgresql.username}" />
+			</exec>
+
+			<echo file="@{workspace.dir}/docker-compose-ci.yaml"><![CDATA[services:
+    database:
+        profiles:
+            - workspace-database
+    liferay:
+        container_name: ${env.HOSTNAME}_liferay
+        depends_on: !reset {}
+        environment:
+            LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_DRIVER_UPPERCASEC_LASS_UPPERCASEN_AME: ${database.postgresql.driver}
+            LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_PASSWORD: "${database.postgresql.password}"
+            LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_URL: jdbc:postgresql://${database.postgresql.host}:5432/lportal_workspace
+            LIFERAY_JDBC_PERIOD_DEFAULT_PERIOD_USERNAME: ${database.postgresql.username}
+        network_mode: container:${env.NODE_NAME}
+        ports: !override []
+]]></echo>
+
+			<exec dir="@{workspace.dir}" executable="docker" failonerror="false">
+				<arg value="compose" />
+				<arg value="--file" />
+				<arg value="docker-compose.yaml" />
+				<arg value="--file" />
+				<arg value="docker-compose-ci.yaml" />
+				<arg value="down" />
+				<arg value="--volumes" />
+			</exec>
+
+			<exec dir="@{workspace.dir}" executable="docker" failonerror="true">
+				<arg value="compose" />
+				<arg value="--file" />
+				<arg value="docker-compose.yaml" />
+				<arg value="--file" />
+				<arg value="docker-compose-ci.yaml" />
+				<arg value="create" />
+				<arg value="liferay" />
+			</exec>
+		</sequential>
+	</macrodef>
+
 	<macrodef name="database-test-action">
 		<attribute name="database.type" />
 		<element name="action" />
@@ -887,6 +980,10 @@ mariadb.executable=${mariadb.executable}]]></echo>
 					}
 
 					public List getTestUtilModules() {
+						String standaloneBuildProfile = project.getProperty("env.TEST_PORTAL_RELEASE_BUILD_PROFILE");
+
+						boolean standaloneRelease = StringUtils.isNotEmpty(standaloneBuildProfile);
+
 						List appBndFiles = findFiles(new File(projectDir, "modules/apps"), ".+/app.bnd");
 
 						File dxpAppsDir = new File(projectDir, "modules/dxp/apps");
@@ -906,11 +1003,12 @@ mariadb.executable=${mariadb.executable}]]></echo>
 						for (File appBndFile : appBndFiles) {
 							String fileContent = new String(Files.readAllBytes(appBndFile.toPath()));
 
-							if (fileContent.contains("Liferay-Releng-Bundle: true")) {
+							if (standaloneRelease || fileContent.contains("Liferay-Releng-Bundle: true")) {
 								releasedAppDirs.add(appBndFile.getParentFile());
 							}
 						}
 
+						boolean standaloneTestUtilModuleFound = false;
 						List testUtilModules = new ArrayList();
 
 						for (File releasedAppDir : releasedAppDirs) {
@@ -918,6 +1016,18 @@ mariadb.executable=${mariadb.executable}]]></echo>
 
 							for (File testUtilModuleBuildGradleFile : testUtilModuleBuildGradleFiles) {
 								String testUtilModule = testUtilModuleBuildGradleFile.getParent();
+
+								if (standaloneRelease) {
+									File standaloneBuildProfileFile = new File(testUtilModule, ".lfrbuild-" + standaloneBuildProfile);
+
+									if (!standaloneBuildProfileFile.exists()) {
+										System.out.println("Ignoring " + testUtilModule.replace(projectDir + "/", ""));
+
+										continue;
+									}
+
+									standaloneTestUtilModuleFound = true;
+								}
 
 								File skipTestIntegrationCheckFile = new File(testUtilModule, ".lfrbuild-ci-skip-test-integration-check");
 
@@ -943,6 +1053,10 @@ mariadb.executable=${mariadb.executable}]]></echo>
 
 								testUtilModules.add(testUtilModule);
 							}
+						}
+
+						if (standaloneRelease && !standaloneTestUtilModuleFound) {
+							throw new RuntimeException("No test util module is marked .lfrbuild-" + standaloneBuildProfile);
 						}
 
 						return testUtilModules;
@@ -3065,7 +3179,6 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 								<matches pattern="(file|https?)://" string="${test.portal.bundle.war.url}" />
 								<matches pattern="(file|https?)://" string="${test.portal.bundle.zip.url}" />
 							</or>
-							<matches pattern="(file|https?)://" string="${test.sql.zip.url}" />
 							<contains string="${env.JOB_NAME}" substring="-release" />
 						</and>
 						<then>
@@ -3109,7 +3222,10 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 							/>
 
 							<parallel failonany="true" threadcount="${parallel.thread.count}">
-								<ant dir="portal-test" inheritAll="false" target="jar" />
+								<ant dir="portal-test" inheritAll="false" target="jar">
+									<property name="baseline.jar.report.level" value="off" />
+								</ant>
+
 								<ant dir="support-tomcat" inheritAll="false" target="compile" />
 								<ant dir="util-bridges" inheritAll="false" target="compile" />
 
@@ -3605,10 +3721,28 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 								replace="${java.jdk.home}/bin"
 							/>
 
+							<local name="workspace.dir" />
+
+							<if>
+								<isset property="env.PLAYWRIGHT_WORKSPACE_NAME" />
+								<then>
+									<condition else="${project.dir}/workspaces/${env.PLAYWRIGHT_WORKSPACE_NAME}" property="workspace.dir" value="${liferay.portal.private.dir}/workspaces/${env.PLAYWRIGHT_WORKSPACE_NAME}">
+										<available file="${liferay.portal.private.dir}/workspaces/${env.PLAYWRIGHT_WORKSPACE_NAME}" type="dir" />
+									</condition>
+								</then>
+							</if>
+
 							<local name="exception.message" />
 
 							<trycatch property="exception.message">
 								<try>
+									<if>
+										<isset property="env.PLAYWRIGHT_WORKSPACE_NAME" />
+										<then>
+											<create-workspace-bundle database.type="@{database.type}" workspace.dir="${workspace.dir}" workspace.name="${env.PLAYWRIGHT_WORKSPACE_NAME}" />
+										</then>
+									</if>
+
 									<exec executable="/bin/bash" failonerror="true" timeout="${test.class.playwright.setup.timeout}">
 										<arg value="modules/test/playwright/env/set_up.sh" />
 										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
@@ -3620,6 +3754,8 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 										<env key="LIFERAY_PORTAL_URL" value="http://${env.NODE_NAME}:8080" />
 										<env key="PATH" value="${execute.path}" />
 										<env key="PLAYWRIGHT_PROJECT_NAME" value="${playwright.project.name}" />
+										<env if:set="env.PLAYWRIGHT_WORKSPACE_NAME" key="PLAYWRIGHT_WORKSPACE_DIR" value="${workspace.dir}" />
+										<env if:set="env.PLAYWRIGHT_WORKSPACE_NAME" key="PLAYWRIGHT_WORKSPACE_NAME" value="${env.PLAYWRIGHT_WORKSPACE_NAME}" />
 									</exec>
 
 									<start-docker-playwright />
@@ -3674,6 +3810,13 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 								<finally>
 									<stop-docker-playwright />
 
+									<if>
+										<isset property="env.PLAYWRIGHT_WORKSPACE_NAME" />
+										<then>
+											<print-docker-logs container.name="${env.HOSTNAME}_liferay" />
+										</then>
+									</if>
+
 									<exec executable="/bin/bash" timeout="${test.class.playwright.teardown.timeout}">
 										<arg value="modules/test/playwright/env/tear_down.sh" />
 										<env key="APP_SERVER_TYPE" value="@{app.server.type}" />
@@ -3684,6 +3827,8 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 										<env key="LIFERAY_PORTAL_URL" value="http://${env.HOSTNAME}:8080" />
 										<env key="PATH" value="${execute.path}" />
 										<env key="PLAYWRIGHT_PROJECT_NAME" value="${playwright.project.name}" />
+										<env if:set="env.PLAYWRIGHT_WORKSPACE_NAME" key="PLAYWRIGHT_WORKSPACE_DIR" value="${workspace.dir}" />
+										<env if:set="env.PLAYWRIGHT_WORKSPACE_NAME" key="PLAYWRIGHT_WORKSPACE_NAME" value="${env.PLAYWRIGHT_WORKSPACE_NAME}" />
 									</exec>
 
 									<split-testsuites-junit-report test.suites.report.filepath="${playwright.dir}/test-results/TEST-playwright.xml" />
@@ -3714,7 +3859,6 @@ ${poshi.runner.testsuite.testcase.name}</echo>
 								<matches pattern="(file|https?)://" string="${test.portal.bundle.war.url}" />
 								<matches pattern="(file|https?)://" string="${test.portal.bundle.zip.url}" />
 							</or>
-							<matches pattern="(file|https?)://" string="${test.sql.zip.url}" />
 							<contains string="${env.JOB_NAME}" substring="-release" />
 						</and>
 						<then>
@@ -5921,6 +6065,10 @@ information. Make sure to commit in all format-javadoc results.
 		<run-functional-test app.server.type="tomcat" database.type="mysql" database.version="8.4" test.portal.log.assert="true" />
 	</target>
 
+	<target name="functional-debian13-tomcat101-mysql84">
+		<run-functional-test app.server.type="tomcat" database.type="mysql" database.version="8.4" test.portal.log.assert="true" />
+	</target>
+
 	<target name="functional-fedora35-tomcat101-mysql">
 		<run-functional-test app.server.type="tomcat" database.type="mysql" test.portal.log.assert="true" />
 	</target>
@@ -6309,6 +6457,22 @@ information. Make sure to commit in all format-javadoc results.
 		<run-functional-test app.server.type="tomcat" database.type="postgresql" database.version="15.5" test.portal.log.assert="true" />
 	</target>
 
+	<target name="functional-orcllinux10-tomcat101-mysql">
+		<run-functional-test app.server.type="tomcat" database.type="mysql" test.portal.log.assert="true" />
+	</target>
+
+	<target name="functional-orcllinux10-tomcat101-mysql84">
+		<run-functional-test app.server.type="tomcat" database.type="mysql" database.version="8.4" test.portal.log.assert="true" />
+	</target>
+
+	<target name="functional-orcllinux10-tomcat101-postgresql">
+		<run-functional-test app.server.type="tomcat" database.type="postgresql" test.portal.log.assert="true" />
+	</target>
+
+	<target name="functional-orcllinux10-tomcat101-postgresql155">
+		<run-functional-test app.server.type="tomcat" database.type="postgresql" database.version="15.5" test.portal.log.assert="true" />
+	</target>
+
 	<target name="functional-redhat8-tomcat101-mysql">
 		<run-functional-test app.server.type="tomcat" database.type="mysql" test.portal.log.assert="true" />
 	</target>
@@ -6382,6 +6546,10 @@ information. Make sure to commit in all format-javadoc results.
 	</target>
 
 	<target name="functional-smoke-debian12-tomcat101-mysql84">
+		<run-functional-test app.server.type="tomcat" database.type="mysql" database.version="8.4" test.portal.log.assert="true" />
+	</target>
+
+	<target name="functional-smoke-debian13-tomcat101-mysql84">
 		<run-functional-test app.server.type="tomcat" database.type="mysql" database.version="8.4" test.portal.log.assert="true" />
 	</target>
 
@@ -8031,18 +8199,6 @@ information. Make sure to commit in all format-javadoc results.
 		<set-app-server-version-number app.server.type="wildfly" app.server.version="30.0.0" />
 
 		<run-functional-test app.server.type="wildfly" app.server.version="30.0.0" database.type="mariadb" />
-	</target>
-
-	<target name="functional-upgrade-wildfly300-mariadb104">
-		<set-app-server-version-number app.server.type="wildfly" app.server.version="30.0.0" />
-
-		<run-functional-test app.server.type="wildfly" app.server.version="30.0.0" database.type="mariadb" database.version="10.4" />
-	</target>
-
-	<target name="functional-upgrade-wildfly300-mariadb106">
-		<set-app-server-version-number app.server.type="wildfly" app.server.version="30.0.0" />
-
-		<run-functional-test app.server.type="wildfly" app.server.version="30.0.0" database.type="mariadb" database.version="10.6" />
 	</target>
 
 	<target name="functional-weblogic151-mysql">
@@ -10928,18 +11084,33 @@ junit.jvm.override.version=21</echo>
 			<test-action>
 				<local name="workspace.names" />
 
-				<propertycopy from="workspaces.names[workspaces-compile-jdk${batch.jdk.version}][${env.CI_TEST_SUITE}]" name="workspace.names" silent="true" />
-
 				<if>
-					<not>
-						<isset property="workspace.names" />
-					</not>
+					<isset property="modules.test.class.group" />
 					<then>
-						<propertycopy from="workspaces.names[workspaces-compile][${env.CI_TEST_SUITE}]" name="workspace.names" override="true" silent="true" />
+						<propertyregex
+							defaultValue="${modules.test.class.group}"
+							global="true"
+							input="${modules.test.class.group}"
+							override="true"
+							property="workspace.names"
+							regexp="\s+"
+							replace=","
+						/>
 					</then>
-				</if>
+					<else>
+						<beanshell>
+							<![CDATA[
+								import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
 
-				<property name="workspace.names" value="${workspaces.names[workspaces-compile]}" />
+								Properties properties = new Properties();
+
+								properties.putAll(project.getProperties());
+
+								project.setProperty("workspace.names", JenkinsResultsParserUtil.getProperty(properties, "workspaces.names", false, new String[] {project.getProperty("test.batch.name"), project.getProperty("env.CI_TEST_SUITE")}));
+							]]>
+						</beanshell>
+					</else>
+				</if>
 
 				<for list="${workspace.names}" param="workspace.name">
 					<sequential>

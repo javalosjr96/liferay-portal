@@ -113,7 +113,7 @@ import com.liferay.portal.security.membershippolicy.SiteMembershipPolicyUtil;
 import com.liferay.portal.security.membershippolicy.UserGroupMembershipPolicyFactoryUtil;
 import com.liferay.portal.util.MaintenanceUtil;
 import com.liferay.portal.util.ShutdownUtil;
-import com.liferay.portal.verify.PostupgradeVerifyDatabaseState;
+import com.liferay.portal.verify.PostUpgradeVerifyDatabaseState;
 import com.liferay.portal.verify.VerifyException;
 import com.liferay.server.admin.web.internal.constants.ImageMagickResourceLimitConstants;
 import com.liferay.server.admin.web.internal.scripting.util.ServerScriptingUtil;
@@ -319,11 +319,13 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 		while (iterator.hasNext()) {
 			Map.Entry<String, String> entry = iterator.next();
 
-			if (Objects.equals(
+			if (!Objects.equals(
 					entry.getValue(), priorities.get(entry.getKey()))) {
 
-				iterator.remove();
+				continue;
 			}
+
+			iterator.remove();
 		}
 
 		for (Map.Entry<String, String> logLevel : logLevels.entrySet()) {
@@ -632,9 +634,11 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 		throws Exception {
 
 		for (DataCleanup dataCleanup : dataCleanups) {
-			if (cmd.equals(dataCleanup.getLabel())) {
-				dataCleanup.cleanup();
+			if (!cmd.equals(dataCleanup.getLabel())) {
+				continue;
 			}
+
+			dataCleanup.cleanup();
 		}
 	}
 
@@ -832,12 +836,14 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 		while (enumeration.hasMoreElements()) {
 			String name = enumeration.nextElement();
 
-			if (name.startsWith("logLevel")) {
-				logLevels.put(
-					name.substring(8),
-					ParamUtil.getString(
-						actionRequest, name, Level.INFO.toString()));
+			if (!name.startsWith("logLevel")) {
+				continue;
 			}
+
+			logLevels.put(
+				name.substring(8),
+				ParamUtil.getString(
+					actionRequest, name, Level.INFO.toString()));
 		}
 
 		_updateLogLevels(logLevels);
@@ -872,11 +878,13 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 		while (enumeration.hasMoreElements()) {
 			String name = enumeration.nextElement();
 
-			if (name.startsWith("portalProperty")) {
-				portalProperties.put(
-					name.substring(14),
-					ParamUtil.getString(actionRequest, name, "false"));
+			if (!name.startsWith("portalProperty")) {
+				continue;
 			}
+
+			portalProperties.put(
+				name.substring(14),
+				ParamUtil.getString(actionRequest, name, "false"));
 		}
 
 		_updatePortalProperties(portalProperties);
@@ -889,11 +897,11 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 	}
 
 	private void _verifyDatabaseState(ActionRequest actionRequest) {
-		PostupgradeVerifyDatabaseState postupgradeVerifyDatabaseState =
-			new PostupgradeVerifyDatabaseState();
+		PostUpgradeVerifyDatabaseState postUpgradeVerifyDatabaseState =
+			new PostUpgradeVerifyDatabaseState();
 
 		try {
-			postupgradeVerifyDatabaseState.verify();
+			postUpgradeVerifyDatabaseState.verify();
 		}
 		catch (VerifyException verifyException) {
 			SessionErrors.add(
@@ -906,9 +914,9 @@ public class EditServerMVCActionCommand extends BaseMVCActionCommand {
 		hideDefaultSuccessMessage(actionRequest);
 
 		List<String> errorMessages =
-			postupgradeVerifyDatabaseState.getErrorMessages();
+			postUpgradeVerifyDatabaseState.getErrorMessages();
 		List<String> warnMessages =
-			postupgradeVerifyDatabaseState.getWarnMessages();
+			postUpgradeVerifyDatabaseState.getWarnMessages();
 
 		if (errorMessages.isEmpty() && warnMessages.isEmpty()) {
 			SessionMessages.add(actionRequest, "verifyDatabaseState");

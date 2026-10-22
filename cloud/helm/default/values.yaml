@@ -44,6 +44,14 @@ autoscaling:
                     query: max(jvm_threads_current{namespace="{{ include "liferay.namespace" . }}"})
                     threshold: "500"
     type: hpa
+clientExtensions:
+    delivery:
+        enabled: false
+        operatorServiceAccount:
+            name: dxp-operator
+            namespace: dxp-operator-system
+    policy:
+        allowedNamespaces: []
 configmap:
     annotations: {}
     data: {}
@@ -78,9 +86,8 @@ customInitContainers:
                         seccompProfile:
                             type: RuntimeDefault
                     volumeMounts:
-                        -   mountPath: /liferay-init-scripts/deploy-sync.sh
-                            name: {{ .licensing.initScriptsVolumeName }}
-                            subPath: deploy-sync.sh
+                        -   mountPath: /liferay-init-scripts
+                            name: liferay-deploy-sync
                         -   mountPath: /secret
                             name: liferay-license
                         -   mountPath: /opt/liferay
@@ -291,9 +298,8 @@ customInitContainers:
                         seccompProfile:
                             type: RuntimeDefault
                     volumeMounts:
-                        -   mountPath: /liferay-init-scripts/deploy-sync.sh
-                            name: {{ .marketplace.initScriptsVolumeName }}
-                            subPath: deploy-sync.sh
+                        -   mountPath: /liferay-init-scripts
+                            name: liferay-deploy-sync
                         -   mountPath: /marketplace
                             name: liferay-marketplace
                             readOnly: true
@@ -315,6 +321,11 @@ customVolumes:
                 defaultMode: 0755
                 name: liferay-init-scripts-default
             name: liferay-init-scripts-default
+database:
+    engine: ""
+    host: ""
+    port: ""
+    tlsRequired: false
 dependencies: {}
 env:
     -   name: DNS_MEMBERSHIP_SERVICE_NAME
@@ -389,13 +400,13 @@ licensing:
     activationCodeSecretName: ""
     dxpVersion: ""
     enabled: false
-    initScriptsVolumeName: liferay-init-scripts-default
+    environmentName: ""
     offline: false
     offlineActivationBundle: ""
     onlineActivationWorkflow:
         clusterRoleName: online-activation-cluster-role
         clusterWorkflowTemplateName: online-activation-cluster-workflow-template
-        enabled: true
+        enabled: false
         serviceAccountName: online-activation-service-account
         ttlSecondsAfterCompletion: 3600
         userAccess:
@@ -419,7 +430,6 @@ marketplace:
         volumeAttributes: {}
         volumeHandle: ""
     enabled: false
-    initScriptsVolumeName: liferay-init-scripts-default
     size: 10Gi
     syncInterval: 600
 nameOverride: ""
@@ -503,6 +513,8 @@ resources:
         cpu: 2000m
         memory: 6Gi
 schedulingGates: []
+search:
+    engine: ""
 securityContext: {}
 service:
     annotations: {}
@@ -511,6 +523,10 @@ service:
             port: 7800
             protocol: TCP
             targetPort: cluster
+        -   name: cluster-tx
+            port: 7801
+            protocol: TCP
+            targetPort: cluster-tx
         -   name: http
             port: 8080
             protocol: TCP
@@ -608,9 +624,12 @@ volumeMounts:
     -   mountPath: /opt/liferay/tomcat/work
         name: liferay-persistent-volume
         subPath: tomcat/work
-    -   mountPath: /opt/liferay/unicast.xml
+    -   mountPath: /opt/liferay/unicast-control.xml
         name: liferay-configmap
-        subPath: unicast.xml
+        subPath: unicast-control.xml
+    -   mountPath: /opt/liferay/unicast-transport.xml
+        name: liferay-configmap
+        subPath: unicast-transport.xml
     -   mountPath: /opt/liferay/work
         name: liferay-persistent-volume
         subPath: liferay/work

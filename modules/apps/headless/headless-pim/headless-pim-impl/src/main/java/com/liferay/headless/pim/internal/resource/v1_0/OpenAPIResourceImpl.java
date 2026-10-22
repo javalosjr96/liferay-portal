@@ -36,13 +36,14 @@ import org.osgi.service.component.annotations.Reference;
  * @author Stefano Motta
  * @generated
  */
+@com.liferay.portal.vulcan.feature.flag.FeatureFlag("LPD-96666")
 @Component(
 	properties = "OSGI-INF/liferay/rest/v1_0/openapi.properties",
 	service = OpenAPIResourceImpl.class
 )
 @Generated("")
 @OpenAPIDefinition(
-	info = @Info(description = "Manages typed relationships between PIM entities.. A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.headless.pim.client', and version '1.0.3'.", license = @License(name = "Apache 2.0", url = "http://www.apache.org/licenses/LICENSE-2.0.html"), title = "Liferay Headless PIM", version = "v1.0")
+	info = @Info(description = "Manages typed relationships between PIM entities.. A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.headless.pim.client', and version '2.0.0'.", license = @License(name = "Apache 2.0", url = "http://www.apache.org/licenses/LICENSE-2.0.html"), title = "Liferay Headless PIM", version = "v1.0")
 )
 @Path("/v1.0")
 public class OpenAPIResourceImpl {
@@ -94,4 +95,4 @@ public class OpenAPIResourceImpl {
 	};
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1321196606
+// LIFERAY-REST-BUILDER-HASH:-893389226

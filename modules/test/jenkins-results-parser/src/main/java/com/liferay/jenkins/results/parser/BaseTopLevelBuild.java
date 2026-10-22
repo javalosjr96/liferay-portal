@@ -26,6 +26,12 @@ import com.liferay.jenkins.results.parser.failure.message.generator.RebaseFailur
 import com.liferay.jenkins.results.parser.failure.message.generator.RelevantRuleValidationFailureMessageGenerator;
 import com.liferay.jenkins.results.parser.persistent.resource.PersistentResourceFactory;
 import com.liferay.jenkins.results.parser.testray.TestrayBuild;
+import com.liferay.jenkins.results.parser.testray.TestrayCaseResult;
+import com.liferay.jenkins.results.parser.testray.TestrayContext;
+import com.liferay.jenkins.results.parser.testray.TestrayFactory;
+import com.liferay.jenkins.results.parser.testray.TestrayRoutine;
+import com.liferay.jenkins.results.parser.testray.TestrayServer;
+import com.liferay.jenkins.results.parser.testray.TopLevelStandaloneBuildTestrayCaseResult;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,11 +85,13 @@ public abstract class BaseTopLevelBuild
 
 	@Override
 	public void addTestrayAttachmentURL(URL testrayAttachmentURL) {
-		if (_testrayAttachmentURLs.contains(testrayAttachmentURL)) {
-			return;
-		}
+		synchronized (_testrayAttachmentURLs) {
+			if (_testrayAttachmentURLs.contains(testrayAttachmentURL)) {
+				return;
+			}
 
-		_testrayAttachmentURLs.add(testrayAttachmentURL);
+			_testrayAttachmentURLs.add(testrayAttachmentURL);
+		}
 	}
 
 	@Override
@@ -247,6 +255,40 @@ public abstract class BaseTopLevelBuild
 			).put(
 				"totalDuration", getTotalDuration()
 			);
+		}
+
+		if (_testrayCaseResultURL != null) {
+			buildReportJSONObject.put(
+				"testrayCaseResultURL", String.valueOf(_testrayCaseResultURL));
+		}
+
+		if (_testrayContext != null) {
+			Map<File, TestrayBuild> testrayBuildsMap =
+				_testrayContext.getTestrayBuildsMap();
+
+			TestrayBuild testrayBuild = testrayBuildsMap.get(null);
+
+			if (testrayBuild != null) {
+				buildReportJSONObject.put(
+					"testrayBuildURL", String.valueOf(testrayBuild.getURL()));
+
+				TestrayRoutine testrayRoutine =
+					testrayBuild.getTestrayRoutine();
+
+				if (testrayRoutine != null) {
+					buildReportJSONObject.put(
+						"testrayRoutineURL",
+						String.valueOf(testrayRoutine.getURL()));
+				}
+
+				TestrayServer testrayServer = testrayBuild.getTestrayServer();
+
+				if (testrayServer != null) {
+					buildReportJSONObject.put(
+						"testrayServerURL",
+						String.valueOf(testrayServer.getURL()));
+				}
+			}
 		}
 
 		return buildReportJSONObject;
@@ -499,8 +541,65 @@ public abstract class BaseTopLevelBuild
 	}
 
 	@Override
-	public synchronized List<URL> getTestrayAttachmentURLs() {
-		return _testrayAttachmentURLs;
+	public List<URL> getTestrayAttachmentURLs() {
+		synchronized (_testrayAttachmentURLs) {
+			return new ArrayList<>(_testrayAttachmentURLs);
+		}
+	}
+
+	@Override
+	public URL getTestrayCaseResultURL() {
+		synchronized (_testrayCaseResultURLLock) {
+			if (_testrayCaseResultURL != null) {
+				return _testrayCaseResultURL;
+			}
+
+			TestrayCaseResult.Status status = null;
+
+			if (getResult() == null) {
+				status = TestrayCaseResult.Status.INCOMPLETE;
+			}
+
+			TestrayContext testrayContext = getTestrayContext();
+
+			TopLevelStandaloneBuildTestrayCaseResult
+				topLevelStandaloneBuildTestrayCaseResult =
+					TestrayFactory.newTopLevelStandaloneBuildTestrayCaseResult(
+						status, testrayContext.getTestrayBuild(),
+						getTopLevelBuildReport());
+
+			topLevelStandaloneBuildTestrayCaseResult.initTestrayRun(getJob());
+
+			_testrayCaseResultURL =
+				topLevelStandaloneBuildTestrayCaseResult.
+					getTestrayCaseResultURL();
+
+			if (_testrayCaseResultURL != null) {
+				_testrayCaseResult = topLevelStandaloneBuildTestrayCaseResult;
+			}
+
+			return _testrayCaseResultURL;
+		}
+	}
+
+	@Override
+	public TestrayContext getTestrayContext() {
+		synchronized (_testrayContextLock) {
+			if (_testrayContext != null) {
+				return _testrayContext;
+			}
+
+			_testrayContext = TestrayFactory.newTestrayContext(
+				getBuildDatabase(), this);
+
+			Job job = getJob();
+
+			if (job != null) {
+				job.setTestrayContext(_testrayContext);
+			}
+
+			return _testrayContext;
+		}
 	}
 
 	public TimelineData getTimelineData() {
@@ -513,13 +612,16 @@ public abstract class BaseTopLevelBuild
 			return null;
 		}
 
-		if (_topLevelBuildReport != null) {
+		synchronized (_topLevelBuildReportLock) {
+			if (_topLevelBuildReport != null) {
+				return _topLevelBuildReport;
+			}
+
+			_topLevelBuildReport = BuildReportFactory.newTopLevelBuildReport(
+				this);
+
 			return _topLevelBuildReport;
 		}
-
-		_topLevelBuildReport = BuildReportFactory.newTopLevelBuildReport(this);
-
-		return _topLevelBuildReport;
 	}
 
 	@Override
@@ -570,9 +672,11 @@ public abstract class BaseTopLevelBuild
 		ValidationBuild validationBuild = null;
 
 		for (Build downstreamBuild : getDownstreamBuilds()) {
-			if (downstreamBuild instanceof ValidationBuild) {
-				validationBuild = (ValidationBuild)downstreamBuild;
+			if (!(downstreamBuild instanceof ValidationBuild)) {
+				continue;
 			}
+
+			validationBuild = (ValidationBuild)downstreamBuild;
 		}
 
 		if (validationBuild == null) {
@@ -952,13 +1056,9 @@ public abstract class BaseTopLevelBuild
 	}
 
 	protected Element getBaseBranchDetailsElement() {
-		String baseBranchURL = JenkinsResultsParserUtil.combine(
-			"https://github.com/liferay/", getBaseGitRepositoryName(), "/tree/",
-			getBranchName());
-
+		String baseBranchSHA = null;
+		String baseBranchUsername = "liferay";
 		String baseGitRepositoryName = getBaseGitRepositoryName();
-
-		String baseGitRepositorySHA = null;
 
 		if ((this instanceof WorkspaceBuild) && !fromArchive) {
 			WorkspaceBuild workspaceBuild = (WorkspaceBuild)this;
@@ -968,34 +1068,39 @@ public abstract class BaseTopLevelBuild
 			WorkspaceGitRepository workspaceGitRepository =
 				workspace.getPrimaryWorkspaceGitRepository();
 
-			baseGitRepositorySHA = workspaceGitRepository.getBaseBranchSHA();
+			baseBranchSHA = workspaceGitRepository.getBaseBranchSHA();
+			baseBranchUsername = workspaceGitRepository.getBaseBranchUsername();
 		}
 		else if (!baseGitRepositoryName.equals("liferay-jenkins-ee") &&
 				 baseGitRepositoryName.endsWith("-ee")) {
 
-			baseGitRepositorySHA = getBaseGitRepositorySHA(
+			baseBranchSHA = getBaseGitRepositorySHA(
 				baseGitRepositoryName.substring(
 					0, baseGitRepositoryName.length() - 3));
 		}
 		else {
-			baseGitRepositorySHA = getBaseGitRepositorySHA(
-				baseGitRepositoryName);
+			baseBranchSHA = getBaseGitRepositorySHA(baseGitRepositoryName);
 		}
+
+		String baseBranchURL = JenkinsResultsParserUtil.combine(
+			"https://github.com/", baseBranchUsername, "/",
+			baseGitRepositoryName, "/tree/", getBranchName());
 
 		Element baseGitBranchDetailsElement = Dom4JUtil.getNewElement(
 			"p", null, "Branch Name: ",
 			Dom4JUtil.getNewAnchorElement(baseBranchURL, getBranchName()));
 
-		if (baseGitRepositorySHA != null) {
+		if (baseBranchSHA != null) {
 			String baseGitRepositoryCommitURL =
-				"https://github.com/liferay/" + baseGitRepositoryName +
-					"/commit/" + baseGitRepositorySHA;
+				JenkinsResultsParserUtil.combine(
+					"https://github.com/", baseBranchUsername, "/",
+					baseGitRepositoryName, "/commit/", baseBranchSHA);
 
 			Dom4JUtil.addToElement(
 				baseGitBranchDetailsElement, Dom4JUtil.getNewElement("br"),
 				"Branch GIT ID: ",
 				Dom4JUtil.getNewAnchorElement(
-					baseGitRepositoryCommitURL, baseGitRepositorySHA));
+					baseGitRepositoryCommitURL, baseBranchSHA));
 		}
 
 		return baseGitBranchDetailsElement;
@@ -1010,34 +1115,37 @@ public abstract class BaseTopLevelBuild
 			sb.append("\nUnique Failures:");
 
 			for (Build failedDownstreamBuild : failedDownstreamBuilds) {
-				if (failedDownstreamBuild.isUniqueFailure()) {
-					sb.append("\n");
-					sb.append(failedDownstreamBuild.getDisplayName());
+				if (!failedDownstreamBuild.isUniqueFailure()) {
+					continue;
+				}
 
-					for (TestResult testResult :
-							failedDownstreamBuild.
-								getUniqueFailureTestResults()) {
+				sb.append("\n");
+				sb.append(failedDownstreamBuild.getDisplayName());
 
-						sb.append("\n\t");
-						sb.append(testResult.getDisplayName());
-					}
+				for (TestResult testResult :
+						failedDownstreamBuild.getUniqueFailureTestResults()) {
+
+					sb.append("\n\t");
+					sb.append(testResult.getDisplayName());
 				}
 			}
 
 			sb.append("\n\nUpstream Failures:");
 
 			for (Build failedDownstreamBuild : failedDownstreamBuilds) {
-				if (!failedDownstreamBuild.isUniqueFailure()) {
-					sb.append("\n");
-					sb.append(failedDownstreamBuild.getDisplayName());
+				if (failedDownstreamBuild.isUniqueFailure()) {
+					continue;
+				}
 
-					for (TestResult testResult :
-							failedDownstreamBuild.
-								getUpstreamJobFailureTestResults()) {
+				sb.append("\n");
+				sb.append(failedDownstreamBuild.getDisplayName());
 
-						sb.append("\n\t");
-						sb.append(testResult.getDisplayName());
-					}
+				for (TestResult testResult :
+						failedDownstreamBuild.
+							getUpstreamJobFailureTestResults()) {
+
+					sb.append("\n\t");
+					sb.append(testResult.getDisplayName());
 				}
 			}
 
@@ -1068,10 +1176,12 @@ public abstract class BaseTopLevelBuild
 				failedDownstreamBuild.
 					getGitHubMessageUpstreamJobFailureElement();
 
-			if (gitHubMessageUpstreamJobFailureElement != null) {
-				upstreamBuildFailureElements.add(
-					gitHubMessageUpstreamJobFailureElement);
+			if (gitHubMessageUpstreamJobFailureElement == null) {
+				continue;
 			}
+
+			upstreamBuildFailureElements.add(
+				gitHubMessageUpstreamJobFailureElement);
 		}
 
 		List<Element> buildFailureElements = new ArrayList<>();
@@ -1333,8 +1443,8 @@ public abstract class BaseTopLevelBuild
 
 		return Dom4JUtil.getNewElement(
 			"body", null, headingElement, subheadingElement,
-			getJenkinsReportCommitElement(), getJenkinsReportSummaryElement(),
-			getJenkinsReportTimelineElement(),
+			getJenkinsReportTestrayElement(), getJenkinsReportCommitElement(),
+			getJenkinsReportSummaryElement(), getJenkinsReportTimelineElement(),
 			getJenkinsReportTopLevelTableElement(),
 			getJenkinsReportDownstreamElement());
 	}
@@ -1621,6 +1731,51 @@ public abstract class BaseTopLevelBuild
 		return tableColumnHeaderElement;
 	}
 
+	protected Element getJenkinsReportTestrayElement() {
+		TestrayBuild testrayBuild = null;
+
+		if (_testrayContext != null) {
+			Map<File, TestrayBuild> testrayBuildsMap =
+				_testrayContext.getTestrayBuildsMap();
+
+			testrayBuild = testrayBuildsMap.get(null);
+		}
+
+		if ((testrayBuild == null) && (_testrayCaseResult == null)) {
+			return null;
+		}
+
+		Element testrayElement = Dom4JUtil.getNewElement("div");
+
+		if (testrayBuild != null) {
+			TestrayRoutine testrayRoutine = testrayBuild.getTestrayRoutine();
+
+			if (testrayRoutine != null) {
+				Dom4JUtil.getNewElement(
+					"p", testrayElement, "Testray Routine: ",
+					Dom4JUtil.getNewAnchorElement(
+						String.valueOf(testrayRoutine.getURL()),
+						testrayRoutine.getName()));
+			}
+
+			Dom4JUtil.getNewElement(
+				"p", testrayElement, "Testray Build: ",
+				Dom4JUtil.getNewAnchorElement(
+					String.valueOf(testrayBuild.getURL()),
+					testrayBuild.getName()));
+		}
+
+		if (_testrayCaseResult != null) {
+			Dom4JUtil.getNewElement(
+				"p", testrayElement, "Testray Case Result: ",
+				Dom4JUtil.getNewAnchorElement(
+					String.valueOf(_testrayCaseResultURL),
+					_testrayCaseResult.getName()));
+		}
+
+		return testrayElement;
+	}
+
 	protected Element getJenkinsReportTimelineElement() {
 		Element canvasElement = Dom4JUtil.getNewElement("canvas");
 
@@ -1748,50 +1903,52 @@ public abstract class BaseTopLevelBuild
 		Element jobSummaryListElement = Dom4JUtil.getNewElement("ul");
 
 		for (Build build : builds) {
-			if (Objects.equals(getResult(), "SUCCESS") == success) {
-				count++;
+			if (Objects.equals(getResult(), "SUCCESS") != success) {
+				continue;
+			}
 
-				if (count > _MAX_JOB_SUMMARY_LIST_SIZE) {
-					Element jobSummaryListItemElement = Dom4JUtil.getNewElement(
-						"li", jobSummaryListElement);
+			count++;
 
-					jobSummaryListItemElement.addText("...");
-
-					break;
-				}
-
-				if (build instanceof DownstreamBuild) {
-					DownstreamBuild downstreamBuild = (DownstreamBuild)build;
-
-					if (!Objects.equals(
-							batchName, downstreamBuild.getBatchName())) {
-
-						batchName = downstreamBuild.getBatchName();
-
-						Element batchListItemElement = Dom4JUtil.getNewElement(
-							"li", jobSummaryListElement);
-
-						batchListItemElement.addText(batchName);
-
-						batchListElement = Dom4JUtil.getNewElement(
-							"ul", batchListItemElement);
-					}
-
-					Element batchListItemElement = Dom4JUtil.getNewElement(
-						"li", batchListElement);
-
-					batchListItemElement.add(
-						build.getGitHubMessageBuildAnchorElement());
-
-					continue;
-				}
-
+			if (count > _MAX_JOB_SUMMARY_LIST_SIZE) {
 				Element jobSummaryListItemElement = Dom4JUtil.getNewElement(
 					"li", jobSummaryListElement);
 
-				jobSummaryListItemElement.add(
-					build.getGitHubMessageBuildAnchorElement());
+				jobSummaryListItemElement.addText("...");
+
+				break;
 			}
+
+			if (build instanceof DownstreamBuild) {
+				DownstreamBuild downstreamBuild = (DownstreamBuild)build;
+
+				if (!Objects.equals(
+						batchName, downstreamBuild.getBatchName())) {
+
+					batchName = downstreamBuild.getBatchName();
+
+					Element batchListItemElement = Dom4JUtil.getNewElement(
+						"li", jobSummaryListElement);
+
+					batchListItemElement.addText(batchName);
+
+					batchListElement = Dom4JUtil.getNewElement(
+						"ul", batchListItemElement);
+				}
+
+				Element batchListItemElement = Dom4JUtil.getNewElement(
+					"li", batchListElement);
+
+				batchListItemElement.add(
+					build.getGitHubMessageBuildAnchorElement());
+
+				continue;
+			}
+
+			Element jobSummaryListItemElement = Dom4JUtil.getNewElement(
+				"li", jobSummaryListElement);
+
+			jobSummaryListItemElement.add(
+				build.getGitHubMessageBuildAnchorElement());
 		}
 
 		return jobSummaryListElement;
@@ -2100,10 +2257,12 @@ public abstract class BaseTopLevelBuild
 				StatsDMetricsUtil.generateGaugeDeltaMetric(
 					"build_slave_usage_gauge", slaveUsage, metricLabels);
 
-			if (buildMetricMessage != null) {
-				sb.append(buildMetricMessage);
-				sb.append("\n");
+			if (buildMetricMessage == null) {
+				continue;
 			}
+
+			sb.append(buildMetricMessage);
+			sb.append("\n");
 		}
 
 		if (sb.length() > 0) {
@@ -2318,9 +2477,11 @@ public abstract class BaseTopLevelBuild
 			List<String> downstreamBadBuildURLs =
 				downstreamBuild.getBadBuildURLs();
 
-			if (downstreamBadBuildURLs != null) {
-				downstreamBuildURLs.addAll(downstreamBadBuildURLs);
+			if (downstreamBadBuildURLs == null) {
+				continue;
 			}
+
+			downstreamBuildURLs.addAll(downstreamBadBuildURLs);
 		}
 
 		Map<String, String> urlAxisNames = new HashMap<>();
@@ -2399,9 +2560,11 @@ public abstract class BaseTopLevelBuild
 		List<Build> cachedDownstreamBuilds = new ArrayList<>();
 
 		for (Build downstreamBuild : getDownstreamBuilds()) {
-			if (downstreamBuild.isBuildCached()) {
-				cachedDownstreamBuilds.add(downstreamBuild);
+			if (!downstreamBuild.isBuildCached()) {
+				continue;
 			}
+
+			cachedDownstreamBuilds.add(downstreamBuild);
 		}
 
 		return cachedDownstreamBuilds;
@@ -2461,11 +2624,13 @@ public abstract class BaseTopLevelBuild
 		for (String propertyName : properties.stringPropertyNames()) {
 			String badBuildURLsString = properties.getProperty(propertyName);
 
-			if (!badBuildURLsString.isEmpty()) {
-				String[] badBuildURLs = badBuildURLsString.split(",");
-
-				totalReinvocationCount += badBuildURLs.length;
+			if (badBuildURLsString.isEmpty()) {
+				continue;
 			}
+
+			String[] badBuildURLs = badBuildURLsString.split(",");
+
+			totalReinvocationCount += badBuildURLs.length;
 		}
 
 		return totalReinvocationCount;
@@ -2527,6 +2692,12 @@ public abstract class BaseTopLevelBuild
 	private int _metricsHostPort;
 	private final boolean _sendBuildMetrics;
 	private final List<URL> _testrayAttachmentURLs = new ArrayList<>();
+	private TestrayCaseResult _testrayCaseResult;
+	private URL _testrayCaseResultURL;
+	private final Object _testrayCaseResultURLLock = new Object();
+	private TestrayContext _testrayContext;
+	private final Object _testrayContextLock = new Object();
 	private TopLevelBuildReport _topLevelBuildReport;
+	private final Object _topLevelBuildReportLock = new Object();
 
 }

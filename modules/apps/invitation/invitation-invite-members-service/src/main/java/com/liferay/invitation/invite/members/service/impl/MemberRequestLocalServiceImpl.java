@@ -7,7 +7,7 @@ package com.liferay.invitation.invite.members.service.impl;
 
 import com.liferay.invitation.invite.members.constants.InviteMembersConstants;
 import com.liferay.invitation.invite.members.exception.MemberRequestAlreadyUsedException;
-import com.liferay.invitation.invite.members.exception.MemberRequestInvalidUserException;
+import com.liferay.invitation.invite.members.exception.MemberRequestReceiverUserIdException;
 import com.liferay.invitation.invite.members.model.MemberRequest;
 import com.liferay.invitation.invite.members.service.base.MemberRequestLocalServiceBaseImpl;
 import com.liferay.mail.kernel.model.MailMessage;
@@ -172,18 +172,6 @@ public class MemberRequestLocalServiceImpl
 
 		return memberRequestPersistence.findByG_R_S(
 			groupId, receiverUserId, status);
-	}
-
-	@Override
-	public List<MemberRequest> getReceiverMemberRequest(
-		long receiverUserId, int start, int end) {
-
-		return memberRequestPersistence.findByReceiverUserId(receiverUserId);
-	}
-
-	@Override
-	public int getReceiverMemberRequestCount(long receiverUserId) {
-		return memberRequestPersistence.countByReceiverUserId(receiverUserId);
 	}
 
 	@Override
@@ -464,7 +452,7 @@ public class MemberRequestLocalServiceImpl
 			throw new MemberRequestAlreadyUsedException();
 		}
 		else if (memberRequest.getReceiverUserId() != userId) {
-			throw new MemberRequestInvalidUserException();
+			throw new MemberRequestReceiverUserIdException();
 		}
 	}
 

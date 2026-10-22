@@ -46,7 +46,6 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
@@ -519,12 +518,14 @@ public class GroupServiceImpl extends GroupServiceBaseImpl {
 		while (iterator.hasNext()) {
 			Group group = iterator.next();
 
-			if (group.isSite() &&
-				PortletPermissionUtil.hasControlPanelAccessPermission(
+			if (!group.isSite() ||
+				!PortletPermissionUtil.hasControlPanelAccessPermission(
 					permissionChecker, group.getGroupId(), portlets)) {
 
-				groups.add(group);
+				continue;
 			}
+
+			groups.add(group);
 		}
 
 		return new ArrayList<>(groups);
@@ -931,19 +932,16 @@ public class GroupServiceImpl extends GroupServiceBaseImpl {
 	 */
 	@Override
 	public List<Group> search(
-			long companyId, String name, String description, String[] params,
-			int start, int end)
+			long companyId, String name, String description,
+			LinkedHashMap<String, Object> params, int start, int end)
 		throws PortalException {
 
 		if (params == null) {
-			params = new String[0];
+			params = new LinkedHashMap<>();
 		}
 
-		LinkedHashMap<String, Object> paramsObj = MapUtil.toLinkedHashMap(
-			params);
-
 		List<Group> groups = groupLocalService.search(
-			companyId, name, description, paramsObj, true, start, end);
+			companyId, name, description, params, true, start, end);
 
 		return filterGroups(groups);
 	}
@@ -976,17 +974,15 @@ public class GroupServiceImpl extends GroupServiceBaseImpl {
 	 */
 	@Override
 	public int searchCount(
-		long companyId, String name, String description, String[] params) {
+		long companyId, String name, String description,
+		LinkedHashMap<String, Object> params) {
 
 		if (params == null) {
-			params = new String[0];
+			params = new LinkedHashMap<>();
 		}
 
-		LinkedHashMap<String, Object> paramsObj = MapUtil.toLinkedHashMap(
-			params);
-
 		return groupLocalService.searchCount(
-			companyId, name, description, paramsObj, true);
+			companyId, name, description, params, true);
 	}
 
 	/**

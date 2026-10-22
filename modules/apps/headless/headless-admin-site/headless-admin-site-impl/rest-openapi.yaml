@@ -823,6 +823,20 @@ components:
             description:
                 A display page template folder.
             properties:
+                actions:
+                    additionalProperties:
+                        additionalProperties:
+                            description:
+                                The action's properties.
+                            type: string
+                        description:
+                            The action's name.
+                        type: object
+                    # @review
+                    description:
+                        Block of actions allowed by the user making the request.
+                    readOnly: true
+                    type: object
                 creator:
                     $ref: ../../headless-admin-user/headless-admin-user-impl/rest-openapi.yaml#Creator
                     # @review
@@ -2890,7 +2904,7 @@ components:
                 priority:
                     # @review
                     description:
-                        The experience's priority. It must be a unique value within the page specification. The default experience is always assigned priority 0; a positive priority results in an active experience and a negative priority results in an inactive one. After every create, update, or delete operation, the server compacts the priorities of the remaining experiences into sequential values (1, 2, 3, ... for active experiences and -1, -2, -3, ... for inactive experiences), so the priority returned or persisted may differ from the one supplied in the request.
+                        The experience's priority. It must be a unique value within the page specification. The default experience is always assigned priority 0; a positive priority results in an active experience and a negative priority results in an inactive one. Only the default experience can be created with priority 0. Supplying priority 0 when updating an experience moves it across the default, so an active experience becomes inactive and an inactive one becomes active. After every create, update, or delete operation, the server compacts the priorities of the remaining experiences into sequential values (1, 2, 3, ... for active experiences and -1, -2, -3, ... for inactive experiences), so the priority returned or persisted may differ from the one supplied in the request.
                     type: integer
                 segmentItemExternalReference:
                     $ref: "#/components/schemas/ItemExternalReference"
@@ -5055,7 +5069,7 @@ components:
             type: object
 info:
     description:
-        "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.headless.admin.site.client', and version '1.0.36'."
+        "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.headless.admin.site.client', and version '1.0.37'."
     license:
         name: Apache 2.0
         url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -5063,6 +5077,191 @@ info:
     version: v1.0
 openapi: 3.0.1
 paths:
+    "/design-libraries/{designLibraryExternalReferenceCode}/display-page-template-folders":
+        get:
+            # @review
+            description:
+                Retrieves the display page template folders of a design library.
+            operationId: getDesignLibraryDisplayPageTemplateFoldersPage
+            parameters:
+                -   in: path
+                    name: designLibraryExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+                -   in: query
+                    name: aggregationTerms
+                    schema:
+                        items:
+                            type: string
+                        type: array
+                -   in: query
+                    name: fields
+                    schema:
+                        type: string
+                -   in: query
+                    name: filter
+                    schema:
+                        type: string
+                -   in: query
+                    name: nestedFields
+                    schema:
+                        type: string
+                -   in: query
+                    name: page
+                    schema:
+                        type: integer
+                -   in: query
+                    name: pageSize
+                    schema:
+                        type: integer
+                -   in: query
+                    name: restrictFields
+                    schema:
+                        type: string
+                -   in: query
+                    name: search
+                    schema:
+                        type: string
+                -   in: query
+                    name: sort
+                    schema:
+                        type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/DisplayPageTemplateFolder"
+                                type: array
+                        application/xml:
+                            schema:
+                                items:
+                                    $ref: "#/components/schemas/DisplayPageTemplateFolder"
+                                type: array
+            tags: ["DisplayPageTemplateFolder"]
+            x-feature-flag: LPD-57283
+    "/design-libraries/{designLibraryExternalReferenceCode}/display-page-template-folders/{displayPageTemplateFolderExternalReferenceCode}":
+        delete:
+            # @review
+            description:
+                Deletes a specific display page template folder of a design library.
+            operationId: deleteDesignLibraryDisplayPageTemplateFolder
+            parameters:
+                -   in: path
+                    name: designLibraryExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+                -   in: path
+                    name: displayPageTemplateFolderExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["DisplayPageTemplateFolder"]
+            x-feature-flag: LPD-57283
+        get:
+            # @review
+            description:
+                Retrieves a specific display page template folder of a design library.
+            operationId: getDesignLibraryDisplayPageTemplateFolder
+            parameters:
+                -   in: path
+                    name: designLibraryExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+                -   in: path
+                    name: displayPageTemplateFolderExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+                -   in: query
+                    name: fields
+                    schema:
+                        type: string
+                -   in: query
+                    name: nestedFields
+                    schema:
+                        type: string
+                -   in: query
+                    name: restrictFields
+                    schema:
+                        type: string
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/DisplayPageTemplateFolder"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/DisplayPageTemplateFolder"
+            tags: ["DisplayPageTemplateFolder"]
+            x-feature-flag: LPD-57283
+    "/design-libraries/{designLibraryExternalReferenceCode}/display-page-template-folders/{displayPageTemplateFolderExternalReferenceCode}/permissions":
+        get:
+            operationId: getDesignLibraryDisplayPageTemplateFolderPermissionsPage
+            parameters:
+                -   in: path
+                    name: designLibraryExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+                -   in: path
+                    name: displayPageTemplateFolderExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+                -   in: query
+                    name: fields
+                    schema:
+                        type: string
+                -   in: query
+                    name: restrictFields
+                    schema:
+                        type: string
+                -   in: query
+                    name: roleNames
+                    schema:
+                        type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["DisplayPageTemplateFolder"]
+            x-feature-flag: LPD-57283
+        put:
+            operationId: putDesignLibraryDisplayPageTemplateFolderPermissionsPage
+            parameters:
+                -   in: path
+                    name: designLibraryExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+                -   in: path
+                    name: displayPageTemplateFolderExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+            requestBody:
+                content:
+                    application/json: {}
+                    application/xml: {}
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["DisplayPageTemplateFolder"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/display-page-templates":
         get:
             # @review
@@ -5127,6 +5326,7 @@ paths:
                                     $ref: "#/components/schemas/DisplayPageTemplate"
                                 type: array
             tags: ["DisplayPageTemplate"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/display-page-templates/{displayPageTemplateExternalReferenceCode}":
         delete:
             # @review
@@ -5150,6 +5350,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["DisplayPageTemplate"]
+            x-feature-flag: LPD-57283
         get:
             # @review
             description:
@@ -5188,6 +5389,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/DisplayPageTemplate"
             tags: ["DisplayPageTemplate"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/display-page-templates/{displayPageTemplateExternalReferenceCode}/copy":
         post:
             # @review
@@ -5215,6 +5417,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/DisplayPageTemplate"
             tags: ["DisplayPageTemplate"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/display-page-templates/{displayPageTemplateExternalReferenceCode}/copy-with-permission":
         post:
             # @review
@@ -5242,6 +5445,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/DisplayPageTemplate"
             tags: ["DisplayPageTemplate"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/display-page-templates/{displayPageTemplateExternalReferenceCode}/mark-as-default":
         post:
             # @review
@@ -5269,6 +5473,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/DisplayPageTemplate"
             tags: ["DisplayPageTemplate"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/display-page-templates/{displayPageTemplateExternalReferenceCode}/permissions":
         get:
             operationId: getDesignLibraryDisplayPageTemplatePermissionsPage
@@ -5301,6 +5506,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["DisplayPageTemplate"]
+            x-feature-flag: LPD-57283
         put:
             operationId: putDesignLibraryDisplayPageTemplatePermissionsPage
             parameters:
@@ -5324,6 +5530,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["DisplayPageTemplate"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/display-page-templates/{displayPageTemplateExternalReferenceCode}/unmark-as-default":
         post:
             # @review
@@ -5351,6 +5558,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/DisplayPageTemplate"
             tags: ["DisplayPageTemplate"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/page-template-sets":
         get:
             # @review
@@ -5415,6 +5623,7 @@ paths:
                                     $ref: "#/components/schemas/PageTemplateSet"
                                 type: array
             tags: ["PageTemplateSet"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/page-template-sets/{pageTemplateSetExternalReferenceCode}":
         delete:
             # @review
@@ -5438,6 +5647,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["PageTemplateSet"]
+            x-feature-flag: LPD-57283
         get:
             # @review
             description:
@@ -5476,6 +5686,64 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/PageTemplateSet"
             tags: ["PageTemplateSet"]
+            x-feature-flag: LPD-57283
+    "/design-libraries/{designLibraryExternalReferenceCode}/page-template-sets/{pageTemplateSetExternalReferenceCode}/permissions":
+        get:
+            operationId: getDesignLibraryPageTemplateSetPermissionsPage
+            parameters:
+                -   in: path
+                    name: designLibraryExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+                -   in: path
+                    name: pageTemplateSetExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+                -   in: query
+                    name: fields
+                    schema:
+                        type: string
+                -   in: query
+                    name: restrictFields
+                    schema:
+                        type: string
+                -   in: query
+                    name: roleNames
+                    schema:
+                        type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["PageTemplateSet"]
+            x-feature-flag: LPD-57283
+        put:
+            operationId: putDesignLibraryPageTemplateSetPermissionsPage
+            parameters:
+                -   in: path
+                    name: designLibraryExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+                -   in: path
+                    name: pageTemplateSetExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+            requestBody:
+                content:
+                    application/json: {}
+                    application/xml: {}
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["PageTemplateSet"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/style-books":
         get:
             # @review
@@ -5540,6 +5808,7 @@ paths:
                                     $ref: "#/components/schemas/StyleBook"
                                 type: array
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
         post:
             # @review
             description:
@@ -5570,6 +5839,7 @@ paths:
                                 $ref: "#/components/schemas/StyleBook"
             # @review
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
     "/design-libraries/{designLibraryExternalReferenceCode}/style-books/{styleBookExternalReferenceCode}":
         delete:
             # @review
@@ -5593,6 +5863,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
         get:
             # @review
             description:
@@ -5631,6 +5902,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/StyleBook"
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
         patch:
             # @review
             description:
@@ -5677,6 +5949,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/StyleBook"
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
         put:
             # @review
             description:
@@ -5723,6 +5996,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/StyleBook"
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
     "/sites/{siteExternalReferenceCode}/display-page-template-folders":
         get:
             # @review
@@ -7214,7 +7488,11 @@ paths:
                     content:
                         application/json: {}
                         application/xml: {}
+                404:
+                    description:
+                        "The requested page experience could not be found."
             tags: ["PageExperience"]
+            x-feature-flag: LPD-74328
         get:
             # @review
             description:
@@ -7252,7 +7530,11 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/PageExperience"
+                404:
+                    description:
+                        "The requested page experience could not be found."
             tags: ["PageExperience"]
+            x-feature-flag: LPD-74328
         patch:
             # @review
             description:
@@ -7298,7 +7580,11 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/PageExperience"
+                404:
+                    description:
+                        "The requested page experience could not be found."
             tags: ["PageExperience"]
+            x-feature-flag: LPD-74328
         put:
             # @review
             description:
@@ -7344,7 +7630,14 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/PageExperience"
+                404:
+                    description:
+                        "The requested page specification or page experience could not be found."
+                409:
+                    description:
+                        "A page experience key or priority is duplicated."
             tags: ["PageExperience"]
+            x-feature-flag: LPD-74328
     "/sites/{siteExternalReferenceCode}/page-specifications/{pageSpecificationExternalReferenceCode}":
         delete:
             # @review
@@ -7380,6 +7673,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["PageSpecification"]
+            x-feature-flag: LPD-74328
         get:
             # @review
             description:
@@ -7464,6 +7758,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/PageSpecification"
             tags: ["PageSpecification"]
+            x-feature-flag: LPD-74328
         put:
             # @review
             description:
@@ -7510,6 +7805,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/PageSpecification"
             tags: ["PageSpecification"]
+            x-feature-flag: LPD-74328
     "/sites/{siteExternalReferenceCode}/page-specifications/{pageSpecificationExternalReferenceCode}/page-experiences":
         get:
             # @review
@@ -7554,6 +7850,7 @@ paths:
                                 type: array
             # @review
             tags: ["PageExperience"]
+            x-feature-flag: LPD-74328
         post:
             # @review
             description:
@@ -7599,8 +7896,18 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/PageExperience"
+                400:
+                    description:
+                        "The request is invalid. For example, the page specification is not a draft, or it does not belong to a site page."
+                404:
+                    description:
+                        "The requested page specification could not be found."
+                409:
+                    description:
+                        "A page experience key or priority is duplicated."
             # @review
             tags: ["PageExperience"]
+            x-feature-flag: LPD-74328
     "/sites/{siteExternalReferenceCode}/page-specifications/{pageSpecificationExternalReferenceCode}/page-experiences/{pageExperienceExternalReferenceCode}/page-elements":
         get:
             # @review
@@ -7652,8 +7959,15 @@ paths:
                                 items:
                                     $ref: "#/components/schemas/PageElement"
                                 type: array
+                400:
+                    description:
+                        "The request is invalid. For example, the page experience does not belong to the page specification."
+                404:
+                    description:
+                        "The requested page specification or page experience could not be found."
             # @review
             tags: ["PageElement"]
+            x-feature-flag: LPD-74328
         post:
             # @review
             description:
@@ -7704,8 +8018,15 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/PageElement"
+                400:
+                    description:
+                        "The request is invalid. For example, the page experience does not belong to the page specification, the page element definition is invalid, or a page element with the same external reference code already exists."
+                404:
+                    description:
+                        "The requested page specification, page experience, or parent page element could not be found."
             # @review
             tags: ["PageElement"]
+            x-feature-flag: LPD-74328
     "/sites/{siteExternalReferenceCode}/page-specifications/{pageSpecificationExternalReferenceCode}/page-experiences/{pageExperienceExternalReferenceCode}/page-elements/{pageElementExternalReferenceCode}":
         delete:
             # @review
@@ -7738,7 +8059,14 @@ paths:
                     content:
                         application/json: {}
                         application/xml: {}
+                400:
+                    description:
+                        "The request is invalid. For example, the page experience does not belong to the page specification."
+                404:
+                    description:
+                        "The requested page specification, page experience, or page element could not be found."
             tags: ["PageElement"]
+            x-feature-flag: LPD-74328
         get:
             # @review
             description:
@@ -7786,7 +8114,14 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/PageElement"
+                400:
+                    description:
+                        "The request is invalid. For example, the page experience does not belong to the page specification."
+                404:
+                    description:
+                        "The requested page specification, page experience, or page element could not be found."
             tags: ["PageElement"]
+            x-feature-flag: LPD-74328
         patch:
             # @review
             description:
@@ -7842,7 +8177,14 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/PageElement"
+                400:
+                    description:
+                        "The request is invalid. For example, the page experience does not belong to the page specification, or the page element definition is invalid."
+                404:
+                    description:
+                        "The requested page specification, page experience, or page element could not be found."
             tags: ["PageElement"]
+            x-feature-flag: LPD-74328
         put:
             # @review
             description:
@@ -7898,7 +8240,14 @@ paths:
                         application/xml:
                             schema:
                                 $ref: "#/components/schemas/PageElement"
+                400:
+                    description:
+                        "The request is invalid. For example, the page experience does not belong to the page specification, or the page element definition is invalid."
+                404:
+                    description:
+                        "The requested page specification or page experience could not be found."
             tags: ["PageElement"]
+            x-feature-flag: LPD-74328
     "/sites/{siteExternalReferenceCode}/page-specifications/{pageSpecificationExternalReferenceCode}/page-experiences/{pageExperienceExternalReferenceCode}/page-elements/{pageElementExternalReferenceCode}/page-elements":
         get:
             # @review
@@ -7955,8 +8304,15 @@ paths:
                                 items:
                                     $ref: "#/components/schemas/PageElement"
                                 type: array
+                400:
+                    description:
+                        "The request is invalid. For example, the page experience does not belong to the page specification."
+                404:
+                    description:
+                        "The requested page specification, page experience, or page element could not be found."
             # @review
             tags: ["PageElement"]
+            x-feature-flag: LPD-74328
     "/sites/{siteExternalReferenceCode}/page-specifications/{pageSpecificationExternalReferenceCode}/publish":
         post:
             # @review
@@ -8047,6 +8403,7 @@ paths:
                                     $ref: "#/components/schemas/StyleBook"
                                 type: array
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
     "/sites/{siteExternalReferenceCode}/page-template-sets":
         get:
             # @review
@@ -9232,6 +9589,7 @@ paths:
                                     $ref: "#/components/schemas/PageSpecificationVersion"
                                 type: array
             tags: ["PageSpecificationVersion"]
+            x-feature-flag: LPD-10622
     "/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/page-specification-versions/{pageSpecificationVersionExternalReferenceCode}":
         delete:
             description:
@@ -9259,6 +9617,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["PageSpecificationVersion"]
+            x-feature-flag: LPD-10622
         get:
             description:
                 Retrieves a specific page specification version of a site page.
@@ -9301,6 +9660,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/PageSpecificationVersion"
             tags: ["PageSpecificationVersion"]
+            x-feature-flag: LPD-10622
     "/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/page-specification-versions/{pageSpecificationVersionExternalReferenceCode}/page-specification":
         get:
             description:
@@ -9344,6 +9704,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/PageSpecification"
             tags: ["PageSpecification"]
+            x-feature-flag: LPD-10622
     "/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/page-specification-versions/{pageSpecificationVersionExternalReferenceCode}/page-specification-version-page-experiences":
         get:
             description:
@@ -9391,6 +9752,7 @@ paths:
                                     $ref: "#/components/schemas/PageSpecificationVersionPageExperience"
                                 type: array
             tags: ["PageSpecificationVersionPageExperience"]
+            x-feature-flag: LPD-10622
     "/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/page-specification-versions/{pageSpecificationVersionExternalReferenceCode}/restore":
         post:
             description:
@@ -9422,6 +9784,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/PageSpecification"
             tags: ["PageSpecificationVersion"]
+            x-feature-flag: LPD-10622
     "/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/page-specifications":
         get:
             # @review
@@ -9670,6 +10033,7 @@ paths:
                         "The requested site page could not be found."
             # @review
             tags: ["WidgetPageWidgetInstance"]
+            x-feature-flag: LPD-74328
         post:
             # @review
             description:
@@ -9723,6 +10087,7 @@ paths:
                         "The requested site page could not be found."
             # @review
             tags: ["WidgetPageWidgetInstance"]
+            x-feature-flag: LPD-74328
     "/sites/{siteExternalReferenceCode}/site-pages/{sitePageExternalReferenceCode}/widget-instances/{widgetInstanceExternalReferenceCode}":
         delete:
             # @review
@@ -9757,6 +10122,7 @@ paths:
                     description:
                         "The requested site page or widget instance could not be found."
             tags: ["WidgetPageWidgetInstance"]
+            x-feature-flag: LPD-74328
         get:
             # @review
             description:
@@ -9806,6 +10172,7 @@ paths:
                     description:
                         "The requested site page or widget instance could not be found."
             tags: ["WidgetPageWidgetInstance"]
+            x-feature-flag: LPD-74328
         patch:
             # @review
             description:
@@ -9863,6 +10230,7 @@ paths:
                     description:
                         "The requested site page or widget instance could not be found."
             tags: ["WidgetPageWidgetInstance"]
+            x-feature-flag: LPD-74328
         put:
             # @review
             description:
@@ -9920,6 +10288,7 @@ paths:
                     description:
                         "The requested site page could not be found."
             tags: ["WidgetPageWidgetInstance"]
+            x-feature-flag: LPD-74328
     "/sites/{siteExternalReferenceCode}/style-books":
         get:
             # @review
@@ -9984,6 +10353,7 @@ paths:
                                     $ref: "#/components/schemas/StyleBook"
                                 type: array
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
         post:
             # @review
             description:
@@ -10014,6 +10384,7 @@ paths:
                                 $ref: "#/components/schemas/StyleBook"
             # @review
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
     "/sites/{siteExternalReferenceCode}/style-books/{styleBookExternalReferenceCode}":
         delete:
             # @review
@@ -10037,6 +10408,7 @@ paths:
                         application/json: {}
                         application/xml: {}
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
         get:
             # @review
             description:
@@ -10075,6 +10447,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/StyleBook"
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
         patch:
             # @review
             description:
@@ -10121,6 +10494,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/StyleBook"
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
         put:
             # @review
             description:
@@ -10167,6 +10541,7 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/StyleBook"
             tags: ["StyleBook"]
+            x-feature-flag: LPD-57283
     "/sites/{siteExternalReferenceCode}/utility-pages":
         get:
             # @review
@@ -10873,6 +11248,7 @@ paths:
                                 format: binary
                                 type: string
             tags: ["Site"]
+            x-feature-flag: LPD-19870
         put:
             description:
                 Adds or update a new site

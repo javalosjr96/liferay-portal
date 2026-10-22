@@ -18,7 +18,24 @@ jobs:
                 with:
                     kubeconform-version: 0.7.0
             -   name: Lint chart
-                run: helm lint "cloud/helm/${{matrix.chart}}"
+                run: |
+                    set -o errexit
+                    set -o nounset
+                    set -o pipefail
+
+                    function main {
+                        local helm_lint_args=()
+                        local render_values_file="cloud/scripts/tests/render-values/${{matrix.chart}}.yaml"
+
+                        if [[ -f ${render_values_file} ]]
+                        then
+                            helm_lint_args=("--values" "${render_values_file}")
+                        fi
+
+                        helm lint "cloud/helm/${{matrix.chart}}" "${helm_lint_args[@]}"
+                    }
+
+                    main "${@}"
             -   name: Render and validate manifests
                 run: cloud/scripts/tests/render_helm_manifests.sh "${{matrix.chart}}"
             -   if: ${{!cancelled()}}
@@ -42,11 +59,11 @@ jobs:
             matrix:
                 chart:
                     -   aws
-                    -   aws-infrastructure
                     -   aws-infrastructure-provider
                     -   aws-marketplace
                     -   azure
                     -   azure-infrastructure-provider
+                    -   client-extension
                     -   default
                     -   dxp-operator
                     -   gcp

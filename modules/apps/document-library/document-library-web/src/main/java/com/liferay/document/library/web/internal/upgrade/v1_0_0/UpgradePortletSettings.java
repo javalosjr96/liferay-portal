@@ -6,8 +6,9 @@
 package com.liferay.document.library.web.internal.upgrade.v1_0_0;
 
 import com.liferay.document.library.constants.DLPortletKeys;
-import com.liferay.portal.kernel.settings.SettingsLocatorHelper;
+import com.liferay.document.library.web.internal.settings.DLPortletInstanceSettings;
 import com.liferay.portal.kernel.util.PortletKeys;
+import com.liferay.portlet.documentlibrary.DLGroupServiceSettings;
 import com.liferay.portlet.documentlibrary.constants.DLConstants;
 
 /**
@@ -16,22 +17,20 @@ import com.liferay.portlet.documentlibrary.constants.DLConstants;
 public class UpgradePortletSettings
 	extends com.liferay.portal.upgrade.v7_0_0.UpgradePortletSettings {
 
-	public UpgradePortletSettings(SettingsLocatorHelper settingsLocatorHelper) {
-		super(settingsLocatorHelper);
-	}
-
 	@Override
 	protected void doUpgrade() throws Exception {
-		upgradeMainPortlet(
-			DLPortletKeys.DOCUMENT_LIBRARY, DLConstants.SERVICE_NAME,
-			PortletKeys.PREFS_OWNER_TYPE_GROUP, true);
+		String[] serviceKeys = getSettingsKeys(DLGroupServiceSettings.class);
 
 		upgradeDisplayPortlet(
-			DLPortletKeys.DOCUMENT_LIBRARY, DLConstants.SERVICE_NAME,
-			PortletKeys.PREFS_OWNER_TYPE_LAYOUT);
+			DLPortletKeys.DOCUMENT_LIBRARY, PortletKeys.PREFS_OWNER_TYPE_LAYOUT,
+			serviceKeys);
 		upgradeDisplayPortlet(
-			DLPortletKeys.MEDIA_GALLERY_DISPLAY, DLConstants.SERVICE_NAME,
-			PortletKeys.PREFS_OWNER_TYPE_LAYOUT);
+			DLPortletKeys.MEDIA_GALLERY_DISPLAY,
+			PortletKeys.PREFS_OWNER_TYPE_LAYOUT, serviceKeys);
+		upgradeMainPortlet(
+			DLPortletKeys.DOCUMENT_LIBRARY, DLConstants.SERVICE_NAME,
+			PortletKeys.PREFS_OWNER_TYPE_GROUP,
+			getSettingsKeys(DLPortletInstanceSettings.class), serviceKeys);
 	}
 
 }

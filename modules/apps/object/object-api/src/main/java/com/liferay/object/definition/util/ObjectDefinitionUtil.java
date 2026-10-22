@@ -154,6 +154,8 @@ public class ObjectDefinitionUtil {
 		"com.liferay.ai.hub.site.initializer", "com.liferay.commerce.service",
 		"com.liferay.content.marketing.platform.site.initializer",
 		"com.liferay.content.site.generator.impl", "com.liferay.cookies.impl",
+		"com.liferay.digital.sales.room.site.initializer",
+		"com.liferay.digital.signature.impl",
 		"com.liferay.frontend.data.set.admin.web",
 		"com.liferay.frontend.data.set.impl",
 		"com.liferay.headless.builder.impl",
@@ -161,31 +163,12 @@ public class ObjectDefinitionUtil {
 		"com.liferay.list.type.service", "com.liferay.mcp.server.rest.impl",
 		"com.liferay.notification.service", "com.liferay.object.service",
 		"com.liferay.seo.studio.site.initializer",
-		"com.liferay.site.initializer.cms", "com.liferay.site.initializer.dsr",
-		"com.liferay.site.initializer.pim"
+		"com.liferay.site.initializer.cms", "com.liferay.site.initializer.pim"
 	};
 
 	private static final Map<String, String>
 		_allowedModifiableSystemObjectDefinitionNames = HashMapBuilder.put(
 			"AccountValidatorResult", "/account/validator-results"
-		).put(
-			"AIHubAgentDefinition", "/ai-hub/agent-definitions"
-		).put(
-			"AIHubChatbot", "/ai-hub/chatbots"
-		).put(
-			"AIHubConfiguration", "/ai-hub/configurations"
-		).put(
-			"AIHubContentRetriever", "/ai-hub/content-retrievers"
-		).put(
-			"AIHubCrawlerJob", "/ai-hub/crawler-jobs"
-		).put(
-			"AIHubGuardrail", "/ai-hub/guardrails"
-		).put(
-			"AIHubInstructionDefinition", "/ai-hub/instruction-definitions"
-		).put(
-			"AIHubMCPServer", "/ai-hub/mcp-servers"
-		).put(
-			"AIHubReport", "/ai-hub/reports"
 		).put(
 			"APIApplication", "/headless-builder/applications"
 		).put(
@@ -254,6 +237,12 @@ public class ObjectDefinitionUtil {
 		).put(
 			"DataSetUserConfiguration", "/data-set-admin/user-configurations"
 		).put(
+			"DSRequest", "/digital-signature/requests"
+		).put(
+			"DSRequestDocument", "/digital-signature/request-documents"
+		).put(
+			"DSRequestRecipient", "/digital-signature/request-recipients"
+		).put(
 			"DSRRoom", "/digital-sales-room/rooms"
 		).put(
 			"FunctionalCookieEntry", "/functional-cookies-entries"
@@ -278,7 +267,7 @@ public class ObjectDefinitionUtil {
 		).put(
 			"PersonalizationCookieEntry", "/personalization-cookies-entries"
 		).put(
-			"PIMBaseSku", "/pim/base-skus"
+			"PIMBasicProduct", "/pim/basic-products"
 		).put(
 			"PIMCatalog", "/pim/catalogs"
 		).put(
@@ -287,28 +276,6 @@ public class ObjectDefinitionUtil {
 			"PIMConnectorFieldMapping", "/pim/connector-field-mappings"
 		).put(
 			"PIMLink", "/pim/links"
-		).put(
-			"SEOStudioDomain", "/seo-studio/domains"
-		).put(
-			"SEOStudioGSCCredentials", "/seo-studio/gsc-credentials"
-		).put(
-			"SEOStudioInsightType", "/seo-studio/insight-types"
-		).put(
-			"SEOStudioInstance", "/seo-studio/instances"
-		).put(
-			"SEOStudioIntegration", "/seo-studio/integrations"
-		).put(
-			"SEOStudioPage", "/seo-studio/pages"
-		).put(
-			"SEOStudioPageSpeedResult", "/seo-studio/pagespeed-results"
-		).put(
-			"SEOStudioScan", "/seo-studio/scans"
-		).put(
-			"SEOStudioScanInsight", "/seo-studio/scan-insights"
-		).put(
-			"SEOStudioScanMetric", "/seo-studio/scan-metrics"
-		).put(
-			"SEOStudioScanRun", "/seo-studio/scan-runs"
 		).build();
 
 }

@@ -1,7 +1,7 @@
 dependencies {
-	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-annotations", version: "2.18.9"
-	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.18.9"
-	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-databind", version: "2.18.9"
+	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-annotations", version: "2.18.11"
+	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: "2.18.11"
+	testIntegrationImplementation group: "com.fasterxml.jackson.core", name: "jackson-databind", version: "2.18.11"
 	testIntegrationImplementation group: "com.liferay", name: "jakarta.ws.rs", version: "3.1.0.LIFERAY-PATCHED-1"
 	testIntegrationImplementation group: "jakarta.annotation", name: "jakarta.annotation-api", version: "2.1.1"
 	testIntegrationImplementation group: "org.skyscreamer", name: "jsonassert", version: "1.2.3"
@@ -15,6 +15,7 @@ dependencies {
 	testIntegrationImplementation project(":apps:export-import:export-import-test-util")
 	testIntegrationImplementation project(":apps:headless:headless-batch-engine:headless-batch-engine-client")
 	testIntegrationImplementation project(":apps:journal:journal-api")
+	testIntegrationImplementation project(":apps:layout:layout-admin-api")
 	testIntegrationImplementation project(":apps:layout:layout-page-template-admin-api")
 	testIntegrationImplementation project(":apps:layout:layout-page-template-api")
 	testIntegrationImplementation project(":apps:layout:layout-test-util")

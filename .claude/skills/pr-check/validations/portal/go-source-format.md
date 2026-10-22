@@ -1,10 +1,6 @@
 # Go Source Format
 
-## Trigger
-
-Any hand written Go file changed under `cloud/operator/`, which is the scope `.claude/rules/go-style.md` declares. Generated Go — a `zz_generated` name, or a file carrying the `// Code generated ... DO NOT EDIT.` marker — is excluded, since the next `go generate` overwrites it. The name is what the Match below can filter on; skip a marked file the regex still admits.
-
-The portal source formatter does not process `*.go`, so this validation covers Go the way Source Format covers the rest of the tree: `gofmt` plus the Go conventions in `.claude/rules/go-style.md`.
+Formats hand written Go under `cloud/operator` with `gofmt` and the conventions in `.claude/rules/go-style.md`, since the portal source formatter does not process Go. Generated Go is skipped, because the next `go generate` overwrites it.
 
 ## Match
 
@@ -14,7 +10,7 @@ The portal source formatter does not process `*.go`, so this validation covers G
 
 `cloud/operator/resources` is the Go module root — the directory that holds `go.mod`.
 
-Invoke the `format-source` skill scoped to the changed Go files. It runs `gofmt` and applies `.claude/rules/go-style.md`. After it finishes, confirm the module is clean under `gofmt`:
+Skip a changed file carrying the `// Code generated ... DO NOT EDIT.` marker, since the next `go generate` overwrites it. The `## Match` cannot filter on that marker. Invoke the `format-source` skill scoped to the remaining changed Go files. It runs `gofmt` and applies `.claude/rules/go-style.md`. After it finishes, confirm the module is clean under `gofmt`:
 
 ```bash
 (cd "${REPO_ROOT}/cloud/operator/resources" && gofmt -l .)

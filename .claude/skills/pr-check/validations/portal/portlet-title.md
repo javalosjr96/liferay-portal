@@ -1,8 +1,6 @@
 # Portlet Title
 
-## Trigger
-
-A new portlet is registered through an added `jakarta.portlet.name=` property in a `@Component`. Each portlet needs a matching `jakarta.portlet.title.<portlet name>` key, in the global `portal-language-lang` `Language.properties` or in the module's own `content/Language.properties`. A missing key fails `PortletTitleTest`, which lives in a separate test module the PR never touches, so nothing else here catches it.
+A new portlet needs a matching `jakarta.portlet.title.<portlet name>` language key. A missing key fails `PortletTitleTest`, which lives in a test module the pull request never touches, so nothing else here catches it.
 
 ## Match
 
@@ -13,7 +11,8 @@ A new portlet is registered through an added `jakarta.portlet.name=` property in
 This check is static and needs no build. List the added `jakarta.portlet.name=` lines:
 
 ```bash
-git diff "$(git merge-base HEAD master)...HEAD" -- '*.java'
+bash "${SKILL_DIR}/select_paths.sh" "${MERGE_BASE}" "${VALIDATION_FILE}" \
+	| xargs git diff "${MERGE_BASE}...HEAD" --
 ```
 
 For each line, work out the portlet name from a string literal or from the value of a referenced `*PortletKeys` constant, reading that constant and joining its string fragments when needed. Then confirm that a `jakarta.portlet.title.<name>=` line exists in the global `portal-language-lang` `Language.properties` or in the module's own `content/Language.properties`, and report any missing key as a FAIL.

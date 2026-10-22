@@ -1468,6 +1468,8 @@ public class ObjectEntryRelatedObjectsResourceTest {
 	public void testPatchCustomObjectEntryWithNestedCustomObjectEntryValues()
 		throws Exception {
 
+		// Many to many relationship
+
 		ObjectDefinition objectDefinition =
 			ObjectDefinitionTestUtil.publishObjectDefinition(
 				List.of(
@@ -1546,6 +1548,59 @@ public class ObjectEntryRelatedObjectsResourceTest {
 
 		Assert.assertEquals(1, keywordsJSONArray.length());
 		Assert.assertEquals(keyword, keywordsJSONArray.getString(0));
+
+		// Many to one relationship
+
+		objectEntry = ObjectEntryTestUtil.addObjectEntry(
+			objectDefinition,
+			HashMapBuilder.<String, Serializable>put(
+				_OBJECT_FIELD_NAME_1, _OBJECT_FIELD_VALUE_1
+			).put(
+				_OBJECT_FIELD_NAME_2, _OBJECT_FIELD_VALUE_2
+			).put(
+				_OBJECT_FIELD_NAME_3, _OBJECT_FIELD_VALUE_3
+			).build());
+
+		objectRelationship = _addObjectRelationship(
+			objectDefinition, _objectDefinition1,
+			ObjectRelationshipConstants.TYPE_ONE_TO_MANY);
+
+		jsonObject = HTTPTestUtil.invokeToJSONObject(
+			JSONUtil.put(
+				objectRelationship.getName(),
+				JSONUtil.put(
+					_OBJECT_FIELD_NAME_2, _NEW_OBJECT_FIELD_VALUE_1
+				).put(
+					"externalReferenceCode",
+					objectEntry.getExternalReferenceCode()
+				)
+			).toString(),
+			_getEndpoint(
+				_objectEntry1.getExternalReferenceCode(), _objectDefinition1,
+				null),
+			Http.Method.PATCH);
+
+		Assert.assertEquals(
+			objectEntry.getExternalReferenceCode(),
+			jsonObject.getString(
+				StringBundler.concat(
+					"r_", objectRelationship.getName(), "_",
+					StringUtil.replaceLast(
+						objectDefinition.getPKObjectFieldName(), "Id",
+						"ERC"))));
+
+		nestedObjectEntryJSONObject = jsonObject.getJSONObject(
+			objectRelationship.getName());
+
+		Assert.assertEquals(
+			_OBJECT_FIELD_VALUE_1,
+			nestedObjectEntryJSONObject.getString(_OBJECT_FIELD_NAME_1));
+		Assert.assertEquals(
+			_NEW_OBJECT_FIELD_VALUE_1,
+			nestedObjectEntryJSONObject.getString(_OBJECT_FIELD_NAME_2));
+		Assert.assertEquals(
+			_OBJECT_FIELD_VALUE_3,
+			nestedObjectEntryJSONObject.getString(_OBJECT_FIELD_NAME_3));
 	}
 
 	@Test

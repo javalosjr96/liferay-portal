@@ -7,6 +7,7 @@ package com.liferay.gradle.plugins.defaults;
 
 import com.liferay.gradle.plugins.defaults.internal.util.GradlePluginsDefaultsUtil;
 import com.liferay.gradle.plugins.defaults.internal.util.GradleUtil;
+import com.liferay.gradle.plugins.util.ThemeUtil;
 import com.liferay.gradle.util.Validator;
 
 import java.io.File;
@@ -109,9 +110,11 @@ public class LiferaySettingsPlugin implements Plugin<Settings> {
 			flagName = flagName.replace('_', '.');
 			flagName = flagName.toLowerCase();
 
-			if (!Boolean.getBoolean(prefix + flagName)) {
-				iterator.remove();
+			if (Boolean.getBoolean(prefix + flagName)) {
+				continue;
 			}
+
+			iterator.remove();
 		}
 
 		return flags;
@@ -133,7 +136,7 @@ public class LiferaySettingsPlugin implements Plugin<Settings> {
 			return ProjectDirType.SPRING_BOOT;
 		}
 
-		if (Files.exists(dirPath.resolve("gulpfile.js"))) {
+		if (ThemeUtil.isTheme(dirPath.toFile())) {
 			return ProjectDirType.THEME;
 		}
 

@@ -1,9 +1,5 @@
 # Workspace Source Format
 
-## Trigger
-
-Always.
-
 ## Match
 
 `.`

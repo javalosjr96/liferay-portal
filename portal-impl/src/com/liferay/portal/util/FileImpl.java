@@ -13,6 +13,7 @@ import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.DigesterUtil;
@@ -407,6 +408,9 @@ public class FileImpl implements com.liferay.portal.kernel.util.File {
 		try (FileInputStream fileInputStream = new FileInputStream(file)) {
 			return DigesterUtil.digestHex(DigesterUtil.MD5, fileInputStream);
 		}
+		catch (SystemException systemException) {
+			throw new IOException(systemException);
+		}
 	}
 
 	@Override
@@ -487,9 +491,11 @@ public class FileImpl implements com.liferay.portal.kernel.util.File {
 		File[] fileArray = file.listFiles();
 
 		for (int i = 0; (fileArray != null) && (i < fileArray.length); i++) {
-			if (fileArray[i].isDirectory()) {
-				dirs.add(fileArray[i].getName());
+			if (!fileArray[i].isDirectory()) {
+				continue;
 			}
+
+			dirs.add(fileArray[i].getName());
 		}
 
 		return dirs.toArray(new String[0]);
@@ -507,9 +513,11 @@ public class FileImpl implements com.liferay.portal.kernel.util.File {
 		File[] fileArray = file.listFiles();
 
 		for (int i = 0; (fileArray != null) && (i < fileArray.length); i++) {
-			if (fileArray[i].isFile()) {
-				files.add(fileArray[i].getName());
+			if (!fileArray[i].isFile()) {
+				continue;
 			}
+
+			files.add(fileArray[i].getName());
 		}
 
 		return files.toArray(new String[0]);

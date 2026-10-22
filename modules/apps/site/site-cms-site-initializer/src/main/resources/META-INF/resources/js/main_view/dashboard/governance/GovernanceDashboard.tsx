@@ -6,22 +6,19 @@
 import React from 'react';
 
 import {GovernanceContextProvider} from './GovernanceContext';
-import {AttentionRequired} from './components/AttentionRequired';
-import {DuplicationAndSimilarity} from './components/DuplicationAndSimilarity';
 import {Filters} from './components/Filters';
+import {Freshness} from './components/Freshness';
 import {GovernanceHealth} from './components/GovernanceHealth';
-import {NeedsReview} from './components/NeedsReview';
-import {WorkflowAndContentProgress} from './components/WorkflowAndContentProgress';
+import {Operations} from './components/Operations';
+import {Quality} from './components/Quality';
 import {GovernanceAdditionalProps} from './types';
 
 import '../../../../css/dashboard/GovernanceDashboard.scss';
 
 export default function GovernanceDashboard({
 	additionalProps,
-	constants,
 }: {
 	additionalProps: GovernanceAdditionalProps;
-	constants: {[key: string]: string};
 }) {
 	return (
 		<GovernanceContextProvider>
@@ -29,16 +26,11 @@ export default function GovernanceDashboard({
 
 			<GovernanceHealth />
 
-			<AttentionRequired />
+			<Quality additionalProps={additionalProps} />
 
-			<NeedsReview additionalProps={additionalProps} />
+			<Freshness additionalProps={additionalProps} />
 
-			<WorkflowAndContentProgress additionalProps={additionalProps} />
-
-			<DuplicationAndSimilarity
-				additionalProps={additionalProps}
-				constants={constants}
-			/>
+			<Operations additionalProps={additionalProps} />
 		</GovernanceContextProvider>
 	);
 }

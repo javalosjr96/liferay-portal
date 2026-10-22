@@ -11,13 +11,13 @@ jobs:
         needs:
             -   check-repository
             -   push-rc-aws
-            -   push-rc-aws-infrastructure
             -   push-rc-aws-infrastructure-provider
             -   push-rc-azure
             -   push-rc-azure-infrastructure-provider
             -   push-rc-bootstrap-aws
             -   push-rc-bootstrap-azure
             -   push-rc-bootstrap-gcp
+            -   push-rc-client-extension
             -   push-rc-default
             -   push-rc-dxp-operator
             -   push-rc-gcp
@@ -43,15 +43,6 @@ jobs:
         with:
             chart_name: liferay-aws
             working_directory: ./cloud/helm/aws
-    check-aws-infrastructure:
-        needs:
-            -   test-cloud-helm-chart
-            -   test-cloud-helm-chart-smoke
-            -   test-cloud-terraform
-        uses: ./.github/workflows/ci-reusable-check-helm-chart-version.yaml
-        with:
-            chart_name: liferay-aws-infrastructure
-            working_directory: ./cloud/helm/aws-infrastructure
     check-aws-infrastructure-provider:
         needs:
             -   test-cloud-helm-chart
@@ -103,6 +94,15 @@ jobs:
         uses: ./.github/workflows/ci-reusable-check-bootstrap-version.yaml
         with:
             provider: gcp
+    check-client-extension:
+        needs:
+            -   test-cloud-helm-chart
+            -   test-cloud-helm-chart-smoke
+            -   test-cloud-terraform
+        uses: ./.github/workflows/ci-reusable-check-helm-chart-version.yaml
+        with:
+            chart_name: liferay-client-extension
+            working_directory: ./cloud/helm/client-extension
     check-default:
         needs:
             -   test-cloud-helm-chart
@@ -204,14 +204,6 @@ jobs:
         uses: ./.github/workflows/ci-reusable-promote-helm-chart.yaml
         with:
             source_image_ref: ${{needs.push-rc-aws.outputs.image_ref}}
-    promote-rc-aws-infrastructure:
-        if: ${{!cancelled() && needs.approve-release.result == 'success' && needs.push-rc-aws-infrastructure.result == 'success'}}
-        needs:
-            -   approve-release
-            -   push-rc-aws-infrastructure
-        uses: ./.github/workflows/ci-reusable-promote-helm-chart.yaml
-        with:
-            source_image_ref: ${{needs.push-rc-aws-infrastructure.outputs.image_ref}}
     promote-rc-aws-infrastructure-provider:
         if: ${{!cancelled() && needs.approve-release.result == 'success' && needs.push-rc-aws-infrastructure-provider.result == 'success'}}
         needs:
@@ -252,6 +244,14 @@ jobs:
         uses: ./.github/workflows/ci-reusable-promote-bootstrap-tarball.yaml
         with:
             source_object_name: ${{needs.push-rc-bootstrap-gcp.outputs.object_name}}
+    promote-rc-client-extension:
+        if: ${{!cancelled() && needs.approve-release.result == 'success' && needs.push-rc-client-extension.result == 'success'}}
+        needs:
+            -   approve-release
+            -   push-rc-client-extension
+        uses: ./.github/workflows/ci-reusable-promote-helm-chart.yaml
+        with:
+            source_image_ref: ${{needs.push-rc-client-extension.outputs.image_ref}}
     promote-rc-default:
         if: ${{!cancelled() && needs.approve-release.result == 'success' && needs.push-rc-default.result == 'success'}}
         needs:
@@ -443,13 +443,6 @@ jobs:
         with:
             chart_name: liferay-aws
             working_directory: ./cloud/helm/aws
-    push-rc-aws-infrastructure:
-        if: ${{needs.check-aws-infrastructure.outputs.should_release == 'true'}}
-        needs: check-aws-infrastructure
-        uses: ./.github/workflows/ci-reusable-push-helm-chart.yaml
-        with:
-            chart_name: liferay-aws-infrastructure
-            working_directory: ./cloud/helm/aws-infrastructure
     push-rc-aws-infrastructure-provider:
         if: ${{needs.check-aws-infrastructure-provider.outputs.should_release == 'true'}}
         needs: check-aws-infrastructure-provider
@@ -498,6 +491,13 @@ jobs:
         uses: ./.github/workflows/ci-reusable-push-bootstrap-tarball.yaml
         with:
             provider: gcp
+    push-rc-client-extension:
+        if: ${{needs.check-client-extension.outputs.should_release == 'true'}}
+        needs: check-client-extension
+        uses: ./.github/workflows/ci-reusable-push-helm-chart.yaml
+        with:
+            chart_name: liferay-client-extension
+            working_directory: ./cloud/helm/client-extension
     push-rc-default:
         if: ${{needs.check-default.outputs.should_release == 'true'}}
         needs: check-default
@@ -576,12 +576,12 @@ jobs:
         needs:
             -   approve-release
             -   promote-rc-aws
-            -   promote-rc-aws-infrastructure
             -   promote-rc-aws-infrastructure-provider
             -   promote-rc-azure
             -   promote-rc-azure-infrastructure-provider
             -   promote-rc-bootstrap-aws
             -   promote-rc-bootstrap-gcp
+            -   promote-rc-client-extension
             -   promote-rc-default
             -   promote-rc-dxp-operator
             -   promote-rc-gcp
@@ -595,13 +595,13 @@ jobs:
             -   publish-aws-marketplace
             -   publish-bootstrap-azure
             -   push-rc-aws
-            -   push-rc-aws-infrastructure
             -   push-rc-aws-infrastructure-provider
             -   push-rc-azure
             -   push-rc-azure-infrastructure-provider
             -   push-rc-bootstrap-aws
             -   push-rc-bootstrap-azure
             -   push-rc-bootstrap-gcp
+            -   push-rc-client-extension
             -   push-rc-default
             -   push-rc-dxp-operator
             -   push-rc-gcp
@@ -631,10 +631,10 @@ jobs:
                     BOOTSTRAP_VERSION_azure: ${{needs.push-rc-bootstrap-azure.outputs.version}}
                     BOOTSTRAP_VERSION_gcp: ${{needs.push-rc-bootstrap-gcp.outputs.version}}
                     DIGEST_liferay_aws: ${{needs.promote-rc-aws.outputs.image_digest}}
-                    DIGEST_liferay_aws_infrastructure: ${{needs.promote-rc-aws-infrastructure.outputs.image_digest}}
                     DIGEST_liferay_aws_infrastructure_provider: ${{needs.promote-rc-aws-infrastructure-provider.outputs.image_digest}}
                     DIGEST_liferay_azure: ${{needs.promote-rc-azure.outputs.image_digest}}
                     DIGEST_liferay_azure_infrastructure_provider: ${{needs.promote-rc-azure-infrastructure-provider.outputs.image_digest}}
+                    DIGEST_liferay_client_extension: ${{needs.promote-rc-client-extension.outputs.image_digest}}
                     DIGEST_liferay_default: ${{needs.promote-rc-default.outputs.image_digest}}
                     DIGEST_liferay_dxp_operator: ${{needs.promote-rc-dxp-operator.outputs.image_digest}}
                     DIGEST_liferay_gcp: ${{needs.promote-rc-gcp.outputs.image_digest}}
@@ -647,10 +647,10 @@ jobs:
                     IMAGE_DIGEST_liferay_dxp_operator: ${{needs.promote-rc-image-dxp-operator.outputs.image_digest}}
                     IMAGE_VERSION_liferay_dxp_operator: ${{needs.push-rc-image-dxp-operator.outputs.version}}
                     VERSION_liferay_aws: ${{needs.push-rc-aws.outputs.chart_version}}
-                    VERSION_liferay_aws_infrastructure: ${{needs.push-rc-aws-infrastructure.outputs.chart_version}}
                     VERSION_liferay_aws_infrastructure_provider: ${{needs.push-rc-aws-infrastructure-provider.outputs.chart_version}}
                     VERSION_liferay_azure: ${{needs.push-rc-azure.outputs.chart_version}}
                     VERSION_liferay_azure_infrastructure_provider: ${{needs.push-rc-azure-infrastructure-provider.outputs.chart_version}}
+                    VERSION_liferay_client_extension: ${{needs.push-rc-client-extension.outputs.chart_version}}
                     VERSION_liferay_default: ${{needs.push-rc-default.outputs.chart_version}}
                     VERSION_liferay_dxp_operator: ${{needs.push-rc-dxp-operator.outputs.chart_version}}
                     VERSION_liferay_gcp: ${{needs.push-rc-gcp.outputs.chart_version}}
@@ -748,10 +748,10 @@ jobs:
 
                         for chart in \
                             liferay-aws \
-                            liferay-aws-infrastructure \
                             liferay-aws-infrastructure-provider \
                             liferay-azure \
                             liferay-azure-infrastructure-provider \
+                            liferay-client-extension \
                             liferay-default \
                             liferay-dxp-operator \
                             liferay-gcp \
@@ -937,7 +937,6 @@ jobs:
         needs:
             -   check-repository
             -   push-rc-aws
-            -   push-rc-aws-infrastructure
             -   push-rc-aws-infrastructure-provider
             -   push-rc-bootstrap-aws
             -   push-rc-bootstrap-gcp

@@ -3,14 +3,14 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
+import {uuidv4} from 'frontend-js-web';
 import React, {useCallback, useEffect, useMemo, useState} from 'react';
-import {v4 as uuidv4} from 'uuid';
 
 import useTypeProperties from '../../hooks/useTypeProperties';
 import {ConditionBuilder} from './ConditionBuilder';
 import {Config, initializeConfig} from './config';
-import {RELATIVE_DATE_VALUES} from './operators';
-import {getPropertyKey} from './types';
+import {ASSET_FIELDS, RELATIVE_DATE_VALUES} from './operators';
+import {getFilterPropertyKey} from './types';
 
 import type {
 	FilterCondition,
@@ -28,10 +28,7 @@ function createEmptyConditions(): FilterCondition[] {
  * item type, so they are worth keeping when the source changes.
  */
 function isTypeSpecificCondition(condition: FilterCondition): boolean {
-	return (
-		condition.classNameId !== undefined &&
-		condition.classTypeId !== undefined
-	);
+	return condition.objectDefinitionExternalReferenceCode !== undefined;
 }
 
 function normalizeDateTime(value: string) {
@@ -53,6 +50,16 @@ function serializeValue(
 	property: FilterProperty | undefined,
 	value: FilterCondition['value']
 ): FilterCondition['value'] {
+	if (
+		(property?.type === 'asset-categories' ||
+			property?.type === 'asset-tags') &&
+		Array.isArray(value)
+	) {
+		return (value as Array<{value: string}>).map((entry) => ({
+			value: entry.value,
+		}));
+	}
+
 	if (property?.type !== 'date-time' || value === null) {
 		return value;
 	}
@@ -81,7 +88,6 @@ interface CollectionFilterBuilderProps extends Config {
  * picks it up on form submit.
  */
 export default function CollectionFilterBuilder({
-	categorySelectorURL,
 	groupIds,
 	initialConditions,
 	namespace,
@@ -91,7 +97,6 @@ export default function CollectionFilterBuilder({
 	vocabularyIds,
 }: CollectionFilterBuilderProps) {
 	initializeConfig({
-		categorySelectorURL,
 		groupIds,
 		namespace,
 		tagSelectorURL,
@@ -112,23 +117,7 @@ export default function CollectionFilterBuilder({
 	const propertiesWithAssetFields = useMemo<FilterPropertyGroup[]>(
 		() => [
 			{
-				items: [
-					{
-						label: Liferay.Language.get('tags'),
-						name: 'assetTags',
-						type: 'asset-tags',
-					},
-					{
-						label: Liferay.Language.get('categories'),
-						name: 'assetCategories',
-						type: 'asset-categories',
-					},
-					{
-						label: Liferay.Language.get('keywords'),
-						name: 'keywords',
-						type: 'text',
-					},
-				],
+				items: ASSET_FIELDS,
 				label: '',
 			},
 			...properties,
@@ -142,9 +131,8 @@ export default function CollectionFilterBuilder({
 				propertiesWithAssetFields
 					.flatMap((group) => group.items ?? [])
 					.map((property) => [
-						getPropertyKey(
-							property.classNameId,
-							property.classTypeId,
+						getFilterPropertyKey(
+							property.objectDefinitionExternalReferenceCode,
 							property.name
 						),
 						property,
@@ -157,9 +145,8 @@ export default function CollectionFilterBuilder({
 		conditions
 			.map(({id: _id, ...props}) => {
 				const property = propertiesMap.get(
-					getPropertyKey(
-						props.classNameId,
-						props.classTypeId,
+					getFilterPropertyKey(
+						props.objectDefinitionExternalReferenceCode,
 						props.propertyName
 					)
 				);

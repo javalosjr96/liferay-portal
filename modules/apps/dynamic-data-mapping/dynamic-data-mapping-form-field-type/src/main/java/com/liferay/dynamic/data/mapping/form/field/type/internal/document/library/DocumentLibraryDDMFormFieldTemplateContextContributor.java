@@ -5,9 +5,9 @@
 
 package com.liferay.dynamic.data.mapping.form.field.type.internal.document.library;
 
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
-import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.dynamic.data.mapping.constants.DDMFormConstants;
 import com.liferay.dynamic.data.mapping.constants.DDMPortletKeys;
 import com.liferay.dynamic.data.mapping.form.field.type.DDMFormFieldTemplateContextContributor;
@@ -593,6 +593,19 @@ public class DocumentLibraryDDMFormFieldTemplateContextContributor
 		DDMFormFieldRenderingContext ddmFormFieldRenderingContext) {
 
 		Locale locale = ddmFormFieldRenderingContext.getLocale();
+
+		if (!StringUtil.startsWith(
+				ddmFormFieldRenderingContext.getPortletNamespace(),
+				_portal.getPortletNamespace(
+					DDMPortletKeys.DYNAMIC_DATA_MAPPING_FORM))) {
+
+			ThemeDisplay themeDisplay = getThemeDisplay(
+				ddmFormFieldRenderingContext.getHttpServletRequest());
+
+			if (themeDisplay != null) {
+				locale = themeDisplay.getLocale();
+			}
+		}
 
 		if (locale == null) {
 			locale = LocaleUtil.getDefault();

@@ -11,13 +11,13 @@ import com.liferay.commerce.account.test.util.CommerceAccountTestUtil;
 import com.liferay.commerce.product.model.CPConfigurationEntry;
 import com.liferay.commerce.product.model.CPConfigurationList;
 import com.liferay.commerce.product.model.CPDefinition;
+import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.model.CProduct;
 import com.liferay.commerce.product.model.CommerceCatalog;
 import com.liferay.commerce.product.model.CommerceChannel;
 import com.liferay.commerce.product.service.CPConfigurationEntryLocalService;
 import com.liferay.commerce.product.service.CPConfigurationListLocalService;
 import com.liferay.commerce.product.service.CPDefinitionLocalService;
-import com.liferay.commerce.product.service.CommerceCatalogLocalServiceUtil;
 import com.liferay.commerce.product.test.util.CPTestUtil;
 import com.liferay.commerce.test.util.CommerceTestUtil;
 import com.liferay.expando.kernel.model.ExpandoColumn;
@@ -29,8 +29,12 @@ import com.liferay.headless.commerce.delivery.catalog.client.dto.v1_0.Product;
 import com.liferay.headless.commerce.delivery.catalog.client.dto.v1_0.ProductConfiguration;
 import com.liferay.headless.commerce.delivery.catalog.client.pagination.Page;
 import com.liferay.headless.commerce.delivery.catalog.client.pagination.Pagination;
+import com.liferay.headless.commerce.delivery.catalog.client.problem.Problem;
+import com.liferay.headless.commerce.delivery.catalog.client.resource.v1_0.ProductResource;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.search.Indexer;
+import com.liferay.portal.kernel.search.IndexerRegistry;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
@@ -43,7 +47,10 @@ import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 
 import java.math.BigDecimal;
@@ -82,6 +89,15 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 			_user.getUserId());
 	}
 
+	@FeatureFlag("LPD-109588")
+	@Override
+	@Test
+	public void testGetChannelProduct() throws Exception {
+		super.testGetChannelProduct();
+
+		_testGetChannelProductByGuestWithGuestBrowsingDisabled();
+	}
+
 	@Override
 	@Test
 	public void testGetChannelProductsPage() throws Exception {
@@ -89,6 +105,8 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 
 		_testGetChannelProductsPageWithCustomFields();
 		_testGetChannelProductsPageWithProductConfiguration();
+		_testGetChannelProductsPageWithSearchByName();
+		_testGetChannelProductsPageWithSearchBySku();
 	}
 
 	@Override
@@ -290,6 +308,54 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 		};
 	}
 
+	private void _testGetChannelProductByGuestWithGuestBrowsingDisabled()
+		throws Exception {
+
+		Product product = _addCPDefinition(randomProduct());
+
+		ProductResource guestProductResource = ProductResource.builder(
+		).endpoint(
+			testCompany.getVirtualHostname(),
+			PortalUtil.getPortalServerPort(false), "http"
+		).locale(
+			LocaleUtil.getDefault()
+		).build();
+
+		Product guestProduct = guestProductResource.getChannelProduct(
+			_commerceChannel.getCommerceChannelId(), product.getId(), null);
+
+		Assert.assertEquals(
+			product.getProductId(), guestProduct.getProductId());
+
+		CommerceTestUtil.runWithGuestBrowsingDisabled(
+			_commerceChannel.getGroupId(),
+			() -> {
+				Problem.ProblemException problemException = Assert.assertThrows(
+					Problem.ProblemException.class,
+					() -> guestProductResource.getChannelProduct(
+						_commerceChannel.getCommerceChannelId(),
+						product.getId(), null));
+
+				Problem problem = problemException.getProblem();
+
+				Assert.assertEquals("NOT_FOUND", problem.getStatus());
+
+				Page<Product> page =
+					guestProductResource.getChannelProductsPage(
+						_commerceChannel.getCommerceChannelId(), null, null,
+						null, Pagination.of(1, 10), null);
+
+				Assert.assertEquals(0, page.getTotalCount());
+
+				Product adminProduct = productResource.getChannelProduct(
+					_commerceChannel.getCommerceChannelId(), product.getId(),
+					null);
+
+				Assert.assertEquals(
+					product.getProductId(), adminProduct.getProductId());
+			});
+	}
+
 	private void _testGetChannelProductsPageWithCustomFields()
 		throws Exception {
 
@@ -356,11 +422,9 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 	private void _testGetChannelProductsPageWithProductConfiguration()
 		throws Exception {
 
-		CommerceCatalog commerceCatalog =
-			CommerceCatalogLocalServiceUtil.addCommerceCatalog(
-				null, RandomTestUtil.randomString(),
-				RandomTestUtil.randomString(),
-				LocaleUtil.US.getDisplayLanguage(), _serviceContext);
+		CommerceCatalog commerceCatalog = CommerceTestUtil.addCommerceCatalog(
+			testCompany.getCompanyId(), testGroup.getGroupId(),
+			_user.getUserId(), _commerceChannel.getCommerceCurrencyCode());
 
 		CPConfigurationList cpConfigurationList =
 			_cpConfigurationListLocalService.addCPConfigurationList(
@@ -435,6 +499,106 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 			productConfiguration2.getMultipleOrderQuantity());
 	}
 
+	private void _testGetChannelProductsPageWithSearchByName()
+		throws Exception {
+
+		Product randomProduct1 = randomProduct();
+
+		String word = RandomTestUtil.randomString();
+
+		randomProduct1.setName(word + " " + RandomTestUtil.randomString());
+
+		Product product1 = _addCPDefinition(randomProduct1);
+
+		Product randomProduct2 = randomProduct();
+
+		randomProduct2.setName(
+			StringBundler.concat(
+				RandomTestUtil.randomString(), " ", word,
+				RandomTestUtil.randomString()));
+
+		Product product2 = _addCPDefinition(randomProduct2);
+
+		_addCPDefinition(randomProduct());
+
+		Page<Product> page = productResource.getChannelProductsPage(
+			_commerceChannel.getCommerceChannelId(), null,
+			StringUtil.toUpperCase(word), null, Pagination.of(1, 10), null);
+
+		Assert.assertEquals(2, page.getTotalCount());
+
+		assertContains(product1, (List<Product>)page.getItems());
+		assertContains(product2, (List<Product>)page.getItems());
+	}
+
+	private void _testGetChannelProductsPageWithSearchBySku() throws Exception {
+		CommerceCatalog commerceCatalog = CommerceTestUtil.addCommerceCatalog(
+			testCompany.getCompanyId(), testGroup.getGroupId(),
+			_user.getUserId(), _commerceChannel.getCommerceCurrencyCode());
+
+		String skuInfix = RandomTestUtil.randomString();
+		String skuPrefix = RandomTestUtil.randomString();
+
+		CPInstance cpInstance1 = CPTestUtil.addCPInstanceFromCatalog(
+			commerceCatalog.getGroupId(),
+			BigDecimal.valueOf(RandomTestUtil.randomDouble()),
+			skuPrefix + skuInfix + RandomTestUtil.randomString());
+
+		CPDefinition cpDefinition1 = cpInstance1.getCPDefinition();
+
+		_cpDefinitions.add(cpDefinition1);
+
+		CPInstance cpInstance2 = CPTestUtil.addCPInstanceFromCatalog(
+			commerceCatalog.getGroupId(),
+			BigDecimal.valueOf(RandomTestUtil.randomDouble()),
+			skuPrefix + skuInfix + RandomTestUtil.randomString());
+
+		CPDefinition cpDefinition2 = cpInstance2.getCPDefinition();
+
+		_cpDefinitions.add(cpDefinition2);
+
+		Indexer<CPDefinition> indexer = _indexerRegistry.getIndexer(
+			CPDefinition.class);
+
+		indexer.reindex(cpDefinition1);
+		indexer.reindex(cpDefinition2);
+
+		Page<Product> page = productResource.getChannelProductsPage(
+			_commerceChannel.getCommerceChannelId(), null, skuPrefix, null,
+			Pagination.of(1, 10), null);
+
+		Assert.assertEquals(2, page.getTotalCount());
+
+		Product product1 = productResource.getChannelProduct(
+			_commerceChannel.getCommerceChannelId(),
+			cpDefinition1.getCProductId(), _accountEntry.getAccountEntryId());
+
+		assertContains(product1, (List<Product>)page.getItems());
+
+		Product product2 = productResource.getChannelProduct(
+			_commerceChannel.getCommerceChannelId(),
+			cpDefinition2.getCProductId(), _accountEntry.getAccountEntryId());
+
+		assertContains(product2, (List<Product>)page.getItems());
+
+		page = productResource.getChannelProductsPage(
+			_commerceChannel.getCommerceChannelId(), null, skuInfix, null,
+			Pagination.of(1, 10), null);
+
+		Assert.assertEquals(2, page.getTotalCount());
+
+		assertContains(product1, (List<Product>)page.getItems());
+		assertContains(product2, (List<Product>)page.getItems());
+
+		page = productResource.getChannelProductsPage(
+			_commerceChannel.getCommerceChannelId(), null, cpInstance1.getSku(),
+			null, Pagination.of(1, 10), null);
+
+		assertEquals(
+			Collections.singletonList(product1),
+			(List<Product>)page.getItems());
+	}
+
 	@DeleteAfterTestRun
 	private AccountEntry _accountEntry;
 
@@ -461,6 +625,9 @@ public class ProductResourceTest extends BaseProductResourceTestCase {
 
 	@Inject
 	private ExpandoTableLocalService _expandoTableLocalService;
+
+	@Inject
+	private IndexerRegistry _indexerRegistry;
 
 	@Inject
 	private Portal _portal;

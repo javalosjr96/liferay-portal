@@ -149,9 +149,11 @@ public class CPPublisherWebHelper {
 			long cpDefinitionId = GetterUtil.getLong(
 				rootElement.elementText("product-id"));
 
-			if (cpDefinitionIds.contains(cpDefinitionId)) {
-				iterator.remove();
+			if (!cpDefinitionIds.contains(cpDefinitionId)) {
+				continue;
 			}
+
+			iterator.remove();
 		}
 
 		portletPreferences.setValues(
@@ -181,12 +183,12 @@ public class CPPublisherWebHelper {
 				break;
 			}
 
-			boolean queryContains = GetterUtil.getBoolean(
-				portletPreferences.getValue(
-					"queryContains" + i, StringPool.BLANK));
 			boolean queryAndOperator = GetterUtil.getBoolean(
 				portletPreferences.getValue(
 					"queryAndOperator" + i, StringPool.BLANK));
+			boolean queryContains = GetterUtil.getBoolean(
+				portletPreferences.getValue(
+					"queryContains" + i, StringPool.BLANK));
 			String queryName = portletPreferences.getValue(
 				"queryName" + i, StringPool.BLANK);
 

@@ -20,6 +20,7 @@ type TDocument = {
 	contentUrl?: string;
 	description?: string;
 	documentFolderId?: number;
+	documentType?: {name: string};
 	externalReferenceCode?: string;
 	fileName?: string;
 	id?: number;
@@ -218,6 +219,7 @@ export class HeadlessDeliveryApiHelper {
 			articleBody?: string;
 			headline?: string;
 			keywords?: string[];
+			taxonomyCategoryIds?: number[];
 		}
 	): Promise<any> {
 		blog = {
@@ -261,11 +263,13 @@ export class HeadlessDeliveryApiHelper {
 	async postSiteKnowledgeBaseArticle({
 		articleBody,
 		siteId,
+		taxonomyCategoryIds,
 		title,
 		viewableBy,
 	}: {
 		articleBody: string;
 		siteId: string;
+		taxonomyCategoryIds?: number[];
 		title: string;
 		viewableBy?: string;
 	}): Promise<KnowledgeBaseArticle> {
@@ -274,6 +278,7 @@ export class HeadlessDeliveryApiHelper {
 			{
 				data: {
 					articleBody,
+					taxonomyCategoryIds,
 					title,
 					viewableBy,
 				},
@@ -332,11 +337,13 @@ export class HeadlessDeliveryApiHelper {
 		headline,
 		siteId,
 		taxonomyCategoryIds,
+		viewableBy,
 	}: {
 		articleBody: string;
 		headline: string;
 		siteId: string;
 		taxonomyCategoryIds?: number[];
+		viewableBy?: string;
 	}): Promise<MessageBoardThread> {
 		return this.apiHelpers.post(
 			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/message-board-threads`,
@@ -345,6 +352,7 @@ export class HeadlessDeliveryApiHelper {
 					articleBody,
 					headline,
 					taxonomyCategoryIds,
+					viewableBy,
 				},
 				failOnStatusCode: true,
 			}
@@ -415,10 +423,17 @@ export class HeadlessDeliveryApiHelper {
 		siteId,
 		tags,
 		title,
+		title_i18n,
 		viewableBy = '',
 	}: {
 		categoryIds?: number[];
-		contentFields?: {contentFieldValue: {data: string}; name: string}[];
+		contentFields?: {
+			contentFieldValue:
+				| {data: string}
+				| {geo: {latitude: number; longitude: number}};
+			contentFieldValue_i18n?: {[key: string]: {data: string}};
+			name: string;
+		}[];
 		contentStructureId: number;
 		datePublished: string;
 		description?: string;
@@ -426,6 +441,7 @@ export class HeadlessDeliveryApiHelper {
 		siteId: string;
 		tags?: string[];
 		title: string;
+		title_i18n?: {[key: string]: string};
 		viewableBy?: string;
 	}): Promise<StructuredContent> {
 		return this.apiHelpers.post(
@@ -440,6 +456,7 @@ export class HeadlessDeliveryApiHelper {
 					relatedContents,
 					taxonomyCategoryIds: categoryIds,
 					title,
+					title_i18n,
 					viewableBy,
 				},
 				failOnStatusCode: true,
@@ -590,6 +607,30 @@ export class HeadlessDeliveryApiHelper {
 			`document-folders/${documentFolderId}`,
 			file,
 			document
+		);
+	}
+
+	async postDocumentFolderDocumentFolder(
+		parentDocumentFolderId: number | string,
+		documentFolder?: TDocumentFolder
+	) {
+		documentFolder = {
+			description: getRandomString(),
+			externalReferenceCode: getRandomString(),
+			name: getRandomString(),
+			viewableBy: 'Anyone',
+			...(documentFolder || {}),
+		};
+
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/document-folders/${parentDocumentFolderId}/document-folders`,
+			{
+				data: documentFolder,
+				failOnStatusCode: true,
+				headers: {
+					...(await this.apiHelpers.getCSRFTokenHeader()),
+				},
+			}
 		);
 	}
 

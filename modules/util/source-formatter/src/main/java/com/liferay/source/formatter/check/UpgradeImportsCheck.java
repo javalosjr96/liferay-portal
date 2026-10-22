@@ -104,6 +104,12 @@ public class UpgradeImportsCheck extends BaseFileCheck {
 			String className)
 		throws Exception {
 
+		if (StringUtil.endsWith(newClassName, className) &&
+			StringUtil.endsWith(matcher.group(), newClassName)) {
+
+			return false;
+		}
+
 		if (!StringUtil.equalsIgnoreCase(matcher.group(), newClassName) &&
 			!StringUtil.equals(matcher.group(), newClassNameVariableName) &&
 			!StringUtil.equalsIgnoreCase(
@@ -252,23 +258,22 @@ public class UpgradeImportsCheck extends BaseFileCheck {
 			String newClassName = SourceFormatterUtil.getSimpleName(
 				entry.getValue());
 
-			if (!className.equals(newClassName)) {
-				variablesMap.put(className, newClassName);
-
-				if (!className.endsWith("Util") &&
-					newClassName.endsWith("Util")) {
-
-					variablesMap.put(
-						StringUtil.lowerCaseFirstLetter(className),
-						newClassName);
-
-					continue;
-				}
-
-				variablesMap.put(
-					StringUtil.lowerCaseFirstLetter(className),
-					StringUtil.lowerCaseFirstLetter(newClassName));
+			if (className.equals(newClassName)) {
+				continue;
 			}
+
+			variablesMap.put(className, newClassName);
+
+			if (!className.endsWith("Util") && newClassName.endsWith("Util")) {
+				variablesMap.put(
+					StringUtil.lowerCaseFirstLetter(className), newClassName);
+
+				continue;
+			}
+
+			variablesMap.put(
+				StringUtil.lowerCaseFirstLetter(className),
+				StringUtil.lowerCaseFirstLetter(newClassName));
 		}
 
 		return variablesMap;

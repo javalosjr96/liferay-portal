@@ -4,6 +4,7 @@
  */
 
 import {
+	DisplayType,
 	IBulkActionItem,
 	IInternalRenderer,
 	IView,
@@ -22,11 +23,13 @@ import {
 	ISearchAssetObjectEntry,
 } from '../../common/types/AssetType';
 import {
+	ASSET_STATUS_TO_DISPLAY_TYPE,
 	CMSSiteInitializerFDSNames,
 	NO_VALUE,
 	OBJECT_ENTRY_CLASS_NAME,
 	OBJECT_ENTRY_FOLDER_CLASS_NAME,
 } from '../../common/utils/constants';
+import {getAssetTitle} from '../../common/utils/getAssetTitle';
 import {getFormattedLabel} from '../../common/utils/getFormattedText';
 import {getScopeExternalReferenceCode} from '../../common/utils/getScopeExternalReferenceCode';
 import {openBulkActionConfirmationModal} from '../../common/utils/openBulkActionConfirmationModal';
@@ -50,6 +53,7 @@ import deleteAssetEntriesBulkAction, {
 } from './actions/deleteAssetEntriesBulkAction';
 import deleteItemAction from './actions/deleteItemAction';
 import duplicateBulkAction from './actions/duplicateBulkAction';
+import editImageAction, {isEditableImage} from './actions/editImageAction';
 import executeResetPermissionObjectBulkSelectionAction from './actions/executeResetPermissionObjectBulkSelectionAction';
 import expireEntriesBulkAction from './actions/expireEntriesBulkAction';
 import exportTranslationBulkAction from './actions/exportTranslationBulkAction';
@@ -68,6 +72,7 @@ import {
 	openScheduleDateModal,
 } from './utils/createScheduleDateModalOpener';
 import {executeAsyncItemAction} from './utils/executeAsyncItemAction';
+import styleDeleteAction from './utils/styleDeleteAction';
 import transformFDSBulkActions from './utils/transformFDSBulkActions';
 import transformViewsItemsProps from './utils/transformViewsItemProps';
 import GalleryView from './views/GalleryView';
@@ -157,6 +162,7 @@ export type AdditionalProps = {
 	collaboratorURLs: Record<string, string>;
 	contentViewURL: string;
 	defaultPermissionAdditionalProps?: any;
+	editableImageMIMETypes: string[];
 	fileMimeTypeCssClasses: Record<string, string>;
 	fileMimeTypeIcons: Record<string, string>;
 	filter?: string;
@@ -186,6 +192,8 @@ export default function AssetsFDSPropsTransformer({
 	hideManagementBarInEmptyState?: boolean;
 	id?: string;
 	itemsActions?: any[];
+	searchAsYouType?: boolean;
+	searchSuggestionsEnabled?: boolean;
 	views: IView[];
 }) {
 	refreshOnContentChanged(otherProps?.id);
@@ -209,6 +217,17 @@ export default function AssetsFDSPropsTransformer({
 			schema: {
 				description: 'description',
 				image: 'imageURL',
+				labels: [
+					{
+						displayTypeKey: 'embedded.status.label',
+						displayTypeValues:
+							ASSET_STATUS_TO_DISPLAY_TYPE as Record<
+								string,
+								DisplayType
+							>,
+						value: 'embedded.status.label_i18n',
+					},
+				],
 				link: '',
 				sticker: '',
 				symbol: '',
@@ -267,7 +286,7 @@ export default function AssetsFDSPropsTransformer({
 					type: 'internal',
 				} as IInternalRenderer,
 				{
-					component: ({actions, itemData, options, value}) => {
+					component: ({actions, itemData, options}) => {
 						const simpleActionLink = (
 							<SimpleActionLinkRenderer
 								actions={actions}
@@ -301,7 +320,7 @@ export default function AssetsFDSPropsTransformer({
 										/>
 									)
 								}
-								value={value}
+								value={getAssetTitle(itemData)}
 							/>
 						);
 
@@ -403,6 +422,16 @@ export default function AssetsFDSPropsTransformer({
 						Boolean(item?.embedded?.file?.link?.href),
 				};
 			}
+			else if (action?.data?.id === 'edit-image') {
+				return {
+					...action,
+					isVisible: (item: any) =>
+						isEditableImage(
+							item,
+							additionalProps.editableImageMIMETypes
+						),
+				};
+			}
 			else if (
 				action?.data?.id === 'actionLink' ||
 				isScheduleDateActionId(action?.data?.id)
@@ -453,7 +482,7 @@ export default function AssetsFDSPropsTransformer({
 				};
 			}
 
-			return action;
+			return styleDeleteAction(action);
 		}),
 		async onActionDropdownItemClick({
 			action,
@@ -525,6 +554,11 @@ export default function AssetsFDSPropsTransformer({
 					),
 					url: href,
 				});
+			}
+			else if (action?.data?.id === 'edit-image') {
+				event?.preventDefault();
+
+				editImageAction(itemData, loadData);
 			}
 			else if (
 				action?.data?.id === 'default-permissions' ||
@@ -662,7 +696,7 @@ export default function AssetsFDSPropsTransformer({
 					creator: itemData.embedded.creator,
 					entryClassName: itemData.entryClassName,
 					itemId: itemData.embedded.id,
-					title: itemData.embedded.title,
+					title: getAssetTitle(itemData),
 				});
 			}
 			else if (
@@ -943,8 +977,8 @@ export default function AssetsFDSPropsTransformer({
 				});
 			}
 		},
-		searchAsYouType: true,
-		searchSuggestionsEnabled: true,
+		searchAsYouType: otherProps.searchAsYouType ?? true,
+		searchSuggestionsEnabled: otherProps.searchSuggestionsEnabled ?? true,
 		snapshotsEnabled: true,
 		views: transformViewsItemsProps({
 			fileMimeTypeCssClasses: additionalProps.fileMimeTypeCssClasses,

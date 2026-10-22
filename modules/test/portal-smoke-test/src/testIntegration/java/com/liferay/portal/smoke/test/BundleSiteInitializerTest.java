@@ -140,6 +140,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.annotations.ExtendedObjectClassDefinition;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
@@ -192,6 +193,7 @@ import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -539,6 +541,42 @@ public class BundleSiteInitializerTest {
 		finally {
 			FileUtil.deltree(tempDir1);
 			FileUtil.deltree(tempDir2);
+		}
+	}
+
+	@Test
+	public void testInitializeFromFileWithoutLayoutSetTheme() throws Exception {
+		_updateLookAndFeel(false, "cms_WAR_cmstheme");
+		_updateLookAndFeel(true, "cms_WAR_cmstheme");
+
+		File tempDir = FileUtil.createTempFolder();
+
+		try {
+			File siteInitializerDir = new File(tempDir, "site-initializer");
+
+			siteInitializerDir.mkdirs();
+
+			SiteInitializer siteInitializer = _siteInitializerFactory.create(
+				siteInitializerDir, null);
+
+			siteInitializer.initialize(_group.getGroupId());
+
+			LayoutSet privateLayoutSet = _layoutSetLocalService.fetchLayoutSet(
+				_group.getGroupId(), true);
+
+			Theme privateTheme = privateLayoutSet.getTheme();
+
+			Assert.assertEquals("CMS", privateTheme.getName());
+
+			LayoutSet publicLayoutSet = _layoutSetLocalService.fetchLayoutSet(
+				_group.getGroupId(), false);
+
+			Theme publicTheme = publicLayoutSet.getTheme();
+
+			Assert.assertEquals("CMS", publicTheme.getName());
+		}
+		finally {
+			FileUtil.deltree(tempDir);
 		}
 	}
 
@@ -1592,6 +1630,36 @@ public class BundleSiteInitializerTest {
 					dlFileEntry.getFileEntryId(), dlFileEntry.getVersion())));
 
 		Assert.assertTrue(string.isEmpty());
+
+		DLFolder notesDLFolder = _dlFolderLocalService.fetchFolder(
+			_group.getGroupId(), dlFolder.getFolderId(), "Notes");
+
+		dlFileEntry = _dlFileEntryLocalService.getFileEntry(
+			_group.getGroupId(), notesDLFolder.getFolderId(), "Summary.md");
+
+		string = new String(
+			StreamUtil.toByteArray(
+				_dlFileEntryLocalService.getFileAsStream(
+					dlFileEntry.getFileEntryId(), dlFileEntry.getVersion())));
+
+		Assert.assertEquals("## Old Testament Notes Update", string);
+
+		dlFolder = _dlFolderLocalService.fetchFolder(
+			_group.getGroupId(), DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			"New Testament");
+
+		notesDLFolder = _dlFolderLocalService.fetchFolder(
+			_group.getGroupId(), dlFolder.getFolderId(), "Notes");
+
+		dlFileEntry = _dlFileEntryLocalService.getFileEntry(
+			_group.getGroupId(), notesDLFolder.getFolderId(), "Summary.md");
+
+		string = new String(
+			StreamUtil.toByteArray(
+				_dlFileEntryLocalService.getFileAsStream(
+					dlFileEntry.getFileEntryId(), dlFileEntry.getVersion())));
+
+		Assert.assertEquals("## New Testament Notes Update", string);
 	}
 
 	private void _assertDataDefinition1() throws Exception {
@@ -3814,6 +3882,19 @@ public class BundleSiteInitializerTest {
 
 		_assertResourceAction(
 			new String[] {"UPDATE", "VIEW"}, resourcePermission);
+
+		role = _roleLocalService.fetchRole(
+			_group.getCompanyId(), "Test Role 3");
+
+		resourcePermission =
+			_resourcePermissionLocalService.fetchResourcePermission(
+				_group.getCompanyId(), "com.liferay.commerce.product",
+				ResourceConstants.SCOPE_COMPANY,
+				String.valueOf(_group.getCompanyId()), role.getRoleId());
+
+		Assert.assertNotNull(resourcePermission);
+
+		_assertResourceAction(new String[] {"VIEW_PRICE"}, resourcePermission);
 	}
 
 	private void _assertResourcePermission2() throws Exception {
@@ -3905,6 +3986,16 @@ public class BundleSiteInitializerTest {
 
 		_assertResourceAction(
 			new String[] {"UPDATE", "VIEW"}, resourcePermission);
+
+		role = _roleLocalService.fetchRole(
+			_group.getCompanyId(), "Test Role 3");
+
+		Assert.assertFalse(
+			_resourcePermissionLocalService.hasResourcePermission(
+				_group.getCompanyId(), "com.liferay.commerce.product",
+				ResourceConstants.SCOPE_COMPANY,
+				String.valueOf(_group.getCompanyId()), role.getRoleId(),
+				"VIEW_PRICE"));
 	}
 
 	private void _assertRoles() {
@@ -4355,8 +4446,18 @@ public class BundleSiteInitializerTest {
 
 		String typeSettings = siteNavigationMenuItem1.getTypeSettings();
 
-		Assert.assertTrue(typeSettings.contains("Test Layout"));
 		Assert.assertTrue(typeSettings.contains("useCustomName"));
+
+		UnicodeProperties unicodeProperties = UnicodePropertiesBuilder.fastLoad(
+			typeSettings
+		).build();
+
+		Assert.assertEquals(
+			LanguageUtil.get(LocaleUtil.US, "layout"),
+			unicodeProperties.getProperty("name_en_US"));
+		Assert.assertEquals(
+			LanguageUtil.get(LocaleUtil.SPAIN, "layout"),
+			unicodeProperties.getProperty("name_es_ES"));
 
 		SiteNavigationMenuItem siteNavigationMenuItem2 =
 			siteNavigationMenuItems.get(1);
@@ -4940,6 +5041,17 @@ public class BundleSiteInitializerTest {
 		_assertSiteNavigationMenu2();
 		_assertSXPBlueprint2();
 		_assertUserAccounts2();
+	}
+
+	private void _updateLookAndFeel(boolean privateLayout, String themeId)
+		throws Exception {
+
+		LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
+			_group.getGroupId(), privateLayout);
+
+		_layoutSetLocalService.updateLookAndFeel(
+			_group.getGroupId(), privateLayout, themeId,
+			layoutSet.getColorSchemeId(), layoutSet.getCss());
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(

@@ -11,6 +11,8 @@ import {expandSection} from '../../../../utils/expandSection';
 import {PORTLET_URLS} from '../../../../utils/portletUrls';
 import {waitForAlert} from '../../../../utils/waitForAlert';
 
+const JOURNAL_NAMESPACE = '_com_liferay_journal_web_portlet_JournalPortlet_';
+
 export enum FilterBy {
 	ALL = 'All',
 	MINE = 'Mine',
@@ -56,6 +58,25 @@ export class JournalPage {
 		await this.page.goto(
 			`/group${siteUrl || '/guest'}${PORTLET_URLS.journal}`
 		);
+	}
+
+	async gotoFolder({
+		folderId,
+		siteUrl,
+	}: {
+		folderId: number;
+		siteUrl: Site['friendlyUrlPath'];
+	}) {
+		await this.page.goto(
+			`/group${siteUrl}${PORTLET_URLS.journal}&${JOURNAL_NAMESPACE}folderId=${folderId}&${JOURNAL_NAMESPACE}displayStyle=descriptive`
+		);
+	}
+
+	getArticleStatus(title: string) {
+		return this.page
+			.locator('.list-group-item')
+			.filter({hasText: title})
+			.locator('.label');
 	}
 
 	async fillArticleContent(content: string) {
@@ -235,6 +256,30 @@ export class JournalPage {
 		await waitForAlert(this.page, `was created successfully.`);
 	}
 
+	async publishSelectedElements({confirm = true}: {confirm?: boolean} = {}) {
+		await clickAndExpectToBeVisible({
+			autoClick: true,
+			target: this.page.getByRole('menuitem', {
+				name: 'Publish Selected Elements',
+			}),
+			trigger: this.page.getByTitle('Actions', {exact: true}),
+		});
+
+		const dialog = this.page.getByRole('dialog');
+
+		await expect(
+			dialog.getByText(
+				'Are you sure you want to publish the selected entities?'
+			)
+		).toBeVisible();
+
+		await dialog
+			.getByRole('button', {name: confirm ? 'Publish to Live' : 'Cancel'})
+			.click();
+
+		await expect(dialog).toBeHidden();
+	}
+
 	async selectItem(index: number) {
 		await this.page
 			.locator(
@@ -242,6 +287,10 @@ export class JournalPage {
 			)
 			.locator('input[type=checkbox]')
 			.click();
+	}
+
+	async selectItemByTitle(title: string) {
+		await this.page.getByRole('checkbox', {name: title}).check();
 	}
 
 	async selectPage(index: number) {

@@ -15,8 +15,11 @@ java ^
 	--add-opens=java.base/sun.util.calendar=ALL-UNNAMED ^
 	--add-opens=java.rmi/sun.rmi.transport=ALL-UNNAMED ^
 	--add-opens=jdk.zipfs/jdk.nio.zipfs=ALL-UNNAMED ^
+	-Dlauncher="%~nx0" ^
 	-jar com.liferay.portal.tools.db.upgrade.client.jar %*
 
 popd
 
 @echo on
+
+@exit /b %ERRORLEVEL%

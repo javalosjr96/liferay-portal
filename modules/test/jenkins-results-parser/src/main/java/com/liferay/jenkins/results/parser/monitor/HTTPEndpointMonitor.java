@@ -27,6 +27,9 @@ public class HTTPEndpointMonitor extends BaseMonitor {
 		_latencyMaximumMillis = getLongValue(
 			"threshold", 0, "latency.maximum.millis",
 			monitorConfig.getThresholds());
+
+		_remoteEndpointURL = JenkinsResultsParserUtil.getRemoteURL(
+			_endpointURL);
 	}
 
 	@Override
@@ -57,7 +60,7 @@ public class HTTPEndpointMonitor extends BaseMonitor {
 
 			return new MonitorResult(
 				JenkinsResultsParserUtil.combine(
-					"Endpoint ", _endpointURL, " responded in ",
+					"Endpoint ", _remoteEndpointURL, " responded in ",
 					String.valueOf(latencyMillis),
 					" ms, exceeding its maximum latency of ",
 					String.valueOf(_latencyMaximumMillis), " ms"),
@@ -66,14 +69,19 @@ public class HTTPEndpointMonitor extends BaseMonitor {
 
 		return new MonitorResult(
 			JenkinsResultsParserUtil.combine(
-				"Endpoint ", _endpointURL, " is OK"),
+				"Endpoint ", _remoteEndpointURL, " is OK"),
 			metrics, MonitorResult.Status.OK, currentTimeMillis);
+	}
+
+	@Override
+	protected String getDefaultLinkURL() {
+		return _remoteEndpointURL;
 	}
 
 	private String _getFailureMessage(Exception exception) {
 		if (exception instanceof FileNotFoundException) {
 			return JenkinsResultsParserUtil.combine(
-				"Endpoint ", _endpointURL, " was not found");
+				"Endpoint ", _remoteEndpointURL, " was not found");
 		}
 
 		String message = JenkinsResultsParserUtil.getMessage(exception);
@@ -82,12 +90,12 @@ public class HTTPEndpointMonitor extends BaseMonitor {
 
 		if (matcher.find()) {
 			return JenkinsResultsParserUtil.combine(
-				"Endpoint ", _endpointURL, " returned the response code ",
+				"Endpoint ", _remoteEndpointURL, " returned the response code ",
 				matcher.group("responseCode"));
 		}
 
 		return JenkinsResultsParserUtil.combine(
-			"Unable to read ", _endpointURL, ": ", message);
+			"Unable to read ", _remoteEndpointURL, ": ", message);
 	}
 
 	private static final Pattern _responseCodePattern = Pattern.compile(
@@ -95,5 +103,6 @@ public class HTTPEndpointMonitor extends BaseMonitor {
 
 	private final String _endpointURL;
 	private final long _latencyMaximumMillis;
+	private final String _remoteEndpointURL;
 
 }

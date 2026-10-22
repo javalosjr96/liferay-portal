@@ -16,13 +16,16 @@ import com.liferay.headless.delivery.client.pagination.Pagination;
 import com.liferay.headless.delivery.client.resource.v1_0.AssetEntryResource;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.test.util.JournalTestUtil;
+import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
 import com.liferay.portal.kernel.service.RoleLocalService;
+import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -56,6 +59,8 @@ public class AssetEntryResourceTest extends BaseAssetEntryResourceTestCase {
 		_testGetAssetEntriesPageWithClassNameIdFilter();
 		_testGetAssetEntriesPageWithClassPKFilter();
 		_testGetAssetEntriesPageWithClassTypeIdFilter();
+		_testGetAssetEntriesPageWithGroupIdFilter();
+		_testGetAssetEntriesPageWithGroupIdFilterAndLayoutScope();
 		_testGetAssetEntriesPageWithMultipleClassNameIdsFilter();
 		_testGetAssetEntriesPageWithMultipleGroupIds();
 		_testGetAssetEntriesPageWithStatusFilter();
@@ -68,7 +73,7 @@ public class AssetEntryResourceTest extends BaseAssetEntryResourceTestCase {
 
 	@Override
 	protected String[] getIgnoredEntityFieldNames() {
-		return new String[] {"classNameId", "classTypeId", "status"};
+		return new String[] {"classNameId", "classTypeId", "groupId", "status"};
 	}
 
 	@Override
@@ -280,6 +285,68 @@ public class AssetEntryResourceTest extends BaseAssetEntryResourceTestCase {
 			_hasClassPK(assetEntries, journalArticle1.getResourcePrimKey()));
 		Assert.assertFalse(
 			_hasClassPK(assetEntries, journalArticle2.getResourcePrimKey()));
+	}
+
+	private void _testGetAssetEntriesPageWithGroupIdFilter() throws Exception {
+		Long groupId1 = testGroup.getGroupId();
+
+		BlogsEntry blogsEntry1 = _addBlogsEntry(groupId1);
+		JournalArticle journalArticle1 = JournalTestUtil.addArticle(
+			groupId1, 0);
+
+		Long groupId2 = irrelevantGroup.getGroupId();
+
+		BlogsEntry blogsEntry2 = _addBlogsEntry(groupId2);
+		JournalArticle journalArticle2 = JournalTestUtil.addArticle(
+			groupId2, 0);
+
+		String filterString = StringBundler.concat(
+			"((classNameId eq ",
+			PortalUtil.getClassNameId(BlogsEntry.class.getName()),
+			" and groupId eq ", groupId1, ") or (classNameId in (",
+			PortalUtil.getClassNameId(JournalArticle.class.getName()),
+			") and groupId in (", groupId2,
+			"))) and (status eq 'approved' or status eq 'scheduled')");
+
+		Page<AssetEntry> page = assetEntryResource.getAssetEntriesPage(
+			new Long[] {groupId1, groupId2}, null, null, filterString,
+			Pagination.of(1, 50), null);
+
+		List<AssetEntry> assetEntries = (List<AssetEntry>)page.getItems();
+
+		Assert.assertTrue(_hasClassPK(assetEntries, blogsEntry1.getEntryId()));
+		Assert.assertFalse(_hasClassPK(assetEntries, blogsEntry2.getEntryId()));
+		Assert.assertFalse(
+			_hasClassPK(assetEntries, journalArticle1.getResourcePrimKey()));
+		Assert.assertTrue(
+			_hasClassPK(assetEntries, journalArticle2.getResourcePrimKey()));
+	}
+
+	private void _testGetAssetEntriesPageWithGroupIdFilterAndLayoutScope()
+		throws Exception {
+
+		Group layoutGroup = GroupTestUtil.addGroup(
+			TestPropsValues.getUserId(),
+			LayoutTestUtil.addTypePortletLayout(testGroup));
+
+		Long groupId = layoutGroup.getGroupId();
+
+		BlogsEntry blogsEntry = _addBlogsEntry(groupId);
+
+		Page<AssetEntry> page = assetEntryResource.getAssetEntriesPage(
+			new Long[] {groupId}, null, null, null, Pagination.of(1, 50), null);
+
+		Assert.assertTrue(
+			_hasClassPK(
+				(List<AssetEntry>)page.getItems(), blogsEntry.getEntryId()));
+
+		page = assetEntryResource.getAssetEntriesPage(
+			new Long[] {groupId}, null, null, "groupId eq " + groupId,
+			Pagination.of(1, 50), null);
+
+		Assert.assertTrue(
+			_hasClassPK(
+				(List<AssetEntry>)page.getItems(), blogsEntry.getEntryId()));
 	}
 
 	private void _testGetAssetEntriesPageWithMultipleClassNameIdsFilter()

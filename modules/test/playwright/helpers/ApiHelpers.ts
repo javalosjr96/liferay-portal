@@ -9,8 +9,14 @@ import {
 	ObjectFolderAPI,
 	ObjectRelationshipAPI,
 } from '@liferay/object-admin-rest-client-js';
-import {BrowserContext, Page} from '@playwright/test';
+import {Page} from '@playwright/test';
 
+import {
+	clearAuthToken,
+	getCSRFTokenHeader,
+	getHeader,
+	readAuthToken,
+} from '../../playwright-core/src/authToken';
 import {liferayConfig} from '../liferay.config';
 import {AnalyticsSettingsRestApiHelper} from './AnalyticsSettingsRestApiHelper';
 import {ApiBuilderHelper} from './ApiBuilderHelper';
@@ -43,6 +49,7 @@ import {HeadlessDeliveryApiHelper} from './HeadlessDeliveryApiHelper';
 import {HeadlessDigitalSalesRoomApiHelper} from './HeadlessDigitalSalesRoomApiHelper';
 import {HeadlessPortalInstanceApiHelper} from './HeadlessPortalInstanceApiHelper';
 import {LanguageApiHelper} from './LanguageApiHelper';
+import {LaunchApiHelper} from './LaunchApiHelper';
 import {ListTypeAdminApiHelper} from './ListTypeAdminApiHelper';
 import {NotificationApiHelper} from './NotificationApiHelper';
 import {ObjectActionApiHelper} from './ObjectActionApiHelper';
@@ -77,6 +84,7 @@ import {JSONWebServicesLayoutSetPrototypeApiHelper} from './json-web-services/JS
 import {JSONWebServicesMBApiHelper} from './json-web-services/JSONWebServicesMBApiHelper';
 import {JSONWebServicesOSBAsahApiHelper} from './json-web-services/JSONWebServicesOSBAsahApiHelper';
 import {JSONWebServicesOSBFaroApiHelper} from './json-web-services/JSONWebServicesOSBFaroApiHelper';
+import {JSONWebServicesOrganizationApiHelper} from './json-web-services/JSONWebServicesOrganizationApiHelper';
 import {JSONWebServicesPushNotificationsDeviceApiHelper} from './json-web-services/JSONWebServicesPushNotificationsDeviceApiHelper';
 import {JSONWebServicesResourcePermissionApiHelper} from './json-web-services/JSONWebServicesResourcePermissionApiHelper';
 import {JSONWebServicesRoleApiHelper} from './json-web-services/JSONWebServicesRoleApiHelper';
@@ -86,8 +94,7 @@ import {JSONWebServicesStagingApiHelper} from './json-web-services/JSONWebServic
 import {JSONWebServicesTeamApiHelper} from './json-web-services/JSONWebServicesTeamApiHelper';
 import {JSONWebServicesUserApiHelper} from './json-web-services/JSONWebServicesUserApiHelper';
 import {JSONWebServicesUserGroupApiHelper} from './json-web-services/JSONWebServicesUserGroupApiHelper';
-
-type ContentType = 'application/json' | 'application/x-www-form-urlencoded';
+import {JSONWebServicesWorkflowDefinitionLinkApiHelper} from './json-web-services/JSONWebServicesWorkflowDefinitionLinkApiHelper';
 
 type TDataApiHelpersData = {
 	applicationName?: string;
@@ -106,41 +113,7 @@ interface RequestOptions<T> {
 	multipart?: {[key: string]: any};
 }
 
-const authTokens = new WeakMap<BrowserContext, string>();
-
-export function clearAuthToken(page: Page) {
-	authTokens.delete(page.context());
-}
-
-export async function readAuthToken(page: Page) {
-	const authToken = await page.evaluate(() => Liferay.authToken);
-
-	authTokens.set(page.context(), authToken);
-
-	return authToken;
-}
-
-async function getCSRFTokenHeader(page: Page) {
-	let authToken = authTokens.get(page.context());
-
-	if (authToken === undefined) {
-		authToken = await readAuthToken(page);
-	}
-
-	return {
-		'x-csrf-token': authToken,
-	};
-}
-
-export async function getHeader(
-	page: Page,
-	contentType: ContentType = 'application/json'
-) {
-	return {
-		'Content-Type': contentType,
-		...(await getCSRFTokenHeader(page)),
-	};
-}
+export {clearAuthToken, getHeader, readAuthToken};
 
 export class ApiHelpers {
 	readonly analyticsSettingsRest: AnalyticsSettingsRestApiHelper;
@@ -197,6 +170,7 @@ export class ApiHelpers {
 	readonly jsonWebServicesLayoutSet: JSONWebServicesLayoutSetApiHelper;
 	readonly jsonWebServicesLayoutSetPrototype: JSONWebServicesLayoutSetPrototypeApiHelper;
 	readonly jsonWebServicesMBApiHelper: JSONWebServicesMBApiHelper;
+	readonly jsonWebServicesOrganization: JSONWebServicesOrganizationApiHelper;
 	readonly jsonWebServicesOSBAsah: JSONWebServicesOSBAsahApiHelper;
 	readonly jsonWebServicesOSBFaro: JSONWebServicesOSBFaroApiHelper;
 	readonly jsonWebServicesPushNotificationsDevice: JSONWebServicesPushNotificationsDeviceApiHelper;
@@ -208,7 +182,9 @@ export class ApiHelpers {
 	readonly jsonWebServicesTeam: JSONWebServicesTeamApiHelper;
 	readonly jsonWebServicesUser: JSONWebServicesUserApiHelper;
 	readonly jsonWebServicesUserGroup: JSONWebServicesUserGroupApiHelper;
+	readonly jsonWebServicesWorkflowDefinitionLink: JSONWebServicesWorkflowDefinitionLinkApiHelper;
 	readonly language: LanguageApiHelper;
+	readonly launch: LaunchApiHelper;
 	readonly listTypeAdmin: ListTypeAdminApiHelper;
 	readonly notification: NotificationApiHelper;
 	readonly objectAction: ObjectActionApiHelper;
@@ -313,6 +289,8 @@ export class ApiHelpers {
 		this.jsonWebServicesLayoutSetPrototype =
 			new JSONWebServicesLayoutSetPrototypeApiHelper(this);
 		this.jsonWebServicesMBApiHelper = new JSONWebServicesMBApiHelper(this);
+		this.jsonWebServicesOrganization =
+			new JSONWebServicesOrganizationApiHelper(this);
 		this.jsonWebServicesOSBFaro = new JSONWebServicesOSBFaroApiHelper(this);
 		this.jsonWebServicesOSBAsah = new JSONWebServicesOSBAsahApiHelper(this);
 		this.jsonWebServicesPushNotificationsDevice =
@@ -330,7 +308,10 @@ export class ApiHelpers {
 		this.jsonWebServicesUserGroup = new JSONWebServicesUserGroupApiHelper(
 			this
 		);
+		this.jsonWebServicesWorkflowDefinitionLink =
+			new JSONWebServicesWorkflowDefinitionLinkApiHelper(this);
 		this.language = new LanguageApiHelper(this);
+		this.launch = new LaunchApiHelper(this);
 		this.listTypeAdmin = new ListTypeAdminApiHelper(this);
 		this.notification = new NotificationApiHelper(this);
 		this.objectAction = new ObjectActionApiHelper(this);

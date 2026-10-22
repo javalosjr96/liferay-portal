@@ -9,16 +9,20 @@ import {executeAsyncItemAction} from '../utils/executeAsyncItemAction';
 
 export default function confirmAndDeleteEntryAction({
 	bodyHTML,
+	confirmButtonLabel = Liferay.Language.get('delete'),
 	dataSetId,
 	deleteAction,
 	loadData,
+	status = 'danger',
 	successMessage,
 	title,
 }: {
 	bodyHTML: string;
+	confirmButtonLabel?: string;
 	dataSetId?: string;
 	deleteAction: {href: string; method: string};
 	loadData: () => void;
+	status?: 'danger' | 'warning';
 	successMessage: string;
 	title: string;
 }) {
@@ -32,8 +36,8 @@ export default function confirmAndDeleteEntryAction({
 				type: 'cancel',
 			},
 			{
-				displayType: 'danger',
-				label: Liferay.Language.get('delete'),
+				displayType: status,
+				label: confirmButtonLabel,
 				onClick: ({processClose}: {processClose: () => void}) => {
 					processClose();
 
@@ -56,7 +60,7 @@ export default function confirmAndDeleteEntryAction({
 		],
 		center: true,
 		role: 'alert',
-		status: 'danger',
+		status,
 		title,
 	});
 }

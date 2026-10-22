@@ -1,86 +1,53 @@
-import AttributeFilterChip from './AttributeFilterChip';
+import AddConditionButton from './AddConditionButton';
+import AttributeConditionsSection from './AttributeConditionsSection';
 import AttributeFilterDropdown from './attribute-filter-dropdown';
-import ClayButton from '@clayui/button';
-import ClayIcon from '@clayui/icon';
-import DndProvider from 'shared/components/DndProvider';
 import React from 'react';
 import {Align} from '@clayui/drop-down';
-import {Attributes, Breakdowns, Filters} from 'event-analysis/utils/types';
-import {
-	DeleteFilter,
-	MoveFilter,
-	withAttributesConsumer,
-} from '../context/attributes';
-import {HTML5Backend} from 'react-dnd-html5-backend';
+import {getFilterDisplay} from 'event-analysis/utils/utils';
+import {getSafeDecodedURIComponent} from 'shared/util/util';
+import {SortableChipTypes} from './SortableChipTypes';
+import {useAttributes} from '../context/attributes';
 
 interface IAttributeFilterSectionProps {
-	attributes: Attributes;
-	breakdownOrder: string[];
-	breakdowns: Breakdowns;
-	deleteFilter: DeleteFilter;
-	eventId: string;
-	filterOrder: string[];
-	filters: Filters;
-	moveFilter: MoveFilter;
+	eventId?: string;
 }
 
-export const AttributeFilterSection: React.FC<IAttributeFilterSectionProps> = ({
-	attributes,
-	deleteFilter,
+const AttributeFilterSection: React.FC<IAttributeFilterSectionProps> = ({
 	eventId,
-	filterOrder,
-	filters,
-	moveFilter,
 }) => {
-	const uneditableIds = Object.keys(attributes);
+	const {attributes, deleteFilter, filterOrder, filters, moveFilter} =
+		useAttributes();
 
 	return (
-		<div className="attribute-filter-section-root d-flex align-items-center">
-			<div className="section-header">
-				{Liferay.Language.get('filter')}
-			</div>
-
-			{!!eventId && (
-				<div className="attribute-container d-flex align-items-center justify-content-between">
-					<DndProvider backend={HTML5Backend}>
-						<div className="attribute-list d-flex align-items-center">
-							{filterOrder.map((id, i) => (
-								<AttributeFilterChip
-									attribute={
-										attributes[filters[id].attributeId]
-									}
-									eventId={eventId}
-									filter={filters[id]}
-									index={i}
-									key={id}
-									onCloseClick={deleteFilter}
-									onMove={moveFilter}
-									uneditableIds={uneditableIds}
-								/>
-							))}
-						</div>
-					</DndProvider>
-
+		<AttributeConditionsSection
+			action={
+				eventId && (
 					<AttributeFilterDropdown
-						alignmentPosition={Align.LeftTop}
+						alignmentPosition={Align.RightTop}
 						eventId={eventId}
 						trigger={
-							<ClayButton
-								aria-label={Liferay.Language.get('add')}
-								borderless
-								className="button-root add-attribute"
-								displayType="secondary"
-								size="sm"
-							>
-								<ClayIcon className="icon-root" symbol="plus" />
-							</ClayButton>
+							<AddConditionButton
+								label={Liferay.Language.get('add-filter')}
+							/>
 						}
-						uneditableIds={uneditableIds}
+						uneditableIds={Object.keys(attributes)}
 					/>
-				</div>
-			)}
-		</div>
+				)
+			}
+			className="attribute-filter-section-root"
+			conditions={filters}
+			dragType={SortableChipTypes.Filter}
+			getDisplay={(attribute, filter) => {
+				const [overline, label] = getFilterDisplay(attribute, filter);
+
+				return [overline, getSafeDecodedURIComponent(label)];
+			}}
+			onMove={moveFilter}
+			onRemove={deleteFilter}
+			order={filterOrder}
+			title={Liferay.Language.get('filter-by')}
+		/>
 	);
 };
 
-export default withAttributesConsumer(AttributeFilterSection);
+export default AttributeFilterSection;

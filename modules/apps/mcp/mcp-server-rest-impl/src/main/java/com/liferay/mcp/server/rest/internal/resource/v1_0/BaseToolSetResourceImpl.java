@@ -39,6 +39,7 @@ import java.util.Map;
  * @author Alejandro Tardín
  * @generated
  */
+@com.liferay.portal.vulcan.feature.flag.FeatureFlag("LPD-63311")
 @Generated("")
 @jakarta.ws.rs.Path("/v1.0")
 public abstract class BaseToolSetResourceImpl implements ToolSetResource {
@@ -49,7 +50,7 @@ public abstract class BaseToolSetResourceImpl implements ToolSetResource {
 	 * curl -X 'GET' 'http://localhost:8080/o/mcp-server/v1.0/tool-sets'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Use this whenever you do not know which tool set can fulfill the user's request — it is the first thing to try. Returns every tool set exposed by Liferay, each with a curated description. Pick the tool set whose description matches the user's intent and pass its `name` to `getToolSetToolSetNameToolSummariesPage` to see what tools it offers."
+		description = "Returns every tool set exposed by Liferay, each with a description. Start here only when `getToolSearchToolSearchResultsPage` is not among your tools or has returned nothing relevant. Pick the tool set whose description matches the user's intent and pass its `name` to `getToolSetToolSetNameToolSummariesPage` to see what tools it offers."
 	)
 	@io.swagger.v3.oas.annotations.tags.Tags(
 		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "ToolSet")}
@@ -507,4 +508,4 @@ public abstract class BaseToolSetResourceImpl implements ToolSetResource {
 		LogFactoryUtil.getLog(BaseToolSetResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:308363251
+// LIFERAY-REST-BUILDER-HASH:251242733

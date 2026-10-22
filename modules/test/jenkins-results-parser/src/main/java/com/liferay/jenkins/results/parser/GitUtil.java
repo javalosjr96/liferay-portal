@@ -137,9 +137,11 @@ public class GitUtil {
 				getRemoteGitRefs(
 					remoteGitBranchName, workingDirectory, remoteURL)) {
 
-			if (remoteGitRef instanceof RemoteGitBranch) {
-				remoteGitBranches.add((RemoteGitBranch)remoteGitRef);
+			if (!(remoteGitRef instanceof RemoteGitBranch)) {
+				continue;
 			}
+
+			remoteGitBranches.add((RemoteGitBranch)remoteGitRef);
 		}
 
 		return remoteGitBranches;
@@ -260,7 +262,7 @@ public class GitUtil {
 
 		if (!isValidRemoteURL(remoteURL)) {
 			throw new IllegalArgumentException(
-				"Invalid remote url " + remoteURL);
+				"Invalid remote URL " + remoteURL);
 		}
 
 		String command = null;
@@ -421,7 +423,7 @@ public class GitUtil {
 		}
 
 		throw new IllegalArgumentException(
-			"Invalid github-dev remote url " + gitHubDevRemoteURL);
+			"Invalid github-dev remote URL " + gitHubDevRemoteURL);
 	}
 
 	public static class ExecutionResult {
@@ -514,12 +516,14 @@ public class GitUtil {
 					modifiedCommands[i] = modifiedCommands[i].replace(
 						_HOSTNAME_GITHUB_CACHE_PROXY, gitHubDevNodeHostname);
 
-					if ((retryDelay != 0) &&
-						modifiedCommands[i].contains(
+					if ((retryDelay == 0) ||
+						!modifiedCommands[i].contains(
 							_HOSTNAME_GITHUB_CACHE_PROXY)) {
 
-						retryDelay = 0;
+						continue;
 					}
+
+					retryDelay = 0;
 				}
 			}
 

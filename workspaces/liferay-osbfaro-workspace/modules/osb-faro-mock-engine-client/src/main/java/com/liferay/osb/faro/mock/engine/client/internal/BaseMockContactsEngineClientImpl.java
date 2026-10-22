@@ -57,6 +57,7 @@ import com.liferay.osb.faro.engine.client.model.IndividualSegmentMembershipChang
 import com.liferay.osb.faro.engine.client.model.IndividualSegmentMembershipChangeAggregation;
 import com.liferay.osb.faro.engine.client.model.IndividualTransformation;
 import com.liferay.osb.faro.engine.client.model.Interest;
+import com.liferay.osb.faro.engine.client.model.LifecycleTriggerResult;
 import com.liferay.osb.faro.engine.client.model.Metric;
 import com.liferay.osb.faro.engine.client.model.PageExperience;
 import com.liferay.osb.faro.engine.client.model.PageVisited;
@@ -322,6 +323,15 @@ public abstract class BaseMockContactsEngineClientImpl
 	}
 
 	@Override
+	public long fetchSegmentNewMembersCount(
+			FaroProject faroProject, String id, int rangeKey)
+		throws Exception {
+
+		return contactsEngineClient.fetchSegmentNewMembersCount(
+			faroProject, id, rangeKey);
+	}
+
+	@Override
 	public <T> T get(
 			FaroProject faroProject, Map<String, String> headers, String path,
 			Map<String, List<String>> queryParameters, Class<T> returnType)
@@ -431,10 +441,12 @@ public abstract class BaseMockContactsEngineClientImpl
 	}
 
 	@Override
-	public List<AccountLifecycle> getAccountLifecycles(FaroProject faroProject)
+	public List<AccountLifecycle> getAccountLifecycles(
+			FaroProject faroProject, Long channelId)
 		throws FaroEngineClientException {
 
-		return contactsEngineClient.getAccountLifecycles(faroProject);
+		return contactsEngineClient.getAccountLifecycles(
+			faroProject, channelId);
 	}
 
 	@Override
@@ -466,14 +478,15 @@ public abstract class BaseMockContactsEngineClientImpl
 
 	@Override
 	public Results<Account> getAccounts(
-		FaroProject faroProject, String channelId, String filterString,
-		boolean includeAnonymousUsers, String query, String rangeEnd,
-		Integer rangeKey, String rangeStart, String segmentId, int cur,
-		int delta, String sortString) {
+		FaroProject faroProject, String accountLifecycleId, String channelId,
+		String filterString, boolean includeAnonymousUsers, String query,
+		String rangeEnd, Integer rangeKey, String rangeStart, String segmentId,
+		int cur, int delta, String sortString) {
 
 		return contactsEngineClient.getAccounts(
-			faroProject, channelId, filterString, includeAnonymousUsers, query,
-			rangeEnd, rangeKey, rangeStart, segmentId, cur, delta, sortString);
+			faroProject, accountLifecycleId, channelId, filterString,
+			includeAnonymousUsers, query, rangeEnd, rangeKey, rangeStart,
+			segmentId, cur, delta, sortString);
 	}
 
 	@Override
@@ -877,6 +890,14 @@ public abstract class BaseMockContactsEngineClientImpl
 	}
 
 	@Override
+	public long getDataSourceMetricsCampaignsCount(
+		FaroProject faroProject, String dataSourceId) {
+
+		return contactsEngineClient.getDataSourceMetricsCampaignsCount(
+			faroProject, dataSourceId);
+	}
+
+	@Override
 	public long getDataSourceMetricsEventsCount(
 		FaroProject faroProject, String dataSourceId) {
 
@@ -1245,6 +1266,15 @@ public abstract class BaseMockContactsEngineClientImpl
 	}
 
 	@Override
+	public LifecycleTriggerResult getNewAccountsLifecycleTriggerResult(
+			FaroProject faroProject, String id, int rangeKey)
+		throws Exception {
+
+		return contactsEngineClient.getNewAccountsLifecycleTriggerResult(
+			faroProject, id, rangeKey);
+	}
+
+	@Override
 	public List<PageExperience> getPageExperiences(
 			FaroProject faroProject, String canonicalUrl, String channelId,
 			String pageTitle)
@@ -1299,6 +1329,15 @@ public abstract class BaseMockContactsEngineClientImpl
 		return contactsEngineClient.getSimilarIndividuals(
 			faroProject, individualId, query, fields, cur, delta,
 			orderByFields);
+	}
+
+	@Override
+	public LifecycleTriggerResult getStalledAccountsLifecycleTriggerResult(
+			FaroProject faroProject, String id, int rangeKey)
+		throws Exception {
+
+		return contactsEngineClient.getStalledAccountsLifecycleTriggerResult(
+			faroProject, id, rangeKey);
 	}
 
 	@Override
@@ -1475,6 +1514,11 @@ public abstract class BaseMockContactsEngineClientImpl
 		return contactsEngineClient.updateSegmentActivation(
 			faroProject, cronExpression, frequencyType, scheduleEndDate,
 			scheduleStartDate, scheduleType, segmentId);
+	}
+
+	@Override
+	public void validateConnection(FaroProject faroProject) throws Exception {
+		contactsEngineClient.validateConnection(faroProject);
 	}
 
 	@Reference(

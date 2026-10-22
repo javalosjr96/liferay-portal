@@ -186,6 +186,44 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testEarlyLoopExit() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"EarlyLoopExit.testjava"
+			).addExpectedMessage(
+				"Invert the condition and use \"continue\" as early as " +
+					"possible instead of nesting the rest of the loop body " +
+						"in the if-statement",
+				25
+			).addExpectedMessage(
+				"Invert the condition and use \"continue\" as early as " +
+					"possible instead of nesting the rest of the loop body " +
+						"in the if-statement",
+				33
+			).addExpectedMessage(
+				"Invert the condition and use \"continue\" as early as " +
+					"possible instead of nesting the rest of the loop body " +
+						"in the if-statement",
+				43
+			).addExpectedMessage(
+				"Invert the condition and use \"break\" as early as possible " +
+					"instead of nesting the rest of the loop body in the " +
+						"if-statement",
+				54
+			).addExpectedMessage(
+				"Invert the condition and use \"return\" as early as " +
+					"possible instead of nesting the rest of the loop body " +
+						"in the if-statement",
+				143
+			).addExpectedMessage(
+				"Invert the condition and use \"throw\" as early as possible " +
+					"instead of nesting the rest of the loop body in the " +
+						"if-statement",
+				156
+			));
+	}
+
+	@Test
 	public void testElseStatement() throws Exception {
 		test("ElseStatement1.testjava");
 		test(
@@ -251,7 +289,8 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 		test(
 			"ExecuteBatchWithoutAutoBatchPreparedStatementUtil.testjava",
 			StringBundler.concat(
-				"Use \"AutoBatchPreparedStatementUtil.autoBatch\" or \"",
+				"Use \"AutoBatchPreparedStatementUtil.autoBatch\", \"",
+				"AutoBatchPreparedStatementUtil.autoBatchWithResults\", or \"",
 				"AutoBatchPreparedStatementUtil.concurrentAutoBatch\" to ",
 				"create a prepared statement when using \"preparedStatement.",
 				"executeBatch()\""),
@@ -311,6 +350,25 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 			"Missing check \"PropsValues.FIPS_ENABLED\" in if-statement " +
 				"condition in the same class as a trust manager, see LPD-93649",
 			17);
+	}
+
+	@Test
+	public void testFeatureFlagAnnotation() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"FeatureFlagAnnotation.testjava"
+			).addExpectedMessage(
+				"Declare the feature flag with \"x-feature-flag\" in " +
+					"\"rest-openapi.yaml\" instead of using the annotation " +
+						"\"@FeatureFlag\"",
+				13
+			).addExpectedMessage(
+				"Declare the feature flag with \"x-feature-flag\" in " +
+					"\"rest-openapi.yaml\" instead of using the annotation " +
+						"\"@FeatureFlag\"",
+				16
+			));
+		test("FeatureFlagAnnotationWithTestRuleImport.testjava");
 	}
 
 	@Test
@@ -612,6 +670,11 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testJavaLogVariableDefinition() throws Exception {
+		test("JavaLogVariableDefinition.testjava");
+	}
+
+	@Test
 	public void testJavaNewProblemInstantiationParameters() throws Exception {
 		test("JavaNewProblemInstantiationParameters.testjava");
 	}
@@ -880,6 +943,18 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testNestedSwitchExpressions() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"NestedSwitchExpressions.testjava"
+			).addExpectedMessage(
+				"Use \"if/else\" statement instead of \"switch\"", 14
+			).addExpectedMessage(
+				"Use \"if/else\" statement instead of \"switch\"", 15
+			));
+	}
+
+	@Test
 	public void testNullAssertionInIfStatement() throws Exception {
 		test(
 			SourceProcessorTestParameters.create(
@@ -913,6 +988,30 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testPatternMatchingForSwitch() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"PatternMatchingForSwitch.testjava"
+			).addExpectedMessage(
+				"Use \"if/else\" statement instead of \"switch\"", 14
+			).addExpectedMessage(
+				"Do not use pattern matching for switch", 16
+			).addExpectedMessage(
+				"Do not use pattern matching for switch", 17
+			).addExpectedMessage(
+				"Use \"if/else\" statement instead of \"switch\"", 23
+			).addExpectedMessage(
+				"Use \"if/else\" statement instead of \"switch\"", 25
+			).addExpectedMessage(
+				"Do not use pattern matching for switch", 26
+			).addExpectedMessage(
+				"Use \"if/else\" statement instead of \"switch\"", 35
+			).addExpectedMessage(
+				"Do not use pattern matching for switch", 36
+			));
+	}
+
+	@Test
 	public void testProxyUsage() throws Exception {
 		test(
 			"ProxyUsage.testjava",
@@ -938,6 +1037,44 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	@Test
 	public void testRecordClass() throws Exception {
 		test("RecordClass.testjava", "Do not declare record class", 11);
+	}
+
+	@Test
+	public void testRecordPattern() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"RecordPattern.testjava"
+			).addExpectedMessage(
+				"Do not use record patterns", 18
+			).addExpectedMessage(
+				"Use \"if/else\" statement instead of \"switch\"", 35
+			).addExpectedMessage(
+				"Do not use pattern matching for switch", 36
+			).addExpectedMessage(
+				"Do not use record patterns", 36
+			));
+	}
+
+	@Test
+	public void testRedundantBranchingStatement() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"RedundantBranchingStatement.testjava"
+			).addExpectedMessage(
+				"Redundant \"return\" statement", 19
+			).addExpectedMessage(
+				"Redundant \"return\" statement", 26
+			).addExpectedMessage(
+				"Redundant \"return\" statement", 36
+			).addExpectedMessage(
+				"Redundant \"return\" statement", 47
+			).addExpectedMessage(
+				"Redundant \"continue\" statement", 57
+			).addExpectedMessage(
+				"Redundant \"continue\" statement", 71
+			).addExpectedMessage(
+				"Redundant \"continue\" statement", 125
+			));
 	}
 
 	@Test
@@ -1131,7 +1268,7 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
-	public void testSizeIsZeroCheck() throws Exception {
+	public void testSizeIsZero() throws Exception {
 		test(
 			SourceProcessorTestParameters.create(
 				"SizeIsZero.testjava"
@@ -1209,6 +1346,54 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 	}
 
 	@Test
+	public void testTestClassStaticInitializer() throws Exception {
+		test(
+			SourceProcessorTestParameters.create(
+				"TestClassStaticInitializer.testjava"
+			).addExpectedMessage(
+				StringBundler.concat(
+					"Do not use class \"PortalUtil\" in a static initializer ",
+					"of an Arquillian test, since it needs the portal but ",
+					"static initializers also run in the client JVM. ",
+					"Initialize it in a @Before or @BeforeClass method or ",
+					"where it is used"),
+				82
+			).addExpectedMessage(
+				StringBundler.concat(
+					"Do not use \"DLTestUtil.randomTextFileBytes\" in a ",
+					"static initializer of an Arquillian test, since it needs ",
+					"the portal but static initializers also run in the ",
+					"client JVM. Initialize it in a @Before or @BeforeClass ",
+					"method or where it is used"),
+				91
+			).addExpectedMessage(
+				StringBundler.concat(
+					"Use \"RandomTestUtil.randomInt\" instead of ",
+					"\"RandomTestUtil.nextInt\" in a static initializer of an ",
+					"Arquillian test, since \"RandomTestUtil.nextInt\" needs ",
+					"the portal but static initializers also run in the ",
+					"client JVM"),
+				97
+			).addExpectedMessage(
+				StringBundler.concat(
+					"Do not use \"RandomTestUtil.randomString\" with ",
+					"\"TikaRandomizerBumper\" in a static initializer of an ",
+					"Arquillian test, since it needs the portal but static ",
+					"initializers also run in the client JVM. Initialize it ",
+					"in a @Before or @BeforeClass method or where it is used"),
+				99
+			).addExpectedMessage(
+				StringBundler.concat(
+					"Do not use class \"TestPropsValues\" in a static ",
+					"initializer of an Arquillian test, since it needs the ",
+					"portal but static initializers also run in the client ",
+					"JVM. Initialize it in a @Before or @BeforeClass method ",
+					"or where it is used"),
+				109
+			));
+	}
+
+	@Test
 	public void testTextBlock() throws Exception {
 		test(
 			SourceProcessorTestParameters.create(
@@ -1219,6 +1404,8 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 				"Do not use text block", 23
 			).addExpectedMessage(
 				"Do not use text block", 29
+			).addExpectedMessage(
+				"Do not use text block", 42
 			));
 	}
 

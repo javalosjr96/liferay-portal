@@ -28,10 +28,6 @@ import jakarta.portlet.ResourceResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -90,20 +86,14 @@ public class GetSiteNavigationMenuPreviewMVCResourceCommand
 
 		httpServletRequest.setAttribute(WebKeys.THEME_DISPLAY, themeDisplay);
 
-		Document document = Jsoup.parse(
-			ThemeUtil.include(
-				ServletContextPool.get(StringPool.BLANK), httpServletRequest,
-				httpServletResponse, "portal_normal.ftl", layoutSet.getTheme(),
-				false));
-
-		Element bodyElement = document.body();
-
-		bodyElement.html(unsyncStringWriter.toString());
-
-		ServletResponseUtil.write(httpServletResponse, document.html());
+		String html = ThemeUtil.include(
+			ServletContextPool.get(StringPool.BLANK), httpServletRequest,
+			httpServletResponse, "portal_normal.ftl", layoutSet.getTheme(),
+			false);
 
 		ServletResponseUtil.write(
-			httpServletResponse, unsyncStringWriter.toString());
+			httpServletResponse,
+			ThemeUtil.replaceBodyContent(html, unsyncStringWriter.toString()));
 	}
 
 	@Reference

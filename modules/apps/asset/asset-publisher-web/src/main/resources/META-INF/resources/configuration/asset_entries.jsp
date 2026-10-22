@@ -106,7 +106,7 @@ long[] groupIds = assetPublisherDisplayContext.getGroupIds();
 				<clay:button
 					additionalProps='<%=
 						HashMapBuilder.<String, Object>put(
-							"assetEntryTypes", assetPublisherDisplayContext.getAssetEntryTypesJSONArray()
+							"assetEntryTypes", assetPublisherDisplayContext.getAssetEntryTypesJSONArray(groupId)
 						).put(
 							"currentURL", configurationRenderURL.toString()
 						).put(

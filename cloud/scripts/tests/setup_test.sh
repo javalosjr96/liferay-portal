@@ -12,11 +12,19 @@ function main {
 
 	scripts_dir=$(cd "$(dirname "${0}")/.." && pwd)
 
-	for script in "${scripts_dir}/setup_aws.sh" "${scripts_dir}/setup_gcp.sh"
+	_run_test "${scripts_dir}/setup_aws.sh" _test_aborts_with_config_missing_account_id
+	_run_test "${scripts_dir}/setup_aws.sh" _test_aborts_with_tfstate_missing_bucket_name
+
+	for script in "${scripts_dir}/setup_aws.sh" "${scripts_dir}/setup_azure.sh"
 	do
-		_run_test "${script}" _test_aborts_with_config_missing_variables_object
-		_run_test "${script}" _test_aborts_with_old_terraform_version
+		_run_test "${script}" _test_aborts_with_config_missing_required_key
 	done
+
+	_run_test "${scripts_dir}/setup_azure.sh" _test_aborts_with_config_missing_database_engine
+	_run_test "${scripts_dir}/setup_azure.sh" _test_aborts_with_config_unsupported_database_engine
+
+	_run_test "${scripts_dir}/setup_gcp.sh" _test_aborts_with_config_missing_variables_object
+	_run_test "${scripts_dir}/setup_gcp.sh" _test_aborts_with_old_terraform_version
 
 	for script in "${scripts_dir}/setup_aws.sh" "${scripts_dir}/setup_azure.sh" "${scripts_dir}/setup_gcp.sh"
 	do
@@ -35,6 +43,38 @@ function main {
 	fi
 
 	return 1
+}
+
+function _make_helm_stub {
+	local stub_dir="${1}"
+
+	local chart_dir
+	local helm_path
+
+	chart_dir=$(cd "$(dirname "${0}")/../../helm/azure-infrastructure-provider" && pwd)
+	helm_path=$(command -v helm)
+
+	rm "${stub_dir}/helm"
+
+	cat > "${stub_dir}/helm" <<EOF
+#!/usr/bin/env bash
+
+helm_args=()
+
+for helm_arg in "\${@}"
+do
+	if [[ \${helm_arg} == oci://*/liferay-azure-infrastructure-provider ]]
+	then
+		helm_arg="${chart_dir}"
+	fi
+
+	helm_args+=("\${helm_arg}")
+done
+
+exec "${helm_path}" "\${helm_args[@]}"
+EOF
+
+	chmod +x "${stub_dir}/helm"
 }
 
 function _make_stub_path {
@@ -105,6 +145,8 @@ function _run_setup_test {
 
 	stub_dir=$(_make_stub_path)
 
+	_make_helm_stub "${stub_dir}"
+
 	_make_terraform_stub "${stub_dir}" "${terraform_version}"
 
 	if [[ -n ${utility_to_remove} ]]
@@ -157,6 +199,63 @@ function _run_test {
 	fi
 }
 
+function _test_aborts_with_config_missing_account_id {
+	local config_json
+	local exit_code
+	local output
+	local result
+
+	config_json=$(jq --null-input '{deployment_name: "liferay-test", region: "us-east-1"}')
+	result=$(_run_setup_test "${1}" "${config_json}")
+	exit_code=$(echo "${result}" | head -n 1)
+	output=$(echo "${result}" | tail -n +2)
+
+	if [ ${exit_code} -ne 0 ] && [[ ${output} == *'must contain a key named "account_id"'* ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function _test_aborts_with_config_missing_database_engine {
+	local config_json
+	local exit_code
+	local output
+	local result
+
+	config_json=$(jq --null-input '{deployment_name: "liferay-test", region: "eastus", subscription_id: "subscription", tenant_id: "tenant"}')
+	result=$(_run_setup_test "${1}" "${config_json}")
+	exit_code=$(echo "${result}" | head -n 1)
+	output=$(echo "${result}" | tail -n +2)
+
+	if [ ${exit_code} -ne 0 ] && [[ ${output} == *"at '/database/engine'"* ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function _test_aborts_with_config_missing_required_key {
+	local config_json
+	local exit_code
+	local output
+	local result
+
+	config_json=$(jq --null-input '{account_id: "111111111111", deployment_name: "liferay-test", subscription_id: "subscription", tenant_id: "tenant"}')
+	result=$(_run_setup_test "${1}" "${config_json}")
+	exit_code=$(echo "${result}" | head -n 1)
+	output=$(echo "${result}" | tail -n +2)
+
+	if [ ${exit_code} -ne 0 ] && [[ ${output} == *'must contain a key named "region"'* ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
 function _test_aborts_with_config_missing_variables_object {
 	local config_json
 	local exit_code
@@ -169,6 +268,25 @@ function _test_aborts_with_config_missing_variables_object {
 	output=$(echo "${result}" | tail -n +2)
 
 	if [ ${exit_code} -ne 0 ] && [[ ${output} == *'must contain a root object named "variables"'* ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function _test_aborts_with_config_unsupported_database_engine {
+	local config_json
+	local exit_code
+	local output
+	local result
+
+	config_json=$(jq --null-input '{deployment_name: "liferay-test", region: "eastus", setup: {database: {engine: "hypersonic"}}, subscription_id: "subscription", tenant_id: "tenant"}')
+	result=$(_run_setup_test "${1}" "${config_json}")
+	exit_code=$(echo "${result}" | head -n 1)
+	output=$(echo "${result}" | tail -n +2)
+
+	if [ ${exit_code} -ne 0 ] && [[ ${output} == *"at '/database/engine'"* ]]
 	then
 		return 0
 	fi
@@ -259,6 +377,25 @@ function _test_aborts_with_old_terraform_version {
 	output=$(echo "${result}" | tail -n +2)
 
 	if [ ${exit_code} -ne 0 ] && [[ ${output} == *"is older than"* ]]
+	then
+		return 0
+	fi
+
+	return 1
+}
+
+function _test_aborts_with_tfstate_missing_bucket_name {
+	local config_json
+	local exit_code
+	local output
+	local result
+
+	config_json=$(jq --null-input '{account_id: "111111111111", deployment_name: "liferay-test", region: "us-east-1", tfstate: {}}')
+	result=$(_run_setup_test "${1}" "${config_json}")
+	exit_code=$(echo "${result}" | head -n 1)
+	output=$(echo "${result}" | tail -n +2)
+
+	if [ ${exit_code} -ne 0 ] && [[ ${output} == *'must contain a key named "tfstate.bucket_name"'* ]]
 	then
 		return 0
 	fi

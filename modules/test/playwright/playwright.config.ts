@@ -83,6 +83,7 @@ import {config as cookiesBannerWebConfig} from './tests/cookies-banner-web/main/
 import {config as dataCleanupConfig} from './tests/data-cleanup/main/config';
 import {config as depotWebConfig} from './tests/depot-web/main/config';
 import {config as designLibraryWebConfig} from './tests/design-library-web/main/config';
+import {config as digitalSalesRoomWebConfig} from './tests/digital-sales-room-web/main/config';
 import {config as dispatchWebConfig} from './tests/dispatch-web/main/config';
 import {config as documentLibraryWebConfig} from './tests/document-library-web/main/config';
 import {config as dynamicDataMappingFormWebConfig} from './tests/dynamic-data-mapping-form-web/main/config';
@@ -110,6 +111,7 @@ import {config as frontendJsImageEditorWebConfig} from './tests/frontend-js-imag
 import {config as frontendJsItemSelectorWebConfig} from './tests/frontend-js-item-selector-web/main/config';
 import {config as frontendJsSpaWebConfig} from './tests/frontend-js-spa-web/main/config';
 import {config as frontendJsWebConfig} from './tests/frontend-js-web/main/config';
+import {config as frontendJsWebSessionTimeoutWarningConfig} from './tests/frontend-js-web/session-timeout-warning/config';
 import {config as frontendTaglibClayConfig} from './tests/frontend-taglib-clay/main/config';
 import {config as frontendTaglibConfig} from './tests/frontend-taglib/main/config';
 import {config as frontendTaglibSpaOffConfig} from './tests/frontend-taglib/spa-off/config';
@@ -118,9 +120,11 @@ import {config as headlessBuilderImplConfig} from './tests/headless-builder-impl
 import {config as headlessBuilderWebConfig} from './tests/headless-builder-web/main/config';
 import {config as headlessDiscoveryWebConfig} from './tests/headless-discovery-web/main/config';
 import {config as iframeWebConfig} from './tests/iframe-web/main/config';
+import {config as ipGeocoderSampleWebConfig} from './tests/ip-geocoder-sample-web/main/config';
 import {config as itemSelectorTaglibConfig} from './tests/item-selector-taglib/main/config';
 import {config as journalWebConfig} from './tests/journal-web/main/config';
 import {config as knowledgeBaseWebConfig} from './tests/knowledge-base-web/main/config';
+import {config as launchWebConfig} from './tests/launch-web/main/config';
 import {config as layoutAdminWebConfig} from './tests/layout-admin-web/main/config';
 import {config as layoutContentPageEditorWebFormContainerConfig} from './tests/layout-content-page-editor-web/form-container/config';
 import {config as layoutContentPageEditorWebFragmentsConfig} from './tests/layout-content-page-editor-web/fragments/config';
@@ -244,7 +248,6 @@ import {config as siteCmsSiteInitializerConfig} from './tests/site-cms-site-init
 import {config as siteCmsSiteInitializerPermissionsConfig} from './tests/site-cms-site-initializer/permissions/config';
 import {config as siteCmsSiteInitializerStructureBuilderConfig} from './tests/site-cms-site-initializer/structure-builder/config';
 import {config as siteCmsStandaloneSiteInitializerConfig} from './tests/site-cms-standalone-site-initializer/main/config';
-import {config as siteDsrSiteInitializerConfig} from './tests/site-dsr-site-initializer/main/config';
 import {config as siteMySitesWebConfig} from './tests/site-my-sites-web/main/config';
 import {config as siteNavigationAdminWebConfig} from './tests/site-navigation-admin-web/main/config';
 import {config as siteNavigationBreadcrumbWebConfig} from './tests/site-navigation-breadcrumb-web/main/config';
@@ -363,6 +366,7 @@ export default defineConfig({
 		customerConfig,
 		depotWebConfig,
 		designLibraryWebConfig,
+		digitalSalesRoomWebConfig,
 		dispatchWebConfig,
 		documentLibraryWebConfig,
 		dynamicDataMappingFormWebConfig,
@@ -390,6 +394,7 @@ export default defineConfig({
 		frontendJsItemSelectorWebConfig,
 		frontendJsSpaWebConfig,
 		frontendJsWebConfig,
+		frontendJsWebSessionTimeoutWarningConfig,
 		frontendTaglibClayConfig,
 		frontendTaglibConfig,
 		frontendTaglibSpaOffConfig,
@@ -398,9 +403,11 @@ export default defineConfig({
 		headlessBuilderWebConfig,
 		headlessDiscoveryWebConfig,
 		iframeWebConfig,
+		ipGeocoderSampleWebConfig,
 		itemSelectorTaglibConfig,
 		journalWebConfig,
 		knowledgeBaseWebConfig,
+		launchWebConfig,
 		layoutAdminWebConfig,
 		layoutContentPageEditorWebConfig,
 		layoutContentPageEditorWebFormContainerConfig,
@@ -522,7 +529,6 @@ export default defineConfig({
 		siteCmsSiteInitializerPermissionsConfig,
 		siteCmsSiteInitializerStructureBuilderConfig,
 		siteCmsStandaloneSiteInitializerConfig,
-		siteDsrSiteInitializerConfig,
 		siteMySitesWebConfig,
 		siteNavigationAdminWebConfig,
 		siteNavigationBreadcrumbWebConfig,

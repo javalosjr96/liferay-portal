@@ -890,6 +890,9 @@ public class AccountEntryPersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					accountEntry.getUuid(),
+					accountEntry.getExternalReferenceCode()) &&
+				!Objects.equals(
 					accountEntryModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					accountEntry.getExternalReferenceCode())) {
@@ -1058,7 +1061,12 @@ public class AccountEntryPersistenceImpl
 	public void activate() {
 		_collectionPersistenceFinderByUuid =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, AccountEntry::getAccountEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid",
+					new String[] {String.class.getName()},
+					new String[] {"uuid_"}, 0, 1, false, null),
+				"", AccountEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid",
 					new String[] {
@@ -1067,24 +1075,25 @@ public class AccountEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"uuid_"}, true),
+				_SQL_COUNT_ACCOUNTENTRY_WHERE, _SQL_SELECT_ACCOUNTENTRY_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid",
 					new String[] {String.class.getName()},
 					new String[] {"uuid_"}, 0, 1, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid",
-					new String[] {String.class.getName()},
-					new String[] {"uuid_"}, 0, 1, false, null),
-				_SQL_SELECT_ACCOUNTENTRY_WHERE, _SQL_COUNT_ACCOUNTENTRY_WHERE,
-				AccountEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"accountEntry.", "uuid", "uuid_", FinderColumn.Type.STRING,
 					"=", true, true, AccountEntry::getUuid));
 
 		_collectionPersistenceFinderByUuid_C =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, AccountEntry::getAccountEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid_C",
+					new String[] {String.class.getName(), Long.class.getName()},
+					new String[] {"uuid_", "companyId"}, 0, 1, false, null),
+				"", AccountEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByUuid_C",
 					new String[] {
@@ -1093,17 +1102,13 @@ public class AccountEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"uuid_", "companyId"}, true),
+				_SQL_COUNT_ACCOUNTENTRY_WHERE, _SQL_SELECT_ACCOUNTENTRY_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByUuid_C",
 					new String[] {String.class.getName(), Long.class.getName()},
 					new String[] {"uuid_", "companyId"}, 0, 1, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByUuid_C",
-					new String[] {String.class.getName(), Long.class.getName()},
-					new String[] {"uuid_", "companyId"}, 0, 1, false, null),
-				_SQL_SELECT_ACCOUNTENTRY_WHERE, _SQL_COUNT_ACCOUNTENTRY_WHERE,
-				AccountEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"accountEntry.", "uuid", "uuid_", FinderColumn.Type.STRING,
 					"=", true, true, AccountEntry::getUuid),
@@ -1113,7 +1118,12 @@ public class AccountEntryPersistenceImpl
 
 		_collectionPersistenceFinderByCompanyId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, AccountEntry::getAccountEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+					"countByCompanyId", new String[] {Long.class.getName()},
+					new String[] {"companyId"}, false),
+				"", AccountEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCompanyId",
 					new String[] {
@@ -1122,24 +1132,27 @@ public class AccountEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"companyId"}, true),
+				_SQL_COUNT_ACCOUNTENTRY_WHERE, _SQL_SELECT_ACCOUNTENTRY_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
 					"findByCompanyId", new String[] {Long.class.getName()},
 					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByCompanyId", new String[] {Long.class.getName()},
-					new String[] {"companyId"}, false),
-				_SQL_SELECT_ACCOUNTENTRY_WHERE, _SQL_COUNT_ACCOUNTENTRY_WHERE,
-				AccountEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"accountEntry.", "companyId", FinderColumn.Type.LONG, "=",
 					true, true, AccountEntry::getCompanyId));
 
 		_collectionPersistenceFinderByC_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, AccountEntry::getAccountEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_S",
+					new String[] {
+						Long.class.getName(), Integer.class.getName()
+					},
+					new String[] {"companyId", "status"}, false),
+				"", AccountEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_S",
 					new String[] {
@@ -1148,21 +1161,15 @@ public class AccountEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"companyId", "status"}, true),
+				_SQL_COUNT_ACCOUNTENTRY_WHERE, _SQL_SELECT_ACCOUNTENTRY_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_S",
 					new String[] {
 						Long.class.getName(), Integer.class.getName()
 					},
 					new String[] {"companyId", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_S",
-					new String[] {
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"companyId", "status"}, false),
-				_SQL_SELECT_ACCOUNTENTRY_WHERE, _SQL_COUNT_ACCOUNTENTRY_WHERE,
-				AccountEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"accountEntry.", "companyId", FinderColumn.Type.LONG, "=",
 					true, true, AccountEntry::getCompanyId),
@@ -1172,7 +1179,12 @@ public class AccountEntryPersistenceImpl
 
 		_collectionPersistenceFinderByU_T =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, AccountEntry::getAccountEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_T",
+					new String[] {Long.class.getName(), String.class.getName()},
+					new String[] {"userId", "type_"}, 0, 2, false, null),
+				"", AccountEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByU_T",
 					new String[] {
@@ -1181,17 +1193,13 @@ public class AccountEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"userId", "type_"}, true),
+				_SQL_COUNT_ACCOUNTENTRY_WHERE, _SQL_SELECT_ACCOUNTENTRY_WHERE,
+				null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByU_T",
 					new String[] {Long.class.getName(), String.class.getName()},
 					new String[] {"userId", "type_"}, 0, 2, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByU_T",
-					new String[] {Long.class.getName(), String.class.getName()},
-					new String[] {"userId", "type_"}, 0, 2, false, null),
-				_SQL_SELECT_ACCOUNTENTRY_WHERE, _SQL_COUNT_ACCOUNTENTRY_WHERE,
-				AccountEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"accountEntry.", "userId", FinderColumn.Type.LONG, "=",
 					true, true, AccountEntry::getUserId),
@@ -1280,4 +1288,4 @@ public class AccountEntryPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-168410417
+// LIFERAY-SERVICE-BUILDER-HASH:-222073401

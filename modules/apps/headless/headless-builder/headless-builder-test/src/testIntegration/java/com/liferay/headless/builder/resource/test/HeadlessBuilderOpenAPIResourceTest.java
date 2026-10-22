@@ -39,6 +39,7 @@ import com.liferay.object.service.ObjectFieldSettingLocalService;
 import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.test.util.ObjectDefinitionTestUtil;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -371,7 +372,7 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 				JSONFactoryUtil.createJSONArray()
 			).toString(),
 			"headless-builder/schemas/by-external-reference-code/" +
-				_API_SCHEMA_ERC,
+				_API_SCHEMA_ERC_1,
 			Http.Method.PATCH);
 		assertSuccessfulJSONObject(
 			JSONUtil.put(
@@ -396,7 +397,7 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 		JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
 			null, "/openapi", Http.Method.GET);
 
-		Assert.assertFalse(jsonObject.has("/" + _API_BASE_URL));
+		Assert.assertFalse(jsonObject.has(apiApplicationURL));
 
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				"portal_web.docroot.errors.code_jsp", LoggerTestUtil.WARN)) {
@@ -429,6 +430,103 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 						_API_BASE_URL, "/openapi.yaml"))
 			).toString(),
 			jsonObject.toString(), JSONCompareMode.LENIENT);
+
+		jsonObject = HTTPTestUtil.invokeToJSONObject(
+			null, apiApplicationURL + "/openapi.json", Http.Method.GET);
+
+		JSONObject pathsJSONObject = jsonObject.getJSONObject("paths");
+
+		Assert.assertTrue(
+			pathsJSONObject.has(_getAPIEndpointPath(_API_GET_ENDPOINT_ERC_2)));
+		Assert.assertTrue(
+			pathsJSONObject.has(
+				"/scopes/{scopeKey}" +
+					_getAPIEndpointPath(_API_SITE_SCOPED_ENDPOINT_ERC_2)));
+
+		JSONObject componentsJSONObject = jsonObject.getJSONObject(
+			"components");
+
+		JSONObject schemasJSONObject = componentsJSONObject.getJSONObject(
+			"schemas");
+
+		Assert.assertTrue(
+			schemasJSONObject.has(_getAPISchemaName(_API_SCHEMA_ERC_2)));
+
+		assertSuccessfulJSONObject(
+			null,
+			"headless-builder/endpoints/by-external-reference-code/" +
+				_API_GET_ENDPOINT_ERC_2,
+			Http.Method.DELETE);
+		assertSuccessfulJSONObject(
+			null,
+			"headless-builder/endpoints/by-external-reference-code/" +
+				_API_SITE_SCOPED_ENDPOINT_ERC_2,
+			Http.Method.DELETE);
+		assertSuccessfulJSONObject(
+			null,
+			"headless-builder/schemas/by-external-reference-code/" +
+				_API_SCHEMA_ERC_2,
+			Http.Method.DELETE);
+		assertSuccessfulJSONObject(
+			JSONUtil.put(
+				"description", "updated description"
+			).put(
+				"name", "UpdatedRecordSchemaName"
+			).toString(),
+			"headless-builder/schemas/by-external-reference-code/" +
+				_API_SCHEMA_ERC_3,
+			Http.Method.PATCH);
+
+		String apiSchemaExternalReferenceCode = RandomTestUtil.randomString();
+
+		assertSuccessfulJSONObject(
+			JSONUtil.put(
+				"apiSchemaToAPIProperties",
+				JSONUtil.putAll(
+					JSONUtil.put(
+						"description", "description"
+					).put(
+						"name", "addedTextProperty"
+					).put(
+						"objectFieldERC",
+						_API_SINGLE_ELEMENT_SCHEMA_TEXT_FIELD_ERC
+					))
+			).put(
+				"description", "description"
+			).put(
+				"externalReferenceCode", apiSchemaExternalReferenceCode
+			).put(
+				"mainObjectDefinitionERC",
+				_singleElementObjectDefinition.getExternalReferenceCode()
+			).put(
+				"name", "AddedSchemaName"
+			).put(
+				"r_apiApplicationToAPISchemas_l_apiApplicationERC",
+				_API_APPLICATION_ERC
+			).toString(),
+			"headless-builder/schemas", Http.Method.POST);
+		assertSuccessfulJSONObject(
+			JSONUtil.put(
+				"description", "added description"
+			).put(
+				"httpMethod", "get"
+			).put(
+				"name", "added name"
+			).put(
+				"path", "/added-path"
+			).put(
+				"r_apiApplicationToAPIEndpoints_l_apiApplicationERC",
+				_API_APPLICATION_ERC
+			).put(
+				"r_responseAPISchemaToAPIEndpoints_l_apiSchemaERC",
+				apiSchemaExternalReferenceCode
+			).put(
+				"retrieveType",
+				APIApplication.Endpoint.RetrieveType.COLLECTION.getValue()
+			).put(
+				"scope", APIApplication.Endpoint.Scope.COMPANY.getValue()
+			).toString(),
+			"headless-builder/endpoints", Http.Method.POST);
 
 		jsonObject = HTTPTestUtil.invokeToJSONObject(
 			null, apiApplicationURL + "/openapi.json", Http.Method.GET);
@@ -565,7 +663,7 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 					).put(
 						"description", "description"
 					).put(
-						"externalReferenceCode", _API_SCHEMA_ERC
+						"externalReferenceCode", _API_SCHEMA_ERC_1
 					).put(
 						"mainObjectDefinitionERC",
 						_objectDefinition1.getExternalReferenceCode()
@@ -662,12 +760,22 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 					).put(
 						"description", "description"
 					).put(
-						"externalReferenceCode", RandomTestUtil.randomString()
+						"externalReferenceCode", _API_SCHEMA_ERC_3
 					).put(
 						"mainObjectDefinitionERC",
 						_objectDefinition3.getExternalReferenceCode()
 					).put(
 						"name", "RecordSchemaName"
+					),
+					JSONUtil.put(
+						"description", RandomTestUtil.randomString()
+					).put(
+						"externalReferenceCode", _API_SCHEMA_ERC_2
+					).put(
+						"mainObjectDefinitionERC",
+						_objectDefinition3.getExternalReferenceCode()
+					).put(
+						"name", RandomTestUtil.randomString()
 					),
 					JSONUtil.put(
 						"apiSchemaToAPIProperties",
@@ -748,6 +856,7 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 				"title", "title"
 			).toString(),
 			"headless-builder/applications", Http.Method.POST);
+
 		assertSuccessfulJSONObject(
 			JSONUtil.put(
 				"apiApplicationToAPIEndpoints",
@@ -804,6 +913,43 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 						"scope", APIApplication.Endpoint.Scope.SITE.getValue()
 					),
 					JSONUtil.put(
+						"description", "company scoped no schema description"
+					).put(
+						"httpMethod", "get"
+					).put(
+						"name", "company scoped no schema name"
+					).put(
+						"path", "/company-scoped-no-schema"
+					).put(
+						"retrieveType",
+						APIApplication.Endpoint.RetrieveType.COLLECTION.
+							getValue()
+					).put(
+						"scope",
+						APIApplication.Endpoint.Scope.COMPANY.getValue()
+					),
+					JSONUtil.put(
+						"description", RandomTestUtil.randomString()
+					).put(
+						"externalReferenceCode", _API_GET_ENDPOINT_ERC_2
+					).put(
+						"httpMethod", "get"
+					).put(
+						"name", RandomTestUtil.randomString()
+					).put(
+						"path",
+						StringUtil.toLowerCase(
+							StringPool.FORWARD_SLASH +
+								RandomTestUtil.randomString())
+					).put(
+						"retrieveType",
+						APIApplication.Endpoint.RetrieveType.COLLECTION.
+							getValue()
+					).put(
+						"scope",
+						APIApplication.Endpoint.Scope.COMPANY.getValue()
+					),
+					JSONUtil.put(
 						"description",
 						"post endpoint no request schema description"
 					).put(
@@ -826,7 +972,7 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 					JSONUtil.put(
 						"description", "site scoped description"
 					).put(
-						"externalReferenceCode", _API_SITE_SCOPED_ENDPOINT_ERC
+						"externalReferenceCode", _API_SITE_SCOPED_ENDPOINT_ERC_1
 					).put(
 						"httpMethod", "get"
 					).put(
@@ -836,6 +982,26 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 					).put(
 						"r_responseAPISchemaToAPIEndpoints_l_apiSchemaERC",
 						_API_SITE_SCOPED_SCHEMA_ERC
+					).put(
+						"retrieveType",
+						APIApplication.Endpoint.RetrieveType.COLLECTION.
+							getValue()
+					).put(
+						"scope", APIApplication.Endpoint.Scope.SITE.getValue()
+					),
+					JSONUtil.put(
+						"description", RandomTestUtil.randomString()
+					).put(
+						"externalReferenceCode", _API_SITE_SCOPED_ENDPOINT_ERC_2
+					).put(
+						"httpMethod", "get"
+					).put(
+						"name", RandomTestUtil.randomString()
+					).put(
+						"path",
+						StringUtil.toLowerCase(
+							StringPool.FORWARD_SLASH +
+								RandomTestUtil.randomString())
 					).put(
 						"retrieveType",
 						APIApplication.Endpoint.RetrieveType.COLLECTION.
@@ -864,7 +1030,7 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 					JSONUtil.put(
 						"description", "description"
 					).put(
-						"externalReferenceCode", _API_GET_ENDPOINT_ERC
+						"externalReferenceCode", _API_GET_ENDPOINT_ERC_1
 					).put(
 						"httpMethod", "get"
 					).put(
@@ -873,7 +1039,7 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 						"path", "/path"
 					).put(
 						"r_responseAPISchemaToAPIEndpoints_l_apiSchemaERC",
-						_API_SCHEMA_ERC
+						_API_SCHEMA_ERC_1
 					).put(
 						"retrieveType",
 						APIApplication.Endpoint.RetrieveType.COLLECTION.
@@ -894,7 +1060,7 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 						"path", "/path"
 					).put(
 						"r_requestAPISchemaToAPIEndpoints_l_apiSchemaERC",
-						_API_SCHEMA_ERC
+						_API_SCHEMA_ERC_1
 					).put(
 						"retrieveType",
 						APIApplication.Endpoint.RetrieveType.SINGLE_ELEMENT.
@@ -979,6 +1145,30 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 		return objectFieldSetting;
 	}
 
+	private String _getAPIEndpointPath(String externalReferenceCode)
+		throws Exception {
+
+		JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
+			null,
+			"headless-builder/endpoints/by-external-reference-code/" +
+				externalReferenceCode,
+			Http.Method.GET);
+
+		return jsonObject.getString("path");
+	}
+
+	private String _getAPISchemaName(String externalReferenceCode)
+		throws Exception {
+
+		JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
+			null,
+			"headless-builder/schemas/by-external-reference-code/" +
+				externalReferenceCode,
+			Http.Method.GET);
+
+		return jsonObject.getString("name");
+	}
+
 	private ObjectDefinition _publishObjectDefinition(
 			List<ObjectField> objectFields, String scope)
 		throws Exception {
@@ -1005,7 +1195,10 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 	private static final String _API_BASE_URL = StringUtil.toLowerCase(
 		RandomTestUtil.randomString());
 
-	private static final String _API_GET_ENDPOINT_ERC =
+	private static final String _API_GET_ENDPOINT_ERC_1 =
+		RandomTestUtil.randomString();
+
+	private static final String _API_GET_ENDPOINT_ERC_2 =
 		RandomTestUtil.randomString();
 
 	private static final String
@@ -1042,7 +1235,14 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 	private static final String _API_SCHEMA_DECIMAL_FIELD_ERC =
 		RandomTestUtil.randomString();
 
-	private static final String _API_SCHEMA_ERC = RandomTestUtil.randomString();
+	private static final String _API_SCHEMA_ERC_1 =
+		RandomTestUtil.randomString();
+
+	private static final String _API_SCHEMA_ERC_2 =
+		RandomTestUtil.randomString();
+
+	private static final String _API_SCHEMA_ERC_3 =
+		RandomTestUtil.randomString();
 
 	private static final String _API_SCHEMA_INTEGER_FIELD_ERC =
 		RandomTestUtil.randomString();
@@ -1094,7 +1294,10 @@ public class HeadlessBuilderOpenAPIResourceTest extends BaseTestCase {
 		_API_SINGLE_ELEMENT_SITE_SCOPED_SCHEMA_TEXT_FIELD_ERC =
 			RandomTestUtil.randomString();
 
-	private static final String _API_SITE_SCOPED_ENDPOINT_ERC =
+	private static final String _API_SITE_SCOPED_ENDPOINT_ERC_1 =
+		RandomTestUtil.randomString();
+
+	private static final String _API_SITE_SCOPED_ENDPOINT_ERC_2 =
 		RandomTestUtil.randomString();
 
 	private static final String _API_SITE_SCOPED_NO_SCHEMA_ENDPOINT_ERC =

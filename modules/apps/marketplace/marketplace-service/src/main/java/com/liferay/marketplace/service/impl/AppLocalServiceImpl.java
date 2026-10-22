@@ -17,7 +17,6 @@ import com.liferay.marketplace.service.base.AppLocalServiceBaseImpl;
 import com.liferay.marketplace.service.persistence.ModulePersistence;
 import com.liferay.marketplace.util.BundleManagerUtil;
 import com.liferay.marketplace.util.comparator.AppTitleComparator;
-import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
@@ -188,9 +187,11 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 		List<App> apps = appPersistence.findAll();
 
 		for (App app : apps) {
-			if (app.isInstalled()) {
-				installedApps.add(app);
+			if (!app.isInstalled()) {
+				continue;
 			}
+
+			installedApps.add(app);
 		}
 
 		installedApps = ListUtil.sort(
@@ -199,21 +200,6 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 		_installedApps = installedApps;
 
 		return _installedApps;
-	}
-
-	@Override
-	public List<App> getInstalledApps(String category) {
-		List<App> apps = appPersistence.findByCategory(category);
-
-		return TransformUtil.transform(
-			apps,
-			app -> {
-				if (app.isInstalled()) {
-					return app;
-				}
-
-				return null;
-			});
 	}
 
 	@Override
@@ -306,10 +292,12 @@ public class AppLocalServiceImpl extends AppLocalServiceBaseImpl {
 		for (Module module : modules) {
 			_moduleLocalService.deleteModule(module.getModuleId());
 
-			if (module.isBundle()) {
-				BundleManagerUtil.uninstallBundle(
-					module.getBundleSymbolicName(), module.getBundleVersion());
+			if (!module.isBundle()) {
+				continue;
 			}
+
+			BundleManagerUtil.uninstallBundle(
+				module.getBundleSymbolicName(), module.getBundleVersion());
 		}
 	}
 

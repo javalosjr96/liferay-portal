@@ -23,6 +23,7 @@ import manageMembersAction, {
 import SpaceRenderer from './cell_renderers/SpaceRenderer';
 import addOnClickToCreationMenuItems from './utils/addOnClickToCreationMenuItems';
 import {executeAsyncItemAction} from './utils/executeAsyncItemAction';
+import styleDeleteAction from './utils/styleDeleteAction';
 import transformFDSBulkActions from './utils/transformFDSBulkActions';
 
 const ACTIONS = {};
@@ -89,7 +90,7 @@ export default function AllSpacesFDSPropsTransformer({
 				};
 			}
 
-			return action;
+			return styleDeleteAction(action);
 		}),
 		onActionDropdownItemClick: ({
 			action,
@@ -110,6 +111,7 @@ export default function AllSpacesFDSPropsTransformer({
 				};
 				creatorUserId: string;
 				externalReferenceCode: string;
+				friendlyURL: string;
 				id: string;
 				name: string;
 				siteId: string;
@@ -166,6 +168,22 @@ export default function AllSpacesFDSPropsTransformer({
 						itemData.name
 					),
 				});
+			}
+			else if (action.data.id === 'export') {
+				navigate(
+					additionalProps.exportURL.replace(
+						'{friendlyURL}',
+						itemData.friendlyURL
+					)
+				);
+			}
+			else if (action.data.id === 'import') {
+				navigate(
+					additionalProps.importURL.replace(
+						'{friendlyURL}',
+						itemData.friendlyURL
+					)
+				);
 			}
 			else if (action.data.id === 'pin' || action.data.id === 'unpin') {
 				event?.preventDefault();

@@ -336,12 +336,14 @@ export default function AddToolsModal({
 					<ClayLoadingIndicator />
 				) : (
 					<>
-						<div className="sticky-top">
-							<SelectedItemsBar
-								count={selectedTools.length}
-								onDeselectAll={() => setSelectedKeys(new Set())}
-							/>
-						</div>
+						{!!initialItems.length && (
+							<div className="sticky-top">
+								<SelectedItemsBar
+									count={selectedTools.length}
+									onClear={() => setSelectedKeys(new Set())}
+								/>
+							</div>
+						)}
 
 						<div className="px-4 py-2">
 							{initialItems.length ? (
@@ -452,7 +454,7 @@ export default function AddToolsModal({
 								</TreeView>
 							) : (
 								<div className="align-items-center d-flex justify-content-center py-4">
-									<p className="text-secondary" role="status">
+									<p className="text-secondary">
 										{Liferay.Language.get(
 											'no-tools-were-found'
 										)}

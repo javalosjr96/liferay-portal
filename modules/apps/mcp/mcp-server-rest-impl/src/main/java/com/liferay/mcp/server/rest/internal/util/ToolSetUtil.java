@@ -14,10 +14,12 @@ import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.module.service.Snapshot;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
@@ -50,21 +52,30 @@ import java.util.concurrent.ConcurrentHashMap;
 public class ToolSetUtil {
 
 	public static void clearOpenAPIJSONObjectCache(long companyId) {
+		if (companyId == CompanyConstants.SYSTEM) {
+			_openAPIJSONObjects.clear();
+
+			return;
+		}
+
 		Set<String> keys = _openAPIJSONObjects.keySet();
 
 		keys.removeIf(key -> key.startsWith(companyId + StringPool.POUND));
 	}
 
 	public static Tool getTool(
-		HttpServletRequest httpServletRequest,
+		HttpServletRequest httpServletRequest, boolean requiredInputSchemaOnly,
 		Map<String, String> restrictFieldsMap, String toolName,
 		String toolSetName) {
 
 		return OpenAPIUtil.getTool(
 			!Objects.equals(toolSetName, _TOOL_SET_NAME),
 			_getOpenAPIJSONObject(
-				httpServletRequest, _getOpenAPIDocument(toolSetName),
+				httpServletRequest,
+				_getOpenAPIDocument(
+					PortalUtil.getCompanyId(httpServletRequest), toolSetName),
 				toolSetName),
+			requiredInputSchemaOnly,
 			_getRestrictFields(restrictFieldsMap, toolName, toolSetName),
 			toolName);
 	}
@@ -79,14 +90,16 @@ public class ToolSetUtil {
 
 		return OpenAPIUtil.getOutputSchema(
 			_getOpenAPIJSONObject(
-				httpServletRequest, _getOpenAPIDocument(toolSetName),
+				httpServletRequest,
+				_getOpenAPIDocument(
+					PortalUtil.getCompanyId(httpServletRequest), toolSetName),
 				toolSetName),
 			toolName);
 	}
 
-	public static Page<ToolSet> getToolSetsPage() {
+	public static Page<ToolSet> getToolSetsPage(long companyId) {
 		Map<String, HeadlessApplicationProvider.OpenAPIDocument>
-			openAPIDocuments = _getOpenAPIDocuments();
+			openAPIDocuments = _getOpenAPIDocuments(companyId);
 
 		return Page.of(
 			TransformUtil.transform(
@@ -112,7 +125,10 @@ public class ToolSetUtil {
 		return Page.of(
 			OpenAPIUtil.getToolSummaries(
 				_getOpenAPIJSONObject(
-					httpServletRequest, _getOpenAPIDocument(toolSetName),
+					httpServletRequest,
+					_getOpenAPIDocument(
+						PortalUtil.getCompanyId(httpServletRequest),
+						toolSetName),
 					toolSetName)));
 	}
 
@@ -140,7 +156,9 @@ public class ToolSetUtil {
 			if (Objects.equals(toolName, "getToolSetToolSetNameTool")) {
 				return _getResponse(
 					getTool(
-						httpServletRequest, restrictFieldsMap,
+						httpServletRequest,
+						inputJSONObject.getBoolean("requiredInputSchemaOnly"),
+						restrictFieldsMap,
 						inputJSONObject.getString("toolName"),
 						inputJSONObject.getString("toolSetName")));
 			}
@@ -155,7 +173,9 @@ public class ToolSetUtil {
 			}
 
 			if (Objects.equals(toolName, "getToolSetsPage")) {
-				return _getResponse(getToolSetsPage());
+				return _getResponse(
+					getToolSetsPage(
+						PortalUtil.getCompanyId(httpServletRequest)));
 			}
 
 			if (Objects.equals(toolName, "postToolSetToolSetNameToolInvoke")) {
@@ -171,7 +191,8 @@ public class ToolSetUtil {
 			_vulcanRequestForwarderSnapshot.get();
 
 		HeadlessApplicationProvider.OpenAPIDocument openAPIDocument =
-			_getOpenAPIDocument(toolSetName);
+			_getOpenAPIDocument(
+				PortalUtil.getCompanyId(httpServletRequest), toolSetName);
 
 		HeadlessApplicationProvider.Application application =
 			openAPIDocument.getApplication();
@@ -236,10 +257,10 @@ public class ToolSetUtil {
 	}
 
 	private static HeadlessApplicationProvider.OpenAPIDocument
-		_getOpenAPIDocument(String toolSetName) {
+		_getOpenAPIDocument(long companyId, String toolSetName) {
 
 		Map<String, HeadlessApplicationProvider.OpenAPIDocument>
-			openAPIDocuments = _getOpenAPIDocuments();
+			openAPIDocuments = _getOpenAPIDocuments(companyId);
 
 		HeadlessApplicationProvider.OpenAPIDocument openAPIDocument =
 			openAPIDocuments.get(toolSetName);
@@ -253,7 +274,7 @@ public class ToolSetUtil {
 	}
 
 	private static Map<String, HeadlessApplicationProvider.OpenAPIDocument>
-		_getOpenAPIDocuments() {
+		_getOpenAPIDocuments(long companyId) {
 
 		Map<String, HeadlessApplicationProvider.OpenAPIDocument>
 			openAPIDocuments = new TreeMap<>();
@@ -262,7 +283,7 @@ public class ToolSetUtil {
 			_headlessApplicationProviderSnapshot.get();
 
 		for (HeadlessApplicationProvider.Application application :
-				headlessApplicationProvider.getApplications()) {
+				headlessApplicationProvider.getApplications(companyId)) {
 
 			if (Validator.isNull(application.getBasePath()) ||
 				Objects.equals(application.getBasePath(), "/openapi")) {
@@ -316,8 +337,12 @@ public class ToolSetUtil {
 				try {
 					return JSONFactoryUtil.createJSONObject(content);
 				}
-				catch (Exception exception) {
-					throw new RuntimeException(exception);
+				catch (JSONException jsonException) {
+					throw new IllegalStateException(
+						StringBundler.concat(
+							"Unable to parse the OpenAPI document of the \"",
+							toolSetName, "\" tool set"),
+						jsonException);
 				}
 			});
 	}

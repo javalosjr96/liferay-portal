@@ -348,8 +348,7 @@ public class CloudBucketUtilTest
 
 		_validateChecksumFile(destinationFile, _randomS3ObjectPath());
 
-		Assert.assertTrue(
-			"Deleted a file whose checksum matched", destinationFile.exists());
+		Assert.assertTrue(destinationFile.exists());
 
 		JenkinsResultsParserUtil.write(
 			destinationChecksumFile, RandomTestUtil.randomSHA());
@@ -357,7 +356,7 @@ public class CloudBucketUtilTest
 		try {
 			_validateChecksumFile(destinationFile, _randomS3ObjectPath());
 
-			Assert.fail("Accepted a file whose checksum did not match");
+			Assert.fail();
 		}
 		catch (IOException ioException) {
 			String message = ioException.getMessage();
@@ -366,9 +365,7 @@ public class CloudBucketUtilTest
 				message, message.contains(destinationFile.getName()));
 		}
 
-		Assert.assertFalse(
-			"Kept a file whose checksum did not match",
-			destinationFile.exists());
+		Assert.assertFalse(destinationFile.exists());
 	}
 
 	@Rule

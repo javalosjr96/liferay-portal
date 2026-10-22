@@ -12,14 +12,14 @@ html:root {
 	@include clay-css($c-root);
 }
 
-@media (prefers-color-scheme: dark) {
-	html:root {
-		@include clay-css($c-dark);
-	}
-}
+html[data-color-scheme='dark']:root {
+	@include clay-css($c-dark);
 
-@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
-	html:root {
+	@media (prefers-contrast: more) {
+		@include clay-css($c-dark-high-contrast);
+	}
+
+	&[data-prefers-contrast='more'] {
 		@include clay-css($c-dark-high-contrast);
 	}
 }
@@ -31,8 +31,7 @@ html:root {
 // to the explicit color scheme, not a prefers-color-scheme media query, so it
 // respects the color scheme toggle.
 
-[data-color-scheme='dark'] .taglib-empty-result-message,
-[data-color-scheme='dark-high-contrast'] .taglib-empty-result-message {
+[data-color-scheme='dark'] .taglib-empty-result-message {
 	.taglib-empty-result-message-header,
 	.taglib-empty-result-message-header-has-plus-btn,
 	.taglib-empty-search-result-message-header,

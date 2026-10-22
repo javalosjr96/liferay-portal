@@ -12,7 +12,7 @@ ArrayUtilCheck | [Styling](styling_checks.md#styling-checks) | .java, .jsp, .jsp
 [AssertEqualsCheck](check/assert_equals_check.md#assertequalscheck) | [Styling](styling_checks.md#styling-checks) | .java | Checks that additional information is provided when calling `Assert.assertEquals`. |
 AssertFailCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Checks that calls to `Assert.fail` can be only used inside a try block as the last statement. |
 AssignAsUsedCheck | [Performance](performance_checks.md#performance-checks) | .java | Finds cases where an assign statement can be inlined or moved closer to where it is used. |
-[AutoBatchPreparedStatementUtilCheck](check/auto_batch_prepared_statement_util_check.md#autobatchpreparedstatementutilcheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Finds cases where `AutoBatchPreparedStatementUtil.autoBatch` or `AutoBatchPreparedStatementUtil.concurrentAutoBatch` should be used. |
+[AutoBatchPreparedStatementUtilCheck](check/auto_batch_prepared_statement_util_check.md#autobatchpreparedstatementutilcheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Finds cases where `AutoBatchPreparedStatementUtil.autoBatch`, `AutoBatchPreparedStatementUtil.autoBatchWithResults`, or `AutoBatchPreparedStatementUtil.concurrentAutoBatch` should be used. |
 [AvoidNestedBlocksCheck](https://checkstyle.sourceforge.io/checks/blocks/avoidnestedblocks.html) | [Styling](styling_checks.md#styling-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Finds nested blocks (blocks that are used freely in the code). |
 [AvoidStarImportCheck](https://checkstyle.sourceforge.io/checks/imports/avoidstarimport.html) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Checks that there are no import statements that use the * notation. |
 BNDBreakingChangeCommitMessageCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .bnd | Checks that commit message should contain the schematized breaking changes. |
@@ -84,6 +84,7 @@ DeprecatedAPICheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-ch
 DeprecatedClassesCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Replaces deprecated classes. |
 DockerfileEmptyLinesCheck | [Styling](styling_checks.md#styling-checks) | Dockerfile | Finds missing and unnecessary empty lines. |
 DockerfileInstructionCheck | [Styling](styling_checks.md#styling-checks) | Dockerfile | Performs styling rules on instructions in `Dockerfile` files. |
+[EarlyLoopExitCheck](check/early_loop_exit_check.md#earlyloopexitcheck) | [Styling](styling_checks.md#styling-checks) | .java | Finds if-statements at the end of a loop body that can be inverted to use `break`, `continue`, `return`, or `throw` as early as possible. |
 EmbeddedJSONCheck | [Styling](styling_checks.md#styling-checks) | .action, .function, .jelly, .jrxml, .macro, .markdown, .md, .pom, .project, .properties, .qti, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, or .xsd | Ensures consistent formatting for embedded JSON. |
 EmptyCollectionCheck | [Styling](styling_checks.md#styling-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Checks that there are no calls to `Collections.EMPTY_LIST`, `Collections.EMPTY_MAP` or `Collections.EMPTY_SET`. |
 EmptyConstructorCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Finds unnecessary empty constructors. |
@@ -117,7 +118,7 @@ GradleBlockOrderCheck | [Styling](styling_checks.md#styling-checks) | .gradle | 
 GradleBodyCheck | [Styling](styling_checks.md#styling-checks) | .gradle | Applies rules to enforce consistency in the body of gradle build files. |
 GradleCommerceDependenciesCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .gradle | Checks the modules that are outside of Commerce are not allowed to depend on Commerce modules. |
 [GradleDependenciesCheck](check/gradle_dependencies_check.md#gradledependenciescheck) | [Performance](performance_checks.md#performance-checks) | .gradle | Checks that modules are not depending on other modules. |
-[GradleDependencyArtifactsCheck](check/gradle_dependency_artifacts_check.md#gradledependencyartifactscheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .gradle, .prettierignore, or .properties | Performs several checks on dependencies artifacts. |
+[GradleDependencyArtifactsCheck](check/gradle_dependency_artifacts_check.md#gradledependencyartifactscheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .gradle or .properties | Performs several checks on dependencies artifacts. |
 GradleDependencyConfigurationCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .gradle | Validates the scope of dependencies in build gradle files. |
 GradleDependencyVersionCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .gradle | Checks the version for dependencies in gradle build files. |
 GradleEmptyLinesCheck | [Styling](styling_checks.md#styling-checks) | .gradle | Finds missing and unnecessary empty lines. |
@@ -152,15 +153,14 @@ InnerExceptionClassCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevent
 InstanceofOrderCheck | [Styling](styling_checks.md#styling-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Check the order of `instanceof` calls. |
 [ItemBuilderCheck](check/builder_check.md#buildercheck) | [Miscellaneous](miscellaneous_checks.md#miscellaneous-checks) | .java | Checks that `DropdownItemBuilder`, `LabelItemBuilder` or `NavigationItemBuilder` is used when possible. |
 [ItemListBuilderCheck](check/builder_check.md#buildercheck) | [Miscellaneous](miscellaneous_checks.md#miscellaneous-checks) | .java | Checks that `DropdownItemListBuilder`, `LabelItemListBuilder` or `NavigationItemListBuilder` is used when possible. |
-JDKDynamicAgentLoadingCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .action, .eslintignore, .expect, .function, .gotmpl, .jelly, .jrxml, .macro, .pom, .prettierignore, .project, .properties, .qti, .sh, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, .xsd, .yaml, or .yml | Checks that dynamic loading of agents is not used. |
-JDKPreviewFeaturesCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .action, .eslintignore, .expect, .function, .gotmpl, .jelly, .jrxml, .macro, .pom, .prettierignore, .project, .properties, .qti, .sh, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, .xsd, .yaml, or .yml | Checks that preview features are not used. |
+JDKDynamicAgentLoadingCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .action, .expect, .function, .gotmpl, .jelly, .jrxml, .macro, .pom, .project, .properties, .qti, .sh, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, .xsd, .yaml, or .yml | Checks that dynamic loading of agents is not used. |
+JDKPreviewFeaturesCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .action, .expect, .function, .gotmpl, .jelly, .jrxml, .macro, .pom, .project, .properties, .qti, .sh, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, .xsd, .yaml, or .yml | Checks that preview features are not used. |
 JSCompatibilityCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | | Checks for JavaScript compatibility. |
 [JSLodashDependencyCheck](check/js_lodash_dependency_check.md#jslodashdependencycheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .js or .jsx | Finds incorrect use of `AUI._`. |
-JSONBatchEngineDataFileCheck | [Styling](styling_checks.md#styling-checks) | .ipynb, .json, or .npmbridgerc | Remove elements in `*.batch-engine-data.json` files. |
+JSONBatchEngineDataFileCheck | [Styling](styling_checks.md#styling-checks) | .ipynb, .json, or .npmbridgerc | Performs several checks on `*.batch-engine-data.json` files. |
 JSONCommerceCatalogFileCheck | [Styling](styling_checks.md#styling-checks) | .ipynb, .json, or .npmbridgerc | Sorts `*.options.json`, `*.products.json`, and `*.products.specifications.json` files. |
 [JSONDeprecatedPackagesCheck](check/json_deprecated_packages_check.md#jsondeprecatedpackagescheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .ipynb, .json, or .npmbridgerc | Finds incorrect use of deprecated packages in `package.json` files. |
 JSONNamingCheck | [Naming Conventions](naming_conventions_checks.md#naming-conventions-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Checks if variable names follow naming conventions. |
-JSONObjectDefinitionFileCheck | [Styling](styling_checks.md#styling-checks) | .ipynb, .json, or .npmbridgerc | Applies rules to enforce consistency in code style. |
 JSONPackageJSONBNDVersionCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .ipynb, .json, or .npmbridgerc | Checks the version for dependencies in `package.json` files. |
 JSONPackageJSONCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .ipynb, .json, or .npmbridgerc | Checks content of `package.json` files. |
 JSONPackageJSONDependencyVersionCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .ipynb, .json, or .npmbridgerc | Checks the version for dependencies in `package.json` files. |
@@ -263,6 +263,7 @@ JavaEmptyLinesCheck | [Styling](styling_checks.md#styling-checks) | .java | Find
 JavaEntityFieldsMapOrderCheck | [Styling](styling_checks.md#styling-checks) | .java | Sorts entity fields when calling `EntityFieldsMapFactory.create` and `EntityModel.toEntityFieldsMap`. |
 JavaExceptionCheck | [Naming Conventions](naming_conventions_checks.md#naming-conventions-checks) | .java | Checks that variable names of exceptions in `catch` statements follow naming conventions. |
 JavaExpandoBridgeAttributesCallOrderCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Ensure `setExpandoBridgeAttributes` is the final setter called on a model before model persistence. |
+JavaFeatureFlagAnnotationCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Checks that feature flags are declared with `x-feature-flag` in `rest-openapi.yaml` instead of using the annotation `@FeatureFlag`. |
 JavaFeatureFlagManagerUtilCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Finds cases where `FeatureFlagManagerUtil.isEnabled` should be used and incorrect use of it. |
 JavaFeatureFlagsAndTestInfoAnnotationCheck | [Styling](styling_checks.md#styling-checks) | .java | Sorts the values in `@FeatureFlags` and `@TestInfo` annotation. |
 JavaFinalVariableCheck | [Styling](styling_checks.md#styling-checks) | .java | Finds cases of unneeded `final` modifiers for variables and parameters. |
@@ -438,6 +439,7 @@ PackageinfoBNDExportPackageCheck | [Bug Prevention](bug_prevention_checks.md#bug
 PackageinfoBreakingChangeCommitMessageCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | packageinfo | Checks that commit message should contain the schematized breaking changes. |
 [ParameterNameCheck](https://checkstyle.sourceforge.io/checks/naming/parametername.html) | [Naming Conventions](naming_conventions_checks.md#naming-conventions-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Checks that method parameter names conform to a specified pattern. |
 ParsePrimitiveTypeCheck | [Performance](performance_checks.md#performance-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Verifies that `GetterUtil.parse*` is used to parse primitive types, when possible. |
+PatternMatchingForSwitchCheck | [Performance](performance_checks.md#performance-checks) | .java | Finds usage of pattern matching for `switch`. |
 PersistenceCallCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Finds illegal persistence calls across component boundaries. |
 [PersistenceUpdateCheck](check/persistence_update_check.md#persistenceupdatecheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Checks that there are no stale references in service code from persistence updates. |
 PlusStatementCheck | [Styling](styling_checks.md#styling-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Performs several checks to statements where `+` is used for concatenation. |
@@ -455,46 +457,46 @@ PoshiVariableNameCheck | [Styling](styling_checks.md#styling-checks) | .function
 PoshiWhitespaceCheck | [Styling](styling_checks.md#styling-checks) | .function, .jar, .lar, .macro, .path, .testcase, .war, or .zip | Finds missing and unnecessary whitespace. |
 PrimitiveWrapperInstantiationCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Finds cases where `new Type` is used for primitive types (use `Type.valueOf` instead). |
 PrincipalExceptionCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Finds calls to `PrincipalException.class.getName()` (use `PrincipalException.getNestedClasses()` instead). |
-PropertiesArchivedModulesCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Finds `test.batch.class.names.includes` property value pointing to archived modules in `test.properties`. |
-PropertiesBuildIncludeDirsCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Verifies property value of `build.include.dirs` in `build.properties`. |
-PropertiesCommentsCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Validates comments in `.properties` files. |
-PropertiesDefaultAdminScreenNameCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Checks that we do not use `default.admin.screen.name`. |
-PropertiesDefinitionKeysCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Sorts definition keys in `liferay-plugin-package.properties` file. |
-PropertiesDependenciesFileCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Sorts the properties in `dependencies.properties` file. |
-PropertiesDuplicateKeysCheck | [Miscellaneous](miscellaneous_checks.md#miscellaneous-checks) | .eslintignore, .prettierignore, or .properties | Checks for duplicate property keys. |
-PropertiesEmptyLinesCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Finds missing and unnecessary empty lines. |
-PropertiesEnvironmentVariablesCheck | [Documentation](documentation_checks.md#documentation-checks) | .eslintignore, .prettierignore, or .properties | Verifies that the environment property in the documentation matches the property name. |
-PropertiesFeatureFlagsCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Generate feature flags in `portal.properties` file. |
-PropertiesImportedFilesContentCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Performs several checks on `imported-files.properties` file. |
-PropertiesJVMAttributesOrderCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Sorts JVM attributes. |
-PropertiesLanguageContractionsCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Finds contractions (such as `can't` or `you're`). |
-[PropertiesLanguageKeysCheck](check/properties_language_keys_check.md#propertieslanguagekeyscheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Checks that there is no HTML markup in language keys. |
-PropertiesLanguageKeysContextCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Checks if the language keys include a word of context to indicate specific meaning. |
-PropertiesLanguageKeysOrderCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Sort language keys in `Language.properties` file. |
-PropertiesLanguageStylingCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Applies rules to enforce consistency in code style. |
-PropertiesLiferayPluginPackageFileCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Performs several checks on `liferay-plugin-package.properties` file. |
-PropertiesLiferayPluginPackageLiferayVersionsCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Validates the version in `liferay-plugin-package.properties` file. |
-PropertiesLongLinesCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Finds lines that are longer than the specified maximum line length. |
-PropertiesMultiLineValuesOrderCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Verifies that property with multiple values is not on a single line. |
-PropertiesPlaywrightTestCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Performs several checks on `test.properties` for Playwright test. |
-PropertiesPortalFileCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Performs several checks on `portal.properties` or `portal-*.properties` file. |
-PropertiesPortletFileCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Performs several checks on `portlet.properties` file. |
-PropertiesReleaseBuildCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Verifies that the information in `release.properties` matches the information in `ReleaseInfo.java`. |
-PropertiesServiceKeysCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Finds usage of legacy properties in `service.properties`. |
-PropertiesSourceFormatterContentCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Performs several checks on `source-formatter.properties` file. |
-PropertiesSourceFormatterFileCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Performs several checks on `source-formatter.properties` file. |
-PropertiesStylingCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Applies rules to enforce consistency in code style. |
-PropertiesTestFileCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Checks the order of properties in `test.properties` file. |
-[PropertiesUpgradeLiferayPluginPackageFileCheck](check/properties_upgrade_liferay_plugin_package_file_check.md#propertiesupgradeliferaypluginpackagefilecheck) | [Upgrade](upgrade_checks.md#upgrade-checks) | .eslintignore, .prettierignore, or .properties | Performs several upgrade checks in `liferay-plugin-package.properties` file. |
-PropertiesUpgradeLiferayPluginPackageLiferayVersionsCheck | [Upgrade](upgrade_checks.md#upgrade-checks) | .eslintignore, .prettierignore, or .properties | Validates and upgrades the version in `liferay-plugin-package.properties` file. |
-PropertiesVerifyPropertiesCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .eslintignore, .prettierignore, or .properties | Finds usage of legacy properties in `portal.properties` or `system.properties`. |
-PropertiesWhitespaceCheck | [Styling](styling_checks.md#styling-checks) | .eslintignore, .prettierignore, or .properties | Finds missing and unnecessary whitespace in `.properties` files. |
+PropertiesArchivedModulesCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Finds `test.batch.class.names.includes` property value pointing to archived modules in `test.properties`. |
+PropertiesBuildIncludeDirsCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Verifies property value of `build.include.dirs` in `build.properties`. |
+PropertiesCommentsCheck | [Styling](styling_checks.md#styling-checks) | .properties | Validates comments in `.properties` files and wraps them to the maximum line length. |
+PropertiesDefaultAdminScreenNameCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Checks that we do not use `default.admin.screen.name`. |
+PropertiesDefinitionKeysCheck | [Styling](styling_checks.md#styling-checks) | .properties | Sorts definition keys in `liferay-plugin-package.properties` file. |
+PropertiesDependenciesFileCheck | [Styling](styling_checks.md#styling-checks) | .properties | Sorts the properties in `dependencies.properties` file. |
+PropertiesDuplicateKeysCheck | [Miscellaneous](miscellaneous_checks.md#miscellaneous-checks) | .properties | Checks for duplicate property keys. |
+PropertiesEmptyLinesCheck | [Styling](styling_checks.md#styling-checks) | .properties | Finds missing and unnecessary empty lines. |
+PropertiesEnvironmentVariablesCheck | [Documentation](documentation_checks.md#documentation-checks) | .properties | Verifies that the environment property in the documentation matches the property name. |
+PropertiesFeatureFlagsCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Generate feature flags in `portal.properties` file. |
+PropertiesImportedFilesContentCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Performs several checks on `imported-files.properties` file. |
+PropertiesJVMAttributesOrderCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Sorts JVM attributes. |
+PropertiesLanguageContractionsCheck | [Styling](styling_checks.md#styling-checks) | .properties | Finds contractions (such as `can't` or `you're`). |
+[PropertiesLanguageKeysCheck](check/properties_language_keys_check.md#propertieslanguagekeyscheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Checks that there is no HTML markup in language keys. |
+PropertiesLanguageKeysContextCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Checks if the language keys include a word of context to indicate specific meaning. |
+PropertiesLanguageKeysOrderCheck | [Styling](styling_checks.md#styling-checks) | .properties | Sort language keys in `Language.properties` file. |
+PropertiesLanguageStylingCheck | [Styling](styling_checks.md#styling-checks) | .properties | Applies rules to enforce consistency in code style. |
+PropertiesLiferayPluginPackageFileCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Performs several checks on `liferay-plugin-package.properties` file. |
+PropertiesLiferayPluginPackageLiferayVersionsCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Validates the version in `liferay-plugin-package.properties` file. |
+PropertiesMultiLineValuesOrderCheck | [Styling](styling_checks.md#styling-checks) | .properties | Verifies that property with multiple values is not on a single line. |
+PropertiesPlaywrightTestCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Performs several checks on `test.properties` for Playwright test. |
+PropertiesPortalFileCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Performs several checks on `portal.properties` or `portal-*.properties` file. |
+PropertiesPortletFileCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Performs several checks on `portlet.properties` file. |
+PropertiesReleaseBuildCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Verifies that the information in `release.properties` matches the information in `ReleaseInfo.java`. |
+PropertiesServiceKeysCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Finds usage of legacy properties in `service.properties`. |
+PropertiesSourceFormatterContentCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Performs several checks on `source-formatter.properties` file. |
+PropertiesSourceFormatterFileCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Performs several checks on `source-formatter.properties` file. |
+PropertiesStylingCheck | [Styling](styling_checks.md#styling-checks) | .properties | Applies rules to enforce consistency in code style. |
+PropertiesTestFileCheck | [Styling](styling_checks.md#styling-checks) | .properties | Checks the order of properties in `test.properties` file. |
+[PropertiesUpgradeLiferayPluginPackageFileCheck](check/properties_upgrade_liferay_plugin_package_file_check.md#propertiesupgradeliferaypluginpackagefilecheck) | [Upgrade](upgrade_checks.md#upgrade-checks) | .properties | Performs several upgrade checks in `liferay-plugin-package.properties` file. |
+PropertiesUpgradeLiferayPluginPackageLiferayVersionsCheck | [Upgrade](upgrade_checks.md#upgrade-checks) | .properties | Validates and upgrades the version in `liferay-plugin-package.properties` file. |
+PropertiesVerifyPropertiesCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .properties | Finds usage of legacy properties in `portal.properties` or `system.properties`. |
+PropertiesWhitespaceCheck | [Styling](styling_checks.md#styling-checks) | .properties | Finds missing and unnecessary whitespace in `.properties` files. |
 PythonClassesAndMethodsOrderCheck | [Styling](styling_checks.md#styling-checks) | .py | Checks the order of classes and methods. |
 PythonImportsCheck | [Styling](styling_checks.md#styling-checks) | .py | Sorts and groups imports in `.py` files. |
 PythonStylingCheck | [Styling](styling_checks.md#styling-checks) | .py | Applies rules to enforce consistency in code style. |
 PythonWhitespaceCheck | [Styling](styling_checks.md#styling-checks) | .py | Finds missing and unnecessary whitespace. |
 RESTDTOSetCallCheck | [Performance](performance_checks.md#performance-checks) | .java | Ensures using set calls with `UnsafeSupplier` parameter for REST DTO. |
 RecordClassCheck | [Performance](performance_checks.md#performance-checks) | .java | Finds usage of `record`. |
+RecordPatternCheck | [Performance](performance_checks.md#performance-checks) | .java | Finds usage of record patterns. |
 RedundantBranchingStatementCheck | [Performance](performance_checks.md#performance-checks) | .java | Finds unnecessary branching (`break`, `continue` or `return`) statements. |
 [RedundantLogCheck](check/redundant_log_check.md#redundantlogcheck) | [Performance](performance_checks.md#performance-checks) | .java | Finds unnecessary logs. |
 ReferenceAnnotationCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Performs several checks on classes with @Reference annotation. |
@@ -548,6 +550,7 @@ TestClassCheck | [Naming Conventions](naming_conventions_checks.md#naming-conven
 TestClassDBConnectionCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Finds cases of incorrect use of database connection. |
 TestClassHardcodedPortCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Checks usages of `PortalUtil.getPortalServerPort()` in test classes. |
 TestClassMissingLiferayUnitTestRuleCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Finds missing LiferayUnitTestRule. |
+[TestClassStaticInitializerCheck](check/test_class_static_initializer_check.md#testclassstaticinitializercheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Checks that static initializers of Arquillian tests do not call portal test utilities and service methods. |
 TestClassStaticVariableCheck | [Performance](performance_checks.md#performance-checks) | .java | Finds unnecessary static modifiers in test classes. |
 TextBlockCheck | [Styling](styling_checks.md#styling-checks) | .java | Finds usage of text block. |
 [ThreadContextClassLoaderCheck](check/thread_context_class_loader_check.md#threadcontextclassloadercheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Checks usage of `Thread.setContextClassLoader`. |
@@ -623,7 +626,7 @@ VariableNameCheck | [Naming Conventions](naming_conventions_checks.md#naming-con
 VirtualThreadsCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .java | Checks that virtual threads are not used (e.g., Executors.newVirtualThreadPerTaskExecutor(), Thread.ofVirtual(), Thread.startVirtualThread()). |
 [WhitespaceAfterCheck](https://checkstyle.sourceforge.io/checks/whitespace/whitespaceafter.html) | [Styling](styling_checks.md#styling-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Checks that a token is followed by whitespace, with the exception that it does not check for whitespace after the semicolon of an empty for iterator. |
 [WhitespaceAroundCheck](https://checkstyle.sourceforge.io/checks/whitespace/whitespacearound.html) | [Styling](styling_checks.md#styling-checks) | .java, .jsp, .jspf, .jspx, .tag, .tpl, or .vm | Checks that a token is surrounded by whitespace. |
-WhitespaceCheck | [Styling](styling_checks.md#styling-checks) | .cql, .css, .dtd, .expect, .groovy, .scss, .sh, .soy, .sql, .tld, .tpl, .ts, .tsx, Dockerfile, or packageinfo | Finds missing and unnecessary whitespace. |
+WhitespaceCheck | [Styling](styling_checks.md#styling-checks) | .*ignore, .cql, .css, .dtd, .expect, .groovy, .scss, .sh, .soy, .sql, .tld, .tpl, .ts, .tsx, Dockerfile, or packageinfo | Finds missing and unnecessary whitespace. |
 XMLBuildFileCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .action, .function, .jelly, .jrxml, .macro, .pom, .project, .properties, .qti, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, or .xsd | Performs several checks on `build.xml`. |
 XMLCheckstyleFileCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | .action, .function, .jelly, .jrxml, .macro, .pom, .project, .properties, .qti, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, or .xsd | Performs several checks on `checkstyle.xml` file. |
 XMLCustomSQLOrderCheck | [Styling](styling_checks.md#styling-checks) | .action, .function, .jelly, .jrxml, .macro, .pom, .project, .properties, .qti, .svg, .testcase, .toggle, .tpl, .wsdl, .xlf, .xml, or .xsd | Checks the order of attributes in `custom-sql` file. |

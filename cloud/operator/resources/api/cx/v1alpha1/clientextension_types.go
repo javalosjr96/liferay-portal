@@ -5,18 +5,23 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
+	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	client "sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const AnnotationAllowedClientExtensionNamespaces = "cx.liferay.com/allowed-client-extension-namespaces"
-
 const (
 	ConditionConfigurationAccepted = "ConfigurationAccepted"
 	ConditionDelivered             = "Delivered"
+	ConditionMirrored              = "Mirrored"
 	ConditionProvisioned           = "Provisioned"
 	ConditionReady                 = "Ready"
 	ConditionWorkloadAccepted      = "WorkloadAccepted"
+)
+
+const (
+	ConfigMapKeyAllowedNamespaces      = "allowedNamespaces"
+	ConfigMapNameClientExtensionPolicy = "client-extension-policy"
 )
 
 const (
@@ -77,9 +82,12 @@ type ClientExtensionList struct {
 }
 
 type ClientExtensionSpec struct {
-	// +optional
-	Configs []string `json:"configs,omitempty"`
+	// +kubebuilder:validation:MinProperties=1
+	// +kubebuilder:validation:Required
+	Configs map[string]Configuration `json:"configs"`
 
+	// +kubebuilder:validation:MaxLength=253
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$`
 	// +optional
 	Domain string `json:"domain,omitempty"`
 
@@ -88,14 +96,15 @@ type ClientExtensionSpec struct {
 	// +optional
 	DxpNamespace string `json:"dxpNamespace,omitempty"`
 
-	// +optional
-	ProjectName string `json:"projectName,omitempty"`
-
+	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9]*[a-z0-9])?$`
 	// +kubebuilder:validation:Required
 	ServiceID string `json:"serviceId"`
 
+	// +kubebuilder:validation:MaxLength=63
 	// +kubebuilder:validation:MinLength=1
+	// +kubebuilder:validation:Pattern=`^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$`
 	// +kubebuilder:validation:Required
 	VirtualInstanceID string `json:"virtualInstanceId"`
 
@@ -119,7 +128,10 @@ type ClientExtensionStatus struct {
 	ExtInitSecretName string `json:"extInitSecretName,omitempty"`
 
 	// +optional
-	ExtProvisionConfigMapNames []string `json:"extProvisionConfigMapNames,omitempty"`
+	ExtProvisionObservedTime *metav1.Time `json:"extProvisionObservedTime,omitempty"`
+
+	// +optional
+	ExtProvisionResourceVersion string `json:"extProvisionResourceVersion,omitempty"`
 
 	// +optional
 	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
@@ -133,6 +145,12 @@ type ClientExtensionStatus struct {
 
 	// +optional
 	WorkloadName string `json:"workloadName,omitempty"`
+}
+
+// +kubebuilder:pruning:PreserveUnknownFields
+// +kubebuilder:validation:Type=object
+type Configuration struct {
+	apiextensionsv1.JSON
 }
 
 type ConfigurationError struct {

@@ -12,6 +12,7 @@ import com.liferay.petra.sql.dsl.query.DSLQuery;
 import com.liferay.portal.kernel.model.BaseModel;
 
 import java.util.List;
+import java.util.function.Function;
 
 import org.osgi.annotation.versioning.ProviderType;
 
@@ -24,7 +25,7 @@ import org.osgi.annotation.versioning.ProviderType;
 public interface InlineSQLHelper {
 
 	public <T extends BaseModel<T>> List<T> filter(
-		List<T> list, long... groupIds);
+		Function<T, Long> classPKFunction, List<T> list, long... groupIds);
 
 	public <T extends Table<T>> Predicate getPermissionWherePredicate(
 		Class<?> modelClass, Column<T, Long> classPKColumn, long... groupIds);
@@ -33,22 +34,15 @@ public interface InlineSQLHelper {
 		String modelClassName, Column<T, Long> classPKColumn, long... groupIds);
 
 	/**
-	 * Returns <code>true</code> if the inline SQL helper is enabled.
-	 *
-	 * @return <code>true</code> if the inline SQL helper is enabled;
-	 *         <code>false</code> otherwise
-	 */
-	public boolean isEnabled();
-
-	/**
 	 * Returns <code>true</code> if the inline SQL helper is enabled for the
-	 * group.
+	 * groups.
 	 *
-	 * @param  groupId the primary key of the group
+	 * @param  groupIds the primary keys of the groups. When empty or
+	 *         <code>null</code>, the check applies at the company level.
 	 * @return <code>true</code> if the inline SQL helper is enabled for the
-	 *         group; <code>false</code> otherwise
+	 *         groups; <code>false</code> otherwise
 	 */
-	public boolean isEnabled(long groupId);
+	public boolean isEnabled(long... groupIds);
 
 	/**
 	 * Returns <code>true</code> if the inline SQL helper is enabled for the
@@ -60,16 +54,6 @@ public interface InlineSQLHelper {
 	 *         company or group; <code>false</code> otherwise
 	 */
 	public boolean isEnabled(long companyId, long groupId);
-
-	/**
-	 * Returns <code>true</code> if the inline SQL helper is enabled for the
-	 * groups.
-	 *
-	 * @param  groupIds the primary keys of the groups
-	 * @return <code>true</code> if the inline SQL helper is enabled for the
-	 *         groups; <code>false</code> otherwise
-	 */
-	public boolean isEnabled(long[] groupIds);
 
 	public <T extends Table<T>> DSLQuery replacePermissionCheck(
 		DSLQuery dslQuery, Class<?> modelClass, Column<T, Long> classPKColumn,
@@ -89,51 +73,12 @@ public interface InlineSQLHelper {
 	 *         by the query
 	 * @param  classPKField the name of the column containing the resource's
 	 *         primary key
+	 * @param  groupIds the primary keys of the groups containing the resources.
+	 *         When empty or <code>null</code>, the check applies at the company
+	 *         level.
 	 * @return the modified SQL query
 	 */
 	public String replacePermissionCheck(
-		String sql, String className, String classPKField);
-
-	/**
-	 * Modifies the SQL query to only match resources that the user has
-	 * permission to view.
-	 *
-	 * Note that this method is only intended for use with relatively simple SQL
-	 * queries (i.e. queries that have no more than one WHERE clause). For more
-	 * complex SQL queries, it is recommended to use the DSLQuery methods
-	 * instead.
-	 *
-	 * @param  sql the SQL query
-	 * @param  className the fully qualified class name of the resources matched
-	 *         by the query
-	 * @param  classPKField the name of the column containing the resource's
-	 *         primary key
-	 * @param  groupId the primary key of the group containing the resources
-	 *         (optionally <code>null</code>)
-	 * @return the modified SQL query
-	 */
-	public String replacePermissionCheck(
-		String sql, String className, String classPKField, long groupId);
-
-	/**
-	 * Modifies the SQL query to only match resources that the user has
-	 * permission to view.
-	 *
-	 * Note that this method is only intended for use with relatively simple SQL
-	 * queries (i.e. queries that have no more than one WHERE clause). For more
-	 * complex SQL queries, it is recommended to use the DSLQuery methods
-	 * instead.
-	 *
-	 * @param  sql the SQL query
-	 * @param  className the fully qualified class name of the resources matched
-	 *         by the query
-	 * @param  classPKField the name of the column containing the resource's
-	 *         primary key
-	 * @param  groupIds the primary keys of the groups containing the resources
-	 *         (optionally <code>null</code>)
-	 * @return the modified SQL query
-	 */
-	public String replacePermissionCheck(
-		String sql, String className, String classPKField, long[] groupIds);
+		String sql, String className, String classPKField, long... groupIds);
 
 }

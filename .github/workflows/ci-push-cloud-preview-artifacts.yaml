@@ -48,14 +48,16 @@ jobs:
                 include:
                     -   chart_name: liferay-aws
                         working_directory: ./cloud/helm/aws
-                    -   chart_name: liferay-aws-infrastructure
-                        working_directory: ./cloud/helm/aws-infrastructure
                     -   chart_name: liferay-aws-infrastructure-provider
                         working_directory: ./cloud/helm/aws-infrastructure-provider
+                    -   chart_name: liferay-aws-marketplace
+                        working_directory: ./cloud/helm/aws-marketplace
                     -   chart_name: liferay-azure
                         working_directory: ./cloud/helm/azure
                     -   chart_name: liferay-azure-infrastructure-provider
                         working_directory: ./cloud/helm/azure-infrastructure-provider
+                    -   chart_name: liferay-client-extension
+                        working_directory: ./cloud/helm/client-extension
                     -   chart_name: liferay-default
                         working_directory: ./cloud/helm/default
                     -   chart_name: liferay-dxp-operator

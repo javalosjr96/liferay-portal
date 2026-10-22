@@ -8,7 +8,7 @@ package com.liferay.fragment.service.impl;
 import com.liferay.depot.model.DepotEntryGroupRel;
 import com.liferay.depot.service.DepotEntryGroupRelLocalService;
 import com.liferay.depot.service.DepotEntryLocalService;
-import com.liferay.document.library.util.DLURLHelper;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.fragment.constants.FragmentEntryLinkConstants;
 import com.liferay.fragment.listener.FragmentEntryLinkListener;
 import com.liferay.fragment.listener.FragmentEntryLinkListenerRegistry;
@@ -17,7 +17,6 @@ import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.model.FragmentEntryLinkTable;
 import com.liferay.fragment.processor.DefaultFragmentEntryProcessorContext;
-import com.liferay.fragment.processor.FragmentEntryProcessorContext;
 import com.liferay.fragment.processor.FragmentEntryProcessorRegistry;
 import com.liferay.fragment.service.base.FragmentEntryLinkLocalServiceBaseImpl;
 import com.liferay.fragment.service.persistence.FragmentCollectionPersistence;
@@ -45,6 +44,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.LayoutTable;
+import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.SystemEventConstants;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.repository.model.FileEntry;
@@ -63,6 +63,7 @@ import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.ScopeUtil;
+import com.liferay.portal.kernel.util.ServerDetector;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
@@ -154,7 +155,8 @@ public class FragmentEntryLinkLocalServiceImpl
 			editableValues = String.valueOf(
 				_fragmentEntryProcessorRegistry.
 					getDefaultEditableValuesJSONObject(
-						_getProcessedHTML(fragmentEntryLink, serviceContext),
+						_getProcessedHTML(
+							false, fragmentEntryLink, serviceContext),
 						_jsonFactory.safeCreateJSONObject(configuration)));
 		}
 
@@ -519,11 +521,6 @@ public class FragmentEntryLinkLocalServiceImpl
 	}
 
 	@Override
-	public List<FragmentEntryLink> getFragmentEntryLinks(String rendererKey) {
-		return fragmentEntryLinkPersistence.findByRendererKey(rendererKey);
-	}
-
-	@Override
 	public List<FragmentEntryLink> getFragmentEntryLinksByFragmentEntry(
 			long groupId, FragmentEntry fragmentEntry)
 		throws PortalException {
@@ -769,12 +766,16 @@ public class FragmentEntryLinkLocalServiceImpl
 
 			fragmentEntryLink.setHtml(html);
 
+			FragmentEntryLink clonedFragmentEntryLink = MVCCModel.scratchClone(
+				fragmentEntryLink);
+
 			fragmentEntryLink.setEditableValues(
 				_fragmentEntryProcessorRegistry.mergeDefaultEditableValues(
-					fragmentEntryLink.getConfigurationJSONObject(),
+					clonedFragmentEntryLink.getConfigurationJSONObject(),
 					editableValuesJSONObject,
 					_getProcessedHTML(
-						fragmentEntryLink,
+						ServerDetector.isJBoss() || ServerDetector.isWildfly(),
+						clonedFragmentEntryLink,
 						ServiceContextThreadLocal.getServiceContext())));
 
 			modified = true;
@@ -1000,7 +1001,8 @@ public class FragmentEntryLinkLocalServiceImpl
 	}
 
 	private String _getProcessedHTML(
-			FragmentEntryLink fragmentEntryLink, ServiceContext serviceContext)
+			boolean disablePortletRender, FragmentEntryLink fragmentEntryLink,
+			ServiceContext serviceContext)
 		throws PortalException {
 
 		if (serviceContext == null) {
@@ -1025,16 +1027,20 @@ public class FragmentEntryLinkLocalServiceImpl
 			return fragmentEntryLink.getHtml();
 		}
 
-		FragmentEntryProcessorContext fragmentEntryProcessorContext =
-			new DefaultFragmentEntryProcessorContext(
-				fragmentEntryLink.getCompanyId(), httpServletRequest,
-				httpServletResponse, LocaleUtil.getMostRelevantLocale(),
-				FragmentEntryLinkConstants.EDIT,
-				fragmentEntryLink.getGroupId());
+		DefaultFragmentEntryProcessorContext
+			defaultFragmentEntryProcessorContext =
+				new DefaultFragmentEntryProcessorContext(
+					fragmentEntryLink.getCompanyId(), httpServletRequest,
+					httpServletResponse, LocaleUtil.getMostRelevantLocale(),
+					FragmentEntryLinkConstants.EDIT,
+					fragmentEntryLink.getGroupId());
+
+		defaultFragmentEntryProcessorContext.setDisablePortletRender(
+			disablePortletRender);
 
 		return _fragmentEntryProcessorRegistry.processFragmentEntryLinkHTML(
 			_jsonFactory.createJSONObject(), fragmentEntryLink,
-			fragmentEntryProcessorContext);
+			defaultFragmentEntryProcessorContext);
 	}
 
 	private boolean _isValidFragmentEntry(

@@ -9,6 +9,8 @@ import {clickAndExpectToBeVisible} from '../../../utils/clickAndExpectToBeVisibl
 
 export class CommerceThemeMiniumCatalogPage {
 	readonly accountSelectorAccount: (accountName: string) => Locator;
+	readonly accountSelectorAccounts: Locator;
+	readonly accountSelectorAccountsScroller: Locator;
 	readonly accountSelectorBackButton: Locator;
 	readonly accountSelectorButton: Locator;
 	readonly accountSelectorDropdownMenu: Locator;
@@ -33,6 +35,8 @@ export class CommerceThemeMiniumCatalogPage {
 	readonly createNewAccountButton: Locator;
 	readonly createNewAccountModal: Locator;
 	readonly createNewAccountModalCancelButton: Locator;
+	readonly createNewAccountModalCreateButton: Locator;
+	readonly createNewAccountModalExternalReferenceCodeInput: Locator;
 	readonly createNewAccountModalNameInput: Locator;
 	readonly createNewOrderButton: Locator;
 	readonly firstCardItem: Locator;
@@ -113,6 +117,12 @@ export class CommerceThemeMiniumCatalogPage {
 			page
 				.locator('.dropdown-menu.show')
 				.getByText(accountName, {exact: false});
+		this.accountSelectorAccounts = page.locator(
+			'.account-selector-dropdown-menu.show .accounts-list .dropdown-item'
+		);
+		this.accountSelectorAccountsScroller = page.locator(
+			'.account-selector-dropdown-menu.show .accounts-list-container .inline-scroller'
+		);
 		this.accountSelectorBackButton = page
 			.locator('.dropdown-menu.show')
 			.getByRole('button', {exact: true, name: 'Back to Accounts'});
@@ -179,6 +189,13 @@ export class CommerceThemeMiniumCatalogPage {
 		this.createNewAccountModal = page.locator('.modal-content');
 		this.createNewAccountModalCancelButton =
 			this.createNewAccountModal.getByRole('button', {name: 'Cancel'});
+		this.createNewAccountModalCreateButton =
+			this.createNewAccountModal.getByRole('button', {
+				exact: true,
+				name: 'Create',
+			});
+		this.createNewAccountModalExternalReferenceCodeInput =
+			this.createNewAccountModal.locator('input[name="accountERC"]');
 		this.createNewAccountModalNameInput =
 			this.createNewAccountModal.locator('input[name="accountName"]');
 		this.createNewOrderButton = page.getByRole('button', {

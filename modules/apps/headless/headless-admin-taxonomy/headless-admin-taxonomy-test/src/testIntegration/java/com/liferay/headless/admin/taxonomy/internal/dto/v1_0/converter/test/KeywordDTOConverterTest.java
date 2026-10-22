@@ -14,7 +14,9 @@ import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalServiceUtil;
 import com.liferay.headless.admin.taxonomy.dto.v1_0.AssetLibrary;
 import com.liferay.headless.admin.taxonomy.dto.v1_0.Keyword;
+import com.liferay.headless.admin.taxonomy.dto.v1_0.Project;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
@@ -23,6 +25,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -55,16 +58,7 @@ public class KeywordDTOConverterTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_depotEntry = DepotEntryLocalServiceUtil.addDepotEntry(
-			Collections.singletonMap(
-				LocaleUtil.getDefault(), RandomTestUtil.randomString()),
-			null, DepotConstants.TYPE_ASSET_LIBRARY,
-			new ServiceContext() {
-				{
-					setCompanyId(TestPropsValues.getCompanyId());
-					setUserId(TestPropsValues.getUserId());
-				}
-			});
+		_depotEntry = _addDepotEntry(DepotConstants.TYPE_SPACE);
 
 		_depotEntryGroup = _depotEntry.getGroup();
 
@@ -81,7 +75,12 @@ public class KeywordDTOConverterTest {
 			RandomTestUtil.randomString(), _serviceContext);
 
 		_assetTagGroupRelLocalService.setAssetTagGroupRels(
-			assetTag.getTagId(), new long[] {_depotEntryGroup.getGroupId()});
+			assetTag.getTagId(), new long[] {_depotEntryGroup.getGroupId()},
+			DepotConstants.TYPE_SPACE);
+		_assetTagGroupRelLocalService.setAssetTagGroupRels(
+			assetTag.getTagId(),
+			new long[] {GroupConstants.ANY_PARENT_GROUP_ID},
+			DepotConstants.TYPE_PROJECT);
 
 		Keyword keyword = _toDTO(assetTag);
 
@@ -97,6 +96,55 @@ public class KeywordDTOConverterTest {
 		Assert.assertEquals(
 			_depotEntryGroup.getExternalReferenceCode(),
 			assetLibrary.getExternalReferenceCode());
+	}
+
+	@FeatureFlag("LPD-99403")
+	@Test
+	public void testToDTOWithProjects() throws Exception {
+		_projectDepotEntry = _addDepotEntry(DepotConstants.TYPE_PROJECT);
+
+		Group projectDepotEntryGroup = _projectDepotEntry.getGroup();
+
+		AssetTag assetTag = _assetTagLocalService.addTag(
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			RandomTestUtil.randomString(), _serviceContext);
+
+		_assetTagGroupRelLocalService.setAssetTagGroupRels(
+			assetTag.getTagId(),
+			new long[] {projectDepotEntryGroup.getGroupId()},
+			DepotConstants.TYPE_PROJECT);
+
+		Keyword keyword = _toDTO(assetTag);
+
+		AssetLibrary[] assetLibraries = keyword.getAssetLibraries();
+
+		Assert.assertEquals(
+			Arrays.toString(assetLibraries), 0, assetLibraries.length);
+
+		Project[] projects = keyword.getProjects();
+
+		Assert.assertEquals(Arrays.toString(projects), 1, projects.length);
+
+		Project project = projects[0];
+
+		Assert.assertEquals(
+			projectDepotEntryGroup.getGroupId(), (long)project.getId());
+		Assert.assertEquals(
+			projectDepotEntryGroup.getExternalReferenceCode(),
+			project.getExternalReferenceCode());
+	}
+
+	private DepotEntry _addDepotEntry(int depotEntryType) throws Exception {
+		return DepotEntryLocalServiceUtil.addDepotEntry(
+			Collections.singletonMap(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()),
+			null, depotEntryType,
+			new ServiceContext() {
+				{
+					setCompanyId(TestPropsValues.getCompanyId());
+					setUserId(TestPropsValues.getUserId());
+				}
+			});
 	}
 
 	private Keyword _toDTO(AssetTag assetTag) throws Exception {
@@ -128,6 +176,9 @@ public class KeywordDTOConverterTest {
 
 	@DeleteAfterTestRun
 	private Group _group;
+
+	@DeleteAfterTestRun
+	private DepotEntry _projectDepotEntry;
 
 	private ServiceContext _serviceContext;
 

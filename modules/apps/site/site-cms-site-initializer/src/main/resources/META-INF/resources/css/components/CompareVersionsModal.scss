@@ -19,6 +19,24 @@
 			border-color: map-get($input-readonly, border-color);
 			height: auto;
 
+			&[aria-multiline='true'] {
+				min-height: calc(
+					5em * #{$input-line-height} + 2 * #{$input-padding-y} + 2 *
+						#{$input-border-width}
+				);
+			}
+
+			&:focus {
+				border-color: map-get(
+					map-get($input-readonly, focus),
+					border-color
+				);
+
+				&:not(:focus-visible) {
+					box-shadow: none;
+				}
+			}
+
 			img {
 				max-width: 100%;
 			}
@@ -64,8 +82,17 @@
 		}
 	}
 
-	&-content.portal-popup:not(.article-preview) #main-content {
-		position: static;
+	&-content {
+		.input-group-item-focusable:focus-within:has(
+				.form-control[readonly]:focus
+			) {
+			background-color: transparent;
+			box-shadow: none;
+
+			.input-group-inset-item {
+				background-color: transparent;
+			}
+		}
 	}
 
 	&-key-added {
@@ -83,17 +110,12 @@
 	}
 
 	&-pane {
+		flex: 1;
+		min-height: 0;
 		min-width: 0;
 
-		@include media-breakpoint-up(md) {
-			flex: 1;
-		}
-
-		&-empty-state,
-		&-header {
-			position: sticky;
-			top: 0;
-			z-index: 1;
+		&-content {
+			min-height: 0;
 		}
 
 		& + & {
@@ -108,10 +130,6 @@
 
 	&-panes {
 		min-height: 0;
-
-		&-row {
-			min-height: 100%;
-		}
 	}
 
 	&-removals {

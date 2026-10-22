@@ -1,0 +1,383 @@
+{
+	"className": "com.liferay.object.model.ObjectDefinition#P4R4",
+	"enableCategorization": true,
+	"enableComments": false,
+	"enableFriendlyURLCustomization": false,
+	"enableIndexSearch": true,
+	"enableLocalization": true,
+	"enableObjectEntryDraft": true,
+	"enableObjectEntryHistory": true,
+	"enableObjectEntrySchedule": true,
+	"enableObjectEntrySubscription": false,
+	"externalReferenceCode": "L_PIM_BASIC_PRODUCT",
+	"label": {
+		"en_US": "PIM Basic Product"
+	},
+	"modifiable": true,
+	"name": "PIMBasicProduct",
+	"objectActions": [
+	],
+	"objectDefinitionSettings": [
+		{
+			"name": "acceptAllGroups",
+			"value": "true"
+		},
+		{
+			"name": "domain",
+			"value": "space"
+		},
+		{
+			"name": "visible",
+			"value": "true"
+		}
+	],
+	"objectFields": [
+		{
+			"DBType": "Double",
+			"businessType": "Decimal",
+			"externalReferenceCode": "DEPTH",
+			"indexed": false,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "Depth"
+			},
+			"name": "depth",
+			"required": false,
+			"system": true
+		},
+		{
+			"DBType": "Clob",
+			"businessType": "RichText",
+			"externalReferenceCode": "DESCRIPTION",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "en_US",
+			"label": {
+				"en_US": "Description"
+			},
+			"name": "description",
+			"required": false,
+			"system": true
+		},
+		{
+			"DBType": "Double",
+			"businessType": "Decimal",
+			"externalReferenceCode": "HEIGHT",
+			"indexed": false,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "Height"
+			},
+			"name": "height",
+			"required": false,
+			"system": true
+		},
+		{
+			"DBType": "String",
+			"businessType": "Text",
+			"externalReferenceCode": "SKU",
+			"indexed": true,
+			"indexedAsKeyword": true,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "SKU"
+			},
+			"name": "sku",
+			"required": true,
+			"system": true
+		},
+		{
+			"DBType": "String",
+			"businessType": "Text",
+			"externalReferenceCode": "TITLE",
+			"indexed": true,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "en_US",
+			"label": {
+				"en_US": "Title"
+			},
+			"name": "title",
+			"required": true,
+			"system": true
+		},
+		{
+			"DBType": "Boolean",
+			"businessType": "Boolean",
+			"defaultValue": false,
+			"externalReferenceCode": "UNIT_OF_MEASURE_ALLOW_DECIMAL_QUANTITIES",
+			"indexed": false,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "Allow Decimal Quantities"
+			},
+			"name": "unitOfMeasureAllowDecimalQuantities",
+			"required": false,
+			"system": true
+		},
+		{
+			"DBType": "String",
+			"businessType": "Text",
+			"externalReferenceCode": "UNIT_OF_MEASURE_KEY",
+			"indexed": true,
+			"indexedAsKeyword": true,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "Key"
+			},
+			"name": "unitOfMeasureKey",
+			"required": false,
+			"system": true
+		},
+		{
+			"DBType": "String",
+			"businessType": "Text",
+			"externalReferenceCode": "UNIT_OF_MEASURE_NAME",
+			"indexed": true,
+			"indexedAsKeyword": true,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "Name"
+			},
+			"name": "unitOfMeasureName",
+			"required": false,
+			"system": true
+		},
+		{
+			"DBType": "String",
+			"businessType": "Text",
+			"externalReferenceCode": "UNIT_OF_MEASURE_SYMBOL",
+			"indexed": true,
+			"indexedAsKeyword": true,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "Symbol"
+			},
+			"name": "unitOfMeasureSymbol",
+			"required": false,
+			"system": true
+		},
+		{
+			"DBType": "Boolean",
+			"businessType": "Boolean",
+			"defaultValue": false,
+			"externalReferenceCode": "VIRTUAL",
+			"indexed": false,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "Virtual"
+			},
+			"name": "virtual",
+			"required": false,
+			"system": true
+		},
+		{
+			"DBType": "Double",
+			"businessType": "Decimal",
+			"externalReferenceCode": "WEIGHT",
+			"indexed": false,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "Weight"
+			},
+			"name": "weight",
+			"required": false,
+			"system": true
+		},
+		{
+			"DBType": "Double",
+			"businessType": "Decimal",
+			"externalReferenceCode": "WIDTH",
+			"indexed": false,
+			"indexedAsKeyword": false,
+			"indexedLanguageId": "",
+			"label": {
+				"en_US": "Width"
+			},
+			"name": "width",
+			"required": false,
+			"system": true
+		}
+	],
+	"objectFolderExternalReferenceCode": "L_PIM_PRODUCT_TYPES",
+	"objectLayouts": [
+		{
+			"defaultObjectLayout": false,
+			"name": {
+				"en_US": "PIM Basic Product"
+			},
+			"objectLayoutTabs": [
+				{
+					"name": {
+						"en_US": "Details"
+					},
+					"objectLayoutBoxes": [
+						{
+							"collapsable": false,
+							"name": {
+								"en_US": "Details"
+							},
+							"objectLayoutRows": [
+								{
+									"objectLayoutColumns": [
+										{
+											"objectFieldName": "sku",
+											"priority": 0,
+											"size": 12
+										}
+									],
+									"priority": 0
+								},
+								{
+									"objectLayoutColumns": [
+										{
+											"objectFieldName": "description",
+											"priority": 0,
+											"size": 12
+										}
+									],
+									"priority": 1
+								},
+								{
+									"objectLayoutColumns": [
+										{
+											"objectFieldName": "virtual",
+											"priority": 0,
+											"size": 12
+										}
+									],
+									"priority": 2
+								}
+							],
+							"priority": 0,
+							"type": "regular"
+						},
+						{
+							"collapsable": true,
+							"name": {
+								"en_US": "Dimensions"
+							},
+							"objectLayoutRows": [
+								{
+									"objectLayoutColumns": [
+										{
+											"objectFieldName": "depth",
+											"priority": 0,
+											"size": 12
+										}
+									],
+									"priority": 0
+								},
+								{
+									"objectLayoutColumns": [
+										{
+											"objectFieldName": "height",
+											"priority": 0,
+											"size": 12
+										}
+									],
+									"priority": 1
+								},
+								{
+									"objectLayoutColumns": [
+										{
+											"objectFieldName": "weight",
+											"priority": 0,
+											"size": 12
+										}
+									],
+									"priority": 2
+								},
+								{
+									"objectLayoutColumns": [
+										{
+											"objectFieldName": "width",
+											"priority": 0,
+											"size": 12
+										}
+									],
+									"priority": 3
+								}
+							],
+							"priority": 1,
+							"type": "regular"
+						}
+					],
+					"priority": 0
+				},
+				{
+					"name": {
+						"en_US": "Units of Measure"
+					},
+					"objectLayoutBoxes": [
+						{
+							"collapsable": false,
+							"name": {
+								"en_US": "Units of Measure"
+							},
+							"objectLayoutRows": [
+								{
+									"objectLayoutColumns": [
+										{
+											"objectFieldName": "unitOfMeasureName",
+											"priority": 0,
+											"size": 12
+										}
+									],
+									"priority": 0
+								},
+								{
+									"objectLayoutColumns": [
+										{
+											"objectFieldName": "unitOfMeasureKey",
+											"priority": 0,
+											"size": 12
+										}
+									],
+									"priority": 1
+								},
+								{
+									"objectLayoutColumns": [
+										{
+											"objectFieldName": "unitOfMeasureSymbol",
+											"priority": 0,
+											"size": 12
+										}
+									],
+									"priority": 2
+								},
+								{
+									"objectLayoutColumns": [
+										{
+											"objectFieldName": "unitOfMeasureAllowDecimalQuantities",
+											"priority": 0,
+											"size": 12
+										}
+									],
+									"priority": 3
+								}
+							],
+							"priority": 0,
+							"type": "regular"
+						}
+					],
+					"priority": 1
+				}
+			]
+		}
+	],
+	"objectRelationships": [
+	],
+	"panelCategoryKey": "",
+	"pluralLabel": {
+		"en_US": "PIM Basic Products"
+	},
+	"scope": "depot",
+	"system": true,
+	"titleObjectFieldName": "title",
+	"updateStrategy": "UPDATE"
+}

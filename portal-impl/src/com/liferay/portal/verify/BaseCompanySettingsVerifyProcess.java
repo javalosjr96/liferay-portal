@@ -13,10 +13,7 @@ import com.liferay.portal.kernel.settings.CompanyServiceSettingsLocator;
 import com.liferay.portal.kernel.settings.FallbackKeysSettingsUtil;
 import com.liferay.portal.kernel.settings.ModifiableSettings;
 import com.liferay.portal.kernel.settings.Settings;
-import com.liferay.portal.kernel.settings.SettingsDescriptor;
 import com.liferay.portal.kernel.settings.SettingsException;
-import com.liferay.portal.kernel.settings.SettingsLocatorHelper;
-import com.liferay.portal.kernel.util.HashMapDictionary;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.PrefsPropsUtil;
 
@@ -24,7 +21,8 @@ import jakarta.portlet.ValidatorException;
 
 import java.io.IOException;
 
-import java.util.Dictionary;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -41,19 +39,21 @@ public abstract class BaseCompanySettingsVerifyProcess extends VerifyProcess {
 
 	protected abstract Set<String> getLegacyPropertyKeys();
 
-	protected Dictionary<String, String> getPropertyValues(long companyId) {
-		Dictionary<String, String> dictionary = new HashMapDictionary<>();
+	protected Map<String, String> getPropertyValues(long companyId) {
+		Map<String, String> map = new HashMap<>();
 
 		for (String[] renamePropertykeys : getRenamePropertyKeysArray()) {
 			String propertyValue = PrefsPropsUtil.getString(
 				companyId, renamePropertykeys[0]);
 
-			if (propertyValue != null) {
-				dictionary.put(renamePropertykeys[1], propertyValue);
+			if (propertyValue == null) {
+				continue;
 			}
+
+			map.put(renamePropertykeys[1], propertyValue);
 		}
 
-		return dictionary;
+		return map;
 	}
 
 	protected String[][] getRenamePropertyKeysArray() {
@@ -62,11 +62,8 @@ public abstract class BaseCompanySettingsVerifyProcess extends VerifyProcess {
 
 	protected abstract String getSettingsId();
 
-	protected abstract SettingsLocatorHelper getSettingsLocatorHelper();
-
 	protected void storeSettings(
-			long companyId, String settingsId,
-			Dictionary<String, String> dictionary)
+			long companyId, String settingsId, Map<String, String> map)
 		throws IOException, SettingsException, ValidatorException {
 
 		Settings settings = FallbackKeysSettingsUtil.getSettings(
@@ -75,24 +72,18 @@ public abstract class BaseCompanySettingsVerifyProcess extends VerifyProcess {
 		ModifiableSettings modifiableSettings =
 			settings.getModifiableSettings();
 
-		SettingsLocatorHelper settingsLocatorHelper =
-			getSettingsLocatorHelper();
+		for (Map.Entry<String, String> entry : map.entrySet()) {
+			String name = entry.getKey();
 
-		SettingsDescriptor settingsDescriptor =
-			settingsLocatorHelper.getSettingsDescriptor(settingsId);
-
-		for (String name : settingsDescriptor.getAllKeys()) {
-			String value = dictionary.get(name);
-
-			if (value == null) {
-				continue;
-			}
+			String value = entry.getValue();
 
 			String oldValue = settings.getValue(name, null);
 
-			if (!value.equals(oldValue)) {
-				modifiableSettings.setValue(name, value);
+			if (value.equals(oldValue)) {
+				continue;
 			}
+
+			modifiableSettings.setValue(name, value);
 		}
 
 		modifiableSettings.store();
@@ -104,11 +95,10 @@ public abstract class BaseCompanySettingsVerifyProcess extends VerifyProcess {
 
 			companyLocalService.forEachCompanyId(
 				companyId -> {
-					Dictionary<String, String> dictionary = getPropertyValues(
-						companyId);
+					Map<String, String> map = getPropertyValues(companyId);
 
-					if (!dictionary.isEmpty()) {
-						storeSettings(companyId, getSettingsId(), dictionary);
+					if (!map.isEmpty()) {
+						storeSettings(companyId, getSettingsId(), map);
 					}
 
 					Set<String> keys = getLegacyPropertyKeys();

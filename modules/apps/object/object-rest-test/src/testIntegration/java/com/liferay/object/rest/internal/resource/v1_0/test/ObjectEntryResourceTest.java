@@ -24,6 +24,7 @@ import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.model.DepotEntryGroupRel;
 import com.liferay.depot.service.DepotEntryGroupRelLocalService;
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFileVersion;
 import com.liferay.document.library.kernel.model.DLFolder;
@@ -33,7 +34,6 @@ import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.kernel.service.DLFolderLocalService;
 import com.liferay.document.library.test.util.DLTestUtil;
-import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.expando.kernel.model.ExpandoColumn;
 import com.liferay.expando.kernel.model.ExpandoColumnConstants;
 import com.liferay.expando.kernel.model.ExpandoTableConstants;
@@ -49,6 +49,9 @@ import com.liferay.list.type.model.ListTypeDefinition;
 import com.liferay.list.type.model.ListTypeEntry;
 import com.liferay.list.type.service.ListTypeDefinitionLocalService;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
+import com.liferay.map.geocoder.GeocoderResult;
+import com.liferay.map.test.util.GeocoderTestUtil;
+import com.liferay.object.configuration.ObjectConfiguration;
 import com.liferay.object.constants.ObjectActionExecutorConstants;
 import com.liferay.object.constants.ObjectActionKeys;
 import com.liferay.object.constants.ObjectActionTriggerConstants;
@@ -64,9 +67,11 @@ import com.liferay.object.constants.ObjectValidationRuleSettingConstants;
 import com.liferay.object.exception.NoSuchObjectEntryException;
 import com.liferay.object.field.builder.AssigneeObjectFieldBuilder;
 import com.liferay.object.field.builder.AttachmentObjectFieldBuilder;
+import com.liferay.object.field.builder.LocationObjectFieldBuilder;
 import com.liferay.object.field.builder.LongTextObjectFieldBuilder;
 import com.liferay.object.field.builder.RichTextObjectFieldBuilder;
 import com.liferay.object.field.builder.TextObjectFieldBuilder;
+import com.liferay.object.field.business.type.ObjectFieldBusinessTypeRegistry;
 import com.liferay.object.field.setting.builder.ObjectFieldSettingBuilder;
 import com.liferay.object.field.setting.util.ObjectFieldSettingUtil;
 import com.liferay.object.field.util.ObjectFieldUtil;
@@ -6065,6 +6070,63 @@ public class ObjectEntryResourceTest {
 				(JSONArray)_userAccountJSONObject.get("permissions")
 			},
 			Type.MANY_TO_MANY);
+
+		// Without fields, many to one relationship
+
+		String relationshipFieldName = String.format(
+			"r_%s_%s", _objectRelationship5.getName(),
+			_userSystemObjectDefinition.getPKObjectFieldName());
+
+		String relationshipFieldNameNestedFieldName = StringUtil.removeLast(
+			relationshipFieldName, "Id");
+
+		_assertNestedFieldsInRelationships(
+			0, 1,
+			HTTPTestUtil.invokeToJSONObject(
+				null,
+				StringBundler.concat(
+					_objectDefinition4.getRESTContextPath(), "/",
+					_objectEntry4.getObjectEntryId(), "?nestedFields=",
+					relationshipFieldName),
+				Http.Method.GET),
+			relationshipFieldNameNestedFieldName,
+			new String[][] {
+				{
+					_OBJECT_FIELD_NAME_TEXT,
+					String.valueOf(_OBJECT_FIELD_VALUE_4)
+				},
+				{_OBJECT_FIELD_NAME_2, String.valueOf(_OBJECT_FIELD_VALUE_2)}
+			},
+			null, Type.MANY_TO_ONE);
+
+		jsonObject = HTTPTestUtil.invokeToJSONObject(
+			null,
+			StringBundler.concat(
+				_objectDefinition4.getRESTContextPath(), "/",
+				_objectEntry4.getObjectEntryId(), "?nestedFields=",
+				_objectRelationship5.getName()),
+			Http.Method.GET);
+
+		_assertNestedFieldsInRelationships(
+			0, 1, jsonObject, relationshipFieldNameNestedFieldName,
+			new String[][] {
+				{
+					_OBJECT_FIELD_NAME_TEXT,
+					String.valueOf(_OBJECT_FIELD_VALUE_4)
+				},
+				{_OBJECT_FIELD_NAME_2, String.valueOf(_OBJECT_FIELD_VALUE_2)}
+			},
+			null, Type.MANY_TO_ONE);
+		_assertNestedFieldsInRelationships(
+			0, 1, jsonObject, _objectRelationship5.getName(),
+			new String[][] {
+				{
+					_OBJECT_FIELD_NAME_TEXT,
+					String.valueOf(_OBJECT_FIELD_VALUE_4)
+				},
+				{_OBJECT_FIELD_NAME_2, String.valueOf(_OBJECT_FIELD_VALUE_2)}
+			},
+			null, Type.MANY_TO_ONE);
 	}
 
 	@Test
@@ -6929,59 +6991,71 @@ public class ObjectEntryResourceTest {
 		_postObjectEntryWithKeywords("tag1", "tag2", "tag3");
 
 		_assertFilteredObjectEntries(4, "keywords/any()");
-		_assertFilteredObjectEntries(1, "not keywords/any()");
 
-		_assertFilteredObjectEntries(4, "keywords/any(k:k eq 'tag1')");
+		_assertFilteredObjectEntries(0, "keywords/any(k:contains(k,'1234'))");
+		_assertFilteredObjectEntries(4, "keywords/any(k:contains(k,'AG1'))");
+		_assertFilteredObjectEntries(4, "keywords/any(k:contains(k,'ag1'))");
+		_assertFilteredObjectEntries(2, "keywords/any(k:contains(k,'ag2'))");
+		_assertFilteredObjectEntries(1, "keywords/any(k:contains(k,'ag3'))");
+		_assertFilteredObjectEntries(4, "keywords/any(k:contains(k,'tag'))");
+
+		_assertFilteredObjectEntries(0, "keywords/any(k:k eq '1234')");
 		_assertFilteredObjectEntries(4, "keywords/any(k:k eq 'TAG1')");
+		_assertFilteredObjectEntries(4, "keywords/any(k:k eq 'tag1')");
 		_assertFilteredObjectEntries(2, "keywords/any(k:k eq 'tag2')");
 		_assertFilteredObjectEntries(1, "keywords/any(k:k eq 'tag3')");
-		_assertFilteredObjectEntries(0, "keywords/any(k:k eq '1234')");
 
-		_assertFilteredObjectEntries(2, "keywords/any(k:k ne 'tag1')");
-		_assertFilteredObjectEntries(2, "keywords/any(k:k ne 'TAG1')");
-		_assertFilteredObjectEntries(4, "keywords/any(k:k ne 'tag2')");
-		_assertFilteredObjectEntries(4, "keywords/any(k:k ne 'tag3')");
-
-		_assertFilteredObjectEntries(2, "keywords/any(k:k gt 'tag1')");
-		_assertFilteredObjectEntries(2, "keywords/any(k:k gt 'TAG1')");
-		_assertFilteredObjectEntries(1, "keywords/any(k:k gt 'tag2')");
-		_assertFilteredObjectEntries(0, "keywords/any(k:k gt 'tag3')");
-
-		_assertFilteredObjectEntries(4, "keywords/any(k:k ge 'tag1')");
 		_assertFilteredObjectEntries(4, "keywords/any(k:k ge 'TAG1')");
+		_assertFilteredObjectEntries(4, "keywords/any(k:k ge 'tag1')");
 		_assertFilteredObjectEntries(2, "keywords/any(k:k ge 'tag2')");
 		_assertFilteredObjectEntries(1, "keywords/any(k:k ge 'tag3')");
 
-		_assertFilteredObjectEntries(0, "keywords/any(k:k lt 'tag1')");
-		_assertFilteredObjectEntries(0, "keywords/any(k:k lt 'TAG1')");
-		_assertFilteredObjectEntries(4, "keywords/any(k:k lt 'tag2')");
-		_assertFilteredObjectEntries(4, "keywords/any(k:k lt 'tag3')");
+		_assertFilteredObjectEntries(2, "keywords/any(k:k gt 'TAG1')");
+		_assertFilteredObjectEntries(2, "keywords/any(k:k gt 'tag1')");
+		_assertFilteredObjectEntries(1, "keywords/any(k:k gt 'tag2')");
+		_assertFilteredObjectEntries(0, "keywords/any(k:k gt 'tag3')");
 
-		_assertFilteredObjectEntries(4, "keywords/any(k:k le 'tag1')");
+		_assertFilteredObjectEntries(
+			0, "keywords/any(k:k in ('1234', '5678'))");
+		_assertFilteredObjectEntries(
+			4, "keywords/any(k:k in ('TAG1', 'tag2'))");
+		_assertFilteredObjectEntries(
+			4, "keywords/any(k:k in ('tag1', 'tag2'))");
+		_assertFilteredObjectEntries(
+			2, "keywords/any(k:k in ('tag2', 'tag3'))");
+
 		_assertFilteredObjectEntries(4, "keywords/any(k:k le 'TAG1')");
+		_assertFilteredObjectEntries(4, "keywords/any(k:k le 'tag1')");
 		_assertFilteredObjectEntries(4, "keywords/any(k:k le 'tag2')");
 		_assertFilteredObjectEntries(4, "keywords/any(k:k le 'tag3')");
 
+		_assertFilteredObjectEntries(0, "keywords/any(k:k lt 'TAG1')");
+		_assertFilteredObjectEntries(0, "keywords/any(k:k lt 'tag1')");
+		_assertFilteredObjectEntries(4, "keywords/any(k:k lt 'tag2')");
+		_assertFilteredObjectEntries(4, "keywords/any(k:k lt 'tag3')");
+
+		_assertFilteredObjectEntries(2, "keywords/any(k:k ne 'TAG1')");
+		_assertFilteredObjectEntries(2, "keywords/any(k:k ne 'tag1')");
+		_assertFilteredObjectEntries(4, "keywords/any(k:k ne 'tag2')");
+		_assertFilteredObjectEntries(4, "keywords/any(k:k ne 'tag3')");
+
+		_assertFilteredObjectEntries(0, "keywords/any(k:startswith(k,'1234'))");
+		_assertFilteredObjectEntries(4, "keywords/any(k:startswith(k,'TAG1'))");
 		_assertFilteredObjectEntries(4, "keywords/any(k:startswith(k,'t'))");
 		_assertFilteredObjectEntries(4, "keywords/any(k:startswith(k,'ta'))");
 		_assertFilteredObjectEntries(4, "keywords/any(k:startswith(k,'tag'))");
 		_assertFilteredObjectEntries(4, "keywords/any(k:startswith(k,'tag1'))");
-		_assertFilteredObjectEntries(4, "keywords/any(k:startswith(k,'TAG1'))");
 		_assertFilteredObjectEntries(2, "keywords/any(k:startswith(k,'tag2'))");
 		_assertFilteredObjectEntries(1, "keywords/any(k:startswith(k,'tag3'))");
-		_assertFilteredObjectEntries(0, "keywords/any(k:startswith(k,'1234'))");
 
-		_assertFilteredObjectEntries(4, "keywords/any(k:contains(k,'tag'))");
-		_assertFilteredObjectEntries(4, "keywords/any(k:contains(k,'ag1'))");
-		_assertFilteredObjectEntries(4, "keywords/any(k:contains(k,'AG1'))");
-		_assertFilteredObjectEntries(2, "keywords/any(k:contains(k,'ag2'))");
-		_assertFilteredObjectEntries(1, "keywords/any(k:contains(k,'ag3'))");
-		_assertFilteredObjectEntries(0, "keywords/any(k:contains(k,'1234'))");
-
-		_assertFilteredObjectEntries(4, "keywords/any(k:k in ('tag1','tag2'))");
-		_assertFilteredObjectEntries(4, "keywords/any(k:k in ('TAG1','tag2'))");
-		_assertFilteredObjectEntries(2, "keywords/any(k:k in ('tag2','tag3'))");
-		_assertFilteredObjectEntries(0, "keywords/any(k:k in ('1234','5678'))");
+		_assertFilteredObjectEntries(5, "not (keywords/any(k:k eq '1234'))");
+		_assertFilteredObjectEntries(1, "not (keywords/any(k:k eq 'TAG1'))");
+		_assertFilteredObjectEntries(1, "not (keywords/any(k:k eq 'tag1'))");
+		_assertFilteredObjectEntries(3, "not (keywords/any(k:k eq 'tag2'))");
+		_assertFilteredObjectEntries(4, "not (keywords/any(k:k eq 'tag3'))");
+		_assertFilteredObjectEntries(
+			3, "not (keywords/any(k:k in ('tag2', 'tag3')))");
+		_assertFilteredObjectEntries(1, "not keywords/any()");
 	}
 
 	@Test
@@ -7028,9 +7102,11 @@ public class ObjectEntryResourceTest {
 			3,
 			String.format("%s/any()", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST));
 		_assertFilteredObjectEntries(
-			1,
+			0,
 			String.format(
-				"not %s/any()", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST));
+				"%s/any(k:contains(k,'%s'))",
+				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				RandomTestUtil.randomString()));
 		_assertFilteredObjectEntries(
 			3,
 			String.format(
@@ -7052,8 +7128,7 @@ public class ObjectEntryResourceTest {
 		_assertFilteredObjectEntries(
 			0,
 			String.format(
-				"%s/any(k:contains(k,'%s'))",
-				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				"%s/any(k:k eq '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
 				RandomTestUtil.randomString()));
 		_assertFilteredObjectEntries(
 			3,
@@ -7061,10 +7136,20 @@ public class ObjectEntryResourceTest {
 				"%s/any(k:k eq '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
 				_LIST_TYPE_ENTRY_KEY_1));
 		_assertFilteredObjectEntries(
+			0,
+			String.format(
+				"%s/any(k:k eq '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				_LIST_TYPE_ENTRY_KEY_1.substring(1)));
+		_assertFilteredObjectEntries(
 			2,
 			String.format(
 				"%s/any(k:k eq '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
 				_LIST_TYPE_ENTRY_KEY_2));
+		_assertFilteredObjectEntries(
+			0,
+			String.format(
+				"%s/any(k:k eq '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				_LIST_TYPE_ENTRY_KEY_2.substring(1)));
 		_assertFilteredObjectEntries(
 			1,
 			String.format(
@@ -7074,40 +7159,30 @@ public class ObjectEntryResourceTest {
 			0,
 			String.format(
 				"%s/any(k:k eq '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
-				RandomTestUtil.randomString()));
-		_assertFilteredObjectEntries(
-			0,
-			String.format(
-				"%s/any(k:k eq '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
-				_LIST_TYPE_ENTRY_KEY_1.substring(1)));
-		_assertFilteredObjectEntries(
-			0,
-			String.format(
-				"%s/any(k:k eq '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
-				_LIST_TYPE_ENTRY_KEY_2.substring(1)));
-		_assertFilteredObjectEntries(
-			0,
-			String.format(
-				"%s/any(k:k eq '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
 				_LIST_TYPE_ENTRY_KEY_3.substring(1)));
+		_assertFilteredObjectEntries(
+			0,
+			String.format(
+				"%s/any(k:k in ('%s', '%s'))",
+				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				RandomTestUtil.randomString(), RandomTestUtil.randomString()));
 		_assertFilteredObjectEntries(
 			3,
 			String.format(
-				"%s/any(k:k in ('%s','%s'))",
+				"%s/any(k:k in ('%s', '%s'))",
 				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST, _LIST_TYPE_ENTRY_KEY_1,
 				_LIST_TYPE_ENTRY_KEY_2));
 		_assertFilteredObjectEntries(
 			2,
 			String.format(
-				"%s/any(k:k in ('%s','%s'))",
+				"%s/any(k:k in ('%s', '%s'))",
 				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST, _LIST_TYPE_ENTRY_KEY_2,
 				_LIST_TYPE_ENTRY_KEY_3));
 		_assertFilteredObjectEntries(
-			0,
+			3,
 			String.format(
-				"%s/any(k:k in ('%s','%s'))",
-				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
-				RandomTestUtil.randomString(), RandomTestUtil.randomString()));
+				"%s/any(k:k ne '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				RandomTestUtil.randomString()));
 		_assertFilteredObjectEntries(
 			2,
 			String.format(
@@ -7124,10 +7199,17 @@ public class ObjectEntryResourceTest {
 				"%s/any(k:k ne '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
 				_LIST_TYPE_ENTRY_KEY_3));
 		_assertFilteredObjectEntries(
+			0,
+			String.format(
+				"%s/any(k:startswith(k,'%s'))",
+				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				RandomTestUtil.randomString()));
+		_assertFilteredObjectEntries(
 			3,
 			String.format(
-				"%s/any(k:k ne '%s')", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
-				RandomTestUtil.randomString()));
+				"%s/any(k:startswith(k,'%s'))",
+				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				_LIST_TYPE_ENTRY_KEY_1));
 		_assertFilteredObjectEntries(
 			3,
 			String.format(
@@ -7139,25 +7221,13 @@ public class ObjectEntryResourceTest {
 			String.format(
 				"%s/any(k:startswith(k,'%s'))",
 				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
-				_LIST_TYPE_ENTRY_KEY_2.substring(0, 2)));
-		_assertFilteredObjectEntries(
-			1,
-			String.format(
-				"%s/any(k:startswith(k,'%s'))",
-				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
-				_LIST_TYPE_ENTRY_KEY_3.substring(0, 2)));
-		_assertFilteredObjectEntries(
-			3,
-			String.format(
-				"%s/any(k:startswith(k,'%s'))",
-				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
-				_LIST_TYPE_ENTRY_KEY_1));
+				_LIST_TYPE_ENTRY_KEY_2));
 		_assertFilteredObjectEntries(
 			2,
 			String.format(
 				"%s/any(k:startswith(k,'%s'))",
 				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
-				_LIST_TYPE_ENTRY_KEY_2));
+				_LIST_TYPE_ENTRY_KEY_2.substring(0, 2)));
 		_assertFilteredObjectEntries(
 			1,
 			String.format(
@@ -7165,11 +7235,51 @@ public class ObjectEntryResourceTest {
 				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
 				_LIST_TYPE_ENTRY_KEY_3));
 		_assertFilteredObjectEntries(
-			0,
+			1,
 			String.format(
 				"%s/any(k:startswith(k,'%s'))",
 				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				_LIST_TYPE_ENTRY_KEY_3.substring(0, 2)));
+		_assertFilteredObjectEntries(
+			2,
+			String.format(
+				"not (%s/any(k:(k eq '%s') or (k eq '%s')))",
+				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST, _LIST_TYPE_ENTRY_KEY_2,
+				_LIST_TYPE_ENTRY_KEY_3));
+		_assertFilteredObjectEntries(
+			4,
+			String.format(
+				"not (%s/any(k:k eq '%s'))",
+				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
 				RandomTestUtil.randomString()));
+		_assertFilteredObjectEntries(
+			1,
+			String.format(
+				"not (%s/any(k:k eq '%s'))",
+				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				_LIST_TYPE_ENTRY_KEY_1));
+		_assertFilteredObjectEntries(
+			2,
+			String.format(
+				"not (%s/any(k:k eq '%s'))",
+				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				_LIST_TYPE_ENTRY_KEY_2));
+		_assertFilteredObjectEntries(
+			3,
+			String.format(
+				"not (%s/any(k:k eq '%s'))",
+				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST,
+				_LIST_TYPE_ENTRY_KEY_3));
+		_assertFilteredObjectEntries(
+			2,
+			String.format(
+				"not (%s/any(k:k in ('%s', '%s')))",
+				_OBJECT_FIELD_NAME_MULTISELECT_PICKLIST, _LIST_TYPE_ENTRY_KEY_2,
+				_LIST_TYPE_ENTRY_KEY_3));
+		_assertFilteredObjectEntries(
+			1,
+			String.format(
+				"not %s/any()", _OBJECT_FIELD_NAME_MULTISELECT_PICKLIST));
 	}
 
 	@Test
@@ -7234,59 +7344,26 @@ public class ObjectEntryResourceTest {
 			taxonomyCategory1, taxonomyCategory2, taxonomyCategory3);
 
 		_assertFilteredObjectEntries(3, "taxonomyCategoryIds/any()");
-		_assertFilteredObjectEntries(1, "not taxonomyCategoryIds/any()");
-		_assertFilteredObjectEntries(
-			3,
-			String.format(
-				"taxonomyCategoryIds/any(k:k eq %s)",
-				taxonomyCategory1.getId()));
-		_assertFilteredObjectEntries(
-			3,
-			String.format(
-				"taxonomyCategoryIds/any(k:k eq %s)",
-				taxonomyCategory1.getId()));
-		_assertFilteredObjectEntries(
-			2,
-			String.format(
-				"taxonomyCategoryIds/any(k:k eq %s)",
-				taxonomyCategory2.getId()));
-		_assertFilteredObjectEntries(
-			1,
-			String.format(
-				"taxonomyCategoryIds/any(k:k eq %s)",
-				taxonomyCategory3.getId()));
 		_assertFilteredObjectEntries(0, "taxonomyCategoryIds/any(k:k eq 1234)");
-
 		_assertFilteredObjectEntries(
-			2,
+			3,
 			String.format(
-				"taxonomyCategoryIds/any(k:k ne %s)",
+				"taxonomyCategoryIds/any(k:k eq %s)",
 				taxonomyCategory1.getId()));
 		_assertFilteredObjectEntries(
 			3,
 			String.format(
-				"taxonomyCategoryIds/any(k:k ne %s)",
+				"taxonomyCategoryIds/any(k:k eq %s)",
+				taxonomyCategory1.getId()));
+		_assertFilteredObjectEntries(
+			2,
+			String.format(
+				"taxonomyCategoryIds/any(k:k eq %s)",
 				taxonomyCategory2.getId()));
-		_assertFilteredObjectEntries(
-			3,
-			String.format(
-				"taxonomyCategoryIds/any(k:k ne %s)",
-				taxonomyCategory3.getId()));
-
-		_assertFilteredObjectEntries(
-			2,
-			String.format(
-				"taxonomyCategoryIds/any(k:k gt %s)",
-				taxonomyCategory1.getId()));
 		_assertFilteredObjectEntries(
 			1,
 			String.format(
-				"taxonomyCategoryIds/any(k:k gt %s)",
-				taxonomyCategory2.getId()));
-		_assertFilteredObjectEntries(
-			0,
-			String.format(
-				"taxonomyCategoryIds/any(k:k gt %s)",
+				"taxonomyCategoryIds/any(k:k eq %s)",
 				taxonomyCategory3.getId()));
 
 		_assertFilteredObjectEntries(
@@ -7306,49 +7383,105 @@ public class ObjectEntryResourceTest {
 				taxonomyCategory3.getId()));
 
 		_assertFilteredObjectEntries(
+			2,
+			String.format(
+				"taxonomyCategoryIds/any(k:k gt %s)",
+				taxonomyCategory1.getId()));
+		_assertFilteredObjectEntries(
+			1,
+			String.format(
+				"taxonomyCategoryIds/any(k:k gt %s)",
+				taxonomyCategory2.getId()));
+		_assertFilteredObjectEntries(
 			0,
 			String.format(
-				"taxonomyCategoryIds/any(k:k lt %s)",
-				taxonomyCategory1.getId()));
-		_assertFilteredObjectEntries(
-			3,
-			String.format(
-				"taxonomyCategoryIds/any(k:k lt %s)",
-				taxonomyCategory2.getId()));
-		_assertFilteredObjectEntries(
-			3,
-			String.format(
-				"taxonomyCategoryIds/any(k:k lt %s)",
+				"taxonomyCategoryIds/any(k:k gt %s)",
 				taxonomyCategory3.getId()));
 
 		_assertFilteredObjectEntries(
-			3,
-			String.format(
-				"taxonomyCategoryIds/any(k:k le %s)",
-				taxonomyCategory1.getId()));
+			0, "taxonomyCategoryIds/any(k:k in (1234, 5678))");
 		_assertFilteredObjectEntries(
 			3,
 			String.format(
-				"taxonomyCategoryIds/any(k:k le %s)",
-				taxonomyCategory2.getId()));
-		_assertFilteredObjectEntries(
-			3,
-			String.format(
-				"taxonomyCategoryIds/any(k:k le %s)",
-				taxonomyCategory3.getId()));
-
-		_assertFilteredObjectEntries(
-			3,
-			String.format(
-				"taxonomyCategoryIds/any(k:k in (%s,%s))",
+				"taxonomyCategoryIds/any(k:k in (%s, %s))",
 				taxonomyCategory1.getId(), taxonomyCategory2.getId()));
 		_assertFilteredObjectEntries(
 			2,
 			String.format(
-				"taxonomyCategoryIds/any(k:k in (%s,%s))",
+				"taxonomyCategoryIds/any(k:k in (%s, %s))",
 				taxonomyCategory2.getId(), taxonomyCategory3.getId()));
+
 		_assertFilteredObjectEntries(
-			0, "taxonomyCategoryIds/any(k:k in (1234,5678))");
+			3,
+			String.format(
+				"taxonomyCategoryIds/any(k:k le %s)",
+				taxonomyCategory1.getId()));
+		_assertFilteredObjectEntries(
+			3,
+			String.format(
+				"taxonomyCategoryIds/any(k:k le %s)",
+				taxonomyCategory2.getId()));
+		_assertFilteredObjectEntries(
+			3,
+			String.format(
+				"taxonomyCategoryIds/any(k:k le %s)",
+				taxonomyCategory3.getId()));
+
+		_assertFilteredObjectEntries(
+			0,
+			String.format(
+				"taxonomyCategoryIds/any(k:k lt %s)",
+				taxonomyCategory1.getId()));
+		_assertFilteredObjectEntries(
+			3,
+			String.format(
+				"taxonomyCategoryIds/any(k:k lt %s)",
+				taxonomyCategory2.getId()));
+		_assertFilteredObjectEntries(
+			3,
+			String.format(
+				"taxonomyCategoryIds/any(k:k lt %s)",
+				taxonomyCategory3.getId()));
+
+		_assertFilteredObjectEntries(
+			2,
+			String.format(
+				"taxonomyCategoryIds/any(k:k ne %s)",
+				taxonomyCategory1.getId()));
+		_assertFilteredObjectEntries(
+			3,
+			String.format(
+				"taxonomyCategoryIds/any(k:k ne %s)",
+				taxonomyCategory2.getId()));
+		_assertFilteredObjectEntries(
+			3,
+			String.format(
+				"taxonomyCategoryIds/any(k:k ne %s)",
+				taxonomyCategory3.getId()));
+
+		_assertFilteredObjectEntries(
+			4, "not (taxonomyCategoryIds/any(k:k eq 1234))");
+		_assertFilteredObjectEntries(
+			1,
+			String.format(
+				"not (taxonomyCategoryIds/any(k:k eq %s))",
+				taxonomyCategory1.getId()));
+		_assertFilteredObjectEntries(
+			2,
+			String.format(
+				"not (taxonomyCategoryIds/any(k:k eq %s))",
+				taxonomyCategory2.getId()));
+		_assertFilteredObjectEntries(
+			3,
+			String.format(
+				"not (taxonomyCategoryIds/any(k:k eq %s))",
+				taxonomyCategory3.getId()));
+		_assertFilteredObjectEntries(
+			2,
+			String.format(
+				"not (taxonomyCategoryIds/any(k:k in (%s, %s)))",
+				taxonomyCategory2.getId(), taxonomyCategory3.getId()));
+		_assertFilteredObjectEntries(1, "not taxonomyCategoryIds/any()");
 	}
 
 	@Test
@@ -10873,6 +11006,147 @@ public class ObjectEntryResourceTest {
 			defaultLanguageJSONObject.getString("fileBase64"));
 
 		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
+	}
+
+	@FeatureFlag("LPD-11388")
+	@Test
+	public void testPostCustomObjectEntryWithLocalizedLocationObjectField()
+		throws Exception {
+
+		GeocoderResult geocoderResult = new GeocoderResult(
+			RandomTestUtil.randomString(), RandomTestUtil.randomDouble(),
+			RandomTestUtil.randomDouble());
+
+		try (SafeCloseable safeCloseable =
+				GeocoderTestUtil.swapWithSafeCloseable(
+					geocoderResult,
+					_objectFieldBusinessTypeRegistry.getObjectFieldBusinessType(
+						ObjectFieldConstants.BUSINESS_TYPE_LOCATION))) {
+
+			ObjectDefinition objectDefinition =
+				ObjectDefinitionTestUtil.publishObjectDefinition(
+					Collections.singletonList(
+						new LocationObjectFieldBuilder(
+						).labelMap(
+							RandomTestUtil.randomLocaleStringMap()
+						).localized(
+							true
+						).name(
+							"location"
+						).build()));
+
+			String address = RandomTestUtil.randomString();
+			double latitude = RandomTestUtil.randomDouble();
+			double longitude = RandomTestUtil.randomDouble();
+
+			JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
+				JSONUtil.put(
+					"location_i18n",
+					JSONUtil.put(
+						"en_US", JSONUtil.put("address", address)
+					).put(
+						"pt_BR",
+						JSONUtil.put(
+							"coordinates",
+							JSONUtil.put(
+								"latitude", latitude
+							).put(
+								"longitude", longitude
+							))
+					)
+				).toString(),
+				objectDefinition.getRESTContextPath(), Http.Method.POST);
+
+			JSONObject i18nJSONObject = jsonObject.getJSONObject(
+				"location_i18n");
+
+			_assertLocationJSONObject(
+				address, geocoderResult.getLatitude(),
+				geocoderResult.getLongitude(),
+				i18nJSONObject.getJSONObject("en_US"));
+			_assertLocationJSONObject(
+				geocoderResult.getAddress(), latitude, longitude,
+				i18nJSONObject.getJSONObject("pt_BR"));
+		}
+	}
+
+	@FeatureFlag("LPD-11388")
+	@Test
+	public void testPostCustomObjectEntryWithLocationObjectField()
+		throws Exception {
+
+		GeocoderResult geocoderResult = new GeocoderResult(
+			RandomTestUtil.randomString(), RandomTestUtil.randomDouble(),
+			RandomTestUtil.randomDouble());
+
+		try (SafeCloseable safeCloseable =
+				GeocoderTestUtil.swapWithSafeCloseable(
+					geocoderResult,
+					_objectFieldBusinessTypeRegistry.getObjectFieldBusinessType(
+						ObjectFieldConstants.BUSINESS_TYPE_LOCATION))) {
+
+			String defaultValue = RandomTestUtil.randomString();
+
+			ObjectDefinition objectDefinition =
+				ObjectDefinitionTestUtil.publishObjectDefinition(
+					Collections.singletonList(
+						new LocationObjectFieldBuilder(
+						).labelMap(
+							RandomTestUtil.randomLocaleStringMap()
+						).name(
+							"location"
+						).objectFieldSettings(
+							Arrays.asList(
+								new ObjectFieldSettingBuilder(
+								).name(
+									ObjectFieldSettingConstants.
+										NAME_DEFAULT_VALUE
+								).value(
+									JSONUtil.put(
+										"address", defaultValue
+									).toString()
+								).build(),
+								new ObjectFieldSettingBuilder(
+								).name(
+									ObjectFieldSettingConstants.
+										NAME_DEFAULT_VALUE_TYPE
+								).value(
+									ObjectFieldSettingConstants.
+										VALUE_INPUT_AS_VALUE
+								).build())
+						).build()));
+
+			String address = RandomTestUtil.randomString();
+
+			JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
+				JSONUtil.put(
+					"location", JSONUtil.put("address", address)
+				).toString(),
+				objectDefinition.getRESTContextPath(), Http.Method.POST);
+
+			_assertLocationJSONObject(
+				address, geocoderResult.getLatitude(),
+				geocoderResult.getLongitude(),
+				jsonObject.getJSONObject("location"));
+
+			_objectValidationRuleLocalService.addObjectValidationRule(
+				StringUtil.randomString(), TestPropsValues.getUserId(),
+				objectDefinition.getObjectDefinitionId(), true,
+				ObjectValidationRuleConstants.ENGINE_TYPE_DDM,
+				LocalizedMapUtil.getLocalizedMap("Field must not be empty"),
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				ObjectValidationRuleConstants.OUTPUT_TYPE_FULL_VALIDATION,
+				"not(isEmpty(location))", false, Collections.emptyList());
+
+			jsonObject = HTTPTestUtil.invokeToJSONObject(
+				String.valueOf(_jsonFactory.createJSONObject()),
+				objectDefinition.getRESTContextPath(), Http.Method.POST);
+
+			_assertLocationJSONObject(
+				defaultValue, geocoderResult.getLatitude(),
+				geocoderResult.getLongitude(),
+				jsonObject.getJSONObject("location"));
+		}
 	}
 
 	@Test
@@ -16449,6 +16723,24 @@ public class ObjectEntryResourceTest {
 		}
 	}
 
+	private void _assertLocationJSONObject(
+		String expectedAddress, double expectedLatitude,
+		double expectedLongitude, JSONObject locationJSONObject) {
+
+		Assert.assertEquals(
+			expectedAddress, locationJSONObject.getString("address"));
+
+		JSONObject coordinatesJSONObject = locationJSONObject.getJSONObject(
+			"coordinates");
+
+		Assert.assertEquals(
+			expectedLatitude, coordinatesJSONObject.getDouble("latitude"),
+			0.0001);
+		Assert.assertEquals(
+			expectedLongitude, coordinatesJSONObject.getDouble("longitude"),
+			0.0001);
+	}
+
 	private void _assertNestedFieldsFieldsInRelationships(
 		int currentDepth, int depth, JSONObject jsonObject,
 		String[] nestedFieldNames,
@@ -17328,12 +17620,7 @@ public class ObjectEntryResourceTest {
 					objectDefinition.getCompanyId()));
 			objectEntryResource.setContextUser(user);
 
-			Class<?> clazz = objectEntryResource.getClass();
-
-			Method method = clazz.getMethod(
-				"setObjectDefinition", ObjectDefinition.class);
-
-			method.invoke(objectEntryResource, objectDefinition);
+			_setObjectDefinition(objectDefinition, objectEntryResource);
 
 			return objectEntryResource;
 		}
@@ -17783,11 +18070,39 @@ public class ObjectEntryResourceTest {
 		objectEntry.setProperties(properties);
 	}
 
+	private void _setObjectDefinition(
+			ObjectDefinition objectDefinition,
+			ObjectEntryResource objectEntryResource)
+		throws Exception {
+
+		Class<?> clazz = objectEntryResource.getClass();
+
+		Method method = clazz.getMethod(
+			"setObjectDefinition", ObjectDefinition.class);
+
+		method.invoke(objectEntryResource, objectDefinition);
+	}
+
 	private void _setUpPermissionThreadLocal(User user) {
 		PrincipalThreadLocal.setName(user.getUserId());
 
 		PermissionThreadLocal.setPermissionChecker(
 			PermissionCheckerFactoryUtil.create(user));
+	}
+
+	private CompanyConfigurationTemporarySwapper _swapObjectConfiguration(
+			String[] attachmentFileURLHostsAllowed,
+			boolean attachmentFileURLLocalNetworkAccessEnabled)
+		throws Exception {
+
+		return new CompanyConfigurationTemporarySwapper(
+			TestPropsValues.getCompanyId(), ObjectConfiguration.class.getName(),
+			HashMapDictionaryBuilder.<String, Object>put(
+				"attachmentFileURLHostsAllowed", attachmentFileURLHostsAllowed
+			).put(
+				"attachmentFileURLLocalNetworkAccessEnabled",
+				attachmentFileURLLocalNetworkAccessEnabled
+			).build());
 	}
 
 	private void _testDeleteObjectEntryWithComments(
@@ -18004,7 +18319,7 @@ public class ObjectEntryResourceTest {
 		// in
 
 		_assertFilteredObjectEntries(
-			2, fieldName + " in (2023-09-20T10:05:00Z,2023-09-20T10:00:00Z)");
+			2, fieldName + " in (2023-09-20T10:05:00Z, 2023-09-20T10:00:00Z)");
 
 		// le
 
@@ -19305,141 +19620,182 @@ public class ObjectEntryResourceTest {
 			}
 		);
 
-		// Documents and media source, file from URL
-
 		Company company = _companyLocalService.getCompany(
 			TestPropsValues.getCompanyId());
 
-		_testPatchPutCustomObjectEntryWithAttachmentField(
-			fileEntry -> JSONUtil.put(
+		String previewFileURL = StringBundler.concat(
+			"http://", company.getVirtualHostname(), ":",
+			PortalUtil.getPortalServerPort(false),
+			_dlURLHelper.getPreviewURL(
+				customFileEntry1, customFileEntry1.getFileVersion(), null, "",
+				false, true));
+
+		String hostNotAllowedMessage = StringBundler.concat(
+			"Unable to download file from ", previewFileURL, " because host ",
+			company.getVirtualHostname(), " is not allowed");
+
+		// Documents and media source, file from local URL with host allowed
+		// and local network access disabled
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper = _swapObjectConfiguration(
+					new String[] {company.getVirtualHostname()}, false)) {
+
+			_testPatchPutCustomObjectEntryWithInvalidFileURL(
+				hostNotAllowedMessage, previewFileURL, httpMethod,
+				objectDefinition, useExternalReferenceCode);
+		}
+
+		// Documents and media source, file from local URL with host allowed
+		// and local network access enabled
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper = _swapObjectConfiguration(
+					new String[] {
+						StringUtil.toUpperCase(company.getVirtualHostname())
+					},
+					true)) {
+
+			_testPatchPutCustomObjectEntryWithAttachmentField(
+				fileEntry -> JSONUtil.put(
+					_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
+					_getFileEntryJSONObject(
+						null, fileEntry, objectDefinition,
+						_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE)),
+				_toFileEntry(
+					RandomTestUtil.randomString() + ".txt", previewFileURL,
+					null, null, customFileEntry1.getMimeType()),
+				httpMethod, null, objectDefinition,
 				_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
-				_getFileEntryJSONObject(
-					null, fileEntry, objectDefinition,
-					_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE)),
-			_toFileEntry(
-				RandomTestUtil.randomString() + ".txt",
-				StringBundler.concat(
-					"http://", company.getVirtualHostname(), ":",
-					PortalUtil.getPortalServerPort(false),
-					_dlURLHelper.getPreviewURL(
-						customFileEntry1, customFileEntry1.getFileVersion(),
-						null, "", false, true)),
-				null, null, customFileEntry1.getMimeType()),
-			httpMethod, null, objectDefinition,
-			_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
+				useExternalReferenceCode);
+		}
+
+		// Documents and media source, file from local URL with local network
+		// access disabled
+
+		_testPatchPutCustomObjectEntryWithInvalidFileURL(
+			hostNotAllowedMessage, previewFileURL, httpMethod, objectDefinition,
 			useExternalReferenceCode);
 
-		// Documents and media source, file from URL and host down
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper = _swapObjectConfiguration(
+					new String[0], true)) {
 
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				"com.liferay.object.rest.internal.manager.v1_0." +
-					"DefaultObjectEntryManagerImpl",
-				LoggerTestUtil.ERROR)) {
-
-			String url = StringBundler.concat(
-				"http://", company.getVirtualHostname(), ":",
-				PortalUtil.getPortalServerPort(false) + 1);
+			// Documents and media source, file from local URL with local
+			// network access enabled
 
 			_testPatchPutCustomObjectEntryWithAttachmentField(
 				fileEntry -> JSONUtil.put(
-					"status", "BAD_REQUEST"
-				).put(
-					"title", "Unable to download file from " + url
-				),
+					_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
+					_getFileEntryJSONObject(
+						null, fileEntry, objectDefinition,
+						_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE)),
 				_toFileEntry(
-					RandomTestUtil.randomString() + ".txt", url, null, null,
-					customFileEntry1.getMimeType()),
-				httpMethod, null, objectDefinition,
-				_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
-				useExternalReferenceCode);
-		}
-
-		// Documents and media source, file from URL malformed
-
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				"com.liferay.object.rest.internal.manager.v1_0." +
-					"DefaultObjectEntryManagerImpl",
-				LoggerTestUtil.ERROR)) {
-
-			String url = StringBundler.concat(
-				"http//", company.getVirtualHostname(), ":",
-				PortalUtil.getPortalServerPort(false), "/",
-				RandomTestUtil.randomString());
-
-			_testPatchPutCustomObjectEntryWithAttachmentField(
-				fileEntry -> JSONUtil.put(
-					"status", "BAD_REQUEST"
-				).put(
-					"title", "Unable to download file from " + url
-				),
-				_toFileEntry(
-					RandomTestUtil.randomString() + ".txt", url, null, null,
-					customFileEntry1.getMimeType()),
-				httpMethod, null, objectDefinition,
-				_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
-				useExternalReferenceCode);
-		}
-
-		// Documents and media source, file from URL not found
-
-		String notFoundPath = "/" + RandomTestUtil.randomString();
-
-		String httpCode404URL = StringBundler.concat(
-			"http://", company.getVirtualHostname(), ":",
-			PortalUtil.getPortalServerPort(false), notFoundPath);
-
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				"portal_web.docroot.errors.code_jsp", LoggerTestUtil.WARN)) {
-
-			_testPatchPutCustomObjectEntryWithAttachmentField(
-				fileEntry -> JSONUtil.put(
-					"status", "BAD_REQUEST"
-				).put(
-					"title",
-					"Unable to download file from " + httpCode404URL +
-						", unexpected HTTP code: 404"
-				),
-				_toFileEntry(
-					RandomTestUtil.randomString() + ".txt", httpCode404URL,
+					RandomTestUtil.randomString() + ".txt", previewFileURL,
 					null, null, customFileEntry1.getMimeType()),
 				httpMethod, null, objectDefinition,
 				_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
 				useExternalReferenceCode);
 
-			List<LogEntry> logEntries = logCapture.getLogEntries();
+			// Documents and media source, file from URL and host down
 
-			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
+			try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+					"com.liferay.object.rest.internal.manager.v1_0." +
+						"DefaultObjectEntryManagerImpl",
+					LoggerTestUtil.ERROR)) {
 
-			LogEntry logEntry = logEntries.get(0);
+				String url = StringBundler.concat(
+					"http://", company.getVirtualHostname(), ":",
+					PortalUtil.getPortalServerPort(false) + 1);
 
-			Assert.assertEquals(LoggerTestUtil.WARN, logEntry.getPriority());
+				_testPatchPutCustomObjectEntryWithInvalidFileURL(
+					"Unable to download file from " + url, url, httpMethod,
+					objectDefinition, useExternalReferenceCode);
+			}
 
-			String message = logEntry.getMessage();
+			// Documents and media source, file from URL malformed
 
-			Assert.assertTrue(message, message.contains("code=\"404\""));
-			Assert.assertTrue(message, message.contains("uri=" + notFoundPath));
+			try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+					"com.liferay.object.rest.internal.manager.v1_0." +
+						"DefaultObjectEntryManagerImpl",
+					LoggerTestUtil.ERROR)) {
+
+				String url = StringBundler.concat(
+					"http//", company.getVirtualHostname(), ":",
+					PortalUtil.getPortalServerPort(false), "/",
+					RandomTestUtil.randomString());
+
+				_testPatchPutCustomObjectEntryWithInvalidFileURL(
+					"Unable to download file from " + url, url, httpMethod,
+					objectDefinition, useExternalReferenceCode);
+			}
+
+			// Documents and media source, file from URL not found
+
+			String notFoundPath = "/" + RandomTestUtil.randomString();
+
+			String httpCode404URL = StringBundler.concat(
+				"http://", company.getVirtualHostname(), ":",
+				PortalUtil.getPortalServerPort(false), notFoundPath);
+
+			try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+					"portal_web.docroot.errors.code_jsp",
+					LoggerTestUtil.WARN)) {
+
+				_testPatchPutCustomObjectEntryWithInvalidFileURL(
+					"Unable to download file from " + httpCode404URL +
+						" because of unexpected HTTP response code 404",
+					httpCode404URL, httpMethod, objectDefinition,
+					useExternalReferenceCode);
+
+				List<LogEntry> logEntries = logCapture.getLogEntries();
+
+				Assert.assertEquals(
+					logEntries.toString(), 1, logEntries.size());
+
+				LogEntry logEntry = logEntries.get(0);
+
+				Assert.assertEquals(
+					LoggerTestUtil.WARN, logEntry.getPriority());
+
+				String message = logEntry.getMessage();
+
+				Assert.assertTrue(message, message.contains("code=\"404\""));
+				Assert.assertTrue(
+					message, message.contains("uri=" + notFoundPath));
+			}
+		}
+
+		// Documents and media source, file from URL with host not allowed
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper = _swapObjectConfiguration(
+					new String[] {"www.able.com"}, true)) {
+
+			_testPatchPutCustomObjectEntryWithInvalidFileURL(
+				hostNotAllowedMessage, previewFileURL, httpMethod,
+				objectDefinition, useExternalReferenceCode);
 		}
 
 		// Documents and media source, file from URL with unsupported protocol
+
+		String jarFileURL = StringBundler.concat(
+			"jar:file:///", RandomTestUtil.randomString(),
+			".jar!/META-INF/MANIFEST.MF");
+
+		_testPatchPutCustomObjectEntryWithInvalidFileURL(
+			"Unable to download file from " + jarFileURL +
+				" because protocol jar is not supported",
+			jarFileURL, httpMethod, objectDefinition, useExternalReferenceCode);
 
 		String unsupportedProtocolFileURL = StringBundler.concat(
 			"file://", company.getVirtualHostname(), ":",
 			PortalUtil.getPortalServerPort(false));
 
-		_testPatchPutCustomObjectEntryWithAttachmentField(
-			fileEntry -> JSONUtil.put(
-				"status", "BAD_REQUEST"
-			).put(
-				"title",
-				"Unable to download file from " + unsupportedProtocolFileURL +
-					", unsupported protocol: file"
-			),
-			_toFileEntry(
-				RandomTestUtil.randomString() + ".txt",
-				unsupportedProtocolFileURL, null, null,
-				customFileEntry1.getMimeType()),
-			httpMethod, null, objectDefinition,
-			_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
+		_testPatchPutCustomObjectEntryWithInvalidFileURL(
+			"Unable to download file from " + unsupportedProtocolFileURL +
+				" because protocol file is not supported",
+			unsupportedProtocolFileURL, httpMethod, objectDefinition,
 			useExternalReferenceCode);
 
 		// User computer to CMS basic document source, file from Base64
@@ -19804,6 +20160,25 @@ public class ObjectEntryResourceTest {
 					"externalReferenceCode", externalReferenceCode2
 				).toString(),
 				endpoint2 + externalReferenceCode1, httpMethod));
+	}
+
+	private void _testPatchPutCustomObjectEntryWithInvalidFileURL(
+			String expectedTitle, String fileURL, Http.Method httpMethod,
+			ObjectDefinition objectDefinition, boolean useExternalReferenceCode)
+		throws Exception {
+
+		_testPatchPutCustomObjectEntryWithAttachmentField(
+			fileEntry -> JSONUtil.put(
+				"status", "BAD_REQUEST"
+			).put(
+				"title", expectedTitle
+			),
+			_toFileEntry(
+				RandomTestUtil.randomString() + ".txt", fileURL, null, null,
+				ContentTypes.TEXT_PLAIN),
+			httpMethod, null, objectDefinition,
+			_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
+			useExternalReferenceCode);
 	}
 
 	private void _testPatchPutObjectEntryWithComments(
@@ -20300,137 +20675,176 @@ public class ObjectEntryResourceTest {
 			"thumbnailURL", objectDefinition,
 			_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE);
 
-		// Documents and media source, file from URL
-
 		Company company = _companyLocalService.getCompany(
 			TestPropsValues.getCompanyId());
 
-		_testPostCustomObjectEntryWithAttachmentObjectField(
-			fileEntry -> JSONUtil.put(
-				_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
-				_getFileEntryJSONObject(
-					null, fileEntry, objectDefinition,
-					_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE)),
-			_toFileEntry(
-				customFileEntry1.getTitle(),
-				StringBundler.concat(
-					"http://", company.getVirtualHostname(), ":",
-					PortalUtil.getPortalServerPort(false),
-					_dlURLHelper.getPreviewURL(
-						customFileEntry1, customFileEntry1.getFileVersion(),
-						null, "", false, true)),
-				null, _group.getGroupId(), customFileEntry1.getMimeType()),
-			null, objectDefinition,
-			_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE);
+		String previewFileURL = StringBundler.concat(
+			"http://", company.getVirtualHostname(), ":",
+			PortalUtil.getPortalServerPort(false),
+			_dlURLHelper.getPreviewURL(
+				customFileEntry1, customFileEntry1.getFileVersion(), null, "",
+				false, true));
 
-		// Documents and media source, file from URL and host down
+		String hostNotAllowedMessage = StringBundler.concat(
+			"Unable to download file from ", previewFileURL, " because host ",
+			company.getVirtualHostname(), " is not allowed");
 
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				"com.liferay.object.rest.internal.manager.v1_0." +
-					"DefaultObjectEntryManagerImpl",
-				LoggerTestUtil.ERROR)) {
+		// Documents and media source, file from local URL with host allowed
+		// and local network access disabled
 
-			String hostDownFileURL = StringBundler.concat(
-				"http://", company.getVirtualHostname(), ":",
-				PortalUtil.getPortalServerPort(false) + 1);
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper = _swapObjectConfiguration(
+					new String[] {company.getVirtualHostname()}, false)) {
 
-			_testPostCustomObjectEntryWithAttachmentObjectField(
-				fileEntry -> JSONUtil.put(
-					"status", "BAD_REQUEST"
-				).put(
-					"title", "Unable to download file from " + hostDownFileURL
-				),
-				_toFileEntry(
-					RandomTestUtil.randomString() + ".txt", hostDownFileURL,
-					null, null, customFileEntry1.getMimeType()),
-				null, objectDefinition,
-				_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE);
+			_testPostCustomObjectEntryWithInvalidFileURL(
+				hostNotAllowedMessage, previewFileURL, objectDefinition);
 		}
 
-		// Documents and media source, file from URL malformed
+		// Documents and media source, file from local URL with host allowed
+		// and local network access enabled
 
-		String malformedFileURL = StringBundler.concat(
-			"http//", company.getVirtualHostname(), ":",
-			PortalUtil.getPortalServerPort(false), "/",
-			RandomTestUtil.randomString());
-
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				"com.liferay.object.rest.internal.manager.v1_0." +
-					"DefaultObjectEntryManagerImpl",
-				LoggerTestUtil.ERROR)) {
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper = _swapObjectConfiguration(
+					new String[] {
+						StringUtil.toUpperCase(company.getVirtualHostname())
+					},
+					true)) {
 
 			_testPostCustomObjectEntryWithAttachmentObjectField(
 				fileEntry -> JSONUtil.put(
-					"status", "BAD_REQUEST"
-				).put(
-					"title", "Unable to download file from " + malformedFileURL
-				),
+					_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
+					_getFileEntryJSONObject(
+						null, fileEntry, objectDefinition,
+						_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE)),
 				_toFileEntry(
-					RandomTestUtil.randomString() + ".txt", malformedFileURL,
+					RandomTestUtil.randomString() + ".txt", previewFileURL,
 					null, _group.getGroupId(), customFileEntry1.getMimeType()),
 				null, objectDefinition,
 				_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE);
 		}
 
-		// Documents and media source, file from URL not found
+		// Documents and media source, file from local URL with local network
+		// access disabled
 
-		String notFoundPath = "/" + RandomTestUtil.randomString();
+		_testPostCustomObjectEntryWithInvalidFileURL(
+			hostNotAllowedMessage, previewFileURL, objectDefinition);
 
-		String resourceNotFoundFileURL = StringBundler.concat(
-			"http://", company.getVirtualHostname(), ":",
-			PortalUtil.getPortalServerPort(false), notFoundPath);
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper = _swapObjectConfiguration(
+					new String[0], true)) {
 
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				"portal_web.docroot.errors.code_jsp", LoggerTestUtil.WARN)) {
+			// Documents and media source, file from local URL with local
+			// network access enabled
 
 			_testPostCustomObjectEntryWithAttachmentObjectField(
 				fileEntry -> JSONUtil.put(
-					"status", "BAD_REQUEST"
-				).put(
-					"title",
-					"Unable to download file from " + resourceNotFoundFileURL +
-						", unexpected HTTP code: 404"
-				),
+					_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE,
+					_getFileEntryJSONObject(
+						null, fileEntry, objectDefinition,
+						_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE)),
 				_toFileEntry(
-					RandomTestUtil.randomString() + ".txt",
-					resourceNotFoundFileURL, null, _group.getGroupId(),
-					customFileEntry1.getMimeType()),
+					customFileEntry1.getTitle(), previewFileURL, null,
+					_group.getGroupId(), customFileEntry1.getMimeType()),
 				null, objectDefinition,
 				_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE);
 
-			List<LogEntry> logEntries = logCapture.getLogEntries();
+			// Documents and media source, file from URL and host down
 
-			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
+			try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+					"com.liferay.object.rest.internal.manager.v1_0." +
+						"DefaultObjectEntryManagerImpl",
+					LoggerTestUtil.ERROR)) {
 
-			LogEntry logEntry = logEntries.get(0);
+				String hostDownFileURL = StringBundler.concat(
+					"http://", company.getVirtualHostname(), ":",
+					PortalUtil.getPortalServerPort(false) + 1);
 
-			Assert.assertEquals(LoggerTestUtil.WARN, logEntry.getPriority());
+				_testPostCustomObjectEntryWithInvalidFileURL(
+					"Unable to download file from " + hostDownFileURL,
+					hostDownFileURL, objectDefinition);
+			}
 
-			String message = logEntry.getMessage();
+			// Documents and media source, file from URL malformed
 
-			Assert.assertTrue(message, message.contains("code=\"404\""));
-			Assert.assertTrue(message, message.contains("uri=" + notFoundPath));
+			try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+					"com.liferay.object.rest.internal.manager.v1_0." +
+						"DefaultObjectEntryManagerImpl",
+					LoggerTestUtil.ERROR)) {
+
+				String malformedFileURL = StringBundler.concat(
+					"http//", company.getVirtualHostname(), ":",
+					PortalUtil.getPortalServerPort(false), "/",
+					RandomTestUtil.randomString());
+
+				_testPostCustomObjectEntryWithInvalidFileURL(
+					"Unable to download file from " + malformedFileURL,
+					malformedFileURL, objectDefinition);
+			}
+
+			// Documents and media source, file from URL not found
+
+			String notFoundPath = "/" + RandomTestUtil.randomString();
+
+			String resourceNotFoundFileURL = StringBundler.concat(
+				"http://", company.getVirtualHostname(), ":",
+				PortalUtil.getPortalServerPort(false), notFoundPath);
+
+			try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+					"portal_web.docroot.errors.code_jsp",
+					LoggerTestUtil.WARN)) {
+
+				_testPostCustomObjectEntryWithInvalidFileURL(
+					"Unable to download file from " + resourceNotFoundFileURL +
+						" because of unexpected HTTP response code 404",
+					resourceNotFoundFileURL, objectDefinition);
+
+				List<LogEntry> logEntries = logCapture.getLogEntries();
+
+				Assert.assertEquals(
+					logEntries.toString(), 1, logEntries.size());
+
+				LogEntry logEntry = logEntries.get(0);
+
+				Assert.assertEquals(
+					LoggerTestUtil.WARN, logEntry.getPriority());
+
+				String message = logEntry.getMessage();
+
+				Assert.assertTrue(message, message.contains("code=\"404\""));
+				Assert.assertTrue(
+					message, message.contains("uri=" + notFoundPath));
+			}
+		}
+
+		// Documents and media source, file from URL with host not allowed
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper = _swapObjectConfiguration(
+					new String[] {"www.able.com"}, true)) {
+
+			_testPostCustomObjectEntryWithInvalidFileURL(
+				hostNotAllowedMessage, previewFileURL, objectDefinition);
 		}
 
 		// Documents and media source, file from URL with unsupported protocol
+
+		String jarFileURL = StringBundler.concat(
+			"jar:file:///", RandomTestUtil.randomString(),
+			".jar!/META-INF/MANIFEST.MF");
+
+		_testPostCustomObjectEntryWithInvalidFileURL(
+			"Unable to download file from " + jarFileURL +
+				" because protocol jar is not supported",
+			jarFileURL, objectDefinition);
 
 		String unsupportedProtocolURL = StringBundler.concat(
 			"file://", company.getVirtualHostname(), ":",
 			PortalUtil.getPortalServerPort(false));
 
-		_testPostCustomObjectEntryWithAttachmentObjectField(
-			fileEntry -> JSONUtil.put(
-				"status", "BAD_REQUEST"
-			).put(
-				"title",
-				"Unable to download file from " + unsupportedProtocolURL +
-					", unsupported protocol: file"
-			),
-			_toFileEntry(
-				RandomTestUtil.randomString() + ".txt", unsupportedProtocolURL,
-				null, _group.getGroupId(), customFileEntry1.getMimeType()),
-			null, objectDefinition,
-			_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE);
+		_testPostCustomObjectEntryWithInvalidFileURL(
+			"Unable to download file from " + unsupportedProtocolURL +
+				" because protocol file is not supported",
+			unsupportedProtocolURL, objectDefinition);
 
 		// User computer to CMS basic document source, file from Base64
 
@@ -20780,6 +21194,24 @@ public class ObjectEntryResourceTest {
 		_assertJSONObjectWithAttachmentField(
 			expectedJSONObjectUnsafeFunction.apply(fileEntry), jsonObject,
 			objectFieldName);
+	}
+
+	private void _testPostCustomObjectEntryWithInvalidFileURL(
+			String expectedTitle, String fileURL,
+			ObjectDefinition objectDefinition)
+		throws Exception {
+
+		_testPostCustomObjectEntryWithAttachmentObjectField(
+			fileEntry -> JSONUtil.put(
+				"status", "BAD_REQUEST"
+			).put(
+				"title", expectedTitle
+			),
+			_toFileEntry(
+				RandomTestUtil.randomString() + ".txt", fileURL, null,
+				_group.getGroupId(), ContentTypes.TEXT_PLAIN),
+			null, objectDefinition,
+			_OBJECT_FIELD_NAME_ATTACHMENT_DOCS_AND_MEDIA_SOURCE);
 	}
 
 	private void
@@ -21613,6 +22045,11 @@ public class ObjectEntryResourceTest {
 							"true"
 						).build()));
 
+			_setObjectDefinition(
+				_objectDefinitionLocalService.getObjectDefinition(
+					objectDefinition.getObjectDefinitionId()),
+				objectEntryResource);
+
 			validationResponse = _validate(
 				scopeKey, objectEntryResource,
 				_getValidationRequest(Collections.emptyMap()));
@@ -21665,6 +22102,11 @@ public class ObjectEntryResourceTest {
 
 			_objectFieldLocalService.deleteObjectField(
 				objectField2.getObjectFieldId());
+
+			_setObjectDefinition(
+				_objectDefinitionLocalService.getObjectDefinition(
+					objectDefinition.getObjectDefinitionId()),
+				objectEntryResource);
 
 			FileEntry fileEntry = TempFileEntryUtil.addTempFileEntry(
 				_testGroupId, TestPropsValues.getUserId(),
@@ -22899,6 +23341,9 @@ public class ObjectEntryResourceTest {
 
 	@Inject
 	private ObjectEntryService _objectEntryService;
+
+	@Inject
+	private ObjectFieldBusinessTypeRegistry _objectFieldBusinessTypeRegistry;
 
 	@Inject
 	private ObjectFieldLocalService _objectFieldLocalService;

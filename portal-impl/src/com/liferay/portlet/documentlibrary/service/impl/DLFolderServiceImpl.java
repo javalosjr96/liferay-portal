@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.dao.orm.QueryDefinition;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.lock.Lock;
 import com.liferay.portal.kernel.lock.LockManagerUtil;
+import com.liferay.portal.kernel.lock.NoSuchLockException;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
@@ -22,6 +23,7 @@ import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermi
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portlet.documentlibrary.DLGroupServiceSettings;
@@ -32,6 +34,7 @@ import com.liferay.ratings.kernel.model.RatingsEntryTable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Brian Wing Shun Chan
@@ -646,11 +649,13 @@ public class DLFolderServiceImpl extends DLFolderServiceBaseImpl {
 
 			folderIds.add(dlFolder.getFolderId());
 
-			if (recurse) {
-				getSubfolderIds(
-					folderIds, dlFolder.getGroupId(), dlFolder.getFolderId(),
-					recurse);
+			if (!recurse) {
+				continue;
 			}
+
+			getSubfolderIds(
+				folderIds, dlFolder.getGroupId(), dlFolder.getFolderId(),
+				recurse);
 		}
 	}
 
@@ -725,8 +730,7 @@ public class DLFolderServiceImpl extends DLFolderServiceBaseImpl {
 
 		ModelResourcePermissionUtil.check(
 			dlFolderModelResourcePermission, permissionChecker,
-			serviceContext.getScopeGroupId(), parentFolderId,
-			ActionKeys.ADD_FOLDER);
+			dlFolder.getGroupId(), parentFolderId, ActionKeys.ADD_FOLDER);
 
 		return dlFolderLocalService.moveFolder(
 			getUserId(), folderId, parentFolderId, serviceContext);
@@ -736,6 +740,30 @@ public class DLFolderServiceImpl extends DLFolderServiceBaseImpl {
 	public Lock refreshFolderLock(
 			String lockUuid, long companyId, long expirationTime)
 		throws PortalException {
+
+		Lock lock = LockManagerUtil.getLockByUuidAndCompanyId(
+			lockUuid, companyId);
+
+		if (!Objects.equals(lock.getClassName(), DLFolder.class.getName())) {
+			throw new NoSuchLockException(
+				"No folder lock exists with UUID " + lockUuid);
+		}
+
+		ModelResourcePermission<DLFolder> dlFolderModelResourcePermission =
+			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
+				DLFolder.class.getName());
+
+		DLFolder dlFolder = dlFolderPersistence.findByPrimaryKey(
+			GetterUtil.getLong(lock.getKey()));
+
+		dlFolderModelResourcePermission.check(
+			getPermissionChecker(), dlFolder, ActionKeys.UPDATE);
+
+		if ((expirationTime <= 0) ||
+			(expirationTime > DLFolderImpl.LOCK_EXPIRATION_TIME)) {
+
+			expirationTime = DLFolderImpl.LOCK_EXPIRATION_TIME;
+		}
 
 		return LockManagerUtil.refresh(lockUuid, companyId, expirationTime);
 	}

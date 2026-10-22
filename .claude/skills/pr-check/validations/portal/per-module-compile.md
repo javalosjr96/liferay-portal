@@ -1,42 +1,29 @@
 # Per-Module Compile
 
-## Trigger
-
-A module is in the deploy set AND **Full Portal Build** did not deploy it. The latter holds when:
-
-- **Full Portal Build** did not fire.
-
-- OR **Full Portal Build** fired but the module lacks `.lfrbuild-portal` (so `ant all` did not deploy it).
-
-**Command** builds the deploy set. Its size N is used by [full-portal-build.md](full-portal-build.md)'s cost comparison.
-
-Two consumer surfaces are [cross-module-compile.md](cross-module-compile.md)'s instead, and this validation excludes both: modules carrying `.lfrbuild-portal-deprecated`, which only the `portal-deprecated` profile configures, and `testIntegration` sources in `-test` modules, which `deploy` never compiles. Archived modules are not among them, since the project graph reaches those normally.
-
-Both behavior-change and surface-only edits fire this validation — the build verifies compile and resource bundling regardless of intent.
+Deploys each module the branch changed, which checks that it compiles and bundles its resources whatever the change was. The jar task runs `compileJSP`, so a deploy also compiles the module's JSPs, apart from a fragment's, which compile only against their host. When the deploy set grows past the point where one full build is cheaper, it hands off to **Full Portal Build**. Modules carrying `.lfrbuild-portal-deprecated` and the `testIntegration` source of `-test` modules belong to **Cross-Module Compile** instead. A deploy compiles `src/main` alone, so a path under `src/test` or `src/testIntegration` selects nothing here, and a module whose only change sits there is left to **Java Unit Tests** and **Cross-Module Compile**.
 
 ## Match
 
-`^modules/.+\.(java|js|jsx|mjs|cjs|ts|tsx|css|scss|sass|ftl|jsp|jspf)$|^modules/.+/src/main/.+\.properties$|^modules/.+/(bnd\.bnd|gradle\.properties|package-lock\.json|yarn\.lock|package\.json)$ &! ^modules/test/playwright/|(^|/)test\.properties$`
+`^modules/.+\.(java|js|jsx|mjs|cjs|ts|tsx|css|scss|sass|ftl|jsp|jspf)$|^modules/.+/src/main/.+\.properties$|^modules/.+/(bnd\.bnd|gradle\.properties|package-lock\.json|yarn\.lock|package\.json)$ &! ^modules/test/playwright/|/src/test/|/src/testIntegration/|(^|/)test\.properties$`
+
+## Preconditions
+
+- Portal Snapshots
 
 ## Command
 
-Build the deploy set from the diff:
+The deploy set is the Gradle project paths of the changed modules, such as `apps:blogs:blogs-api`. The expansions below match on that form, not on the directory:
 
 ```bash
-MERGE_BASE=$(git merge-base HEAD master)
-
-git diff --name-only "${MERGE_BASE}...HEAD" -- modules
+bash "${SKILL_DIR}/select_paths.sh" "${MERGE_BASE}" "${VALIDATION_FILE}" \
+	| bash "${SKILL_DIR}/find_modules.sh" "${MERGE_BASE}" \
+	| cut -d " " -f1 \
+	| command grep '^modules/' \
+	| sort --unique \
+	| sed "s#^modules/##; s#/#:#g"
 ```
 
-A module is in the deploy set when it has changed sources or resources: `*.java`, `*.{js,jsx,mjs,cjs,ts,tsx}`, frontend resources (`*.{css,scss,sass}`, `*.ftl`, `*.jsp`, `*.jspf`), lockfiles (`package-lock.json`, `yarn.lock`), `*.properties` files under `src/main`, or OSGi configuration (`bnd.bnd`, `gradle.properties`, `package.json` keys other than `test`).
-
-That list is the **Match** regex above restated, and the two have to stay in step. A `test.properties` is never in the set, even under `src/main`, since it configures CI test selection rather than the build. A module whose only change is a `.lfrbuild-*` marker is not in the deploy set, since the marker changes what the build configures rather than what the module contains, and [module-registration.md](module-registration.md) handles it.
-
-A changed file's module is its **nearest ancestor directory holding a `bnd.bnd`**. Do not use `build.gradle`, which app group directories also carry, so `modules/apps/questions/questions-web/package.json` would resolve to `modules/apps/questions`. Module depth is not fixed either, running three to five segments below `modules`, so never strip a set number of them.
-
-Exclude modules whose **only** Java change is under `src/testIntegration`. Integration Test Compile already runs `compileTestIntegrationJava` for those, and `-test` modules do not deploy a runtime bundle — `gradlew :path:deploy` would be redundant. A diff that touches `src/testIntegration` *and* anything else in the same module still puts the module in the deploy set.
-
-Convert each deploy set module directory to a Gradle project path by stripping `modules/` and replacing `/` with `:`, so `modules/apps/blogs/blogs-api` becomes `apps:blogs:blogs-api`. The expansions below match on that form, not on the directory.
+Drop a module the branch deleted, which `find_modules.sh` still names through the merge base but which has nothing left to deploy, and report its paths below as paths that sit in no module. A module was deleted when `git cat-file -e "HEAD:<module directory>"` fails. When the runner says Full Portal Build ran and succeeded, drop each module carrying `.lfrbuild-portal` as well, since `ant all` already deployed it. When the runner says it failed, drop nothing, since a failed `ant all` stops at its first error and vouches for no module.
 
 Expand by consumers only when the change can break one. An added `public` or `protected` member is source and binary compatible, so it expands nothing. A removed member, or one whose signature changed, does break consumers. Collect the removed and added member lines separately and expand only on a removal with no matching addition, since a member that was moved or reformatted appears as both and breaks nobody:
 
@@ -45,16 +32,29 @@ git diff "${MERGE_BASE}...HEAD" -- '<changed file>' | command grep --extended-re
 git diff "${MERGE_BASE}...HEAD" -- '<changed file>' | command grep --extended-regexp '^\+\s*(public|protected)\b'
 ```
 
-Take the consumers that name the changed **type**, not every module that declares a dependency on its project. A project edge means a module could see the type; only a source reference means it does. Search the index, since a recursive `command grep` over `modules` descends into `build` and `node_modules` and does not finish:
+Take the consumers that name the changed **type**, not every module that declares a dependency on its project. A project edge means a module could see the type; only a source reference means it does. Search for the fully qualified name, the package from the file's `package` line followed by the file name without `.java`, since a file outside the package has to import the type or spell that name out and the repository has no `com.liferay` wildcard imports. A file in the same package needs no import, so search those for the simple name. Search the index, since a recursive `command grep` over `modules` descends into `build` and `node_modules` and does not finish:
 
 ```bash
-git grep --cached --files-with-matches --word-regexp '<TypeName>' -- '*.java' \
-	| sed 's|/src/.*||' | sort --unique
+(cd "${REPO_ROOT}" && git grep --cached --files-with-matches --fixed-strings --word-regexp '<FullyQualifiedName>' -- '*.java')
+(cd "${REPO_ROOT}" && git grep --all-match --cached --files-with-matches --fixed-strings --word-regexp -e 'package <package>;' -e '<TypeName>' -- '*.java')
 ```
 
-The difference is not marginal. Removing a member from a mid sized API class put 188 modules on the project edge and 6 on the type reference, and only 2 of those were production consumers that could break. Match the type name rather than the member name, which collides across unrelated classes.
+Take the project of each file either search lists:
 
-Drop any match that is a `-test` or `-test-util` module or carries `.lfrbuild-portal-deprecated`, per the Trigger, and resolve each remaining path to its module the same way a changed file is resolved, by its nearest ancestor holding a `bnd.bnd`.
+```bash
+printf '%s\n' <consumer file>... \
+	| bash "${SKILL_DIR}/find_modules.sh" "${MERGE_BASE}" \
+	| cut -d " " -f1 \
+	| command grep '^modules/' \
+	| sort --unique \
+	| sed "s#^modules/##; s#/#:#g"
+```
+
+A simple name collides with every unrelated type of the same name. `Test` alone matches each `import org.junit.Test`, 6,661 files outside the module that declares it, while its fully qualified name matches none.
+
+The difference is not marginal. Removing a member from a mid sized API class put 188 modules on the project edge and 6 on the type reference, and only 2 of those were production consumers that could break. Match the type rather than the member name, which collides across unrelated classes.
+
+Drop any module that is a `-test` or `-test-util` module or carries `.lfrbuild-portal-deprecated`.
 
 Apply the handoff below to the set you now have, **before** capping it. When the handoff does not fire, cap the consumers at 12 in sorted path order so two runs on the same diff build the same set, and name the full consumer count in the result.
 
@@ -76,13 +76,7 @@ Report the count and the cost math, run Full Portal Build in this validation's p
 
 Run the lockfile check regardless, since it needs no build and a handoff does not make a mismatched dependency any less broken.
 
-Set up once, then deploy each module:
-
-```bash
-(cd "${REPO_ROOT}" && ant compile install-portal-snapshots)
-```
-
-The setup step is a precondition: it rebuilds the `portal-kernel`/`portal-impl` snapshot from the branch tree before any module compiles, so a module referencing a portal-core symbol is checked against the branch's kernel rather than a stale snapshot. A kernel change from a separate, not-yet-merged PR is only caught once local `master` includes it, since pr-check never fetches a remote.
+Deploy each module. The **Portal Snapshots** precondition rebuilds the `portal-kernel`/`portal-impl` snapshot from the branch tree before any module compiles, so a module referencing a portal core symbol is checked against the branch's kernel rather than a stale snapshot. A kernel change from a separate PR that is not yet merged is only caught once local `master` includes it, since pr-check never fetches a remote.
 
 ```bash
 ("${REPO_ROOT}/gradlew" \
@@ -109,15 +103,23 @@ Do not hand this to [javascript-unit-test.md](javascript-unit-test.md). Jest res
 
 Treat `UP-TO-DATE` on a changed module's own `compileJava` with the same suspicion. Gradle's cache has served a stale output in this repository before, so confirm the change reached the jar rather than reading the task line as proof.
 
-When a changed path has no `bnd.bnd` ancestor, there is no module to build, so report **NOT VERIFIED** naming every such path. When a changed path does sit inside a module and the set is still empty, the derivation is broken, so report that as a FAIL. PASS when every module the diff changed reports `BUILD SUCCESSFUL`.
+A changed path that sits in no module, other than the shared tooling above, has nothing to build. Find those paths by resolving the changed paths:
+
+```bash
+bash "${SKILL_DIR}/select_paths.sh" "${MERGE_BASE}" "${VALIDATION_FILE}" \
+	| bash "${SKILL_DIR}/find_modules.sh" "${MERGE_BASE}" \
+	| command grep '^- ' \
+	| cut -d " " -f2-
+```
+
+Report **NO COVERAGE** naming every such path, and also when that tooling expanded to no module. When a changed path does sit inside a module and the set is still empty, the derivation is broken, so report that as a FAIL. The validation passes when every module in the deploy set reports `BUILD SUCCESSFUL`.
 
 ## Checklist
 
 ```
-- [ ] Setup: ant compile install-portal-snapshots
 - [ ] (One subitem per deploy-set module:) Deploy <module path>
 ```
 
 ## Time Estimate
 
-3 min setup, then about 10 sec per module on a warm daemon and a minute or more on a cold one. Each module is its own `gradlew` invocation paying its own configuration, and `--parallel` works within an invocation rather than across them, so the cost is linear in N and the cap above is what keeps it bounded.
+About 10 sec per module on a warm daemon and a minute or more on a cold one. Each module is its own `gradlew` invocation paying its own configuration, and `--parallel` works within an invocation rather than across them, so the cost is linear in N and the cap above is what keeps it bounded.

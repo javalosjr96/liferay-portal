@@ -7,7 +7,7 @@ name: manage-object-logic
 
 # Manage Object Logic
 
-Attach triggers, conditions, and actions to object definitions. The three extension points are object actions (immediate), Kaleo workflows (multistep approval), and notification templates (user facing messages).
+Attach triggers, conditions, and actions to object definitions. The three extension points are object actions (immediate), Kaleo workflows (approval; see "Approval Workflow"), and notification templates (user facing messages).
 
 ## When to Invoke
 
@@ -43,7 +43,68 @@ Consult `rules/object-actions-catalog.md` for the full catalog. Summary:
 | `updateObjectEntry` | Entry ID + field map | Updates an entry in the same or another object |
 | Webhook | URL + secret | HTTP POST to external endpoint |
 | Groovy Script | Script body | Self hosted or PaaS **and** script execution enabled — off by default, see `rules/object-actions-catalog.md`. Probe before designing around it |
-| Client Extension | CET `objectAction` or `workflowAction` externalReferenceCode | Calls a deployed microservice |
+| Client Extension | Executor key `function#<cet-erc>` of a deployed `objectAction` CET | Calls a deployed microservice |
+
+### Deliver the Object Action as a Client Extension (Preferred)
+
+Two different things share the name. The **`objectAction` CET** is the code to run; deploying it only registers an executor, `function#<cet-erc>`, and attaches it to nothing. Its `client-extension.yaml` names no object and no trigger. The **object action** is a record on the object definition — object, trigger, executor — and nothing fires until it exists.
+
+Deliver that record as a client extension too, so a fresh environment gets it by deploying, not by replaying REST calls. The REST recipes below are for one off changes to a running instance.
+
+A `batch` CET can create it in two ways:
+
+| `className` | How | Use When |
+| --- | --- | --- |
+| `com.liferay.object.admin.rest.dto.v1_0.ObjectAction` | One file of actions, the definition named by ERC | The definition is owned elsewhere — another batch, the UI, a site initializer |
+| `com.liferay.object.admin.rest.dto.v1_0.ObjectDefinition` | `objectActions` inside the full definition | This batch already owns the whole definition |
+
+#### Standalone `ObjectAction` Batch
+
+```json
+{
+	"configuration": {
+		"className": "com.liferay.object.admin.rest.dto.v1_0.ObjectAction",
+		"parameters": {
+			"containsHeaders": "true",
+			"createStrategy": "INSERT",
+			"externalReferenceCode": "<OBJECT_DEFINITION_ERC>",
+			"importStrategy": "ON_ERROR_FAIL"
+		},
+		"taskItemDelegateName": "DEFAULT"
+	},
+	"items": [
+		{
+			"active": true,
+			"conditionExpression": "",
+			"externalReferenceCode": "<ACTION_ERC>",
+			"label": {
+				"en_US": "<Action Label>"
+			},
+			"name": "<actionName>",
+			"objectActionExecutorKey": "function#<cet-erc>",
+			"objectActionTriggerKey": "onAfterAdd",
+			"parameters": {
+			}
+		}
+	]
+}
+```
+
+Verified on 2026.Q1 with a `function#` executor: the action was created on the named definition, fired, and read `success`, and the definition's fields were untouched.
+
+- **`parameters.externalReferenceCode` is the object definition's ERC**, not the action's. `objectDefinitionId` works too, but it is a numeric ID and differs per environment. `objectDefinitionExternalReferenceCode` is rejected.
+- **Use `INSERT`.** `UPSERT` is rejected for `ObjectAction`, so do not copy it from the `ObjectDefinition` batch in [liferay-sample-batch](https://github.com/liferay/liferay-portal/tree/master/workspaces/liferay-sample-workspace/client-extensions/liferay-sample-batch). In a `batch` CET the rejection is silent: the log shows `Illegal create strategy UPSERT` at `WARN`, no import task starts, and the bundle still reaches `STARTED`. Give each item a fixed `externalReferenceCode`: a redeploy then leaves exactly one action instead of a duplicate. That redeploy logs `Unable to update batch engine import task` at `ERROR` with `DuplicateObjectActionExternalReferenceCodeException`, or `DuplicateObjectFieldExternalReferenceCodeException` for an `ObjectField` batch — the expected outcome, not a failure. Verified on 2026.Q1.
+- **Deploy the `objectAction` CET first.** The executor must exist when the batch runs.
+- **Use a separate project.** `batch` and microservice CETs cannot share a project (`rules/client-extension-types.md`), so the action batch is a sibling of the microservice project.
+- **The batch needs `Liferay.Headless.Batch.Engine.everything`** on its `oAuthApplicationHeadlessServer`. On a local bundle, that scope alone imported both `ObjectField` and `ObjectAction` items. Verified on 2026.Q1. Liferay Cloud was not tested.
+
+#### Adding a Field the Action Needs
+
+The same standalone form adds a field to a definition owned elsewhere, without replacing it: `className` `com.liferay.object.admin.rest.dto.v1_0.ObjectField`, the same `externalReferenceCode` parameter naming the definition, and one raw `ObjectField` per item (`DBType`, `businessType`, `externalReferenceCode`, `label`, `name`, `required`). Verified on 2026.Q1: the field was added and the existing fields were untouched. Number the files so the field batch sorts before the action batch.
+
+#### `objectActions` Inside an `ObjectDefinition` Batch
+
+[liferay-sample-batch](https://github.com/liferay/liferay-portal/tree/master/workspaces/liferay-sample-workspace/client-extensions/liferay-sample-batch) shows this shape. An `ObjectDefinition` import **replaces the whole definition**: omit `objectFields` and the import tries to delete the existing fields. Verified on 2026.Q1, where it failed only because the field was the definition's last custom one. Use this form only in the batch that already carries the complete definition; never write a partial definition just to add an action.
 
 ### Object Action — Notification (Site Initializer, Preferred)
 
@@ -183,6 +244,8 @@ curl \
 	--user "test@liferay.com:test"
 ```
 
+To send through a `notificationType` CET instead of email, set `"type"` to `function#<cet-erc>`. The bare ERC is rejected with a `500`. A `function#` template also needs a `recipients` array; without one the save fails with a `500` (`createNotificationRecipientSettings`). Every template needs `editorType`, whatever its type. Delivery leaves no notification queue entry, so confirm it in the CET's log. Verified on 2026.Q1.
+
 That shape mails a **portal user**. A public form has no user — the address was typed into a field — so `recipientType: "user"` is wrong there and there is no `recipients` block to carry the address.
 
 #### Mailing an Address Held in a Field (Public Forms)
@@ -245,6 +308,8 @@ curl \
 
 ### Object Action — Webhook
 
+This is the live recipe. To ship it, put the same body in a `batch` CET as above.
+
 ```bash
 curl \
 	--data '{
@@ -267,7 +332,7 @@ curl \
 
 ### Object Action — Client Extension
 
-First deploy the `objectAction` CET via `scaffold-client-extension`. Then reference its `externalReferenceCode`:
+First deploy the `objectAction` CET via `scaffold-client-extension`. Then create the object action that references it — preferably as a `batch` CET (see "Deliver the Object Action as a Client Extension" above). For a one off change to a running instance:
 
 ```bash
 curl \
@@ -275,10 +340,9 @@ curl \
 		"active": true,
 		"label": {"en_US": "<ActionLabel>"},
 		"name": "<actionName>",
-		"objectActionExecutorKey": "objectAction",
+		"objectActionExecutorKey": "function#<cet-erc>",
 		"objectActionTriggerKey": "onAfterAdd",
 		"parameters": {
-			"clientExtensionEntryExternalReferenceCode": "<cet-erc>"
 		}
 	}' \
 	--header "Content-Type: application/json" \
@@ -288,28 +352,172 @@ curl \
 	--user "test@liferay.com:test"
 ```
 
-The executor key for a Client Extension action is `"objectAction"` (not `"groovy"` — that key is only for the inline Groovy executor). See `rules/object-actions-catalog.md`.
+**The executor key is `function#` plus the `objectAction` CET entry's ERC**, the key under which `FunctionObjectActionExecutorImpl` registers each deployed CET. Verified end to end on 2026.Q1: the action ran, the CET received the POST, and the action's status read `success`. A bare `"objectAction"` key with the ERC in `parameters` also saves with a `200`, so a successful save proves nothing. Confirm that the action fired from the CET's own log. `status.label` is not reliable: one action reached the CET four times and still read `never-ran`.
 
-### Kaleo Workflow
+The CET receives the entry twice: as the persistence model under `objectEntry` (custom fields in `values`, `createDate` as a date string), and as the REST DTO under `objectEntryDTO<ObjectName>` (custom fields in `properties`, `dateCreated` as **epoch milliseconds**, not ISO 8601). There is no `modelDTO<ObjectName>` key for a custom object.
 
-Deploy a workflow definition when the object requires multistep review or approval.
+**The payload does not say which site the entry came from.** For a company scoped object, `objectEntry.groupId` is `0` and the DTO carries no site, and there is no HTTP request context to read a referrer from. Verified on 2026.Q1 with an entry submitted from a site page. When the action needs the originating site, capture it at submit time: add a field to the object (see "Adding a Field the Action Needs" above) and have the form send it. `Liferay.ThemeDisplay` exposes no site name, only IDs and URLs — `getPortalURL()` plus the `/web/<site>` prefix of `getLayoutRelativeURL()` gives a readable site URL.
+
+A related value the payload carries only as a foreign key, such as the parent entry's name, can be fetched with the bearer token the CET receives, provided the OAuth application has that object's scope (`rules/oauth-scopes.md`). The token is the triggering user's, so a Guest submission fetches as Guest.
+
+A callback to `/o/c/<plural>` needs the **object's own scope** on the CET's OAuth application, not `Liferay.Headless.Object.everything`. See `rules/oauth-scopes.md`.
+
+**Respond before calling back.** An `onAfterAdd` action runs inside the transaction that adds the entry, and Liferay waits for the CET's response before it commits. On Hypersonic, a callback to `/o/c` made before the CET responds waits on that transaction, and the add waits on the callback, so the request hangs. Verified on 2026.Q1. Answer Liferay first, then make the callback.
+
+The same hang was seen once without any callback, on the first add after creating two actions on Hypersonic. Liferay never called the CET; the add waited on its own action status update. A portal restart cleared it, and it did not recur. If an add hangs with nothing in the CET log, restart the portal.
+
+### Approval Workflow
+
+Use this when a reviewer approves or rejects each entry. Everything in this section was verified end to end on a 2026.Q2 bundle.
+
+**Do not link the stock Single Approver.** Its `reject` transition goes to an `update` task that sets the entry back to Pending for the author to revise, so a rejected entry never leaves Pending, and a Guest submitter has no account to act on `update` with. **Do not write a Groovy script action either.** Deploying one fails with `KaleoDefinitionValidationException.NotAllowedScriptLanguage` (`Groovy is not allowed`).
+
+Set the status with declarative `<status>` actions on two terminal states instead:
+
+```xml
+<?xml version="1.0"?>
+<workflow-definition xmlns="urn:liferay.com:liferay-workflow_7.4.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:liferay.com:liferay-workflow_7.4.0 http://www.liferay.com/dtd/liferay-workflow-definition_7_4_0.xsd">
+	<name><Workflow Name></name>
+	<version>1</version>
+	<state>
+		<name>created</name>
+		<initial>true</initial>
+		<transitions>
+			<transition>
+				<name>review</name>
+				<target>review</target>
+				<default>true</default>
+			</transition>
+		</transitions>
+	</state>
+	<task>
+		<name>review</name>
+		<assignments>
+			<roles>
+				<role>
+					<role-type>regular</role-type>
+					<name>Administrator</name>
+				</role>
+			</roles>
+		</assignments>
+		<transitions>
+			<transition>
+				<name>approve</name>
+				<target>approved</target>
+				<default>true</default>
+			</transition>
+			<transition>
+				<name>reject</name>
+				<target>rejected</target>
+				<default>false</default>
+			</transition>
+		</transitions>
+	</task>
+	<state>
+		<name>approved</name>
+		<actions>
+			<action>
+				<name>approve</name>
+				<status>0</status>
+				<execution-type>onEntry</execution-type>
+			</action>
+		</actions>
+	</state>
+	<state>
+		<name>rejected</name>
+		<actions>
+			<action>
+				<name>reject</name>
+				<status>4</status>
+				<execution-type>onEntry</execution-type>
+			</action>
+		</actions>
+	</state>
+</workflow-definition>
+```
+
+The entry's system `status` follows the workflow: `1` pending on submission, `0` approved, `4` denied. There is no separate "rejected" code. A rejected entry reads `{"code": 4, "label": "denied"}`.
+
+#### Deploy and Link Over REST
+
+Deploy the definition, building the body with `jq` so the XML is escaped:
+
+```bash
+jq \
+	--arg content "$(cat <workflow>.xml)" \
+	--null-input \
+	'{active: true, content: $content, name: "<Workflow Name>", title: "<Workflow Name>"}' \
+	| curl \
+		--data @- \
+		--header "Content-Type: application/json" \
+		--request POST \
+		--silent \
+		--url "http://localhost:${PORT}/o/headless-admin-workflow/v1.0/workflow-definitions/deploy" \
+		--user "test@liferay.com:test"
+```
+
+Link it to the object with the returned `id`:
 
 ```bash
 curl \
 	--data '{
-		"active": true,
-		"name": "<WorkflowName>",
-		"title": {"en_US": "<Workflow Title>"},
-		"content": "<escaped XML or JSON workflow definition>"
+		"className": "<object definition className>",
+		"groupId": 0,
+		"workflowDefinitionName": "<Workflow Name>"
 	}' \
 	--header "Content-Type: application/json" \
 	--request POST \
 	--silent \
-	--url "http://localhost:${PORT}/o/headless-admin-workflow/v1.0/workflow-definitions" \
+	--url "http://localhost:${PORT}/o/headless-admin-workflow/v1.0/workflow-definitions/<workflow-definition-id>/workflow-definition-links" \
 	--user "test@liferay.com:test"
 ```
 
-After creating, associate the workflow with the object definition. The reliable path is the Control Panel (Objects → \<Definition\> → Actions → Workflow). There is **no** `workflow-definitions/{id}/assign-to-object` endpoint; programmatic association is done through the `workflow-definition-links` resource (`POST /o/headless-admin-workflow/v1.0/workflow-definitions/<id>/workflow-definition-links`) — confirm the request body against the OpenAPI spec (`get-openapi` MCP tool, or `GET /o/headless-admin-workflow/v1.0/openapi.json`) before scripting it, as the link payload (workflow, class name, type pk) is version sensitive.
+- `className` is the object definition's `className` field (`com.liferay.object.model.ObjectDefinition#<code>`), not its `name`. Read it with `GET /o/object-admin/v1.0/object-definitions/<id>`.
+- `groupId` is `0` for a company scoped object. A link at the site's group ID is accepted and then never applies to entries posted to `/o/c/<plural>`.
+- A link cannot be deleted (`405`), and there is no top level `GET /workflow-definition-links` (`404`). List a definition's links with `GET /workflow-definitions/<id>/workflow-definition-links`, and repoint one with `PUT /workflow-definition-links/by-external-reference-code/<erc>`.
+
+Confirm by posting an entry: the response `status.label` is `pending`.
+
+#### In a Site Initializer
+
+`site-initializer/workflow-definitions/<name>/` holds `workflow-definition.json` (the DTO without `content`) and `workflow-definition.xml`, and deploying the definition from the tree works. **Linking it from the tree does not.** A `workflow-definition.properties.json` naming the object creates a link whose `className` is `ObjectDefinition#<numeric id>`, while the object's real class name is a generated code such as `ObjectDefinition#A1J1` (`_getUniqueClassName` in `ObjectDefinitionLocalServiceImpl`). The link exists, matches nothing, and entries never enter the workflow. On 2026.Q2, the same object carried a `#34825` link from the tree and the working `#A1J1` link from REST.
+
+So always link over REST after every provision, with the object's actual `className`, as in "Deploy and Link Over REST" above. Do not take an existing link as proof: compare its `className` with the object definition's `className`.
+
+#### Approve or Reject as the Administrator
+
+```bash
+WORKFLOW="http://localhost:${PORT}/o/headless-admin-workflow/v1.0"
+
+TASK_ID=$(curl \
+	--silent \
+	--url "${WORKFLOW}/workflow-tasks/assigned-to-my-roles?pageSize=200" \
+	--user "test@liferay.com:test" \
+	| jq --argjson id <entry-id> '.items[] | select(.objectReviewed.id == $id) | .id')
+
+curl \
+	--data '{}' \
+	--header "Content-Type: application/json" \
+	--request POST \
+	--silent \
+	--url "${WORKFLOW}/workflow-tasks/${TASK_ID}/assign-to-me" \
+	--user "test@liferay.com:test"
+
+curl \
+	--data '{"transitionName": "approve"}' \
+	--header "Content-Type: application/json" \
+	--request POST \
+	--silent \
+	--url "${WORKFLOW}/workflow-tasks/${TASK_ID}/change-transition" \
+	--user "test@liferay.com:test"
+```
+
+- Find the task in `assigned-to-my-roles`, not through `/workflow-instances`. An instance started by a Guest submission is missing from `GET /workflow-instances`, even though its task is in the Administrator queue.
+- `assign-to-me` needs the JSON `{}` body. The call returns `415` without it, and transitioning an unclaimed task returns `403`.
+- The body field is `transitionName`. `{"name": ...}` returns `400`.
+- Use `"reject"` for the other outcome. The entry's status changes within a second.
+
+A `workflowAction` CET receives a `transitionURL` in its payload, and it is relative (`/o/headless-admin-workflow/v1.0/workflow-tasks/<id>/change-transition`). Prefix the portal URL before posting `{"transitionName": "<name>"}`. The call needs `Liferay.Headless.Admin.Workflow.everything`. Verified on 2026.Q1.
 
 ### Verify Object Actions
 

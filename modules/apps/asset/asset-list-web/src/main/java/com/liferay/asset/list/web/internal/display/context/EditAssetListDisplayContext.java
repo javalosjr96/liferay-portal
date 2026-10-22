@@ -38,9 +38,7 @@ import com.liferay.info.search.InfoSearchClassMapperRegistry;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.item.selector.ItemSelectorCriterion;
 import com.liferay.item.selector.criteria.GroupItemSelectorReturnType;
-import com.liferay.item.selector.criteria.InfoItemItemSelectorReturnType;
 import com.liferay.item.selector.criteria.group.criterion.GroupItemSelectorCriterion;
-import com.liferay.item.selector.criteria.info.item.criterion.InfoItemItemSelectorCriterion;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.CharPool;
@@ -62,7 +60,6 @@ import com.liferay.portal.kernel.module.configuration.ConfigurationException;
 import com.liferay.portal.kernel.portlet.LiferayPortletResponse;
 import com.liferay.portal.kernel.portlet.LiferayPortletURL;
 import com.liferay.portal.kernel.portlet.PortletURLFactoryUtil;
-import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactory;
 import com.liferay.portal.kernel.portlet.RequestBackedPortletURLFactoryUtil;
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.search.Field;
@@ -164,6 +161,8 @@ public class EditAssetListDisplayContext {
 			classNameIds = _getDefaultClassNameIds();
 		}
 
+		Map<Long, JSONArray> groupIdsJSONArrays = new HashMap<>();
+
 		return JSONUtil.toJSONArray(
 			ArrayUtil.toArray(classNameIds),
 			classNameId -> {
@@ -191,6 +190,11 @@ public class EditAssetListDisplayContext {
 
 				return JSONUtil.put(
 					"classNameId", classNameId
+				).put(
+					"groupIds",
+					_getGroupIdsJSONArray(
+						_themeDisplay.getScopeGroupId(), groupIdsJSONArrays,
+						assetRendererFactory.getPortletId())
 				).put(
 					"label",
 					assetRendererFactory.getTypeName(_themeDisplay.getLocale())
@@ -506,27 +510,6 @@ public class EditAssetListDisplayContext {
 		return _backURL;
 	}
 
-	public String getCategorySelectorURL() {
-		RequestBackedPortletURLFactory requestBackedPortletURLFactory =
-			RequestBackedPortletURLFactoryUtil.create(_portletRequest);
-
-		InfoItemItemSelectorCriterion itemSelectorCriterion =
-			new InfoItemItemSelectorCriterion();
-
-		itemSelectorCriterion.setDesiredItemSelectorReturnTypes(
-			new InfoItemItemSelectorReturnType());
-		itemSelectorCriterion.setItemType(AssetCategory.class.getName());
-		itemSelectorCriterion.setMultiSelection(true);
-
-		return PortletURLBuilder.create(
-			_itemSelector.getItemSelectorURL(
-				requestBackedPortletURLFactory, _themeDisplay.getScopeGroup(),
-				_themeDisplay.getScopeGroupId(),
-				_portletResponse.getNamespace() + "selectCategory",
-				itemSelectorCriterion)
-		).buildString();
-	}
-
 	public String getClassName(AssetRendererFactory<?> assetRendererFactory) {
 		Class<? extends AssetRendererFactory<?>> clazz =
 			_assetRendererFactoryClassProvider.getClass(assetRendererFactory);
@@ -739,18 +722,18 @@ public class EditAssetListDisplayContext {
 		).build();
 	}
 
-	public List<Map<String, Object>> getFilters() {
-		String filters = _unicodeProperties.getProperty("filters");
+	public List<Map<String, Object>> getFilterMaps() {
+		String filtersJSON = _unicodeProperties.getProperty("filters");
 
-		if (Validator.isNull(filters)) {
+		if (Validator.isNull(filtersJSON)) {
 			return Collections.emptyList();
 		}
 
 		try {
 			JSONArray filtersJSONArray = JSONFactoryUtil.createJSONArray(
-				filters);
+				filtersJSON);
 
-			List<Map<String, Object>> filtersList = new ArrayList<>(
+			List<Map<String, Object>> filterMaps = new ArrayList<>(
 				filtersJSONArray.length());
 
 			for (int i = 0; i < filtersJSONArray.length(); i++) {
@@ -762,10 +745,30 @@ public class EditAssetListDisplayContext {
 					filterMap.put(key, filterJSONObject.get(key));
 				}
 
-				filtersList.add(filterMap);
+				try {
+					List<Map<String, Object>> selectedItems =
+						_fetchSelectedItems(filterJSONObject);
+
+					if (selectedItems != null) {
+						if (selectedItems.isEmpty()) {
+							continue;
+						}
+
+						filterMap.put("value", selectedItems);
+					}
+				}
+				catch (Exception exception) {
+					if (_log.isWarnEnabled()) {
+						_log.warn(
+							"Unable to resolve filter " + filterJSONObject,
+							exception);
+					}
+				}
+
+				filterMaps.add(filterMap);
 			}
 
-			return filtersList;
+			return filterMaps;
 		}
 		catch (Exception exception) {
 			if (_log.isDebugEnabled()) {
@@ -1094,7 +1097,6 @@ public class EditAssetListDisplayContext {
 
 	public JSONArray getTypePropertiesJSONArray() {
 		long[] classNameIds = new long[0];
-		long[] classTypeIds = new long[0];
 
 		boolean anyAssetType = GetterUtil.getBoolean(
 			_unicodeProperties.getProperty(
@@ -1104,11 +1106,10 @@ public class EditAssetListDisplayContext {
 
 		if (!anyAssetType && !selectionStyle.equals("manual")) {
 			classNameIds = getClassNameIds();
-			classTypeIds = getClassTypeIds();
 		}
 
 		return AssetListTypePropertiesUtil.getTypePropertiesJSONArray(
-			classNameIds, classTypeIds, _themeDisplay.getCompanyId(),
+			classNameIds, _themeDisplay.getCompanyId(),
 			_themeDisplay.getLocale());
 	}
 
@@ -1269,6 +1270,29 @@ public class EditAssetListDisplayContext {
 		return _subtypeFieldsFilterEnabled;
 	}
 
+	private List<Map<String, Object>> _fetchSelectedItems(
+			JSONObject filterJSONObject)
+		throws PortalException {
+
+		if (!_isCommonFieldFilter(filterJSONObject)) {
+			return null;
+		}
+
+		String propertyName = filterJSONObject.getString("propertyName");
+
+		if (Objects.equals(propertyName, "assetCategories")) {
+			return _getAssetCategorySelectedItems(
+				filterJSONObject.getJSONArray("value"));
+		}
+
+		if (Objects.equals(propertyName, "assetTags")) {
+			return _getAssetTagSelectedItems(
+				filterJSONObject.getJSONArray("value"));
+		}
+
+		return null;
+	}
+
 	private List<AssetCategory> _filterAssetCategories(long[] categoryIds) {
 		return TransformUtil.transformToList(
 			categoryIds,
@@ -1302,6 +1326,20 @@ public class EditAssetListDisplayContext {
 			});
 
 		return StringUtil.merge(filteredAssetTagNames);
+	}
+
+	private List<Map<String, Object>> _getAssetCategorySelectedItems(
+		JSONArray valueJSONArray) {
+
+		return TransformUtil.transform(
+			_filterAssetCategories(
+				GetterUtil.getLongValues(
+					JSONUtil.toStringArray(valueJSONArray, "value"))),
+			assetCategory -> HashMapBuilder.<String, Object>put(
+				"label", assetCategory.getTitle(_themeDisplay.getLocale())
+			).put(
+				"value", String.valueOf(assetCategory.getCategoryId())
+			).build());
 	}
 
 	private JSONArray _getAssetListEntrySegmentsEntryRelJSONArray() {
@@ -1360,6 +1398,30 @@ public class EditAssetListDisplayContext {
 					_themeDisplay.getLocale())
 			),
 			_log);
+	}
+
+	private List<Map<String, Object>> _getAssetTagSelectedItems(
+			JSONArray valueJSONArray)
+		throws PortalException {
+
+		long[] groupIds = getReferencedModelsGroupIds();
+
+		return TransformUtil.transformToList(
+			JSONUtil.toStringArray(valueJSONArray, "value"),
+			assetTagName -> {
+				if (ArrayUtil.isEmpty(
+						AssetTagLocalServiceUtil.getTagIds(
+							groupIds, assetTagName))) {
+
+					return null;
+				}
+
+				return HashMapBuilder.<String, Object>put(
+					"label", assetTagName
+				).put(
+					"value", assetTagName
+				).build();
+			});
 	}
 
 	private Long[] _getClassTypeIds(
@@ -1430,6 +1492,36 @@ public class EditAssetListDisplayContext {
 		).buildString();
 	}
 
+	private JSONArray _getGroupIdsJSONArray(
+			long groupId, Map<Long, JSONArray> groupIdsJSONArrays,
+			String portletId)
+		throws PortalException {
+
+		StagingGroupHelper stagingGroupHelper =
+			StagingGroupHelperUtil.getStagingGroupHelper();
+
+		long stagedPortletGroupId = stagingGroupHelper.getStagedPortletGroupId(
+			groupId, portletId);
+
+		JSONArray groupIdsJSONArray = groupIdsJSONArrays.get(
+			stagedPortletGroupId);
+
+		if (groupIdsJSONArray != null) {
+			return groupIdsJSONArray;
+		}
+
+		long[] groupIds =
+			SiteConnectedGroupGroupProviderUtil.
+				getCurrentAndAncestorSiteAndDepotGroupIds(
+					new long[] {stagedPortletGroupId});
+
+		groupIdsJSONArray = JSONUtil.putAll(ArrayUtil.toArray(groupIds));
+
+		groupIdsJSONArrays.put(stagedPortletGroupId, groupIdsJSONArray);
+
+		return groupIdsJSONArray;
+	}
+
 	private String _getOrderByColumn(String key, String defaultOrderByColumn) {
 		String orderByColumn = GetterUtil.getString(
 			_unicodeProperties.getProperty(key, defaultOrderByColumn));
@@ -1453,6 +1545,16 @@ public class EditAssetListDisplayContext {
 		}
 
 		return typeSettings;
+	}
+
+	private boolean _isCommonFieldFilter(JSONObject filterJSONObject) {
+		if ((filterJSONObject.getLong("classNameId") <= 0) &&
+			(filterJSONObject.getLong("classTypeId") <= 0)) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private void _setDDMStructure() throws Exception {

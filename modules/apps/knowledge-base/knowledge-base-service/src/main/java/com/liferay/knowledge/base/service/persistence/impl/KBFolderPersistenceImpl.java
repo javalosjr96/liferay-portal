@@ -329,88 +329,6 @@ public class KBFolderPersistenceImpl
 			finderCache, new Object[] {uuid, companyId});
 	}
 
-	private CollectionPersistenceFinder<KBFolder, NoSuchFolderException>
-		_collectionPersistenceFinderByCompanyId;
-
-	/**
-	 * Returns an ordered range of all the kb folders where companyId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>com.liferay.portal.kernel.dao.orm.QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>KBFolderModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param start the lower bound of the range of kb folders
-	 * @param end the upper bound of the range of kb folders (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching kb folders
-	 */
-	@Override
-	public List<KBFolder> findByCompanyId(
-		long companyId, int start, int end,
-		OrderByComparator<KBFolder> orderByComparator, boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByCompanyId.find(
-			finderCache, new Object[] {companyId}, start, end,
-			orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first kb folder in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching kb folder
-	 * @throws NoSuchFolderException if a matching kb folder could not be found
-	 */
-	@Override
-	public KBFolder findByCompanyId_First(
-			long companyId, OrderByComparator<KBFolder> orderByComparator)
-		throws NoSuchFolderException {
-
-		return _collectionPersistenceFinderByCompanyId.findFirst(
-			finderCache, new Object[] {companyId}, orderByComparator);
-	}
-
-	/**
-	 * Returns the first kb folder in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching kb folder, or <code>null</code> if a matching kb folder could not be found
-	 */
-	@Override
-	public KBFolder fetchByCompanyId_First(
-		long companyId, OrderByComparator<KBFolder> orderByComparator) {
-
-		return _collectionPersistenceFinderByCompanyId.fetchFirst(
-			finderCache, new Object[] {companyId}, orderByComparator);
-	}
-
-	/**
-	 * Removes all the kb folders where companyId = &#63; from the database.
-	 *
-	 * @param companyId the company ID
-	 */
-	@Override
-	public void removeByCompanyId(long companyId) {
-		_collectionPersistenceFinderByCompanyId.remove(
-			finderCache, new Object[] {companyId});
-	}
-
-	/**
-	 * Returns the number of kb folders where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @return the number of matching kb folders
-	 */
-	@Override
-	public int countByCompanyId(long companyId) {
-		return _collectionPersistenceFinderByCompanyId.count(
-			finderCache, new Object[] {companyId});
-	}
-
 	private FilterCollectionPersistenceFinder<KBFolder, NoSuchFolderException>
 		_collectionPersistenceFinderByG_P;
 
@@ -1000,6 +918,8 @@ public class KBFolderPersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					kbFolder.getUuid(), kbFolder.getExternalReferenceCode()) &&
+				!Objects.equals(
 					kbFolderModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					kbFolder.getExternalReferenceCode())) {
@@ -1313,35 +1233,14 @@ public class KBFolderPersistenceImpl
 					"kbFolder.", "companyId", FinderColumn.Type.LONG, "=", true,
 					true, KBFolder::getCompanyId));
 
-		_collectionPersistenceFinderByCompanyId =
-			new CollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCompanyId",
-					new String[] {
-						Long.class.getName(), Integer.class.getName(),
-						Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"findByCompanyId", new String[] {Long.class.getName()},
-					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByCompanyId", new String[] {Long.class.getName()},
-					new String[] {"companyId"}, false),
-				_SQL_SELECT_KBFOLDER_WHERE, _SQL_COUNT_KBFOLDER_WHERE,
-				KBFolderModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
-				new FinderColumn<>(
-					"kbFolder.", "companyId", FinderColumn.Type.LONG, "=", true,
-					true, KBFolder::getCompanyId));
-
 		_collectionPersistenceFinderByG_P =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, KBFolder::getKbFolderId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P",
+					new String[] {Long.class.getName(), Long.class.getName()},
+					new String[] {"groupId", "parentKBFolderId"}, false),
+				"", KBFolderModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P",
 					new String[] {
@@ -1350,17 +1249,12 @@ public class KBFolderPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "parentKBFolderId"}, true),
+				_SQL_COUNT_KBFOLDER_WHERE, _SQL_SELECT_KBFOLDER_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_P",
 					new String[] {Long.class.getName(), Long.class.getName()},
 					new String[] {"groupId", "parentKBFolderId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P",
-					new String[] {Long.class.getName(), Long.class.getName()},
-					new String[] {"groupId", "parentKBFolderId"}, false),
-				_SQL_SELECT_KBFOLDER_WHERE, _SQL_COUNT_KBFOLDER_WHERE,
-				KBFolderModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"kbFolder.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, KBFolder::getGroupId),
@@ -1414,7 +1308,16 @@ public class KBFolderPersistenceImpl
 
 		_collectionPersistenceFinderByG_P_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, KBFolder::getKbFolderId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "parentKBFolderId", "status"},
+					false),
+				"", KBFolderModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P_S",
 					new String[] {
@@ -1425,6 +1328,7 @@ public class KBFolderPersistenceImpl
 					},
 					new String[] {"groupId", "parentKBFolderId", "status"},
 					true),
+				_SQL_COUNT_KBFOLDER_WHERE, _SQL_SELECT_KBFOLDER_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_P_S",
 					new String[] {
@@ -1433,17 +1337,7 @@ public class KBFolderPersistenceImpl
 					},
 					new String[] {"groupId", "parentKBFolderId", "status"},
 					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "parentKBFolderId", "status"},
-					false),
-				_SQL_SELECT_KBFOLDER_WHERE, _SQL_COUNT_KBFOLDER_WHERE,
-				KBFolderModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"kbFolder.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, KBFolder::getGroupId),
@@ -1536,4 +1430,4 @@ public class KBFolderPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:407544305
+// LIFERAY-SERVICE-BUILDER-HASH:2038937198

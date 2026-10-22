@@ -39,9 +39,7 @@ public class SystemEventCheck extends BaseCheck {
 	protected void doVisitToken(DetailAST detailAST) {
 		_entityElement = null;
 
-		DetailAST parentDetailAST = detailAST.getParent();
-
-		if (parentDetailAST != null) {
+		if (!isDirectChildOfCompilationUnit(detailAST)) {
 			return;
 		}
 
@@ -123,9 +121,11 @@ public class SystemEventCheck extends BaseCheck {
 				return;
 			}
 
-			if (_implementsClassedModel(entityElement)) {
-				log(methodDefDetailAST, _MSG_MISSING_SYSTEM_EVENT, methodName);
+			if (!_implementsClassedModel(entityElement)) {
+				continue;
 			}
+
+			log(methodDefDetailAST, _MSG_MISSING_SYSTEM_EVENT, methodName);
 		}
 	}
 
@@ -159,12 +159,11 @@ public class SystemEventCheck extends BaseCheck {
 				continue;
 			}
 
-			if (matchingMethodDefDetailAST == null) {
-				matchingMethodDefDetailAST = curMethodDefDetailAST;
-			}
-			else {
+			if (matchingMethodDefDetailAST != null) {
 				return null;
 			}
+
+			matchingMethodDefDetailAST = curMethodDefDetailAST;
 		}
 
 		return matchingMethodDefDetailAST;

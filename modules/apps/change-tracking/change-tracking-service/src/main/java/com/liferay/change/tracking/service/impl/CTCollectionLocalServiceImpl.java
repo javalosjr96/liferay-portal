@@ -35,7 +35,6 @@ import com.liferay.change.tracking.model.CTEntry;
 import com.liferay.change.tracking.model.CTEntryTable;
 import com.liferay.change.tracking.model.CTPreferences;
 import com.liferay.change.tracking.model.CTSchemaVersion;
-import com.liferay.change.tracking.model.CTScore;
 import com.liferay.change.tracking.service.CTEntryLocalService;
 import com.liferay.change.tracking.service.CTPreferencesLocalService;
 import com.liferay.change.tracking.service.CTSchemaVersionLocalService;
@@ -46,7 +45,6 @@ import com.liferay.change.tracking.service.persistence.CTEntryPersistence;
 import com.liferay.change.tracking.service.persistence.CTMessagePersistence;
 import com.liferay.change.tracking.service.persistence.CTPreferencesPersistence;
 import com.liferay.change.tracking.service.persistence.CTSchemaVersionPersistence;
-import com.liferay.change.tracking.service.persistence.CTScorePersistence;
 import com.liferay.change.tracking.spi.display.CTDisplayRenderer;
 import com.liferay.change.tracking.spi.resolver.ConstraintResolver;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
@@ -178,14 +176,6 @@ public class CTCollectionLocalServiceImpl
 
 		ctCollection = ctCollectionPersistence.update(ctCollection);
 
-		CTScore ctScore = _ctScorePersistence.create(
-			counterLocalService.increment(CTScore.class.getName()));
-
-		ctScore.setCompanyId(companyId);
-		ctScore.setCtCollectionId(ctCollectionId);
-
-		_ctScorePersistence.update(ctScore);
-
 		_resourceLocalService.addResources(
 			ctCollection.getCompanyId(), 0, ctCollection.getUserId(),
 			CTCollection.class.getName(), ctCollection.getCtCollectionId(),
@@ -282,9 +272,11 @@ public class CTCollectionLocalServiceImpl
 
 				List<ConflictInfo> conflictInfos = ctConflictChecker.check();
 
-				if (!conflictInfos.isEmpty()) {
-					conflictInfosMap.put(entry.getKey(), conflictInfos);
+				if (conflictInfos.isEmpty()) {
+					continue;
 				}
+
+				conflictInfosMap.put(entry.getKey(), conflictInfos);
 			}
 		}
 
@@ -557,13 +549,6 @@ public class CTCollectionLocalServiceImpl
 		_ctMessagePersistence.removeByCtCollectionId(
 			ctCollection.getCtCollectionId());
 
-		CTScore ctScore = _ctScorePersistence.fetchByCtCollectionId(
-			ctCollection.getCtCollectionId());
-
-		if (ctScore != null) {
-			_ctScorePersistence.remove(ctScore);
-		}
-
 		Group group = _groupLocalService.fetchGroup(
 			ctCollection.getCompanyId(),
 			_classNameLocalService.getClassNameId(CTCollection.class),
@@ -688,6 +673,15 @@ public class CTCollectionLocalServiceImpl
 	}
 
 	@Override
+	public List<CTCollection> getCTCollections(
+		long companyId, long userId, int[] statuses, int start, int end,
+		OrderByComparator<CTCollection> orderByComparator) {
+
+		return ctCollectionPersistence.findByC_U_S(
+			companyId, userId, statuses, start, end, orderByComparator);
+	}
+
+	@Override
 	public List<CTMappingTableInfo> getCTMappingTableInfos(
 		long ctCollectionId) {
 
@@ -699,9 +693,11 @@ public class CTCollectionLocalServiceImpl
 			CTMappingTableInfo ctMappingTableInfo =
 				ctTableMapperHelper.getCTMappingTableInfo(ctCollectionId);
 
-			if (ctMappingTableInfo != null) {
-				ctMappingTableInfos.add(ctMappingTableInfo);
+			if (ctMappingTableInfo == null) {
+				continue;
 			}
+
+			ctMappingTableInfos.add(ctMappingTableInfo);
 		}
 
 		return ctMappingTableInfos;
@@ -1059,14 +1055,18 @@ public class CTCollectionLocalServiceImpl
 				toCTCollectionId, entry.getKey(), entry.getValue());
 		}
 
+		relatedCTEntries = getRelatedCTEntries(
+			toCTCollection.getCtCollectionId(),
+			TransformUtil.transformToLongArray(
+				ctEntries, CTEntry::getCtEntryId));
+
+		_ctClosureFactory.clearCache(fromCTCollectionId);
+		_ctClosureFactory.clearCache(toCTCollectionId);
+
 		conflictInfosMap = checkConflicts(
-			toCTCollection.getCompanyId(),
-			getRelatedCTEntries(
-				toCTCollection.getCtCollectionId(),
-				TransformUtil.transformToLongArray(
-					ctEntries, CTEntry::getCtEntryId)),
-			toCTCollectionId, toCTCollection.getName(),
-			CTConstants.CT_COLLECTION_ID_PRODUCTION, "Production");
+			toCTCollection.getCompanyId(), relatedCTEntries, toCTCollectionId,
+			toCTCollection.getName(), CTConstants.CT_COLLECTION_ID_PRODUCTION,
+			"Production");
 
 		for (Map.Entry<Long, List<ConflictInfo>> entry :
 				conflictInfosMap.entrySet()) {
@@ -1079,9 +1079,6 @@ public class CTCollectionLocalServiceImpl
 				}
 			}
 		}
-
-		_ctClosureFactory.clearCache(fromCTCollectionId);
-		_ctClosureFactory.clearCache(toCTCollectionId);
 	}
 
 	@Override
@@ -1437,15 +1434,17 @@ public class CTCollectionLocalServiceImpl
 					List<String> uids = new ArrayList<>(ctEntries.size());
 
 					for (CTEntry ctEntry : ctEntries) {
-						if (ctEntry.getChangeType() !=
+						if (ctEntry.getChangeType() ==
 								CTConstants.CT_CHANGE_TYPE_DELETION) {
 
-							uids.add(
-								_uidFactory.getUID(
-									indexer.getClassName(),
-									ctEntry.getModelClassPK(),
-									ctEntry.getCtCollectionId()));
+							continue;
 						}
+
+						uids.add(
+							_uidFactory.getUID(
+								indexer.getClassName(),
+								ctEntry.getModelClassPK(),
+								ctEntry.getCtCollectionId()));
 					}
 
 					_indexWriterHelper.deleteDocuments(
@@ -1663,24 +1662,25 @@ public class CTCollectionLocalServiceImpl
 					List<String> uids = new ArrayList<>(ctEntries.size());
 
 					for (CTEntry ctEntry : ctEntries) {
-						if (ctEntry.getChangeType() !=
+						if (ctEntry.getChangeType() ==
 								CTConstants.CT_CHANGE_TYPE_DELETION) {
 
-							uids.add(
-								_uidFactory.getUID(
-									indexer.getClassName(),
-									ctEntry.getModelClassPK(),
-									fromCTCollectionId));
+							continue;
+						}
 
-							try (SafeCloseable safeCloseable =
-									CTCollectionThreadLocal.
-										setCTCollectionIdWithSafeCloseable(
-											toCTCollectionId)) {
+						uids.add(
+							_uidFactory.getUID(
+								indexer.getClassName(),
+								ctEntry.getModelClassPK(), fromCTCollectionId));
 
-								indexer.reindex(
-									indexer.getClassName(),
-									ctEntry.getModelClassPK());
-							}
+						try (SafeCloseable safeCloseable =
+								CTCollectionThreadLocal.
+									setCTCollectionIdWithSafeCloseable(
+										toCTCollectionId)) {
+
+							indexer.reindex(
+								indexer.getClassName(),
+								ctEntry.getModelClassPK());
 						}
 					}
 
@@ -1875,9 +1875,6 @@ public class CTCollectionLocalServiceImpl
 
 	@Reference
 	private CTSchemaVersionPersistence _ctSchemaVersionPersistence;
-
-	@Reference
-	private CTScorePersistence _ctScorePersistence;
 
 	@Reference
 	private CTServiceRegistry _ctServiceRegistry;

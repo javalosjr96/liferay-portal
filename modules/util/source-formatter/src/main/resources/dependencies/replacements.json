@@ -5620,6 +5620,14 @@
 		"to": "addUserWithWorkflow(param#0#, param#1#, param#2#, param#3#, param#4#, param#5#, param#6#, param#7#, param#8#, param#9#, param#10#, param#11#, param#12#, param#13#, param#14#, param#15#, param#16#, param#17#, param#18#, UserConstants.TYPE_REGULAR, param#19#, param#20#, param#21#, param#22#, param#23#, param#24#)"
 	},
 	{
+		"classNames": [
+			"FileAttachment"
+		],
+		"from": "getFile()",
+		"hasMessage": true,
+		"issueKey": "LPD-61485"
+	},
+	{
 		"from": "new FileAttachment(File paramName, String paramName)",
 		"hasMessage": true,
 		"issueKey": "LPD-61487"
@@ -5660,11 +5668,11 @@
 				"to": "FileAvailabilityUtil.isAvailable(getServletContext(), ${page})"
 			},
 			{
-				"from": "servletContext = ServletContextUtil.getServletContext()",
+				"from": "regex:(?<=\\t)servletContext = ServletContextUtil\\.getServletContext\\(\\)",
 				"to": "setServletContext(ServletContextUtil.getServletContext())"
 			},
 			{
-				"from": "setAttributes(request)",
+				"from": "regex:(?<=\\t)setAttributes\\(request\\)",
 				"to": "setAttributes(getRequest())"
 			}
 		]
@@ -6045,6 +6053,53 @@
 	},
 	{
 		"classNames": [
+			"AccountEntryLocalService",
+			"AccountEntryLocalServiceUtil",
+			"AccountEntryService",
+			"AccountEntryServiceUtil"
+		],
+		"from": "addAccountEntry(long paramName, long paramName, String paramName, String paramName, String[] paramName, String paramName, byte[] paramName, String paramName, String paramName, int paramName, ServiceContext paramName)",
+		"issueKey": "LPD-99279",
+		"to": "addAccountEntry(null, param#0#, param#1#, param#2#, param#3#, param#4#, param#5#, param#6#, param#7#, param#8#, param#9#, param#10#)"
+	},
+	{
+		"classNames": [
+			"CPAttachmentFileEntryService",
+			"CPAttachmentFileEntryServiceUtil"
+		],
+		"from": "addCPAttachmentFileEntry(long paramName, long paramName, long paramName, long paramName, boolean paramName, String paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, boolean paramName, Map<Locale, String> paramName, String paramName, double paramName, int paramName, ServiceContext paramName)",
+		"issueKey": "LPD-99282",
+		"to": "addCPAttachmentFileEntry(param#0#, param#1#, param#2#, param#3#, param#4#, param#5#, param#6#, param#7#, param#8#, param#9#, param#10#, param#11#, param#12#, param#13#, param#14#, param#15#, param#16#, true, param#17#, param#18#, param#19#, param#20#, param#21#)"
+	},
+	{
+		"classNames": [
+			"CPAttachmentFileEntryLocalService",
+			"CPAttachmentFileEntryLocalServiceUtil"
+		],
+		"from": "addCPAttachmentFileEntry(String paramName, long paramName, long paramName, long paramName, long paramName, long paramName, boolean paramName, String paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, boolean paramName, Map<Locale, String> paramName, String paramName, double paramName, int paramName, ServiceContext paramName)",
+		"issueKey": "LPD-99282",
+		"to": "addCPAttachmentFileEntry(param#0#, param#1#, param#2#, param#3#, param#4#, param#5#, param#6#, param#7#, param#8#, param#9#, param#10#, param#11#, param#12#, param#13#, param#14#, param#15#, param#16#, param#17#, param#18#, true, param#19#, param#20#, param#21#, param#22#, param#23#)"
+	},
+	{
+		"classNames": [
+			"CPAttachmentFileEntryService",
+			"CPAttachmentFileEntryServiceUtil"
+		],
+		"from": "updateCPAttachmentFileEntry(long paramName, long paramName, boolean paramName, String paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, boolean paramName, Map<Locale, String> paramName, String paramName, double paramName, int paramName, ServiceContext paramName)",
+		"issueKey": "LPD-99282",
+		"to": "updateCPAttachmentFileEntry(param#0#, param#1#, param#2#, param#3#, param#4#, param#5#, param#6#, param#7#, param#8#, param#9#, param#10#, param#11#, param#12#, param#13#, param#14#, true, param#15#, param#16#, param#17#, param#18#, param#19#)"
+	},
+	{
+		"classNames": [
+			"CPAttachmentFileEntryLocalService",
+			"CPAttachmentFileEntryLocalServiceUtil"
+		],
+		"from": "updateCPAttachmentFileEntry(long paramName, long paramName, long paramName, boolean paramName, String paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, int paramName, boolean paramName, Map<Locale, String> paramName, String paramName, double paramName, int paramName, ServiceContext paramName)",
+		"issueKey": "LPD-99282",
+		"to": "updateCPAttachmentFileEntry(param#0#, param#1#, param#2#, param#3#, param#4#, param#5#, param#6#, param#7#, param#8#, param#9#, param#10#, param#11#, param#12#, param#13#, param#14#, param#15#, true, param#16#, param#17#, param#18#, param#19#, param#20#)"
+	},
+	{
+		"classNames": [
 			"CPDefinitionSpecificationOptionValueLocalService",
 			"CPDefinitionSpecificationOptionValueLocalServiceUtil",
 			"CPDefinitionSpecificationOptionValueService",
@@ -6065,6 +6120,15 @@
 		"from": "fetchLayoutPageTemplateEntry(long paramName, String paramName, int paramName)",
 		"issueKey": "LPD-99284",
 		"to": "fetchLayoutPageTemplateEntry(param#0#, 0L, param#1#, param#2#)"
+	},
+	{
+		"classNames": [
+			"CommerceVirtualOrderItemLocalService",
+			"CommerceVirtualOrderItemLocalServiceUtil"
+		],
+		"from": "regex:(?<variableName>\\w+)\\.addCommerceVirtualOrderItem\\(\\s*(?<commerceOrderItemId>[\\w.]+(?:\\(\\))?),\\s*(?<cpDefinitionVirtualSetting>\\w+)\\.getFileEntryId\\(\\),\\s*\\k<cpDefinitionVirtualSetting>\\.getUrl\\(\\),\\s*(?<activationStatus>[\\w.]+(?:\\(\\))?),\\s*(?<duration>[\\w.]+(?:\\(\\))?),\\s*(?<usages>[\\w.]+(?:\\(\\))?),\\s*(?<maxUsages>[\\w.]+(?:\\(\\))?),\\s*(?<serviceContext>[\\w.]+(?:\\(\\))?)\\s*\\)",
+		"issueKey": "LPD-99286",
+		"to": "${variableName}.addCommerceVirtualOrderItem(${commerceOrderItemId}, ${cpDefinitionVirtualSetting}.getCPDVirtualSettingFileEntries(), ${activationStatus}, ${duration}, ${maxUsages}, ${serviceContext})"
 	},
 	{
 		"from": "PanelCategoryKeys.APPLICATIONS_MENU_APPLICATIONS_BATCH_PLANNER",
@@ -6334,6 +6398,38 @@
 	},
 	{
 		"classNames": [
+			"CommerceOrderHttpHelper"
+		],
+		"from": "getCommerceCartPortletURL(HttpServletRequest paramName)",
+		"hasMessage": true,
+		"issueKey": "LPD-102414"
+	},
+	{
+		"classNames": [
+			"CommerceOrderHttpHelper"
+		],
+		"from": "getCommerceCartPortletURL(HttpServletRequest paramName, CommerceOrder paramName)",
+		"hasMessage": true,
+		"issueKey": "LPD-102414"
+	},
+	{
+		"classNames": [
+			"CommerceOrderHttpHelper"
+		],
+		"from": "getCommerceCartPortletURL(long paramName, HttpServletRequest paramName, CommerceOrder paramName)",
+		"hasMessage": true,
+		"issueKey": "LPD-102414"
+	},
+	{
+		"classNames": [
+			"CPDefinitionInventoryEngine"
+		],
+		"from": "getMinStockQuantity(CPInstance paramName)",
+		"issueKey": "LPD-102781",
+		"to": "getMinStockQuantity(0, param#0#)"
+	},
+	{
+		"classNames": [
 			"CommerceOrderLocalService",
 			"CommerceOrderLocalServiceUtil",
 			"CommerceOrderLocalServiceWrapper",
@@ -6353,6 +6449,41 @@
 		"from": "get(PageContext paramName, String paramName)",
 		"hasMessage": true,
 		"issueKey": "LPD-105365"
+	},
+	{
+		"from": "PanelCategoryKeys.CONTROL_PANEL_CONFIGURATION",
+		"issueKey": "LPD-106961",
+		"to": "PanelCategoryKeys.CONTROL_PANEL_INSTANCE",
+		"validExtensions": [
+			"java",
+			"jsp"
+		]
+	},
+	{
+		"from": "PortletCategoryKeys.CONTROL_PANEL_CONFIGURATION",
+		"issueKey": "LPD-106961",
+		"to": "PortletCategoryKeys.CONTROL_PANEL_INSTANCE",
+		"validExtensions": [
+			"java",
+			"jsp"
+		]
+	},
+	{
+		"from": "regex:\\bcontrol_panel\\.configuration(?![\\w.-])",
+		"issueKey": "LPD-106961",
+		"to": "control_panel.instance",
+		"validExtensions": [
+			"java",
+			"jsp"
+		]
+	},
+	{
+		"from": "regex:\\bcontrol_panel\\.configuration(?![\\w.-])",
+		"issueKey": "LPD-106961",
+		"to": "control_panel.object",
+		"validExtensions": [
+			"json"
+		]
 	},
 	{
 		"from": "regex:MultiVMPoolUtil\\s*.\\s*getPortalCache\\(\\s*(?<prefixMethodName>[\\s\\S]*?)\\)",

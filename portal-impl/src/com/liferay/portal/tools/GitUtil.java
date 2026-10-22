@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -70,13 +71,15 @@ public class GitUtil {
 				continue;
 			}
 
-			if (sb.index() > 1) {
-				sb.setIndex(sb.index() - 1);
-
-				commitMessages.add(sb.toString());
-
-				sb.setIndex(0);
+			if (sb.index() <= 1) {
+				continue;
 			}
+
+			sb.setIndex(sb.index() - 1);
+
+			commitMessages.add(sb.toString());
+
+			sb.setIndex(0);
 		}
 
 		return commitMessages;
@@ -303,9 +306,11 @@ public class GitUtil {
 		String line = null;
 
 		while ((line = unsyncBufferedReader.readLine()) != null) {
-			if (StringUtil.count(line, CharPool.SLASH) >= gitLevel) {
-				fileNames.add(getFileName(line, gitLevel));
+			if (StringUtil.count(line, CharPool.SLASH) < gitLevel) {
+				continue;
 			}
+
+			fileNames.add(getFileName(line, gitLevel));
 		}
 
 		return fileNames;
@@ -388,13 +393,13 @@ public class GitUtil {
 		while ((line = unsyncBufferedReader.readLine()) != null) {
 			String[] array = line.split("\\s+");
 
-			if (array.length < 2) {
+			if ((array.length < 2) ||
+				(StringUtil.count(array[1], CharPool.SLASH) < gitLevel)) {
+
 				continue;
 			}
 
-			if (StringUtil.count(array[1], CharPool.SLASH) >= gitLevel) {
-				fileNames.add(getFileName(array[1], gitLevel));
-			}
+			fileNames.add(getFileName(array[1], gitLevel));
 		}
 
 		return fileNames;
@@ -415,15 +420,17 @@ public class GitUtil {
 			File dir = getRootDir(
 				file.getParentFile(), baseDir, markerFileName);
 
-			if (dir != null) {
-				String dirName = String.valueOf(
-					baseDirPath.relativize(dir.toPath()));
-
-				dirName = StringUtil.replace(
-					dirName, File.separatorChar, CharPool.SLASH);
-
-				dirNames.add(dirName);
+			if (dir == null) {
+				continue;
 			}
+
+			String dirName = String.valueOf(
+				baseDirPath.relativize(dir.toPath()));
+
+			dirName = StringUtil.replace(
+				dirName, File.separatorChar, CharPool.SLASH);
+
+			dirNames.add(dirName);
 		}
 
 		return dirNames;
@@ -455,9 +462,11 @@ public class GitUtil {
 		String line = null;
 
 		while ((line = unsyncBufferedReader.readLine()) != null) {
-			if (StringUtil.count(line, CharPool.SLASH) >= gitLevel) {
-				fileNames.add(getFileName(line, gitLevel));
+			if (StringUtil.count(line, CharPool.SLASH) < gitLevel) {
+				continue;
 			}
+
+			fileNames.add(getFileName(line, gitLevel));
 		}
 
 		return fileNames;
@@ -489,9 +498,13 @@ public class GitUtil {
 	}
 
 	protected static int getGitLevel(String baseDirName) throws GitException {
-		File dir = new File(baseDirName);
+		Path path = Paths.get(baseDirName);
 
-		dir = dir.getAbsoluteFile();
+		path = path.toAbsolutePath();
+
+		path = path.normalize();
+
+		File dir = path.toFile();
 
 		for (int i = 0; i <= ToolsUtil.PORTAL_MAX_DIR_LEVEL; i++) {
 			if ((dir == null) || !dir.exists()) {
@@ -601,9 +614,11 @@ public class GitUtil {
 		String line = null;
 
 		while ((line = unsyncBufferedReader.readLine()) != null) {
-			if (StringUtil.count(line, CharPool.SLASH) >= gitLevel) {
-				fileNames.add(getFileName(line, gitLevel));
+			if (StringUtil.count(line, CharPool.SLASH) < gitLevel) {
+				continue;
 			}
+
+			fileNames.add(getFileName(line, gitLevel));
 		}
 
 		return fileNames;
@@ -641,10 +656,12 @@ public class GitUtil {
 
 			long timestamp = GetterUtil.getLong(parts[1]);
 
-			if (timestamp > latestTimestamp) {
-				latestCommitId = parts[0];
-				latestTimestamp = timestamp;
+			if (timestamp <= latestTimestamp) {
+				continue;
 			}
+
+			latestCommitId = parts[0];
+			latestTimestamp = timestamp;
 		}
 
 		return latestCommitId;
@@ -666,9 +683,11 @@ public class GitUtil {
 		String line = null;
 
 		while ((line = unsyncBufferedReader.readLine()) != null) {
-			if (StringUtil.count(line, CharPool.SLASH) >= gitLevel) {
-				fileNames.add(getFileName(line, gitLevel));
+			if (StringUtil.count(line, CharPool.SLASH) < gitLevel) {
+				continue;
 			}
+
+			fileNames.add(getFileName(line, gitLevel));
 		}
 
 		return fileNames;

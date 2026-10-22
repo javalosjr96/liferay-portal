@@ -51,24 +51,24 @@ public abstract class BaseUserSessionResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/faro-rest/v1.0/workspace/{groupId}/channels/{channelId}/accounts/{accountId}/user-sessions'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "List the browsing sessions of the individuals associated with an account over a date range, most recent first, each with the events recorded during it. Use this to see what a specific account or person actually did recently. For date range filtering pass `rangeKey` as one of LAST_24_HOURS, YESTERDAY, LAST_7_DAYS, LAST_28_DAYS, LAST_30_DAYS, LAST_90_DAYS, LAST_180_DAYS, LAST_YEAR. Alternatively, pass `rangeStart` and `rangeEnd` as dates for a custom window."
+		description = "List the browsing sessions of the individuals associated with an account over a date range, most recent first, each with the events recorded during it. Use this to see what a specific account or person actually did recently. Pagination counts page groups, not sessions: a page group is all the events of a session on the same page URL, and every other event is a group of its own. Each page returns up to `pageSize` page groups merged into their sessions, so a page can hold fewer than `pageSize` sessions and a long session can continue on the next page. `totalCount` and `lastPage` are expressed in page groups; keep requesting pages until `page` reaches `lastPage`. For date range filtering pass `rangeKey` as one of LAST_24_HOURS, YESTERDAY, LAST_7_DAYS, LAST_28_DAYS, LAST_30_DAYS, LAST_90_DAYS, LAST_180_DAYS, LAST_YEAR. Alternatively, pass `rangeStart` and `rangeEnd` as dates for a custom window."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				description = "Identifier of the Liferay site that owns the Analytics Cloud workspace.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "groupId"
+				name = "groupId", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				description = "Identifier of the channel whose sessions should be listed should be returned.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "channelId"
+				name = "channelId", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				description = "ID of the account whose individuals' sessions should be listed.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "accountId"
+				name = "accountId", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				description = "Page number (starts at 1).",
@@ -149,24 +149,24 @@ public abstract class BaseUserSessionResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/faro-rest/v1.0/workspace/{groupId}/channels/{channelId}/individuals/{individualId}/user-sessions'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "List the browsing sessions of a single individual over a date range, most recent first, each with the events recorded during it. Use this to see what a specific account or person actually did recently. For date range filtering pass `rangeKey` as one of LAST_24_HOURS, YESTERDAY, LAST_7_DAYS, LAST_28_DAYS, LAST_30_DAYS, LAST_90_DAYS, LAST_180_DAYS, LAST_YEAR. Alternatively, pass `rangeStart` and `rangeEnd` as dates for a custom window."
+		description = "List the browsing sessions of a single individual over a date range, most recent first, each with the events recorded during it. Use this to see what a specific account or person actually did recently. Pagination counts page groups, not sessions: a page group is all the events of a session on the same page URL, and every other event is a group of its own. Each page returns up to `pageSize` page groups merged into their sessions, so a page can hold fewer than `pageSize` sessions and a long session can continue on the next page. `totalCount` and `lastPage` are expressed in page groups; keep requesting pages until `page` reaches `lastPage`. For date range filtering pass `rangeKey` as one of LAST_24_HOURS, YESTERDAY, LAST_7_DAYS, LAST_28_DAYS, LAST_30_DAYS, LAST_90_DAYS, LAST_180_DAYS, LAST_YEAR. Alternatively, pass `rangeStart` and `rangeEnd` as dates for a custom window."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
 				description = "ID of the Liferay site that owns the Analytics Cloud workspace.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "groupId"
+				name = "groupId", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				description = "ID of the channel whose sessions should be listed should be returned.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "channelId"
+				name = "channelId", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				description = "ID of the individual whose sessions should be listed.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.PATH,
-				name = "individualId"
+				name = "individualId", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				description = "Page number (starts at 1).",
@@ -686,4 +686,4 @@ public abstract class BaseUserSessionResourceImpl
 		LogFactoryUtil.getLog(BaseUserSessionResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1234996396
+// LIFERAY-REST-BUILDER-HASH:-1827087860

@@ -1,9 +1,9 @@
 dependencies {
-	compileOnly group: "com.fasterxml.jackson.core", name: "jackson-databind", version: "2.18.9"
+	compileOnly group: "com.fasterxml.jackson.core", name: "jackson-databind", version: "2.18.11"
 	compileOnly group: "com.liferay", name: "biz.aQute.bnd.annotation", version: "4.2.0.LIFERAY-PATCHED-2"
 	compileOnly group: "com.liferay", name: "jakarta.ws.rs", version: "3.1.0.LIFERAY-PATCHED-1"
-	compileOnly group: "com.liferay", name: "org.apache.cxf.core", version: "3.6.12.JAKARTA-LIFERAY-PATCHED-1"
-	compileOnly group: "com.liferay", name: "org.apache.cxf.rt.frontend.jaxrs", version: "3.6.12.JAKARTA-LIFERAY-PATCHED-1"
+	compileOnly group: "com.liferay", name: "org.apache.cxf.core", version: "3.6.13.JAKARTA-LIFERAY-PATCHED-1"
+	compileOnly group: "com.liferay", name: "org.apache.cxf.rt.frontend.jaxrs", version: "3.6.13.JAKARTA-LIFERAY-PATCHED-1"
 	compileOnly group: "com.liferay.jakarta.portlet", name: "com.liferay.jakarta.portlet-api", version: "4.0.0"
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.impl", version: "default"
 	compileOnly group: "com.liferay.portal", name: "com.liferay.portal.kernel", version: "default"
@@ -26,6 +26,7 @@ dependencies {
 	compileOnly project(":apps:headless:headless-delivery:headless-delivery-api")
 	compileOnly project(":apps:headless:headless-object:headless-object-api")
 	compileOnly project(":apps:list-type:list-type-api")
+	compileOnly project(":apps:oauth2-provider:oauth2-provider-api")
 	compileOnly project(":apps:object:object-admin-rest-api")
 	compileOnly project(":apps:object:object-api")
 	compileOnly project(":apps:object:object-rest-api")
@@ -52,4 +53,5 @@ dependencies {
 	compileOnly project(":core:petra:petra-sql-dsl-api")
 	compileOnly project(":core:petra:petra-sql-dsl-spi")
 	compileOnly project(":core:petra:petra-string")
+	testImplementation project(":core:petra:petra-concurrent")
 }

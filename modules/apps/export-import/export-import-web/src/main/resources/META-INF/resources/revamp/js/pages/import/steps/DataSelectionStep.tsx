@@ -4,24 +4,31 @@
  */
 
 import ClayLayout from '@clayui/layout';
-import React from 'react';
+import React, {useId} from 'react';
 
+import ScopeSection from '../../../components/ScopeSection';
+import SectionHeader from '../../../components/SectionHeader';
 import {
 	FormikFieldCheckbox,
 	FormikFieldContentSelector,
 } from '../../../components/forms/formik';
 import {ImportPreview} from '../../../types/exportImportPreview';
 import FileSummary from './FileSummary';
+import SiteSelection from './SiteSelection';
 
 export default function DataSelectionStep({
 	commentsAndRatingsEnabled = false,
 	importPreview,
 	lookAndFeelEnabled = false,
+	siteSelectionEnabled = false,
 }: {
 	commentsAndRatingsEnabled?: boolean;
 	importPreview?: ImportPreview;
 	lookAndFeelEnabled?: boolean;
+	siteSelectionEnabled?: boolean;
 }) {
+	const labelId = useId();
+
 	if (!importPreview) {
 		return null;
 	}
@@ -30,7 +37,26 @@ export default function DataSelectionStep({
 		<>
 			<FileSummary importPreview={importPreview} />
 
-			<ClayLayout.Sheet className="mt-4 option-group">
+			{siteSelectionEnabled && !!importPreview.previewSites?.length && (
+				<ScopeSection
+					subtitle={Liferay.Language.get(
+						'import-complete-sites-from-your-file,-including-all-their-pages,-content,-and-settings'
+					)}
+				>
+					<SiteSelection previewSites={importPreview.previewSites} />
+				</ScopeSection>
+			)}
+
+			<SectionHeader
+				className="mt-4"
+				id={labelId}
+				subtitle={Liferay.Language.get(
+					'select-the-data-from-your-file-that-you-would-like-to-import'
+				)}
+				title={Liferay.Language.get('data-selection')}
+			/>
+
+			<ClayLayout.Sheet className="option-group">
 				<FormikFieldCheckbox
 					description={Liferay.Language.get(
 						'export-import-permissions-help'
@@ -52,6 +78,7 @@ export default function DataSelectionStep({
 
 			<div data-testid="data-selection-section">
 				<FormikFieldContentSelector
+					aria-labelledby={labelId}
 					commentsAndRatingsEnabled={commentsAndRatingsEnabled}
 					lookAndFeelEnabled={lookAndFeelEnabled}
 					name="contentSelection"

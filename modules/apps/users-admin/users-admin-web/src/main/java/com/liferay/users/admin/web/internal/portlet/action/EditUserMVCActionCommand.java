@@ -8,7 +8,7 @@ package com.liferay.users.admin.web.internal.portlet.action;
 import com.liferay.announcements.kernel.model.AnnouncementsDelivery;
 import com.liferay.asset.kernel.exception.AssetCategoryException;
 import com.liferay.asset.kernel.exception.AssetTagException;
-import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.bean.BeanParamUtil;
@@ -76,7 +76,6 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowTask;
 import com.liferay.portal.kernel.workflow.WorkflowTaskManager;
 import com.liferay.portlet.InvokerPortletUtil;
-import com.liferay.portlet.admin.util.AdminUtil;
 import com.liferay.portlet.usersadmin.util.UsersAdminUtil;
 import com.liferay.users.admin.constants.UsersAdminPortletKeys;
 
@@ -354,8 +353,7 @@ public class EditUserMVCActionCommand
 
 		Contact contact = user.getContact();
 
-		String oldPassword = AdminUtil.getUpdateUserPassword(
-			actionRequest, user.getUserId());
+		String oldPassword = ParamUtil.getString(actionRequest, "password");
 
 		String oldScreenName = user.getScreenName();
 		String screenName = BeanParamUtil.getString(
@@ -383,8 +381,7 @@ public class EditUserMVCActionCommand
 
 			int authResult = _userLocalService.authenticateByUserId(
 				themeDisplay.getCompanyId(), portal.getUserId(actionRequest),
-				ParamUtil.getString(actionRequest, "password"), new HashMap<>(),
-				new HashMap<>(), new HashMap<>());
+				oldPassword, new HashMap<>(), new HashMap<>(), new HashMap<>());
 
 			if (authResult != Authenticator.SUCCESS) {
 				throw new PrincipalException();
@@ -398,7 +395,7 @@ public class EditUserMVCActionCommand
 		long fileEntryId = ParamUtil.getLong(actionRequest, "fileEntryId");
 
 		if (fileEntryId > 0) {
-			FileEntry fileEntry = _dlAppLocalService.getFileEntry(fileEntryId);
+			FileEntry fileEntry = _dlAppService.getFileEntry(fileEntryId);
 
 			portraitBytes = FileUtil.getBytes(fileEntry.getContentStream());
 		}
@@ -574,7 +571,7 @@ public class EditUserMVCActionCommand
 		long fileEntryId = ParamUtil.getLong(actionRequest, "fileEntryId");
 
 		if (fileEntryId > 0) {
-			FileEntry fileEntry = _dlAppLocalService.getFileEntry(fileEntryId);
+			FileEntry fileEntry = _dlAppService.getFileEntry(fileEntryId);
 
 			portraitBytes = FileUtil.getBytes(fileEntry.getContentStream());
 		}
@@ -717,7 +714,7 @@ public class EditUserMVCActionCommand
 	}
 
 	@Reference
-	private DLAppLocalService _dlAppLocalService;
+	private DLAppService _dlAppService;
 
 	@Reference
 	private Language _language;

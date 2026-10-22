@@ -6,7 +6,6 @@
 import {Page, expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
-import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {loginTest} from '../../../fixtures/loginTest';
 import {mcpServerWebPagesTest} from '../../../fixtures/mcpServerWebPagesTest';
 import {DataApiHelpers} from '../../../helpers/ApiHelpers';
@@ -23,9 +22,6 @@ import {
 
 const baseTest = mergeTests(
 	dataApiHelpersTest,
-	featureFlagsTest({
-		'LPD-63311': {enabled: true},
-	}),
 	loginTest(),
 	mcpServerWebPagesTest
 );
@@ -575,7 +571,7 @@ test.describe('Profiles - Data Masks tab', () => {
 	);
 
 	test(
-		'Deselects every mask with the Deselect All action',
+		'Deselects every mask with the Clear action',
 		{tag: '@LPD-99230'},
 		async ({apiHelpers, profilesPage}) => {
 			const firstMaskName = profileName();
@@ -605,9 +601,9 @@ test.describe('Profiles - Data Masks tab', () => {
 				profilesPage.dialog.getByText(/Items? Selected/)
 			).toBeVisible();
 
-			await profilesPage.deselectAllButton.click();
+			await profilesPage.clearButton.click();
 
-			await expect(profilesPage.dialog.getByRole('status')).toHaveText(
+			await expect(profilesPage.selectionStatus).toHaveText(
 				'Nothing Selected'
 			);
 			await expect(
@@ -1025,7 +1021,7 @@ test.describe('Profiles - Tools tab', () => {
 	);
 
 	test(
-		'Deselects every tool with the Deselect All action',
+		'Deselects every tool with the Clear action',
 		{tag: '@LPD-103214'},
 		async ({apiHelpers, profilesPage}) => {
 			const name = profileName();
@@ -1044,7 +1040,7 @@ test.describe('Profiles - Tools tab', () => {
 				/[1-9]\d*\s+Items? Selected/
 			);
 
-			await profilesPage.deselectAllButton.click();
+			await profilesPage.clearButton.click();
 
 			await expect(profilesPage.dialog.getByRole('status')).toHaveText(
 				'Nothing Selected'
@@ -1210,6 +1206,7 @@ test.describe('Profiles - Status', () => {
 			await profilesPage.nameInput.fill(name);
 			await profilesPage.descriptionInput.fill('Created from the UI');
 
+			await expect(profilesPage.creationInfoAlert).toBeVisible();
 			await expect(profilesPage.statusToggle).toBeDisabled();
 
 			await profilesPage.saveButton.click();
@@ -1219,6 +1216,7 @@ test.describe('Profiles - Status', () => {
 			await waitForAlert(page, `${name} was saved successfully.`);
 
 			await expect(profilesPage.formHeading).toHaveText('Edit Profile');
+			await expect(profilesPage.creationInfoAlert).toBeHidden();
 			await expect(profilesPage.statusToggle).toBeEnabled();
 
 			await profilesPage.statusToggle.click();

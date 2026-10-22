@@ -11,11 +11,17 @@ name: pr
 
 Create a GitHub PR for the current branch, transition the linked Jira tickets to review, and record the PR URL on those tickets.
 
+## Repository Settings
+
+The base branch is `master` in `liferay/liferay-portal` and `master-private` in `liferay/liferay-portal-ee`. Use the base branch of the repository that a remote of this checkout points at (check `git remote --verbose`).
+
+Below, `${BASE_BRANCH}` stands for that base branch, and `<repository>` stands for that repository without its organization, such as `liferay-portal`.
+
 ## Preconditions
 
 - At least one commit adds tests. When none do, ask the user for a rationale and refuse to proceed without one. The only exceptions are PRs with no code changes (e.g., language key updates or markdown changes).
 
-- The current branch is a development branch, not `master` or any other protected branch.
+- The current branch is a development branch, not `${BASE_BRANCH}` or any other protected branch.
 
 - The `pr-check` skill must pass. Skip only when `${ARGUMENTS}` contains `--skip-pr-check`. A skip requires a reason: take it from the text following the flag when present, otherwise prompt the user for one. The reason is recorded in the **PR Check** section, which is written for a skip rather than omitted.
 
@@ -31,11 +37,11 @@ A branch may span more than one ticket. Resolve the **ticket set** — every tic
 
 The ticket key follows the pattern `LPD-12345`, `LCD-12345`, `LRCI-1234`, and similar forms (uppercase letters, hyphen, digits).
 
-Collect every distinct ticket key from the subjects of the branch's commits relative to `master`. Each subject is prefixed with its ticket (`LPD-12345 <subject>`); extract every distinct key, in commit order (oldest first). When no commit carries a ticket, prompt the user for one.
+Collect every distinct ticket key from the subjects of the branch's commits relative to `${BASE_BRANCH}`. Each subject is prefixed with its ticket (`LPD-12345 <subject>`); extract every distinct key, in commit order (oldest first). When no commit carries a ticket, prompt the user for one.
 
 ### Target Repository
 
-The target repository defaults to `<fork-owner>/liferay-portal`. When `${ARGUMENTS}` names a different `org/repo`, use that; when it matches an alias below, expand the alias; otherwise, ask the user to choose `<fork-owner>` from one of the team forks:
+The target repository defaults to `<fork-owner>/<repository>`. When `${ARGUMENTS}` names a different `org/repo`, use that; when it matches an alias below, expand the alias; otherwise, ask the user to choose `<fork-owner>` from the teams below, leaving out any team that has no fork of `<repository>`:
 
 - `liferay-ac`
 - `liferay-appsec`
@@ -52,11 +58,13 @@ The target repository defaults to `<fork-owner>/liferay-portal`. When `${ARGUMEN
 - `liferay-search`
 - `liferay-site-management`
 
+When the `pr-check` run reports that the branch sits on the forward target and `${ARGUMENTS}` names no repository, use the forward target instead of asking.
+
 The following short aliases resolve to a target repository:
 
-- `brian` → `brianchandotcom/liferay-portal`
+- `brian` → `brianchandotcom/<repository>`
 
-The PR head is `<github-username>:<branch-name>` (the GitHub username is read from the user's `origin` remote URL — e.g., `git@github.com:brianchandotcom/liferay-portal.git` yields `brianchandotcom`), and the base is `master`.
+The PR head is `<github-username>:<branch-name>` (the GitHub username is read from the user's `origin` remote URL — for example, `git@github.com:brianchandotcom/liferay-portal.git` yields `brianchandotcom`), and the base is `${BASE_BRANCH}`.
 
 ## Expected Output
 
@@ -99,6 +107,8 @@ This optional section is only included when the commits do not add any tests. It
 
 The **PR Check** section is the Results Summary block emitted by the `pr-check` skill that ran as the precondition — the overall state line, the tested SHA, the table of validations, and every note appended below it, since any row can carry a note, a `PASS` included — pasted verbatim, followed by a hidden marker. The marker is an HTML comment, invisible in rendered Markdown, whose payload is a JSON object of the form `<!-- pr-check {"result": "<state>", "sha": "<tested-SHA>"} -->`, where `<state>` is `success` when the overall state is `PASS` and `failure` when it is `FAIL`, so a run carrying `NOT VERIFIED` rows records `success`, and `<tested-SHA>` is the full 40-character SHA from the Results Summary. The webhook reads the `result` and `sha` fields to apply the `pr-check` commit status to that SHA and the `pr-check - <state>` label to the PR, so this skill records no status or label itself.
 
+When `build/test-plan/result.json` exists and its `head` is the tested SHA, add a `Test plan: <count> run, <passed> passed.` line between the Results Summary block and the marker. Leave it out otherwise. Put a blank line before and after it. `<count>` is the number of entries in `tests`. `<passed>` is the number of those entries whose `result` is `passed`.
+
 When pr-check was skipped via `--skip-pr-check`, still write the section, but as a skip rather than a run. Under the same `## PR Check` heading, the body is a single `**pr-check: SKIPPED** — <reason>` line with no table, and the marker payload adds a `reason` field alongside `result` (set to `skipped`) and the PR head SHA. The JSON object keys are alphabetical (`reason`, `result`, `sha`).
 
 ```markdown
@@ -117,7 +127,7 @@ Create the pull request with `--body-file`, or with `--body` from a quoted-hered
 body_file=$(mktemp)
 
 gh pr create \
-	--base master \
+	--base "${BASE_BRANCH}" \
 	--body-file "${body_file}" \
 	--head <github-username>:<branch-name> \
 	--repo <target-org/repo> \

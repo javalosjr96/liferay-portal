@@ -403,7 +403,13 @@ public class CTCollectionTemplatePersistenceImpl
 	public void activate() {
 		_collectionPersistenceFinderByCompanyId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, CTCollectionTemplate::getCtCollectionTemplateId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+					"countByCompanyId", new String[] {Long.class.getName()},
+					new String[] {"companyId"}, false),
+				"", CTCollectionTemplateModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCompanyId",
 					new String[] {
@@ -412,18 +418,13 @@ public class CTCollectionTemplatePersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"companyId"}, true),
+				_SQL_COUNT_CTCOLLECTIONTEMPLATE_WHERE,
+				_SQL_SELECT_CTCOLLECTIONTEMPLATE_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
 					"findByCompanyId", new String[] {Long.class.getName()},
 					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByCompanyId", new String[] {Long.class.getName()},
-					new String[] {"companyId"}, false),
-				_SQL_SELECT_CTCOLLECTIONTEMPLATE_WHERE,
-				_SQL_COUNT_CTCOLLECTIONTEMPLATE_WHERE,
-				CTCollectionTemplateModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"ctCollectionTemplate.", "companyId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -489,4 +490,4 @@ public class CTCollectionTemplatePersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:726617829
+// LIFERAY-SERVICE-BUILDER-HASH:-411924179

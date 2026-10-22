@@ -11,7 +11,8 @@ import com.liferay.batch.engine.internal.util.ItemIndexThreadLocal;
 import com.liferay.batch.engine.jaxrs.uri.BatchEngineUriInfo;
 import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.portal.kernel.audit.AuditRequestThreadLocal;
+import com.liferay.portal.kernel.audit.AuditRequestContext;
+import com.liferay.portal.kernel.audit.AuditRequestContextThreadLocal;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskStatusMessageSender;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskThreadLocal;
 import com.liferay.portal.kernel.backgroundtask.constants.BackgroundTaskConstants;
@@ -38,34 +39,41 @@ public class BatchEngineTaskExecutorUtil {
 			UnsafeSupplier<T, Throwable> unsafeSupplier, User user)
 		throws Throwable {
 
-		AuditRequestThreadLocal auditRequestThreadLocal =
-			AuditRequestThreadLocal.getAuditThreadLocal();
+		AuditRequestContext auditRequestContext =
+			AuditRequestContextThreadLocal.getAuditRequestContext();
 
-		auditRequestThreadLocal.setRealUserEmailAddress(user.getEmailAddress());
-		auditRequestThreadLocal.setRealUserId(user.getUserId());
+		String realUserEmailAddress =
+			auditRequestContext.getRealUserEmailAddress();
+		long realUserId = auditRequestContext.getRealUserId();
 
 		PermissionChecker permissionChecker =
 			PermissionThreadLocal.getPermissionChecker();
 
-		if (checkPermissions) {
-			PermissionThreadLocal.setPermissionChecker(
-				PermissionCheckerFactoryUtil.create(user));
-		}
-		else {
-			PermissionThreadLocal.setPermissionChecker(
-				new LiberalPermissionChecker(user));
-		}
-
 		String name = PrincipalThreadLocal.getName();
-
-		PrincipalThreadLocal.setName(user.getUserId());
 
 		try (SafeCloseable safeCloseable =
 				ItemIndexThreadLocal.pushIndexQueueWithSafeCloseable()) {
 
+			auditRequestContext.setRealUserEmailAddress(user.getEmailAddress());
+			auditRequestContext.setRealUserId(user.getUserId());
+
+			if (checkPermissions) {
+				PermissionThreadLocal.setPermissionChecker(
+					PermissionCheckerFactoryUtil.create(user));
+			}
+			else {
+				PermissionThreadLocal.setPermissionChecker(
+					new LiberalPermissionChecker(user));
+			}
+
+			PrincipalThreadLocal.setName(user.getUserId());
+
 			return unsafeSupplier.get();
 		}
 		finally {
+			auditRequestContext.setRealUserEmailAddress(realUserEmailAddress);
+			auditRequestContext.setRealUserId(realUserId);
+
 			PermissionThreadLocal.setPermissionChecker(permissionChecker);
 			PrincipalThreadLocal.setName(name);
 		}

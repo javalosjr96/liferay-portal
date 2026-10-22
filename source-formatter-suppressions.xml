@@ -105,7 +105,6 @@
 		<suppress checks="JavaFeatureFlagManagerUtilCheck" files="portal-test/src/com/liferay/portal/test/rule/FeatureFlagTestRule\.java" />
 		<suppress checks="JavaHelperUtilCheck" files="portal-impl/src/com/liferay/portal/deploy/hot/CustomJspBagRegistryUtil\.java" />
 		<suppress checks="JavaHelperUtilCheck" files="portal-kernel/src/com/liferay/portal/kernel/security/pwd/PasswordEncryptorUtil\.java" />
-		<suppress checks="JavaHelperUtilCheck" files="portal-kernel/src/com/liferay/portal/kernel/settings/SettingsLocatorHelperUtil\.java" />
 		<suppress checks="JavaModuleClassGetResourceCallCheck" files="modules/apps/dispatch/dispatch-talend-api/src/test/java/com/liferay/dispatch/talend/TalendArchiveUtil\.java" />
 		<suppress checks="JavaModuleClassGetResourceCallCheck" files="modules/apps/dispatch/dispatch-talend-web/src/test/java/com/liferay/dispatch/talend/web/internal/process/TalendProcessTest\.java" />
 		<suppress checks="JavaModuleClassGetResourceCallCheck" files="modules/core/portal-bootstrap/src/main/java/com/liferay/portal/bootstrap/ModuleFrameworkImpl\.java" />
@@ -140,6 +139,7 @@
 		<suppress checks="JSPLanguageKeysCheck" files="portal-web/docroot/html/portal/saml/.*" />
 		<suppress checks="LocaleUtilCheck" files="portal-kernel/src/com/liferay/portal/kernel/util/LocaleUtil\.java" />
 		<suppress checks="LocaleUtilCheck" files="portal-kernel/test/unit/com/liferay/portal/kernel/util/LocaleUtilTest\.java" />
+		<suppress checks="MarkdownFileExtensionCheck" files="portal-web/test/functional/com/liferay/portalweb/tests/enduser/collaboration/knowledgebase/dependencies/.*intro\.markdown" />
 		<suppress checks="MethodCallsOrderCheck" files="portal-impl/src/com/liferay/portal/util/PortalImpl\.java" />
 		<suppress checks="MethodCallsOrderCheck" files="portal-impl/test/unit/com/liferay/portal/json/JSONUtilTest\.java" />
 		<suppress checks="PoshiPauseUsageCheck" files="portal-web/test/functional/com/liferay/portalweb/macros/Alert\.macro" />
@@ -151,7 +151,6 @@
 		<suppress checks="PoshiPauseUsageCheck" files="portal-web/test/functional/com/liferay/portalweb/macros/Staging\.macro" />
 		<suppress checks="PoshiPauseUsageCheck" files="portal-web/test/functional/com/liferay/portalweb/macros/fragment/FragmentsDeploy\.macro" />
 		<suppress checks="PoshiPauseUsageCheck" files="portal-web/test/functional/com/liferay/portalweb/macros/layout/pageeditor/PageEditor\.macro" />
-		<suppress checks="PoshiPauseUsageCheck" files="portal-web/test/functional/com/liferay/portalweb/macros/rss/RSSPortlet\.macro" />
 		<suppress checks="PoshiPauseUsageCheck" files="portal-web/test/functional/com/liferay/portalweb/tests/coreinfrastructure/administration/passwordpolicies/PasswordPolicies\.testcase" />
 		<suppress checks="PoshiPauseUsageCheck" files="portal-web/test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/login/SessionTimeout\.testcase" />
 		<suppress checks="PoshiPauseUsageCheck" files="portal-web/test/functional/com/liferay/portalweb/tests/coreinfrastructure/security/oauth2/OAuth2\.testcase" />
@@ -164,7 +163,6 @@
 		<suppress checks="PoshiVariableNameCheck" files="portal-web/test/functional/com/liferay/portalweb/macros/json/journal/JSONWebcontentUtil\.macro" />
 		<suppress checks="PrimitiveWrapperInstantiationCheck" files="portal-impl/src/com/liferay/portal/json/jabsorb/serializer/LiferaySerializer\.java" />
 		<suppress checks="PropertiesEmptyLinesCheck" files="build\.properties" />
-		<suppress checks="PropertiesLongLinesCheck" files="portal-impl/src/system\.properties" />
 		<suppress checks="PropertiesWhitespaceCheck" files="build\.properties" />
 		<suppress checks="ResourceBundleCheck" files="portal-kernel/src/com/liferay/portal/kernel/resource/bundle/ClassResourceBundleLoader\.java" />
 		<suppress checks="ResourceBundleCheck" files="portal-kernel/src/com/liferay/portal/kernel/util/ResourceBundleUtil\.java" />

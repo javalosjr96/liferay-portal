@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PropsUtil;
 import com.liferay.portal.kernel.util.PropsValues;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.service.base.VirtualHostLocalServiceBaseImpl;
 
@@ -71,9 +72,11 @@ public class VirtualHostLocalServiceImpl
 		List<VirtualHost> defaultVirtualHosts = new ArrayList<>();
 
 		for (VirtualHost virtualHost : virtualHosts) {
-			if (virtualHost.isDefaultVirtualHost()) {
-				defaultVirtualHosts.add(virtualHost);
+			if (!virtualHost.isDefaultVirtualHost()) {
+				continue;
 			}
+
+			defaultVirtualHosts.add(virtualHost);
 		}
 
 		if (defaultVirtualHosts.isEmpty()) {
@@ -90,13 +93,16 @@ public class VirtualHostLocalServiceImpl
 	}
 
 	@Override
-	public VirtualHost fetchVirtualHost(String hostname) {
-		if (Validator.isIPv6Address(hostname)) {
+	public VirtualHost fetchVirtualHost(String virtualHostname) {
+		virtualHostname = StringUtil.toLowerCase(
+			StringUtil.trim(virtualHostname));
+
+		if (Validator.isIPv6Address(virtualHostname)) {
 			try {
 				Inet6Address inet6Address = (Inet6Address)InetAddress.getByName(
-					hostname);
+					virtualHostname);
 
-				hostname = inet6Address.getHostAddress();
+				virtualHostname = inet6Address.getHostAddress();
 			}
 			catch (UnknownHostException unknownHostException) {
 				if (_log.isDebugEnabled()) {
@@ -106,29 +112,28 @@ public class VirtualHostLocalServiceImpl
 		}
 
 		VirtualHost virtualHost = virtualHostPersistence.fetchByHostname(
-			hostname);
+			virtualHostname);
 
-		if ((virtualHost == null) && hostname.contains("xn--")) {
+		if ((virtualHost == null) && virtualHostname.contains("xn--")) {
 			virtualHost = virtualHostPersistence.fetchByHostname(
-				IDN.toUnicode(hostname));
+				IDN.toUnicode(virtualHostname));
 		}
 
 		return virtualHost;
 	}
 
 	@Override
-	public VirtualHost getVirtualHost(String hostname) throws PortalException {
-		try {
-			return virtualHostPersistence.findByHostname(hostname);
-		}
-		catch (NoSuchVirtualHostException noSuchVirtualHostException) {
-			if (hostname.contains("xn--")) {
-				return virtualHostPersistence.findByHostname(
-					IDN.toUnicode(hostname));
-			}
+	public VirtualHost getVirtualHost(String virtualHostname)
+		throws PortalException {
 
-			throw noSuchVirtualHostException;
+		VirtualHost virtualHost = fetchVirtualHost(virtualHostname);
+
+		if (virtualHost == null) {
+			throw new NoSuchVirtualHostException(
+				"{hostname=" + virtualHostname + "}");
 		}
+
+		return virtualHost;
 	}
 
 	@Override
@@ -152,13 +157,15 @@ public class VirtualHostLocalServiceImpl
 		List<VirtualHost> filteredVirtualHosts = null;
 
 		for (VirtualHost virtualHost : virtualHosts) {
-			if (virtualHost.getLayoutSetId() == layoutSetId) {
-				if (filteredVirtualHosts == null) {
-					filteredVirtualHosts = new ArrayList<>(virtualHosts.size());
-				}
-
-				filteredVirtualHosts.add(virtualHost);
+			if (virtualHost.getLayoutSetId() != layoutSetId) {
+				continue;
 			}
+
+			if (filteredVirtualHosts == null) {
+				filteredVirtualHosts = new ArrayList<>(virtualHosts.size());
+			}
+
+			filteredVirtualHosts.add(virtualHost);
 		}
 
 		if (filteredVirtualHosts == null) {
@@ -178,7 +185,8 @@ public class VirtualHostLocalServiceImpl
 
 	@Override
 	public List<VirtualHost> updateVirtualHosts(
-		long companyId, long layoutSetId, TreeMap<String, String> hostnames) {
+		long companyId, long layoutSetId,
+		TreeMap<String, String> virtualHostnames) {
 
 		LayoutSet layoutSet = _layoutSetPersistence.fetchByPrimaryKey(
 			layoutSetId);
@@ -195,11 +203,11 @@ public class VirtualHostLocalServiceImpl
 
 		boolean first = true;
 
-		for (String curHostname : hostnames.navigableKeySet()) {
+		for (String curVirtualHostname : virtualHostnames.navigableKeySet()) {
 			VirtualHost virtualHost = null;
 
 			for (VirtualHost curVirtualHost : virtualHosts) {
-				if (curHostname.equals(curVirtualHost.getHostname())) {
+				if (curVirtualHostname.equals(curVirtualHost.getHostname())) {
 					virtualHost = curVirtualHost;
 
 					break;
@@ -213,12 +221,12 @@ public class VirtualHostLocalServiceImpl
 
 				virtualHost.setCompanyId(companyId);
 				virtualHost.setLayoutSetId(layoutSetId);
-				virtualHost.setHostname(curHostname);
+				virtualHost.setHostname(curVirtualHostname);
 
 				virtualHosts.add(virtualHost);
 			}
 
-			String languageId = hostnames.get(curHostname);
+			String languageId = virtualHostnames.get(curVirtualHostname);
 
 			Locale locale = LocaleUtil.fromLanguageId(languageId, true, false);
 
@@ -244,11 +252,13 @@ public class VirtualHostLocalServiceImpl
 		while (iterator.hasNext()) {
 			VirtualHost virtualHost = iterator.next();
 
-			if (!hostnames.containsKey(virtualHost.getHostname())) {
-				iterator.remove();
-
-				virtualHostPersistence.remove(virtualHost);
+			if (virtualHostnames.containsKey(virtualHost.getHostname())) {
+				continue;
 			}
+
+			iterator.remove();
+
+			virtualHostPersistence.remove(virtualHost);
 		}
 
 		virtualHostPersistence.cacheResult(virtualHosts);

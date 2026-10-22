@@ -19,15 +19,21 @@ gradle.allprojects {
 			testModules group: "com.liferay.portal", name: "com.liferay.portal.test.integration"
 		}
 
-		if (project.name.endsWith("-test")) {
-			deploy.enabled = false
+		List<String> disabledTaskNames = []
 
-			tasks.matching {
-				Task task ->
+		if (project.name.endsWith("-test") || project.name.endsWith("-test-util")) {
+			disabledTaskNames.addAll(["deploy", "dockerCopy", "dockerDeploy"])
+		}
 
-				["deploy", "dockerCopy", "dockerDeploy"].contains(task.name)
-			}.configureEach {
-				enabled = false
+		if (integrationTestTarget == "container") {
+			disabledTaskNames.addAll(["copyTestModules", "setUpTestableTomcat", "startTestableTomcat", "stopTestableTomcat"])
+		}
+
+		tasks.configureEach {
+			Task task ->
+
+			if (disabledTaskNames.contains(task.name)) {
+				task.enabled = false
 			}
 		}
 
@@ -47,13 +53,6 @@ gradle.allprojects {
 					}
 				}
 			}
-		}
-
-		if (integrationTestTarget == "container") {
-			copyTestModules.enabled = false
-			setUpTestableTomcat.enabled = false
-			startTestableTomcat.enabled = false
-			stopTestableTomcat.enabled = false
 		}
 	}
 }

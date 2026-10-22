@@ -6,20 +6,30 @@
 package com.liferay.dynamic.data.mapping.service.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.dynamic.data.mapping.io.DDMFormValuesSerializer;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
+import com.liferay.dynamic.data.mapping.model.DDMFormInstanceSettings;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstanceVersion;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.UnlocalizedValue;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceLocalServiceUtil;
+import com.liferay.dynamic.data.mapping.storage.DDMFormFieldValue;
 import com.liferay.dynamic.data.mapping.storage.DDMFormValues;
+import com.liferay.dynamic.data.mapping.storage.StorageType;
+import com.liferay.dynamic.data.mapping.test.util.DDMFormInstanceTestUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormTestUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMFormValuesTestUtil;
+import com.liferay.dynamic.data.mapping.util.DDMFormInstanceFactory;
+import com.liferay.dynamic.data.mapping.util.DDMFormValuesSerializeUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import org.junit.Assert;
@@ -103,6 +113,94 @@ public class DDMFormInstanceLocalServiceTest extends BaseDDMServiceTestCase {
 		Assert.assertEquals(
 			WorkflowConstants.STATUS_DRAFT,
 			latestFormInstanceVersion.getStatus());
+	}
+
+	@Test
+	public void testGetSettingsDDMFormValues() throws Exception {
+		DDMFormInstance formInstance =
+			DDMFormInstanceTestUtil.addDDMFormInstance(
+				group, TestPropsValues.getUserId());
+
+		DDMFormInstance cachedFormInstance1 =
+			DDMFormInstanceLocalServiceUtil.getFormInstance(
+				formInstance.getFormInstanceId());
+
+		Assert.assertEquals(
+			StorageType.DEFAULT.getValue(),
+			cachedFormInstance1.getStorageType());
+
+		DDMFormValues settingsDDMFormValues =
+			cachedFormInstance1.getSettingsDDMFormValues();
+
+		DDMFormFieldValue ddmFormFieldValue =
+			settingsDDMFormValues.getDDMFormFieldValue("storageType", false);
+
+		ddmFormFieldValue.setValue(
+			new UnlocalizedValue(RandomTestUtil.randomString()));
+
+		DDMFormInstance cachedFormInstance2 =
+			DDMFormInstanceLocalServiceUtil.getFormInstance(
+				formInstance.getFormInstanceId());
+
+		DDMFormInstanceSettings ddmFormInstanceSettings =
+			DDMFormInstanceFactory.create(
+				DDMFormInstanceSettings.class,
+				cachedFormInstance2.getSettingsDDMFormValues());
+
+		Assert.assertEquals(
+			StorageType.DEFAULT.getValue(),
+			ddmFormInstanceSettings.storageType());
+
+		Assert.assertEquals(
+			StorageType.DEFAULT.getValue(),
+			cachedFormInstance2.getStorageType());
+	}
+
+	@Test
+	public void testSetSettings() throws Exception {
+		DDMFormInstance formInstance =
+			DDMFormInstanceTestUtil.addDDMFormInstance(
+				group, TestPropsValues.getUserId());
+
+		DDMFormInstance cachedFormInstance =
+			DDMFormInstanceLocalServiceUtil.getFormInstance(
+				formInstance.getFormInstanceId());
+
+		cachedFormInstance.setMvccVersion(
+			cachedFormInstance.getMvccVersion() - 1);
+
+		cachedFormInstance.getObjectDefinitionId();
+		cachedFormInstance.getSettingsDDMFormValues();
+		cachedFormInstance.getStorageType();
+
+		long objectDefinitionId = RandomTestUtil.randomLong();
+		String storageType = RandomTestUtil.randomString();
+
+		cachedFormInstance.setSettings(
+			_createSettings(objectDefinitionId, storageType));
+
+		DDMFormInstanceSettings ddmFormInstanceSettings =
+			DDMFormInstanceFactory.create(
+				DDMFormInstanceSettings.class,
+				cachedFormInstance.getSettingsDDMFormValues());
+
+		Assert.assertFalse(
+			cachedFormInstance.getSettings(),
+			ddmFormInstanceSettings.requireCaptcha());
+
+		Assert.assertEquals(storageType, cachedFormInstance.getStorageType());
+		Assert.assertEquals(
+			objectDefinitionId, cachedFormInstance.getObjectDefinitionId());
+
+		objectDefinitionId = RandomTestUtil.randomLong();
+		storageType = RandomTestUtil.randomString();
+
+		cachedFormInstance.setSettings(
+			_createSettings(objectDefinitionId, storageType));
+
+		Assert.assertEquals(
+			objectDefinitionId, cachedFormInstance.getObjectDefinitionId());
+		Assert.assertEquals(storageType, cachedFormInstance.getStorageType());
 	}
 
 	@Test
@@ -239,6 +337,28 @@ public class DDMFormInstanceLocalServiceTest extends BaseDDMServiceTestCase {
 			secondFormInstanceVersion.getStatus());
 	}
 
+	private String _createSettings(
+		long objectDefinitionId, String storageType) {
+
+		DDMFormValues settingsDDMFormValues =
+			DDMFormInstanceTestUtil.createSettingsDDMFormValues(false);
+
+		settingsDDMFormValues.addDDMFormFieldValue(
+			DDMFormValuesTestUtil.createUnlocalizedDDMFormFieldValue(
+				"objectDefinitionId", String.valueOf(objectDefinitionId)));
+
+		DDMFormFieldValue ddmFormFieldValue =
+			settingsDDMFormValues.getDDMFormFieldValue("storageType", false);
+
+		ddmFormFieldValue.setValue(new UnlocalizedValue(storageType));
+
+		return DDMFormValuesSerializeUtil.serialize(
+			settingsDDMFormValues, _jsonDDMFormValuesSerializer);
+	}
+
 	private static long _classNameId;
+
+	@Inject(filter = "ddm.form.values.serializer.type=json")
+	private DDMFormValuesSerializer _jsonDDMFormValuesSerializer;
 
 }

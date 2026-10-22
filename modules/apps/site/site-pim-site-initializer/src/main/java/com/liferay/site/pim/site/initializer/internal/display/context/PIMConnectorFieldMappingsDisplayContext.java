@@ -5,8 +5,10 @@
 
 package com.liferay.site.pim.site.initializer.internal.display.context;
 
+import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -31,9 +33,11 @@ public class PIMConnectorFieldMappingsDisplayContext {
 
 	public PIMConnectorFieldMappingsDisplayContext(
 		HttpServletRequest httpServletRequest,
+		ObjectDefinition objectDefinition,
 		ObjectEntryLocalService objectEntryLocalService) {
 
 		_httpServletRequest = httpServletRequest;
+		_objectDefinition = objectDefinition;
 		_objectEntryLocalService = objectEntryLocalService;
 
 		_objectEntryId = ParamUtil.getLong(httpServletRequest, "objectEntryId");
@@ -42,6 +46,11 @@ public class PIMConnectorFieldMappingsDisplayContext {
 	}
 
 	public Map<String, Object> getBreadcrumbProps() {
+		ObjectEntry objectEntry = _objectEntryLocalService.fetchObjectEntry(
+			_objectEntryId);
+
+		String name = _getName(objectEntry);
+
 		return HashMapBuilder.<String, Object>put(
 			"actionItems",
 			JSONUtil.putAll(
@@ -51,7 +60,80 @@ public class PIMConnectorFieldMappingsDisplayContext {
 						String.valueOf(_objectEntryId), _themeDisplay)
 				).put(
 					"label", LanguageUtil.get(_httpServletRequest, "edit")
-				))
+				).put(
+					"symbolLeft", "pencil"
+				)
+			).put(
+				() -> {
+					if ((objectEntry == null) ||
+						!MapUtil.getBoolean(
+							objectEntry.getValues(), "active")) {
+
+						return null;
+					}
+
+					return JSONUtil.put(
+						"href",
+						PIMURLUtil.getConnectorExecuteURL(
+							String.valueOf(_objectEntryId))
+					).put(
+						"label",
+						LanguageUtil.get(_httpServletRequest, "execute")
+					).put(
+						"successMessage",
+						LanguageUtil.get(
+							_httpServletRequest,
+							"execution-has-started-successfully-and-will-" +
+								"continue-in-the-background")
+					).put(
+						"symbolLeft", "play"
+					).put(
+						"target", "asyncPost"
+					);
+				}
+			).put(
+				JSONUtil.put(
+					"href",
+					PIMURLUtil.getConnectorScheduleURL(
+						String.valueOf(_objectEntryId), _themeDisplay)
+				).put(
+					"label", LanguageUtil.get(_httpServletRequest, "schedule")
+				).put(
+					"symbolLeft", "date-time"
+				)
+			).put(
+				JSONUtil.put(
+					"className", "text-danger"
+				).put(
+					"confirmationMessage",
+					LanguageUtil.get(
+						_httpServletRequest,
+						"the-connector-and-all-its-field-mappings-will-be-" +
+							"deleted.-this-action-cannot-be-undone")
+				).put(
+					"confirmationTitle",
+					LanguageUtil.format(_httpServletRequest, "delete-x", name)
+				).put(
+					"href",
+					() -> {
+						if (_objectDefinition == null) {
+							return StringPool.BLANK;
+						}
+
+						return StringBundler.concat(
+							"/o", _objectDefinition.getRESTContextPath(),
+							StringPool.SLASH, _objectEntryId);
+					}
+				).put(
+					"label", LanguageUtil.get(_httpServletRequest, "delete")
+				).put(
+					"redirect", PIMURLUtil.getConnectorsURL(_themeDisplay)
+				).put(
+					"symbolLeft", "trash"
+				).put(
+					"target", "asyncDelete"
+				)
+			)
 		).put(
 			"breadcrumbItems",
 			JSONUtil.putAll(
@@ -67,7 +149,7 @@ public class PIMConnectorFieldMappingsDisplayContext {
 				).put(
 					"href", StringPool.BLANK
 				).put(
-					"label", _getName()
+					"label", name
 				))
 		).put(
 			"hideSpace", true
@@ -99,10 +181,7 @@ public class PIMConnectorFieldMappingsDisplayContext {
 		).build();
 	}
 
-	private String _getName() {
-		ObjectEntry objectEntry = _objectEntryLocalService.fetchObjectEntry(
-			_objectEntryId);
-
+	private String _getName(ObjectEntry objectEntry) {
 		if (objectEntry == null) {
 			return LanguageUtil.get(_httpServletRequest, "field-mappings");
 		}
@@ -117,6 +196,7 @@ public class PIMConnectorFieldMappingsDisplayContext {
 	}
 
 	private final HttpServletRequest _httpServletRequest;
+	private final ObjectDefinition _objectDefinition;
 	private final long _objectEntryId;
 	private final ObjectEntryLocalService _objectEntryLocalService;
 	private final ThemeDisplay _themeDisplay;

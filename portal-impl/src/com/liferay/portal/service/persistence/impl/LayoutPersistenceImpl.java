@@ -544,90 +544,6 @@ public class LayoutPersistenceImpl
 	}
 
 	private CollectionPersistenceFinder<Layout, NoSuchLayoutException>
-		_collectionPersistenceFinderByParentPlid;
-
-	/**
-	 * Returns an ordered range of all the layouts where parentPlid = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>LayoutModelImpl</code>.
-	 * </p>
-	 *
-	 * @param parentPlid the parent plid
-	 * @param start the lower bound of the range of layouts
-	 * @param end the upper bound of the range of layouts (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching layouts
-	 */
-	@Override
-	public List<Layout> findByParentPlid(
-		long parentPlid, int start, int end,
-		OrderByComparator<Layout> orderByComparator, boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByParentPlid.find(
-			FinderCacheUtil.getFinderCache(), new Object[] {parentPlid}, start,
-			end, orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first layout in the ordered set where parentPlid = &#63;.
-	 *
-	 * @param parentPlid the parent plid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching layout
-	 * @throws NoSuchLayoutException if a matching layout could not be found
-	 */
-	@Override
-	public Layout findByParentPlid_First(
-			long parentPlid, OrderByComparator<Layout> orderByComparator)
-		throws NoSuchLayoutException {
-
-		return _collectionPersistenceFinderByParentPlid.findFirst(
-			FinderCacheUtil.getFinderCache(), new Object[] {parentPlid},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the first layout in the ordered set where parentPlid = &#63;.
-	 *
-	 * @param parentPlid the parent plid
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
-	 */
-	@Override
-	public Layout fetchByParentPlid_First(
-		long parentPlid, OrderByComparator<Layout> orderByComparator) {
-
-		return _collectionPersistenceFinderByParentPlid.fetchFirst(
-			FinderCacheUtil.getFinderCache(), new Object[] {parentPlid},
-			orderByComparator);
-	}
-
-	/**
-	 * Removes all the layouts where parentPlid = &#63; from the database.
-	 *
-	 * @param parentPlid the parent plid
-	 */
-	@Override
-	public void removeByParentPlid(long parentPlid) {
-		_collectionPersistenceFinderByParentPlid.remove(
-			FinderCacheUtil.getFinderCache(), new Object[] {parentPlid});
-	}
-
-	/**
-	 * Returns the number of layouts where parentPlid = &#63;.
-	 *
-	 * @param parentPlid the parent plid
-	 * @return the number of matching layouts
-	 */
-	@Override
-	public int countByParentPlid(long parentPlid) {
-		return _collectionPersistenceFinderByParentPlid.count(
-			FinderCacheUtil.getFinderCache(), new Object[] {parentPlid});
-	}
-
-	private CollectionPersistenceFinder<Layout, NoSuchLayoutException>
 		_collectionPersistenceFinderByIconImageId;
 
 	/**
@@ -709,101 +625,6 @@ public class LayoutPersistenceImpl
 	public int countByIconImageId(long iconImageId) {
 		return _collectionPersistenceFinderByIconImageId.count(
 			FinderCacheUtil.getFinderCache(), new Object[] {iconImageId});
-	}
-
-	private CollectionPersistenceFinder<Layout, NoSuchLayoutException>
-		_collectionPersistenceFinderByLayoutSetPrototypeLayoutERC;
-
-	/**
-	 * Returns an ordered range of all the layouts where layoutSetPrototypeLayoutERC = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>LayoutModelImpl</code>.
-	 * </p>
-	 *
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 * @param start the lower bound of the range of layouts
-	 * @param end the upper bound of the range of layouts (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching layouts
-	 */
-	@Override
-	public List<Layout> findByLayoutSetPrototypeLayoutERC(
-		String layoutSetPrototypeLayoutERC, int start, int end,
-		OrderByComparator<Layout> orderByComparator, boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByLayoutSetPrototypeLayoutERC.find(
-			FinderCacheUtil.getFinderCache(),
-			new Object[] {layoutSetPrototypeLayoutERC}, start, end,
-			orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first layout in the ordered set where layoutSetPrototypeLayoutERC = &#63;.
-	 *
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching layout
-	 * @throws NoSuchLayoutException if a matching layout could not be found
-	 */
-	@Override
-	public Layout findByLayoutSetPrototypeLayoutERC_First(
-			String layoutSetPrototypeLayoutERC,
-			OrderByComparator<Layout> orderByComparator)
-		throws NoSuchLayoutException {
-
-		return _collectionPersistenceFinderByLayoutSetPrototypeLayoutERC.
-			findFirst(
-				FinderCacheUtil.getFinderCache(),
-				new Object[] {layoutSetPrototypeLayoutERC}, orderByComparator);
-	}
-
-	/**
-	 * Returns the first layout in the ordered set where layoutSetPrototypeLayoutERC = &#63;.
-	 *
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
-	 */
-	@Override
-	public Layout fetchByLayoutSetPrototypeLayoutERC_First(
-		String layoutSetPrototypeLayoutERC,
-		OrderByComparator<Layout> orderByComparator) {
-
-		return _collectionPersistenceFinderByLayoutSetPrototypeLayoutERC.
-			fetchFirst(
-				FinderCacheUtil.getFinderCache(),
-				new Object[] {layoutSetPrototypeLayoutERC}, orderByComparator);
-	}
-
-	/**
-	 * Removes all the layouts where layoutSetPrototypeLayoutERC = &#63; from the database.
-	 *
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 */
-	@Override
-	public void removeByLayoutSetPrototypeLayoutERC(
-		String layoutSetPrototypeLayoutERC) {
-
-		_collectionPersistenceFinderByLayoutSetPrototypeLayoutERC.remove(
-			FinderCacheUtil.getFinderCache(),
-			new Object[] {layoutSetPrototypeLayoutERC});
-	}
-
-	/**
-	 * Returns the number of layouts where layoutSetPrototypeLayoutERC = &#63;.
-	 *
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 * @return the number of matching layouts
-	 */
-	@Override
-	public int countByLayoutSetPrototypeLayoutERC(
-		String layoutSetPrototypeLayoutERC) {
-
-		return _collectionPersistenceFinderByLayoutSetPrototypeLayoutERC.count(
-			FinderCacheUtil.getFinderCache(),
-			new Object[] {layoutSetPrototypeLayoutERC});
 	}
 
 	private FilterCollectionPersistenceFinder<Layout, NoSuchLayoutException>
@@ -2349,160 +2170,6 @@ public class LayoutPersistenceImpl
 	}
 
 	private FilterCollectionPersistenceFinder<Layout, NoSuchLayoutException>
-		_collectionPersistenceFinderByG_P_LSPLE;
-
-	/**
-	 * Returns an ordered range of all the layouts where groupId = &#63; and privateLayout = &#63; and layoutSetPrototypeLayoutERC = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>LayoutModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param privateLayout the private layout
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 * @param start the lower bound of the range of layouts
-	 * @param end the upper bound of the range of layouts (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching layouts
-	 */
-	@Override
-	public List<Layout> findByG_P_LSPLE(
-		long groupId, boolean privateLayout, String layoutSetPrototypeLayoutERC,
-		int start, int end, OrderByComparator<Layout> orderByComparator,
-		boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByG_P_LSPLE.find(
-			FinderCacheUtil.getFinderCache(),
-			new Object[] {groupId, privateLayout, layoutSetPrototypeLayoutERC},
-			start, end, orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first layout in the ordered set where groupId = &#63; and privateLayout = &#63; and layoutSetPrototypeLayoutERC = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param privateLayout the private layout
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching layout
-	 * @throws NoSuchLayoutException if a matching layout could not be found
-	 */
-	@Override
-	public Layout findByG_P_LSPLE_First(
-			long groupId, boolean privateLayout,
-			String layoutSetPrototypeLayoutERC,
-			OrderByComparator<Layout> orderByComparator)
-		throws NoSuchLayoutException {
-
-		return _collectionPersistenceFinderByG_P_LSPLE.findFirst(
-			FinderCacheUtil.getFinderCache(),
-			new Object[] {groupId, privateLayout, layoutSetPrototypeLayoutERC},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the first layout in the ordered set where groupId = &#63; and privateLayout = &#63; and layoutSetPrototypeLayoutERC = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param privateLayout the private layout
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching layout, or <code>null</code> if a matching layout could not be found
-	 */
-	@Override
-	public Layout fetchByG_P_LSPLE_First(
-		long groupId, boolean privateLayout, String layoutSetPrototypeLayoutERC,
-		OrderByComparator<Layout> orderByComparator) {
-
-		return _collectionPersistenceFinderByG_P_LSPLE.fetchFirst(
-			FinderCacheUtil.getFinderCache(),
-			new Object[] {groupId, privateLayout, layoutSetPrototypeLayoutERC},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns an ordered range of all the layouts that the user has permissions to view where groupId = &#63; and privateLayout = &#63; and layoutSetPrototypeLayoutERC = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>LayoutModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param privateLayout the private layout
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 * @param start the lower bound of the range of layouts
-	 * @param end the upper bound of the range of layouts (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching layouts that the user has permission to view
-	 */
-	@Override
-	public List<Layout> filterFindByG_P_LSPLE(
-		long groupId, boolean privateLayout, String layoutSetPrototypeLayoutERC,
-		int start, int end, OrderByComparator<Layout> orderByComparator) {
-
-		return _collectionPersistenceFinderByG_P_LSPLE.filterFind(
-			FinderCacheUtil.getFinderCache(),
-			new Object[] {groupId, privateLayout, layoutSetPrototypeLayoutERC},
-			start, end, orderByComparator, groupId);
-	}
-
-	/**
-	 * Removes all the layouts where groupId = &#63; and privateLayout = &#63; and layoutSetPrototypeLayoutERC = &#63; from the database.
-	 *
-	 * @param groupId the group ID
-	 * @param privateLayout the private layout
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 */
-	@Override
-	public void removeByG_P_LSPLE(
-		long groupId, boolean privateLayout,
-		String layoutSetPrototypeLayoutERC) {
-
-		_collectionPersistenceFinderByG_P_LSPLE.remove(
-			FinderCacheUtil.getFinderCache(),
-			new Object[] {groupId, privateLayout, layoutSetPrototypeLayoutERC});
-	}
-
-	/**
-	 * Returns the number of layouts where groupId = &#63; and privateLayout = &#63; and layoutSetPrototypeLayoutERC = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param privateLayout the private layout
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 * @return the number of matching layouts
-	 */
-	@Override
-	public int countByG_P_LSPLE(
-		long groupId, boolean privateLayout,
-		String layoutSetPrototypeLayoutERC) {
-
-		return _collectionPersistenceFinderByG_P_LSPLE.count(
-			FinderCacheUtil.getFinderCache(),
-			new Object[] {groupId, privateLayout, layoutSetPrototypeLayoutERC});
-	}
-
-	/**
-	 * Returns the number of layouts that the user has permission to view where groupId = &#63; and privateLayout = &#63; and layoutSetPrototypeLayoutERC = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param privateLayout the private layout
-	 * @param layoutSetPrototypeLayoutERC the layout set prototype layout erc
-	 * @return the number of matching layouts that the user has permission to view
-	 */
-	@Override
-	public int filterCountByG_P_LSPLE(
-		long groupId, boolean privateLayout,
-		String layoutSetPrototypeLayoutERC) {
-
-		return _collectionPersistenceFinderByG_P_LSPLE.filterCount(
-			FinderCacheUtil.getFinderCache(),
-			new Object[] {groupId, privateLayout, layoutSetPrototypeLayoutERC},
-			groupId);
-	}
-
-	private FilterCollectionPersistenceFinder<Layout, NoSuchLayoutException>
 		_collectionPersistenceFinderByG_P_ST;
 
 	/**
@@ -3771,6 +3438,8 @@ public class LayoutPersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					layout.getUuid(), layout.getExternalReferenceCode()) &&
+				!Objects.equals(
 					layoutModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					layout.getExternalReferenceCode())) {
@@ -4123,7 +3792,13 @@ public class LayoutPersistenceImpl
 
 		_collectionPersistenceFinderByGroupId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Layout::getPlid,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
+					new String[] {Long.class.getName()},
+					new String[] {"groupId"}, false),
+				"layout.system_ = [$FALSE$]", LayoutModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByGroupId",
 					new String[] {
@@ -4132,17 +3807,12 @@ public class LayoutPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId"}, true),
+				_SQL_COUNT_LAYOUT_WHERE, _SQL_SELECT_LAYOUT_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByGroupId",
 					new String[] {Long.class.getName()},
 					new String[] {"groupId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
-					new String[] {Long.class.getName()},
-					new String[] {"groupId"}, false),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"layout.system = [$FALSE$]", "layout.system_ = [$FALSE$]", null,
+				"layout.system = [$FALSE$]",
 				new FinderColumn<>(
 					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getGroupId));
@@ -4173,32 +3843,6 @@ public class LayoutPersistenceImpl
 					"layout.", "companyId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getCompanyId));
 
-		_collectionPersistenceFinderByParentPlid =
-			new CollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByParentPlid",
-					new String[] {
-						Long.class.getName(), Integer.class.getName(),
-						Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"parentPlid"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"findByParentPlid", new String[] {Long.class.getName()},
-					new String[] {"parentPlid"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByParentPlid", new String[] {Long.class.getName()},
-					new String[] {"parentPlid"}, false),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"layout.system = [$FALSE$]", "layout.system_ = [$FALSE$]", null,
-				new FinderColumn<>(
-					"layout.", "parentPlid", FinderColumn.Type.LONG, "=", true,
-					true, Layout::getParentPlid));
-
 		_collectionPersistenceFinderByIconImageId =
 			new CollectionPersistenceFinder<>(
 				this,
@@ -4225,41 +3869,16 @@ public class LayoutPersistenceImpl
 					"layout.", "iconImageId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getIconImageId));
 
-		_collectionPersistenceFinderByLayoutSetPrototypeLayoutERC =
-			new CollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
-					"findByLayoutSetPrototypeLayoutERC",
-					new String[] {
-						String.class.getName(), Integer.class.getName(),
-						Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"layoutSetPrototypeLayoutERC"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"findByLayoutSetPrototypeLayoutERC",
-					new String[] {String.class.getName()},
-					new String[] {"layoutSetPrototypeLayoutERC"}, 0, 1, true,
-					null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByLayoutSetPrototypeLayoutERC",
-					new String[] {String.class.getName()},
-					new String[] {"layoutSetPrototypeLayoutERC"}, 0, 1, false,
-					null),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"layout.system = [$FALSE$]", "layout.system_ = [$FALSE$]", null,
-				new FinderColumn<>(
-					"layout.", "layoutSetPrototypeLayoutERC",
-					FinderColumn.Type.STRING, "=", true, true,
-					Layout::getLayoutSetPrototypeLayoutERC));
-
 		_collectionPersistenceFinderByG_P =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Layout::getPlid,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P",
+					new String[] {
+						Long.class.getName(), Boolean.class.getName()
+					},
+					new String[] {"groupId", "privateLayout"}, false),
+				"", LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P",
 					new String[] {
@@ -4268,21 +3887,14 @@ public class LayoutPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "privateLayout"}, true),
+				_SQL_COUNT_LAYOUT_WHERE, _SQL_SELECT_LAYOUT_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_P",
 					new String[] {
 						Long.class.getName(), Boolean.class.getName()
 					},
 					new String[] {"groupId", "privateLayout"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName()
-					},
-					new String[] {"groupId", "privateLayout"}, false),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getGroupId),
@@ -4292,7 +3904,13 @@ public class LayoutPersistenceImpl
 
 		_collectionPersistenceFinderByG_T =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Layout::getPlid,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_T",
+					new String[] {Long.class.getName(), String.class.getName()},
+					new String[] {"groupId", "type_"}, 0, 2, false, null),
+				"layout.system_ = [$FALSE$]", LayoutModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_T",
 					new String[] {
@@ -4301,17 +3919,12 @@ public class LayoutPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "type_"}, true),
+				_SQL_COUNT_LAYOUT_WHERE, _SQL_SELECT_LAYOUT_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_T",
 					new String[] {Long.class.getName(), String.class.getName()},
 					new String[] {"groupId", "type_"}, 0, 2, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_T",
-					new String[] {Long.class.getName(), String.class.getName()},
-					new String[] {"groupId", "type_"}, 0, 2, false, null),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"layout.system = [$FALSE$]", "layout.system_ = [$FALSE$]", null,
+				"layout.system = [$FALSE$]",
 				new FinderColumn<>(
 					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getGroupId),
@@ -4321,7 +3934,14 @@ public class LayoutPersistenceImpl
 
 		_collectionPersistenceFinderByG_MLPTEERC =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Layout::getPlid,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
+					"countByG_MLPTEERC",
+					new String[] {Long.class.getName(), String.class.getName()},
+					new String[] {"groupId", "masterLPTEERC"}, 0, 2, false,
+					null),
+				"", LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_MLPTEERC",
 					new String[] {
@@ -4330,21 +3950,14 @@ public class LayoutPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "masterLPTEERC"}, true),
+				_SQL_COUNT_LAYOUT_WHERE, _SQL_SELECT_LAYOUT_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
 					"findByG_MLPTEERC",
 					new String[] {Long.class.getName(), String.class.getName()},
 					new String[] {"groupId", "masterLPTEERC"}, 0, 2, true,
 					null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByG_MLPTEERC",
-					new String[] {Long.class.getName(), String.class.getName()},
-					new String[] {"groupId", "masterLPTEERC"}, 0, 2, false,
-					null),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getGroupId),
@@ -4471,7 +4084,17 @@ public class LayoutPersistenceImpl
 
 		_collectionPersistenceFinderByG_P_P =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Layout::getPlid,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_P",
+					new String[] {
+						Long.class.getName(), Boolean.class.getName(),
+						Long.class.getName()
+					},
+					new String[] {"groupId", "privateLayout", "parentLayoutId"},
+					false),
+				"layout.system_ = [$FALSE$]", LayoutModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P_P",
 					new String[] {
@@ -4482,18 +4105,8 @@ public class LayoutPersistenceImpl
 					},
 					new String[] {"groupId", "privateLayout", "parentLayoutId"},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_P",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						Long.class.getName()
-					},
-					new String[] {"groupId", "privateLayout", "parentLayoutId"},
-					false),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"layout.system = [$FALSE$]", "layout.system_ = [$FALSE$]", null,
+				_SQL_COUNT_LAYOUT_WHERE, _SQL_SELECT_LAYOUT_WHERE, null, null,
+				"layout.system = [$FALSE$]",
 				new FinderColumn<>(
 					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getGroupId),
@@ -4506,7 +4119,17 @@ public class LayoutPersistenceImpl
 
 		_collectionPersistenceFinderByG_P_T =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Layout::getPlid,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_T",
+					new String[] {
+						Long.class.getName(), Boolean.class.getName(),
+						String.class.getName()
+					},
+					new String[] {"groupId", "privateLayout", "type_"}, 0, 4,
+					false, null),
+				"layout.system_ = [$FALSE$]", LayoutModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P_T",
 					new String[] {
@@ -4516,6 +4139,7 @@ public class LayoutPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "privateLayout", "type_"}, true),
+				_SQL_COUNT_LAYOUT_WHERE, _SQL_SELECT_LAYOUT_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_P_T",
 					new String[] {
@@ -4524,17 +4148,7 @@ public class LayoutPersistenceImpl
 					},
 					new String[] {"groupId", "privateLayout", "type_"}, 0, 4,
 					true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_T",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						String.class.getName()
-					},
-					new String[] {"groupId", "privateLayout", "type_"}, 0, 4,
-					false, null),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"layout.system = [$FALSE$]", "layout.system_ = [$FALSE$]", null,
+				"layout.system = [$FALSE$]",
 				new FinderColumn<>(
 					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getGroupId),
@@ -4547,7 +4161,16 @@ public class LayoutPersistenceImpl
 
 		_collectionPersistenceFinderByG_P_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Layout::getPlid,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P_S",
+					new String[] {
+						Long.class.getName(), Boolean.class.getName(),
+						Boolean.class.getName()
+					},
+					new String[] {"groupId", "privateLayout", "system_"},
+					false),
+				"", LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P_S",
 					new String[] {
@@ -4557,6 +4180,7 @@ public class LayoutPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "privateLayout", "system_"}, true),
+				_SQL_COUNT_LAYOUT_WHERE, _SQL_SELECT_LAYOUT_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_P_S",
 					new String[] {
@@ -4564,17 +4188,7 @@ public class LayoutPersistenceImpl
 						Boolean.class.getName()
 					},
 					new String[] {"groupId", "privateLayout", "system_"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_P_S",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						Boolean.class.getName()
-					},
-					new String[] {"groupId", "privateLayout", "system_"},
-					false),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getGroupId),
@@ -4607,63 +4221,18 @@ public class LayoutPersistenceImpl
 				"layout.", "friendlyURL", FinderColumn.Type.STRING, "=", true,
 				true, Layout::getFriendlyURL));
 
-		_collectionPersistenceFinderByG_P_LSPLE =
-			new FilterCollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P_LSPLE",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						String.class.getName(), Integer.class.getName(),
-						Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {
-						"groupId", "privateLayout",
-						"layoutSetPrototypeLayoutERC"
-					},
-					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"findByG_P_LSPLE",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						String.class.getName()
-					},
-					new String[] {
-						"groupId", "privateLayout",
-						"layoutSetPrototypeLayoutERC"
-					},
-					0, 4, true, null),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByG_P_LSPLE",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						String.class.getName()
-					},
-					new String[] {
-						"groupId", "privateLayout",
-						"layoutSetPrototypeLayoutERC"
-					},
-					0, 4, false, null),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
-				new FinderColumn<>(
-					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
-					true, Layout::getGroupId),
-				new FinderColumn<>(
-					"layout.", "privateLayout", FinderColumn.Type.BOOLEAN, "=",
-					true, true, Layout::isPrivateLayout),
-				new FinderColumn<>(
-					"layout.", "layoutSetPrototypeLayoutERC",
-					FinderColumn.Type.STRING, "=", true, true,
-					Layout::getLayoutSetPrototypeLayoutERC));
-
 		_collectionPersistenceFinderByG_P_ST =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Layout::getPlid,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_ST",
+					new String[] {
+						Long.class.getName(), Boolean.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "privateLayout", "status"}, false),
+				"layout.system_ = [$FALSE$]", LayoutModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P_ST",
 					new String[] {
@@ -4673,6 +4242,7 @@ public class LayoutPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "privateLayout", "status"}, true),
+				_SQL_COUNT_LAYOUT_WHERE, _SQL_SELECT_LAYOUT_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_P_ST",
 					new String[] {
@@ -4680,16 +4250,7 @@ public class LayoutPersistenceImpl
 						Integer.class.getName()
 					},
 					new String[] {"groupId", "privateLayout", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_ST",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "privateLayout", "status"}, false),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"layout.system = [$FALSE$]", "layout.system_ = [$FALSE$]", null,
+				"layout.system = [$FALSE$]",
 				new FinderColumn<>(
 					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getGroupId),
@@ -4702,7 +4263,19 @@ public class LayoutPersistenceImpl
 
 		_collectionPersistenceFinderByG_P_P_H =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Layout::getPlid,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_P_H",
+					new String[] {
+						Long.class.getName(), Boolean.class.getName(),
+						Long.class.getName(), Boolean.class.getName()
+					},
+					new String[] {
+						"groupId", "privateLayout", "parentLayoutId", "hidden_"
+					},
+					false),
+				"layout.system_ = [$FALSE$]", LayoutModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P_P_H",
 					new String[] {
@@ -4715,20 +4288,8 @@ public class LayoutPersistenceImpl
 						"groupId", "privateLayout", "parentLayoutId", "hidden_"
 					},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_P_H",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						Long.class.getName(), Boolean.class.getName()
-					},
-					new String[] {
-						"groupId", "privateLayout", "parentLayoutId", "hidden_"
-					},
-					false),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"layout.system = [$FALSE$]", "layout.system_ = [$FALSE$]", null,
+				_SQL_COUNT_LAYOUT_WHERE, _SQL_SELECT_LAYOUT_WHERE, null, null,
+				"layout.system = [$FALSE$]",
 				new FinderColumn<>(
 					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getGroupId),
@@ -4744,7 +4305,18 @@ public class LayoutPersistenceImpl
 
 		_collectionPersistenceFinderByG_P_P_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Layout::getPlid,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_P_S",
+					new String[] {
+						Long.class.getName(), Boolean.class.getName(),
+						Long.class.getName(), Boolean.class.getName()
+					},
+					new String[] {
+						"groupId", "privateLayout", "parentLayoutId", "system_"
+					},
+					false),
+				"", LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P_P_S",
 					new String[] {
@@ -4757,20 +4329,8 @@ public class LayoutPersistenceImpl
 						"groupId", "privateLayout", "parentLayoutId", "system_"
 					},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_P_S",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						Long.class.getName(), Boolean.class.getName()
-					},
-					new String[] {
-						"groupId", "privateLayout", "parentLayoutId", "system_"
-					},
-					false),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				_SQL_COUNT_LAYOUT_WHERE, _SQL_SELECT_LAYOUT_WHERE, null, null,
+				"",
 				new FinderColumn<>(
 					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getGroupId),
@@ -4786,7 +4346,19 @@ public class LayoutPersistenceImpl
 
 		_collectionPersistenceFinderByG_P_P_LteP =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, Layout::getPlid,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_P_LteP",
+					new String[] {
+						Long.class.getName(), Boolean.class.getName(),
+						Long.class.getName(), Integer.class.getName()
+					},
+					new String[] {
+						"groupId", "privateLayout", "parentLayoutId", "priority"
+					},
+					false),
+				"layout.system_ = [$FALSE$]", LayoutModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_P_P_LteP",
 					new String[] {
@@ -4799,20 +4371,8 @@ public class LayoutPersistenceImpl
 						"groupId", "privateLayout", "parentLayoutId", "priority"
 					},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_P_P_LteP",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName(),
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {
-						"groupId", "privateLayout", "parentLayoutId", "priority"
-					},
-					false),
-				_SQL_SELECT_LAYOUT_WHERE, _SQL_COUNT_LAYOUT_WHERE,
-				LayoutModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"layout.system = [$FALSE$]", "layout.system_ = [$FALSE$]", null,
+				_SQL_COUNT_LAYOUT_WHERE, _SQL_SELECT_LAYOUT_WHERE, null, null,
+				"layout.system = [$FALSE$]",
 				new FinderColumn<>(
 					"layout.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, Layout::getGroupId),
@@ -4878,4 +4438,4 @@ public class LayoutPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-244446925
+// LIFERAY-SERVICE-BUILDER-HASH:1737029783

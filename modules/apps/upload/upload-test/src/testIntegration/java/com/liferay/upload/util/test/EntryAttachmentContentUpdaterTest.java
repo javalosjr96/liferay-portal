@@ -28,6 +28,7 @@ import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
+import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.upload.AttachmentContentUpdater;
 
 import java.io.InputStream;
@@ -54,7 +55,9 @@ public class EntryAttachmentContentUpdaterTest {
 	@ClassRule
 	@Rule
 	public static final AggregateTestRule aggregateTestRule =
-		new LiferayIntegrationTestRule();
+		new AggregateTestRule(
+			new LiferayIntegrationTestRule(),
+			PermissionCheckerMethodTestRule.INSTANCE);
 
 	@Before
 	public void setUp() throws Exception {
@@ -226,9 +229,10 @@ public class EntryAttachmentContentUpdaterTest {
 		String fileEntryURL = PortletFileRepositoryUtil.getPortletFileEntryURL(
 			null, newFileEntry, StringPool.BLANK);
 
-		String expectedContent =
-			"<p>Sample Text</p><a href=\"www.liferay.com\"><img src=\"" +
-				fileEntryURL + "\" /></a>";
+		String expectedContent = StringBundler.concat(
+			"<p>Sample Text</p><a href=\"www.liferay.com\"><img ",
+			"data-fileentryid=\"", newFileEntry.getFileEntryId(), "\" src=\"",
+			fileEntryURL, "\" /></a>");
 
 		_assertEquals(_parseHtml(expectedContent), _parseHtml(content));
 	}

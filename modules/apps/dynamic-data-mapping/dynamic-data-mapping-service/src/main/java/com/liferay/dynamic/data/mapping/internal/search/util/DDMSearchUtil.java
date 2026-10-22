@@ -6,7 +6,6 @@
 package com.liferay.dynamic.data.mapping.internal.search.util;
 
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
-import com.liferay.dynamic.data.mapping.model.DDMStructureLayout;
 import com.liferay.dynamic.data.mapping.model.DDMTemplate;
 import com.liferay.dynamic.data.mapping.security.permission.DDMPermissionSupport;
 import com.liferay.petra.function.UnsafeFunction;
@@ -24,6 +23,7 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.OrderByComparator;
+import com.liferay.portal.kernel.util.StringUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -33,31 +33,6 @@ import java.util.Map;
  * @author Rafael Praxedes
  */
 public class DDMSearchUtil {
-
-	public static SearchContext buildStructureLayoutSearchContext(
-		long companyId, long[] groupIds, long classNameId, String name,
-		String description, String storageType, Integer type, int status,
-		int start, int end,
-		OrderByComparator<DDMStructureLayout> orderByComparator) {
-
-		SearchContext searchContext = new SearchContext();
-
-		searchContext.setAttribute(Field.CLASS_NAME_ID, classNameId);
-		searchContext.setAttribute(Field.CLASS_PK, null);
-		searchContext.setAttribute(Field.DESCRIPTION, description);
-		searchContext.setAttribute(Field.NAME, name);
-		searchContext.setCompanyId(companyId);
-		searchContext.setEnd(end);
-		searchContext.setGroupIds(groupIds);
-
-		if (orderByComparator != null) {
-			searchContext.setSorts(_getSortsFromComparator(orderByComparator));
-		}
-
-		searchContext.setStart(start);
-
-		return searchContext;
-	}
 
 	public static SearchContext buildStructureSearchContext(
 		DDMPermissionSupport ddmPermissionSupport, long companyId,
@@ -73,9 +48,19 @@ public class DDMSearchUtil {
 		searchContext.setAttribute(Field.DESCRIPTION, description);
 		searchContext.setAttribute(Field.NAME, name);
 		searchContext.setAttribute(Field.STATUS, status);
-		searchContext.setAttribute(
-			"resourcePermissionName",
-			ddmPermissionSupport.getStructureModelResourceName(classNameId));
+
+		try {
+			searchContext.setAttribute(
+				"resourcePermissionName",
+				ddmPermissionSupport.getStructureModelResourceName(
+					classNameId));
+		}
+		catch (PortalException portalException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(portalException);
+			}
+		}
+
 		searchContext.setAttribute("storageType", storageType);
 		searchContext.setAttribute("type", type);
 		searchContext.setCompanyId(companyId);
@@ -88,7 +73,9 @@ public class DDMSearchUtil {
 		}
 
 		if (orderByComparator != null) {
-			searchContext.setSorts(_getSortsFromComparator(orderByComparator));
+			searchContext.setSorts(
+				_getSortsFromComparator(
+					searchContext.getLanguageId(), orderByComparator));
 		}
 
 		return searchContext;
@@ -175,7 +162,9 @@ public class DDMSearchUtil {
 		}
 
 		if (orderByComparator != null) {
-			searchContext.setSorts(_getSortsFromComparator(orderByComparator));
+			searchContext.setSorts(
+				_getSortsFromComparator(
+					searchContext.getLanguageId(), orderByComparator));
 		}
 
 		return searchContext;
@@ -236,6 +225,7 @@ public class DDMSearchUtil {
 	}
 
 	private static Sort[] _getSortsFromComparator(
+		String languageId,
 		OrderByComparator<? extends BaseModel<?>> orderByComparator) {
 
 		return TransformUtil.transform(
@@ -243,6 +233,11 @@ public class DDMSearchUtil {
 			orderByFieldName -> {
 				String fieldName = _fieldNameOrderByCols.getOrDefault(
 					orderByFieldName, orderByFieldName);
+
+				if (StringUtil.equals(fieldName, Field.NAME)) {
+					fieldName = Field.getSortableFieldName(
+						Field.getLocalizedName(languageId, "localized_name"));
+				}
 
 				int sortType = _fieldNameSortTypes.getOrDefault(
 					fieldName, Sort.STRING_TYPE);

@@ -3,12 +3,13 @@ title: 'Alerts'
 description: 'Alerts are used to capture the attention of the user in an intrusive way.'
 lexiconDefinition: 'https://liferay.design/lexicon/core-components/alerts/'
 packageNpm: '@clayui/alert'
-packageUse: "import Alert from '@clayui/alert';"
+packageUse: "import Alert, {usePrefersPersistentAlerts} from '@clayui/alert';"
 packageTypes:
     [
-        'clay-alert/src/index.tsx',
+        'clay-alert/src/Alert.tsx',
         'clay-alert/src/Footer.tsx',
         'clay-alert/src/ToastContainer.tsx',
+        'clay-alert/src/usePrefersPersistentAlerts.ts',
     ]
 ---
 
@@ -247,3 +248,21 @@ export default function App() {
 	);
 }
 ```
+
+### Disable Auto Close
+
+When a `Provider` sets `persistentAlerts`, it overrides `autoClose` (`true` or a duration in ms) and alerts stay until they are dismissed. Use it to give users who need more time to read a way to keep alerts open, which helps meet WCAG 2.2.1 (Timing Adjustable). An alert shows a close button only when it has `onClose` and does not set `hideCloseIcon`. If an alert has no close button, such as one with `hideCloseIcon` or one without `onClose`, give users another way to dismiss it when `persistentAlerts` is on.
+
+Alerts also stay open while `document.body` has the `c-prefers-persistent-alerts` class, even when a `Provider` sets `persistentAlerts={false}`. The class can be added or removed at any time, so a page can opt in without wiring a `Provider`.
+
+```jsx
+<Provider persistentAlerts spritemap="/public/icons.svg">
+	<Alert autoClose={5000} onClose={() => {}} title="Hola:">
+		This alert stays until it is dismissed.
+	</Alert>
+</Provider>
+```
+
+### Persistent Alerts in Custom Components
+
+A custom component that closes on its own can follow the same setting with `usePrefersPersistentAlerts`. It returns `true` when a `Provider` sets `persistentAlerts` or `document.body` has the `c-prefers-persistent-alerts` class, and it updates when either one changes. While it returns `true`, do not start the auto close timer.

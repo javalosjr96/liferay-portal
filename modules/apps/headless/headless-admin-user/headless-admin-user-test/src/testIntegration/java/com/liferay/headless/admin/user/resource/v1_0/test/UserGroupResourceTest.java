@@ -15,6 +15,7 @@ import com.liferay.headless.admin.user.client.pagination.Page;
 import com.liferay.headless.admin.user.client.pagination.Pagination;
 import com.liferay.headless.admin.user.client.permission.Permission;
 import com.liferay.headless.admin.user.client.resource.v1_0.UserGroupResource;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -41,9 +42,13 @@ import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.vulcan.permission.PermissionUtil;
 
@@ -179,6 +184,14 @@ public class UserGroupResourceTest extends BaseUserGroupResourceTestCase {
 		super.testGraphQLDeleteUserGroupUsers();
 	}
 
+	@Override
+	@Test
+	public void testPatchUserGroup() throws Exception {
+		super.testPatchUserGroup();
+
+		_testPatchUserGroupWithRoleBriefs();
+	}
+
 	@LazyReferencing
 	@Override
 	@Test
@@ -187,6 +200,7 @@ public class UserGroupResourceTest extends BaseUserGroupResourceTestCase {
 
 		_testPostUserGroupBatch();
 		_testPostUserGroupBatchWithCreator();
+		_testPostUserGroupBatchWithRoleBriefs();
 	}
 
 	@Override
@@ -355,12 +369,144 @@ public class UserGroupResourceTest extends BaseUserGroupResourceTestCase {
 		return _postUserGroup();
 	}
 
+	private void _addRoleUsers(
+			String name, long primKey, User user, String... actionIds)
+		throws Exception {
+
+		Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			TestPropsValues.getCompanyId(), name,
+			ResourceConstants.SCOPE_INDIVIDUAL, String.valueOf(primKey),
+			role.getRoleId(), actionIds);
+
+		_userLocalService.addRoleUsers(
+			role.getRoleId(), new long[] {user.getUserId()});
+	}
+
+	private void _patchUserGroupBatch(
+			String expectedExecuteStatus, Role role, User user,
+			long userGroupId)
+		throws Exception {
+
+		UserGroup userGroup = new UserGroup() {
+			{
+				id = userGroupId;
+				roleBriefs = new RoleBrief[] {
+					new RoleBrief() {
+						{
+							externalReferenceCode =
+								role.getExternalReferenceCode();
+							name = role.getName();
+							roleType = role.getType();
+						}
+					}
+				};
+			}
+		};
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_CLASS_NAME_BATCH_ENGINE_IMPORT_TASK_EXECUTOR_IMPL,
+				LoggerTestUtil.ERROR)) {
+
+			HTTPTestUtil.customize(
+			).withCredentials(
+				user.getEmailAddress(), _PASSWORD
+			).apply(
+				() -> waitForFinish(
+					expectedExecuteStatus,
+					HTTPTestUtil.invokeToJSONObject(
+						JSONUtil.put(
+							_jsonFactory.createJSONObject(userGroup.toString())
+						).toString(),
+						"headless-admin-user/v1.0/user-groups/batch?" +
+							"updateStrategy=PARTIAL_UPDATE",
+						Http.Method.PUT))
+			);
+
+			List<LogEntry> logEntries = logCapture.getLogEntries();
+
+			if (Objects.equals(expectedExecuteStatus, "COMPLETED")) {
+				Assert.assertTrue(logEntries.isEmpty());
+
+				return;
+			}
+
+			LogEntry logEntry = logEntries.get(0);
+
+			Assert.assertEquals(
+				StringBundler.concat(
+					"User ", user.getUserId(), " must have ",
+					ActionKeys.ASSIGN_MEMBERS, " permission for ",
+					Role.class.getName(), " ", role.getRoleId()),
+				logEntry.getMessage());
+		}
+	}
+
 	private UserGroup _postUserGroup() throws Exception {
 		return _postUserGroup(randomUserGroup());
 	}
 
 	private UserGroup _postUserGroup(UserGroup userGroup) throws Exception {
 		return userGroupResource.postUserGroup(userGroup);
+	}
+
+	private String _postUserGroupBatch(
+			String expectedExecuteStatus, Role role, User user)
+		throws Exception {
+
+		UserGroup userGroup = randomUserGroup();
+
+		userGroup.setRoleBriefs(
+			new RoleBrief[] {
+				new RoleBrief() {
+					{
+						externalReferenceCode = role.getExternalReferenceCode();
+						name = role.getName();
+						roleType = role.getType();
+					}
+				}
+			});
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_CLASS_NAME_BATCH_ENGINE_IMPORT_TASK_EXECUTOR_IMPL,
+				LoggerTestUtil.ERROR)) {
+
+			HTTPTestUtil.customize(
+			).withCredentials(
+				user.getEmailAddress(), _PASSWORD
+			).apply(
+				() -> waitForFinish(
+					expectedExecuteStatus,
+					HTTPTestUtil.invokeToJSONObject(
+						JSONUtil.put(
+							"items",
+							JSONUtil.put(
+								_jsonFactory.createJSONObject(
+									userGroup.toString()))
+						).toString(),
+						"headless-admin-user/v1.0/user-groups/batch",
+						Http.Method.POST))
+			);
+
+			List<LogEntry> logEntries = logCapture.getLogEntries();
+
+			if (Objects.equals(expectedExecuteStatus, "COMPLETED")) {
+				Assert.assertTrue(logEntries.isEmpty());
+			}
+			else {
+				LogEntry logEntry = logEntries.get(0);
+
+				Assert.assertEquals(
+					StringBundler.concat(
+						"User ", user.getUserId(), " must have ",
+						ActionKeys.ASSIGN_MEMBERS, " permission for ",
+						Role.class.getName(), " ", role.getRoleId()),
+					logEntry.getMessage());
+			}
+		}
+
+		return userGroup.getExternalReferenceCode();
 	}
 
 	private void _testGetUserGroupWithNestedFields() throws Exception {
@@ -544,6 +690,57 @@ public class UserGroupResourceTest extends BaseUserGroupResourceTestCase {
 		assertContains(userGroup2, (List<UserGroup>)page.getItems());
 	}
 
+	private void _testPatchUserGroupWithRoleBriefs() throws Exception {
+		Role role1 = _roleLocalService.getRole(
+			TestPropsValues.getCompanyId(), RoleConstants.ADMINISTRATOR);
+
+		com.liferay.portal.kernel.model.UserGroup serviceBuilderUserGroup =
+			_userGroupLocalService.addUserGroup(
+				StringPool.BLANK, TestPropsValues.getUserId(),
+				TestPropsValues.getCompanyId(), RandomTestUtil.randomString(),
+				RandomTestUtil.randomString(),
+				ServiceContextTestUtil.getServiceContext());
+		User user = UserTestUtil.addUser();
+
+		_addRoleUsers(
+			com.liferay.portal.kernel.model.UserGroup.class.getName(),
+			serviceBuilderUserGroup.getUserGroupId(), user, ActionKeys.UPDATE,
+			ActionKeys.VIEW);
+
+		_userLocalService.updatePassword(
+			user.getUserId(), _PASSWORD, _PASSWORD, false, true);
+
+		_patchUserGroupBatch(
+			"FAILED", role1, user, serviceBuilderUserGroup.getUserGroupId());
+
+		Assert.assertFalse(
+			_roleLocalService.hasGroupRole(
+				serviceBuilderUserGroup.getGroupId(), role1.getRoleId()));
+
+		Role role2 = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		_addRoleUsers(
+			Role.class.getName(), role2.getRoleId(), user, ActionKeys.VIEW);
+
+		_patchUserGroupBatch(
+			"FAILED", role2, user, serviceBuilderUserGroup.getUserGroupId());
+
+		Assert.assertFalse(
+			_roleLocalService.hasGroupRole(
+				serviceBuilderUserGroup.getGroupId(), role2.getRoleId()));
+
+		_addRoleUsers(
+			Role.class.getName(), role2.getRoleId(), user,
+			ActionKeys.ASSIGN_MEMBERS, ActionKeys.VIEW);
+
+		_patchUserGroupBatch(
+			"COMPLETED", role2, user, serviceBuilderUserGroup.getUserGroupId());
+
+		Assert.assertTrue(
+			_roleLocalService.hasGroupRole(
+				serviceBuilderUserGroup.getGroupId(), role2.getRoleId()));
+	}
+
 	private void _testPostUserGroupBatch() throws Exception {
 		UserGroup userGroup = randomUserGroup();
 
@@ -713,6 +910,65 @@ public class UserGroupResourceTest extends BaseUserGroupResourceTestCase {
 		Assert.assertEquals(
 			TestPropsValues.getUserId(), serviceBuilderUserGroup.getUserId());
 	}
+
+	private void _testPostUserGroupBatchWithRoleBriefs() throws Exception {
+		Role role1 = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		RoleTestUtil.addResourcePermission(
+			role1, PortletKeys.PORTAL, ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(TestPropsValues.getCompanyId()),
+			ActionKeys.ADD_USER_GROUP);
+
+		User user = UserTestUtil.addUser();
+
+		_userLocalService.updatePassword(
+			user.getUserId(), _PASSWORD, _PASSWORD, false, true);
+
+		_userLocalService.addRoleUsers(
+			role1.getRoleId(), new long[] {user.getUserId()});
+
+		Role role2 = _roleLocalService.getRole(
+			TestPropsValues.getCompanyId(), RoleConstants.ADMINISTRATOR);
+
+		String externalReferenceCode = _postUserGroupBatch(
+			"FAILED", role2, user);
+
+		Assert.assertNull(
+			_userGroupLocalService.fetchUserGroupByExternalReferenceCode(
+				externalReferenceCode, TestPropsValues.getCompanyId()));
+
+		Role role3 = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		_addRoleUsers(
+			Role.class.getName(), role3.getRoleId(), user, ActionKeys.VIEW);
+
+		externalReferenceCode = _postUserGroupBatch("FAILED", role3, user);
+
+		Assert.assertNull(
+			_userGroupLocalService.fetchUserGroupByExternalReferenceCode(
+				externalReferenceCode, TestPropsValues.getCompanyId()));
+
+		_addRoleUsers(
+			Role.class.getName(), role3.getRoleId(), user,
+			ActionKeys.ASSIGN_MEMBERS, ActionKeys.VIEW);
+
+		externalReferenceCode = _postUserGroupBatch("COMPLETED", role3, user);
+
+		com.liferay.portal.kernel.model.UserGroup serviceBuilderUserGroup =
+			_userGroupLocalService.fetchUserGroupByExternalReferenceCode(
+				externalReferenceCode, TestPropsValues.getCompanyId());
+
+		Assert.assertTrue(
+			_roleLocalService.hasGroupRole(
+				serviceBuilderUserGroup.getGroupId(), role3.getRoleId()));
+	}
+
+	private static final String
+		_CLASS_NAME_BATCH_ENGINE_IMPORT_TASK_EXECUTOR_IMPL =
+			"com.liferay.batch.engine.internal." +
+				"BatchEngineImportTaskExecutorImpl";
+
+	private static final String _PASSWORD = RandomTestUtil.randomString();
 
 	@Inject
 	private JSONFactory _jsonFactory;

@@ -108,24 +108,24 @@ public class LinkEditableElementParser extends BaseEditableElementParser {
 		if (StringUtil.equalsIgnoreCase(target, "_parent") ||
 			StringUtil.equalsIgnoreCase(target, "_top")) {
 
-			configJSONObject.put("target", "_self");
+			target = "_self";
 		}
 
-		String targetValue = configJSONObject.getString("target");
-
-		if (Validator.isNotNull(targetValue)) {
-			element.attr("target", targetValue);
+		if (Validator.isNotNull(target)) {
+			element.attr("target", target);
 		}
 
 		String buttonType = configJSONObject.getString("buttonType");
 
 		if (!buttonType.isEmpty()) {
 			for (String className : replaceableElement.classNames()) {
-				if (className.startsWith("btn-") ||
-					Objects.equals(className, "btn")) {
+				if (!className.startsWith("btn-") &&
+					!Objects.equals(className, "btn")) {
 
-					replaceableElement.removeClass(className);
+					continue;
 				}
+
+				replaceableElement.removeClass(className);
 			}
 
 			if (Objects.equals(buttonType, "link")) {

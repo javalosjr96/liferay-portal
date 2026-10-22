@@ -13,8 +13,10 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.Theme;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
@@ -24,6 +26,7 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.theme.ThemeUtil;
 import com.liferay.portal.kernel.util.Constants;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
@@ -78,6 +81,12 @@ public class LayoutPreviewRendererImpl implements LayoutPreviewRenderer {
 
 		themeDisplay.setLayout(layout);
 		themeDisplay.setLayoutSet(layout.getLayoutSet());
+		themeDisplay.setLayouts(
+			ListUtil.filter(
+				_layoutLocalService.getLayouts(
+					layout.getGroupId(), layout.isPrivateLayout(),
+					LayoutConstants.DEFAULT_PARENT_LAYOUT_ID),
+				curLayout -> !curLayout.isHidden() && curLayout.isPublished()));
 
 		themeDisplay.setPlid(layout.getPlid());
 		themeDisplay.setScopeGroupId(layout.getGroupId());
@@ -89,6 +98,7 @@ public class LayoutPreviewRendererImpl implements LayoutPreviewRenderer {
 		LayoutStructure originalLayoutStructure =
 			(LayoutStructure)httpServletRequest.getAttribute(
 				LayoutWebKeys.LAYOUT_STRUCTURE);
+		Object originalLocale = httpServletRequest.getAttribute(WebKeys.LOCALE);
 		Object originalOutputData = httpServletRequest.getAttribute(
 			WebKeys.OUTPUT_DATA);
 		boolean originalPortletDecorate = GetterUtil.getBoolean(
@@ -113,6 +123,7 @@ public class LayoutPreviewRendererImpl implements LayoutPreviewRenderer {
 			httpServletRequest.setAttribute(
 				SegmentsWebKeys.SEGMENTS_EXPERIENCE_IDS,
 				new long[] {segmentsExperienceId});
+			httpServletRequest.setAttribute(WebKeys.LOCALE, locale);
 			httpServletRequest.setAttribute(WebKeys.OUTPUT_DATA, null);
 			httpServletRequest.setAttribute(
 				WebKeys.PORTLET_DECORATE, Boolean.FALSE);
@@ -184,6 +195,7 @@ public class LayoutPreviewRendererImpl implements LayoutPreviewRenderer {
 				SegmentsWebKeys.SEGMENTS_EXPERIENCE_IDS,
 				originalSegmentsExperienceIds);
 			httpServletRequest.setAttribute(WebKeys.LAYOUT, originalLayout);
+			httpServletRequest.setAttribute(WebKeys.LOCALE, originalLocale);
 			httpServletRequest.setAttribute(
 				WebKeys.OUTPUT_DATA, originalOutputData);
 			httpServletRequest.setAttribute(
@@ -201,6 +213,9 @@ public class LayoutPreviewRendererImpl implements LayoutPreviewRenderer {
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		LayoutPreviewRendererImpl.class);
+
+	@Reference
+	private LayoutLocalService _layoutLocalService;
 
 	@Reference
 	private LayoutServiceContextHelper _layoutServiceContextHelper;

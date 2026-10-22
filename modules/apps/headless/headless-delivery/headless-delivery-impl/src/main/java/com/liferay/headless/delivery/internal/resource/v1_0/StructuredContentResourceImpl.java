@@ -465,18 +465,14 @@ public class StructuredContentResourceImpl
 
 		DDMStructure ddmStructure = journalArticle.getDDMStructure();
 
-		try (AutoCloseable autoCloseable =
-				_layoutServiceContextHelper.getServiceContextAutoCloseable(
-					contextCompany, contextUser)) {
-
-			return DisplayPageRendererUtil.toHTML(
-				JournalArticle.class.getName(), ddmStructure.getStructureId(),
-				displayPageKey, journalArticle.getGroupId(),
-				contextHttpServletRequest, contextHttpServletResponse,
-				journalArticle, _infoItemServiceRegistry,
-				_layoutDisplayPageProviderRegistry, _layoutService,
-				_layoutPageTemplateEntryService);
-		}
+		return DisplayPageRendererUtil.toHTML(
+			JournalArticle.class.getName(), ddmStructure.getStructureId(),
+			displayPageKey, journalArticle.getGroupId(),
+			contextHttpServletResponse, journalArticle,
+			contextAcceptLanguage.getPreferredLocale(), contextUser,
+			_infoItemServiceRegistry, _layoutDisplayPageProviderRegistry,
+			_layoutService, _layoutPageTemplateEntryService,
+			_layoutServiceContextHelper);
 	}
 
 	@Override
@@ -921,9 +917,11 @@ public class StructuredContentResourceImpl
 				_assetTypeTypeToClassNames.get(relatedContent.getContentType()),
 				relatedContent.getId());
 
-			if (assetEntry != null) {
-				assetLinkEntryIds.add(assetEntry.getEntryId());
+			if (assetEntry == null) {
+				continue;
 			}
+
+			assetLinkEntryIds.add(assetEntry.getEntryId());
 		}
 
 		return ArrayUtil.toLongArray(assetLinkEntryIds);
@@ -1285,10 +1283,12 @@ public class StructuredContentResourceImpl
 							contextAcceptLanguage.getPreferredLocale())));
 			}
 
-			if (ListUtil.isNotEmpty(fieldValues)) {
-				field.setValues(
-					contextAcceptLanguage.getPreferredLocale(), fieldValues);
+			if (ListUtil.isEmpty(fieldValues)) {
+				continue;
 			}
+
+			field.setValues(
+				contextAcceptLanguage.getPreferredLocale(), fieldValues);
 		}
 
 		_ddmFormValuesValidator.validate(

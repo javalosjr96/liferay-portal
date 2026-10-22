@@ -10,8 +10,8 @@ import com.liferay.client.extension.model.ClientExtensionEntryRel;
 import com.liferay.client.extension.service.ClientExtensionEntryRelLocalService;
 import com.liferay.client.extension.type.CET;
 import com.liferay.client.extension.type.manager.CETManager;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
-import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.exportimport.kernel.staging.Staging;
 import com.liferay.headless.delivery.dto.v1_0.ClientExtension;
 import com.liferay.headless.delivery.dto.v1_0.MasterPage;
@@ -426,10 +426,12 @@ public class PageDefinitionDTOConverter
 
 							String key = entry.getKey();
 
-							if (key.startsWith("lfr-theme:")) {
-								themeSettingsUnicodeProperties.setProperty(
-									key, entry.getValue());
+							if (!key.startsWith("lfr-theme:")) {
+								continue;
 							}
+
+							themeSettingsUnicodeProperties.setProperty(
+								key, entry.getValue());
 						}
 
 						if (themeSettingsUnicodeProperties.isEmpty()) {

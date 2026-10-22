@@ -14,9 +14,6 @@ import com.liferay.exportimport.kernel.lar.StagedModelDataHandlerUtil;
 import com.liferay.exportimport.report.constants.ExportImportReportEntryConstants;
 import com.liferay.exportimport.report.service.ExportImportReportEntryLocalService;
 import com.liferay.exportimport.staged.model.repository.StagedModelRepository;
-import com.liferay.frontend.token.definition.FrontendTokenDefinition;
-import com.liferay.frontend.token.definition.FrontendTokenDefinitionRegistry;
-import com.liferay.frontend.token.definition.util.FrontendTokenDefinitionUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONFactory;
@@ -32,9 +29,11 @@ import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.style.book.model.StyleBookEntry;
 import com.liferay.style.book.service.StyleBookEntryLocalService;
+import com.liferay.style.book.util.StyleBookUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,6 +45,7 @@ import org.osgi.service.component.annotations.Reference;
 
 /**
  * @author Pavel Savinov
+ * @author Thiago Buarque
  */
 @Component(service = StagedModelDataHandler.class)
 public class StylebookEntryStagedModelDataHandler
@@ -143,8 +143,46 @@ public class StylebookEntryStagedModelDataHandler
 			_stagedModelRepository.fetchStagedModelByUuidAndGroupId(
 				styleBookEntry.getUuid(), portletDataContext.getScopeGroupId());
 
-		if ((existingStyleBookEntry == null) ||
-			!portletDataContext.isDataStrategyMirror()) {
+		StyleBookEntry ercStyleBookEntry = null;
+
+		String externalReferenceCode =
+			importedStyleBookEntry.getExternalReferenceCode();
+
+		if (Validator.isNotNull(externalReferenceCode)) {
+			ercStyleBookEntry =
+				_styleBookEntryLocalService.
+					fetchStyleBookEntryByExternalReferenceCode(
+						externalReferenceCode,
+						portletDataContext.getScopeGroupId());
+		}
+
+		if ((existingStyleBookEntry == null) && (ercStyleBookEntry != null) &&
+			(ercStyleBookEntry.getStatus() == WorkflowConstants.STATUS_EMPTY)) {
+
+			existingStyleBookEntry = ercStyleBookEntry;
+		}
+
+		boolean emptyStyleBookEntry = false;
+
+		if ((existingStyleBookEntry != null) &&
+			(existingStyleBookEntry.getStatus() ==
+				WorkflowConstants.STATUS_EMPTY)) {
+
+			emptyStyleBookEntry = true;
+		}
+
+		boolean addStyleBookEntry = false;
+
+		if (!emptyStyleBookEntry &&
+			((existingStyleBookEntry == null) ||
+			 !portletDataContext.isDataStrategyMirror())) {
+
+			addStyleBookEntry = true;
+		}
+
+		if (addStyleBookEntry ||
+			(emptyStyleBookEntry &&
+			 !Objects.equals(originalName, existingStyleBookEntry.getName()))) {
 
 			String uniqueName =
 				_styleBookEntryLocalService.generateStyleBookEntryName(
@@ -154,21 +192,25 @@ public class StylebookEntryStagedModelDataHandler
 				importedStyleBookEntry.setName(uniqueName);
 				importedStyleBookEntry.setStyleBookEntryKey(StringPool.BLANK);
 			}
+		}
 
-			String externalReferenceCode =
-				importedStyleBookEntry.getExternalReferenceCode();
+		long previewFileEntryId = 0;
 
-			if (Validator.isNotNull(externalReferenceCode)) {
-				StyleBookEntry ercStyleBookEntry =
-					_styleBookEntryLocalService.
-						fetchStyleBookEntryByExternalReferenceCode(
-							externalReferenceCode,
-							portletDataContext.getScopeGroupId());
+		if (styleBookEntry.getPreviewFileEntryId() > 0) {
+			Map<Long, Long> fileEntryIds =
+				(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
+					FileEntry.class);
 
-				if (ercStyleBookEntry != null) {
-					importedStyleBookEntry.setExternalReferenceCode(
-						StringPool.BLANK);
-				}
+			previewFileEntryId = MapUtil.getLong(
+				fileEntryIds, styleBookEntry.getPreviewFileEntryId(), 0);
+		}
+
+		importedStyleBookEntry.setPreviewFileEntryId(previewFileEntryId);
+
+		if (addStyleBookEntry) {
+			if (ercStyleBookEntry != null) {
+				importedStyleBookEntry.setExternalReferenceCode(
+					StringPool.BLANK);
 			}
 
 			importedStyleBookEntry = _stagedModelRepository.addStagedModel(
@@ -184,15 +226,9 @@ public class StylebookEntryStagedModelDataHandler
 				portletDataContext, importedStyleBookEntry);
 		}
 
-		if (styleBookEntry.getPreviewFileEntryId() > 0) {
-			Map<Long, Long> fileEntryIds =
-				(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
-					FileEntry.class);
-
-			long previewFileEntryId = MapUtil.getLong(
-				fileEntryIds, styleBookEntry.getPreviewFileEntryId(), 0);
-
-			importedStyleBookEntry.setPreviewFileEntryId(previewFileEntryId);
+		if ((previewFileEntryId > 0) &&
+			(importedStyleBookEntry.getPreviewFileEntryId() !=
+				previewFileEntryId)) {
 
 			importedStyleBookEntry =
 				_styleBookEntryLocalService.updatePreviewFileEntryId(
@@ -211,28 +247,6 @@ public class StylebookEntryStagedModelDataHandler
 	@Override
 	protected StagedModelRepository<StyleBookEntry> getStagedModelRepository() {
 		return _stagedModelRepository;
-	}
-
-	private List<String> _getFrontendTokenNames(
-		PortletDataContext portletDataContext, StyleBookEntry styleBookEntry) {
-
-		FrontendTokenDefinition themeFrontendTokenDefinition =
-			_frontendTokenDefinitionRegistry.getFrontendTokenDefinition(
-				portletDataContext.getCompanyId(), styleBookEntry.getThemeId());
-
-		JSONObject overrideFrontendTokenDefinitionJSONObject =
-			FrontendTokenDefinitionUtil.parseFrontendTokenDefinitionJSONObject(
-				styleBookEntry.getFrontendTokenDefinition());
-
-		if (themeFrontendTokenDefinition == null) {
-			return FrontendTokenDefinitionUtil.getFrontendTokenNames(
-				overrideFrontendTokenDefinitionJSONObject);
-		}
-
-		return FrontendTokenDefinitionUtil.getFrontendTokenNames(
-			FrontendTokenDefinitionUtil.mergeFrontendTokenDefinitionJSONObject(
-				themeFrontendTokenDefinition.getJSONObject(LocaleUtil.US),
-				overrideFrontendTokenDefinitionJSONObject));
 	}
 
 	private boolean _hasMissingTokens(
@@ -290,8 +304,8 @@ public class StylebookEntryStagedModelDataHandler
 			warningMessages.add(themeWarningMessage);
 		}
 		else if (_hasMissingTokens(
-					_getFrontendTokenNames(
-						portletDataContext, importedStyleBookEntry),
+					StyleBookUtil.getFrontendTokensValuesKeys(
+						LocaleUtil.US, importedStyleBookEntry),
 					importedStyleBookEntry.getFrontendTokensValues())) {
 
 			warningMessages.add(
@@ -323,9 +337,6 @@ public class StylebookEntryStagedModelDataHandler
 	@Reference
 	private ExportImportReportEntryLocalService
 		_exportImportReportEntryLocalService;
-
-	@Reference
-	private FrontendTokenDefinitionRegistry _frontendTokenDefinitionRegistry;
 
 	@Reference
 	private JSONFactory _jsonFactory;

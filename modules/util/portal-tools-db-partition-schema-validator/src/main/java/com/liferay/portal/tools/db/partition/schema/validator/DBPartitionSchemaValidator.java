@@ -34,11 +34,13 @@ public class DBPartitionSchemaValidator {
 		Options options = _getOptions();
 
 		if ((args.length != 0) && args[0].equals("--help")) {
-			new HelpFormatter(
-			).printHelp(
+			HelpFormatter helpFormatter = new HelpFormatter();
+
+			helpFormatter.setSyntaxPrefix("Usage: ");
+
+			helpFormatter.printHelp(
 				"Liferay Portal Tools Database Partition Schema Validator",
-				options
-			);
+				options);
 
 			return;
 		}
@@ -269,22 +271,24 @@ public class DBPartitionSchemaValidator {
 					continue;
 				}
 
-				if (_hasColumn(partitionName, tableName, "companyId")) {
-					int count = _getInvalidRecordsCount(
-						companyId, partitionName, tableName, defaultPartition);
+				if (!_hasColumn(partitionName, tableName, "companyId")) {
+					continue;
+				}
 
-					if (count > 0) {
-						System.out.println(
-							"Table " + tableName + " contains " + count +
-								" records with an invalid company ID");
+				int count = _getInvalidRecordsCount(
+					companyId, partitionName, tableName, defaultPartition);
 
-						validPartition = false;
-					}
-					else if (_debug) {
-						System.out.println(
-							"Table " + tableName + " does not contain " +
-								"invalid records");
-					}
+				if (count > 0) {
+					System.out.println(
+						"Table " + tableName + " contains " + count +
+							" records with an invalid company ID");
+
+					validPartition = false;
+				}
+				else if (_debug) {
+					System.out.println(
+						"Table " + tableName + " does not contain invalid " +
+							"records");
 				}
 			}
 

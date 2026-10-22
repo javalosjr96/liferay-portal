@@ -203,6 +203,9 @@ public interface WebKeys {
 
 	public static final String GROUP_FRIENDLY_URL = "GROUP_FRIENDLY_URL";
 
+	public static final String HTTP_SERVLET_REQUEST_PORTAL_PREFERENCES =
+		"LIFERAY_SHARED_HTTP_SERVLET_REQUEST_PORTAL_PREFERENCES";
+
 	public static final String HTTPS_INITIAL = "HTTPS_INITIAL";
 
 	public static final String I18N_ERROR_PATH = "I18N_ERROR_PATH";

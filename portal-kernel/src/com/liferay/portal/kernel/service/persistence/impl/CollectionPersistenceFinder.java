@@ -7,6 +7,7 @@ package com.liferay.portal.kernel.service.persistence.impl;
 
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.dao.orm.CountFinderPathRegistry;
 import com.liferay.portal.kernel.dao.orm.FinderCache;
 import com.liferay.portal.kernel.dao.orm.FinderPath;
 import com.liferay.portal.kernel.dao.orm.Query;
@@ -52,12 +53,18 @@ public class CollectionPersistenceFinder
 		_orderByEntityAlias = orderByEntityAlias;
 		_uniquePersistenceFinder = uniquePersistenceFinder;
 
+		if (countFinderPath.isCountResult()) {
+			CountFinderPathRegistry.register(countFinderPath);
+		}
+
 		List<Integer> arrayableIndexes = new ArrayList<>();
 
 		for (int i = 0; i < finderColumns.length; i++) {
-			if (finderColumns[i] instanceof ArrayableFinderColumn) {
-				arrayableIndexes.add(i);
+			if (!(finderColumns[i] instanceof ArrayableFinderColumn)) {
+				continue;
 			}
+
+			arrayableIndexes.add(i);
 		}
 
 		if (arrayableIndexes.isEmpty()) {
@@ -66,6 +73,8 @@ public class CollectionPersistenceFinder
 		else {
 			_arrayableIndexes = ArrayUtil.toIntArray(arrayableIndexes);
 		}
+
+		_equalityCountFinderPath = _createEqualityCountFinderPath();
 	}
 
 	public int count(FinderCache finderCache, Object[] values) {
@@ -80,10 +89,18 @@ public class CollectionPersistenceFinder
 
 			normalizeValues(values);
 
+			FinderPath countFinderPath = _countFinderPath;
+
+			if ((_equalityCountFinderPath != null) &&
+				_isAllArrayableLengthOne(values)) {
+
+				countFinderPath = _equalityCountFinderPath;
+			}
+
 			Object[] finderArgs = buildFinderArgs(values);
 
 			Long count = (Long)finderCache.getResult(
-				_countFinderPath, finderArgs, basePersistenceImpl);
+				countFinderPath, finderArgs, basePersistenceImpl);
 
 			if (count == null) {
 				List<Object[]> valuesList = _paginate(
@@ -96,7 +113,7 @@ public class CollectionPersistenceFinder
 					count = _countChunked(valuesList);
 				}
 
-				finderCache.putResult(_countFinderPath, finderArgs, count);
+				finderCache.putResult(countFinderPath, finderArgs, count);
 			}
 
 			return count.intValue();
@@ -226,44 +243,19 @@ public class CollectionPersistenceFinder
 	private String _buildFindSql(
 		Object[] values, OrderByComparator<T> orderByComparator) {
 
-		StringBundler sb = null;
+		String sqlWhere = buildSQLWhere(sqlSelectWhere, values, false);
 
 		if (orderByComparator == null) {
-			sb = new StringBundler((finderColumns.length * 2) + 3);
-		}
-		else {
-			sb = new StringBundler(
-				(finderColumns.length * 2) + 3 +
-					(orderByComparator.getOrderByFields().length * 2));
+			return sqlWhere + _defaultOrderByJpql;
 		}
 
-		sb.append(sqlSelectWhere);
+		StringBundler sb = new StringBundler(
+			(orderByComparator.getOrderByFields().length * 2) + 2);
 
-		for (int i = 0; i < finderColumns.length; i++) {
-			String fragment = finderColumns[i].getSqlFragment(values[i], false);
+		sb.append(sqlWhere);
 
-			if (fragment.isEmpty()) {
-				continue;
-			}
-
-			sb.append(fragment);
-			sb.append(" AND ");
-		}
-
-		if (!where.isEmpty()) {
-			sb.append(where);
-		}
-		else if (sb.index() > 1) {
-			sb.setIndex(sb.index() - 1);
-		}
-
-		if (orderByComparator == null) {
-			sb.append(_defaultOrderByJpql);
-		}
-		else {
-			basePersistenceImpl.appendOrderByComparator(
-				sb, _orderByEntityAlias, orderByComparator);
-		}
+		basePersistenceImpl.appendOrderByComparator(
+			sb, _orderByEntityAlias, orderByComparator);
 
 		return sb.toString();
 	}
@@ -295,6 +287,21 @@ public class CollectionPersistenceFinder
 		return total;
 	}
 
+	private FinderPath _createEqualityCountFinderPath() {
+		if ((_arrayableIndexes == null) || (_unpaginatedFindPath == null) ||
+			(_uniquePersistenceFinder != null)) {
+
+			return null;
+		}
+
+		FinderPath equalityCountFinderPath =
+			_countFinderPath.createEqualityCountFinderPath();
+
+		CountFinderPathRegistry.register(equalityCountFinderPath);
+
+		return equalityCountFinderPath;
+	}
+
 	private List<T> _findChunked(
 		List<Object[]> valuesList, int start, int end,
 		OrderByComparator<T> orderByComparator) {
@@ -318,6 +325,20 @@ public class CollectionPersistenceFinder
 
 		return Collections.unmodifiableList(
 			ListUtil.subList(result, start, end));
+	}
+
+	private boolean _isAllArrayableLengthOne(Object[] values) {
+		if (_arrayableIndexes == null) {
+			return false;
+		}
+
+		for (int index : _arrayableIndexes) {
+			if (Array.getLength(values[index]) != 1) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	private boolean _isMultiElementArrayable(Object[] values) {
@@ -436,14 +457,8 @@ public class CollectionPersistenceFinder
 	}
 
 	private boolean _unwrapIfAllArrayableLengthOne(Object[] values) {
-		if (_arrayableIndexes == null) {
+		if (!_isAllArrayableLengthOne(values)) {
 			return false;
-		}
-
-		for (int index : _arrayableIndexes) {
-			if (Array.getLength(values[index]) != 1) {
-				return false;
-			}
 		}
 
 		for (int index : _arrayableIndexes) {
@@ -456,6 +471,7 @@ public class CollectionPersistenceFinder
 	private final int[] _arrayableIndexes;
 	private final FinderPath _countFinderPath;
 	private final String _defaultOrderByJpql;
+	private final FinderPath _equalityCountFinderPath;
 	private final String _orderByEntityAlias;
 	private final FinderPath _paginatedFindPath;
 	private final String _sqlCountWhere;

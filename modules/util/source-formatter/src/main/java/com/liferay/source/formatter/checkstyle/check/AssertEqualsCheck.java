@@ -9,6 +9,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.TokenUtil;
 
 import java.util.List;
 
@@ -42,8 +43,9 @@ public class AssertEqualsCheck extends BaseCheck {
 
 			DetailAST firstChildDetailAST = firstExprDetailAST.getFirstChild();
 
-			if ((firstChildDetailAST.getType() == TokenTypes.LITERAL_FALSE) ||
-				(firstChildDetailAST.getType() == TokenTypes.LITERAL_TRUE)) {
+			if (TokenUtil.isOfType(
+					firstChildDetailAST, TokenTypes.LITERAL_FALSE,
+					TokenTypes.LITERAL_TRUE)) {
 
 				log(
 					methodCallDetailAST, _MSG_ASSERT_USE_BOOLEAN,
@@ -90,16 +92,20 @@ public class AssertEqualsCheck extends BaseCheck {
 			variableName = _getVariableNameForMethodCall(
 				firstChildDetailAST, "size");
 
-			if (variableName != null) {
-				DetailAST typeDetailAST = getVariableTypeDetailAST(
-					methodCallDetailAST, variableName);
-
-				if ((typeDetailAST != null) && isCollection(typeDetailAST)) {
-					log(
-						methodCallDetailAST, _MSG_ASSERT_ADD_INFORMATION,
-						variableName + ".toString()");
-				}
+			if (variableName == null) {
+				continue;
 			}
+
+			DetailAST typeDetailAST = getVariableTypeDetailAST(
+				methodCallDetailAST, variableName);
+
+			if ((typeDetailAST == null) || !isCollection(typeDetailAST)) {
+				continue;
+			}
+
+			log(
+				methodCallDetailAST, _MSG_ASSERT_ADD_INFORMATION,
+				variableName + ".toString()");
 		}
 	}
 

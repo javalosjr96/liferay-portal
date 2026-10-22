@@ -15,6 +15,7 @@ import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.document.library.kernel.service.DLFolderLocalService;
 import com.liferay.document.library.kernel.util.DLValidator;
 import com.liferay.document.library.kernel.util.comparator.RepositoryModelTitleComparator;
+import com.liferay.document.library.web.internal.security.permission.resource.DLFileEntryPermission;
 import com.liferay.petra.io.StreamUtil;
 import com.liferay.petra.sql.dsl.DSLFunctionFactoryUtil;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
@@ -167,10 +168,17 @@ public class DownloadEntriesMVCResourceCommand implements MVCResourceCommand {
 			return;
 		}
 
+		ThemeDisplay themeDisplay = (ThemeDisplay)resourceRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
 		if ((fileEntries.size() == 1) && fileShortcuts.isEmpty() &&
 			folders.isEmpty()) {
 
 			FileEntry fileEntry = fileEntries.get(0);
+
+			DLFileEntryPermission.check(
+				themeDisplay.getPermissionChecker(), fileEntry,
+				ActionKeys.DOWNLOAD);
 
 			PortletResponseUtil.sendFile(
 				resourceRequest, resourceResponse, fileEntry.getFileName(),
@@ -185,16 +193,16 @@ public class DownloadEntriesMVCResourceCommand implements MVCResourceCommand {
 			FileEntry fileEntry = _dlAppService.getFileEntry(
 				fileShortcut.getToFileEntryId());
 
+			DLFileEntryPermission.check(
+				themeDisplay.getPermissionChecker(), fileEntry,
+				ActionKeys.DOWNLOAD);
+
 			PortletResponseUtil.sendFile(
 				resourceRequest, resourceResponse, fileEntry.getFileName(),
 				fileEntry.getContentStream(), 0, fileEntry.getMimeType(),
 				HttpHeaders.CONTENT_DISPOSITION_ATTACHMENT);
 		}
 		else {
-			ThemeDisplay themeDisplay =
-				(ThemeDisplay)resourceRequest.getAttribute(
-					WebKeys.THEME_DISPLAY);
-
 			for (FileShortcut fileShortcut : fileShortcuts) {
 				try {
 					fileEntries.add(
@@ -220,10 +228,12 @@ public class DownloadEntriesMVCResourceCommand implements MVCResourceCommand {
 				}
 
 				for (Folder folder : folders) {
-					if (!_isExternalRepositoryFolder(folder)) {
-						size += _getFolderSize(
-							folder.getRepositoryId(), folder.getFolderId());
+					if (_isExternalRepositoryFolder(folder)) {
+						continue;
 					}
+
+					size += _getFolderSize(
+						folder.getRepositoryId(), folder.getFolderId());
 				}
 
 				_dlValidator.validateDownloadSize(groupId, size);
@@ -249,12 +259,14 @@ public class DownloadEntriesMVCResourceCommand implements MVCResourceCommand {
 			}
 
 			for (Folder folder : folders) {
-				if (!_isExternalRepositoryFolder(folder)) {
-					_zipFolder(
-						folder.getRepositoryId(), folder.getFolderId(),
-						folder.getName() + StringPool.SLASH, permissionChecker,
-						zipOutputStream);
+				if (_isExternalRepositoryFolder(folder)) {
+					continue;
 				}
+
+				_zipFolder(
+					folder.getRepositoryId(), folder.getFolderId(),
+					folder.getName() + StringPool.SLASH, permissionChecker,
+					zipOutputStream);
 			}
 
 			zipOutputStream.close();

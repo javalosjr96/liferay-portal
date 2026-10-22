@@ -12,27 +12,33 @@ import com.liferay.document.library.kernel.model.DLFileVersion;
 import com.liferay.document.library.kernel.model.DLFolder;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.model.DLVersionNumberIncrease;
+import com.liferay.document.library.kernel.service.DLAppServiceUtil;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalServiceUtil;
 import com.liferay.document.library.kernel.service.DLFileEntryServiceUtil;
 import com.liferay.document.library.kernel.service.DLFileVersionLocalServiceUtil;
 import com.liferay.document.library.kernel.service.DLFolderLocalServiceUtil;
 import com.liferay.document.library.kernel.util.DLUtil;
+import com.liferay.document.library.test.util.DLTestUtil;
 import com.liferay.petra.io.StreamUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
+import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalServiceUtil;
 import com.liferay.portal.kernel.service.RoleLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.TestInfo;
+import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.test.util.RoleTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -40,6 +46,7 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.portlet.documentlibrary.constants.DLConstants;
 import com.liferay.ratings.kernel.service.RatingsEntryLocalService;
 
 import java.io.ByteArrayInputStream;
@@ -323,6 +330,77 @@ public class DLFileEntryServiceTest {
 	}
 
 	@Test
+	public void testMoveFileEntryToRootFolderWhenItemGroupHasAddPermission()
+		throws Exception {
+
+		DLFolder dlFolder = DLTestUtil.addDLFolder(_group.getGroupId());
+
+		DLFileEntry dlFileEntry = addDLFileEntry(dlFolder.getFolderId(), false);
+
+		_user = _addUser(dlFileEntry.getFileEntryId(), _group);
+
+		_alternativeGroup = GroupTestUtil.addGroup();
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user)) {
+
+			DLFileEntryServiceUtil.moveFileEntry(
+				dlFileEntry.getFileEntryId(),
+				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+				ServiceContextTestUtil.getServiceContext(
+					_alternativeGroup.getGroupId(), _user.getUserId()));
+		}
+
+		dlFileEntry = DLFileEntryLocalServiceUtil.getDLFileEntry(
+			dlFileEntry.getFileEntryId());
+
+		Assert.assertEquals(
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			dlFileEntry.getFolderId());
+		Assert.assertEquals(_group.getGroupId(), dlFileEntry.getGroupId());
+	}
+
+	@Test
+	public void testMoveFileEntryToRootFolderWhenOnlyScopeGroupHasAddPermission()
+		throws Exception {
+
+		DLFolder dlFolder = DLTestUtil.addDLFolder(_group.getGroupId());
+
+		DLFileEntry dlFileEntry = addDLFileEntry(dlFolder.getFolderId(), false);
+
+		_alternativeGroup = GroupTestUtil.addGroup();
+
+		long fileEntryId = dlFileEntry.getFileEntryId();
+
+		_user = _addUser(fileEntryId, _alternativeGroup);
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user)) {
+
+			PrincipalException.MustHavePermission mustHavePermission =
+				Assert.assertThrows(
+					PrincipalException.MustHavePermission.class,
+					() -> DLFileEntryServiceUtil.moveFileEntry(
+						fileEntryId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+						ServiceContextTestUtil.getServiceContext(
+							_alternativeGroup.getGroupId(),
+							_user.getUserId())));
+
+			Assert.assertEquals(
+				DLConstants.RESOURCE_NAME, mustHavePermission.resourceName);
+			Assert.assertEquals(
+				_group.getGroupId(), mustHavePermission.resourceId);
+			Assert.assertArrayEquals(
+				new String[] {ActionKeys.ADD_DOCUMENT},
+				mustHavePermission.actionId);
+		}
+
+		dlFileEntry = DLFileEntryLocalServiceUtil.getDLFileEntry(fileEntryId);
+
+		Assert.assertEquals(dlFolder.getFolderId(), dlFileEntry.getFolderId());
+	}
+
+	@Test
 	public void testRestoreFileNameWhenDeletingLatestFileVersion()
 		throws Exception {
 
@@ -407,6 +485,85 @@ public class DLFileEntryServiceTest {
 			dlFileEntry.getFileName());
 	}
 
+	@Test
+	@TestInfo("LPD-110162")
+	public void testUpdateStatus() throws Exception {
+		DLFileEntry dlFileEntry = addDLFileEntry(
+			DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, false);
+
+		DLFileVersion dlFileVersion = dlFileEntry.getLatestFileVersion(true);
+
+		long fileVersionId = dlFileVersion.getFileVersionId();
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+
+		User user = _addUser(dlFileEntry.getFileEntryId(), _group);
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				user)) {
+
+			Assert.assertThrows(
+				PrincipalException.class,
+				() -> DLFileEntryServiceUtil.updateStatus(
+					TestPropsValues.getUserId(), fileVersionId,
+					WorkflowConstants.STATUS_APPROVED, serviceContext,
+					new HashMap<String, Serializable>()));
+
+			DLFileEntryServiceUtil.updateStatus(
+				user.getUserId(), fileVersionId,
+				WorkflowConstants.STATUS_APPROVED, serviceContext,
+				new HashMap<String, Serializable>());
+		}
+
+		dlFileVersion = DLFileVersionLocalServiceUtil.getDLFileVersion(
+			fileVersionId);
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_APPROVED, dlFileVersion.getStatus());
+		Assert.assertEquals(
+			user.getUserId(), dlFileVersion.getStatusByUserId());
+	}
+
+	@Test
+	@TestInfo("LPD-110162")
+	public void testUpdateStatusWhenFolderHasWorkflow() throws Exception {
+		DLFolder dlFolder = DLTestUtil.addDLFolder(_group.getGroupId());
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+
+		serviceContext.setAttribute(
+			"restrictionType", DLFolderConstants.RESTRICTION_TYPE_WORKFLOW);
+		serviceContext.setAttribute(
+			"workflowDefinition" +
+				DLFileEntryTypeConstants.FILE_ENTRY_TYPE_ID_ALL,
+			"Single Approver@1");
+
+		DLAppServiceUtil.updateFolder(
+			dlFolder.getFolderId(), dlFolder.getName(),
+			dlFolder.getDescription(), serviceContext);
+
+		DLFileEntry dlFileEntry = addDLFileEntry(dlFolder.getFolderId(), false);
+
+		DLFileVersion dlFileVersion = dlFileEntry.getLatestFileVersion(true);
+
+		long fileVersionId = dlFileVersion.getFileVersionId();
+
+		Assert.assertThrows(
+			PrincipalException.class,
+			() -> DLFileEntryServiceUtil.updateStatus(
+				TestPropsValues.getUserId(), fileVersionId,
+				WorkflowConstants.STATUS_APPROVED, serviceContext,
+				new HashMap<String, Serializable>()));
+
+		dlFileVersion = DLFileVersionLocalServiceUtil.getDLFileVersion(
+			fileVersionId);
+
+		Assert.assertNotEquals(
+			WorkflowConstants.STATUS_APPROVED, dlFileVersion.getStatus());
+	}
+
 	protected DLFileEntry addDLFileEntry(long folderId, boolean appendExtension)
 		throws Exception {
 
@@ -456,6 +613,23 @@ public class DLFileEntryServiceTest {
 			new HashMap<String, Serializable>());
 	}
 
+	private User _addUser(long fileEntryId, Group group) throws Exception {
+		User user = UserTestUtil.addGroupUser(group, RoleConstants.SITE_MEMBER);
+
+		_role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		ResourcePermissionLocalServiceUtil.setResourcePermissions(
+			_role.getCompanyId(), DLFileEntry.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL, String.valueOf(fileEntryId),
+			_role.getRoleId(),
+			new String[] {ActionKeys.UPDATE, ActionKeys.VIEW});
+
+		RoleLocalServiceUtil.addUserRoles(
+			user.getUserId(), new long[] {_role.getRoleId()});
+
+		return user;
+	}
+
 	private void _removeResourcePermission(
 			long fileEntryId, String roleName, String actionId)
 		throws Exception {
@@ -473,9 +647,18 @@ public class DLFileEntryServiceTest {
 		"Content: Enterprise. Open Source. For Life.";
 
 	@DeleteAfterTestRun
+	private Group _alternativeGroup;
+
+	@DeleteAfterTestRun
 	private Group _group;
 
 	@Inject
 	private RatingsEntryLocalService _ratingsEntryLocalService;
+
+	@DeleteAfterTestRun
+	private Role _role;
+
+	@DeleteAfterTestRun
+	private User _user;
 
 }

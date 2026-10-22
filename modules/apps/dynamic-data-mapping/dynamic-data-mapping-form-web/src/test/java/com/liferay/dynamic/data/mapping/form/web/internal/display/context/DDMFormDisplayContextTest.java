@@ -21,8 +21,10 @@ import com.liferay.dynamic.data.mapping.model.DDMFormInstanceVersion;
 import com.liferay.dynamic.data.mapping.model.DDMFormLayout;
 import com.liferay.dynamic.data.mapping.model.DDMFormSuccessPageSettings;
 import com.liferay.dynamic.data.mapping.model.DDMStructure;
+import com.liferay.dynamic.data.mapping.model.DDMStructureVersion;
 import com.liferay.dynamic.data.mapping.model.LocalizedValue;
 import com.liferay.dynamic.data.mapping.model.impl.DDMFormInstanceImpl;
+import com.liferay.dynamic.data.mapping.model.impl.DDMStructureVersionImpl;
 import com.liferay.dynamic.data.mapping.render.DDMFormFieldRenderingContext;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMFormInstanceRecordService;
@@ -54,6 +56,7 @@ import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
 import com.liferay.portal.kernel.service.permission.PortletPermissionUtil;
+import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.servlet.SessionMessages;
 import com.liferay.portal.kernel.test.portlet.MockRenderRequest;
 import com.liferay.portal.kernel.test.portlet.MockRenderResponse;
@@ -78,6 +81,7 @@ import jakarta.portlet.RenderRequest;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Map;
@@ -439,6 +443,33 @@ public class DDMFormDisplayContextTest {
 
 		Assert.assertEquals(
 			expectedDDMFormFieldOptions, actualDDMFormFieldOptions);
+	}
+
+	@Test
+	public void testGetErrorMessages() throws Exception {
+		RenderRequest renderRequest = _mockRenderRequest();
+
+		SessionErrors.add(
+			renderRequest, IllegalStateException.class,
+			new IllegalStateException("<b>Illegal State Exception</b>"));
+		SessionErrors.add(
+			renderRequest, PortalException.class,
+			new PortalException("Portal Exception"));
+
+		DDMFormDisplayContext ddmFormDisplayContext =
+			_createDDMFormDisplayContext(renderRequest);
+
+		Assert.assertEquals(
+			Collections.singletonMap(
+				IllegalStateException.class.getName(),
+				"&lt;b&gt;Illegal State Exception&lt;/b&gt;"),
+			ddmFormDisplayContext.getErrorMessages());
+	}
+
+	@Test
+	public void testGetFormInstance() throws Exception {
+		_testGetFormInstanceWithApprovedSettings();
+		_testGetFormInstanceWithDraftSettings();
 	}
 
 	@Test
@@ -1086,6 +1117,24 @@ public class DDMFormDisplayContextTest {
 		return ddmFormInstance;
 	}
 
+	private DDMFormInstance _mockDDMFormInstance(
+		String settings, long structureId) {
+
+		DDMFormInstance ddmFormInstance = new DDMFormInstanceImpl();
+
+		ddmFormInstance.setMvccVersion(RandomTestUtil.randomLong());
+		ddmFormInstance.setStructureId(structureId);
+		ddmFormInstance.setSettings(settings);
+
+		Mockito.when(
+			_ddmFormInstanceLocalService.fetchFormInstance(Mockito.anyLong())
+		).thenReturn(
+			ddmFormInstance
+		);
+
+		return ddmFormInstance;
+	}
+
 	private DDMFormInstanceSettings _mockDDMFormInstanceSettings(
 		String redirectURL) {
 
@@ -1123,6 +1172,26 @@ public class DDMFormDisplayContextTest {
 		);
 
 		return ddmFormInstanceSettings;
+	}
+
+	private void _mockDDMFormInstanceVersion(String settings, long structureId)
+		throws Exception {
+
+		Mockito.when(
+			_ddmFormInstanceVersion.getSettings()
+		).thenReturn(
+			settings
+		);
+
+		DDMStructureVersion ddmStructureVersion = new DDMStructureVersionImpl();
+
+		ddmStructureVersion.setStructureId(structureId);
+
+		Mockito.when(
+			_ddmFormInstanceVersion.getStructureVersion()
+		).thenReturn(
+			ddmStructureVersion
+		);
 	}
 
 	private DDMFormInstanceVersionLocalService
@@ -1373,6 +1442,46 @@ public class DDMFormDisplayContextTest {
 		).thenReturn(
 			ResourceBundleUtil.EMPTY_RESOURCE_BUNDLE
 		);
+	}
+
+	private void _testGetFormInstanceWithApprovedSettings() throws Exception {
+		String settings = RandomTestUtil.randomString();
+		long structureId = RandomTestUtil.randomLong();
+
+		DDMFormInstance ddmFormInstance = _mockDDMFormInstance(
+			settings, structureId);
+
+		_mockDDMFormInstanceVersion(settings, structureId);
+
+		DDMFormDisplayContext ddmFormDisplayContext =
+			_createDDMFormDisplayContext();
+
+		Assert.assertSame(
+			ddmFormInstance, ddmFormDisplayContext.getFormInstance());
+	}
+
+	private void _testGetFormInstanceWithDraftSettings() throws Exception {
+		DDMFormInstance ddmFormInstance = _mockDDMFormInstance(
+			RandomTestUtil.randomString(), RandomTestUtil.randomLong());
+
+		String settings = RandomTestUtil.randomString();
+		long structureId = RandomTestUtil.randomLong();
+
+		_mockDDMFormInstanceVersion(settings, structureId);
+
+		DDMFormDisplayContext ddmFormDisplayContext =
+			_createDDMFormDisplayContext();
+
+		DDMFormInstance approvedDDMFormInstance =
+			ddmFormDisplayContext.getFormInstance();
+
+		Assert.assertNotSame(ddmFormInstance, approvedDDMFormInstance);
+		Assert.assertEquals(
+			ddmFormInstance.getMvccVersion() - 1,
+			approvedDDMFormInstance.getMvccVersion());
+		Assert.assertEquals(settings, approvedDDMFormInstance.getSettings());
+		Assert.assertEquals(
+			structureId, approvedDDMFormInstance.getStructureId());
 	}
 
 	private void _whenLanguageIsAvailableLocale(Locale locale) {

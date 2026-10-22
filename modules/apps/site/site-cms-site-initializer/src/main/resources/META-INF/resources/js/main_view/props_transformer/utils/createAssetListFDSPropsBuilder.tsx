@@ -25,6 +25,8 @@ export interface AssetListFDSProps {
 	apiURL?: string;
 	id?: string;
 	itemsActions?: IItemsActions[];
+	searchAsYouType?: boolean;
+	searchSuggestionsEnabled?: boolean;
 }
 
 interface AssetListFDSConfig<T> {
@@ -84,8 +86,9 @@ export function createAssetListFDSPropsBuilder<T = ISearchAssetObjectEntry>({
 			},
 			hideManagementBarInEmptyState: true,
 			itemsActions,
-			searchAsYouType: true,
-			searchSuggestionsEnabled: true,
+			searchAsYouType: otherProps.searchAsYouType ?? true,
+			searchSuggestionsEnabled:
+				otherProps.searchSuggestionsEnabled ?? true,
 			views: [
 				{
 					contentRenderer: 'list',
@@ -127,6 +130,24 @@ export function createAssetListFDSPropsBuilder<T = ISearchAssetObjectEntry>({
 						},
 					}),
 					thumbnail: 'list',
+				},
+			],
+		};
+	};
+}
+
+export function createTitleSortedFDSPropsTransformer<T extends object>(
+	getAssetListFDSProps: (props: AssetListFDSProps) => T
+) {
+	return function TitleSortedFDSPropsTransformer(props: AssetListFDSProps) {
+		return {
+			...getAssetListFDSProps(props),
+			sorts: [
+				{
+					active: true,
+					direction: 'asc',
+					key: 'title',
+					label: Liferay.Language.get('title'),
 				},
 			],
 		};

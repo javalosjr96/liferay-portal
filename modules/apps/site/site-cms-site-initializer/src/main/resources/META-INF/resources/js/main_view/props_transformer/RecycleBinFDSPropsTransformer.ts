@@ -10,20 +10,25 @@ import {
 import {getCMSItemSelectorGroupedFilters} from '@liferay/frontend-js-item-selector-web';
 import {sub} from 'frontend-js-web';
 
+import {openAssetUsageListModal} from '../../common/components/asset_usage/utils';
 import {
 	FDS_EVENT_UPDATE_DISPLAY,
 	OBJECT_ENTRY_FOLDER_CLASS_NAME,
 } from '../../common/utils/constants';
 import {openGenericFDSDeleteConfirmationModal} from '../../common/utils/genericOpenModalUtil';
+import {getAssetTitle} from '../../common/utils/getAssetTitle';
 import {getFormattedLabel} from '../../common/utils/getFormattedText';
 import {getScopeExternalReferenceCode} from '../../common/utils/getScopeExternalReferenceCode';
 import {displayDeleteSuccessToast} from '../../common/utils/toastUtil';
-import deleteAssetEntriesBulkAction from './actions/deleteAssetEntriesBulkAction';
+import deleteAssetEntriesBulkAction, {
+	executeBulkDeleteAction,
+} from './actions/deleteAssetEntriesBulkAction';
 import restoreAssetEntriesBulkAction from './actions/restoreAssetEntriesBulkAction';
 import restoreItemAction from './actions/restoreItemAction';
 import AuthorRenderer from './cell_renderers/AuthorRenderer';
 import SimpleActionLinkRenderer from './cell_renderers/SimpleActionLinkRenderer';
 import SpaceRendererWithCache from './cell_renderers/SpaceRendererWithCache';
+import styleDeleteAction from './utils/styleDeleteAction';
 import transformFDSBulkActions from './utils/transformFDSBulkActions';
 
 export default function RecycleBinFDSPropsTransformer({
@@ -32,7 +37,10 @@ export default function RecycleBinFDSPropsTransformer({
 	itemsActions = [],
 	...otherProps
 }: {
-	additionalProps: {additionalAPIURLParameters?: string};
+	additionalProps: {
+		additionalAPIURLParameters?: string;
+		brokenLinksCheckerEnabled?: boolean;
+	};
 	apiURL: string;
 	bulkActions: Array<IBulkActionItem>;
 	id: string;
@@ -61,6 +69,7 @@ export default function RecycleBinFDSPropsTransformer({
 							systemIconLabel: Liferay.Language.get(
 								'system-default-structure'
 							),
+							value: getAssetTitle(props.itemData),
 						}),
 					name: 'simpleActionLinkTableCellRenderer',
 					type: 'internal',
@@ -91,7 +100,7 @@ export default function RecycleBinFDSPropsTransformer({
 				};
 			}
 
-			return action;
+			return styleDeleteAction(action);
 		}),
 		async onActionDropdownItemClick({
 			action,
@@ -103,7 +112,7 @@ export default function RecycleBinFDSPropsTransformer({
 			loadData: () => {};
 		}) {
 			const title =
-				itemData.embedded?.title ||
+				getAssetTitle(itemData) ||
 				Liferay.Language.get('untitled-asset');
 
 			if (action.data.id === 'delete') {
@@ -119,14 +128,27 @@ export default function RecycleBinFDSPropsTransformer({
 					return displayDeleteSuccessToast(title);
 				};
 
-				openGenericFDSDeleteConfirmationModal(
-					confirmationText,
-					itemData.actions?.delete?.method,
-					itemData.actions?.delete?.href,
-					title,
-					loadData,
-					displaySuccessToast
-				);
+				const openDeleteConfirmationModal = () => {
+					openGenericFDSDeleteConfirmationModal(
+						confirmationText,
+						itemData.actions?.delete?.method,
+						itemData.actions?.delete?.href,
+						title,
+						loadData,
+						displaySuccessToast
+					);
+				};
+
+				if (remainingAdditionalProps.brokenLinksCheckerEnabled) {
+					openAssetUsageListModal({
+						itemsData: [itemData],
+						onDelete: openDeleteConfirmationModal,
+						selectAll: false,
+					});
+				}
+				else {
+					openDeleteConfirmationModal();
+				}
 			}
 
 			if (action.data.id === 'restore') {
@@ -146,17 +168,38 @@ export default function RecycleBinFDSPropsTransformer({
 			selectedData: any;
 		}) => {
 			if (action?.data?.id === 'delete') {
-				deleteAssetEntriesBulkAction({
-					apiURL: otherProps.apiURL,
-					dataSetId: otherProps.id,
-					selectedData,
-				});
+				const openDeleteConfirmationModal = () => {
+					deleteAssetEntriesBulkAction({
+						apiURL: otherProps.apiURL,
+						dataSetId: otherProps.id,
+						selectedData,
+					});
+				};
+
+				if (remainingAdditionalProps.brokenLinksCheckerEnabled) {
+					openAssetUsageListModal({
+						apiURL: otherProps.apiURL,
+						itemsData: selectedData.items,
+						onDelete: () => {
+							executeBulkDeleteAction(
+								otherProps.apiURL,
+								otherProps.id,
+								selectedData
+							);
+						},
+						onSkip: openDeleteConfirmationModal,
+						selectAll: selectedData.selectAll,
+					});
+				}
+				else {
+					openDeleteConfirmationModal();
+				}
 			}
 			else if (action?.data?.id === 'restore') {
 				if (selectedData?.items?.length === 1) {
 					const item = selectedData.items[0];
 					const title =
-						item.embedded?.title ||
+						getAssetTitle(item) ||
 						Liferay.Language.get('untitled-asset');
 
 					await restoreItemAction(

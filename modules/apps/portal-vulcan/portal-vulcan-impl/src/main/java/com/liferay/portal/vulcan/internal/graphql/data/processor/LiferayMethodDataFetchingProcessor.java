@@ -10,8 +10,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
 import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.log.Log;
-import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.search.Sort;
@@ -35,6 +33,7 @@ import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.aggregation.Aggregation;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineImportTaskResource;
 import com.liferay.portal.vulcan.batch.engine.resource.VulcanBatchEngineImportTaskResourceFactory;
+import com.liferay.portal.vulcan.feature.flag.FeatureFlagChecker;
 import com.liferay.portal.vulcan.graphql.contributor.GraphQLContributor;
 import com.liferay.portal.vulcan.internal.accept.language.AcceptLanguageImpl;
 import com.liferay.portal.vulcan.internal.graphql.util.GraphQLUtil;
@@ -62,6 +61,7 @@ import jakarta.validation.ValidationException;
 import jakarta.validation.constraints.NotNull;
 
 import jakarta.ws.rs.BadRequestException;
+import jakarta.ws.rs.NotFoundException;
 import jakarta.ws.rs.core.MultivaluedHashMap;
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.UriInfo;
@@ -98,6 +98,7 @@ public class LiferayMethodDataFetchingProcessor {
 		BundleContext bundleContext, CompanyLocalService companyLocalService,
 		DepotEntryLocalService depotEntryLocalService,
 		ExpressionConvert<Filter> expressionConvert,
+		FeatureFlagChecker featureFlagChecker,
 		FilterParserProvider filterParserProvider,
 		ServiceTrackerList<GraphQLContributor>
 			graphQLContributorServiceTrackerList,
@@ -114,6 +115,7 @@ public class LiferayMethodDataFetchingProcessor {
 		_companyLocalService = companyLocalService;
 		_depotEntryLocalService = depotEntryLocalService;
 		_expressionConvert = expressionConvert;
+		_featureFlagChecker = featureFlagChecker;
 		_filterParserProvider = filterParserProvider;
 		_graphQLContributorServiceTrackerList =
 			graphQLContributorServiceTrackerList;
@@ -136,9 +138,14 @@ public class LiferayMethodDataFetchingProcessor {
 			Object source)
 		throws Exception {
 
+		long companyId = _portal.getCompanyId(httpServletRequest);
+
+		if (!_featureFlagChecker.isEnabled(companyId, method)) {
+			throw new NotFoundException();
+		}
+
 		Pagination pagination = _paginationProvider.getPagination(
-			_portal.getCompanyId(httpServletRequest),
-			_getIntegerValue(arguments, "page"),
+			companyId, _getIntegerValue(arguments, "page"),
 			_getIntegerValue(arguments, "pageSize"));
 
 		Parameter[] parameters = method.getParameters();
@@ -287,10 +294,10 @@ public class LiferayMethodDataFetchingProcessor {
 				httpServletResponse, instanceArguments, source);
 		}
 		else {
-			Field field = _getThisField(declaringClass);
+			Class<?> enclosingClass = _getEnclosingClass(declaringClass);
 
 			if ((root == source) || Objects.equals(fieldName, "graphQLNode") ||
-				(field == null)) {
+				(enclosingClass == null)) {
 
 				instance = _fillQueryInstance(
 					arguments, httpServletRequest, httpServletResponse,
@@ -300,11 +307,9 @@ public class LiferayMethodDataFetchingProcessor {
 				Constructor<?>[] constructors =
 					declaringClass.getConstructors();
 
-				Class<?> typeClass = field.getType();
-
 				Object queryInstance = _fillQueryInstance(
 					arguments, httpServletRequest, httpServletResponse,
-					typeClass.newInstance(), instanceArguments);
+					enclosingClass.newInstance(), instanceArguments);
 
 				instance = ReflectionKit.constructNewInstance(
 					constructors[0], queryInstance, source);
@@ -624,6 +629,14 @@ public class LiferayMethodDataFetchingProcessor {
 		return ReflectionKit.constructNewInstance(constructor, args);
 	}
 
+	private Class<?> _getEnclosingClass(Class<?> clazz) {
+		if (!clazz.isMemberClass() || Modifier.isStatic(clazz.getModifiers())) {
+			return null;
+		}
+
+		return clazz.getEnclosingClass();
+	}
+
 	private EntityModel _getEntityModel(
 			Object resource, Map<String, String[]> parameterMap)
 		throws Exception {
@@ -684,26 +697,11 @@ public class LiferayMethodDataFetchingProcessor {
 		return null;
 	}
 
-	private Field _getThisField(Class<?> clazz) {
-		try {
-			return clazz.getDeclaredField("this$0");
-		}
-		catch (NoSuchFieldException noSuchFieldException) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(noSuchFieldException);
-			}
-
-			return null;
-		}
-	}
-
-	private static final Log _log = LogFactoryUtil.getLog(
-		LiferayMethodDataFetchingProcessor.class);
-
 	private final BundleContext _bundleContext;
 	private final CompanyLocalService _companyLocalService;
 	private final DepotEntryLocalService _depotEntryLocalService;
 	private final ExpressionConvert<Filter> _expressionConvert;
+	private final FeatureFlagChecker _featureFlagChecker;
 	private final FilterParserProvider _filterParserProvider;
 	private final ServiceTrackerList<GraphQLContributor>
 		_graphQLContributorServiceTrackerList;

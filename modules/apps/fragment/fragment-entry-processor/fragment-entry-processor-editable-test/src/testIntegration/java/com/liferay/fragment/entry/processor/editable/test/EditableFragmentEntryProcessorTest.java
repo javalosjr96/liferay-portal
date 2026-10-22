@@ -14,8 +14,8 @@ import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
 import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
-import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.dynamic.data.mapping.constants.DDMStructureConstants;
 import com.liferay.dynamic.data.mapping.form.field.type.constants.DDMFormFieldTypeConstants;
 import com.liferay.dynamic.data.mapping.io.DDMFormDeserializer;
@@ -1780,7 +1780,7 @@ public class EditableFragmentEntryProcessorTest {
 	}
 
 	@Test
-	@TestInfo("LPD-73556")
+	@TestInfo({"LPD-73556", "LPD-107399"})
 	public void testFragmentEntryProcessorEditableMappedDLImage()
 		throws Exception {
 
@@ -1841,10 +1841,13 @@ public class EditableFragmentEntryProcessorTest {
 		String src = element.attr("src");
 
 		Assert.assertFalse(src.contains("imagePreview=1"));
+		Assert.assertTrue(
+			src.startsWith(_portal.getPathContext() + "/documents/"));
 		Assert.assertEquals(
 			_dlURLHelper.getPreviewURL(
 				fileEntry, fileEntry.getFileVersion(),
-				_serviceContext.getThemeDisplay(), StringPool.BLANK),
+				_serviceContext.getThemeDisplay(), StringPool.BLANK, true,
+				false),
 			src);
 	}
 

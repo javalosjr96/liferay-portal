@@ -53,9 +53,7 @@ public class ChainingCheck extends BaseCheck {
 			_checkChainingOnParentheses(detailAST);
 		}
 
-		DetailAST parentDetailAST = detailAST.getParent();
-
-		if (parentDetailAST != null) {
+		if (!isDirectChildOfCompilationUnit(detailAST)) {
 			return;
 		}
 
@@ -115,9 +113,11 @@ public class ChainingCheck extends BaseCheck {
 
 			int chainSize = chainedMethodNames.size();
 
-			if (chainSize > 3) {
-				_checkChainOrder(methodCallDetailAST, chainedMethodNames);
+			if (chainSize <= 3) {
+				continue;
 			}
+
+			_checkChainOrder(methodCallDetailAST, chainedMethodNames);
 		}
 	}
 
@@ -330,11 +330,13 @@ public class ChainingCheck extends BaseCheck {
 
 				JavaSignature javaSignature = javaMethod.getSignature();
 
-				if (Objects.equals(
+				if (!Objects.equals(
 						javaClass.getName(), javaSignature.getReturnType())) {
 
-					requiredChainingMethodNames.add(javaMethod.getName());
+					continue;
 				}
+
+				requiredChainingMethodNames.add(javaMethod.getName());
 			}
 
 			_requiredChainingMethodNamesMap.put(

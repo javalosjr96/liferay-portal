@@ -267,7 +267,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.commerce.payment.method.authorize.net.jar!httpclient5.jar</file-name>
-				<version>5.6.3</version>
+				<version>5.6.4</version>
 				<project-name>Apache HttpClient</project-name>
 				<licenses>
 					<license>
@@ -1001,7 +1001,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.document.library.repository.cmis.impl.jar!org.apache.cxf.core.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF Core Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -1013,7 +1013,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.document.library.repository.cmis.impl.jar!org.apache.cxf.rt.bindings.soap.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF Runtime SOAP Binding Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -1025,7 +1025,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.document.library.repository.cmis.impl.jar!org.apache.cxf.rt.bindings.xml.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF Runtime XML Binding Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -1037,7 +1037,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.document.library.repository.cmis.impl.jar!org.apache.cxf.rt.databinding.jaxb.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF Runtime JAXB DataBinding Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -1049,7 +1049,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.document.library.repository.cmis.impl.jar!org.apache.cxf.rt.frontend.jaxws.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF Runtime JAX-WS Frontend Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -1061,7 +1061,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.document.library.repository.cmis.impl.jar!org.apache.cxf.rt.frontend.simple.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF Runtime Simple Frontend Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -1073,7 +1073,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.document.library.repository.cmis.impl.jar!org.apache.cxf.rt.transports.http.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF Runtime HTTP Transport Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -1085,7 +1085,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.document.library.repository.cmis.impl.jar!org.apache.cxf.rt.ws.addr.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF Runtime WS Addressing Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -1097,7 +1097,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.document.library.repository.cmis.impl.jar!org.apache.cxf.rt.ws.policy.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF Runtime WS Policy Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -1109,7 +1109,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.document.library.repository.cmis.impl.jar!org.apache.cxf.rt.wsdl.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF Runtime Core for WSDL Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -2581,7 +2581,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.remote.rest.extender.jar!org.apache.cxf.rt.rs.extension.providers.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF JAX-RS Extensions: Providers Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -2593,7 +2593,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.remote.rest.extender.jar!org.apache.cxf.rt.rs.json.basic.jar</file-name>
-				<version>3.6.12.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>3.6.13.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache CXF JAX-RS Extensions: JSON Basic Jakarta</project-name>
 				<project-url>http://cxf.apache.org</project-url>
 				<licenses>
@@ -2944,8 +2944,8 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.search.elasticsearch8.impl.jar!elasticsearch-cli.jar</file-name>
-				<version>8.19.20</version>
-				<project-name>org.elasticsearch#cli;8.19.20</project-name>
+				<version>8.19.23</version>
+				<project-name>org.elasticsearch#cli;8.19.23</project-name>
 				<project-url>https://github.com/elastic/elasticsearch</project-url>
 				<licenses>
 					<license>
@@ -2956,8 +2956,8 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.search.elasticsearch8.impl.jar!elasticsearch-core.jar</file-name>
-				<version>8.19.20</version>
-				<project-name>org.elasticsearch#core;8.19.20</project-name>
+				<version>8.19.23</version>
+				<project-name>org.elasticsearch#core;8.19.23</project-name>
 				<project-url>https://github.com/elastic/elasticsearch</project-url>
 				<licenses>
 					<license>
@@ -2968,7 +2968,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.search.elasticsearch8.impl.jar!elasticsearch-java.jar</file-name>
-				<version>8.19.20</version>
+				<version>8.19.23</version>
 				<project-name>Elasticsearch Java API Client</project-name>
 				<project-url>https://github.com/elastic/elasticsearch-java/</project-url>
 				<licenses>
@@ -2980,8 +2980,8 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.search.elasticsearch8.impl.jar!elasticsearch-rest-client.jar</file-name>
-				<version>8.19.20</version>
-				<project-name>org.elasticsearch.client#rest;8.19.20</project-name>
+				<version>8.19.23</version>
+				<project-name>org.elasticsearch.client#rest;8.19.23</project-name>
 				<project-url>https://github.com/elastic/elasticsearch</project-url>
 				<licenses>
 					<license>
@@ -2992,8 +2992,8 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.search.elasticsearch8.impl.jar!elasticsearch-x-content.jar</file-name>
-				<version>8.19.20</version>
-				<project-name>org.elasticsearch#x-content;8.19.20</project-name>
+				<version>8.19.23</version>
+				<project-name>org.elasticsearch#x-content;8.19.23</project-name>
 				<project-url>https://github.com/elastic/elasticsearch</project-url>
 				<licenses>
 					<license>
@@ -3004,8 +3004,8 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.search.elasticsearch8.impl.jar!elasticsearch.jar</file-name>
-				<version>8.19.20</version>
-				<project-name>org.elasticsearch#server;8.19.20</project-name>
+				<version>8.19.23</version>
+				<project-name>org.elasticsearch#server;8.19.23</project-name>
 				<project-url>https://github.com/elastic/elasticsearch</project-url>
 				<licenses>
 					<license>
@@ -3016,7 +3016,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.search.elasticsearch8.impl.jar!httpclient5.jar</file-name>
-				<version>5.6.3</version>
+				<version>5.6.4</version>
 				<project-name>Apache HttpClient</project-name>
 				<licenses>
 					<license>
@@ -3049,7 +3049,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.search.elasticsearch8.impl.jar!jackson-databind.jar</file-name>
-				<version>2.18.9</version>
+				<version>2.18.11</version>
 				<project-name>jackson-databind</project-name>
 				<project-url>https://github.com/FasterXML/jackson</project-url>
 				<licenses>
@@ -3061,7 +3061,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.search.elasticsearch8.impl.jar!jackson-dataformat-smile.jar</file-name>
-				<version>2.18.2</version>
+				<version>2.18.11</version>
 				<project-name>Jackson dataformat: Smile</project-name>
 				<project-url>https://github.com/FasterXML/jackson-dataformats-binary</project-url>
 				<licenses>
@@ -3296,7 +3296,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.security.antisamy.jar!httpclient5.jar</file-name>
-				<version>5.6.3</version>
+				<version>5.6.4</version>
 				<project-name>Apache HttpClient</project-name>
 				<licenses>
 					<license>
@@ -4782,7 +4782,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.tools.db.migration.importer.jar!postgresql.jar</file-name>
-				<version>42.7.11</version>
+				<version>42.7.14</version>
 				<project-name>PostgreSQL JDBC Driver</project-name>
 				<project-url>https://jdbc.postgresql.org/</project-url>
 				<licenses>
@@ -4830,7 +4830,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.tools.db.partition.migration.validator.jar!jackson-annotations.jar</file-name>
-				<version>2.18.9</version>
+				<version>2.18.11</version>
 				<project-name>Jackson-annotations</project-name>
 				<project-url>https://github.com/FasterXML/jackson</project-url>
 				<licenses>
@@ -4842,7 +4842,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.tools.db.partition.migration.validator.jar!jackson-core.jar</file-name>
-				<version>2.18.9</version>
+				<version>2.18.11</version>
 				<project-name>Jackson-core</project-name>
 				<project-url>https://github.com/FasterXML/jackson-core</project-url>
 				<licenses>
@@ -4854,7 +4854,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.tools.db.partition.migration.validator.jar!jackson-databind.jar</file-name>
-				<version>2.18.9</version>
+				<version>2.18.11</version>
 				<project-name>jackson-databind</project-name>
 				<project-url>https://github.com/FasterXML/jackson</project-url>
 				<licenses>
@@ -4913,7 +4913,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.portal.tools.db.partition.migration.validator.jar!postgresql.jar</file-name>
-				<version>42.7.11</version>
+				<version>42.7.14</version>
 				<project-name>PostgreSQL JDBC Driver</project-name>
 				<project-url>https://jdbc.postgresql.org/</project-url>
 				<licenses>
@@ -5335,7 +5335,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.saml.opensaml.integration.jar!bcpkix-fips.jar</file-name>
-				<version>2.1.12</version>
+				<version>2.1.13</version>
 				<project-name>Bouncy Castle PKIX APIs (FIPS Distribution)</project-name>
 				<project-url>https://www.bouncycastle.org/download/bouncy-castle-java-fips</project-url>
 				<licenses>
@@ -5347,7 +5347,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.saml.opensaml.integration.jar!bcutil-fips.jar</file-name>
-				<version>2.1.7</version>
+				<version>2.1.8</version>
 				<project-name>Bouncy Castle ASN.1 Extension and Utility APIs (FIPS Distribution)</project-name>
 				<project-url>https://www.bouncycastle.org/download/bouncy-castle-java-fips</project-url>
 				<licenses>
@@ -5823,7 +5823,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.fasterxml.jackson.jar!jackson-dataformat-cbor.jar</file-name>
-				<version>2.18.2</version>
+				<version>2.18.11</version>
 				<project-name>Jackson dataformat: CBOR</project-name>
 				<project-url>https://github.com/FasterXML/jackson-dataformats-binary</project-url>
 				<licenses>
@@ -6549,7 +6549,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-buffer.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Buffer</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6561,7 +6561,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-codec-dns.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Codec/DNS</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6573,7 +6573,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-codec-http.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Codec/HTTP</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6585,7 +6585,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-codec-http2.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Codec/HTTP2</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6597,7 +6597,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-codec-socks.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Codec/Socks</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6609,7 +6609,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-codec.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Codec</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6621,7 +6621,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-common.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Common</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6633,7 +6633,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-handler-proxy.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Handler/Proxy</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6645,7 +6645,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-handler.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Handler</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6657,7 +6657,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-resolver-dns-classes-macos.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Resolver/DNS/Classes/MacOS</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6669,7 +6669,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-resolver-dns-native-macos.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Resolver/DNS/Native/MacOS</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6681,7 +6681,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-resolver-dns.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Resolver/DNS</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6693,7 +6693,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-resolver.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Resolver</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6729,7 +6729,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport-classes-epoll.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Transport/Classes/Epoll</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6741,7 +6741,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport-classes-kqueue.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Transport/Classes/KQueue</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6753,7 +6753,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport-native-epoll.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Transport/Native/Epoll</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6765,7 +6765,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport-native-kqueue.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Transport/Native/KQueue</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6777,7 +6777,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport-native-unix-common.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Transport/Native/Unix/Common</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -6789,7 +6789,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.netty.jar!netty-transport.jar</file-name>
-				<version>4.1.137.Final</version>
+				<version>4.1.139.Final</version>
 				<project-name>Netty/Transport</project-name>
 				<project-url>https://netty.io/</project-url>
 				<licenses>
@@ -7439,13 +7439,13 @@
 			</library>
 			<library>
 				<file-name>com.liferay.sharepoint.soap.repository.jar!xmlschema-core.jar</file-name>
-				<version>2.2.1</version>
+				<version>2.3.3</version>
 				<project-name>XmlSchema Core</project-name>
 				<project-url>http://ws.apache.org/xmlschema/</project-url>
 				<licenses>
 					<license>
-						<license-name>The Apache Software License, Version 2.0</license-name>
-						<license-url>http://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
+						<license-name>Apache-2.0</license-name>
+						<license-url>https://www.apache.org/licenses/LICENSE-2.0.txt</license-url>
 					</license>
 				</licenses>
 			</library>
@@ -8615,7 +8615,7 @@
 			</library>
 			<library>
 				<file-name>lib/development/postgresql.jar</file-name>
-				<version>42.7.11</version>
+				<version>42.7.14</version>
 				<project-name>PostgreSQL JDBC Driver</project-name>
 				<project-url>http://jdbc.postgresql.org</project-url>
 				<licenses>

@@ -54,6 +54,8 @@ public class AccountEntryUserRelModelListener
 		if (accountEntryUserRel.getAccountUserId() ==
 				UserConstants.USER_ID_DEFAULT) {
 
+			_reindexAccountEntry(accountEntryUserRel.getAccountEntryId());
+
 			return;
 		}
 
@@ -143,12 +145,14 @@ public class AccountEntryUserRelModelListener
 			for (AccountEntryUserRel curAccountEntryUserRel :
 					accountEntryUserRels) {
 
-				if (curAccountEntryUserRel.getAccountEntryId() ==
+				if (curAccountEntryUserRel.getAccountEntryId() !=
 						AccountConstants.ACCOUNT_ENTRY_ID_DEFAULT) {
 
-					_accountEntryUserRelLocalService.deleteAccountEntryUserRel(
-						curAccountEntryUserRel);
+					continue;
 				}
+
+				_accountEntryUserRelLocalService.deleteAccountEntryUserRel(
+					curAccountEntryUserRel);
 			}
 		}
 	}

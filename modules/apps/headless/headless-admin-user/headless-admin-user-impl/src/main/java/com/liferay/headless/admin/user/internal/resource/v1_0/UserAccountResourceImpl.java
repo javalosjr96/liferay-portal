@@ -17,6 +17,7 @@ import com.liferay.announcements.kernel.service.AnnouncementsDeliveryLocalServic
 import com.liferay.captcha.rest.dto.v1_0.Captcha;
 import com.liferay.captcha.rest.resource.v1_0.CaptchaResource;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.headless.admin.user.dto.v1_0.Account;
@@ -740,7 +741,8 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 		ServiceContext serviceContext = _createServiceContext(userAccount);
 
 		user = _userService.updateUser(
-			userAccountId, null, null, null, false, null, null,
+			userAccountId, userAccount.getCurrentPassword(), null, null, false,
+			null, null,
 			GetterUtil.getString(
 				userAccount.getAlternateName(), user.getScreenName()),
 			GetterUtil.getString(
@@ -798,12 +800,13 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 
 				RoleBrief[] accountRoleBriefs = accountBrief.getRoleBriefs();
 
-				if (accountRoleBriefs != null) {
-					for (RoleBrief roleBrief : accountRoleBriefs) {
-						_accountRoleService.associateUser(
-							accountBrief.getId(), roleBrief.getId(),
-							userAccountId);
-					}
+				if (accountRoleBriefs == null) {
+					continue;
+				}
+
+				for (RoleBrief roleBrief : accountRoleBriefs) {
+					_accountRoleService.associateUser(
+						accountBrief.getId(), roleBrief.getId(), userAccountId);
 				}
 			}
 		}
@@ -1195,9 +1198,9 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 		ServiceContext serviceContext = _createServiceContext(userAccount);
 
 		user = _userService.updateUser(
-			userAccountId, null, null, null, false, null, null,
-			userAccount.getAlternateName(), userAccount.getEmailAddress(),
-			_hasPortrait(null, userAccount),
+			userAccountId, userAccount.getCurrentPassword(), null, null, false,
+			null, null, userAccount.getAlternateName(),
+			userAccount.getEmailAddress(), _hasPortrait(null, userAccount),
 			_getPortraitBytes(false, user, userAccount),
 			GetterUtil.getString(
 				userAccount.getLanguageId(), user.getLanguageId()),
@@ -1589,7 +1592,7 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 			return null;
 		}
 
-		FileEntry fileEntry = _dlAppLocalService.getFileEntry(imageId);
+		FileEntry fileEntry = _dlAppService.getFileEntry(imageId);
 
 		return _file.getBytes(fileEntry.getContentStream());
 	}
@@ -1954,6 +1957,9 @@ public class UserAccountResourceImpl extends BaseUserAccountResourceImpl {
 
 	@Reference
 	private DLAppLocalService _dlAppLocalService;
+
+	@Reference
+	private DLAppService _dlAppService;
 
 	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;

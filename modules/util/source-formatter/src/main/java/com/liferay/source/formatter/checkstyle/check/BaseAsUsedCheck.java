@@ -14,6 +14,7 @@ import com.liferay.portal.tools.ToolsUtil;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.TokenUtil;
 
 import java.util.List;
 import java.util.Objects;
@@ -173,12 +174,14 @@ public abstract class BaseAsUsedCheck extends BaseCheck {
 		int emptyLineCount = 0;
 
 		for (int i = endLineNumber; i <= identDetailAST.getLineNo(); i++) {
-			if (Validator.isNull(getLine(i - 1))) {
-				emptyLineCount++;
+			if (Validator.isNotNull(getLine(i - 1))) {
+				continue;
+			}
 
-				if (emptyLineCount > 1) {
-					return;
-				}
+			emptyLineCount++;
+
+			if (emptyLineCount > 1) {
+				return;
 			}
 		}
 
@@ -271,9 +274,9 @@ public abstract class BaseAsUsedCheck extends BaseCheck {
 			while (true) {
 				DetailAST grandParentDetailAST = parentDetailAST.getParent();
 
-				if ((grandParentDetailAST.getType() ==
-						TokenTypes.LITERAL_ELSE) ||
-					(grandParentDetailAST.getType() == TokenTypes.LITERAL_IF)) {
+				if (TokenUtil.isOfType(
+						grandParentDetailAST, TokenTypes.LITERAL_ELSE,
+						TokenTypes.LITERAL_IF)) {
 
 					parentDetailAST = grandParentDetailAST;
 
@@ -342,12 +345,14 @@ public abstract class BaseAsUsedCheck extends BaseCheck {
 
 			DetailAST parentDetailAST = elistDetailAST.getParent();
 
-			if (parentDetailAST.getType() == TokenTypes.METHOD_CALL) {
-				String methodName = getMethodName(parentDetailAST);
+			if (parentDetailAST.getType() != TokenTypes.METHOD_CALL) {
+				continue;
+			}
 
-				if (methodName.matches(actionNameRegex)) {
-					return dependentIdentDetailAST.getLineNo();
-				}
+			String methodName = getMethodName(parentDetailAST);
+
+			if (methodName.matches(actionNameRegex)) {
+				return dependentIdentDetailAST.getLineNo();
 			}
 		}
 
@@ -445,8 +450,9 @@ public abstract class BaseAsUsedCheck extends BaseCheck {
 
 			DetailAST parentDetailAST = slistDetailAST.getParent();
 
-			if ((parentDetailAST.getType() == TokenTypes.LITERAL_ELSE) ||
-				(parentDetailAST.getType() == TokenTypes.LITERAL_IF)) {
+			if (TokenUtil.isOfType(
+					parentDetailAST, TokenTypes.LITERAL_ELSE,
+					TokenTypes.LITERAL_IF)) {
 
 				elseOrIfStatementDetailAST = parentDetailAST;
 			}
@@ -477,9 +483,8 @@ public abstract class BaseAsUsedCheck extends BaseCheck {
 
 			DetailAST branchedStatementDetailAST = null;
 
-			if ((branchingStatementDetailAST.getType() ==
-					TokenTypes.LITERAL_BREAK) ||
-				(branchingStatementDetailAST.getType() ==
+			if (TokenUtil.isOfType(
+					branchingStatementDetailAST, TokenTypes.LITERAL_BREAK,
 					TokenTypes.LITERAL_CONTINUE)) {
 
 				branchedStatementDetailAST = getParentWithTokenType(
@@ -492,14 +497,16 @@ public abstract class BaseAsUsedCheck extends BaseCheck {
 					TokenTypes.LAMBDA, TokenTypes.METHOD_DEF);
 			}
 
-			if ((branchedStatementDetailAST != null) &&
-				(branchedStatementDetailAST.getLineNo() < start) &&
-				((lastBranchingStatementDetailAST == null) ||
-				 (branchingStatementDetailAST.getLineNo() >
+			if ((branchedStatementDetailAST == null) ||
+				(branchedStatementDetailAST.getLineNo() >= start) ||
+				((lastBranchingStatementDetailAST != null) &&
+				 (branchingStatementDetailAST.getLineNo() <=
 					 lastBranchingStatementDetailAST.getLineNo()))) {
 
-				lastBranchingStatementDetailAST = branchingStatementDetailAST;
+				continue;
 			}
+
+			lastBranchingStatementDetailAST = branchingStatementDetailAST;
 		}
 
 		return lastBranchingStatementDetailAST;
@@ -567,15 +574,10 @@ public abstract class BaseAsUsedCheck extends BaseCheck {
 			}
 
 			if (grandParentDetailAST.getType() == TokenTypes.LITERAL_FOR) {
-				if ((parentDetailAST.getType() == TokenTypes.FOR_CONDITION) ||
-					(parentDetailAST.getType() == TokenTypes.FOR_EACH_CLAUSE) ||
-					(parentDetailAST.getType() == TokenTypes.FOR_INIT) ||
-					(parentDetailAST.getType() == TokenTypes.FOR_ITERATOR)) {
-
-					return true;
-				}
-
-				return false;
+				return TokenUtil.isOfType(
+					parentDetailAST, TokenTypes.FOR_CONDITION,
+					TokenTypes.FOR_EACH_CLAUSE, TokenTypes.FOR_INIT,
+					TokenTypes.FOR_ITERATOR);
 			}
 
 			if (grandParentDetailAST.getType() == TokenTypes.LITERAL_TRY) {

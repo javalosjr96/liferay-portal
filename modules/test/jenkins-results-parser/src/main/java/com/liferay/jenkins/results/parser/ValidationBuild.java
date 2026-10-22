@@ -156,6 +156,17 @@ public class ValidationBuild extends BaseBuild {
 	}
 
 	@Override
+	public Job getJob() {
+		TopLevelBuild topLevelBuild = getTopLevelBuild();
+
+		if (topLevelBuild != null) {
+			return topLevelBuild.getJob();
+		}
+
+		return super.getJob();
+	}
+
+	@Override
 	public JSONObject getTestReportJSONObject(boolean checkCache) {
 		String urlSuffix = "testReport/api/json";
 
@@ -395,9 +406,11 @@ public class ValidationBuild extends BaseBuild {
 			List<Element> failureElements = new ArrayList<>();
 
 			for (TestResult testResult : getTestResults(null)) {
-				if (testResult.isFailing()) {
-					failureElements.add(testResult.getGitHubElement());
+				if (!testResult.isFailing()) {
+					continue;
 				}
+
+				failureElements.add(testResult.getGitHubElement());
 			}
 
 			if (!failureElements.isEmpty()) {

@@ -105,6 +105,11 @@ public abstract class BaseWorkspaceGitRepository
 	}
 
 	@Override
+	public String getBaseBranchUsername() {
+		return getString("base_branch_username");
+	}
+
+	@Override
 	public String getBranchName() {
 		if (_branchName != null) {
 			return _branchName;
@@ -163,8 +168,8 @@ public abstract class BaseWorkspaceGitRepository
 		}
 
 		return GitHubDevSyncUtil.getCacheBranchName(
-			_getBaseBranchUsername(), getSenderBranchUsername(),
-			senderBranchSHA, baseBranchSHA);
+			getBaseBranchUsername(), getSenderBranchUsername(), senderBranchSHA,
+			baseBranchSHA);
 	}
 
 	@Override
@@ -293,6 +298,18 @@ public abstract class BaseWorkspaceGitRepository
 	}
 
 	@Override
+	public void setBaseBranchUsername(String username) {
+		if (username.equals(getBaseBranchUsername())) {
+			return;
+		}
+
+		_setBaseBranchUsername(username);
+		setUsePullRequestBaseRepository(true);
+
+		_upstreamRemoteGitRef = null;
+	}
+
+	@Override
 	public void setCommitFileIsSHA(boolean commitFileIsSHA) {
 		_commitFileIsSHA = commitFileIsSHA;
 	}
@@ -315,7 +332,13 @@ public abstract class BaseWorkspaceGitRepository
 			PullRequest pullRequest = PullRequestFactory.newPullRequest(
 				gitHubURL);
 
-			_upstreamRemoteGitRef = pullRequest.getUpstreamRemoteGitBranch();
+			if (_isUsePullRequestBaseRepository()) {
+				_upstreamRemoteGitRef = _getUpstreamRemoteGitRef();
+			}
+			else {
+				_upstreamRemoteGitRef =
+					pullRequest.getUpstreamRemoteGitBranch();
+			}
 
 			_setBaseBranchHeadSHA(_upstreamRemoteGitRef.getSHA());
 			setBaseBranchSHA(_upstreamRemoteGitRef.getSHA());
@@ -401,6 +424,13 @@ public abstract class BaseWorkspaceGitRepository
 		}
 
 		setSetUp(true);
+	}
+
+	@Override
+	public void setUsePullRequestBaseRepository(
+		boolean usePullRequestBaseRepository) {
+
+		put("use_pull_request_base_repository", usePullRequestBaseRepository);
 	}
 
 	@Override
@@ -1170,11 +1200,20 @@ public abstract class BaseWorkspaceGitRepository
 		gitWorkingDirectory.createLocalGitBranch(
 			upstreamBranchName, true, baseBranchSHA);
 
+		String upstreamRemoteURL = null;
+
+		if (_isUsePullRequestBaseRepository()) {
+			RemoteGitRef upstreamRemoteGitRef = _getUpstreamRemoteGitRef();
+
+			upstreamRemoteURL = upstreamRemoteGitRef.getRemoteURL();
+		}
+
 		return gitWorkingDirectory.getRebasedLocalGitBranch(
 			getBranchName(), getSenderBranchName(),
 			JenkinsResultsParserUtil.combine(
 				"git@github.com:", getSenderBranchUsername(), "/", getName()),
-			senderBranchSHA, upstreamBranchName, baseBranchSHA);
+			senderBranchSHA, upstreamBranchName, baseBranchSHA,
+			upstreamRemoteURL);
 	}
 
 	private LocalGitBranch _createRemoteGitRefLocalGitBranch() {
@@ -1318,10 +1357,6 @@ public abstract class BaseWorkspaceGitRepository
 		return getString("base_branch_head_sha");
 	}
 
-	private String _getBaseBranchUsername() {
-		return getString("base_branch_username");
-	}
-
 	private String _getDotGitArchiveName() {
 		return getDirectoryName() + "-git.zip";
 	}
@@ -1391,12 +1426,21 @@ public abstract class BaseWorkspaceGitRepository
 		String name = getName();
 		String upstreamBranchName = getUpstreamBranchName();
 
+		String upstreamUsername = JenkinsResultsParserUtil.getUpstreamUserName(
+			name, upstreamBranchName);
+
+		String baseBranchUsername = optString("base_branch_username");
+
+		if (_isUsePullRequestBaseRepository() &&
+			!JenkinsResultsParserUtil.isNullOrEmpty(baseBranchUsername)) {
+
+			upstreamUsername = baseBranchUsername;
+		}
+
 		_upstreamRemoteGitRef = GitUtil.getRemoteGitRef(
 			JenkinsResultsParserUtil.combine(
-				"https://github.com/",
-				JenkinsResultsParserUtil.getUpstreamUserName(
-					name, upstreamBranchName),
-				"/", name, "/tree/", upstreamBranchName));
+				"https://github.com/", upstreamUsername, "/", name, "/tree/",
+				upstreamBranchName));
 
 		return _upstreamRemoteGitRef;
 	}
@@ -1470,6 +1514,10 @@ public abstract class BaseWorkspaceGitRepository
 
 	private boolean _isPullRequest() {
 		return PullRequest.isValidGitHubPullRequestURL(getGitHubURL());
+	}
+
+	private boolean _isUsePullRequestBaseRepository() {
+		return getBoolean("use_pull_request_base_repository");
 	}
 
 	private void _setBaseBranchHeadSHA(String branchSHA) {

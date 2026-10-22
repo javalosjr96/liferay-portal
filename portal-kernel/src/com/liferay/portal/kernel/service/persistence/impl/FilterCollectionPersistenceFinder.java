@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
 import com.liferay.portal.kernel.util.OrderByComparator;
 
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Shuyang Zhou
@@ -30,10 +31,12 @@ public class FilterCollectionPersistenceFinder
 	@SafeVarargs
 	public FilterCollectionPersistenceFinder(
 		BasePersistenceImpl<T, E> basePersistenceImpl,
-		FinderPath paginatedFindPath, FinderPath unpaginatedFindPath,
-		FinderPath countFinderPath, String sqlSelectWhere, String sqlCountWhere,
-		String defaultOrderByJpql, String orderByEntityAlias, String where,
-		String dbWhere, UniquePersistenceFinder<T, E> uniquePersistenceFinder,
+		Function<T, Long> classPKFunction, FinderPath countFinderPath,
+		String dbWhere, String defaultOrderByJpql, String orderByEntityAlias,
+		FinderPath paginatedFindPath, String sqlCountWhere,
+		String sqlSelectWhere,
+		UniquePersistenceFinder<T, E> uniquePersistenceFinder,
+		FinderPath unpaginatedFindPath, String where,
 		FinderColumn<T>... finderColumns) {
 
 		super(
@@ -41,6 +44,8 @@ public class FilterCollectionPersistenceFinder
 			countFinderPath, sqlSelectWhere, sqlCountWhere, defaultOrderByJpql,
 			orderByEntityAlias, where, dbWhere, uniquePersistenceFinder,
 			finderColumns);
+
+		_classPKFunction = classPKFunction;
 
 		String entityAlias = basePersistenceImpl.getEntityAlias();
 
@@ -169,43 +174,23 @@ public class FilterCollectionPersistenceFinder
 
 		StringBundler sb = null;
 
-		int extraSize = inlineDistinct ? 3 : 4;
+		int extraSize = inlineDistinct ? 2 : 3;
 
 		if (orderByComparator == null) {
-			sb = new StringBundler((finderColumns.length * 2) + extraSize);
+			sb = new StringBundler(extraSize);
 		}
 		else {
 			sb = new StringBundler(
-				(finderColumns.length * 2) + extraSize +
-					(orderByComparator.getOrderByFields().length * 2));
+				extraSize + (orderByComparator.getOrderByFields().length * 2));
 		}
 
 		if (inlineDistinct) {
-			sb.append(_filterSqlSelectWhere);
+			sb.append(buildSQLWhere(_filterSqlSelectWhere, values, true));
 		}
 		else {
-			sb.append(_filterSqlSelectNoInlineDistinctWhere1);
-		}
-
-		for (int i = 0; i < finderColumns.length; i++) {
-			String fragment = finderColumns[i].getSqlFragment(values[i], true);
-
-			if (fragment.isEmpty()) {
-				continue;
-			}
-
-			sb.append(fragment);
-			sb.append(" AND ");
-		}
-
-		if (!dbWhere.isEmpty()) {
-			sb.append(dbWhere);
-		}
-		else if (sb.index() > 1) {
-			sb.setIndex(sb.index() - 1);
-		}
-
-		if (!inlineDistinct) {
+			sb.append(
+				buildSQLWhere(
+					_filterSqlSelectNoInlineDistinctWhere1, values, true));
 			sb.append(_filterSqlSelectNoInlineDistinctWhere2);
 		}
 
@@ -234,7 +219,7 @@ public class FilterCollectionPersistenceFinder
 				finderCache, values, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null,
 				true);
 
-			list = InlineSQLHelperUtil.filter(list, groupIds);
+			list = InlineSQLHelperUtil.filter(_classPKFunction, list, groupIds);
 
 			return list.size();
 		}
@@ -282,7 +267,7 @@ public class FilterCollectionPersistenceFinder
 				finderCache, values, QueryUtil.ALL_POS, QueryUtil.ALL_POS,
 				orderByComparator, true);
 
-			return InlineSQLHelperUtil.filter(list, groupIds);
+			return InlineSQLHelperUtil.filter(_classPKFunction, list, groupIds);
 		}
 
 		normalizeValues(values);
@@ -341,6 +326,7 @@ public class FilterCollectionPersistenceFinder
 
 	private static final long[] _EMPTY_GROUP_IDS = new long[0];
 
+	private final Function<T, Long> _classPKFunction;
 	private final String _filterPKColumn;
 	private final String _filterSqlCountWhere;
 	private final String _filterSqlSelectNoInlineDistinctWhere1;

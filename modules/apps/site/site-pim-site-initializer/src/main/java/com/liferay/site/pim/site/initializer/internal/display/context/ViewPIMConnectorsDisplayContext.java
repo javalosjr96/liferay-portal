@@ -74,19 +74,6 @@ public class ViewPIMConnectorsDisplayContext {
 	public List<FDSActionDropdownItem> getFDSActionDropdownItems() {
 		return ListUtil.fromArray(
 			FDSActionDropdownItemBuilder.setHref(
-				PIMURLUtil.getEditConnectorURL("{id}", _themeDisplay)
-			).setIcon(
-				"pencil"
-			).setLabel(
-				LanguageUtil.get(_httpServletRequest, "edit")
-			).setMethod(
-				"get"
-			).setPermissionKey(
-				"update"
-			).build(
-				"edit"
-			),
-			FDSActionDropdownItemBuilder.setHref(
 				PIMURLUtil.getFieldMappingsURL("{id}", _themeDisplay)
 			).setIcon(
 				"sheets"
@@ -100,33 +87,57 @@ public class ViewPIMConnectorsDisplayContext {
 				"fieldMappings"
 			),
 			FDSActionDropdownItemBuilder.setHref(
-				PIMURLUtil.getExportToLiferayCommerceURL()
+				PIMURLUtil.getEditConnectorURL("{id}", _themeDisplay)
 			).setIcon(
-				"download"
+				"pencil"
 			).setLabel(
-				LanguageUtil.get(_httpServletRequest, "export")
+				LanguageUtil.get(_httpServletRequest, "edit")
 			).setMethod(
 				"get"
-			).setTarget(
-				"blank"
+			).setPermissionKey(
+				"update"
 			).build(
-				"export"
+				"edit"
 			),
-			FDSActionDropdownItemBuilder.setConfirmationMessage(
-				LanguageUtil.get(
-					_httpServletRequest, "are-you-sure-you-want-to-delete-this")
-			).setHref(
-				"{actions.delete.href}"
+			FDSActionDropdownItemBuilder.setHref(
+				PIMURLUtil.getConnectorExecuteURL("{id}")
 			).setIcon(
+				"play"
+			).setLabel(
+				LanguageUtil.get(_httpServletRequest, "execute")
+			).setMethod(
+				"post"
+			).setSuccessMessage(
+				LanguageUtil.get(
+					_httpServletRequest,
+					"execution-has-started-successfully-and-will-continue-in-" +
+						"the-background")
+			).setTarget(
+				"async"
+			).setVisibilityFilters(
+				HashMapBuilder.<String, Object>put(
+					"active", Boolean.TRUE
+				).build()
+			).build(
+				"execute"
+			),
+			FDSActionDropdownItemBuilder.setHref(
+				PIMURLUtil.getConnectorScheduleURL("{id}", _themeDisplay)
+			).setIcon(
+				"date-time"
+			).setLabel(
+				LanguageUtil.get(_httpServletRequest, "schedule")
+			).setMethod(
+				"get"
+			).build(
+				"schedule"
+			),
+			FDSActionDropdownItemBuilder.setIcon(
 				"trash"
 			).setLabel(
 				LanguageUtil.get(_httpServletRequest, "delete")
-			).setMethod(
-				"delete"
 			).setPermissionKey(
 				"delete"
-			).setTarget(
-				"headless"
 			).build(
 				"delete"
 			));

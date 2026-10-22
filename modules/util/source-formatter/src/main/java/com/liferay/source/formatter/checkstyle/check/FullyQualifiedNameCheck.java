@@ -8,6 +8,7 @@ package com.liferay.source.formatter.checkstyle.check;
 import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
+import com.puppycrawl.tools.checkstyle.utils.TokenUtil;
 
 import java.util.List;
 
@@ -25,9 +26,7 @@ public class FullyQualifiedNameCheck extends BaseCheck {
 
 	@Override
 	protected void doVisitToken(DetailAST detailAST) {
-		DetailAST parentDetailAST = detailAST.getParent();
-
-		if (parentDetailAST != null) {
+		if (!isDirectChildOfCompilationUnit(detailAST)) {
 			return;
 		}
 
@@ -41,18 +40,14 @@ public class FullyQualifiedNameCheck extends BaseCheck {
 				nameDetailAST, name);
 
 			if ((fullyQualifiedName == null) ||
-				fullyQualifiedName.matches(".*\\.upgrade\\.v[0-9_]+\\.\\w+")) {
+				fullyQualifiedName.matches(".*\\.upgrade\\.v[0-9_]+\\.\\w+") ||
+				_isFullyQualifiedNameRequired(
+					detailAST, fullyQualifiedName, name, nameDetailASTs)) {
 
 				continue;
 			}
 
-			if (!_isFullyQualifiedNameRequired(
-					detailAST, fullyQualifiedName, name, nameDetailASTs)) {
-
-				log(
-					nameDetailAST, _MSG_USE_IMPORT_STATEMENT,
-					fullyQualifiedName);
-			}
+			log(nameDetailAST, _MSG_USE_IMPORT_STATEMENT, fullyQualifiedName);
 		}
 	}
 
@@ -66,8 +61,9 @@ public class FullyQualifiedNameCheck extends BaseCheck {
 				return false;
 			}
 
-			if ((siblingDetailAST.getType() != TokenTypes.IMPORT) &&
-				(siblingDetailAST.getType() != TokenTypes.STATIC_IMPORT)) {
+			if (!TokenUtil.isOfType(
+					siblingDetailAST, TokenTypes.IMPORT,
+					TokenTypes.STATIC_IMPORT)) {
 
 				continue;
 			}

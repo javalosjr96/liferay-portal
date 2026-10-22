@@ -11,6 +11,8 @@ import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.depot.service.DepotEntryService;
 import com.liferay.document.library.configuration.DLConfiguration;
+import com.liferay.frontend.data.set.action.FDSItemsActions;
+import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
 import com.liferay.learn.LearnMessageUtil;
 import com.liferay.object.constants.ObjectEntryFolderConstants;
 import com.liferay.object.constants.ObjectFolderConstants;
@@ -63,7 +65,9 @@ public class ViewDashboardDisplayContext {
 		ObjectDefinitionService objectDefinitionService,
 		RoleLocalService roleLocalService, ThemeDisplay themeDisplay,
 		TranslationInfoItemFieldValuesExporterRegistry
-			translationInfoItemFieldValuesExporterRegistry) {
+			translationInfoItemFieldValuesExporterRegistry,
+		FDSItemsActions viewBrokenLinksSectionFDSItemsActions,
+		FDSItemsActions viewMissingRequiredFieldsSectionFDSItemsActions) {
 
 		_analyticsSettingsManager = analyticsSettingsManager;
 		_depotEntryLocalService = depotEntryLocalService;
@@ -76,6 +80,10 @@ public class ViewDashboardDisplayContext {
 		_themeDisplay = themeDisplay;
 		_translationInfoItemFieldValuesExporterRegistry =
 			translationInfoItemFieldValuesExporterRegistry;
+		_viewBrokenLinksSectionFDSItemsActions =
+			viewBrokenLinksSectionFDSItemsActions;
+		_viewMissingRequiredFieldsSectionFDSItemsActions =
+			viewMissingRequiredFieldsSectionFDSItemsActions;
 	}
 
 	public Map<String, Object> getConstants() {
@@ -168,6 +176,11 @@ public class ViewDashboardDisplayContext {
 			GetterUtil.getBoolean(
 				PropsUtil.get(PropsKeys.CMS_BROKEN_LINKS_CHECKER_ENABLED))
 		).put(
+			"brokenLinksFDSActionDropdownItems",
+			() ->
+				_viewBrokenLinksSectionFDSItemsActions.
+					getFDSActionDropdownItems(_httpServletRequest)
+		).put(
 			"candidateAssetLibraries",
 			SectionDisplayContextUtil.getDepotEntriesJSONArray(
 				_httpServletRequest)
@@ -212,17 +225,17 @@ public class ViewDashboardDisplayContext {
 			PermissionUtil.getDefaultPermissionAdditionalProps(
 				_httpServletRequest, _themeDisplay)
 		).put(
-			"expiringSoonFDSName",
-			CMSSiteInitializerFDSNames.EXPIRING_SOON_SECTION
-		).put(
-			"expiringSoonFilterString",
-			SectionDisplayContextUtil.getExpiringSoonFilterString(
-				_httpServletRequest)
-		).put(
 			"fdsActionDropdownItems",
-			() ->
-				SectionDisplayContextUtil.getNeedsReviewFDSActionDropdownItems(
-					_httpServletRequest)
+			() -> {
+				List<FDSActionDropdownItem> fdsActionDropdownItems =
+					SectionDisplayContextUtil.getFDSActionDropdownItems(
+						_httpServletRequest);
+
+				SectionDisplayContextUtil.addScheduleDateFDSActionDropdownItems(
+					fdsActionDropdownItems, _httpServletRequest);
+
+				return fdsActionDropdownItems;
+			}
 		).put(
 			"fileMimeTypeCssClasses",
 			() -> {
@@ -244,6 +257,11 @@ public class ViewDashboardDisplayContext {
 					_dlConfiguration);
 			}
 		).put(
+			"missingRequiredFieldsFDSActionDropdownItems",
+			() ->
+				_viewMissingRequiredFieldsSectionFDSItemsActions.
+					getFDSActionDropdownItems(_httpServletRequest)
+		).put(
 			"objectDefinitionCssClasses",
 			SectionDisplayContextUtil.getObjectDefinitionCssClasses()
 		).put(
@@ -254,13 +272,6 @@ public class ViewDashboardDisplayContext {
 			ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS
 		).put(
 			"redirect", _themeDisplay.getURLCurrent()
-		).put(
-			"upcomingReviewsFDSName",
-			CMSSiteInitializerFDSNames.UPCOMING_REVIEWS_SECTION
-		).put(
-			"upcomingReviewsFilterString",
-			SectionDisplayContextUtil.getUpcomingReviewsFilterString(
-				_httpServletRequest)
 		).build();
 	}
 
@@ -320,5 +331,8 @@ public class ViewDashboardDisplayContext {
 	private final ThemeDisplay _themeDisplay;
 	private final TranslationInfoItemFieldValuesExporterRegistry
 		_translationInfoItemFieldValuesExporterRegistry;
+	private final FDSItemsActions _viewBrokenLinksSectionFDSItemsActions;
+	private final FDSItemsActions
+		_viewMissingRequiredFieldsSectionFDSItemsActions;
 
 }

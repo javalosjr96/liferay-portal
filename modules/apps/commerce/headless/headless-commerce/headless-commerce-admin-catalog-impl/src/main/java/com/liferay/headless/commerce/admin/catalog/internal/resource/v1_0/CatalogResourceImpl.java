@@ -21,6 +21,7 @@ import com.liferay.commerce.product.service.CPDefinitionService;
 import com.liferay.commerce.product.service.CommerceCatalogLocalService;
 import com.liferay.commerce.product.service.CommerceCatalogService;
 import com.liferay.exportimport.constants.ExportImportConstants;
+import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.vulcan.batch.engine.ExportImportVulcanBatchEngineTaskItemDelegate;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.Catalog;
 import com.liferay.headless.commerce.admin.catalog.dto.v1_0.Product;
@@ -29,6 +30,7 @@ import com.liferay.headless.commerce.admin.catalog.resource.v1_0.CatalogResource
 import com.liferay.headless.commerce.core.helper.ServiceContextHelper;
 import com.liferay.headless.commerce.core.util.CommerceCurrencyUtil;
 import com.liferay.portal.kernel.change.tracking.CTAware;
+import com.liferay.portal.kernel.lazy.referencing.LazyReferencingThreadLocal;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.search.Field;
@@ -36,6 +38,7 @@ import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
@@ -49,6 +52,8 @@ import com.liferay.portal.vulcan.util.SearchUtil;
 
 import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
+
+import java.io.Serializable;
 
 import java.util.Collections;
 import java.util.List;
@@ -135,6 +140,24 @@ public class CatalogResourceImpl
 			@Override
 			public List<String> getNestedFields() {
 				return List.of("creator");
+			}
+
+			@Override
+			public Map<String, Serializable> getParameters(
+				PortletDataContext portletDataContext) {
+
+				return HashMapBuilder.<String, Serializable>put(
+					"filter",
+					() -> StringUtil.merge(
+						transform(
+							_commerceCatalogLocalService.getCommerceCatalogs(
+								portletDataContext.getCompanyId(), true),
+							commerceCatalog ->
+								"externalReferenceCode ne '" +
+									commerceCatalog.getExternalReferenceCode() +
+										"'"),
+						" and ")
+				).build();
 			}
 
 			@Override
@@ -377,6 +400,14 @@ public class CatalogResourceImpl
 				catalog.getAccountId(), defaultAccountEntryId);
 		}
 
+		if (!LazyReferencingThreadLocal.isEnabled()) {
+			AccountEntry accountEntry =
+				_accountEntryService.getAccountEntryByExternalReferenceCode(
+					externalReferenceCode, contextCompany.getCompanyId());
+
+			return accountEntry.getAccountEntryId();
+		}
+
 		AccountEntry accountEntry =
 			_accountEntryService.getOrAddEmptyAccountEntry(
 				externalReferenceCode, externalReferenceCode,
@@ -428,7 +459,9 @@ public class CatalogResourceImpl
 			return commerceCurrency;
 		}
 
-		if (Validator.isNull(currencyExternalReferenceCode)) {
+		if (Validator.isNull(currencyExternalReferenceCode) ||
+			!LazyReferencingThreadLocal.isEnabled()) {
+
 			throw new NoSuchCurrencyException(
 				"Unable to find currency with external reference code " +
 					currencyExternalReferenceCode);

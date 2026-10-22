@@ -31,7 +31,7 @@ import java.util.Set;
 public class CTRowUtil {
 
 	public static int copyCTRows(
-			CTPersistence<?> ctPersistence, Connection connection,
+			Connection connection, CTPersistence<?> ctPersistence,
 			String selectSQL)
 		throws SQLException {
 
@@ -62,7 +62,7 @@ public class CTRowUtil {
 			try (PreparedStatement preparedStatement1 =
 					connection.prepareStatement(selectSQL);
 				PreparedStatement preparedStatement2 =
-					AutoBatchPreparedStatementUtil.autoBatch(
+					AutoBatchPreparedStatementUtil.autoBatchWithResults(
 						connection, sb.toString());
 				ResultSet resultSet = preparedStatement1.executeQuery()) {
 
@@ -121,35 +121,53 @@ public class CTRowUtil {
 	}
 
 	public static String getConstraintConflictsSQL(
-		String tableName, String primaryColumnName,
-		String[] uniqueIndexColumnNames, long targetCTCollectionId) {
+		long ctCollectionId, String primaryColumnName,
+		Map<String, Integer> tableColumnsMap, String tableName,
+		String[] uniqueIndexColumnNames, Object[] uniqueIndexValues) {
 
 		StringBundler sb = new StringBundler(
-			(3 * uniqueIndexColumnNames.length) + 9);
+			(6 * uniqueIndexColumnNames.length) + 9);
 
 		sb.append("select ");
 		sb.append(primaryColumnName);
 		sb.append(" from ");
 		sb.append(tableName);
 		sb.append(" where ctCollectionId = ");
-		sb.append(targetCTCollectionId);
+		sb.append(ctCollectionId);
 		sb.append(" and ");
 		sb.append(primaryColumnName);
 		sb.append(" != ?");
 
-		for (String uniqueIndexColumnName : uniqueIndexColumnNames) {
+		for (int i = 0; i < uniqueIndexColumnNames.length; i++) {
+			String uniqueIndexColumnName = uniqueIndexColumnNames[i];
+
 			sb.append(" and ");
-			sb.append(uniqueIndexColumnName);
-			sb.append(" = ?");
+
+			int columnType = tableColumnsMap.get(uniqueIndexColumnName);
+
+			if (!isBlank(columnType, uniqueIndexValues[i])) {
+				sb.append(uniqueIndexColumnName);
+				sb.append(" = ?");
+			}
+			else if (columnType == Types.VARCHAR) {
+				sb.append("(");
+				sb.append(uniqueIndexColumnName);
+				sb.append(" is null or ");
+				sb.append(uniqueIndexColumnName);
+				sb.append(" = '')");
+			}
+			else {
+				sb.append(uniqueIndexColumnName);
+				sb.append(" is null");
+			}
 		}
 
 		return sb.toString();
 	}
 
 	public static String getConstraintEntitiesSQL(
-		String tableName, String primaryColumnName,
-		String[] uniqueIndexColumnNames, long ctCollectionId,
-		Set<Long> primaryKeys) {
+		long ctCollectionId, String primaryColumnName, Set<Long> primaryKeys,
+		String tableName, String[] uniqueIndexColumnNames) {
 
 		StringBundler sb = new StringBundler();
 
@@ -238,6 +256,16 @@ public class CTRowUtil {
 		sb.append(")");
 
 		return sb.toString();
+	}
+
+	public static boolean isBlank(int columnType, Object value) {
+		if ((value == null) ||
+			((columnType == Types.VARCHAR) && value.equals(""))) {
+
+			return true;
+		}
+
+		return false;
 	}
 
 	private static boolean _isPostgresBlobTable(

@@ -2,7 +2,7 @@
 	background-color: $white;
 	display: flex;
 	flex-direction: column;
-	height: calc(100vh - 119px - #{$toolbarHeight});
+	height: 100vh;
 	position: relative;
 	width: 100%;
 
@@ -11,29 +11,27 @@
 		width: 120px;
 	}
 
-	.form-body {
-		flex: 1;
-		height: calc(100% - 58px);
-		min-height: 0;
-		position: relative;
+	.segment-details-row {
+		align-items: center;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem 1rem;
 	}
 
-	.header-root {
-		margin-bottom: 0;
-	}
+	.segment-details-label {
+		align-items: center;
+		display: flex;
+		max-width: 100%;
+		min-width: min(10rem, 100%);
 
-	.title-editor-root.editing + .source-icon {
-		display: none;
-	}
-}
-
-@media (max-width: $maxPageWidth + $sidebarOpenWidth) {
-	body.open .segments-root {
-		.contributor-builder-root.editing
-			.criteria-builder-section-main
-			.contributor-container
-			.container-fluid {
-			padding-right: $criteriaSidebarWidth;
+		.lexicon-icon {
+			flex-shrink: 0;
 		}
+	}
+
+	.segment-details-value {
+		flex: 1 1 12rem;
+		max-width: 20rem;
+		min-width: 0;
 	}
 }

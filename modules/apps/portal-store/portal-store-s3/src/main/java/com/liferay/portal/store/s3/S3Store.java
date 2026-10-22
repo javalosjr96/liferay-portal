@@ -41,9 +41,11 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -125,9 +127,11 @@ public class S3Store implements Store {
 							Instant initiatedInstant =
 								multipartUpload.initiated();
 
-							if (initiatedInstant.isBefore(startInstant)) {
-								multipartUploads.add(multipartUpload);
+							if (!initiatedInstant.isBefore(startInstant)) {
+								continue;
 							}
+
+							multipartUploads.add(multipartUpload);
 						}
 					});
 
@@ -296,19 +300,13 @@ public class S3Store implements Store {
 				companyId, repositoryId, dirName);
 		}
 
-		List<S3Object> s3Objects = _getS3Objects(key);
+		Set<String> fileNames = new LinkedHashSet<>();
 
-		Iterator<S3Object> iterator = s3Objects.iterator();
-
-		String[] fileNames = new String[s3Objects.size()];
-
-		for (int i = 0; i < fileNames.length; i++) {
-			S3Object s3Object = iterator.next();
-
-			fileNames[i] = S3KeyTransformerUtil.getFileName(s3Object.key());
+		for (S3Object s3Object : _getS3Objects(key)) {
+			fileNames.add(S3KeyTransformerUtil.getFileName(s3Object.key()));
 		}
 
-		return fileNames;
+		return fileNames.toArray(new String[0]);
 	}
 
 	@Override
@@ -633,15 +631,17 @@ public class S3Store implements Store {
 
 			while (iterator.hasNext()) {
 				for (int i = 0; i < _DELETE_MAX; i++) {
-					if (iterator.hasNext()) {
-						S3Object s3Object = iterator.next();
-
-						objectIdentifiers.add(
-							ObjectIdentifier.builder(
-							).key(
-								s3Object.key()
-							).build());
+					if (!iterator.hasNext()) {
+						continue;
 					}
+
+					S3Object s3Object = iterator.next();
+
+					objectIdentifiers.add(
+						ObjectIdentifier.builder(
+						).key(
+							s3Object.key()
+						).build());
 				}
 
 				CompletableFuture<DeleteObjectsResponse> completableFuture =
@@ -678,9 +678,11 @@ public class S3Store implements Store {
 		String key = null;
 
 		for (S3Object s3Object : s3Objects) {
-			if ((key == null) || (key.compareTo(s3Object.key()) < 0)) {
-				key = s3Object.key();
+			if ((key != null) && (key.compareTo(s3Object.key()) >= 0)) {
+				continue;
 			}
+
+			key = s3Object.key();
 		}
 
 		return key.substring(key.lastIndexOf(CharPool.SLASH) + 1);

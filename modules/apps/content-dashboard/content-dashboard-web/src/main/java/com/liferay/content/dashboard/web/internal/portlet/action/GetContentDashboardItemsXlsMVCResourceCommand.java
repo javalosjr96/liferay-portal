@@ -276,12 +276,14 @@ public class GetContentDashboardItemsXlsMVCResourceCommand
 				ContentDashboardItem<?> contentDashboardItem =
 					_toContentDashboardItem(document);
 
-				if (contentDashboardItem != null) {
-					workbookBuilder.row();
-
-					_addWorkbookCell(
-						contentDashboardItem, themeDisplay, workbookBuilder);
+				if (contentDashboardItem == null) {
+					continue;
 				}
+
+				workbookBuilder.row();
+
+				_addWorkbookCell(
+					contentDashboardItem, themeDisplay, workbookBuilder);
 			}
 
 			if (documents.size() < searchQueryResultWindowLimit) {
@@ -363,7 +365,7 @@ public class GetContentDashboardItemsXlsMVCResourceCommand
 
 	private String _toString(ThemeDisplay themeDisplay, Object value) {
 		if (value instanceof Date) {
-			return _toString(themeDisplay, (Date)value);
+			return _toString((Date)value, themeDisplay);
 		}
 
 		if (value == null) {

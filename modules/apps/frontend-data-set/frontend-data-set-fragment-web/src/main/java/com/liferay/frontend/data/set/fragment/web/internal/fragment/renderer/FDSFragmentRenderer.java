@@ -111,12 +111,6 @@ public class FDSFragmentRenderer implements FragmentRenderer {
 	}
 
 	@Override
-	public boolean isSelectable(HttpServletRequest httpServletRequest) {
-		return FeatureFlagManagerUtil.isEnabled(
-			_portal.getCompanyId(httpServletRequest), "LPS-164563");
-	}
-
-	@Override
 	public void render(
 			FragmentRendererContext fragmentRendererContext,
 			HttpServletRequest httpServletRequest,
@@ -589,16 +583,15 @@ public class FDSFragmentRenderer implements FragmentRenderer {
 				apiURLTokenMappingsJSONObject.getJSONObject(
 					unresolvedTokenName);
 
-			if (mappingJSONObject == null) {
+			if ((mappingJSONObject == null) ||
+				!Objects.equals(
+					mappingJSONObject.getString("mappingMode"), "context") ||
+				Validator.isNull(mappingJSONObject.getString("fieldId"))) {
+
 				continue;
 			}
 
-			if (Objects.equals(
-					mappingJSONObject.getString("mappingMode"), "context") &&
-				Validator.isNotNull(mappingJSONObject.getString("fieldId"))) {
-
-				unresolvedContextTokenNames.add(unresolvedTokenName);
-			}
+			unresolvedContextTokenNames.add(unresolvedTokenName);
 		}
 
 		return unresolvedContextTokenNames;

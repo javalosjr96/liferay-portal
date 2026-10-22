@@ -336,6 +336,8 @@ function TreeItemSelectorModal({
 
 	const resolvedTitle = title ?? Liferay.Language.get('select-category');
 
+	const hasError = !loading && !!error;
+
 	const isEmpty = !loading && !error && !nodes.length;
 
 	const hasFilterMisses =
@@ -408,16 +410,34 @@ function TreeItemSelectorModal({
 				)}
 
 				<div className="d-flex flex-column flex-grow-1 px-3 py-3">
-					{(loading || isEmpty || hasFilterMisses) && (
+					{(loading || hasError || isEmpty || hasFilterMisses) && (
 						<div className="align-items-center d-flex flex-column flex-grow-1 justify-content-center">
 							{loading && <ClayLoadingIndicator />}
+
+							{hasError && (
+								<ClayEmptyState
+									description={Liferay.Language.get(
+										'an-unexpected-error-occurred'
+									)}
+									imgSrc={`${Liferay.ThemeDisplay.getPathThemeImages()}/states/empty_state.svg`}
+									title={Liferay.Language.get(
+										'unable-to-load-content'
+									)}
+								/>
+							)}
 
 							{isEmpty && (
 								<ClayEmptyState
 									description={Liferay.Language.get(
 										'no-categories-were-found'
 									)}
-									imgSrc={`${Liferay.ThemeDisplay.getPathThemeImages()}/states/empty_state.svg`}
+									image={
+										<ClayIcon
+											className="c-empty-state-icon c-empty-state-icon-empty-state"
+											illustration
+											symbol="empty-state"
+										/>
+									}
 									title={Liferay.Language.get(
 										'no-results-found'
 									)}
@@ -429,7 +449,13 @@ function TreeItemSelectorModal({
 									description={Liferay.Language.get(
 										'try-again-with-a-different-search'
 									)}
-									imgSrc={`${Liferay.ThemeDisplay.getPathThemeImages()}/states/search_state.svg`}
+									image={
+										<ClayIcon
+											className="c-empty-state-icon c-empty-state-icon-search-state"
+											illustration
+											symbol="search-state"
+										/>
+									}
 									small
 									title={Liferay.Language.get(
 										'no-results-found'

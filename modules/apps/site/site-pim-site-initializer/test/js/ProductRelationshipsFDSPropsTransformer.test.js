@@ -4,15 +4,29 @@
  */
 
 import propsTransformer from '../../src/main/resources/META-INF/resources/js/ProductRelationshipsFDSPropsTransformer';
-import ProductRelationshipSelectorNameRenderer from '../../src/main/resources/META-INF/resources/js/cell_renderers/ProductRelationshipSelectorNameRenderer';
+import ProductRelationshipSelectorTitleRenderer from '../../src/main/resources/META-INF/resources/js/cell_renderers/ProductRelationshipSelectorTitleRenderer';
 
 jest.mock('@liferay/site-cms-site-initializer', () => ({
+	StatusLabel: jest.fn(),
 	addOnClickToCreationMenuItems: (items) =>
 		items.map((item) => ({...item, onClick() {}})),
+	confirmAndDeleteEntryAction: (...args) =>
+		mockConfirmAndDeleteEntryAction(...args),
 }));
 
+jest.mock('frontend-js-web', () => ({
+	sub: (template) => template,
+}));
+
+const DELETE_HREF =
+	'/o/headless-pim/v1.0/scopes/39226/links?className=com.liferay.object.model.ObjectDefinition%23P4R4&externalReferenceCode=SHIRT-BLUE&type=variant';
+
+const mockConfirmAndDeleteEntryAction = jest.fn();
+
+Liferay.Util = {...Liferay.Util, escapeHTML: (value) => value};
+
 jest.mock(
-	'../../src/main/resources/META-INF/resources/js/openProductRelationshipSelectorModal',
+	'../../src/main/resources/META-INF/resources/js/ProductRelationshipSelectorModal',
 	() => ({
 		__esModule: true,
 		default: jest.fn(),
@@ -20,16 +34,8 @@ jest.mock(
 );
 
 describe('ProductRelationshipsFDSPropsTransformer', () => {
-	it('marks the delete action as text-danger and leaves the other actions unchanged', () => {
-		const result = propsTransformer({
-			itemsActions: [
-				{data: {id: 'edit'}, icon: 'pencil'},
-				{data: {id: 'delete'}, icon: 'trash'},
-			],
-		});
-
-		expect(result.itemsActions[0].className).toBeUndefined();
-		expect(result.itemsActions[1].className).toBe('text-danger');
+	beforeEach(() => {
+		jest.clearAllMocks();
 	});
 
 	it('wires an onClick onto the creation menu primary items', () => {
@@ -44,21 +50,73 @@ describe('ProductRelationshipsFDSPropsTransformer', () => {
 		);
 	});
 
-	it('registers the product name cell renderer', () => {
+	it('registers the product title cell renderer', () => {
 		const result = propsTransformer({});
 
 		const [renderer] = result.customRenderers.tableCell;
 
 		expect(renderer.component).toBe(
-			ProductRelationshipSelectorNameRenderer
+			ProductRelationshipSelectorTitleRenderer
 		);
-		expect(renderer.name).toBe('nameTableCellRenderer');
+		expect(renderer.name).toBe('titleTableCellRenderer');
 	});
 
-	it('preserves the other props and omits items actions when none are given', () => {
+	it('forces hideManagementBarInEmptyState to true and preserves the other props', () => {
+		const result = propsTransformer({
+			hideManagementBarInEmptyState: false,
+			id: 'productRelationships',
+		});
+
+		expect(result.hideManagementBarInEmptyState).toBe(true);
+		expect(result.id).toBe('productRelationships');
+	});
+
+	it('confirms a removal through the modal rather than the browser dialog', () => {
+		const event = {preventDefault: jest.fn()};
+
+		propsTransformer({}).onActionDropdownItemClick({
+			action: {data: {id: 'delete'}},
+			event,
+			itemData: {
+				actions: {
+					delete: {
+						href: DELETE_HREF,
+						method: 'DELETE',
+					},
+				},
+				title: 'Blue Shirt',
+			},
+			loadData: jest.fn(),
+		});
+
+		expect(event.preventDefault).toHaveBeenCalled();
+		expect(mockConfirmAndDeleteEntryAction).toHaveBeenCalledWith(
+			expect.objectContaining({
+				deleteAction: {
+					href: DELETE_HREF,
+					method: 'DELETE',
+				},
+			})
+		);
+	});
+
+	it('leaves the other item actions to the data set', () => {
+		const event = {preventDefault: jest.fn()};
+
+		propsTransformer({}).onActionDropdownItemClick({
+			action: {data: {id: 'view'}},
+			event,
+			itemData: {actions: {delete: {href: '', method: ''}}, title: ''},
+			loadData: jest.fn(),
+		});
+
+		expect(event.preventDefault).not.toHaveBeenCalled();
+		expect(mockConfirmAndDeleteEntryAction).not.toHaveBeenCalled();
+	});
+
+	it('omits items actions when none are given', () => {
 		const result = propsTransformer({id: 'productRelationships'});
 
-		expect(result.id).toBe('productRelationships');
 		expect(result.itemsActions).toBeUndefined();
 	});
 });

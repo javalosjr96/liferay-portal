@@ -16,6 +16,7 @@ import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.AnnotationUtil;
+import com.puppycrawl.tools.checkstyle.utils.TokenUtil;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -62,8 +63,8 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 
 		DetailAST parentDetailAST = detailAST.getParent();
 
-		if ((parentDetailAST.getType() != TokenTypes.EXPR) &&
-			(parentDetailAST.getType() != TokenTypes.VARIABLE_DEF)) {
+		if (!TokenUtil.isOfType(
+				parentDetailAST, TokenTypes.EXPR, TokenTypes.VARIABLE_DEF)) {
 
 			return;
 		}
@@ -224,21 +225,15 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 			for (DetailAST variableCallerDetailAST : variableCallerDetailASTs) {
 				parentDetailAST = variableCallerDetailAST.getParent();
 
-				if ((parentDetailAST.getType() == TokenTypes.ASSIGN) ||
-					(parentDetailAST.getType() == TokenTypes.BAND_ASSIGN) ||
-					(parentDetailAST.getType() == TokenTypes.BOR_ASSIGN) ||
-					(parentDetailAST.getType() == TokenTypes.BXOR_ASSIGN) ||
-					(parentDetailAST.getType() == TokenTypes.DEC) ||
-					(parentDetailAST.getType() == TokenTypes.DIV_ASSIGN) ||
-					(parentDetailAST.getType() == TokenTypes.INC) ||
-					(parentDetailAST.getType() == TokenTypes.MINUS_ASSIGN) ||
-					(parentDetailAST.getType() == TokenTypes.MOD_ASSIGN) ||
-					(parentDetailAST.getType() == TokenTypes.PLUS_ASSIGN) ||
-					(parentDetailAST.getType() == TokenTypes.POST_DEC) ||
-					(parentDetailAST.getType() == TokenTypes.POST_INC) ||
-					(parentDetailAST.getType() == TokenTypes.SL_ASSIGN) ||
-					(parentDetailAST.getType() == TokenTypes.SR_ASSIGN) ||
-					(parentDetailAST.getType() == TokenTypes.STAR_ASSIGN)) {
+				if (TokenUtil.isOfType(
+						parentDetailAST, TokenTypes.ASSIGN,
+						TokenTypes.BAND_ASSIGN, TokenTypes.BOR_ASSIGN,
+						TokenTypes.BXOR_ASSIGN, TokenTypes.DEC,
+						TokenTypes.DIV_ASSIGN, TokenTypes.INC,
+						TokenTypes.MINUS_ASSIGN, TokenTypes.MOD_ASSIGN,
+						TokenTypes.PLUS_ASSIGN, TokenTypes.POST_DEC,
+						TokenTypes.POST_INC, TokenTypes.SL_ASSIGN,
+						TokenTypes.SR_ASSIGN, TokenTypes.STAR_ASSIGN)) {
 
 					isFinal = false;
 				}
@@ -246,9 +241,11 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 				end = Math.max(end, getEndLineNumber(variableCallerDetailAST));
 			}
 
-			if (!isFinal) {
-				nonfinalVariableRangeList.add(new int[] {start, end});
+			if (isFinal) {
+				continue;
 			}
+
+			nonfinalVariableRangeList.add(new int[] {start, end});
 		}
 
 		return nonfinalVariableRangeList;
@@ -349,23 +346,25 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 				return;
 			}
 
-			if (!allowNullValues()) {
-				DetailAST elistDetailAST = methodCallDetailAST.findFirstToken(
-					TokenTypes.ELIST);
+			if (allowNullValues()) {
+				continue;
+			}
 
-				DetailAST childDetailAST = elistDetailAST.getFirstChild();
+			DetailAST elistDetailAST = methodCallDetailAST.findFirstToken(
+				TokenTypes.ELIST);
 
-				while (true) {
-					if (childDetailAST == null) {
-						break;
-					}
+			DetailAST childDetailAST = elistDetailAST.getFirstChild();
 
-					if (_isNullValueExpression(childDetailAST)) {
-						return;
-					}
-
-					childDetailAST = childDetailAST.getNextSibling();
+			while (true) {
+				if (childDetailAST == null) {
+					break;
 				}
+
+				if (_isNullValueExpression(childDetailAST)) {
+					return;
+				}
+
+				childDetailAST = childDetailAST.getNextSibling();
 			}
 		}
 
@@ -542,9 +541,9 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 		int endLineNumber = getEndLineNumber(parentDetailAST);
 		int startLineNumber = getStartLineNumber(parentDetailAST);
 
-		while ((parentDetailAST.getType() == TokenTypes.DOT) ||
-			   (parentDetailAST.getType() == TokenTypes.EXPR) ||
-			   (parentDetailAST.getType() == TokenTypes.METHOD_CALL)) {
+		while (TokenUtil.isOfType(
+					parentDetailAST, TokenTypes.DOT, TokenTypes.EXPR,
+					TokenTypes.METHOD_CALL)) {
 
 			endLineNumber = getEndLineNumber(parentDetailAST);
 			startLineNumber = getStartLineNumber(parentDetailAST);
@@ -918,12 +917,14 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 				return;
 			}
 
-			if (branchStatementLineNumber < lineNumber) {
-				_checkInline(
-					variableDefinitionDetailAST, parentDetailAST,
-					builderClassName, supportsFunctionMethodNames,
-					expressionDetailASTMap, startLineNumber, endLineNumber);
+			if (branchStatementLineNumber >= lineNumber) {
+				continue;
 			}
+
+			_checkInline(
+				variableDefinitionDetailAST, parentDetailAST, builderClassName,
+				supportsFunctionMethodNames, expressionDetailASTMap,
+				startLineNumber, endLineNumber);
 		}
 	}
 
@@ -1012,9 +1013,9 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 		int endLineNumber = -1;
 
 		while (true) {
-			if ((detailAST == null) ||
-				((detailAST.getType() != TokenTypes.LITERAL_ELSE) &&
-				 (detailAST.getType() != TokenTypes.LITERAL_IF))) {
+			if (!TokenUtil.isOfType(
+					detailAST, TokenTypes.LITERAL_ELSE,
+					TokenTypes.LITERAL_IF)) {
 
 				break;
 			}
@@ -1104,11 +1105,13 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 				expressionDetailASTMap.entrySet()) {
 
 			for (DetailAST expressionDetailAST : entry.getValue()) {
-				if (_isNullValueExpression(expressionDetailAST)) {
-					log(
-						expressionDetailAST, _MSG_INCORRECT_NULL_VALUE,
-						builderClassName);
+				if (!_isNullValueExpression(expressionDetailAST)) {
+					continue;
 				}
+
+				log(
+					expressionDetailAST, _MSG_INCORRECT_NULL_VALUE,
+					builderClassName);
 			}
 		}
 	}
@@ -1204,20 +1207,24 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 
 				DetailAST childDetailAST = expressionDetailAST.getFirstChild();
 
-				if (childDetailAST.getType() == TokenTypes.METHOD_CALL) {
-					FullIdent fullIdent = FullIdent.createFullIdentBelow(
-						childDetailAST);
-
-					String methodCall = fullIdent.getText();
-
-					if (methodCall.equals("String.valueOf") ||
-						methodCall.endsWith(".toString")) {
-
-						log(
-							expressionDetailAST, _MSG_UNNEEDED_STRING_CAST,
-							avoidCastStringMethodName);
-					}
+				if (childDetailAST.getType() != TokenTypes.METHOD_CALL) {
+					continue;
 				}
+
+				FullIdent fullIdent = FullIdent.createFullIdentBelow(
+					childDetailAST);
+
+				String methodCall = fullIdent.getText();
+
+				if (!methodCall.endsWith(".toString") &&
+					!methodCall.equals("String.valueOf")) {
+
+					continue;
+				}
+
+				log(
+					expressionDetailAST, _MSG_UNNEEDED_STRING_CAST,
+					avoidCastStringMethodName);
 			}
 		}
 	}
@@ -1532,9 +1539,9 @@ public abstract class BaseBuilderCheck extends BaseChainedMethodCheck {
 
 			DetailAST parentDetailAST = identDetailAST.getParent();
 
-			if ((parentDetailAST.getType() == TokenTypes.ASSIGN) ||
-				(parentDetailAST.getType() == TokenTypes.EXPR) ||
-				(parentDetailAST.getType() == TokenTypes.TYPECAST) ||
+			if (TokenUtil.isOfType(
+					parentDetailAST, TokenTypes.ASSIGN, TokenTypes.EXPR,
+					TokenTypes.TYPECAST) ||
 				ArrayUtil.contains(
 					ARITHMETIC_OPERATOR_TOKEN_TYPES,
 					parentDetailAST.getType()) ||

@@ -1,18 +1,6 @@
 # Go Generate
 
-## Trigger
-
-Any change under `cloud/operator/`, or to the generated CRD under `cloud/helm/dxp-operator/crds/`.
-
-`cloud/operator/go_build.sh generate` runs `go generate ./...` (controller-gen for the CRD and the deepcopy methods) and then reformats the CRD with the Liferay source formatter. Running it must leave the working tree untouched. When it does not, the committed CRD has drifted from the API types that produce it.
-
-Drift has three sources, and this validation catches all three:
-
-- **A stale CRD.** Someone edited a type or a `+kubebuilder:` marker under `cloud/operator/resources/api/` and did not regenerate.
-
-- **A controller-gen version change.** The generator stamps its own version into the CRD as `controller-gen.kubebuilder.io/version`, so a `go.mod` bump rewrites that line.
-
-- **Source formatter skew.** `go_build.sh` reformats the CRD with the latest source formatter release from Nexus, while `ant format-source-current-branch` reformats it with the version the repository resolves. When the two disagree, each run reverses the other. Commit `f3d6fcaa` is an instance: an `Auto SF` run across the repository unwrapped a `description` line in the CRD while touching nothing under `cloud/operator/`.
+Runs `go generate` and fails when that changes the committed CRD, which means it has drifted from the API types that produce it. Drift has three sources: a type or a `+kubebuilder:` marker changed without a regeneration, a `go.mod` bump changed the controller-gen version stamped into the CRD, or the source formatter release `go_build.sh` uses disagrees with the one the repository resolves, as in commit `f3d6fcaa`.
 
 ## Match
 

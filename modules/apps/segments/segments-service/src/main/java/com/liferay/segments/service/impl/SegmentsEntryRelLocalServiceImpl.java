@@ -65,10 +65,12 @@ public class SegmentsEntryRelLocalServiceImpl
 		throws PortalException {
 
 		for (long classPK : classPKs) {
-			if (!hasSegmentsEntryRel(segmentsEntryId, classNameId, classPK)) {
-				addSegmentsEntryRel(
-					segmentsEntryId, classNameId, classPK, serviceContext);
+			if (hasSegmentsEntryRel(segmentsEntryId, classNameId, classPK)) {
+				continue;
 			}
+
+			addSegmentsEntryRel(
+				segmentsEntryId, classNameId, classPK, serviceContext);
 		}
 	}
 
@@ -99,6 +101,14 @@ public class SegmentsEntryRelLocalServiceImpl
 		for (long classPK : classPKs) {
 			deleteSegmentsEntryRel(segmentsEntryId, classNameId, classPK);
 		}
+	}
+
+	@Override
+	public SegmentsEntryRel fetchSegmentsEntryRel(
+		long segmentsEntryId, long classNameId, long classPK) {
+
+		return segmentsEntryRelPersistence.fetchByS_CN_CPK(
+			segmentsEntryId, classNameId, classPK);
 	}
 
 	@Override
@@ -154,16 +164,14 @@ public class SegmentsEntryRelLocalServiceImpl
 	public boolean hasSegmentsEntryRel(
 		long segmentsEntryId, long classNameId, long classPK) {
 
-		List<SegmentsEntryRel> segmentsEntryRels =
-			segmentsEntryRelPersistence.findByCN_CPK(classNameId, classPK);
+		SegmentsEntryRel segmentsEntryRel = fetchSegmentsEntryRel(
+			segmentsEntryId, classNameId, classPK);
 
-		for (SegmentsEntryRel segmentsEntryRel : segmentsEntryRels) {
-			if (segmentsEntryRel.getSegmentsEntryId() == segmentsEntryId) {
-				return true;
-			}
+		if (segmentsEntryRel == null) {
+			return false;
 		}
 
-		return false;
+		return true;
 	}
 
 	@Reference

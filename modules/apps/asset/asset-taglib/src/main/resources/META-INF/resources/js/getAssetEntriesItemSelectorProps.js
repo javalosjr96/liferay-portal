@@ -88,22 +88,59 @@ function TitleCell({itemData, value}) {
 	return value;
 }
 
-function buildAPIURL(groupIds, classNameIds, excludedAssetEntry) {
+function getFieldFilter(fieldName, values) {
+	if (values.length === 1) {
+		return `${fieldName} eq ${values[0]}`;
+	}
+
+	return `${fieldName} in (${values.join(',')})`;
+}
+
+function buildAPIURL(assetEntryTypes, excludedAssetEntry, groupIds) {
 	const url = new URL(ASSET_ENTRIES_API_URL, window.location.origin);
 
-	String(groupIds)
-		.split(',')
-		.forEach((groupId) => url.searchParams.append('groupIds', groupId));
+	let searchGroupIds = Array.from(
+		new Set(
+			assetEntryTypes.flatMap((assetEntryType) => assetEntryType.groupIds)
+		)
+	);
+
+	if (!searchGroupIds.length) {
+		searchGroupIds = String(groupIds).split(',');
+	}
+
+	searchGroupIds.forEach((groupId) =>
+		url.searchParams.append('groupIds', groupId)
+	);
 	url.searchParams.set('nestedFields', 'permissions');
 	url.searchParams.set('showNonindexable', 'true');
 
+	const classNameIdsByGroupIds = new Map();
+
+	assetEntryTypes.forEach(({classNameId, groupIds}) => {
+		const key = groupIds.join(',');
+
+		classNameIdsByGroupIds.set(key, [
+			...(classNameIdsByGroupIds.get(key) || []),
+			classNameId,
+		]);
+	});
+
 	const filters = [];
 
-	if (classNameIds.length === 1) {
-		filters.push(`classNameId eq ${classNameIds[0]}`);
+	if (classNameIdsByGroupIds.size === 1) {
+		const [classNameIds] = classNameIdsByGroupIds.values();
+
+		filters.push(getFieldFilter('classNameId', classNameIds));
 	}
-	else if (classNameIds.length > 1) {
-		filters.push(`classNameId in (${classNameIds.join(',')})`);
+	else if (classNameIdsByGroupIds.size > 1) {
+		const groupFilters = Array.from(
+			classNameIdsByGroupIds,
+			([groupIds, classNameIds]) =>
+				`(${getFieldFilter('classNameId', classNameIds)} and ${getFieldFilter('groupId', groupIds.split(','))})`
+		);
+
+		filters.push(`(${groupFilters.join(' or ')})`);
 	}
 
 	filters.push(STATUS_FILTER);
@@ -130,14 +167,10 @@ export default function getAssetEntriesItemSelectorProps({
 	groupIds,
 	portletNamespace,
 }) {
-	const classNameIds = assetEntryTypes.map(
-		(assetEntryType) => assetEntryType.classNameId
-	);
-
 	const singleAssetEntryType = assetEntryTypes.length === 1;
 
 	return {
-		apiURL: buildAPIURL(groupIds, classNameIds, excludedAssetEntry),
+		apiURL: buildAPIURL(assetEntryTypes, excludedAssetEntry, groupIds),
 		fdsProps: {
 			configInURLBehavior: 'OFF',
 			customRenderers: {

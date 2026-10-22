@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
@@ -79,10 +80,9 @@ public class ProductRelationshipsDisplayContextTest {
 
 		Mockito.when(
 			language.get(
-				Mockito.any(HttpServletRequest.class),
-				Mockito.eq("add-relationship"))
+				Mockito.any(HttpServletRequest.class), Mockito.eq("new"))
 		).thenReturn(
-			"Add Relationship"
+			"New"
 		);
 
 		_languageUtil.setLanguage(language);
@@ -113,7 +113,7 @@ public class ProductRelationshipsDisplayContextTest {
 			objectEntryLocalService.getValues(objectEntry)
 		).thenReturn(
 			HashMapBuilder.<String, Serializable>put(
-				"name", "Product Name"
+				"title", "Product Title"
 			).build()
 		);
 
@@ -170,7 +170,7 @@ public class ProductRelationshipsDisplayContextTest {
 
 			DropdownItem dropdownItem = dropdownItems.get(0);
 
-			Assert.assertEquals("Add Relationship", dropdownItem.get("label"));
+			Assert.assertEquals("New", dropdownItem.get("label"));
 
 			Map<?, ?> data = (Map<?, ?>)dropdownItem.get("data");
 
@@ -182,7 +182,6 @@ public class ProductRelationshipsDisplayContextTest {
 				objectEntry.getExternalReferenceCode(),
 				data.get("externalReferenceCode"));
 			Assert.assertEquals("[\"filter\"]", data.get("filters"));
-			Assert.assertEquals("Product Name", data.get("name"));
 			Assert.assertEquals(
 				String.valueOf(objectEntry.getGroupId()), data.get("scopeKey"));
 
@@ -199,6 +198,8 @@ public class ProductRelationshipsDisplayContextTest {
 							objectEntry.getObjectEntryId()))));
 			Assert.assertTrue(
 				searchAPIURL, searchAPIURL.contains("{relatedObjectEntryIds}"));
+
+			Assert.assertEquals("Product Title", data.get("title"));
 		}
 	}
 
@@ -235,17 +236,16 @@ public class ProductRelationshipsDisplayContextTest {
 
 		Mockito.when(
 			language.get(
-				Mockito.any(HttpServletRequest.class),
-				Mockito.eq("are-you-sure-you-want-to-delete-this"))
+				Mockito.any(HttpServletRequest.class), Mockito.eq("remove"))
 		).thenReturn(
-			"Are you sure?"
+			"Remove"
 		);
 
 		Mockito.when(
 			language.get(
-				Mockito.any(HttpServletRequest.class), Mockito.eq("delete"))
+				Mockito.any(HttpServletRequest.class), Mockito.eq("view"))
 		).thenReturn(
-			"Delete"
+			"View"
 		);
 
 		_languageUtil.setLanguage(language);
@@ -284,25 +284,41 @@ public class ProductRelationshipsDisplayContextTest {
 				productRelationshipsDisplayContext.getFDSActionDropdownItems();
 
 			Assert.assertEquals(
-				fdsActionDropdownItems.toString(), 1,
+				fdsActionDropdownItems.toString(), 2,
 				fdsActionDropdownItems.size());
 
 			FDSActionDropdownItem fdsActionDropdownItem =
 				fdsActionDropdownItems.get(0);
 
 			Assert.assertEquals(
-				"{actions.delete.href}", fdsActionDropdownItem.get("href"));
-			Assert.assertEquals("trash", fdsActionDropdownItem.get("icon"));
-			Assert.assertEquals("Delete", fdsActionDropdownItem.get("label"));
-			Assert.assertEquals(
-				"headless", fdsActionDropdownItem.get("target"));
+				StringBundler.concat(
+					"http://localhost:8080/c", GroupConstants.CMS_FRIENDLY_URL,
+					"/edit_content_item?objectEntryId={id}&redirect=/web/cms",
+					"/product"),
+				fdsActionDropdownItem.get("href"));
+			Assert.assertEquals("view", fdsActionDropdownItem.get("icon"));
+			Assert.assertEquals("View", fdsActionDropdownItem.get("label"));
+			Assert.assertNull(fdsActionDropdownItem.get("target"));
 
 			Map<?, ?> data = (Map<?, ?>)fdsActionDropdownItem.get("data");
 
+			Assert.assertEquals("view", data.get("id"));
+			Assert.assertEquals("get", data.get("method"));
+			Assert.assertEquals("get", data.get("permissionKey"));
+
+			fdsActionDropdownItem = fdsActionDropdownItems.get(1);
+
+			Assert.assertNull(fdsActionDropdownItem.get("href"));
 			Assert.assertEquals(
-				"Are you sure?", data.get("confirmationMessage"));
+				"times-circle", fdsActionDropdownItem.get("icon"));
+			Assert.assertEquals("Remove", fdsActionDropdownItem.get("label"));
+			Assert.assertNull(fdsActionDropdownItem.get("target"));
+
+			data = (Map<?, ?>)fdsActionDropdownItem.get("data");
+
+			Assert.assertNull(data.get("confirmationMessage"));
 			Assert.assertEquals("delete", data.get("id"));
-			Assert.assertEquals("delete", data.get("method"));
+			Assert.assertNull(data.get("method"));
 			Assert.assertEquals("delete", data.get("permissionKey"));
 		}
 	}

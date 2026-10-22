@@ -8,6 +8,7 @@ package com.liferay.frontend.data.set.internal.serializer;
 import com.liferay.client.extension.type.FDSCellRendererCET;
 import com.liferay.client.extension.type.FDSFilterCET;
 import com.liferay.client.extension.type.manager.CETManager;
+import com.liferay.frontend.data.set.action.FDSBulkActions;
 import com.liferay.frontend.data.set.constants.FDSEntityFieldTypes;
 import com.liferay.frontend.data.set.internal.url.FDSAPIURLResolverRegistryImpl;
 import com.liferay.frontend.data.set.model.FDSActionDropdownItem;
@@ -60,6 +61,8 @@ import org.junit.Rule;
 import org.junit.Test;
 
 import org.mockito.Mockito;
+
+import org.osgi.framework.ServiceRegistration;
 
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.JSONCompareMode;
@@ -227,6 +230,35 @@ public class CustomFDSSerializerTest extends BaseFDSSerializerTestCase {
 			API_URL_PARAMETERS,
 			_customFDSSerializer.serializeAdditionalAPIURLParameters(
 				FDS_NAMES[0], httpServletRequest));
+	}
+
+	@Test
+	public void testSerializeBulkActions() throws Exception {
+		Mockito.when(
+			_customFDSSerializer.serializeBulkActions(
+				FDS_NAMES[0], httpServletRequest)
+		).thenCallRealMethod();
+
+		Assert.assertEquals(
+			Collections.emptyList(),
+			_customFDSSerializer.serializeBulkActions(
+				FDS_NAMES[0], httpServletRequest));
+
+		List<FDSActionDropdownItem> fdsActionDropdownItems = ListUtil.fromArray(
+			new FDSActionDropdownItem(
+				null, ICONS[0], IDS[0], LABELS[0],
+				RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+				RandomTestUtil.randomString()));
+
+		ServiceRegistration<FDSBulkActions> serviceRegistration =
+			registerFDSBulkActions(fdsActionDropdownItems, FDS_NAMES[0]);
+
+		Assert.assertEquals(
+			fdsActionDropdownItems,
+			_customFDSSerializer.serializeBulkActions(
+				FDS_NAMES[0], httpServletRequest));
+
+		serviceRegistration.unregister();
 	}
 
 	@Test
@@ -1786,111 +1818,112 @@ public class CustomFDSSerializerTest extends BaseFDSSerializerTestCase {
 			String rendererType = String.valueOf(
 				propertiesMap.get("rendererType"));
 
-			if (Validator.isNotNull(rendererType) &&
-				rendererType.equals("clientExtension")) {
+			if (Validator.isNull(rendererType) ||
+				!rendererType.equals("clientExtension")) {
 
-				String clientExtensionEntryERC = String.valueOf(
-					propertiesMap.get("renderer"));
-
-				CETManager cetManager = Mockito.mock(CETManager.class);
-
-				Mockito.when(
-					cetManager.getCET(
-						Mockito.anyLong(), Mockito.eq(clientExtensionEntryERC))
-				).thenAnswer(
-					invocation -> new FDSCellRendererCET() {
-
-						@Override
-						public String getBaseURL() {
-							return "";
-						}
-
-						@Override
-						public long getCompanyId() {
-							return invocation.getArgument(0, long.class);
-						}
-
-						@Override
-						public Date getCreateDate() {
-							return null;
-						}
-
-						@Override
-						public String getDescription() {
-							return "";
-						}
-
-						@Override
-						public String getEditJSP() {
-							return "";
-						}
-
-						@Override
-						public String getExternalReferenceCode() {
-							return clientExtensionEntryERC;
-						}
-
-						@Override
-						public Date getModifiedDate() {
-							return null;
-						}
-
-						@Override
-						public String getName() {
-							return "";
-						}
-
-						@Override
-						public String getName(Locale locale) {
-							return "";
-						}
-
-						@Override
-						public Properties getProperties() {
-							return null;
-						}
-
-						@Override
-						public String getSourceCodeURL() {
-							return "";
-						}
-
-						@Override
-						public int getStatus() {
-							return 0;
-						}
-
-						@Override
-						public String getType() {
-							return "";
-						}
-
-						@Override
-						public String getTypeSettings() {
-							return "";
-						}
-
-						@Override
-						public String getURL() {
-							return "/o/" + clientExtensionEntryERC +
-								"/index.js";
-						}
-
-						@Override
-						public boolean hasProperties() {
-							return false;
-						}
-
-						@Override
-						public boolean isReadOnly() {
-							return false;
-						}
-
-					}
-				);
-
-				_customFDSSerializer.cetManager = cetManager;
+				continue;
 			}
+
+			String clientExtensionEntryERC = String.valueOf(
+				propertiesMap.get("renderer"));
+
+			CETManager cetManager = Mockito.mock(CETManager.class);
+
+			Mockito.when(
+				cetManager.getCET(
+					Mockito.anyLong(), Mockito.eq(clientExtensionEntryERC))
+			).thenAnswer(
+				invocation -> new FDSCellRendererCET() {
+
+					@Override
+					public String getBaseURL() {
+						return "";
+					}
+
+					@Override
+					public long getCompanyId() {
+						return invocation.getArgument(0, long.class);
+					}
+
+					@Override
+					public Date getCreateDate() {
+						return null;
+					}
+
+					@Override
+					public String getDescription() {
+						return "";
+					}
+
+					@Override
+					public String getEditJSP() {
+						return "";
+					}
+
+					@Override
+					public String getExternalReferenceCode() {
+						return clientExtensionEntryERC;
+					}
+
+					@Override
+					public Date getModifiedDate() {
+						return null;
+					}
+
+					@Override
+					public String getName() {
+						return "";
+					}
+
+					@Override
+					public String getName(Locale locale) {
+						return "";
+					}
+
+					@Override
+					public Properties getProperties() {
+						return null;
+					}
+
+					@Override
+					public String getSourceCodeURL() {
+						return "";
+					}
+
+					@Override
+					public int getStatus() {
+						return 0;
+					}
+
+					@Override
+					public String getType() {
+						return "";
+					}
+
+					@Override
+					public String getTypeSettings() {
+						return "";
+					}
+
+					@Override
+					public String getURL() {
+						return "/o/" + clientExtensionEntryERC + "/index.js";
+					}
+
+					@Override
+					public boolean hasProperties() {
+						return false;
+					}
+
+					@Override
+					public boolean isReadOnly() {
+						return false;
+					}
+
+				}
+			);
+
+			_customFDSSerializer.cetManager = cetManager;
 		}
 
 		Mockito.when(

@@ -4,11 +4,11 @@
  */
 
 import '@testing-library/jest-dom';
-import {render} from '@testing-library/react';
+import {render, screen, waitFor, within} from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import React from 'react';
 
 import StyleBookEditor from '../../src/main/resources/META-INF/resources/js/style-book-editor/StyleBookEditor';
-import {config} from '../../src/main/resources/META-INF/resources/js/style-book-editor/config';
 
 const DEFAULT_TOKEN_DEFINITION_PRIORITY = 300;
 
@@ -28,12 +28,6 @@ jest.mock(
 	'../../src/main/resources/META-INF/resources/js/style-book-editor/LayoutPreview',
 	() => () => <div data-testid="LayoutPreview" />
 );
-
-global.Liferay = {
-	Language: {
-		get: jest.fn((key) => key),
-	},
-};
 
 const frontendTokenDefinitions = [
 	{
@@ -127,35 +121,112 @@ const previewOptions = [
 ];
 
 describe('StyleBookEditor', () => {
-	it('initializes config with namespaced tokens and backward compatibility for theme tokens', () => {
+	it('stores a link to a token as a reference to its CSS variable', async () => {
+		fetch.mockResponseOnce(JSON.stringify({}));
+
 		render(
 			<StyleBookEditor
 				defaultTokenDefinitionPriority={
 					DEFAULT_TOKEN_DEFINITION_PRIORITY
 				}
+				frontendTokenDefinitions={[
+					{
+						frontendTokenCategories: [
+							{
+								frontendTokenSets: [
+									{
+										frontendTokens: ['a', 'b'].map(
+											(name) => ({
+												defaultValue: '#000000',
+												editorType: 'ColorPicker',
+												label: `Token ${name}`,
+												mappings: [
+													{
+														type: 'cssVariable',
+														value: `token-${name}`,
+													},
+												],
+												name,
+												type: 'String',
+											})
+										),
+										label: 'Set 1',
+										name: 'set1',
+									},
+								],
+								label: 'Category 1',
+								name: 'category1',
+							},
+						],
+						id: 'theme',
+						name: 'Theme Tokens',
+						priority: 300,
+					},
+				]}
+				namespace="_namespace_"
+				previewOptions={previewOptions}
+				saveDraftURL="/save-draft"
+				themeFrontendTokenDefinitionId="theme"
+			/>
+		);
+
+		await userEvent.click(
+			within(screen.getByLabelText('Token a')).getByLabelText(
+				'select-color'
+			)
+		);
+
+		const dropdownMenu = document.querySelector('.dropdown-menu.show');
+
+		await userEvent.click(
+			within(dropdownMenu).getByText('value-from-stylebook')
+		);
+		await userEvent.click(within(dropdownMenu).getByTitle('Token b'));
+
+		await waitFor(() => expect(fetch).toHaveBeenCalled());
+
+		const formData = fetch.mock.calls[0][1].body;
+
+		expect(
+			JSON.parse(formData.get('_namespace_frontendTokensValues'))
+		).toEqual({
+			'theme:a': {
+				cssVariableMapping: 'token-a',
+				name: 'theme:b',
+				tokenDefinitionId: 'theme',
+				value: 'var(--token-b)',
+			},
+		});
+	});
+
+	it('sets the value of the linked token to the CSS variable of a token', () => {
+		const {container} = render(
+			<StyleBookEditor
+				defaultTokenDefinitionPriority={
+					DEFAULT_TOKEN_DEFINITION_PRIORITY
+				}
 				frontendTokenDefinitions={frontendTokenDefinitions}
+				frontendTokensValues={{
+					'theme:conflictingToken': {
+						cssVariableMapping: 'conflicting-token',
+						tokenDefinitionId: 'theme',
+						value: '#222',
+					},
+					'theme:themeToken': {
+						cssVariableMapping: 'theme-token',
+						name: 'theme:conflictingToken',
+						tokenDefinitionId: 'theme',
+						value: 'var(--conflicting-token)',
+					},
+				}}
 				previewOptions={previewOptions}
 				themeFrontendTokenDefinitionId="theme"
 			/>
 		);
 
-		// Namespaced keys should exist
+		const sidebar = container.querySelector('.style-book-editor__sidebar');
 
-		expect(config.frontendTokens['theme:themeToken']).toBeDefined();
-		expect(config.frontendTokens['theme:themeToken'].value).toBe('#000');
-
-		expect(config.frontendTokens['clay:clayToken']).toBeDefined();
-		expect(config.frontendTokens['clay:clayToken'].value).toBe('#fff');
-
-		// Backward compatibility: theme tokens should also exist without namespace
-
-		expect(config.frontendTokens['themeToken']).toBeDefined();
-		expect(config.frontendTokens['themeToken'].name).toBe('themeToken');
-		expect(config.frontendTokens['themeToken'].value).toBe('#000');
-
-		// Clay tokens should NOT exist without namespace (unless it was the theme)
-
-		expect(config.frontendTokens['clayToken']).toBeUndefined();
+		expect(sidebar.style.getPropertyValue('--theme-token')).toBe('#222');
 	});
 
 	it('respects priority precedence when multiple tokens map to the same CSS variable', () => {

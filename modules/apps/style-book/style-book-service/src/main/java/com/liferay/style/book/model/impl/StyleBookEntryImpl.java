@@ -16,10 +16,13 @@ import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.zip.ZipWriter;
+import com.liferay.style.book.model.StyleBookEntryVersion;
 
 /**
  * @author Eudaldo Alonso
+ * @author Thiago Buarque
  */
 public class StyleBookEntryImpl extends StyleBookEntryBaseImpl {
 
@@ -47,6 +50,24 @@ public class StyleBookEntryImpl extends StyleBookEntryBaseImpl {
 	}
 
 	@Override
+	public int getStatus() {
+		if (isHead()) {
+			return super.getStatus();
+		}
+
+		return WorkflowConstants.STATUS_DRAFT;
+	}
+
+	@Override
+	public void populateVersionModel(
+		StyleBookEntryVersion styleBookEntryVersion) {
+
+		super.populateVersionModel(styleBookEntryVersion);
+
+		styleBookEntryVersion.setStatus(super.getStatus());
+	}
+
+	@Override
 	public void populateZipWriter(ZipWriter zipWriter, String path)
 		throws Exception {
 
@@ -54,6 +75,8 @@ public class StyleBookEntryImpl extends StyleBookEntryBaseImpl {
 		FileEntry previewFileEntry = _getPreviewFileEntry();
 
 		JSONObject jsonObject = JSONUtil.put(
+			"defaultStyleBookEntry", isDefaultStyleBookEntry()
+		).put(
 			"frontendTokenDefinitionPath",
 			() -> {
 				if (Validator.isBlank(frontendTokenDefinition)) {

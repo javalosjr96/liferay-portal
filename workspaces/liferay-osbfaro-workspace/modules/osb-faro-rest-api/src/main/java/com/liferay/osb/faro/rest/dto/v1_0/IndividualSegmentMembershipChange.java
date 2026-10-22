@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLField;
 import com.liferay.portal.vulcan.graphql.annotation.GraphQLName;
@@ -25,6 +26,8 @@ import java.io.Serializable;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
@@ -38,11 +41,11 @@ import java.util.function.Supplier;
  */
 @Generated("")
 @GraphQLName(
-	description = "A single change to an individual segment's membership: one individual entering or leaving the segment on a given date, with the individual's name and email resolved. Use `getWorkspaceGroupIndividualSegmentMembershipChangesPage` to list changes for a segment over a date range.",
+	description = "Deprecated: a single change to an individual segment's membership. Returned only by the deprecated `getWorkspaceGroupIndividualSegmentMembershipChangesPage`, which is always empty.",
 	value = "IndividualSegmentMembershipChange"
 )
 @io.swagger.v3.oas.annotations.media.Schema(
-	description = "A single change to an individual segment's membership: one individual entering or leaving the segment on a given date, with the individual's name and email resolved. Use `getWorkspaceGroupIndividualSegmentMembershipChangesPage` to list changes for a segment over a date range."
+	description = "Deprecated: a single change to an individual segment's membership. Returned only by the deprecated `getWorkspaceGroupIndividualSegmentMembershipChangesPage`, which is always empty."
 )
 @JsonFilter("Liferay.Vulcan")
 @XmlRootElement(name = "IndividualSegmentMembershipChange")
@@ -365,51 +368,6 @@ public class IndividualSegmentMembershipChange implements Serializable {
 	@JsonIgnore
 	private Supplier<String> _individualSegmentIdSupplier;
 
-	@io.swagger.v3.oas.annotations.media.Schema(
-		description = "Kind of change. ADDED when the individual entered the segment; the analytics engine defines the value used when an individual leaves."
-	)
-	public String getOperation() {
-		if (_operationSupplier != null) {
-			operation = _operationSupplier.get();
-
-			_operationSupplier = null;
-		}
-
-		return operation;
-	}
-
-	public void setOperation(String operation) {
-		this.operation = operation;
-
-		_operationSupplier = null;
-	}
-
-	@JsonIgnore
-	public void setOperation(
-		UnsafeSupplier<String, Exception> operationUnsafeSupplier) {
-
-		_operationSupplier = () -> {
-			try {
-				return operationUnsafeSupplier.get();
-			}
-			catch (RuntimeException runtimeException) {
-				throw runtimeException;
-			}
-			catch (Exception exception) {
-				throw new RuntimeException(exception);
-			}
-		};
-	}
-
-	@GraphQLField(
-		description = "Kind of change. ADDED when the individual entered the segment; the analytics engine defines the value used when an individual leaves."
-	)
-	@JsonProperty(access = JsonProperty.Access.READ_ONLY)
-	protected String operation;
-
-	@JsonIgnore
-	private Supplier<String> _operationSupplier;
-
 	@Override
 	public boolean equals(Object object) {
 		if (this == object) {
@@ -554,22 +512,6 @@ public class IndividualSegmentMembershipChange implements Serializable {
 			sb.append("\"");
 		}
 
-		String operation = getOperation();
-
-		if (operation != null) {
-			if (sb.length() > 1) {
-				sb.append(", ");
-			}
-
-			sb.append("\"operation\": ");
-
-			sb.append("\"");
-
-			sb.append(_escape(operation));
-
-			sb.append("\"");
-		}
-
 		sb.append("}");
 
 		return sb.toString();
@@ -663,6 +605,27 @@ public class IndividualSegmentMembershipChange implements Serializable {
 		return sb.toString();
 	}
 
+	private static String _toJSON(Object value) {
+		if (value instanceof Collection) {
+			return String.valueOf(
+				JSONFactoryUtil.createJSONArray((Collection<?>)value));
+		}
+		else if (value instanceof Map) {
+			return String.valueOf(
+				JSONFactoryUtil.createJSONObject((Map<?, ?>)value));
+		}
+		else if (value instanceof Object[]) {
+			return String.valueOf(
+				JSONFactoryUtil.createJSONArray(
+					Arrays.asList((Object[])value)));
+		}
+		else if (value instanceof String) {
+			return StringBundler.concat("\"", _escape(value), "\"");
+		}
+
+		return String.valueOf(value);
+	}
+
 	private static final String[][] _JSON_ESCAPE_STRINGS = {
 		{"\\", "\"", "\b", "\f", "\n", "\r", "\t"},
 		{"\\\\", "\\\"", "\\b", "\\f", "\\n", "\\r", "\\t"}
@@ -671,4 +634,4 @@ public class IndividualSegmentMembershipChange implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:2052792626
+// LIFERAY-REST-BUILDER-HASH:-879532226

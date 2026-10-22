@@ -13,6 +13,7 @@ import com.liferay.portal.kernel.model.BaseModel;
 import com.liferay.portal.kernel.module.service.Snapshot;
 
 import java.util.List;
+import java.util.function.Function;
 
 /**
  * @author Raymond Augé
@@ -21,12 +22,12 @@ import java.util.List;
 public class InlineSQLHelperUtil {
 
 	public static <T extends BaseModel<T>> List<T> filter(
-		List<T> list, long... groupIds) {
+		Function<T, Long> classPKFunction, List<T> list, long... groupIds) {
 
 		InlineSQLHelper inlineSQLPermission =
 			_inlineSQLPermissionSnapshot.get();
 
-		return inlineSQLPermission.filter(list, groupIds);
+		return inlineSQLPermission.filter(classPKFunction, list, groupIds);
 	}
 
 	public static <T extends Table<T>> Predicate getPermissionWherePredicate(
@@ -39,18 +40,11 @@ public class InlineSQLHelperUtil {
 			modelClass, classPKColumn, groupIds);
 	}
 
-	public static boolean isEnabled() {
+	public static boolean isEnabled(long... groupIds) {
 		InlineSQLHelper inlineSQLPermission =
 			_inlineSQLPermissionSnapshot.get();
 
-		return inlineSQLPermission.isEnabled();
-	}
-
-	public static boolean isEnabled(long groupId) {
-		InlineSQLHelper inlineSQLPermission =
-			_inlineSQLPermissionSnapshot.get();
-
-		return inlineSQLPermission.isEnabled(groupId);
+		return inlineSQLPermission.isEnabled(groupIds);
 	}
 
 	public static boolean isEnabled(long companyId, long groupId) {
@@ -58,13 +52,6 @@ public class InlineSQLHelperUtil {
 			_inlineSQLPermissionSnapshot.get();
 
 		return inlineSQLPermission.isEnabled(companyId, groupId);
-	}
-
-	public static boolean isEnabled(long[] groupIds) {
-		InlineSQLHelper inlineSQLPermission =
-			_inlineSQLPermissionSnapshot.get();
-
-		return inlineSQLPermission.isEnabled(groupIds);
 	}
 
 	public static <T extends Table<T>> DSLQuery replacePermissionCheck(
@@ -79,27 +66,7 @@ public class InlineSQLHelperUtil {
 	}
 
 	public static String replacePermissionCheck(
-		String sql, String className, String classPKField) {
-
-		InlineSQLHelper inlineSQLPermission =
-			_inlineSQLPermissionSnapshot.get();
-
-		return inlineSQLPermission.replacePermissionCheck(
-			sql, className, classPKField);
-	}
-
-	public static String replacePermissionCheck(
-		String sql, String className, String classPKField, long groupId) {
-
-		InlineSQLHelper inlineSQLPermission =
-			_inlineSQLPermissionSnapshot.get();
-
-		return inlineSQLPermission.replacePermissionCheck(
-			sql, className, classPKField, groupId);
-	}
-
-	public static String replacePermissionCheck(
-		String sql, String className, String classPKField, long[] groupIds) {
+		String sql, String className, String classPKField, long... groupIds) {
 
 		InlineSQLHelper inlineSQLPermission =
 			_inlineSQLPermissionSnapshot.get();

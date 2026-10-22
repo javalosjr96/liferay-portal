@@ -697,19 +697,20 @@ public abstract class BaseSourceCheck implements SourceCheck {
 			}
 
 			for (JavaTerm childJavaTerm : javaClass.getChildJavaTerms()) {
-				if (childJavaTerm.isJavaVariable()) {
-					JavaVariable javaVariable = (JavaVariable)childJavaTerm;
+				if (!childJavaTerm.isJavaVariable()) {
+					continue;
+				}
 
-					String variableContent = javaVariable.getContent();
+				JavaVariable javaVariable = (JavaVariable)childJavaTerm;
 
-					variableTypeName = _getVariableTypeName(
-						variableContent, variableName,
-						includeArrayOrCollectionTypes,
-						includeFullyQualifiedName);
+				String variableContent = javaVariable.getContent();
 
-					if (variableTypeName != null) {
-						return variableTypeName;
-					}
+				variableTypeName = _getVariableTypeName(
+					variableContent, variableName,
+					includeArrayOrCollectionTypes, includeFullyQualifiedName);
+
+				if (variableTypeName != null) {
+					return variableTypeName;
 				}
 			}
 		}
@@ -842,6 +843,20 @@ public abstract class BaseSourceCheck implements SourceCheck {
 		return SourceFormatterCheckUtil.isExcludedPath(
 			_excludesJSONObject, _excludesValuesMap, key, path, -1, parameter,
 			_baseDirName);
+	}
+
+	protected boolean isInsideTextBlock(String content, int pos) {
+		String s = content.substring(pos);
+
+		int x = s.indexOf("\"\"\";");
+
+		if (x == -1) {
+			return false;
+		}
+
+		s = s.substring(0, x);
+
+		return !s.contains("\"\"\"");
 	}
 
 	protected boolean isModulesApp(String absolutePath, boolean privateOnly) {

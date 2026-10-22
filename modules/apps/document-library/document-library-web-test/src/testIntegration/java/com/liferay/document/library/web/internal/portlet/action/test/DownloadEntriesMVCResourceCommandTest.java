@@ -6,21 +6,32 @@
 package com.liferay.document.library.web.internal.portlet.action.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.document.library.kernel.model.DLFileEntry;
+import com.liferay.document.library.kernel.model.DLFileShortcut;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.repository.model.FileShortcut;
 import com.liferay.portal.kernel.repository.model.Folder;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
+import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.servlet.ContentDispositionUtil;
+import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.portlet.MockLiferayResourceRequest;
 import com.liferay.portal.kernel.test.portlet.MockLiferayResourceResponse;
@@ -40,9 +51,14 @@ import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
+import jakarta.portlet.PortletException;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 
+import java.nio.charset.StandardCharsets;
+
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.zip.ZipEntry;
@@ -57,6 +73,7 @@ import org.junit.runner.RunWith;
 
 /**
  * @author Saurasish Basak
+ * @author Jürgen Kappler
  */
 @RunWith(Arquillian.class)
 public class DownloadEntriesMVCResourceCommandTest {
@@ -71,12 +88,16 @@ public class DownloadEntriesMVCResourceCommandTest {
 	@Before
 	public void setUp() throws Exception {
 		_group = GroupTestUtil.addGroup();
+
+		_user = UserTestUtil.addGroupUser(_group, RoleConstants.SITE_MEMBER);
 	}
 
 	@Test
 	public void testServeResource() throws Exception {
 		_testServeResourceDownloadEntries();
+		_testServeResourceDownloadEntry();
 		_testServeResourceDownloadFolder();
+		_testServeResourceDownloadFolderWithJapaneseNames();
 		_testServeResourceDownloadFolderWithoutShortcutTargetPermission();
 		_testServeResourceMaxSizeToDownload();
 	}
@@ -99,6 +120,30 @@ public class DownloadEntriesMVCResourceCommandTest {
 			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			parentFolderId, name, StringPool.BLANK,
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+	}
+
+	private void _assertServeResourceWithoutDownloadPermission(
+			long folderId, String name, long value)
+		throws Exception {
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user)) {
+
+			_serveResource(
+				_getMockLiferayResourceRequest(
+					folderId, "/document_library/download_entry", name, value));
+
+			Assert.fail();
+		}
+		catch (PortletException portletException) {
+			PrincipalException.MustHavePermission mustHavePermission =
+				(PrincipalException.MustHavePermission)
+					portletException.getCause();
+
+			Assert.assertArrayEquals(
+				new String[] {ActionKeys.DOWNLOAD},
+				mustHavePermission.actionId);
+		}
 	}
 
 	private MockLiferayResourceRequest _getMockLiferayResourceRequest(
@@ -131,11 +176,23 @@ public class DownloadEntriesMVCResourceCommandTest {
 		return mockLiferayResourceRequest;
 	}
 
+	private MockLiferayResourceRequest _getMockLiferayResourceRequest(
+			long folderId, String resourceID, String name, long value)
+		throws Exception {
+
+		MockLiferayResourceRequest mockLiferayResourceRequest =
+			_getMockLiferayResourceRequest(folderId, resourceID);
+
+		mockLiferayResourceRequest.setParameter(name, String.valueOf(value));
+
+		return mockLiferayResourceRequest;
+	}
+
 	private Map<String, String> _getZipEntries(byte[] bytes) throws Exception {
 		Map<String, String> zipEntries = new LinkedHashMap<>();
 
 		try (ZipInputStream zipInputStream = new ZipInputStream(
-				new ByteArrayInputStream(bytes))) {
+				new ByteArrayInputStream(bytes), StandardCharsets.ISO_8859_1)) {
 
 			ZipEntry zipEntry = zipInputStream.getNextEntry();
 
@@ -155,8 +212,14 @@ public class DownloadEntriesMVCResourceCommandTest {
 			MockLiferayResourceRequest mockLiferayResourceRequest)
 		throws Exception {
 
-		MockLiferayResourceResponse mockLiferayResourceResponse =
-			new MockLiferayResourceResponse();
+		return _serveResource(
+			mockLiferayResourceRequest, new MockLiferayResourceResponse());
+	}
+
+	private byte[] _serveResource(
+			MockLiferayResourceRequest mockLiferayResourceRequest,
+			MockLiferayResourceResponse mockLiferayResourceResponse)
+		throws Exception {
 
 		_mvcResourceCommand.serveResource(
 			mockLiferayResourceRequest, mockLiferayResourceResponse);
@@ -166,6 +229,18 @@ public class DownloadEntriesMVCResourceCommandTest {
 				mockLiferayResourceResponse.getPortletOutputStream();
 
 		return byteArrayOutputStream.toByteArray();
+	}
+
+	private void _setResourcePermissions(
+			String name, long primKey, String... actionIds)
+		throws Exception {
+
+		Role role = _roleLocalService.getRole(
+			_group.getCompanyId(), RoleConstants.SITE_MEMBER);
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			_group.getCompanyId(), name, ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(primKey), role.getRoleId(), actionIds);
 	}
 
 	private void _testServeResourceDownloadEntries() throws Exception {
@@ -193,6 +268,67 @@ public class DownloadEntriesMVCResourceCommandTest {
 		Assert.assertEquals("old", zipEntries.get("Archive/old.txt"));
 		Assert.assertEquals("notes", zipEntries.get("notes.txt"));
 		Assert.assertEquals(zipEntries.toString(), 2, zipEntries.size());
+	}
+
+	private void _testServeResourceDownloadEntry() throws Exception {
+		Folder folder = _addFolder(
+			"Downloads", DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+
+		serviceContext.setAddGroupPermissions(false);
+		serviceContext.setAddGuestPermissions(false);
+
+		FileEntry fileEntry = _dlAppLocalService.addFileEntry(
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			folder.getFolderId(), "download.txt", ContentTypes.TEXT_PLAIN,
+			"download".getBytes(), null, null, null, serviceContext);
+
+		_setResourcePermissions(
+			DLFileEntry.class.getName(), fileEntry.getFileEntryId(),
+			ActionKeys.DOWNLOAD, ActionKeys.VIEW);
+
+		FileShortcut fileShortcut = _dlAppLocalService.addFileShortcut(
+			null, TestPropsValues.getUserId(), _group.getGroupId(),
+			folder.getFolderId(), fileEntry.getFileEntryId(), serviceContext);
+
+		_setResourcePermissions(
+			DLFileShortcut.class.getName(), fileShortcut.getFileShortcutId(),
+			ActionKeys.VIEW);
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				_user)) {
+
+			Assert.assertEquals(
+				"download",
+				new String(
+					_serveResource(
+						_getMockLiferayResourceRequest(
+							folder.getFolderId(),
+							"/document_library/download_entry",
+							"rowIdsDLFileShortcut",
+							fileShortcut.getFileShortcutId()))));
+			Assert.assertEquals(
+				"download",
+				new String(
+					_serveResource(
+						_getMockLiferayResourceRequest(
+							folder.getFolderId(),
+							"/document_library/download_entry",
+							"rowIdsFileEntry", fileEntry.getFileEntryId()))));
+		}
+
+		_setResourcePermissions(
+			DLFileEntry.class.getName(), fileEntry.getFileEntryId(),
+			ActionKeys.VIEW);
+
+		_assertServeResourceWithoutDownloadPermission(
+			folder.getFolderId(), "rowIdsDLFileShortcut",
+			fileShortcut.getFileShortcutId());
+		_assertServeResourceWithoutDownloadPermission(
+			folder.getFolderId(), "rowIdsFileEntry",
+			fileEntry.getFileEntryId());
 	}
 
 	private void _testServeResourceDownloadFolder() throws Exception {
@@ -230,6 +366,44 @@ public class DownloadEntriesMVCResourceCommandTest {
 		Assert.assertEquals(zipEntries.toString(), 3, zipEntries.size());
 	}
 
+	private void _testServeResourceDownloadFolderWithJapaneseNames()
+		throws Exception {
+
+		Folder folder = _addFolder(
+			"日本語フォルダ1", DLFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+
+		_addFileEntry("document 1", "日本語文書1.txt", folder.getFolderId());
+
+		Folder subfolder = _addFolder("日本語フォルダ2", folder.getFolderId());
+
+		_addFileEntry("document 2", "日本語文書2.txt", subfolder.getFolderId());
+
+		Map<String, String> properties = new HashMap<>();
+
+		Map<String, String> zipEntries = _getZipEntries(
+			_serveResource(
+				_getMockLiferayResourceRequest(
+					folder.getFolderId(), "/document_library/download_folder"),
+				new MockLiferayResourceResponse() {
+
+					@Override
+					public void setProperty(String name, String value) {
+						properties.put(name, value);
+					}
+
+				}));
+
+		Assert.assertEquals(
+			ContentDispositionUtil.getContentDispositionHeaderValue(
+				"日本語フォルダ1.zip"),
+			properties.get(HttpHeaders.CONTENT_DISPOSITION));
+
+		Assert.assertEquals("document 1", zipEntries.get("日本語文書1.txt"));
+		Assert.assertEquals(
+			"document 2", zipEntries.get("日本語フォルダ2/日本語文書2.txt"));
+		Assert.assertEquals(zipEntries.toString(), 2, zipEntries.size());
+	}
+
 	private void _testServeResourceDownloadFolderWithoutShortcutTargetPermission()
 		throws Exception {
 
@@ -254,8 +428,6 @@ public class DownloadEntriesMVCResourceCommandTest {
 			null, TestPropsValues.getUserId(), _group.getGroupId(),
 			folder.getFolderId(), fileEntry.getFileEntryId(),
 			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
-
-		_user = UserTestUtil.addGroupUser(_group, RoleConstants.SITE_MEMBER);
 
 		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
 				_user)) {
@@ -332,6 +504,12 @@ public class DownloadEntriesMVCResourceCommandTest {
 
 	@Inject
 	private PortletFileRepository _portletFileRepository;
+
+	@Inject
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Inject
+	private RoleLocalService _roleLocalService;
 
 	@DeleteAfterTestRun
 	private User _user;

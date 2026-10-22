@@ -11,6 +11,8 @@ import com.liferay.object.entry.folder.util.ObjectEntryFolderUtil;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.object.service.ObjectEntryFolderLocalService;
+import com.liferay.portal.kernel.json.JSONFactory;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.ResourcePermission;
@@ -154,10 +156,35 @@ public class PermissionObjectBulkSelectionAction
 	}
 
 	private Permission[] _getPermissions(
-		Map<String, Serializable> map, String key) {
+			Map<String, Serializable> map, String key)
+		throws Exception {
 
-		return (Permission[])map.getOrDefault(key, new Permission[0]);
+		String json = (String)map.get(key);
+
+		if (json == null) {
+			return new Permission[0];
+		}
+
+		return JSONUtil.toArray(
+			_jsonFactory.createJSONArray(json),
+			jsonObject -> {
+				Permission permission = new Permission();
+
+				permission.setActionIds(
+					JSONUtil.toStringArray(
+						jsonObject.getJSONArray("actionIds")));
+				permission.setRoleExternalReferenceCode(
+					jsonObject.getString("roleExternalReferenceCode", null));
+				permission.setRoleName(jsonObject.getString("roleName"));
+				permission.setRoleType(jsonObject.getString("roleType", null));
+
+				return permission;
+			},
+			Permission.class);
 	}
+
+	@Reference
+	private JSONFactory _jsonFactory;
 
 	@Reference
 	private ObjectEntryFolderLocalService _objectEntryFolderLocalService;

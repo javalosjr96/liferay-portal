@@ -22,6 +22,7 @@ import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestUtil;
 import com.liferay.dynamic.data.mapping.test.util.DDMTemplateTestUtil;
 import com.liferay.journal.constants.JournalArticleConstants;
 import com.liferay.journal.constants.JournalFolderConstants;
+import com.liferay.journal.exception.InvalidFolderException;
 import com.liferay.journal.exception.NoSuchArticleException;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.model.JournalFolder;
@@ -33,25 +34,35 @@ import com.liferay.journal.test.util.JournalTestUtil;
 import com.liferay.journal.util.comparator.ArticleIDComparator;
 import com.liferay.journal.util.comparator.ArticleTitleComparator;
 import com.liferay.journal.util.comparator.ArticleVersionComparator;
+import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ResourceConstants;
+import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.portlet.PortalPreferences;
 import com.liferay.portal.kernel.portlet.PortletPreferencesFactory;
+import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.PermissionCheckerFactory;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
+import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.PortalPreferencesLocalService;
+import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
+import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
+import com.liferay.portal.kernel.test.TestInfo;
+import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
@@ -69,6 +80,7 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
+import com.liferay.subscription.service.SubscriptionLocalService;
 
 import java.io.InputStream;
 
@@ -85,6 +97,7 @@ import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
+import org.junit.function.ThrowingRunnable;
 import org.junit.runner.RunWith;
 
 /**
@@ -146,6 +159,12 @@ public class JournalArticleServiceTest {
 			"Version 1", _article.getTitle(LocaleUtil.getDefault()));
 		Assert.assertTrue(_article.isApproved());
 		Assert.assertEquals(1.0, _article.getVersion(), 0);
+	}
+
+	@Test
+	public void testAddArticleDefaultValues() throws Exception {
+		_testAddArticleDefaultValuesWithInvalidClassNameId();
+		_testAddArticleDefaultValuesWithoutUpdatePermission();
 	}
 
 	@Test(expected = StorageFieldRequiredException.class)
@@ -255,6 +274,14 @@ public class JournalArticleServiceTest {
 			_article.isIndexable(), journalArticle.isIndexable());
 		Assert.assertEquals(
 			_article.isSmallImage(), journalArticle.isSmallImage());
+	}
+
+	@Test
+	public void testDeleteArticleDefaultValues() throws Exception {
+		_testDeleteArticleDefaultValues();
+		_testDeleteArticleDefaultValuesWithInvalidArticle();
+		_testDeleteArticleDefaultValuesWithInvalidDDMStructureId();
+		_testDeleteArticleDefaultValuesWithoutUpdatePermission();
 	}
 
 	@Test
@@ -1113,6 +1140,77 @@ public class JournalArticleServiceTest {
 	}
 
 	@Test
+	@TestInfo("LPD-110132")
+	public void testSubscribeStructure() throws Exception {
+		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
+			_group.getGroupId(), JournalArticle.class.getName());
+		User user = UserTestUtil.addUser();
+
+		try {
+			_journalArticleService.subscribeStructure(
+				_group.getGroupId(), user.getUserId(),
+				ddmStructure.getStructureId());
+
+			Assert.fail();
+		}
+		catch (PrincipalException principalException) {
+		}
+
+		Assert.assertFalse(
+			_subscriptionLocalService.isSubscribed(
+				_group.getCompanyId(), user.getUserId(),
+				DDMStructure.class.getName(), ddmStructure.getStructureId()));
+
+		_journalArticleService.subscribeStructure(
+			_group.getGroupId(), TestPropsValues.getUserId(),
+			ddmStructure.getStructureId());
+
+		Assert.assertTrue(
+			_subscriptionLocalService.isSubscribed(
+				_group.getCompanyId(), TestPropsValues.getUserId(),
+				DDMStructure.class.getName(), ddmStructure.getStructureId()));
+	}
+
+	@Test
+	@TestInfo("LPD-110132")
+	public void testUnsubscribeStructure() throws Exception {
+		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
+			_group.getGroupId(), JournalArticle.class.getName());
+		User user = UserTestUtil.addUser();
+
+		_journalArticleLocalService.subscribeStructure(
+			_group.getGroupId(), TestPropsValues.getUserId(),
+			ddmStructure.getStructureId());
+		_journalArticleLocalService.subscribeStructure(
+			_group.getGroupId(), user.getUserId(),
+			ddmStructure.getStructureId());
+
+		try {
+			_journalArticleService.unsubscribeStructure(
+				_group.getGroupId(), user.getUserId(),
+				ddmStructure.getStructureId());
+
+			Assert.fail();
+		}
+		catch (PrincipalException principalException) {
+		}
+
+		Assert.assertTrue(
+			_subscriptionLocalService.isSubscribed(
+				_group.getCompanyId(), user.getUserId(),
+				DDMStructure.class.getName(), ddmStructure.getStructureId()));
+
+		_journalArticleService.unsubscribeStructure(
+			_group.getGroupId(), TestPropsValues.getUserId(),
+			ddmStructure.getStructureId());
+
+		Assert.assertFalse(
+			_subscriptionLocalService.isSubscribed(
+				_group.getCompanyId(), TestPropsValues.getUserId(),
+				DDMStructure.class.getName(), ddmStructure.getStructureId()));
+	}
+
+	@Test
 	public void testUpdateArticle() throws Exception {
 		_article.setDisplayDate(new Date());
 
@@ -1128,6 +1226,146 @@ public class JournalArticleServiceTest {
 
 		Assert.assertEquals(
 			_article.getDisplayDate(), assetEntry.getPublishDate());
+
+		User user = UserTestUtil.addUser();
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+
+		try {
+			_journalArticleService.updateArticle(
+				user.getUserId(), _group.getGroupId(), _article.getFolderId(),
+				_article.getArticleId(), _article.getVersion(),
+				_article.getTitleMap(), _article.getDescriptionMap(),
+				_article.getContent(), _article.getLayoutUuid(),
+				serviceContext);
+
+			Assert.fail();
+		}
+		catch (PrincipalException principalException) {
+		}
+
+		_article = _journalArticleService.updateArticle(
+			TestPropsValues.getUserId(), _group.getGroupId(),
+			_article.getFolderId(), _article.getArticleId(),
+			_article.getVersion(), _article.getTitleMap(),
+			_article.getDescriptionMap(), _article.getContent(),
+			_article.getLayoutUuid(), serviceContext);
+
+		Assert.assertEquals(1.2, _article.getVersion(), 0);
+	}
+
+	@Test
+	public void testUpdateArticleDefaultValues() throws Exception {
+		_testUpdateArticleDefaultValues();
+		_testUpdateArticleDefaultValuesWithInvalidArticle();
+		_testUpdateArticleDefaultValuesWithoutUpdatePermission();
+	}
+
+	@Test
+	public void testUpdateArticleFolder() throws Exception {
+		User user = UserTestUtil.addUser();
+
+		JournalArticle journalArticle = JournalTestUtil.addArticle(
+			user.getUserId(), _group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+
+		JournalFolder journalFolder = JournalTestUtil.addFolder(
+			_group.getGroupId(), RandomTestUtil.randomString());
+
+		Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			TestPropsValues.getCompanyId(), JournalFolder.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(journalFolder.getFolderId()), role.getRoleId(),
+			new String[] {ActionKeys.ADD_ARTICLE});
+
+		_userLocalService.addRoleUser(role.getRoleId(), user.getUserId());
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				user, _permissionCheckerFactory.create(user))) {
+
+			journalArticle = _journalArticleService.updateArticle(
+				_group.getGroupId(), journalFolder.getFolderId(),
+				journalArticle.getArticleId(), journalArticle.getVersion(),
+				journalArticle.getContent(),
+				ServiceContextTestUtil.getServiceContext(
+					_group.getGroupId(), user.getUserId()));
+		}
+
+		Assert.assertEquals(
+			journalFolder.getFolderId(), journalArticle.getFolderId());
+	}
+
+	@Test(expected = InvalidFolderException.class)
+	public void testUpdateArticleFolderOfAnotherGroup() throws Exception {
+		_otherGroup = GroupTestUtil.addGroup();
+
+		JournalFolder journalFolder = JournalTestUtil.addFolder(
+			_otherGroup.getGroupId(), RandomTestUtil.randomString());
+
+		_journalArticleService.updateArticle(
+			_group.getGroupId(), journalFolder.getFolderId(),
+			_article.getArticleId(), _article.getVersion(),
+			_article.getContent(),
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+	}
+
+	@Test
+	public void testUpdateArticleFolderWithoutAddArticlePermission()
+		throws Exception {
+
+		User user = UserTestUtil.addUser();
+
+		JournalArticle journalArticle = JournalTestUtil.addArticle(
+			user.getUserId(), _group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+
+		JournalFolder journalFolder = JournalTestUtil.addFolder(
+			_group.getGroupId(), RandomTestUtil.randomString());
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(
+				_group.getGroupId(), user.getUserId());
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				user, _permissionCheckerFactory.create(user))) {
+
+			_assertMustHaveAddArticlePermission(
+				() -> _journalArticleService.updateArticle(
+					_group.getGroupId(), journalFolder.getFolderId(),
+					journalArticle.getArticleId(), journalArticle.getVersion(),
+					journalArticle.getContent(), serviceContext));
+			_assertMustHaveAddArticlePermission(
+				() -> _journalArticleService.updateArticle(
+					user.getUserId(), _group.getGroupId(),
+					journalFolder.getFolderId(), journalArticle.getArticleId(),
+					journalArticle.getVersion(), journalArticle.getTitleMap(),
+					journalArticle.getDescriptionMap(),
+					journalArticle.getContent(), journalArticle.getLayoutUuid(),
+					serviceContext));
+			_assertMustHaveAddArticlePermission(
+				() -> _journalArticleService.updateArticle(
+					_group.getGroupId(), journalFolder.getFolderId(),
+					journalArticle.getArticleId(), journalArticle.getVersion(),
+					journalArticle.getTitleMap(),
+					journalArticle.getDescriptionMap(),
+					journalArticle.getFriendlyURLMap(),
+					journalArticle.getContent(),
+					journalArticle.getDDMTemplateKey(),
+					journalArticle.getLayoutUuid(), 0, 0, 0, 0, 0, 0, 0, 0, 0,
+					0, true, 0, 0, 0, 0, 0, true, true, false, 0, 0, null, null,
+					null, null, serviceContext));
+		}
+
+		JournalArticle latestJournalArticle =
+			_journalArticleLocalService.getLatestArticle(
+				journalArticle.getResourcePrimKey());
+
+		Assert.assertEquals(
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			latestJournalArticle.getFolderId());
 	}
 
 	@Test
@@ -1151,6 +1389,103 @@ public class JournalArticleServiceTest {
 
 		Assert.assertEquals(
 			_article.getDisplayDate(), assetEntry.getPublishDate());
+	}
+
+	@Test
+	@TestInfo("LPD-110158")
+	public void testUpdateStatus() throws Exception {
+		_workflowDefinitionLinkLocalService.updateWorkflowDefinitionLink(
+			TestPropsValues.getUserId(), _group.getCompanyId(),
+			_group.getGroupId(), JournalFolder.class.getName(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			JournalArticleConstants.DDM_STRUCTURE_ID_ALL, "Single Approver", 1);
+
+		JournalArticle journalArticle = JournalTestUtil.addArticleWithWorkflow(
+			_group.getGroupId(), false);
+
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId());
+
+		Assert.assertThrows(
+			PrincipalException.class,
+			() -> _journalArticleService.updateStatus(
+				_group.getGroupId(), journalArticle.getArticleId(),
+				journalArticle.getVersion(), WorkflowConstants.STATUS_APPROVED,
+				null, serviceContext));
+
+		JournalArticle draftJournalArticle =
+			_journalArticleLocalService.getArticle(journalArticle.getId());
+
+		Assert.assertTrue(draftJournalArticle.isDraft());
+
+		_workflowDefinitionLinkLocalService.updateWorkflowDefinitionLink(
+			TestPropsValues.getUserId(), _group.getCompanyId(),
+			_group.getGroupId(), JournalFolder.class.getName(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+			JournalArticleConstants.DDM_STRUCTURE_ID_ALL, null);
+
+		JournalArticle approvedJournalArticle =
+			_journalArticleService.updateStatus(
+				_group.getGroupId(), journalArticle.getArticleId(),
+				journalArticle.getVersion(), WorkflowConstants.STATUS_APPROVED,
+				null, serviceContext);
+
+		Assert.assertTrue(approvedJournalArticle.isApproved());
+
+		Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			TestPropsValues.getCompanyId(), JournalArticle.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(journalArticle.getResourcePrimKey()),
+			role.getRoleId(), new String[] {ActionKeys.UPDATE});
+
+		User user = UserTestUtil.addUser();
+
+		_userLocalService.addRoleUser(role.getRoleId(), user.getUserId());
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				user, _permissionCheckerFactory.create(user))) {
+
+			PrincipalException.MustHavePermission mustHavePermission =
+				Assert.assertThrows(
+					PrincipalException.MustHavePermission.class,
+					() -> _journalArticleService.updateStatus(
+						_group.getGroupId(), journalArticle.getArticleId(),
+						journalArticle.getVersion(),
+						WorkflowConstants.STATUS_EXPIRED, null,
+						serviceContext));
+
+			Assert.assertEquals(
+				JournalArticle.class.getName(),
+				mustHavePermission.resourceName);
+			Assert.assertEquals(
+				journalArticle.getResourcePrimKey(),
+				mustHavePermission.resourceId);
+			Assert.assertArrayEquals(
+				new String[] {ActionKeys.EXPIRE}, mustHavePermission.actionId);
+		}
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			TestPropsValues.getCompanyId(), JournalArticle.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(journalArticle.getResourcePrimKey()),
+			role.getRoleId(), new String[] {ActionKeys.EXPIRE});
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				user, _permissionCheckerFactory.create(user))) {
+
+			JournalArticle expiredJournalArticle =
+				_journalArticleService.updateStatus(
+					_group.getGroupId(), journalArticle.getArticleId(),
+					journalArticle.getVersion(),
+					WorkflowConstants.STATUS_EXPIRED, null, serviceContext);
+
+			Assert.assertTrue(expiredJournalArticle.isExpired());
+		}
+
+		_roleLocalService.deleteRole(role);
+		_userLocalService.deleteUser(user);
 	}
 
 	protected List<JournalArticle> addArticles(int count, String content)
@@ -1277,6 +1612,21 @@ public class JournalArticleServiceTest {
 			RandomTestUtil.randomString());
 	}
 
+	private JournalArticle _addArticleDefaultValues(
+			long classNameId, long classPK, DDMStructure ddmStructure)
+		throws Exception {
+
+		return _journalArticleService.addArticleDefaultValues(
+			_group.getGroupId(), classNameId, classPK,
+			HashMapBuilder.put(
+				LocaleUtil.US, RandomTestUtil.randomString()
+			).build(),
+			null, DDMStructureTestUtil.getSampleStructuredContent(),
+			ddmStructure.getStructureId(), null, null, 0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, true, 0, 0, 0, 0, 0, true, true, false, 0, 0, null, null,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+	}
+
 	private JournalArticle _addDeletedJournalArticle(
 			JournalFolder journalFolder, String title)
 		throws Exception {
@@ -1312,6 +1662,62 @@ public class JournalArticleServiceTest {
 				_group.getGroupId(), journalFolder.getFolderId(), status));
 	}
 
+	private void _assertMustHaveAddArticlePermission(
+			UnsafeRunnable<Exception> unsafeRunnable)
+		throws Exception {
+
+		try {
+			unsafeRunnable.run();
+
+			Assert.fail();
+		}
+		catch (PrincipalException.MustHavePermission principalException) {
+			String message = principalException.getMessage();
+
+			Assert.assertTrue(
+				message, message.contains(ActionKeys.ADD_ARTICLE));
+		}
+	}
+
+	private void _assertThrowsPrincipalExceptionWithoutUpdatePermission(
+			DDMStructure ddmStructure, ThrowingRunnable throwingRunnable)
+		throws Exception {
+
+		User user = UserTestUtil.addUser();
+
+		PermissionChecker permissionChecker = _permissionCheckerFactory.create(
+			user);
+
+		try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+				user, permissionChecker)) {
+
+			Assert.assertTrue(
+				_ddmStructureModelResourcePermission.contains(
+					permissionChecker, ddmStructure, ActionKeys.VIEW));
+			Assert.assertFalse(
+				_ddmStructureModelResourcePermission.contains(
+					permissionChecker, ddmStructure, ActionKeys.UPDATE));
+
+			Assert.assertThrows(PrincipalException.class, throwingRunnable);
+		}
+	}
+
+	private void _deleteArticleDefaultValues(
+			String articleId, long ddmStructureId)
+		throws Exception {
+
+		ServiceContextThreadLocal.pushServiceContext(
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		try {
+			_journalArticleService.deleteArticleDefaultValues(
+				_group.getGroupId(), articleId, ddmStructureId);
+		}
+		finally {
+			ServiceContextThreadLocal.popServiceContext();
+		}
+	}
+
 	private void _removeJournalArticleRoleResourcePermission(
 			String roleName, List<JournalArticle> journalArticles,
 			String actionId)
@@ -1325,6 +1731,164 @@ public class JournalArticleServiceTest {
 		}
 	}
 
+	private void _testAddArticleDefaultValuesWithInvalidClassNameId()
+		throws Exception {
+
+		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
+			_group.getGroupId(), JournalArticle.class.getName());
+
+		Assert.assertThrows(
+			PrincipalException.class,
+			() -> _addArticleDefaultValues(
+				JournalArticleConstants.CLASS_NAME_ID_DEFAULT,
+				ddmStructure.getStructureId(), ddmStructure));
+
+		Assert.assertEquals(
+			1,
+			_journalArticleLocalService.getArticlesCount(_group.getGroupId()));
+	}
+
+	private void _testAddArticleDefaultValuesWithoutUpdatePermission()
+		throws Exception {
+
+		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
+			_group.getGroupId(), JournalArticle.class.getName());
+
+		_assertThrowsPrincipalExceptionWithoutUpdatePermission(
+			ddmStructure,
+			() -> _addArticleDefaultValues(
+				PortalUtil.getClassNameId(DDMStructure.class),
+				ddmStructure.getStructureId(), ddmStructure));
+
+		Assert.assertEquals(
+			1,
+			_journalArticleLocalService.getArticlesCount(_group.getGroupId()));
+	}
+
+	private void _testDeleteArticleDefaultValues() throws Exception {
+		JournalArticle journalArticle = JournalTestUtil.addArticleDefaultValues(
+			TestPropsValues.getUserId(), _group.getGroupId(),
+			RandomTestUtil.randomString());
+
+		_deleteArticleDefaultValues(
+			journalArticle.getArticleId(), journalArticle.getDDMStructureId());
+
+		Assert.assertNull(
+			_journalArticleLocalService.fetchArticle(
+				_group.getGroupId(), journalArticle.getArticleId()));
+	}
+
+	private void _testDeleteArticleDefaultValuesWithInvalidArticle()
+		throws Exception {
+
+		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
+			_group.getGroupId(), JournalArticle.class.getName());
+
+		Assert.assertThrows(
+			PrincipalException.class,
+			() -> _deleteArticleDefaultValues(
+				_article.getArticleId(), ddmStructure.getStructureId()));
+
+		Assert.assertNotNull(
+			_journalArticleLocalService.fetchArticle(
+				_group.getGroupId(), _article.getArticleId()));
+	}
+
+	private void _testDeleteArticleDefaultValuesWithInvalidDDMStructureId()
+		throws Exception {
+
+		JournalArticle journalArticle = JournalTestUtil.addArticleDefaultValues(
+			TestPropsValues.getUserId(), _group.getGroupId(),
+			RandomTestUtil.randomString());
+
+		DDMStructure ddmStructure = DDMStructureTestUtil.addStructure(
+			_group.getGroupId(), JournalArticle.class.getName());
+
+		Assert.assertThrows(
+			PrincipalException.class,
+			() -> _deleteArticleDefaultValues(
+				journalArticle.getArticleId(), ddmStructure.getStructureId()));
+
+		Assert.assertNotNull(
+			_journalArticleLocalService.fetchArticle(
+				_group.getGroupId(), journalArticle.getArticleId()));
+	}
+
+	private void _testDeleteArticleDefaultValuesWithoutUpdatePermission()
+		throws Exception {
+
+		JournalArticle journalArticle = JournalTestUtil.addArticleDefaultValues(
+			TestPropsValues.getUserId(), _group.getGroupId(),
+			RandomTestUtil.randomString());
+
+		_assertThrowsPrincipalExceptionWithoutUpdatePermission(
+			journalArticle.getDDMStructure(),
+			() -> _deleteArticleDefaultValues(
+				journalArticle.getArticleId(),
+				journalArticle.getDDMStructureId()));
+
+		Assert.assertNotNull(
+			_journalArticleLocalService.fetchArticle(
+				_group.getGroupId(), journalArticle.getArticleId()));
+	}
+
+	private void _testUpdateArticleDefaultValues() throws Exception {
+		JournalArticle journalArticle = JournalTestUtil.addArticleDefaultValues(
+			TestPropsValues.getUserId(), _group.getGroupId(), "Title");
+
+		JournalArticle updatedJournalArticle = _updateArticleDefaultValues(
+			journalArticle);
+
+		Assert.assertNotEquals(
+			"Title", updatedJournalArticle.getTitle(LocaleUtil.getDefault()));
+	}
+
+	private void _testUpdateArticleDefaultValuesWithInvalidArticle()
+		throws Exception {
+
+		Assert.assertThrows(
+			PrincipalException.class,
+			() -> _updateArticleDefaultValues(_article));
+
+		_article = _journalArticleLocalService.getArticle(
+			_group.getGroupId(), _article.getArticleId());
+
+		Assert.assertEquals(
+			"Version 1", _article.getTitle(LocaleUtil.getDefault()));
+	}
+
+	private void _testUpdateArticleDefaultValuesWithoutUpdatePermission()
+		throws Exception {
+
+		JournalArticle journalArticle = JournalTestUtil.addArticleDefaultValues(
+			TestPropsValues.getUserId(), _group.getGroupId(), "Title");
+
+		_assertThrowsPrincipalExceptionWithoutUpdatePermission(
+			journalArticle.getDDMStructure(),
+			() -> _updateArticleDefaultValues(journalArticle));
+
+		JournalArticle latestJournalArticle =
+			_journalArticleLocalService.getArticle(
+				_group.getGroupId(), journalArticle.getArticleId());
+
+		Assert.assertEquals(
+			"Title", latestJournalArticle.getTitle(LocaleUtil.getDefault()));
+	}
+
+	private JournalArticle _updateArticleDefaultValues(
+			JournalArticle journalArticle)
+		throws Exception {
+
+		return _journalArticleService.updateArticleDefaultValues(
+			journalArticle.getGroupId(), journalArticle.getArticleId(),
+			HashMapBuilder.put(
+				LocaleUtil.US, RandomTestUtil.randomString()
+			).build(),
+			null, journalArticle.getContent(), null, null, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, true, 0, 0, 0, 0, 0, true, true, false, 0, 0, null, null,
+			ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+	}
+
 	private JournalArticle _article;
 
 	@Inject
@@ -1335,6 +1899,12 @@ public class JournalArticleServiceTest {
 
 	@Inject(filter = "ddm.form.deserializer.type=xsd")
 	private DDMFormDeserializer _ddmFormDeserializer;
+
+	@Inject(
+		filter = "model.class.name=com.liferay.dynamic.data.mapping.model.DDMStructure"
+	)
+	private ModelResourcePermission<DDMStructure>
+		_ddmStructureModelResourcePermission;
 
 	@Inject
 	private DDMTemplateLinkLocalService _ddmTemplateLinkLocalService;
@@ -1360,6 +1930,9 @@ public class JournalArticleServiceTest {
 	private JournalArticle _latestArticle;
 	private String _originalPortalPreferencesXML;
 
+	@DeleteAfterTestRun
+	private Group _otherGroup;
+
 	@Inject
 	private PermissionCheckerFactory _permissionCheckerFactory;
 
@@ -1370,6 +1943,19 @@ public class JournalArticleServiceTest {
 	private PortletPreferencesFactory _portletPreferencesFactory;
 
 	@Inject
+	private ResourcePermissionLocalService _resourcePermissionLocalService;
+
+	@Inject
+	private RoleLocalService _roleLocalService;
+
+	@Inject
+	private SubscriptionLocalService _subscriptionLocalService;
+
+	@Inject
 	private UserLocalService _userLocalService;
+
+	@Inject
+	private WorkflowDefinitionLinkLocalService
+		_workflowDefinitionLinkLocalService;
 
 }

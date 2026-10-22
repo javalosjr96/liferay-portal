@@ -15,7 +15,6 @@ import com.liferay.fragment.entry.processor.util.EditableFragmentEntryProcessorU
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.processor.DocumentFragmentEntryProcessor;
 import com.liferay.fragment.processor.FragmentEntryProcessorContext;
-import com.liferay.info.item.ClassPKInfoItemIdentifier;
 import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.info.item.InfoItemReference;
 import com.liferay.info.item.InfoItemServiceRegistry;
@@ -28,8 +27,9 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -87,7 +87,8 @@ public class EditableDocumentFragmentEntryProcessor
 			new HashMap<>();
 
 		boolean analyticsEnabled = _isAnalyticsEnabled(
-			fragmentEntryLink.getCompanyId());
+			fragmentEntryLink.getCompanyId(),
+			fragmentEntryProcessorContext.getHttpServletRequest());
 
 		Elements elements = Collector.collect(
 			new Evaluator() {
@@ -172,9 +173,15 @@ public class EditableDocumentFragmentEntryProcessor
 					fragmentEntryProcessorContext.getLocale());
 			}
 
-			JSONObject configJSONObject = JSONUtil.merge(
-				editableValueJSONObject.getJSONObject("config"),
-				mappedValueConfigJSONObject);
+			JSONObject configJSONObject = editableValueJSONObject.getJSONObject(
+				"config");
+
+			if ((configJSONObject == null) ||
+				(mappedValueConfigJSONObject.length() > 0)) {
+
+				configJSONObject = JSONUtil.merge(
+					configJSONObject, mappedValueConfigJSONObject);
+			}
 
 			JSONObject localizedJSONObject = configJSONObject.getJSONObject(
 				LocaleUtil.toLanguageId(
@@ -227,36 +234,18 @@ public class EditableDocumentFragmentEntryProcessor
 				element.removeAttr("view-tag-name");
 			}
 
-			if (analyticsEnabled &&
-				fragmentEntryProcessorContext.isViewMode()) {
+			if (!analyticsEnabled ||
+				!fragmentEntryProcessorContext.isViewMode()) {
 
-				_setAnalyticsAttributes(
-					element,
-					AnalyticsAttributesUtil.getAnalyticsAttributes(
-						editableValueJSONObject, fragmentEntryProcessorContext,
-						_fragmentEntryProcessorHelper, infoDisplaysFieldValues,
-						_infoItemServiceRegistry));
+				continue;
 			}
-		}
 
-		if ((fragmentEntryProcessorContext.getPreviewClassNameId() > 0) &&
-			(fragmentEntryProcessorContext.getPreviewClassPK() > 0)) {
-
-			InfoItemReference infoItemReference = new InfoItemReference(
-				_portal.getClassName(
-					fragmentEntryProcessorContext.getPreviewClassNameId()),
-				new ClassPKInfoItemIdentifier(
-					fragmentEntryProcessorContext.getPreviewClassPK()));
-
-			if (infoDisplaysFieldValues.containsKey(infoItemReference)) {
-				Element previewElement = new Element("div");
-
-				previewElement.attr("style", "border: 1px solid #0B5FFF");
-
-				Element bodyElement = document.body();
-
-				previewElement.html(bodyElement.html());
-			}
+			_setAnalyticsAttributes(
+				element,
+				AnalyticsAttributesUtil.getAnalyticsAttributes(
+					editableValueJSONObject, fragmentEntryProcessorContext,
+					_fragmentEntryProcessorHelper, infoDisplaysFieldValues,
+					_infoItemServiceRegistry));
 		}
 	}
 
@@ -296,6 +285,27 @@ public class EditableDocumentFragmentEntryProcessor
 		}
 	}
 
+	private boolean _isAnalyticsEnabled(
+		long companyId, HttpServletRequest httpServletRequest) {
+
+		if (httpServletRequest == null) {
+			return _isAnalyticsEnabled(companyId);
+		}
+
+		Boolean analyticsEnabled = (Boolean)httpServletRequest.getAttribute(
+			_ANALYTICS_ENABLED);
+
+		if (analyticsEnabled != null) {
+			return analyticsEnabled;
+		}
+
+		analyticsEnabled = _isAnalyticsEnabled(companyId);
+
+		httpServletRequest.setAttribute(_ANALYTICS_ENABLED, analyticsEnabled);
+
+		return analyticsEnabled;
+	}
+
 	private void _setAnalyticsAttributes(
 		Element element, Map<String, Object> analyticsAttributes) {
 
@@ -316,6 +326,10 @@ public class EditableDocumentFragmentEntryProcessor
 		}
 	}
 
+	private static final String _ANALYTICS_ENABLED =
+		EditableDocumentFragmentEntryProcessor.class.getName() +
+			"#ANALYTICS_ENABLED";
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		EditableDocumentFragmentEntryProcessor.class);
 
@@ -335,8 +349,5 @@ public class EditableDocumentFragmentEntryProcessor
 
 	@Reference
 	private JSONFactory _jsonFactory;
-
-	@Reference
-	private Portal _portal;
 
 }

@@ -1530,6 +1530,9 @@ public class SiteNavigationMenuPersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					siteNavigationMenu.getUuid(),
+					siteNavigationMenu.getExternalReferenceCode()) &&
+				!Objects.equals(
 					siteNavigationMenuModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					siteNavigationMenu.getExternalReferenceCode())) {
@@ -1859,7 +1862,13 @@ public class SiteNavigationMenuPersistenceImpl
 
 		_collectionPersistenceFinderByGroupId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, SiteNavigationMenu::getSiteNavigationMenuId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByGroupId",
+					new String[] {Long.class.getName()},
+					new String[] {"groupId"}, false),
+				"", SiteNavigationMenuModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByGroupId",
 					new String[] {
@@ -1868,18 +1877,13 @@ public class SiteNavigationMenuPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId"}, true),
+				_SQL_COUNT_SITENAVIGATIONMENU_WHERE,
+				_SQL_SELECT_SITENAVIGATIONMENU_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByGroupId",
 					new String[] {Long.class.getName()},
 					new String[] {"groupId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByGroupId",
-					new String[] {Long.class.getName()},
-					new String[] {"groupId"}, false),
-				_SQL_SELECT_SITENAVIGATIONMENU_WHERE,
-				_SQL_COUNT_SITENAVIGATIONMENU_WHERE,
-				SiteNavigationMenuModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"", "", null,
+				"",
 				new ArrayableFinderColumn<>(
 					"siteNavigationMenu.", "groupId", FinderColumn.Type.LONG,
 					"=", false, true, true, SiteNavigationMenu::getGroupId));
@@ -1929,7 +1933,13 @@ public class SiteNavigationMenuPersistenceImpl
 
 		_collectionPersistenceFinderByG_LikeN =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, SiteNavigationMenu::getSiteNavigationMenuId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LikeN",
+					new String[] {Long.class.getName(), String.class.getName()},
+					new String[] {"groupId", "name"}, false),
+				"", SiteNavigationMenuModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_LikeN",
 					new String[] {
@@ -1938,15 +1948,8 @@ public class SiteNavigationMenuPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "name"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LikeN",
-					new String[] {Long.class.getName(), String.class.getName()},
-					new String[] {"groupId", "name"}, false),
-				_SQL_SELECT_SITENAVIGATIONMENU_WHERE,
 				_SQL_COUNT_SITENAVIGATIONMENU_WHERE,
-				SiteNavigationMenuModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"", "", null,
+				_SQL_SELECT_SITENAVIGATIONMENU_WHERE, null, null, "",
 				new ArrayableFinderColumn<>(
 					"siteNavigationMenu.", "groupId", FinderColumn.Type.LONG,
 					"=", false, true, true, SiteNavigationMenu::getGroupId),
@@ -1956,7 +1959,15 @@ public class SiteNavigationMenuPersistenceImpl
 
 		_collectionPersistenceFinderByG_T =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, SiteNavigationMenu::getSiteNavigationMenuId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_T",
+					new String[] {
+						Long.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "type_"}, false),
+				"", SiteNavigationMenuModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_T",
 					new String[] {
@@ -1965,22 +1976,15 @@ public class SiteNavigationMenuPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "type_"}, true),
+				_SQL_COUNT_SITENAVIGATIONMENU_WHERE,
+				_SQL_SELECT_SITENAVIGATIONMENU_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_T",
 					new String[] {
 						Long.class.getName(), Integer.class.getName()
 					},
 					new String[] {"groupId", "type_"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_T",
-					new String[] {
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "type_"}, false),
-				_SQL_SELECT_SITENAVIGATIONMENU_WHERE,
-				_SQL_COUNT_SITENAVIGATIONMENU_WHERE,
-				SiteNavigationMenuModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"", "", null,
+				"",
 				new FinderColumn<>(
 					"siteNavigationMenu.", "groupId", FinderColumn.Type.LONG,
 					"=", true, true, SiteNavigationMenu::getGroupId),
@@ -1991,7 +1995,15 @@ public class SiteNavigationMenuPersistenceImpl
 
 		_collectionPersistenceFinderByG_A =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, SiteNavigationMenu::getSiteNavigationMenuId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_A",
+					new String[] {
+						Long.class.getName(), Boolean.class.getName()
+					},
+					new String[] {"groupId", "auto_"}, false),
+				"", SiteNavigationMenuModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_A",
 					new String[] {
@@ -2000,22 +2012,15 @@ public class SiteNavigationMenuPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "auto_"}, true),
+				_SQL_COUNT_SITENAVIGATIONMENU_WHERE,
+				_SQL_SELECT_SITENAVIGATIONMENU_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_A",
 					new String[] {
 						Long.class.getName(), Boolean.class.getName()
 					},
 					new String[] {"groupId", "auto_"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_A",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName()
-					},
-					new String[] {"groupId", "auto_"}, false),
-				_SQL_SELECT_SITENAVIGATIONMENU_WHERE,
-				_SQL_COUNT_SITENAVIGATIONMENU_WHERE,
-				SiteNavigationMenuModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
-				"", "", null,
+				"",
 				new FinderColumn<>(
 					"siteNavigationMenu.", "groupId", FinderColumn.Type.LONG,
 					"=", true, true, SiteNavigationMenu::getGroupId),
@@ -2108,4 +2113,4 @@ public class SiteNavigationMenuPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1676470136
+// LIFERAY-SERVICE-BUILDER-HASH:-135643958

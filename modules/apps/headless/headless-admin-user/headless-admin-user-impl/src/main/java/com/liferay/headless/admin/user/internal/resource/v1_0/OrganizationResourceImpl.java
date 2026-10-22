@@ -13,6 +13,7 @@ import com.liferay.account.service.AccountEntryService;
 import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.asset.kernel.service.AssetCategoryService;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
+import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.exportimport.constants.ExportImportConstants;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
 import com.liferay.exportimport.vulcan.batch.engine.ExportImportVulcanBatchEngineTaskItemDelegate;
@@ -54,6 +55,7 @@ import com.liferay.portal.kernel.model.OrganizationConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.Website;
+import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.Field;
@@ -65,6 +67,7 @@ import com.liferay.portal.kernel.search.filter.QueryFilter;
 import com.liferay.portal.kernel.search.filter.TermFilter;
 import com.liferay.portal.kernel.service.EmailAddressService;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.service.GroupService;
 import com.liferay.portal.kernel.service.ListTypeLocalService;
 import com.liferay.portal.kernel.service.OrgLaborLocalService;
 import com.liferay.portal.kernel.service.OrgLaborService;
@@ -72,7 +75,6 @@ import com.liferay.portal.kernel.service.OrganizationLocalService;
 import com.liferay.portal.kernel.service.OrganizationService;
 import com.liferay.portal.kernel.service.PhoneService;
 import com.liferay.portal.kernel.service.ResourcePermissionService;
-import com.liferay.portal.kernel.service.RoleLocalService;
 import com.liferay.portal.kernel.service.RoleService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
@@ -835,10 +837,11 @@ public class OrganizationResourceImpl
 
 		Role role = _roleService.getOrAddEmptyRole(
 			externalReferenceCode, Role.class.getName(), 0, roleBrief.getName(),
-			roleBrief.getRoleType());
+			GetterUtil.getInteger(
+				roleBrief.getRoleType(), RoleConstants.TYPE_REGULAR));
 
-		_roleLocalService.addGroupRole(
-			organization.getGroupId(), role.getRoleId());
+		_groupService.addRoleGroups(
+			role.getRoleId(), new long[] {organization.getGroupId()});
 
 		return organization;
 	}
@@ -1071,7 +1074,7 @@ public class OrganizationResourceImpl
 			return null;
 		}
 
-		FileEntry fileEntry = _dlAppLocalService.getFileEntry(imageId);
+		FileEntry fileEntry = _dlAppService.getFileEntry(imageId);
 
 		return _file.getBytes(fileEntry.getContentStream());
 	}
@@ -1489,6 +1492,9 @@ public class OrganizationResourceImpl
 	private DLAppLocalService _dlAppLocalService;
 
 	@Reference
+	private DLAppService _dlAppService;
+
+	@Reference
 	private DTOConverterRegistry _dtoConverterRegistry;
 
 	@Reference
@@ -1499,6 +1505,9 @@ public class OrganizationResourceImpl
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private GroupService _groupService;
 
 	@Reference
 	private ListTypeLocalService _listTypeLocalService;
@@ -1527,9 +1536,6 @@ public class OrganizationResourceImpl
 
 	@Reference
 	private ResourcePermissionService _resourcePermissionService;
-
-	@Reference
-	private RoleLocalService _roleLocalService;
 
 	@Reference
 	private RoleResource _roleResource;

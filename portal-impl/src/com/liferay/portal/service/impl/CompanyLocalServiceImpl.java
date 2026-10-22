@@ -32,6 +32,7 @@ import com.liferay.portal.kernel.dao.orm.Property;
 import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.db.partition.DBPartition;
+import com.liferay.portal.kernel.encryptor.CompanyKeyResolverUtil;
 import com.liferay.portal.kernel.encryptor.EncryptorException;
 import com.liferay.portal.kernel.encryptor.EncryptorUtil;
 import com.liferay.portal.kernel.exception.CompanyMaxUsersException;
@@ -40,7 +41,6 @@ import com.liferay.portal.kernel.exception.CompanyNameException;
 import com.liferay.portal.kernel.exception.CompanyVirtualHostException;
 import com.liferay.portal.kernel.exception.CompanyWebIdException;
 import com.liferay.portal.kernel.exception.LocaleException;
-import com.liferay.portal.kernel.exception.NoSuchVirtualHostException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.RequiredCompanyException;
 import com.liferay.portal.kernel.exception.SystemException;
@@ -150,7 +150,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
-import java.net.IDN;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -226,10 +225,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		String lowerCaseVirtualHostname = StringUtil.toLowerCase(
 			StringUtil.trim(virtualHostname));
 
-		validateWebId(webId);
-		validateVirtualHost(webId, lowerCaseVirtualHostname);
-		validateMx(-1, mx);
-		validateMaxUsers(maxUsers);
+		validateCompany(webId, lowerCaseVirtualHostname, mx, maxUsers);
 
 		if ((companyId == null) || (companyId == 0)) {
 			companyId = _getNextCompanyId();
@@ -246,6 +242,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			DBPartitionUtil.setDefaultCompanyId(company.getCompanyId());
 		}
 
+		String keyString = _generateKey(companyId);
 		boolean newDBPartitionAdded = DBPartitionUtil.addDBPartition(companyId);
 
 		Callable<Company> callable = () -> {
@@ -278,13 +275,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 			// Company info
 
-			try {
-				updatedCompany.setKey(
-					EncryptorUtil.serializeKey(EncryptorUtil.generateKey()));
-			}
-			catch (EncryptorException encryptorException) {
-				throw new SystemException(encryptorException);
-			}
+			updatedCompany.setKey(keyString);
 
 			_companyInfoPersistence.update(updatedCompany.getCompanyInfo());
 
@@ -395,64 +386,86 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 				GetterUtil.getString(webId), lowerCaseVirtualHostname);
 		}
 
-		try (SafeCloseable safeCloseable1 =
-				PortalInstances.setImportInProcessCompanyIdWithSafeCloseable(
-					companyId)) {
+		SafeCloseable safeCloseable1 =
+			PortalInstances.setImportInProcessCompanyIdWithSafeCloseable(
+				companyId);
 
+		try {
 			DBPartitionUtil.importDBPartition(
 				companyId, lowerCaseVirtualHostname, webId);
+		}
+		catch (Throwable throwable) {
+			safeCloseable1.close();
 
-			try (SafeCloseable safeCloseable2 =
-					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						companyId)) {
+			throw throwable;
+		}
 
-				companyPersistence.clearCache();
-				_virtualHostPersistence.clearCache();
+		try (SafeCloseable safeCloseable2 =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId)) {
 
-				Company dbPartitionCompany = TransactionInvokerUtil.invoke(
-					_transactionConfig,
-					() -> {
-						Company company = companyPersistence.findByPrimaryKey(
-							companyId);
+			companyPersistence.clearCache();
+			_virtualHostPersistence.clearCache();
 
-						if (Validator.isNotNull(name) &&
-							!StringUtil.equals(company.getName(), name)) {
+			Company dbPartitionCompany = TransactionInvokerUtil.invoke(
+				_transactionConfig,
+				() -> {
+					Company company = companyPersistence.findByPrimaryKey(
+						companyId);
 
-							validateName(companyId, name);
+					if (Validator.isNotNull(name) &&
+						!StringUtil.equals(company.getName(), name)) {
 
-							company.setName(name);
+						validateName(companyId, name);
 
-							CompanyInfo companyInfo = company.getCompanyInfo();
+						company.setName(name);
 
-							company = companyPersistence.update(company);
+						CompanyInfo companyInfo = company.getCompanyInfo();
 
-							_companyInfoPersistence.update(companyInfo);
-						}
+						company = companyPersistence.update(company);
 
-						if (Validator.isNotNull(lowerCaseVirtualHostname) &&
-							!StringUtil.equals(
-								company.getVirtualHostname(),
-								lowerCaseVirtualHostname)) {
+						_companyInfoPersistence.update(companyInfo);
+					}
 
-							company = updateVirtualHostname(
-								companyId, lowerCaseVirtualHostname);
-						}
+					if (Validator.isNotNull(lowerCaseVirtualHostname) &&
+						!StringUtil.equals(
+							company.getVirtualHostname(),
+							lowerCaseVirtualHostname)) {
 
-						return _addDBPartitionCompany(company);
-					});
+						company = updateVirtualHostname(
+							companyId, lowerCaseVirtualHostname);
+					}
 
-				return _registerDBPartitionCompany(dbPartitionCompany);
-			}
-			catch (Throwable throwable1) {
-				try {
-					_removeDBPartition(companyId, true);
-				}
-				catch (Throwable throwable2) {
-					throwable1.addSuppressed(throwable2);
-				}
+					return _addDBPartitionCompany(company);
+				});
 
-				throw new PortalException(throwable1);
-			}
+			Company company = _registerDBPartitionCompany(dbPartitionCompany);
+
+			safeCloseable1.close();
+
+			return company;
+		}
+		catch (Throwable throwable1) {
+			TransactionCallbackUtil.registerCompletionCallback(
+				() -> {
+					try {
+						_removeDBPartition(companyId, true);
+					}
+					catch (Throwable throwable2) {
+						throwable1.addSuppressed(throwable2);
+
+						_log.error(
+							"Unable to remove database partition for company " +
+								companyId,
+							throwable2);
+					}
+					finally {
+						safeCloseable1.close();
+					}
+
+					return null;
+				});
+
+			throw new PortalException(throwable1);
 		}
 	}
 
@@ -561,13 +574,14 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	public void checkCompanyKey(long companyId) throws PortalException {
 		Company company = companyPersistence.findByPrimaryKey(companyId);
 
-		if (company.getKeyObj() != null) {
+		if (Validator.isNotNull(company.getKey())) {
 			return;
 		}
 
 		try {
 			company.setKey(
-				EncryptorUtil.serializeKey(EncryptorUtil.generateKey()));
+				CompanyKeyResolverUtil.wrapKey(
+					companyId, EncryptorUtil.generateKey()));
 		}
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);
@@ -628,52 +642,74 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 		validateWebId(webId);
 
-		try (SafeCloseable safeCloseable1 =
-				PortalInstances.setCopyInProcessCompanyIdWithSafeCloseable(
-					fromCompanyId)) {
+		SafeCloseable safeCloseable1 =
+			PortalInstances.setCopyInProcessCompanyIdWithSafeCloseable(
+				fromCompanyId);
 
+		try {
 			DBPartitionUtil.copyDBPartition(fromCompanyId, toCompanyId);
+		}
+		catch (Throwable throwable) {
+			safeCloseable1.close();
 
-			long companyId = toCompanyId;
+			throw throwable;
+		}
 
-			try (SafeCloseable safeCloseable2 =
-					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						toCompanyId)) {
+		long companyId = toCompanyId;
 
-				Company dbPartitionCompany = TransactionInvokerUtil.invoke(
-					_transactionConfig,
-					() -> {
-						Company company = fromCompany.cloneWithOriginalValues();
+		try (SafeCloseable safeCloseable2 =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(toCompanyId)) {
 
-						company.setCompanyId(companyId);
-						company.setWebId(webId);
-						company.setName(name);
-						company.setNew(true);
+			Company dbPartitionCompany = TransactionInvokerUtil.invoke(
+				_transactionConfig,
+				() -> {
+					Company company = fromCompany.cloneWithOriginalValues();
 
-						CompanyInfo companyInfo = company.getCompanyInfo();
+					company.setCompanyId(companyId);
+					company.setWebId(webId);
+					company.setName(name);
+					company.setNew(true);
 
-						company = companyPersistence.update(company);
+					CompanyInfo companyInfo = company.getCompanyInfo();
 
-						company = updateVirtualHostname(
-							company.getCompanyId(), lowerCaseVirtualHostname);
+					company = companyPersistence.update(company);
 
-						_companyInfoPersistence.update(companyInfo);
+					company = updateVirtualHostname(
+						company.getCompanyId(), lowerCaseVirtualHostname);
 
-						return _addDBPartitionCompany(company);
-					});
+					_companyInfoPersistence.update(companyInfo);
 
-				return _registerDBPartitionCompany(dbPartitionCompany);
-			}
-			catch (Throwable throwable1) {
-				try {
-					_removeDBPartition(companyId, false);
-				}
-				catch (Throwable throwable2) {
-					throwable1.addSuppressed(throwable2);
-				}
+					return _addDBPartitionCompany(company);
+				});
 
-				throw new PortalException(throwable1);
-			}
+			Company company = _registerDBPartitionCompany(dbPartitionCompany);
+
+			safeCloseable1.close();
+
+			return company;
+		}
+		catch (Throwable throwable1) {
+			TransactionCallbackUtil.registerCompletionCallback(
+				() -> {
+					try {
+						_removeDBPartition(companyId, false);
+					}
+					catch (Throwable throwable2) {
+						throwable1.addSuppressed(throwable2);
+
+						_log.error(
+							"Unable to remove database partition for company " +
+								companyId,
+							throwable2);
+					}
+					finally {
+						safeCloseable1.close();
+					}
+
+					return null;
+				});
+
+			throw new PortalException(throwable1);
 		}
 	}
 
@@ -780,33 +816,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	@Override
 	public Company fetchCompanyById(long companyId) {
 		return companyPersistence.fetchByPrimaryKey(companyId);
-	}
-
-	/**
-	 * Returns the company with the virtual host name.
-	 *
-	 * @param  virtualHostname the virtual host name
-	 * @return the company with the virtual host name, <code>null</code> if a
-	 *         company with the virtual host could not be found
-	 */
-	@Override
-	public Company fetchCompanyByVirtualHost(String virtualHostname) {
-		virtualHostname = StringUtil.toLowerCase(
-			StringUtil.trim(virtualHostname));
-
-		VirtualHost virtualHost = _virtualHostPersistence.fetchByHostname(
-			virtualHostname);
-
-		if ((virtualHost == null) && virtualHostname.contains("xn--")) {
-			virtualHost = _virtualHostPersistence.fetchByHostname(
-				IDN.toUnicode(virtualHostname));
-		}
-
-		if ((virtualHost == null) || (virtualHost.getLayoutSetId() != 0)) {
-			return null;
-		}
-
-		return companyPersistence.fetchByPrimaryKey(virtualHost.getCompanyId());
 	}
 
 	@Override
@@ -966,42 +975,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	@Override
 	public Company getCompanyById(long companyId) throws PortalException {
 		return companyPersistence.findByPrimaryKey(companyId);
-	}
-
-	/**
-	 * Returns the company with the virtual host name.
-	 *
-	 * @param  virtualHostname the company's virtual host name
-	 * @return the company with the virtual host name
-	 */
-	@Override
-	public Company getCompanyByVirtualHost(String virtualHostname)
-		throws PortalException {
-
-		try {
-			virtualHostname = StringUtil.toLowerCase(
-				StringUtil.trim(virtualHostname));
-
-			VirtualHost virtualHost = _virtualHostLocalService.fetchVirtualHost(
-				virtualHostname);
-
-			if ((virtualHost == null) && virtualHostname.contains("xn--")) {
-				virtualHost = _virtualHostPersistence.findByHostname(
-					IDN.toUnicode(virtualHostname));
-			}
-
-			if (virtualHost.getLayoutSetId() != 0) {
-				throw new CompanyVirtualHostException(
-					"Virtual host is associated with layout set " +
-						virtualHost.getLayoutSetId());
-			}
-
-			return companyPersistence.findByPrimaryKey(
-				virtualHost.getCompanyId());
-		}
-		catch (NoSuchVirtualHostException noSuchVirtualHostException) {
-			throw new CompanyVirtualHostException(noSuchVirtualHostException);
-		}
 	}
 
 	/**
@@ -1596,6 +1569,20 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		catch (IOException | PortletException exception) {
 			throw new SystemException(exception);
 		}
+	}
+
+	@Override
+	public void validateCompany(
+			String webId, String virtualHostname, String mx, int maxUsers)
+		throws PortalException {
+
+		String lowerCaseVirtualHostname = StringUtil.toLowerCase(
+			StringUtil.trim(virtualHostname));
+
+		validateWebId(webId);
+		validateVirtualHost(webId, lowerCaseVirtualHostname);
+		validateMx(-1, mx);
+		validateMaxUsers(maxUsers);
 	}
 
 	protected Company checkLogo(long companyId) throws PortalException {
@@ -2489,6 +2476,16 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			});
 	}
 
+	private String _generateKey(long companyId) {
+		try {
+			return CompanyKeyResolverUtil.wrapKey(
+				companyId, EncryptorUtil.generateKey());
+		}
+		catch (EncryptorException encryptorException) {
+			throw new SystemException(encryptorException);
+		}
+	}
+
 	private long _getNextCompanyId() {
 		if (PropsValues.COMPANY_PREDICTABLE_COMPANY_IDS_ENABLED) {
 			if (StartupHelperUtil.isDBNew()) {
@@ -2621,22 +2618,26 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 			if (ListUtil.isNotEmpty(removedLanguageIds)) {
 				for (String removedLanguageId : removedLanguageIds) {
-					if (ArrayUtil.contains(
+					if (!ArrayUtil.contains(
 							groupLanguageIds, removedLanguageId)) {
 
-						groupLanguageIds = ArrayUtil.remove(
-							groupLanguageIds, removedLanguageId);
-
-						updateLocales = true;
+						continue;
 					}
+
+					groupLanguageIds = ArrayUtil.remove(
+						groupLanguageIds, removedLanguageId);
+
+					updateLocales = true;
 				}
 			}
 
-			if (updateLocales) {
-				_updateGroupLocales(
-					group, groupTypeSettingsUnicodeProperties,
-					StringUtil.merge(groupLanguageIds, StringPool.COMMA));
+			if (!updateLocales) {
+				continue;
 			}
+
+			_updateGroupLocales(
+				group, groupTypeSettingsUnicodeProperties,
+				StringUtil.merge(groupLanguageIds, StringPool.COMMA));
 		}
 	}
 

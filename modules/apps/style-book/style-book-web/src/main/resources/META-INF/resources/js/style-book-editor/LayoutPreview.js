@@ -4,6 +4,7 @@
  */
 
 import ClayEmptyState from '@clayui/empty-state';
+import ClayIcon from '@clayui/icon';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import classNames from 'classnames';
 import React, {useCallback, useEffect, useRef, useState} from 'react';
@@ -38,7 +39,7 @@ export default React.memo(function LayoutPreview() {
 				for (const {
 					cssVariableMapping,
 					value,
-				} of config.sortFrontendTokenValues(frontendTokensValues)) {
+				} of config.resolveFrontendTokenValues(frontendTokensValues)) {
 					root.style.setProperty(`--${cssVariableMapping}`, value);
 				}
 
@@ -92,7 +93,13 @@ export default React.memo(function LayoutPreview() {
 						description={Liferay.Language.get(
 							'you-cannot-preview-the-style-book-because-your-site-is-empty'
 						)}
-						imgSrc={`${themeDisplay.getPathThemeImages()}/states/empty_state.svg`}
+						image={
+							<ClayIcon
+								className="c-empty-state-icon c-empty-state-icon-empty-state"
+								illustration
+								symbol="empty-state"
+							/>
+						}
 						title={Liferay.Language.get('no-results-found')}
 					/>
 				)}

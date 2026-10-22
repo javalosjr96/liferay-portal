@@ -1483,6 +1483,7 @@ test(
 	{tag: '@LPD-85260'},
 	async ({
 		apiHelpers,
+		commerceAdminProductDetailsSkusPage,
 		commerceAdminProductPage,
 		page,
 		productDetailsPage,
@@ -1554,18 +1555,9 @@ test(
 			await productDetailsPage.optionSelector('Color')
 		).toBeVisible();
 
-		await productDetailsPage.optionSelector('Color').click();
-
-		let optionSelectorOptionValues = await productDetailsPage
-			.optionSelector('Color')
-			.locator('option')
-			.allTextContents();
-
-		expect(optionSelectorOptionValues).toEqual([
-			'Choose an Option',
-			'Black',
-			'White',
-		]);
+		await expect(
+			productDetailsPage.optionSelectorValues('Color')
+		).toHaveText(['Choose an Option']);
 
 		await commerceAdminProductPage.gotoProduct(product.name['en_US']);
 
@@ -1575,12 +1567,26 @@ test(
 			page.getByText('Showing 1 to 3 of 3 entries.')
 		).toBeVisible();
 
-		const blackSku =
-			await apiHelpers.headlessCommerceAdminCatalog.getSkuByName('BLACK');
-
-		await apiHelpers.headlessCommerceAdminCatalog.patchSku(blackSku.id, {
-			expirationDate: '2020-01-01T00:00:00Z',
+		await page.goto(`/web/${site.name}/p/${product.name['en_US']}`, {
+			waitUntil: 'networkidle',
 		});
+
+		await expect(
+			productDetailsPage.optionSelectorValues('Color')
+		).toHaveText(['Choose an Option', 'Black', 'White']);
+
+		await commerceAdminProductPage.gotoProduct(product.name['en_US']);
+
+		await commerceAdminProductPage.productSkusLink.click();
+
+		await commerceAdminProductDetailsSkusPage
+			.skusTableRowLink('BLACK')
+			.click();
+
+		await commerceAdminProductDetailsSkusPage.neverExpireCheckbox.uncheck();
+		await commerceAdminProductDetailsSkusPage.sidePanelSaveAsDraftButton.click();
+
+		await waitForAlert(commerceAdminProductDetailsSkusPage.sidePanelFrame);
 
 		await page.goto(`/web/${site.name}/p/${product.name['en_US']}`, {
 			waitUntil: 'networkidle',
@@ -1590,15 +1596,9 @@ test(
 			await productDetailsPage.optionSelector('Color')
 		).toBeVisible();
 
-		optionSelectorOptionValues = await productDetailsPage
-			.optionSelector('Color')
-			.locator('option')
-			.allTextContents();
-
-		expect(optionSelectorOptionValues).toEqual([
-			'Choose an Option',
-			'White',
-		]);
+		await expect(
+			productDetailsPage.optionSelectorValues('Color')
+		).toHaveText(['Choose an Option', 'White']);
 	}
 );
 
@@ -1727,7 +1727,7 @@ test(
 
 test(
 	'Verify the storefront product page reflects the calculated stock quantity',
-	{tag: ['@COMMERCE-11873']},
+	{tag: ['@COMMERCE-11873', '@LPD-106599']},
 	async ({
 		apiHelpers,
 		commerceAdminChannelsPage,
@@ -1749,19 +1749,21 @@ test(
 			'B2B'
 		);
 
+		const productConfiguration = {
+			allowBackOrder: false,
+			displayAvailability: true,
+			displayStockQuantity: true,
+			maxOrderQuantity: 10000,
+			minOrderQuantity: 1,
+			minStockQuantity: 0,
+			multipleOrderQuantity: 1,
+		};
+
 		const product =
 			await apiHelpers.headlessCommerceAdminCatalog.postProduct({
 				catalogId: catalog.id,
 				name: {en_US: 'Product' + getRandomInt()},
-				productConfiguration: {
-					allowBackOrder: false,
-					displayAvailability: true,
-					displayStockQuantity: true,
-					maxOrderQuantity: 10000,
-					minOrderQuantity: 1,
-					minStockQuantity: 0,
-					multipleOrderQuantity: 1,
-				},
+				productConfiguration,
 				skus: [
 					{
 						cost: 0,
@@ -1867,6 +1869,105 @@ test(
 			await expect(page.getByText('0 in Stock')).toBeVisible();
 
 			await expect(productDetailsPage.addToCartButton).toBeDisabled();
+		});
+
+		const productId = String(product.productId);
+
+		await test.step('Verify allowing back orders enables ordering the product without stock', async () => {
+			await apiHelpers.headlessCommerceAdminCatalog.patchProduct(
+				productId,
+				{
+					name: product.name,
+					productConfiguration: {
+						...productConfiguration,
+						allowBackOrder: true,
+					},
+				}
+			);
+
+			await page.goto(`/web/${site.name}/p/${product.name['en_US']}`);
+
+			await expect(productDetailsPage.addToCartButton).toBeEnabled();
+		});
+
+		await test.step('Verify a sku that is not purchasable cannot be added to the cart', async () => {
+			await apiHelpers.headlessCommerceAdminCatalog.patchSku(sku.id, {
+				purchasable: false,
+				sku: sku.sku,
+			});
+
+			await page.goto(`/web/${site.name}/p/${product.name['en_US']}`);
+
+			await expect(productDetailsPage.addToCartButton).toBeDisabled();
+
+			await apiHelpers.headlessCommerceAdminCatalog.patchSku(sku.id, {
+				purchasable: true,
+				sku: sku.sku,
+			});
+		});
+
+		await test.step('Verify only the allowed order quantities are selectable', async () => {
+			await apiHelpers.headlessCommerceAdminCatalog.patchProduct(
+				productId,
+				{
+					name: product.name,
+					productConfiguration: {
+						...productConfiguration,
+						allowBackOrder: true,
+						allowedOrderQuantities: [1, 4, 5, 7, 11],
+					},
+				}
+			);
+
+			await page.goto(`/web/${site.name}/p/${product.name['en_US']}`);
+
+			await expect(
+				productDetailsPage.allowedQuantitiesSelect.locator('option')
+			).toHaveText(['1', '4', '5', '7', '11']);
+		});
+
+		await test.step('Verify the selectable quantities start from the minimum order quantity', async () => {
+			await apiHelpers.headlessCommerceAdminCatalog.patchProduct(
+				productId,
+				{
+					name: product.name,
+					productConfiguration: {
+						...productConfiguration,
+						allowBackOrder: true,
+						allowedOrderQuantities: [],
+						minOrderQuantity: 3,
+					},
+				}
+			);
+
+			await page.goto(`/web/${site.name}/p/${product.name['en_US']}`);
+
+			await expect(
+				productDetailsPage.minimumQuantityPerOrderLabel(3)
+			).toBeVisible();
+			await expect(productDetailsPage.quantitySelector).toHaveValue('3');
+
+			await productDetailsPage.quantitySelector.fill('');
+
+			await expect(productDetailsPage.addToCartButton).toBeDisabled();
+
+			await productDetailsPage.quantitySelector.fill('2');
+
+			await expect(
+				productDetailsPage.quantitySelectorErrorContainer
+			).toBeVisible();
+			await expect(
+				productDetailsPage.quantitySelectorPopoverMessage(
+					'Min quantity per order is 3'
+				)
+			).toHaveClass(/text-danger/);
+
+			await productDetailsPage.quantitySelector.fill('3');
+
+			await expect(
+				productDetailsPage.quantitySelectorErrorContainer
+			).toBeHidden();
+			await expect(productDetailsPage.addToCartButton).toBeEnabled();
 		});
 	}
 );

@@ -72,15 +72,17 @@ public class JavaTermOrderCheck extends BaseJavaTermCheck {
 			JavaTerm javaTerm1 = javaTerms.get(i);
 			JavaTerm javaTerm2 = sortedJavaTerms.get(i);
 
-			if (!Objects.equals(
+			if (Objects.equals(
 					javaTerm1.getContent(), javaTerm2.getContent())) {
 
-				content = StringUtil.replaceFirst(
-					content, javaTerm1.getContent(), javaTerm2.getContent(),
-					SourceUtil.getLineStartPos(
-						content,
-						javaTerm1.getLineNumber() - javaClass.getLineNumber()));
+				continue;
 			}
+
+			content = StringUtil.replaceFirst(
+				content, javaTerm1.getContent(), javaTerm2.getContent(),
+				SourceUtil.getLineStartPos(
+					content,
+					javaTerm1.getLineNumber() - javaClass.getLineNumber()));
 		}
 
 		return content;
@@ -98,9 +100,11 @@ public class JavaTermOrderCheck extends BaseJavaTermCheck {
 		while (iterator.hasNext()) {
 			JavaTerm javaTerm = iterator.next();
 
-			if (javaTerm.isJavaStaticBlock() || javaTerm.isDefault()) {
-				iterator.remove();
+			if (!javaTerm.isJavaStaticBlock() && !javaTerm.isDefault()) {
+				continue;
 			}
+
+			iterator.remove();
 		}
 
 		if (childJavaTerms.size() < 2) {
@@ -108,6 +112,7 @@ public class JavaTermOrderCheck extends BaseJavaTermCheck {
 		}
 
 		JavaTermComparator javaTermComparator = new JavaTermComparator(
+			isAttributeValue(_CASE_SENSITIVE_KEY, absolutePath, true),
 			customSQLContent);
 
 		JavaTerm previousJavaTerm = null;
@@ -144,5 +149,7 @@ public class JavaTermOrderCheck extends BaseJavaTermCheck {
 
 		return javaClass.getContent();
 	}
+
+	private static final String _CASE_SENSITIVE_KEY = "caseSensitive";
 
 }

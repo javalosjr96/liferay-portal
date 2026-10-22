@@ -19,6 +19,7 @@ import com.puppycrawl.tools.checkstyle.api.DetailAST;
 import com.puppycrawl.tools.checkstyle.api.FullIdent;
 import com.puppycrawl.tools.checkstyle.api.TokenTypes;
 import com.puppycrawl.tools.checkstyle.utils.AnnotationUtil;
+import com.puppycrawl.tools.checkstyle.utils.TokenUtil;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,16 +70,18 @@ public abstract class BaseAPICheck extends BaseCheck {
 			String constructorTypeName = _getConstructorTypeName(
 				literalNewDetailAST);
 
-			if ((constructorTypeName != null) &&
-				constructorTypeName.startsWith("com.liferay.") &&
-				!excludeImportNames.contains(constructorTypeName)) {
+			if ((constructorTypeName == null) ||
+				!constructorTypeName.startsWith("com.liferay.") ||
+				excludeImportNames.contains(constructorTypeName)) {
 
-				constructorCalls.add(
-					new ConstructorCall(
-						constructorTypeName,
-						_getParameterTypeNames(literalNewDetailAST),
-						literalNewDetailAST.getLineNo()));
+				continue;
 			}
+
+			constructorCalls.add(
+				new ConstructorCall(
+					constructorTypeName,
+					_getParameterTypeNames(literalNewDetailAST),
+					literalNewDetailAST.getLineNo()));
 		}
 
 		return constructorCalls;
@@ -233,15 +236,17 @@ public abstract class BaseAPICheck extends BaseCheck {
 				continue;
 			}
 
-			if (variableTypeName.startsWith("com.liferay.") &&
-				!excludeImportNames.contains(variableTypeName)) {
+			if (!variableTypeName.startsWith("com.liferay.") ||
+				excludeImportNames.contains(variableTypeName)) {
 
-				methodCalls.add(
-					new MethodCall(
-						methodName, variableTypeName,
-						_getParameterTypeNames(methodCallDetailAST),
-						methodCallDetailAST.getLineNo()));
+				continue;
 			}
+
+			methodCalls.add(
+				new MethodCall(
+					methodName, variableTypeName,
+					_getParameterTypeNames(methodCallDetailAST),
+					methodCallDetailAST.getLineNo()));
 		}
 
 		return methodCalls;
@@ -319,15 +324,17 @@ public abstract class BaseAPICheck extends BaseCheck {
 			while (iterator.hasNext()) {
 				String extendedClassName = iterator.next();
 
-				if (extendedClassName.startsWith("com.liferay.")) {
-					methodJSONObjects.addAll(
-						getMethodJSONObjects(
-							new MethodCall(
-								methodCall.getName(), extendedClassName,
-								methodCall.getParameterTypeNames(),
-								methodCall.getLineNumber()),
-							javaClassesJSONObject));
+				if (!extendedClassName.startsWith("com.liferay.")) {
+					continue;
 				}
+
+				methodJSONObjects.addAll(
+					getMethodJSONObjects(
+						new MethodCall(
+							methodCall.getName(), extendedClassName,
+							methodCall.getParameterTypeNames(),
+							methodCall.getLineNumber()),
+						javaClassesJSONObject));
 			}
 		}
 
@@ -392,15 +399,16 @@ public abstract class BaseAPICheck extends BaseCheck {
 			detailAST, true, TokenTypes.TYPE);
 
 		for (DetailAST typeDetailAST : typeDetailASTs) {
-			if (!skipDeprecated ||
-				(!hasDeprecatedParent(typeDetailAST) &&
-				 !hasSuppressDeprecationWarningsAnnotation(typeDetailAST))) {
+			if (skipDeprecated &&
+				(hasDeprecatedParent(typeDetailAST) ||
+				 hasSuppressDeprecationWarningsAnnotation(typeDetailAST))) {
 
-				typeNamesMap = _addTypeName(
-					typeNamesMap,
-					getTypeName(typeDetailAST, false, false, true),
-					typeDetailAST.getLineNo(), excludeImportNames);
+				continue;
 			}
+
+			typeNamesMap = _addTypeName(
+				typeNamesMap, getTypeName(typeDetailAST, false, false, true),
+				typeDetailAST.getLineNo(), excludeImportNames);
 		}
 
 		return typeNamesMap;
@@ -492,9 +500,9 @@ public abstract class BaseAPICheck extends BaseCheck {
 				return false;
 			}
 
-			if (((parentDetailAST.getType() == TokenTypes.CTOR_DEF) ||
-				 (parentDetailAST.getType() == TokenTypes.METHOD_DEF) ||
-				 (parentDetailAST.getType() == TokenTypes.VARIABLE_DEF)) &&
+			if (TokenUtil.isOfType(
+					parentDetailAST, TokenTypes.CTOR_DEF, TokenTypes.METHOD_DEF,
+					TokenTypes.VARIABLE_DEF) &&
 				AnnotationUtil.containsAnnotation(
 					parentDetailAST, "Deprecated")) {
 
@@ -698,9 +706,9 @@ public abstract class BaseAPICheck extends BaseCheck {
 			return "char";
 		}
 
-		if ((detailAST.getType() == TokenTypes.LITERAL_FALSE) ||
-			(detailAST.getType() == TokenTypes.LITERAL_TRUE) ||
-			(detailAST.getType() == TokenTypes.LNOT)) {
+		if (TokenUtil.isOfType(
+				detailAST, TokenTypes.LITERAL_FALSE, TokenTypes.LITERAL_TRUE,
+				TokenTypes.LNOT)) {
 
 			return "boolean";
 		}
@@ -737,13 +745,15 @@ public abstract class BaseAPICheck extends BaseCheck {
 			DetailAST curDetailAST = firstChildDetailAST.getNextSibling();
 
 			while (true) {
-				if (curDetailAST.getType() != TokenTypes.ARRAY_DECLARATOR) {
+				if ((curDetailAST == null) ||
+					(curDetailAST.getType() != TokenTypes.ARRAY_DECLARATOR)) {
+
 					return parameterTypeName;
 				}
 
 				parameterTypeName += "[]";
 
-				curDetailAST = curDetailAST.getFirstChild();
+				curDetailAST = curDetailAST.getNextSibling();
 			}
 		}
 
@@ -807,13 +817,11 @@ public abstract class BaseAPICheck extends BaseCheck {
 			return "long";
 		}
 
-		if ((detailAST.getType() == TokenTypes.LITERAL_BOOLEAN) ||
-			(detailAST.getType() == TokenTypes.LITERAL_BYTE) ||
-			(detailAST.getType() == TokenTypes.LITERAL_DOUBLE) ||
-			(detailAST.getType() == TokenTypes.LITERAL_FLOAT) ||
-			(detailAST.getType() == TokenTypes.LITERAL_INT) ||
-			(detailAST.getType() == TokenTypes.LITERAL_LONG) ||
-			(detailAST.getType() == TokenTypes.LITERAL_SHORT)) {
+		if (TokenUtil.isOfType(
+				detailAST, TokenTypes.LITERAL_BOOLEAN, TokenTypes.LITERAL_BYTE,
+				TokenTypes.LITERAL_DOUBLE, TokenTypes.LITERAL_FLOAT,
+				TokenTypes.LITERAL_INT, TokenTypes.LITERAL_LONG,
+				TokenTypes.LITERAL_SHORT)) {
 
 			return detailAST.getText();
 		}

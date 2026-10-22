@@ -468,13 +468,10 @@ public class AssetPublisherConfigurationAction extends BaseConfigurationAction {
 			actionRequest, "assetEntryIds");
 		int assetEntryOrder = ParamUtil.getInteger(
 			actionRequest, "assetEntryOrder");
-		String assetEntryType = ParamUtil.getString(
-			actionRequest, "assetEntryType");
 
 		for (long assetEntryId : assetEntryIds) {
 			assetPublisherWebHelper.addSelection(
-				portletPreferences, assetEntryId, assetEntryOrder,
-				assetEntryType);
+				portletPreferences, assetEntryId, assetEntryOrder);
 		}
 	}
 
@@ -704,9 +701,11 @@ public class AssetPublisherConfigurationAction extends BaseConfigurationAction {
 		int j = 0;
 
 		for (; i < manualEntries.length; i++) {
-			if (i != assetEntryOrder) {
-				newEntries[j++] = manualEntries[i];
+			if (i == assetEntryOrder) {
+				continue;
 			}
+
+			newEntries[j++] = manualEntries[i];
 		}
 
 		portletPreferences.setValues("assetEntryXml", newEntries);

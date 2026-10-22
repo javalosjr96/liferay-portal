@@ -9,7 +9,7 @@ import com.liferay.asset.kernel.model.AssetEntry;
 import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.asset.link.constants.AssetLinkConstants;
 import com.liferay.asset.link.service.AssetLinkLocalService;
-import com.liferay.bookmarks.configuration.BookmarksGroupServiceOverriddenConfiguration;
+import com.liferay.bookmarks.configuration.BookmarksGroupServiceConfiguration;
 import com.liferay.bookmarks.constants.BookmarksConstants;
 import com.liferay.bookmarks.constants.BookmarksPortletKeys;
 import com.liferay.bookmarks.exception.EntryURLException;
@@ -17,7 +17,6 @@ import com.liferay.bookmarks.model.BookmarksEntry;
 import com.liferay.bookmarks.model.BookmarksFolder;
 import com.liferay.bookmarks.service.base.BookmarksEntryLocalServiceBaseImpl;
 import com.liferay.bookmarks.social.BookmarksActivityKeys;
-import com.liferay.bookmarks.util.comparator.EntryModifiedDateComparator;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -182,11 +181,13 @@ public class BookmarksEntryLocalServiceImpl
 			groupId, folderId);
 
 		for (BookmarksEntry entry : entries) {
-			if (includeTrashedEntries ||
-				!_trashHelper.isInTrashExplicitly(entry)) {
+			if (!includeTrashedEntries &&
+				_trashHelper.isInTrashExplicitly(entry)) {
 
-				bookmarksEntryLocalService.deleteEntry(entry);
+				continue;
 			}
+
+			bookmarksEntryLocalService.deleteEntry(entry);
 		}
 	}
 
@@ -319,49 +320,6 @@ public class BookmarksEntryLocalServiceImpl
 		return bookmarksEntryPersistence.countByG_F_S(
 			groupId, ArrayUtil.toArray(folderIds.toArray(new Long[0])),
 			WorkflowConstants.STATUS_APPROVED);
-	}
-
-	@Override
-	public List<BookmarksEntry> getGroupEntries(
-		long groupId, int start, int end) {
-
-		return bookmarksEntryPersistence.findByG_S(
-			groupId, WorkflowConstants.STATUS_APPROVED, start, end,
-			new EntryModifiedDateComparator());
-	}
-
-	@Override
-	public List<BookmarksEntry> getGroupEntries(
-		long groupId, long userId, int start, int end) {
-
-		OrderByComparator<BookmarksEntry> orderByComparator =
-			new EntryModifiedDateComparator();
-
-		if (userId <= 0) {
-			return bookmarksEntryPersistence.findByG_S(
-				groupId, WorkflowConstants.STATUS_APPROVED, start, end,
-				orderByComparator);
-		}
-
-		return bookmarksEntryPersistence.findByG_U_S(
-			groupId, userId, WorkflowConstants.STATUS_APPROVED, start, end,
-			orderByComparator);
-	}
-
-	@Override
-	public int getGroupEntriesCount(long groupId) {
-		return bookmarksEntryPersistence.countByG_S(
-			groupId, WorkflowConstants.STATUS_APPROVED);
-	}
-
-	@Override
-	public int getGroupEntriesCount(long groupId, long userId) {
-		if (userId <= 0) {
-			return getGroupEntriesCount(groupId);
-		}
-
-		return bookmarksEntryPersistence.countByG_U_S(
-			groupId, userId, WorkflowConstants.STATUS_APPROVED);
 	}
 
 	@Indexable(type = IndexableType.REINDEX)
@@ -765,19 +723,16 @@ public class BookmarksEntryLocalServiceImpl
 			return;
 		}
 
-		BookmarksGroupServiceOverriddenConfiguration
-			bookmarksGroupServiceOverriddenConfiguration =
-				_configurationProvider.getConfiguration(
-					BookmarksGroupServiceOverriddenConfiguration.class,
-					new GroupServiceSettingsLocator(
-						entry.getGroupId(), BookmarksConstants.SERVICE_NAME));
+		BookmarksGroupServiceConfiguration bookmarksGroupServiceConfiguration =
+			_configurationProvider.getConfiguration(
+				BookmarksGroupServiceConfiguration.class,
+				new GroupServiceSettingsLocator(
+					entry.getGroupId(), BookmarksConstants.SERVICE_NAME));
 
 		if ((serviceContext.isCommandAdd() &&
-			 !bookmarksGroupServiceOverriddenConfiguration.
-				 emailEntryAddedEnabled()) ||
+			 !bookmarksGroupServiceConfiguration.emailEntryAddedEnabled()) ||
 			(serviceContext.isCommandUpdate() &&
-			 !bookmarksGroupServiceOverriddenConfiguration.
-				 emailEntryUpdatedEnabled())) {
+			 !bookmarksGroupServiceConfiguration.emailEntryUpdatedEnabled())) {
 
 			return;
 		}
@@ -798,29 +753,24 @@ public class BookmarksEntryLocalServiceImpl
 
 		String entryURL = _getBookmarksEntryURL(entry, serviceContext);
 
-		String fromName =
-			bookmarksGroupServiceOverriddenConfiguration.emailFromName();
+		String fromName = bookmarksGroupServiceConfiguration.emailFromName();
 		String fromAddress =
-			bookmarksGroupServiceOverriddenConfiguration.emailFromAddress();
+			bookmarksGroupServiceConfiguration.emailFromAddress();
 
 		LocalizedValuesMap subjectLocalizedValuesMap = null;
 		LocalizedValuesMap bodyLocalizedValuesMap = null;
 
 		if (serviceContext.isCommandUpdate()) {
 			subjectLocalizedValuesMap =
-				bookmarksGroupServiceOverriddenConfiguration.
-					emailEntryUpdatedSubject();
+				bookmarksGroupServiceConfiguration.emailEntryUpdatedSubject();
 			bodyLocalizedValuesMap =
-				bookmarksGroupServiceOverriddenConfiguration.
-					emailEntryUpdatedBody();
+				bookmarksGroupServiceConfiguration.emailEntryUpdatedBody();
 		}
 		else {
 			subjectLocalizedValuesMap =
-				bookmarksGroupServiceOverriddenConfiguration.
-					emailEntryAddedSubject();
+				bookmarksGroupServiceConfiguration.emailEntryAddedSubject();
 			bodyLocalizedValuesMap =
-				bookmarksGroupServiceOverriddenConfiguration.
-					emailEntryAddedBody();
+				bookmarksGroupServiceConfiguration.emailEntryAddedBody();
 		}
 
 		SubscriptionSender subscriptionSender =

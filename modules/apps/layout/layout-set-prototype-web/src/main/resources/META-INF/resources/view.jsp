@@ -49,7 +49,6 @@ String executeLayoutSetPrototypeSyncInfoMessage = (String)SessionMessages.get(re
 	>
 		<liferay-ui:search-container-row
 			className="com.liferay.portal.kernel.model.LayoutSetPrototype"
-			escapedModel="<%= true %>"
 			keyProperty="layoutSetPrototypeId"
 			modelVar="layoutSetPrototype"
 		>
@@ -84,7 +83,12 @@ String executeLayoutSetPrototypeSyncInfoMessage = (String)SessionMessages.get(re
 						</div>
 
 						<div class="h5">
-							<aui:a href="<%= (rowURL != null) ? rowURL.toString() : StringPool.BLANK %>" target="_blank"><%= layoutSetPrototype.getName(locale) %></aui:a>
+							<clay:link
+								href="<%= rowURL %>"
+								label="<%= layoutSetPrototype.getName(locale) %>"
+								target="_blank"
+								translated="<%= false %>"
+							/>
 						</div>
 
 						<div class="h6 text-default">
@@ -126,13 +130,14 @@ String executeLayoutSetPrototypeSyncInfoMessage = (String)SessionMessages.get(re
 							iconAfter="shortcut"
 							label="<%= layoutSetPrototype.getName(locale) %>"
 							target="_blank"
+							translated="<%= false %>"
 						/>
 					</liferay-ui:search-container-column-text>
 
 					<liferay-ui:search-container-column-text
 						cssClass="table-cell-expand table-cell-minw-300"
 						name="description"
-						value="<%= layoutSetPrototype.getDescription(locale) %>"
+						value="<%= HtmlUtil.escape(layoutSetPrototype.getDescription(locale)) %>"
 					/>
 
 					<liferay-ui:search-container-column-date

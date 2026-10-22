@@ -46,7 +46,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.log.Log;
@@ -242,32 +241,26 @@ public class AssetListAssetEntryProviderImpl
 				"ddmStructureFieldValue", ddmStructureFieldValue);
 		}
 
-		if (FeatureFlagManagerUtil.isEnabled(
-				assetListEntry.getCompanyId(), "LPD-74731")) {
+		String filtersJSON = unicodeProperties.getProperty("filters");
 
-			String filtersJSON = unicodeProperties.getProperty("filters");
+		if (Validator.isNotNull(filtersJSON)) {
+			JSONArray filtersJSONArray = null;
 
-			if (Validator.isNotNull(filtersJSON)) {
-				JSONArray filtersJSONArray = null;
-
-				try {
-					filtersJSONArray = _jsonFactory.createJSONArray(
-						filtersJSON);
+			try {
+				filtersJSONArray = _jsonFactory.createJSONArray(filtersJSON);
+			}
+			catch (Exception exception) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(
+						"Unable to parse filters: " + filtersJSON, exception);
 				}
-				catch (Exception exception) {
-					if (_log.isDebugEnabled()) {
-						_log.debug(
-							"Unable to parse filters: " + filtersJSON,
-							exception);
-					}
-				}
+			}
 
-				if (filtersJSONArray != null) {
-					assetEntryQuery.setAttribute("filters", filtersJSONArray);
+			if (filtersJSONArray != null) {
+				assetEntryQuery.setAttribute("filters", filtersJSONArray);
 
-					_setAssetEntryQueryLegacyFilters(
-						assetEntryQuery, filtersJSONArray);
-				}
+				_setAssetEntryQueryLegacyFilters(
+					assetEntryQuery, filtersJSONArray);
 			}
 		}
 
@@ -370,21 +363,24 @@ public class AssetListAssetEntryProviderImpl
 				break;
 			}
 
-			boolean queryContains = GetterUtil.getBoolean(
-				unicodeProperties.getProperty(
-					"queryContains" + i, StringPool.BLANK));
 			boolean queryAndOperator = GetterUtil.getBoolean(
 				unicodeProperties.getProperty(
 					"queryAndOperator" + i, StringPool.BLANK));
+			boolean queryContains = GetterUtil.getBoolean(
+				unicodeProperties.getProperty(
+					"queryContains" + i, StringPool.BLANK));
 			String queryName = unicodeProperties.getProperty(
 				"queryName" + i, StringPool.BLANK);
 
-			if (Objects.equals(queryName, "assetCategories") && queryContains &&
-				(queryAndOperator || (queryValues.length == 1))) {
+			if (!Objects.equals(queryName, "assetCategories") ||
+				!queryContains ||
+				(!queryAndOperator && (queryValues.length != 1))) {
 
-				assetCategoryIds = ArrayUtil.append(
-					assetCategoryIds, GetterUtil.getLongValues(queryValues));
+				continue;
 			}
+
+			assetCategoryIds = ArrayUtil.append(
+				assetCategoryIds, GetterUtil.getLongValues(queryValues));
 		}
 
 		return assetCategoryIds;
@@ -461,20 +457,22 @@ public class AssetListAssetEntryProviderImpl
 				break;
 			}
 
-			boolean queryContains = GetterUtil.getBoolean(
-				unicodeProperties.getProperty(
-					"queryContains" + i, StringPool.BLANK));
 			boolean queryAndOperator = GetterUtil.getBoolean(
 				unicodeProperties.getProperty(
 					"queryAndOperator" + i, StringPool.BLANK));
+			boolean queryContains = GetterUtil.getBoolean(
+				unicodeProperties.getProperty(
+					"queryContains" + i, StringPool.BLANK));
 			String queryName = unicodeProperties.getProperty(
 				"queryName" + i, StringPool.BLANK);
 
-			if (Objects.equals(queryName, "assetTags") && queryContains &&
-				(queryAndOperator || (queryValues.length == 1))) {
+			if (!Objects.equals(queryName, "assetTags") || !queryContains ||
+				(!queryAndOperator && (queryValues.length != 1))) {
 
-				Collections.addAll(allAssetTagNames, queryValues);
+				continue;
 			}
+
+			Collections.addAll(allAssetTagNames, queryValues);
 		}
 
 		return allAssetTagNames.toArray(new String[0]);
@@ -878,20 +876,22 @@ public class AssetListAssetEntryProviderImpl
 				break;
 			}
 
-			boolean queryContains = GetterUtil.getBoolean(
-				unicodeProperties.getProperty(
-					"queryContains" + i, StringPool.BLANK));
 			boolean queryAndOperator = GetterUtil.getBoolean(
 				unicodeProperties.getProperty(
 					"queryAndOperator" + i, StringPool.BLANK));
+			boolean queryContains = GetterUtil.getBoolean(
+				unicodeProperties.getProperty(
+					"queryContains" + i, StringPool.BLANK));
 			String queryName = unicodeProperties.getProperty(
 				"queryName" + i, StringPool.BLANK);
 
-			if (Objects.equals(queryName, "keywords") && queryContains &&
-				(queryAndOperator || (queryValues.length == 1))) {
+			if (!Objects.equals(queryName, "keywords") || !queryContains ||
+				(!queryAndOperator && (queryValues.length != 1))) {
 
-				allKeywords = queryValues;
+				continue;
 			}
+
+			allKeywords = queryValues;
 		}
 
 		return allKeywords;
@@ -999,10 +999,8 @@ public class AssetListAssetEntryProviderImpl
 			return _toAssetEntryQueryOrderByColumn(orderByColumn);
 		}
 
-		if (FeatureFlagManagerUtil.isEnabled(companyId, "LPD-74731")) {
-			orderByColumn = AssetListOrderByColumnUtil.toOrderByColumn(
-				companyId, orderByColumn);
-		}
+		orderByColumn = AssetListOrderByColumnUtil.toOrderByColumn(
+			companyId, orderByColumn);
 
 		if (orderByColumn.startsWith(StringPool.OPEN_CURLY_BRACE)) {
 			return _toAssetEntryQueryOrderByColumn(defaultOrderByColumn);
@@ -1147,12 +1145,12 @@ public class AssetListAssetEntryProviderImpl
 				break;
 			}
 
-			boolean queryContains = GetterUtil.getBoolean(
-				unicodeProperties.getProperty(
-					"queryContains" + i, StringPool.BLANK));
 			boolean queryAndOperator = GetterUtil.getBoolean(
 				unicodeProperties.getProperty(
 					"queryAndOperator" + i, StringPool.BLANK));
+			boolean queryContains = GetterUtil.getBoolean(
+				unicodeProperties.getProperty(
+					"queryContains" + i, StringPool.BLANK));
 			String queryName = unicodeProperties.getProperty(
 				"queryName" + i, StringPool.BLANK);
 

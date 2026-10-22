@@ -33,6 +33,7 @@ import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryGroupRelLocalService;
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFileEntryTypeConstants;
@@ -43,7 +44,6 @@ import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryService;
 import com.liferay.document.library.kernel.service.DLFolderService;
 import com.liferay.document.library.test.util.DLTestUtil;
-import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.exportimport.kernel.lar.ExportImportThreadLocal;
 import com.liferay.exportimport.report.constants.ExportImportReportEntryConstants;
 import com.liferay.exportimport.report.exception.NoSuchExportImportReportEntryException;
@@ -2390,6 +2390,9 @@ public class DefaultObjectEntryManagerImplTest
 			null, "COUNT", _objectDefinition1.getObjectDefinitionId(),
 			"countAggregationObjectFieldName2", objectRelationship.getName());
 
+		_objectDefinition1 = objectDefinitionLocalService.getObjectDefinition(
+			_objectDefinition1.getObjectDefinitionId());
+
 		ObjectEntry parentObjectEntry2 =
 			_defaultObjectEntryManager.addObjectEntry(
 				_simpleDTOConverterContext, _objectDefinition1,
@@ -2531,7 +2534,7 @@ public class DefaultObjectEntryManagerImplTest
 				new ObjectEntry() {
 					{
 						properties = HashMapBuilder.<String, Object>put(
-							"dateTimeUTCObjectFieldName", localDateTime
+							"dateTimeUTCObjectFieldName", localDateTimeString
 						).build();
 					}
 				},
@@ -12100,13 +12103,13 @@ public class DefaultObjectEntryManagerImplTest
 	}
 
 	private void _testAddObjectEntryWithDefaultLanguageId(
-			ObjectDefinition objectDefinition)
+			ObjectDefinition publishedObjectDefinition)
 		throws Exception {
 
 		String scopeKey;
 
 		if (StringUtil.equals(
-				objectDefinition.getScope(),
+				publishedObjectDefinition.getScope(),
 				ObjectDefinitionConstants.SCOPE_COMPANY)) {
 
 			scopeKey = ObjectDefinitionConstants.SCOPE_COMPANY;
@@ -12123,7 +12126,7 @@ public class DefaultObjectEntryManagerImplTest
 			ObjectEntryDefaultLanguageIdException.class,
 			"Language ID " + invalidLanguageId + " is not available",
 			() -> _defaultObjectEntryManager.addObjectEntry(
-				_simpleDTOConverterContext, objectDefinition,
+				_simpleDTOConverterContext, publishedObjectDefinition,
 				new ObjectEntry() {
 					{
 						defaultLanguageId = invalidLanguageId;
@@ -12141,12 +12144,16 @@ public class DefaultObjectEntryManagerImplTest
 			).name(
 				"requiredLocalizedLongInteger"
 			).objectDefinitionId(
-				objectDefinition.getObjectDefinitionId()
+				publishedObjectDefinition.getObjectDefinitionId()
 			).required(
 				true
 			).userId(
 				TestPropsValues.getUserId()
 			).build());
+
+		ObjectDefinition objectDefinition =
+			objectDefinitionLocalService.getObjectDefinition(
+				publishedObjectDefinition.getObjectDefinitionId());
 
 		AssertUtils.assertFailure(
 			ObjectEntryValuesException.RequiredLanguageId.class,

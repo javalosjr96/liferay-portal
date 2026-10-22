@@ -8,6 +8,7 @@ import ClayButton, {ClayButtonWithIcon} from '@clayui/button';
 import {Text} from '@clayui/core';
 import ClayEmptyState from '@clayui/empty-state';
 import ClayForm, {ClayInput} from '@clayui/form';
+import ClayIcon from '@clayui/icon';
 import ClayLabel from '@clayui/label';
 import ClayList from '@clayui/list';
 import ClayModal from '@clayui/modal';
@@ -16,6 +17,7 @@ import {ClayTooltipProvider} from '@clayui/tooltip';
 import {sub} from 'frontend-js-web';
 import React, {useEffect, useRef, useState} from 'react';
 
+import {PAGINATION_BAR_LABELS} from '../../utils/constants';
 import {openCMSModal} from '../../utils/openCMSModal';
 import {AssetIcon, MimeTypes} from '../AssetIcon';
 import {BulkActionItem, BulkActionItemResponse} from './types';
@@ -388,8 +390,13 @@ const AssetUsageListModal: React.FC<IAssetUsageListModalProps> = ({
 							description={Liferay.Language.get(
 								'review-your-search-and-try-again'
 							)}
-							imgSrc={`${Liferay.ThemeDisplay.getPathThemeImages()}/states/search_state.svg`}
-							imgSrcReducedMotion={`${Liferay.ThemeDisplay.getPathThemeImages()}/states/search_state_reduced_motion.svg`}
+							image={
+								<ClayIcon
+									className="c-empty-state-icon c-empty-state-icon-search-state"
+									illustration
+									symbol="search-state"
+								/>
+							}
 							title={Liferay.Language.get('no-results-found')}
 						>
 							<ClayButton
@@ -536,6 +543,7 @@ const AssetUsageListModal: React.FC<IAssetUsageListModalProps> = ({
 								(data?.totalCount ?? 0) / pageSize - 5 > 999
 							}
 							ellipsisBuffer={3}
+							labels={PAGINATION_BAR_LABELS}
 							onActiveChange={async (newPage: number) => {
 								if (
 									data &&

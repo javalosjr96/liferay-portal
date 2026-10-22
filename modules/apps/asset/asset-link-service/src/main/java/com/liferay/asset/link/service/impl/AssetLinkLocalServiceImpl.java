@@ -238,9 +238,11 @@ public class AssetLinkLocalServiceImpl extends AssetLinkLocalServiceBaseImpl {
 
 		if (rightAssetLinks != null) {
 			for (AssetLink rightAssetLink : rightAssetLinks) {
-				if (deletedAssetLinks.add(rightAssetLink)) {
-					assetLinkPersistence.remove(rightAssetLink);
+				if (!deletedAssetLinks.add(rightAssetLink)) {
+					continue;
 				}
+
+				assetLinkPersistence.remove(rightAssetLink);
 			}
 		}
 
@@ -267,22 +269,6 @@ public class AssetLinkLocalServiceImpl extends AssetLinkLocalServiceBaseImpl {
 
 					return assetLinks;
 				});
-		}
-	}
-
-	/**
-	 * Delete all links that associate the two asset entries.
-	 *
-	 * @param entryId1 the primary key of the first asset entry
-	 * @param entryId2 the primary key of the second asset entry
-	 */
-	@Override
-	public void deleteLinks(long entryId1, long entryId2) {
-		List<AssetLink> links = assetLinkPersistence.findByE_E(
-			entryId1, entryId2);
-
-		for (AssetLink link : links) {
-			deleteLink(link);
 		}
 	}
 
@@ -537,24 +523,30 @@ public class AssetLinkLocalServiceImpl extends AssetLinkLocalServiceBaseImpl {
 		List<AssetLink> assetLinks = getLinks(entryId, typeId);
 
 		for (AssetLink assetLink : assetLinks) {
-			if (((assetLink.getEntryId1() == entryId) &&
-				 !ArrayUtil.contains(linkEntryIds, assetLink.getEntryId2())) ||
-				((assetLink.getEntryId2() == entryId) &&
-				 !ArrayUtil.contains(linkEntryIds, assetLink.getEntryId1()))) {
+			if (((assetLink.getEntryId1() != entryId) ||
+				 ArrayUtil.contains(linkEntryIds, assetLink.getEntryId2())) &&
+				((assetLink.getEntryId2() != entryId) ||
+				 ArrayUtil.contains(linkEntryIds, assetLink.getEntryId1()))) {
 
-				deleteAssetLink(assetLink);
+				continue;
 			}
+
+			deleteAssetLink(assetLink);
 		}
 
 		for (long assetLinkEntryId : linkEntryIds) {
-			if (assetLinkEntryId != entryId) {
-				AssetLink link = assetLinkPersistence.fetchByE_E_T(
-					entryId, assetLinkEntryId, typeId);
-
-				if (link == null) {
-					addLink(userId, entryId, assetLinkEntryId, typeId, 0);
-				}
+			if (assetLinkEntryId == entryId) {
+				continue;
 			}
+
+			AssetLink link = assetLinkPersistence.fetchByE_E_T(
+				entryId, assetLinkEntryId, typeId);
+
+			if (link != null) {
+				continue;
+			}
+
+			addLink(userId, entryId, assetLinkEntryId, typeId, 0);
 		}
 	}
 

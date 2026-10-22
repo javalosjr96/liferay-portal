@@ -18,6 +18,7 @@ import com.liferay.fragment.importer.FragmentsImporterResultEntry;
 import com.liferay.fragment.model.FragmentCollection;
 import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
+import com.liferay.fragment.model.FragmentEntryVersion;
 import com.liferay.fragment.service.FragmentCollectionLocalService;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
 import com.liferay.fragment.service.FragmentEntryLocalService;
@@ -32,6 +33,7 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.test.TestInfo;
@@ -273,12 +275,60 @@ public class FragmentsImporterTest {
 	}
 
 	@Test
+	@TestInfo("LPD-109711")
+	public void testImportFragmentEntriesWithDeletedThumbnail()
+		throws Exception {
+
+		File zipFile = _generateZipFileWithFolderResources();
+
+		try {
+			_fragmentsImporter.importFragmentEntries(
+				_user.getUserId(), _group.getGroupId(), 0, zipFile,
+				FragmentsImportStrategy.OVERWRITE, false);
+
+			List<FragmentCollection> fragmentCollections =
+				_fragmentCollectionLocalService.getFragmentCollections(
+					_group.getGroupId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+			FragmentCollection fragmentCollection = fragmentCollections.get(0);
+
+			List<FragmentEntry> fragmentEntries =
+				_fragmentEntryLocalService.getFragmentEntries(
+					fragmentCollection.getFragmentCollectionId());
+
+			FragmentEntry fragmentEntry = fragmentEntries.get(0);
+
+			Assert.assertNotEquals(0, fragmentEntry.getPreviewFileEntryId());
+
+			PortletFileRepositoryUtil.deletePortletFileEntry(
+				fragmentEntry.getPreviewFileEntryId());
+
+			_fragmentsImporter.importFragmentEntries(
+				_user.getUserId(), _group.getGroupId(), 0, zipFile,
+				FragmentsImportStrategy.OVERWRITE, false);
+
+			FragmentEntry reimportedFragmentEntry =
+				_fragmentEntryLocalService.getFragmentEntry(
+					fragmentEntry.getFragmentEntryId());
+
+			Assert.assertNotEquals(
+				fragmentEntry.getPreviewFileEntryId(),
+				reimportedFragmentEntry.getPreviewFileEntryId());
+			Assert.assertNotNull(
+				PortletFileRepositoryUtil.getPortletFileEntry(
+					reimportedFragmentEntry.getPreviewFileEntryId()));
+		}
+		finally {
+			FileUtil.delete(zipFile);
+		}
+	}
+
+	@Test
 	@TestInfo("LPD-83633")
 	public void testImportFragmentEntriesWithFolderResources()
 		throws Exception {
 
 		_testImportFragmentEntriesWithFolderResources(
-			false,
 			HashMapBuilder.put(
 				"folder1/image2.png", "image2.png"
 			).put(
@@ -292,9 +342,9 @@ public class FragmentsImporterTest {
 				"image1 (1).png", "image1 (1).png"
 			).put(
 				"image1.png", "image1.png"
-			).build());
+			).build(),
+			false);
 		_testImportFragmentEntriesWithFolderResources(
-			true,
 			HashMapBuilder.put(
 				"folder1/image2.png", "image2.png"
 			).put(
@@ -304,7 +354,8 @@ public class FragmentsImporterTest {
 				"folder1/image2.png", "image2.png"
 			).put(
 				"image1.png", "image1.png"
-			).build());
+			).build(),
+			true);
 	}
 
 	@Test
@@ -590,6 +641,105 @@ public class FragmentsImporterTest {
 	}
 
 	@Test
+	@TestInfo("LPD-109711")
+	public void testImportFragmentEntriesWithUnchangedContent()
+		throws Exception {
+
+		File zipFile = _generateZipFileWithFolderResources();
+
+		try {
+			_fragmentsImporter.importFragmentEntries(
+				_user.getUserId(), _group.getGroupId(), 0, zipFile,
+				FragmentsImportStrategy.OVERWRITE, false);
+
+			List<FragmentCollection> fragmentCollections =
+				_fragmentCollectionLocalService.getFragmentCollections(
+					_group.getGroupId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+			FragmentCollection fragmentCollection = fragmentCollections.get(0);
+
+			List<FragmentEntry> fragmentEntries =
+				_fragmentEntryLocalService.getFragmentEntries(
+					fragmentCollection.getFragmentCollectionId());
+
+			FragmentEntry fragmentEntry = fragmentEntries.get(0);
+
+			Assert.assertNotEquals(0, fragmentEntry.getPreviewFileEntryId());
+
+			List<FragmentEntryVersion> fragmentEntryVersions =
+				_fragmentEntryLocalService.getVersions(fragmentEntry);
+
+			_fragmentsImporter.importFragmentEntries(
+				_user.getUserId(), _group.getGroupId(), 0, zipFile,
+				FragmentsImportStrategy.OVERWRITE, false);
+
+			FragmentEntry reimportedFragmentEntry =
+				_fragmentEntryLocalService.getFragmentEntry(
+					fragmentEntry.getFragmentEntryId());
+
+			Assert.assertEquals(
+				fragmentEntry.getPreviewFileEntryId(),
+				reimportedFragmentEntry.getPreviewFileEntryId());
+
+			List<FragmentEntryVersion> reimportedFragmentEntryVersions =
+				_fragmentEntryLocalService.getVersions(reimportedFragmentEntry);
+
+			Assert.assertEquals(
+				reimportedFragmentEntryVersions.toString(),
+				fragmentEntryVersions.size(),
+				reimportedFragmentEntryVersions.size());
+		}
+		finally {
+			FileUtil.delete(zipFile);
+		}
+	}
+
+	@Test
+	@TestInfo("LPD-109711")
+	public void testImportFragmentEntriesWithUnchangedResources()
+		throws Exception {
+
+		_fragmentsImporter.importFragmentEntries(
+			_user.getUserId(), _group.getGroupId(), 0, _resourcesFile,
+			FragmentsImportStrategy.OVERWRITE, false);
+
+		List<FragmentCollection> fragmentCollections =
+			_fragmentCollectionLocalService.getFragmentCollections(
+				_group.getGroupId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS);
+
+		FragmentCollection fragmentCollection = fragmentCollections.get(0);
+
+		List<FileEntry> fileEntries = fragmentCollection.getResources();
+
+		Assert.assertEquals(fileEntries.toString(), 1, fileEntries.size());
+
+		FileEntry fileEntry = fileEntries.get(0);
+
+		_fragmentsImporter.importFragmentEntries(
+			_user.getUserId(), _group.getGroupId(), 0, _resourcesFile,
+			FragmentsImportStrategy.OVERWRITE, false);
+
+		fileEntries = fragmentCollection.getResources();
+
+		Assert.assertEquals(fileEntries.toString(), 1, fileEntries.size());
+
+		FileEntry reimportedFileEntry = fileEntries.get(0);
+
+		Assert.assertEquals(
+			fileEntry.getFileEntryId(), reimportedFileEntry.getFileEntryId());
+
+		List<FragmentEntry> fragmentEntries =
+			_fragmentEntryLocalService.getFragmentEntries(
+				fragmentCollection.getFragmentCollectionId());
+
+		FragmentEntry fragmentEntry = fragmentEntries.get(0);
+
+		String html = fragmentEntry.getHtml();
+
+		Assert.assertTrue(html, html.contains("[resources:image.png]"));
+	}
+
+	@Test
 	@TestInfo("LPS-96113")
 	public void testImportFragmentEntriesWithValidation() throws Exception {
 		_fragmentsImporter.importFragmentEntries(
@@ -750,6 +900,17 @@ public class FragmentsImporterTest {
 		fragmentEntryKeys.add(jsonObject.getString("fragmentEntryKey"));
 	}
 
+	private void _addUpdatedZipWriterEntry(ZipWriter zipWriter, String zipPath)
+		throws Exception {
+
+		URL url = _bundle.getEntry(
+			_PATH_FRAGMENTS_WITH_FOLDER_RESOURCES + "fragments/thumbnail.png");
+
+		try (InputStream inputStream = url.openStream()) {
+			zipWriter.addEntry(zipPath, inputStream);
+		}
+	}
+
 	private void _addZipWriterEntry(
 			ZipWriter zipWriter, String path, String key)
 		throws Exception {
@@ -811,6 +972,37 @@ public class FragmentsImporterTest {
 		_addZipWriterEntry(
 			zipWriter, _PATH_RESOURCES_COLLECTION + "resources", "image.png");
 		_populateZipWriter(_PATH_RESOURCES_COLLECTION, zipWriter, false);
+
+		return zipWriter.getFile();
+	}
+
+	private File _generateUpdatedResourcesZipFile() throws Exception {
+		ZipWriter zipWriter = _zipWriterFactory.getZipWriter();
+
+		_addZipWriterEntry(
+			zipWriter, _PATH_DEPENDENCIES + "resources-collection",
+			"collection.json");
+		_addUpdatedZipWriterEntry(
+			zipWriter, "resources-collection/resources/image.png");
+		_populateZipWriter(_PATH_RESOURCES_COLLECTION, zipWriter, false);
+
+		return zipWriter.getFile();
+	}
+
+	private File _generateUpdatedZipFileWithFolderResources() throws Exception {
+		ZipWriter zipWriter = _zipWriterFactory.getZipWriter();
+
+		_addZipWriterEntry(
+			zipWriter, _PATH_DEPENDENCIES + "fragments-with-folder-resources",
+			FragmentExportImportConstants.FILE_NAME_COLLECTION);
+		_addUpdatedZipWriterEntry(
+			zipWriter, "fragments-with-folder-resources/resources/image1.png");
+		_addUpdatedZipWriterEntry(
+			zipWriter,
+			"fragments-with-folder-resources/resources/folder1/image2.png");
+
+		_populateZipWriter(
+			_PATH_FRAGMENTS_WITH_FOLDER_RESOURCES, zipWriter, true);
 
 		return zipWriter.getFile();
 	}
@@ -936,38 +1128,6 @@ public class FragmentsImporterTest {
 	}
 
 	private void _testImportFragmentEntriesWithFolderResources(
-			boolean propagateChanges,
-			Map<String, String>... expectedResourcesMaps)
-		throws Exception {
-
-		File zipFile = _generateZipFileWithFolderResources();
-
-		try (CompanyConfigurationTemporarySwapper
-				companyConfigurationTemporarySwapper =
-					new CompanyConfigurationTemporarySwapper(
-						_group.getCompanyId(),
-						FragmentServiceConfiguration.class.getName(),
-						HashMapDictionaryBuilder.<String, Object>put(
-							"propagateChanges", propagateChanges
-						).build())) {
-
-			for (Map<String, String> expectedResourcesMap :
-					expectedResourcesMaps) {
-
-				_testImportFragmentEntriesWithFolderResources(
-					expectedResourcesMap, zipFile);
-			}
-
-			_deleteFragmentCollections(
-				_fragmentCollectionLocalService.getFragmentCollections(
-					_group.getGroupId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS));
-		}
-		finally {
-			FileUtil.delete(zipFile);
-		}
-	}
-
-	private void _testImportFragmentEntriesWithFolderResources(
 			Map<String, String> expectedResourcesMap, File zipFile)
 		throws Exception {
 
@@ -995,6 +1155,39 @@ public class FragmentsImporterTest {
 
 			Assert.assertNotNull(fileEntry);
 			Assert.assertEquals(entry.getValue(), fileEntry.getTitle());
+		}
+	}
+
+	private void _testImportFragmentEntriesWithFolderResources(
+			Map<String, String> expectedResourcesMap,
+			Map<String, String> expectedUpdatedResourcesMap,
+			boolean propagateChanges)
+		throws Exception {
+
+		File zipFile = _generateZipFileWithFolderResources();
+		File updatedZipFile = _generateUpdatedZipFileWithFolderResources();
+
+		try (CompanyConfigurationTemporarySwapper
+				companyConfigurationTemporarySwapper =
+					new CompanyConfigurationTemporarySwapper(
+						_group.getCompanyId(),
+						FragmentServiceConfiguration.class.getName(),
+						HashMapDictionaryBuilder.<String, Object>put(
+							"propagateChanges", propagateChanges
+						).build())) {
+
+			_testImportFragmentEntriesWithFolderResources(
+				expectedResourcesMap, zipFile);
+			_testImportFragmentEntriesWithFolderResources(
+				expectedUpdatedResourcesMap, updatedZipFile);
+
+			_deleteFragmentCollections(
+				_fragmentCollectionLocalService.getFragmentCollections(
+					_group.getGroupId(), QueryUtil.ALL_POS, QueryUtil.ALL_POS));
+		}
+		finally {
+			FileUtil.delete(updatedZipFile);
+			FileUtil.delete(zipFile);
 		}
 	}
 
@@ -1026,9 +1219,17 @@ public class FragmentsImporterTest {
 
 			Assert.assertEquals(fileEntries.toString(), 1, fileEntries.size());
 
-			_fragmentsImporter.importFragmentEntries(
-				_user.getUserId(), _group.getGroupId(), 0, _resourcesFile,
-				FragmentsImportStrategy.OVERWRITE, false);
+			File updatedResourcesFile = _generateUpdatedResourcesZipFile();
+
+			try {
+				_fragmentsImporter.importFragmentEntries(
+					_user.getUserId(), _group.getGroupId(), 0,
+					updatedResourcesFile, FragmentsImportStrategy.OVERWRITE,
+					false);
+			}
+			finally {
+				FileUtil.delete(updatedResourcesFile);
+			}
 
 			fragmentCollections =
 				_fragmentCollectionLocalService.getFragmentCollections(

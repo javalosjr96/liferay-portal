@@ -6,6 +6,7 @@
 import React from 'react';
 
 import {APPLY_OBJECT_FIELD_VALUES_EVENT} from '../events';
+import {ObjectField} from '../services/getObjectFields';
 import {Message} from '../types';
 import {AIChat} from '../useAIChat';
 import buildContentTypeMessage from '../utils/buildContentTypeMessage';
@@ -35,26 +36,51 @@ type MessageBalloonRenderers = {
 	) => JSX.Element;
 };
 
+function getFeedbackProps({chat, index, item}: MessageBalloonRenderContext) {
+	if (item.error) {
+		return {};
+	}
+
+	return {
+		feedbackGiven: Boolean(chat.feedbackGiven[index]),
+		onReport: () =>
+			chat.setReportContext({
+				agentDefinitionExternalReferenceCodes:
+					item.agentDefinitionExternalReferenceCodes ?? [],
+				index,
+			}),
+		onThumbsUp: () => chat.giveThumbsUp(index, item),
+	};
+}
+
+function getRichTextFieldNames({chat}: MessageBalloonRenderContext) {
+	const chatContext = {
+		...chat.contextRef.current,
+		...chat.getContextRef.current?.(),
+		...chat.runtimeContextRef.current,
+	};
+
+	if (typeof chatContext.objectFields !== 'string') {
+		return [];
+	}
+
+	let objectFields = JSON.parse(chatContext.objectFields);
+
+	if (!Array.isArray(objectFields)) {
+		objectFields = objectFields.items ?? [];
+	}
+
+	return (objectFields as ObjectField[])
+		.filter(({businessType}) => businessType === 'RichText')
+		.map(({name}) => name);
+}
+
 const MESSAGE_BALLOON_RENDERERS: MessageBalloonRenderers = {
-	'assistant': ({chat, index, item}) => (
+	'assistant': (context) => (
 		<AIAssistantMessageBalloon
-			error={item.error ?? false}
-			feedbackGiven={Boolean(chat.feedbackGiven[index])}
-			message={item.text}
-			onReport={
-				!item.error
-					? () =>
-							chat.setReportContext({
-								agentDefinitionExternalReferenceCodes:
-									item.agentDefinitionExternalReferenceCodes ??
-									[],
-								index,
-							})
-					: undefined
-			}
-			onThumbsUp={
-				!item.error ? () => chat.giveThumbsUp(index, item) : undefined
-			}
+			error={context.item.error ?? false}
+			message={context.item.text}
+			{...getFeedbackProps(context)}
 		/>
 	),
 	'categorization': ({chat}, {categorization}) => (
@@ -63,8 +89,11 @@ const MESSAGE_BALLOON_RENDERERS: MessageBalloonRenderers = {
 			setBalloonGenerating={chat.setBalloonGenerating}
 		/>
 	),
-	'content-drafts': ({item}) => (
-		<ContentsMessageBalloon message={item.text} />
+	'content-drafts': (context) => (
+		<ContentsMessageBalloon
+			message={context.item.text}
+			{...getFeedbackProps(context)}
+		/>
 	),
 	'content-types': ({chat, item}, {contentTypes}) => (
 		<ContentTypeSelectorMessageBalloon
@@ -75,7 +104,9 @@ const MESSAGE_BALLOON_RENDERERS: MessageBalloonRenderers = {
 			setIsGenerating={chat.setIsGenerating}
 		/>
 	),
-	'field-values': ({chat, index}, {fieldValues}) => {
+	'field-values': (context, {fieldValues}) => {
+		const {chat, index} = context;
+
 		const previousMessage = chat.messages[index - 1];
 
 		return (
@@ -90,6 +121,7 @@ const MESSAGE_BALLOON_RENDERERS: MessageBalloonRenderers = {
 						chat.sendMessage(previousMessage.text);
 					}
 				}}
+				richTextFieldNames={getRichTextFieldNames(context)}
 				values={fieldValues}
 			/>
 		);

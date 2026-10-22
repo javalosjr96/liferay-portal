@@ -66,6 +66,7 @@ import com.liferay.object.exception.ObjectDefinitionSystemException;
 import com.liferay.object.exception.ObjectDefinitionValidationException;
 import com.liferay.object.exception.ObjectDefinitionValidationException.ValidationError;
 import com.liferay.object.exception.ObjectDefinitionVersionException;
+import com.liferay.object.exception.ObjectFieldBusinessTypeException;
 import com.liferay.object.exception.ObjectFieldLabelException;
 import com.liferay.object.exception.ObjectFieldListTypeDefinitionIdException;
 import com.liferay.object.exception.ObjectFieldNameException;
@@ -76,6 +77,7 @@ import com.liferay.object.field.builder.AttachmentObjectFieldBuilder;
 import com.liferay.object.field.builder.BooleanObjectFieldBuilder;
 import com.liferay.object.field.builder.DateObjectFieldBuilder;
 import com.liferay.object.field.builder.DateTimeObjectFieldBuilder;
+import com.liferay.object.field.builder.LocationObjectFieldBuilder;
 import com.liferay.object.field.builder.LongIntegerObjectFieldBuilder;
 import com.liferay.object.field.builder.ObjectFieldBuilder;
 import com.liferay.object.field.builder.PicklistObjectFieldBuilder;
@@ -123,6 +125,9 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.audit.AuditMessage;
 import com.liferay.portal.kernel.audit.AuditRouter;
+import com.liferay.portal.kernel.cluster.ClusterExecutor;
+import com.liferay.portal.kernel.cluster.ClusterExecutorUtil;
+import com.liferay.portal.kernel.cluster.ClusterRequest;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
@@ -182,6 +187,8 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LinkedHashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.MethodHandler;
+import com.liferay.portal.kernel.util.MethodKey;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
@@ -192,6 +199,7 @@ import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.kernel.workflow.WorkflowDefinition;
 import com.liferay.portal.language.override.model.PLOEntry;
 import com.liferay.portal.language.override.service.PLOEntryLocalService;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -220,6 +228,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.function.Supplier;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -2648,6 +2657,36 @@ public class ObjectDefinitionLocalServiceTest {
 				user.getUserId(),
 				customObjectDefinition.getObjectDefinitionId());
 
+			ObjectDefinition childCustomObjectDefinition =
+				_objectDefinitionLocalService.addCustomObjectDefinition(
+					null, user.getUserId(), 0, null, null, true, false, true,
+					false, true, false, false, false, false, null,
+					LocalizedMapUtil.getLocalizedMap("Baker"), "Baker", null,
+					null, LocalizedMapUtil.getLocalizedMap("Bakers"), true,
+					ObjectDefinitionConstants.SCOPE_COMPANY,
+					ObjectDefinitionConstants.STORAGE_TYPE_DEFAULT,
+					Collections.emptyList(),
+					Collections.singletonList(
+						ObjectFieldUtil.createObjectField(
+							ObjectFieldConstants.BUSINESS_TYPE_TEXT,
+							ObjectFieldConstants.DB_TYPE_STRING,
+							RandomTestUtil.randomString(),
+							StringUtil.randomId())),
+					Collections.emptyList(), new ServiceContext());
+
+			_objectDefinitionLocalService.publishCustomObjectDefinition(
+				user.getUserId(),
+				childCustomObjectDefinition.getObjectDefinitionId());
+
+			_objectRelationshipLocalService.addObjectRelationship(
+				null, user.getUserId(),
+				customObjectDefinition.getObjectDefinitionId(),
+				childCustomObjectDefinition.getObjectDefinitionId(), 0,
+				ObjectRelationshipConstants.DELETION_TYPE_CASCADE, null, true,
+				LocalizedMapUtil.getLocalizedMap(RandomTestUtil.randomString()),
+				StringUtil.randomId(), false,
+				ObjectRelationshipConstants.TYPE_ONE_TO_MANY, null);
+
 			ObjectDefinition modifiableSystemObjectDefinition =
 				ObjectDefinitionTestUtil.addModifiableSystemObjectDefinition(
 					user.getUserId(), null,
@@ -2677,7 +2716,10 @@ public class ObjectDefinitionLocalServiceTest {
 
 		Assert.assertNull(
 			_objectDefinitionLocalService.fetchObjectDefinition(
-				company.getCompanyId(), "Able"));
+				company.getCompanyId(), "C_Able"));
+		Assert.assertNull(
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				company.getCompanyId(), "C_Baker"));
 		Assert.assertNull(
 			_objectDefinitionLocalService.fetchObjectDefinition(
 				company.getCompanyId(), "Test"));
@@ -4196,6 +4238,98 @@ public class ObjectDefinitionLocalServiceTest {
 	}
 
 	@Test
+	public void testUpdateCustomObjectDefinitionWithClusterExecutor()
+		throws Exception {
+
+		List<ClusterRequest> clusterRequests = new ArrayList<>();
+
+		Object clusterExecutorSnapshot = ReflectionTestUtil.getFieldValue(
+			ClusterExecutorUtil.class, "_clusterExecutorSnapshot");
+
+		Supplier<ClusterExecutor> serviceSupplier =
+			ReflectionTestUtil.getAndSetFieldValue(
+				clusterExecutorSnapshot, "_serviceSupplier",
+				() -> (ClusterExecutor)ProxyUtil.newProxyInstance(
+					ClusterExecutor.class.getClassLoader(),
+					new Class<?>[] {ClusterExecutor.class},
+					(proxy, method, arguments) -> {
+						String methodName = method.getName();
+
+						if (methodName.equals("execute")) {
+							clusterRequests.add((ClusterRequest)arguments[0]);
+						}
+						else if (methodName.equals(
+									"getClusterEventListeners") ||
+								 methodName.equals("getClusterNodes")) {
+
+							return Collections.emptyList();
+						}
+						else if (methodName.equals("isClusterNodeAlive")) {
+							return false;
+						}
+						else if (methodName.equals("isEnabled")) {
+							return true;
+						}
+
+						return null;
+					}));
+
+		ObjectDefinition objectDefinition = _publishObjectDefinition();
+
+		clusterRequests.clear();
+
+		String friendlyURLSeparator = StringUtil.toLowerCase(
+			"a" + StringUtil.randomId());
+
+		objectDefinition = _updateCustomObjectDefinition(
+			objectDefinition.getClassName(),
+			objectDefinition.getDescriptionMap(), friendlyURLSeparator,
+			objectDefinition, Collections.emptyList());
+
+		Assert.assertEquals(
+			clusterRequests.toString(), 1, clusterRequests.size());
+
+		ClusterRequest clusterRequest = clusterRequests.get(0);
+
+		Assert.assertTrue(clusterRequest.isMulticast());
+		Assert.assertTrue(clusterRequest.isSkipLocal());
+
+		MethodHandler methodHandler =
+			(MethodHandler)clusterRequest.getPayload();
+
+		MethodKey methodKey = methodHandler.getMethodKey();
+
+		Assert.assertEquals(
+			"deployObjectDefinition", methodKey.getMethodName());
+
+		Object[] arguments = methodHandler.getArguments();
+
+		ObjectDefinition deployedObjectDefinition =
+			(ObjectDefinition)arguments[0];
+
+		Assert.assertEquals(
+			objectDefinition.getObjectDefinitionId(),
+			deployedObjectDefinition.getObjectDefinitionId());
+		Assert.assertEquals(
+			objectDefinition.getFriendlyURLSeparator(),
+			deployedObjectDefinition.getFriendlyURLSeparator());
+
+		clusterRequests.clear();
+
+		_updateCustomObjectDefinition(
+			objectDefinition.getClassName(),
+			objectDefinition.getDescriptionMap(),
+			objectDefinition.getFriendlyURLSeparator(), objectDefinition,
+			Collections.emptyList());
+
+		Assert.assertTrue(
+			clusterRequests.toString(), clusterRequests.isEmpty());
+
+		ReflectionTestUtil.setFieldValue(
+			clusterExecutorSnapshot, "_serviceSupplier", serviceSupplier);
+	}
+
+	@Test
 	public void testUpdateExternalReferenceCode() throws Exception {
 		ObjectDefinition customObjectDefinition =
 			_objectDefinitionLocalService.addCustomObjectDefinition(
@@ -4733,6 +4867,7 @@ public class ObjectDefinitionLocalServiceTest {
 		_objectFolderLocalService.deleteObjectFolder(objectFolder);
 	}
 
+	@FeatureFlag("LPD-11388")
 	@Test
 	public void testUpdateTitleObjectFieldId() throws Exception {
 		ObjectDefinition objectDefinition =
@@ -4749,6 +4884,29 @@ public class ObjectDefinitionLocalServiceTest {
 		catch (NoSuchObjectFieldException noSuchObjectFieldException) {
 			Assert.assertNotNull(noSuchObjectFieldException);
 		}
+
+		ObjectDefinition finalObjectDefinition = objectDefinition;
+
+		AssertUtils.assertFailure(
+			ObjectFieldBusinessTypeException.class,
+			"Business type location cannot be used as the title object field",
+			() -> {
+				ObjectField objectField = ObjectFieldUtil.addCustomObjectField(
+					new LocationObjectFieldBuilder(
+					).labelMap(
+						RandomTestUtil.randomLocaleStringMap()
+					).name(
+						StringUtil.randomId()
+					).objectDefinitionId(
+						finalObjectDefinition.getObjectDefinitionId()
+					).userId(
+						TestPropsValues.getUserId()
+					).build());
+
+				_objectDefinitionLocalService.updateTitleObjectFieldId(
+					finalObjectDefinition.getObjectDefinitionId(),
+					objectField.getObjectFieldId());
+			});
 
 		ObjectField objectField1 = _objectFieldLocalService.getObjectField(
 			objectDefinition.getObjectDefinitionId(), "externalReferenceCode");
@@ -5884,8 +6042,9 @@ public class ObjectDefinitionLocalServiceTest {
 				).build());
 
 		objectDefinition = _updateCustomObjectDefinition(
-			objectDefinition.getClassName(), objectDefinition,
-			Collections.emptyList(), descriptionMap);
+			objectDefinition.getClassName(), descriptionMap,
+			objectDefinition.getFriendlyURLSeparator(), objectDefinition,
+			Collections.emptyList());
 
 		Assert.assertEquals(
 			"This is the description of an object definition.",
@@ -6098,26 +6257,9 @@ public class ObjectDefinitionLocalServiceTest {
 	}
 
 	private ObjectDefinition _updateCustomObjectDefinition(
-			String className, ObjectDefinition objectDefinition)
-		throws Exception {
-
-		return _updateCustomObjectDefinition(
-			className, objectDefinition, Collections.emptyList());
-	}
-
-	private ObjectDefinition _updateCustomObjectDefinition(
-			String className, ObjectDefinition objectDefinition,
+			String className, Map<Locale, String> descriptionMap,
+			String friendlyURLSeparator, ObjectDefinition objectDefinition,
 			List<ObjectDefinitionSetting> objectDefinitionSettings)
-		throws Exception {
-
-		return _updateCustomObjectDefinition(
-			className, objectDefinition, objectDefinitionSettings, null);
-	}
-
-	private ObjectDefinition _updateCustomObjectDefinition(
-			String className, ObjectDefinition objectDefinition,
-			List<ObjectDefinitionSetting> objectDefinitionSettings,
-			Map<Locale, String> descriptionMap)
 		throws Exception {
 
 		return _objectDefinitionLocalService.updateCustomObjectDefinition(
@@ -6139,14 +6281,32 @@ public class ObjectDefinitionLocalServiceTest {
 			objectDefinition.isEnableObjectEntrySchedule(),
 			objectDefinition.isEnableObjectEntrySubscription(),
 			objectDefinition.isEnableObjectEntryVersioning(),
-			objectDefinition.getFriendlyURLSeparator(),
-			objectDefinition.getLabelMap(), objectDefinition.getShortName(),
+			friendlyURLSeparator, objectDefinition.getLabelMap(),
+			objectDefinition.getShortName(),
 			objectDefinition.getPanelAppOrder(),
 			objectDefinition.getPanelCategoryKey(),
 			objectDefinition.isPortlet(), objectDefinition.getPluralLabelMap(),
 			objectDefinition.getScope(), objectDefinition.getStatus(),
 			objectDefinitionSettings, Collections.emptyList(),
 			Collections.emptyList(), new ServiceContext());
+	}
+
+	private ObjectDefinition _updateCustomObjectDefinition(
+			String className, ObjectDefinition objectDefinition)
+		throws Exception {
+
+		return _updateCustomObjectDefinition(
+			className, objectDefinition, Collections.emptyList());
+	}
+
+	private ObjectDefinition _updateCustomObjectDefinition(
+			String className, ObjectDefinition objectDefinition,
+			List<ObjectDefinitionSetting> objectDefinitionSettings)
+		throws Exception {
+
+		return _updateCustomObjectDefinition(
+			className, null, objectDefinition.getFriendlyURLSeparator(),
+			objectDefinition, objectDefinitionSettings);
 	}
 
 	private static ObjectFolder _defaultObjectFolder;

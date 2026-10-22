@@ -1161,96 +1161,6 @@ public class BlogsEntryPersistenceImpl
 	}
 
 	private CollectionPersistenceFinder<BlogsEntry, NoSuchEntryException>
-		_collectionPersistenceFinderByC_U;
-
-	/**
-	 * Returns an ordered range of all the blogs entries where companyId = &#63; and userId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>BlogsEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param start the lower bound of the range of blogs entries
-	 * @param end the upper bound of the range of blogs entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching blogs entries
-	 */
-	@Override
-	public List<BlogsEntry> findByC_U(
-		long companyId, long userId, int start, int end,
-		OrderByComparator<BlogsEntry> orderByComparator,
-		boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByC_U.find(
-			finderCache, new Object[] {companyId, userId}, start, end,
-			orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first blogs entry in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching blogs entry
-	 * @throws NoSuchEntryException if a matching blogs entry could not be found
-	 */
-	@Override
-	public BlogsEntry findByC_U_First(
-			long companyId, long userId,
-			OrderByComparator<BlogsEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		return _collectionPersistenceFinderByC_U.findFirst(
-			finderCache, new Object[] {companyId, userId}, orderByComparator);
-	}
-
-	/**
-	 * Returns the first blogs entry in the ordered set where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching blogs entry, or <code>null</code> if a matching blogs entry could not be found
-	 */
-	@Override
-	public BlogsEntry fetchByC_U_First(
-		long companyId, long userId,
-		OrderByComparator<BlogsEntry> orderByComparator) {
-
-		return _collectionPersistenceFinderByC_U.fetchFirst(
-			finderCache, new Object[] {companyId, userId}, orderByComparator);
-	}
-
-	/**
-	 * Removes all the blogs entries where companyId = &#63; and userId = &#63; from the database.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 */
-	@Override
-	public void removeByC_U(long companyId, long userId) {
-		_collectionPersistenceFinderByC_U.remove(
-			finderCache, new Object[] {companyId, userId});
-	}
-
-	/**
-	 * Returns the number of blogs entries where companyId = &#63; and userId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param userId the user ID
-	 * @return the number of matching blogs entries
-	 */
-	@Override
-	public int countByC_U(long companyId, long userId) {
-		return _collectionPersistenceFinderByC_U.count(
-			finderCache, new Object[] {companyId, userId});
-	}
-
-	private CollectionPersistenceFinder<BlogsEntry, NoSuchEntryException>
 		_collectionPersistenceFinderByC_LtD;
 
 	/**
@@ -4609,6 +4519,9 @@ public class BlogsEntryPersistenceImpl
 		}
 		else {
 			if (!Objects.equals(
+					blogsEntry.getUuid(),
+					blogsEntry.getExternalReferenceCode()) &&
+				!Objects.equals(
 					blogsEntryModelImpl.getColumnOriginalValue(
 						"externalReferenceCode"),
 					blogsEntry.getExternalReferenceCode())) {
@@ -4978,7 +4891,12 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByGroupId =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
+					new String[] {Long.class.getName()},
+					new String[] {"groupId"}, false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByGroupId",
 					new String[] {
@@ -4987,17 +4905,12 @@ public class BlogsEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId"}, true),
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByGroupId",
 					new String[] {Long.class.getName()},
 					new String[] {"groupId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
-					new String[] {Long.class.getName()},
-					new String[] {"groupId"}, false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId));
@@ -5046,7 +4959,12 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_LtD =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LtD",
+					new String[] {Long.class.getName(), Date.class.getName()},
+					new String[] {"groupId", "displayDate"}, false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_LtD",
 					new String[] {
@@ -5055,14 +4973,8 @@ public class BlogsEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "displayDate"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LtD",
-					new String[] {Long.class.getName(), Date.class.getName()},
-					new String[] {"groupId", "displayDate"}, false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
+				null, "",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
@@ -5072,7 +4984,14 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_S",
+					new String[] {
+						Long.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "status"}, false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_S",
 					new String[] {
@@ -5081,21 +5000,14 @@ public class BlogsEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "status"}, true),
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_S",
 					new String[] {
 						Long.class.getName(), Integer.class.getName()
 					},
 					new String[] {"groupId", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_S",
-					new String[] {
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "status"}, false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
@@ -5105,7 +5017,14 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_NotS =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_NotS",
+					new String[] {
+						Long.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "status"}, false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_NotS",
 					new String[] {
@@ -5114,50 +5033,14 @@ public class BlogsEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "status"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_NotS",
-					new String[] {
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "status"}, false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
+				null, "",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
 				new FinderColumn<>(
 					"blogsEntry.", "status", FinderColumn.Type.INTEGER, "!=",
 					true, true, BlogsEntry::getStatus));
-
-		_collectionPersistenceFinderByC_U = new CollectionPersistenceFinder<>(
-			this,
-			new FinderPath(
-				FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_U",
-				new String[] {
-					Long.class.getName(), Long.class.getName(),
-					Integer.class.getName(), Integer.class.getName(),
-					OrderByComparator.class.getName()
-				},
-				new String[] {"companyId", "userId"}, true),
-			new FinderPath(
-				FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByC_U",
-				new String[] {Long.class.getName(), Long.class.getName()},
-				new String[] {"companyId", "userId"}, true),
-			new FinderPath(
-				FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByC_U",
-				new String[] {Long.class.getName(), Long.class.getName()},
-				new String[] {"companyId", "userId"}, false),
-			_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-			BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-			null,
-			new FinderColumn<>(
-				"blogsEntry.", "companyId", FinderColumn.Type.LONG, "=", true,
-				true, BlogsEntry::getCompanyId),
-			new FinderColumn<>(
-				"blogsEntry.", "userId", FinderColumn.Type.LONG, "=", true,
-				true, BlogsEntry::getUserId));
 
 		_collectionPersistenceFinderByC_LtD = new CollectionPersistenceFinder<>(
 			this,
@@ -5267,7 +5150,15 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_U_LtD =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_LtD",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Date.class.getName()
+					},
+					new String[] {"groupId", "userId", "displayDate"}, false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_U_LtD",
 					new String[] {
@@ -5277,17 +5168,8 @@ public class BlogsEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "userId", "displayDate"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_LtD",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Date.class.getName()
-					},
-					new String[] {"groupId", "userId", "displayDate"}, false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
+				null, "",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
@@ -5300,7 +5182,15 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_U_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "userId", "status"}, false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_U_S",
 					new String[] {
@@ -5310,6 +5200,7 @@ public class BlogsEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "userId", "status"}, true),
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_U_S",
 					new String[] {
@@ -5317,16 +5208,7 @@ public class BlogsEntryPersistenceImpl
 						Integer.class.getName()
 					},
 					new String[] {"groupId", "userId", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "userId", "status"}, false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
@@ -5339,7 +5221,15 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_U_NotS =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_NotS",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "userId", "status"}, false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_U_NotS",
 					new String[] {
@@ -5349,17 +5239,8 @@ public class BlogsEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "userId", "status"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_NotS",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "userId", "status"}, false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
+				null, "",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
@@ -5372,7 +5253,15 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_D_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_D_S",
+					new String[] {
+						Long.class.getName(), Date.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "displayDate", "status"}, false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_D_S",
 					new String[] {
@@ -5382,6 +5271,7 @@ public class BlogsEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "displayDate", "status"}, true),
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_D_S",
 					new String[] {
@@ -5389,16 +5279,7 @@ public class BlogsEntryPersistenceImpl
 						Integer.class.getName()
 					},
 					new String[] {"groupId", "displayDate", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_D_S",
-					new String[] {
-						Long.class.getName(), Date.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "displayDate", "status"}, false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				"",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
@@ -5411,7 +5292,15 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_GtD_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_GtD_S",
+					new String[] {
+						Long.class.getName(), Date.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "displayDate", "status"}, false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_GtD_S",
 					new String[] {
@@ -5421,17 +5310,8 @@ public class BlogsEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "displayDate", "status"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_GtD_S",
-					new String[] {
-						Long.class.getName(), Date.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "displayDate", "status"}, false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
+				null, "",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
@@ -5444,7 +5324,15 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_LtD_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LtD_S",
+					new String[] {
+						Long.class.getName(), Date.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "displayDate", "status"}, false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_LtD_S",
 					new String[] {
@@ -5454,17 +5342,8 @@ public class BlogsEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "displayDate", "status"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LtD_S",
-					new String[] {
-						Long.class.getName(), Date.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "displayDate", "status"}, false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
+				null, "",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
@@ -5477,7 +5356,15 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_LtD_NotS =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LtD_NotS",
+					new String[] {
+						Long.class.getName(), Date.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "displayDate", "status"}, false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_LtD_NotS",
 					new String[] {
@@ -5487,17 +5374,8 @@ public class BlogsEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "displayDate", "status"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_LtD_NotS",
-					new String[] {
-						Long.class.getName(), Date.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "displayDate", "status"}, false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
+				null, "",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
@@ -5646,7 +5524,16 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_U_LtD_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_LtD_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Date.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "userId", "displayDate", "status"},
+					false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_U_LtD_S",
 					new String[] {
@@ -5657,18 +5544,8 @@ public class BlogsEntryPersistenceImpl
 					},
 					new String[] {"groupId", "userId", "displayDate", "status"},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_LtD_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Date.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "userId", "displayDate", "status"},
-					false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
+				null, "",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
@@ -5684,7 +5561,17 @@ public class BlogsEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_U_LtD_NotS =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BlogsEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
+					"countByG_U_LtD_NotS",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Date.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "userId", "displayDate", "status"},
+					false),
+				"", BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
 					"findByG_U_LtD_NotS",
@@ -5696,19 +5583,8 @@ public class BlogsEntryPersistenceImpl
 					},
 					new String[] {"groupId", "userId", "displayDate", "status"},
 					true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION,
-					"countByG_U_LtD_NotS",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Date.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "userId", "displayDate", "status"},
-					false),
-				_SQL_SELECT_BLOGSENTRY_WHERE, _SQL_COUNT_BLOGSENTRY_WHERE,
-				BlogsEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "", "",
-				null,
+				_SQL_COUNT_BLOGSENTRY_WHERE, _SQL_SELECT_BLOGSENTRY_WHERE, null,
+				null, "",
 				new FinderColumn<>(
 					"blogsEntry.", "groupId", FinderColumn.Type.LONG, "=", true,
 					true, BlogsEntry::getGroupId),
@@ -5805,4 +5681,4 @@ public class BlogsEntryPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1836015658
+// LIFERAY-SERVICE-BUILDER-HASH:1907519837

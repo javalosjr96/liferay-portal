@@ -27,6 +27,12 @@ import java.io.OutputStream;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 
+import java.lang.management.LockInfo;
+import java.lang.management.ManagementFactory;
+import java.lang.management.MonitorInfo;
+import java.lang.management.ThreadInfo;
+import java.lang.management.ThreadMXBean;
+
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -798,6 +804,50 @@ public class JenkinsResultsParserUtil {
 		return sb.toString();
 	}
 
+	public static String fetchBuildURL(
+			String jenkinsJobName, JenkinsMaster jenkinsMaster,
+			long jenkinsQueueId)
+		throws IOException {
+
+		if (isNullOrEmpty(jenkinsJobName) || (jenkinsMaster == null) ||
+			(jenkinsQueueId <= 0)) {
+
+			return null;
+		}
+
+		String script = null;
+
+		Class<?> clazz = JenkinsResultsParserUtil.class;
+
+		try {
+			script = readInputStream(
+				clazz.getResourceAsStream("dependencies/get-build-url.groovy"));
+		}
+		catch (IOException ioException) {
+			throw new RuntimeException(
+				"Unable to load groovy script", ioException);
+		}
+
+		script = script.replace("${jenkinsJobName}", jenkinsJobName);
+		script = script.replace(
+			"${jenkinsQueueId}", String.valueOf(jenkinsQueueId));
+
+		String response = executeJenkinsScript(
+			jenkinsMaster.getName(), script, true);
+
+		if (response == null) {
+			throw new IOException(
+				"Unable to execute Jenkins script on " +
+					jenkinsMaster.getName());
+		}
+
+		if (isURL(response)) {
+			return response;
+		}
+
+		return null;
+	}
+
 	public static List<File> findDirs(File baseDir, String regex) {
 		List<File> dirs = new ArrayList<>();
 
@@ -985,9 +1035,11 @@ public class JenkinsResultsParserUtil {
 				throw new RuntimeException(unsupportedEncodingException);
 			}
 
-			if (!matcher.hitEnd()) {
-				sb.append("&");
+			if (matcher.hitEnd()) {
+				continue;
 			}
+
+			sb.append("&");
 		}
 
 		return sb.toString();
@@ -1008,9 +1060,11 @@ public class JenkinsResultsParserUtil {
 			List<Build> downstreamBuilds = parentBuild.getDownstreamBuilds(
 				null);
 
-			if (!downstreamBuilds.isEmpty()) {
-				flattenedBuilds.addAll(flatten(downstreamBuilds));
+			if (downstreamBuilds.isEmpty()) {
+				continue;
 			}
+
+			flattenedBuilds.addAll(flatten(downstreamBuilds));
 		}
 
 		return flattenedBuilds;
@@ -1425,38 +1479,8 @@ public class JenkinsResultsParserUtil {
 		String jenkinsJobName, JenkinsMaster jenkinsMaster,
 		long jenkinsQueueId) {
 
-		if (isNullOrEmpty(jenkinsJobName) || (jenkinsMaster == null) ||
-			(jenkinsQueueId < 0)) {
-
-			return null;
-		}
-
-		Class<?> clazz = JenkinsResultsParserUtil.class;
-
-		String script;
-
 		try {
-			script = readInputStream(
-				clazz.getResourceAsStream("dependencies/get-build-url.groovy"));
-		}
-		catch (IOException ioException) {
-			throw new RuntimeException(
-				"Unable to load groovy script", ioException);
-		}
-
-		script = script.replace("${jenkinsJobName}", jenkinsJobName);
-		script = script.replace(
-			"${jenkinsQueueId}", String.valueOf(jenkinsQueueId));
-
-		try {
-			String response = executeJenkinsScript(
-				jenkinsMaster.getName(), script, true);
-
-			if (isURL(response)) {
-				return response;
-			}
-
-			return null;
+			return fetchBuildURL(jenkinsJobName, jenkinsMaster, jenkinsQueueId);
 		}
 		catch (Exception exception) {
 			return null;
@@ -1489,16 +1513,16 @@ public class JenkinsResultsParserUtil {
 		String jobName = null;
 
 		for (String propertyName : buildProperties.stringPropertyNames()) {
-			if (propertyName.startsWith("job.id[")) {
-				String propertyValue = buildProperties.getProperty(
-					propertyName);
+			if (!propertyName.startsWith("job.id[")) {
+				continue;
+			}
 
-				if (propertyValue.equals(matcher.group("jobId"))) {
-					jobName = propertyName.substring(
-						7, propertyName.length() - 1);
+			String propertyValue = buildProperties.getProperty(propertyName);
 
-					break;
-				}
+			if (propertyValue.equals(matcher.group("jobId"))) {
+				jobName = propertyName.substring(7, propertyName.length() - 1);
+
+				break;
 			}
 		}
 
@@ -1695,9 +1719,11 @@ public class JenkinsResultsParserUtil {
 				remoteCurrentTimeSeconds = getRemoteCurrentTimeSeconds(
 					getJenkinsMasterName(getHostName(null)));
 
-				if ((remoteCurrentTimeSeconds == null) && (retry < 3)) {
-					sleep(1000);
+				if ((remoteCurrentTimeSeconds != null) || (retry >= 3)) {
+					continue;
 				}
+
+				sleep(1000);
 			}
 
 			if (remoteCurrentTimeSeconds != null) {
@@ -1759,9 +1785,11 @@ public class JenkinsResultsParserUtil {
 				}
 			}
 
-			if (containsFile) {
-				directoriesContainingFiles.add(directory);
+			if (!containsFile) {
+				continue;
 			}
+
+			directoriesContainingFiles.add(directory);
 		}
 
 		return directoriesContainingFiles;
@@ -1866,9 +1894,11 @@ public class JenkinsResultsParserUtil {
 		List<File> excludedFiles = new ArrayList<>(files.size());
 
 		for (File file : files) {
-			if (isFileExcluded(excludesPathMatchers, file)) {
-				excludedFiles.add(file);
+			if (!isFileExcluded(excludesPathMatchers, file)) {
+				continue;
 			}
+
+			excludedFiles.add(file);
 		}
 
 		return excludedFiles;
@@ -2234,11 +2264,13 @@ public class JenkinsResultsParserUtil {
 		List<File> includedFiles = new ArrayList<>(files.size());
 
 		for (File file : files) {
-			if (isFileIncluded(
+			if (!isFileIncluded(
 					excludesPathMatchers, includesPathMatchers, file)) {
 
-				includedFiles.add(file);
+				continue;
 			}
+
+			includedFiles.add(file);
 		}
 
 		return includedFiles;
@@ -2552,21 +2584,22 @@ public class JenkinsResultsParserUtil {
 							_jenkinsSlavesPropertyNamePattern.matcher(
 								propertyName.toString());
 
-						if (jenkinsSlavesPropertyNameMatcher.matches()) {
-							String jenkinsMasterName =
-								jenkinsSlavesPropertyNameMatcher.group(1);
-
-							List<String> jenkinsSlaveNames = getSlaves(
-								buildProperties, jenkinsMasterName, null,
-								false);
-
-							if (jenkinsSlaveNames.isEmpty()) {
-								continue;
-							}
-
-							jenkinsNodeMap.put(
-								jenkinsMasterName, jenkinsSlaveNames);
+						if (!jenkinsSlavesPropertyNameMatcher.matches()) {
+							continue;
 						}
+
+						String jenkinsMasterName =
+							jenkinsSlavesPropertyNameMatcher.group(1);
+
+						List<String> jenkinsSlaveNames = getSlaves(
+							buildProperties, jenkinsMasterName, null, false);
+
+						if (jenkinsSlaveNames.isEmpty()) {
+							continue;
+						}
+
+						jenkinsNodeMap.put(
+							jenkinsMasterName, jenkinsSlaveNames);
 					}
 
 					if (jenkinsNodeMap.isEmpty()) {
@@ -2735,19 +2768,21 @@ public class JenkinsResultsParserUtil {
 
 			JSONObject actionsJSONObject = actionsJSONArray.getJSONObject(i);
 
-			if (actionsJSONObject.has("parameters")) {
-				JSONArray parametersJSONArray = actionsJSONObject.getJSONArray(
-					"parameters");
+			if (!actionsJSONObject.has("parameters")) {
+				continue;
+			}
 
-				for (int j = 0; j < parametersJSONArray.length(); j++) {
-					JSONObject parametersJSONObject =
-						parametersJSONArray.getJSONObject(j);
+			JSONArray parametersJSONArray = actionsJSONObject.getJSONArray(
+				"parameters");
 
-					if ("JOB_VARIANT".contains(
-							parametersJSONObject.getString("name"))) {
+			for (int j = 0; j < parametersJSONArray.length(); j++) {
+				JSONObject parametersJSONObject =
+					parametersJSONArray.getJSONObject(j);
 
-						return parametersJSONObject.getString("value");
-					}
+				if ("JOB_VARIANT".contains(
+						parametersJSONObject.getString("name"))) {
+
+					return parametersJSONObject.getString("value");
 				}
 			}
 		}
@@ -3029,9 +3064,11 @@ public class JenkinsResultsParserUtil {
 		Properties properties = new Properties();
 
 		for (File propertiesFile : propertiesFiles) {
-			if ((propertiesFile != null) && propertiesFile.exists()) {
-				properties.putAll(_getProperties(propertiesFile));
+			if ((propertiesFile == null) || !propertiesFile.exists()) {
+				continue;
 			}
+
+			properties.putAll(_getProperties(propertiesFile));
 		}
 
 		return new SecureProperties(properties);
@@ -3083,12 +3120,14 @@ public class JenkinsResultsParserUtil {
 		for (Object key : properties.keySet()) {
 			String keyString = key.toString();
 
-			if (keyString.matches(
+			if (!keyString.matches(
 					Pattern.quote(basePropertyName) + "(\\[.*|$)")) {
 
-				matchingProperties.setProperty(
-					keyString, properties.getProperty(keyString));
+				continue;
 			}
+
+			matchingProperties.setProperty(
+				keyString, properties.getProperty(keyString));
 		}
 
 		Set<Set<String>> targetOptSets = _getOrderedOptSets(opts);
@@ -3116,9 +3155,11 @@ public class JenkinsResultsParserUtil {
 					boolean matchesPropertyOptRegex = false;
 
 					for (String propertyOptRegex : propertyOptRegexes) {
-						if (targetOpt.matches(propertyOptRegex)) {
-							matchesPropertyOptRegex = true;
+						if (!targetOpt.matches(propertyOptRegex)) {
+							continue;
 						}
+
+						matchesPropertyOptRegex = true;
 					}
 
 					if (!matchesPropertyOptRegex) {
@@ -3183,11 +3224,13 @@ public class JenkinsResultsParserUtil {
 
 			stack.pop();
 
-			if (stack.isEmpty()) {
-				propertyOptions.add(propertyName.substring(start + 1, i));
-
-				start = null;
+			if (!stack.isEmpty()) {
+				continue;
 			}
+
+			propertyOptions.add(propertyName.substring(start + 1, i));
+
+			start = null;
 		}
 
 		return propertyOptions;
@@ -3526,19 +3569,21 @@ public class JenkinsResultsParserUtil {
 				jenkinsSlavesPropertyNamePattern.matcher(
 					propertyName.toString());
 
-			if (jenkinsSlavesPropertyNameMatcher.find()) {
-				String slavesString = expandSlaveRange(
-					buildProperties.getProperty(propertyName.toString()));
+			if (!jenkinsSlavesPropertyNameMatcher.find()) {
+				continue;
+			}
 
-				for (String slave : slavesString.split(",")) {
-					slave = slave.trim();
+			String slavesString = expandSlaveRange(
+				buildProperties.getProperty(propertyName.toString()));
 
-					if (isNullOrEmpty(slave)) {
-						continue;
-					}
+			for (String slave : slavesString.split(",")) {
+				slave = slave.trim();
 
-					slaves.add(slave);
+				if (isNullOrEmpty(slave)) {
+					continue;
 				}
+
+				slaves.add(slave);
 			}
 		}
 
@@ -3645,6 +3690,130 @@ public class JenkinsResultsParserUtil {
 		}
 
 		return subdirectories;
+	}
+
+	public static String getThreadDump() {
+		StringBuilder sb = new StringBuilder();
+
+		ThreadMXBean threadMXBean = ManagementFactory.getThreadMXBean();
+
+		ThreadInfo[] threadInfos = threadMXBean.dumpAllThreads(
+			threadMXBean.isObjectMonitorUsageSupported(),
+			threadMXBean.isSynchronizerUsageSupported());
+
+		for (ThreadInfo threadInfo : threadInfos) {
+			sb.append("\"");
+			sb.append(threadInfo.getThreadName());
+			sb.append("\" #");
+			sb.append(threadInfo.getThreadId());
+			sb.append(" ");
+			sb.append(threadInfo.getThreadState());
+
+			String lockName = threadInfo.getLockName();
+
+			if (lockName != null) {
+				sb.append(" on ");
+				sb.append(lockName);
+			}
+
+			String lockOwnerName = threadInfo.getLockOwnerName();
+
+			if (lockOwnerName != null) {
+				sb.append(" owned by \"");
+				sb.append(lockOwnerName);
+				sb.append("\" #");
+				sb.append(threadInfo.getLockOwnerId());
+			}
+
+			sb.append("\n");
+
+			StackTraceElement[] stackTraceElements = threadInfo.getStackTrace();
+
+			MonitorInfo[] monitorInfos = threadInfo.getLockedMonitors();
+
+			int stackTraceElementsCount = Math.min(
+				stackTraceElements.length, 40);
+
+			for (int i = 0; i < stackTraceElementsCount; i++) {
+				sb.append("\tat ");
+				sb.append(stackTraceElements[i]);
+				sb.append("\n");
+
+				for (MonitorInfo monitorInfo : monitorInfos) {
+					if (monitorInfo.getLockedStackDepth() != i) {
+						continue;
+					}
+
+					sb.append("\t- locked ");
+					sb.append(monitorInfo);
+					sb.append("\n");
+				}
+			}
+
+			if (stackTraceElements.length > stackTraceElementsCount) {
+				sb.append("\t...\n");
+			}
+
+			for (MonitorInfo monitorInfo : monitorInfos) {
+				int lockedStackDepth = monitorInfo.getLockedStackDepth();
+
+				if ((lockedStackDepth >= 0) &&
+					(lockedStackDepth < stackTraceElementsCount)) {
+
+					continue;
+				}
+
+				sb.append("\t- locked ");
+				sb.append(monitorInfo);
+				sb.append("\n");
+			}
+
+			LockInfo[] lockInfos = threadInfo.getLockedSynchronizers();
+
+			if (lockInfos.length > 0) {
+				sb.append("\tLocked synchronizers:\n");
+
+				for (LockInfo lockInfo : lockInfos) {
+					sb.append("\t- ");
+					sb.append(lockInfo);
+					sb.append("\n");
+				}
+			}
+
+			sb.append("\n");
+		}
+
+		long[] deadlockedThreadIds = null;
+
+		if (threadMXBean.isSynchronizerUsageSupported()) {
+			deadlockedThreadIds = threadMXBean.findDeadlockedThreads();
+		}
+		else {
+			deadlockedThreadIds = threadMXBean.findMonitorDeadlockedThreads();
+		}
+
+		if (deadlockedThreadIds != null) {
+			sb.append("Found ");
+			sb.append(deadlockedThreadIds.length);
+			sb.append(" deadlocked threads:\n");
+
+			ThreadInfo[] deadlockedThreadInfos = threadMXBean.getThreadInfo(
+				deadlockedThreadIds);
+
+			for (ThreadInfo deadlockedThreadInfo : deadlockedThreadInfos) {
+				if (deadlockedThreadInfo == null) {
+					continue;
+				}
+
+				sb.append("\t\"");
+				sb.append(deadlockedThreadInfo.getThreadName());
+				sb.append("\" #");
+				sb.append(deadlockedThreadInfo.getThreadId());
+				sb.append("\n");
+			}
+		}
+
+		return sb.toString();
 	}
 
 	public static String getUpstreamUserName(
@@ -3754,7 +3923,7 @@ public class JenkinsResultsParserUtil {
 				"Content-Type", "application/x-www-form-urlencoded");
 
 			return getJenkinsBuildQueueId(
-				UrlReader.getResponseHeader(
+				StreamURLReader.getResponseHeader(
 					"Location", getJenkinsHTTPAuthorization(),
 					HttpRequestMethod.POST, sb.toString(), requestHeaders,
 					timeout,
@@ -4441,9 +4610,11 @@ public class JenkinsResultsParserUtil {
 
 				String item = row[columnNumber];
 
-				if (maxColumnWidth[columnNumber] <= item.length()) {
-					maxColumnWidth[columnNumber] = item.length();
+				if (maxColumnWidth[columnNumber] > item.length()) {
+					continue;
 				}
+
+				maxColumnWidth[columnNumber] = item.length();
 			}
 		}
 
@@ -4718,9 +4889,11 @@ public class JenkinsResultsParserUtil {
 		List<String> strings = new ArrayList<>();
 
 		for (String string : delimitedString.split(delimiter)) {
-			if (!strings.contains(string)) {
-				strings.add(string);
+			if (strings.contains(string)) {
+				continue;
 			}
+
+			strings.add(string);
 		}
 
 		return join(",", strings);
@@ -4911,28 +5084,6 @@ public class JenkinsResultsParserUtil {
 		}
 	}
 
-	public static BufferedReader toBufferedReader(
-			String url, boolean checkCache)
-		throws IOException {
-
-		return toBufferedReader(
-			url, checkCache, _RETRIES_SIZE_MAX_DEFAULT, null, null,
-			_SECONDS_RETRY_PERIOD_DEFAULT, _MILLIS_TIMEOUT_DEFAULT, null);
-	}
-
-	public static BufferedReader toBufferedReader(
-			String url, boolean checkCache, int maxRetries,
-			HttpRequestMethod httpRequestMethod, String postContent,
-			int retryPeriod, int timeout, HTTPAuthorization httpAuthorization)
-		throws IOException {
-
-		return new BufferedReader(
-			new InputStreamReader(
-				toInputStream(
-					url, checkCache, maxRetries, httpRequestMethod, postContent,
-					retryPeriod, timeout, httpAuthorization)));
-	}
-
 	public static String toDateString(Date date) {
 		return toDateString(
 			date, "MMM dd, yyyy h:mm:ss a z", "America/Los_Angeles");
@@ -5086,7 +5237,7 @@ public class JenkinsResultsParserUtil {
 			int retryPeriod, int timeout, HTTPAuthorization httpAuthorization)
 		throws IOException {
 
-		return UrlReader.read(
+		return StreamURLReader.read(
 			checkCache, httpAuthorization, httpRequestMethod, maxRetries,
 			postContent, retryPeriod, timeout, url);
 	}
@@ -5120,17 +5271,9 @@ public class JenkinsResultsParserUtil {
 			int retryPeriod, int timeout, HTTPAuthorization httpAuthorization)
 		throws IOException {
 
-		String response = toString(
-			url, checkCache, maxRetries, null, postContent, retryPeriod,
-			timeout, httpAuthorization, true);
-
-		if ((response == null) ||
-			response.endsWith("was truncated due to its size.")) {
-
-			return null;
-		}
-
-		return new JSONArray(response);
+		return BodyURLReader.readJSONArray(
+			checkCache, httpAuthorization, maxRetries, postContent, retryPeriod,
+			timeout, url);
 	}
 
 	public static JSONArray toJSONArray(String url, String postContent)
@@ -5208,44 +5351,9 @@ public class JenkinsResultsParserUtil {
 			int retryPeriod, int timeout, HTTPAuthorization httpAuthorization)
 		throws IOException {
 
-		Retryable<JSONObject> retryable = new Retryable<JSONObject>(
-			true, maxRetries, retryPeriod, true) {
-
-			@Override
-			public JSONObject execute() {
-				try {
-					String response = JenkinsResultsParserUtil.toString(
-						url, checkCache, 0, httpRequestMethod, postContent,
-						retryPeriod, timeout, httpAuthorization, true);
-
-					if ((response == null) ||
-						response.endsWith("was truncated due to its size.")) {
-
-						return null;
-					}
-
-					return createJSONObject(response);
-				}
-				catch (IOException ioException) {
-					throw new RuntimeException(ioException);
-				}
-			}
-
-			@Override
-			protected String getRetryMessage(int retryCount) {
-				return combine(
-					"Unable to create JSONObject: ",
-					super.getRetryMessage(retryCount));
-			}
-
-		};
-
-		try {
-			return retryable.executeWithRetries();
-		}
-		catch (Exception exception) {
-			throw new RuntimeException("Unable to create JSON object");
-		}
+		return BodyURLReader.readJSONObject(
+			checkCache, httpAuthorization, httpRequestMethod, maxRetries,
+			postContent, retryPeriod, timeout, url);
 	}
 
 	public static JSONObject toJSONObject(
@@ -5445,41 +5553,10 @@ public class JenkinsResultsParserUtil {
 		long start = System.currentTimeMillis();
 
 		try {
-			for (int i = 0; i < 2; i++) {
-				try (BufferedReader bufferedReader = toBufferedReader(
-						url, checkCache, maxRetries, httpRequestMethod,
-						postContent, retryPeriod, timeout, httpAuthorization)) {
-
-					StringBuilder sb = new StringBuilder();
-
-					String line = bufferedReader.readLine();
-
-					while (line != null) {
-						sb.append(line);
-						sb.append("\n");
-
-						line = bufferedReader.readLine();
-					}
-
-					String content = sb.toString();
-
-					if (expectResponse && isNullOrEmpty(content) && (i < 1)) {
-						System.out.println(
-							"Unable to get response, retrying request");
-
-						continue;
-					}
-
-					if (checkCache && !url.startsWith("file:")) {
-						saveToCacheFile(
-							getCacheFileKey(url, postContent), content);
-					}
-
-					return content;
-				}
-			}
-
-			return "";
+			return BodyURLReader.readText(
+				checkCache, expectResponse, httpAuthorization,
+				httpRequestMethod, maxRetries, postContent, retryPeriod,
+				timeout, url);
 		}
 		finally {
 			long duration = System.currentTimeMillis() - start;
@@ -6047,9 +6124,11 @@ public class JenkinsResultsParserUtil {
 			int count = 0;
 
 			for (String propertyOpt : propertyOptSet) {
-				if (propertyOpt.contains(".*")) {
-					count++;
+				if (!propertyOpt.contains(".*")) {
+					continue;
 				}
+
+				count++;
 			}
 
 			return count;
@@ -6082,9 +6161,11 @@ public class JenkinsResultsParserUtil {
 		List<String> propertyValues = new ArrayList<>();
 
 		for (String value : propertyValue.split("\\s*,\\s*")) {
-			if (!value.startsWith("#")) {
-				propertyValues.add(value);
+			if (value.startsWith("#")) {
+				continue;
 			}
+
+			propertyValues.add(value);
 		}
 
 		return join(",", propertyValues);
@@ -6287,9 +6368,11 @@ public class JenkinsResultsParserUtil {
 				sb.append(path);
 			}
 
-			if (sb.length() > 0) {
-				sb.append(",");
+			if (sb.length() <= 0) {
+				continue;
 			}
+
+			sb.append(",");
 		}
 
 		return sb.toString();
@@ -6601,9 +6684,11 @@ public class JenkinsResultsParserUtil {
 
 		for (int i = optCount; i > 0; i--) {
 			for (Set<String> optSet : optSets) {
-				if (optSet.size() == i) {
-					orderedOptSet.add(optSet);
+				if (optSet.size() != i) {
+					continue;
 				}
+
+				orderedOptSet.add(optSet);
 			}
 		}
 
@@ -6638,9 +6723,11 @@ public class JenkinsResultsParserUtil {
 				basePropertiesFileName.replace(
 					".properties", "." + environment + ".properties"));
 
-			if (environmentPropertyFile.exists()) {
-				propertiesFiles.add(environmentPropertyFile);
+			if (!environmentPropertyFile.exists()) {
+				continue;
 			}
+
+			propertiesFiles.add(environmentPropertyFile);
 		}
 
 		Properties properties = new Properties();
@@ -6670,15 +6757,18 @@ public class JenkinsResultsParserUtil {
 				propertiesFileName.equals("poshi.properties")) {
 
 				for (String poshiDirPropertyName : poshiDirPropertyNames) {
-					if (temporaryProperties.containsKey(poshiDirPropertyName)) {
-						temporaryProperties.setProperty(
-							poshiDirPropertyName,
-							_fixFilePathPropertyValue(
-								propertiesFile,
-								getProperty(
-									temporaryProperties,
-									poshiDirPropertyName)));
+					if (!temporaryProperties.containsKey(
+							poshiDirPropertyName)) {
+
+						continue;
 					}
+
+					temporaryProperties.setProperty(
+						poshiDirPropertyName,
+						_fixFilePathPropertyValue(
+							propertiesFile,
+							getProperty(
+								temporaryProperties, poshiDirPropertyName)));
 				}
 			}
 
@@ -6733,15 +6823,17 @@ public class JenkinsResultsParserUtil {
 
 		while (matcher.find()) {
 			String propertyGroup = matcher.group(0);
+
 			String propertyName = matcher.group(1);
 
-			if (properties.containsKey(propertyName)) {
-				newValue = newValue.replace(
-					propertyGroup,
-					_getProperty(
-						properties, new ArrayList<>(previousNames),
-						propertyName));
+			if (!properties.containsKey(propertyName)) {
+				continue;
 			}
+
+			newValue = newValue.replace(
+				propertyGroup,
+				_getProperty(
+					properties, new ArrayList<>(previousNames), propertyName));
 		}
 
 		return newValue;
@@ -6790,19 +6882,19 @@ public class JenkinsResultsParserUtil {
 				}
 			}
 
-			if (c == ']') {
-				if (start == null) {
-					continue;
-				}
-
-				stack.pop();
-
-				if (stack.isEmpty()) {
-					indices.add(i);
-
-					start = null;
-				}
+			if ((c != ']') || (start == null)) {
+				continue;
 			}
+
+			stack.pop();
+
+			if (!stack.isEmpty()) {
+				continue;
+			}
+
+			indices.add(i);
+
+			start = null;
 		}
 
 		for (int i = 0; i < indices.size(); i++) {
@@ -6930,9 +7022,11 @@ public class JenkinsResultsParserUtil {
 
 				forbiddenRedactToken = forbiddenRedactToken.trim();
 
-				if (!isNullOrEmpty(forbiddenRedactToken)) {
-					forbiddenRedactTokens.add(forbiddenRedactToken);
+				if (isNullOrEmpty(forbiddenRedactToken)) {
+					continue;
 				}
+
+				forbiddenRedactTokens.add(forbiddenRedactToken);
 			}
 		}
 		catch (IOException ioException) {

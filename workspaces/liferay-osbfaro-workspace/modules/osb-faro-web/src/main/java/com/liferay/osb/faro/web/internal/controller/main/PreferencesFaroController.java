@@ -17,6 +17,8 @@ import com.liferay.osb.faro.web.internal.model.preferences.DistributionCardTabsP
 import com.liferay.osb.faro.web.internal.model.preferences.EmailReportPreferences;
 import com.liferay.osb.faro.web.internal.model.preferences.IndividualDashboardPreferences;
 import com.liferay.osb.faro.web.internal.model.preferences.IndividualSegmentPreferences;
+import com.liferay.osb.faro.web.internal.model.preferences.LifecycleNotificationPreferences;
+import com.liferay.osb.faro.web.internal.model.preferences.SegmentNotificationPreferences;
 import com.liferay.osb.faro.web.internal.model.preferences.WorkspacePreferences;
 import com.liferay.osb.faro.web.internal.param.FaroParam;
 import com.liferay.osb.faro.web.internal.util.JSONUtil;
@@ -114,6 +116,68 @@ public class PreferencesFaroController extends BaseFaroController {
 		return emailReportPreferences.get(channelId);
 	}
 
+	@Path("/lifecycle_notification")
+	@POST
+	@RolesAllowed(RoleConstants.SITE_MEMBER)
+	public LifecycleNotificationPreferences addLifecycleNotificationPreference(
+			@PathParam("groupId") long groupId,
+			@FormParam("accountStageChanges") Boolean accountStageChanges,
+			@FormParam("emailFrequency") String emailFrequency,
+			@FormParam("lifecycleId") String lifecycleId,
+			@FormParam("netNewPipelineAccounts") Boolean netNewPipelineAccounts,
+			@FormParam("newAccounts") Boolean newAccounts,
+			@FormParam("newAtRiskAccounts") Boolean newAtRiskAccounts,
+			@FormParam("newStalledAccounts") Boolean newStalledAccounts)
+		throws Exception {
+
+		long ownerId = _getOwnerId(
+			groupId, FaroPreferencesConstants.SCOPE_USER);
+
+		WorkspacePreferences workspacePreferences = _getWorkspacePreferences(
+			groupId, ownerId);
+
+		Map<String, LifecycleNotificationPreferences>
+			lifecycleNotificationPreferences =
+				workspacePreferences.addLifecycleNotificationPreference(
+					accountStageChanges, emailFrequency, lifecycleId,
+					netNewPipelineAccounts, newAccounts, newAtRiskAccounts,
+					newStalledAccounts);
+
+		_faroPreferencesLocalService.savePreferences(
+			getUserId(), groupId, ownerId,
+			JSONUtil.writeValueAsString(workspacePreferences));
+
+		return lifecycleNotificationPreferences.get(lifecycleId);
+	}
+
+	@Path("/segment_notification")
+	@POST
+	@RolesAllowed(RoleConstants.SITE_MEMBER)
+	public SegmentNotificationPreferences addSegmentNotificationPreference(
+			@PathParam("groupId") long groupId,
+			@FormParam("emailFrequency") String emailFrequency,
+			@FormParam("newMemberAdded") Boolean newMemberAdded,
+			@FormParam("segmentId") String segmentId)
+		throws Exception {
+
+		long ownerId = _getOwnerId(
+			groupId, FaroPreferencesConstants.SCOPE_USER);
+
+		WorkspacePreferences workspacePreferences = _getWorkspacePreferences(
+			groupId, ownerId);
+
+		Map<String, SegmentNotificationPreferences>
+			segmentNotificationPreferences =
+				workspacePreferences.addSegmentNotificationPreference(
+					emailFrequency, newMemberAdded, segmentId);
+
+		_faroPreferencesLocalService.savePreferences(
+			getUserId(), groupId, ownerId,
+			JSONUtil.writeValueAsString(workspacePreferences));
+
+		return segmentNotificationPreferences.get(segmentId);
+	}
+
 	@GET
 	@Path("/default_channel_id")
 	@RolesAllowed(RoleConstants.SITE_MEMBER)
@@ -200,6 +264,38 @@ public class PreferencesFaroController extends BaseFaroController {
 		}
 
 		return new FaroPreferencesDisplay(faroPreferences);
+	}
+
+	@GET
+	@Path("/lifecycle_notification")
+	@RolesAllowed(RoleConstants.SITE_MEMBER)
+	public Map<String, LifecycleNotificationPreferences>
+			getLifecycleNotificationPreferences(
+				@PathParam("groupId") long groupId,
+				@QueryParam("lifecycleId") String lifecycleId)
+		throws Exception {
+
+		WorkspacePreferences workspacePreferences = _getWorkspacePreferences(
+			groupId, _getOwnerId(groupId, FaroPreferencesConstants.SCOPE_USER));
+
+		return workspacePreferences.getLifecycleNotificationPreferences(
+			lifecycleId);
+	}
+
+	@GET
+	@Path("/segment_notification")
+	@RolesAllowed(RoleConstants.SITE_MEMBER)
+	public Map<String, SegmentNotificationPreferences>
+			getSegmentNotificationPreferences(
+				@PathParam("groupId") long groupId,
+				@QueryParam("segmentId") String segmentId)
+		throws Exception {
+
+		WorkspacePreferences workspacePreferences = _getWorkspacePreferences(
+			groupId, _getOwnerId(groupId, FaroPreferencesConstants.SCOPE_USER));
+
+		return workspacePreferences.getSegmentNotificationPreferences(
+			segmentId);
 	}
 
 	@GET

@@ -30,10 +30,6 @@ import jakarta.servlet.ServletContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -100,13 +96,10 @@ public class RenderFragmentEntryStrutsAction implements StrutsAction {
 			return null;
 		}
 
-		Document document = Jsoup.parse(content);
-
-		Element bodyElement = document.body();
-
-		bodyElement.html(unsyncStringWriter.toString());
-
-		ServletResponseUtil.write(httpServletResponse, document.html());
+		ServletResponseUtil.write(
+			httpServletResponse,
+			ThemeUtil.replaceBodyContent(
+				content, unsyncStringWriter.toString()));
 
 		SessionErrors.clear(httpServletRequest);
 

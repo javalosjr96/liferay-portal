@@ -2,7 +2,7 @@ import AccountInput from '../inputs/AccountInput';
 import AccountSelectInput from '../inputs/AccountSelectInput';
 import BehaviorInput from '../inputs/BehaviorInput';
 import BooleanInput from '../inputs/BooleanInput';
-import ClayIcon from '@clayui/icon';
+import ClayIcon from 'shared/components/Icon';
 import ClaySticker from '@clayui/sticker';
 import CustomBooleanInput from '../inputs/CustomBooleanInput';
 import CustomDateInput from '../inputs/CustomDateInput';
@@ -222,6 +222,7 @@ interface ICriteriaRowProps extends PropsFromRedux {
 	id?: string;
 	hover?: boolean;
 	index: number;
+	keyboardTarget?: boolean;
 	onAdd: (index: number, criterion: Criterion) => void;
 	onChange: (criterion: Criterion | Criterion[]) => void;
 	onDelete: (index: number) => void;
@@ -523,6 +524,7 @@ class CriteriaRow extends React.Component<
 				connectDropTarget,
 				dragging,
 				hover,
+				keyboardTarget,
 				stepNumber,
 			},
 			state: {selectedProperty},
@@ -530,7 +532,8 @@ class CriteriaRow extends React.Component<
 
 		const classes = getCN('criterion-row-root', {
 			'dnd-drag': dragging,
-			'dnd-hover': hover && canDrop,
+			'dnd-hover': (hover && canDrop) || keyboardTarget,
+			'keyboard-movement-target': keyboardTarget,
 		});
 
 		return connectDropTarget(

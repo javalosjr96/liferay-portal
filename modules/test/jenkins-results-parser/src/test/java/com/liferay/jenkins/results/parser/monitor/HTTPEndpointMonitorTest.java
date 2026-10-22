@@ -7,7 +7,6 @@ package com.liferay.jenkins.results.parser.monitor;
 
 import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
 import com.liferay.jenkins.results.parser.RandomTestUtil;
-import com.liferay.jenkins.results.parser.UrlReader;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -39,10 +38,10 @@ public class HTTPEndpointMonitorTest
 
 	@Test
 	public void testExecuteLatencyMaximum() throws Exception {
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderOutput(
-			_MILLIS_LATENCY, RandomTestUtil.randomString(), _URL, urlReader);
+		setURLReaderOutput(
+			_MILLIS_LATENCY, RandomTestUtil.randomString(), _URL);
 
 		Properties monitorProperties = _newMonitorProperties();
 
@@ -57,7 +56,7 @@ public class HTTPEndpointMonitorTest
 
 		testEquals(
 			JenkinsResultsParserUtil.combine(
-				"Endpoint ", _URL, " responded in ",
+				"Endpoint ", _REMOTE_URL, " responded in ",
 				metrics.get("latency.millis"),
 				" ms, exceeding its maximum latency of 1 ms"),
 			monitorResult.getMessage());
@@ -72,16 +71,16 @@ public class HTTPEndpointMonitorTest
 
 	@Test
 	public void testExecuteMissingFailureMessage() throws Exception {
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderException(new IOException(), _URL, urlReader);
+		setURLReaderException(new IOException(), _URL);
 
 		MonitorResult monitorResult = _execute(_newMonitorProperties());
 
 		testEquals(MonitorResult.Status.CRITICAL, monitorResult.getStatus());
 		testEquals(
 			JenkinsResultsParserUtil.combine(
-				"Unable to read ", _URL, ": java.io.IOException"),
+				"Unable to read ", _REMOTE_URL, ": java.io.IOException"),
 			monitorResult.getMessage());
 
 		Map<String, String> metrics = monitorResult.getMetrics();
@@ -91,16 +90,16 @@ public class HTTPEndpointMonitorTest
 
 	@Test
 	public void testExecuteNotFound() throws Exception {
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderException(new FileNotFoundException(_URL), _URL, urlReader);
+		setURLReaderException(new FileNotFoundException(_URL), _URL);
 
 		MonitorResult monitorResult = _execute(_newMonitorProperties());
 
 		testEquals(MonitorResult.Status.CRITICAL, monitorResult.getStatus());
 		testEquals(
 			JenkinsResultsParserUtil.combine(
-				"Endpoint ", _URL, " was not found"),
+				"Endpoint ", _REMOTE_URL, " was not found"),
 			monitorResult.getMessage());
 
 		Map<String, String> metrics = monitorResult.getMetrics();
@@ -110,39 +109,40 @@ public class HTTPEndpointMonitorTest
 
 	@Test
 	public void testExecuteOK() throws Exception {
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderOutput(RandomTestUtil.randomString(), _URL, urlReader);
+		setURLReaderOutput(RandomTestUtil.randomString(), _URL);
 
 		MonitorResult monitorResult = _execute(_newMonitorProperties());
 
 		testEquals(MonitorResult.Status.OK, monitorResult.getStatus());
 		testEquals(
-			JenkinsResultsParserUtil.combine("Endpoint ", _URL, " is OK"),
+			JenkinsResultsParserUtil.combine(
+				"Endpoint ", _REMOTE_URL, " is OK"),
 			monitorResult.getMessage());
 
 		Map<String, String> metrics = monitorResult.getMetrics();
 
 		Assert.assertNotNull(metrics.get("latency.millis"));
 
-		verifyUrlReaderRead(false, 0, 27000, urlReader);
+		verifyURLReaderRead(false, 0, 27000);
 	}
 
 	@Test
 	public void testExecuteResponseCode() throws Exception {
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderException(
+		setURLReaderException(
 			new IOException(
 				"Server returned HTTP response code: 503 for URL: " + _URL),
-			_URL, urlReader);
+			_URL);
 
 		MonitorResult monitorResult = _execute(_newMonitorProperties());
 
 		testEquals(MonitorResult.Status.CRITICAL, monitorResult.getStatus());
 		testEquals(
 			JenkinsResultsParserUtil.combine(
-				"Endpoint ", _URL, " returned the response code 503"),
+				"Endpoint ", _REMOTE_URL, " returned the response code 503"),
 			monitorResult.getMessage());
 
 		Map<String, String> metrics = monitorResult.getMetrics();
@@ -152,22 +152,32 @@ public class HTTPEndpointMonitorTest
 
 	@Test
 	public void testExecuteTimeout() throws Exception {
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderException(
-			new SocketTimeoutException("Read timed out"), _URL, urlReader);
+		setURLReaderException(
+			new SocketTimeoutException("Read timed out"), _URL);
 
 		MonitorResult monitorResult = _execute(_newMonitorProperties());
 
 		testEquals(MonitorResult.Status.CRITICAL, monitorResult.getStatus());
 		testEquals(
 			JenkinsResultsParserUtil.combine(
-				"Unable to read ", _URL, ": Read timed out"),
+				"Unable to read ", _REMOTE_URL, ": Read timed out"),
 			monitorResult.getMessage());
 
 		Map<String, String> metrics = monitorResult.getMetrics();
 
 		Assert.assertTrue(metrics.isEmpty());
+	}
+
+	@Test
+	public void testGetLinkURLs() {
+		HTTPEndpointMonitor httpEndpointMonitor = _newHTTPEndpointMonitor(
+			_newMonitorProperties());
+
+		testEquals(
+			Collections.singletonList(_REMOTE_URL),
+			httpEndpointMonitor.getLinkURLs());
 	}
 
 	@Test
@@ -229,10 +239,10 @@ public class HTTPEndpointMonitorTest
 			String latencyMaximumMillis)
 		throws Exception {
 
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderOutput(
-			_MILLIS_LATENCY, RandomTestUtil.randomString(), _URL, urlReader);
+		setURLReaderOutput(
+			_MILLIS_LATENCY, RandomTestUtil.randomString(), _URL);
 
 		Properties monitorProperties = _newMonitorProperties();
 
@@ -268,7 +278,7 @@ public class HTTPEndpointMonitorTest
 		try {
 			_newHTTPEndpointMonitor(monitorProperties);
 
-			Assert.fail("Expected IllegalArgumentException");
+			Assert.fail();
 		}
 		catch (IllegalArgumentException illegalArgumentException) {
 			return illegalArgumentException.getMessage();
@@ -318,7 +328,9 @@ public class HTTPEndpointMonitorTest
 
 	private static final long _MILLIS_LATENCY = 50;
 
-	private static final String _URL =
-		"https://" + RandomTestUtil.randomString();
+	private static final String _REMOTE_URL =
+		"https://test-9-1.liferay.com/api/json";
+
+	private static final String _URL = "http://test-9-1/api/json";
 
 }

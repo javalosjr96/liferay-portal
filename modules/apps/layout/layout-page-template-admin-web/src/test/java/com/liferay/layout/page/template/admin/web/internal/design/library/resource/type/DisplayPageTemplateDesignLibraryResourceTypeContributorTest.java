@@ -19,6 +19,7 @@ import com.liferay.layout.page.template.constants.LayoutPageTemplateActionKeys;
 import com.liferay.layout.page.template.constants.LayoutPageTemplateEntryTypeConstants;
 import com.liferay.layout.page.template.info.item.capability.DisplayPageInfoItemCapability;
 import com.liferay.portal.json.JSONFactoryImpl;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -76,6 +77,12 @@ public class DisplayPageTemplateDesignLibraryResourceTypeContributorTest {
 		jsonFactoryUtil.setJSONFactory(new JSONFactoryImpl());
 
 		Mockito.when(
+			_depotEntry.getCompanyId()
+		).thenReturn(
+			_COMPANY_ID
+		);
+
+		Mockito.when(
 			_depotEntry.getGroup()
 		).thenReturn(
 			_group
@@ -131,7 +138,8 @@ public class DisplayPageTemplateDesignLibraryResourceTypeContributorTest {
 					LayoutPageTemplateAdminPortletKeys.LAYOUT_PAGE_TEMPLATES),
 				Mockito.anyLong(), Mockito.anyLong(), Mockito.anyString())
 		).thenReturn(
-			_liferayPortletURL
+			_editLiferayPortletURL, _configureLiferayPortletURL,
+			_permissionsLiferayPortletURL
 		);
 
 		_portalUtilMockedStatic.when(
@@ -144,6 +152,7 @@ public class DisplayPageTemplateDesignLibraryResourceTypeContributorTest {
 
 	@After
 	public void tearDown() {
+		_featureFlagManagerUtilMockedStatic.close();
 		_languageUtilMockedStatic.close();
 		_portalUtilMockedStatic.close();
 	}
@@ -219,7 +228,7 @@ public class DisplayPageTemplateDesignLibraryResourceTypeContributorTest {
 					_httpServletRequest, _depotEntry, _BACK_URL);
 
 		Assert.assertEquals(
-			fdsActionDropdownItems.toString(), 6,
+			fdsActionDropdownItems.toString(), 7,
 			fdsActionDropdownItems.size());
 
 		_assertFDSActionDropdownItem(
@@ -235,11 +244,35 @@ public class DisplayPageTemplateDesignLibraryResourceTypeContributorTest {
 			fdsActionDropdownItems.get(3), "copy", "copyMenu", "make-a-copy",
 			null, null, null);
 		_assertFDSActionDropdownItem(
-			fdsActionDropdownItems.get(4), "password-policies", "permissions",
+			fdsActionDropdownItems.get(4), "cog", "configure", "configure",
+			null, "get", "link");
+		_assertFDSActionDropdownItem(
+			fdsActionDropdownItems.get(5), "password-policies", "permissions",
 			"permissions", null, "permissions", "modal-permissions");
 		_assertFDSActionDropdownItem(
-			fdsActionDropdownItems.get(5), "trash", "delete", "delete",
+			fdsActionDropdownItems.get(6), "trash", "delete", "delete",
 			"delete", "delete", "async");
+
+		FDSActionDropdownItem editFDSActionDropdownItem =
+			fdsActionDropdownItems.get(0);
+
+		Assert.assertEquals(
+			String.valueOf(_editLiferayPortletURL),
+			editFDSActionDropdownItem.get("href"));
+
+		FDSActionDropdownItem markAsDefaultFDSActionDropdownItem =
+			fdsActionDropdownItems.get(1);
+
+		Assert.assertEquals(
+			"{actions.markAsDefault.href}",
+			markAsDefaultFDSActionDropdownItem.get("href"));
+
+		FDSActionDropdownItem unmarkAsDefaultFDSActionDropdownItem =
+			fdsActionDropdownItems.get(2);
+
+		Assert.assertEquals(
+			"{actions.unmarkAsDefault.href}",
+			unmarkAsDefaultFDSActionDropdownItem.get("href"));
 
 		FDSActionDropdownItem copyFDSActionDropdownItem =
 			fdsActionDropdownItems.get(3);
@@ -276,45 +309,78 @@ public class DisplayPageTemplateDesignLibraryResourceTypeContributorTest {
 			"{actions.copyWithPermission.href}",
 			displayPageWithPermissionsFDSActionDropdownItem.get("href"));
 
-		FDSActionDropdownItem markAsDefaultFDSActionDropdownItem =
-			fdsActionDropdownItems.get(1);
+		FDSActionDropdownItem configureFDSActionDropdownItem =
+			fdsActionDropdownItems.get(4);
 
 		Assert.assertEquals(
-			"{actions.markAsDefault.href}",
-			markAsDefaultFDSActionDropdownItem.get("href"));
+			String.valueOf(_configureLiferayPortletURL),
+			configureFDSActionDropdownItem.get("href"));
 
-		FDSActionDropdownItem unmarkAsDefaultFDSActionDropdownItem =
-			fdsActionDropdownItems.get(2);
+		FDSActionDropdownItem permissionsFDSActionDropdownItem =
+			fdsActionDropdownItems.get(5);
 
 		Assert.assertEquals(
-			"{actions.unmarkAsDefault.href}",
-			unmarkAsDefaultFDSActionDropdownItem.get("href"));
+			String.valueOf(_permissionsLiferayPortletURL),
+			permissionsFDSActionDropdownItem.get("href"));
 
 		FDSActionDropdownItem deleteFDSActionDropdownItem =
-			fdsActionDropdownItems.get(5);
+			fdsActionDropdownItems.get(6);
 
 		Assert.assertEquals(
 			"{actions.delete.href}", deleteFDSActionDropdownItem.get("href"));
 
 		Mockito.verify(
-			_liferayPortletURL
+			_configureLiferayPortletURL
+		).setParameter(
+			"displayPageTemplateExternalReferenceCode",
+			"{embedded.externalReferenceCode}"
+		);
+
+		Mockito.verify(
+			_editLiferayPortletURL
+		).setParameter(
+			"displayPageTemplateExternalReferenceCode",
+			"{embedded.externalReferenceCode}"
+		);
+
+		Mockito.verify(
+			_permissionsLiferayPortletURL
+		).setParameter(
+			"displayPageTemplateExternalReferenceCode",
+			"{embedded.externalReferenceCode}"
+		);
+
+		Mockito.verify(
+			_configureLiferayPortletURL
+		).setParameter(
+			"mvcRenderCommandName",
+			"/layout_page_template_admin/configure_display_page"
+		);
+
+		Mockito.verify(
+			_editLiferayPortletURL
 		).setParameter(
 			"mvcRenderCommandName",
 			"/layout_page_template_admin/edit_display_page"
 		);
 
 		Mockito.verify(
-			_liferayPortletURL
+			_permissionsLiferayPortletURL
 		).setParameter(
 			"mvcRenderCommandName",
 			"/layout_page_template_admin/view_display_page_permissions"
 		);
 
 		Mockito.verify(
-			_liferayPortletURL, Mockito.times(2)
+			_configureLiferayPortletURL
 		).setParameter(
-			"displayPageTemplateExternalReferenceCode",
-			"{embedded.externalReferenceCode}"
+			"redirect", _BACK_URL
+		);
+
+		Mockito.verify(
+			_editLiferayPortletURL
+		).setParameter(
+			"redirect", _BACK_URL
 		);
 	}
 
@@ -346,10 +412,6 @@ public class DisplayPageTemplateDesignLibraryResourceTypeContributorTest {
 
 	@Test
 	public void testHasViewPermission() {
-		Assert.assertFalse(
-			_displayPageTemplateDesignLibraryResourceTypeContributor.
-				hasViewPermission(_permissionChecker, _depotEntry));
-
 		Mockito.when(
 			_portletResourcePermission.contains(
 				_permissionChecker, _GROUP_ID, ActionKeys.VIEW)
@@ -357,7 +419,28 @@ public class DisplayPageTemplateDesignLibraryResourceTypeContributorTest {
 			true
 		);
 
+		Assert.assertFalse(
+			_displayPageTemplateDesignLibraryResourceTypeContributor.
+				hasViewPermission(_permissionChecker, _depotEntry));
+
+		_featureFlagManagerUtilMockedStatic.when(
+			() -> FeatureFlagManagerUtil.isEnabled(_COMPANY_ID, "LPD-81651")
+		).thenReturn(
+			true
+		);
+
 		Assert.assertTrue(
+			_displayPageTemplateDesignLibraryResourceTypeContributor.
+				hasViewPermission(_permissionChecker, _depotEntry));
+
+		Mockito.when(
+			_portletResourcePermission.contains(
+				_permissionChecker, _GROUP_ID, ActionKeys.VIEW)
+		).thenReturn(
+			false
+		);
+
+		Assert.assertFalse(
 			_displayPageTemplateDesignLibraryResourceTypeContributor.
 				hasViewPermission(_permissionChecker, _depotEntry));
 	}
@@ -459,6 +542,8 @@ public class DisplayPageTemplateDesignLibraryResourceTypeContributorTest {
 	private static final String _CLASS_NAME_LABEL =
 		RandomTestUtil.randomString();
 
+	private static final long _COMPANY_ID = RandomTestUtil.randomLong();
+
 	private static final String _FORM_VARIATION_KEY =
 		RandomTestUtil.randomString();
 
@@ -469,10 +554,17 @@ public class DisplayPageTemplateDesignLibraryResourceTypeContributorTest {
 
 	private static final String _NAMESPACE = RandomTestUtil.randomString();
 
+	private final LiferayPortletURL _configureLiferayPortletURL = Mockito.mock(
+		LiferayPortletURL.class);
 	private final DepotEntry _depotEntry = Mockito.mock(DepotEntry.class);
 	private final DisplayPageTemplateDesignLibraryResourceTypeContributor
 		_displayPageTemplateDesignLibraryResourceTypeContributor =
 			new DisplayPageTemplateDesignLibraryResourceTypeContributor();
+	private final LiferayPortletURL _editLiferayPortletURL = Mockito.mock(
+		LiferayPortletURL.class);
+	private final MockedStatic<FeatureFlagManagerUtil>
+		_featureFlagManagerUtilMockedStatic = Mockito.mockStatic(
+			FeatureFlagManagerUtil.class);
 	private final Group _group = Mockito.mock(Group.class);
 	private final HttpServletRequest _httpServletRequest = Mockito.mock(
 		HttpServletRequest.class);
@@ -480,10 +572,10 @@ public class DisplayPageTemplateDesignLibraryResourceTypeContributorTest {
 		Mockito.mock(InfoItemServiceRegistry.class);
 	private final MockedStatic<LanguageUtil> _languageUtilMockedStatic =
 		Mockito.mockStatic(LanguageUtil.class);
-	private final LiferayPortletURL _liferayPortletURL = Mockito.mock(
-		LiferayPortletURL.class);
 	private final PermissionChecker _permissionChecker = Mockito.mock(
 		PermissionChecker.class);
+	private final LiferayPortletURL _permissionsLiferayPortletURL =
+		Mockito.mock(LiferayPortletURL.class);
 	private final MockedStatic<PortalUtil> _portalUtilMockedStatic =
 		Mockito.mockStatic(PortalUtil.class);
 	private final PortletResourcePermission _portletResourcePermission =

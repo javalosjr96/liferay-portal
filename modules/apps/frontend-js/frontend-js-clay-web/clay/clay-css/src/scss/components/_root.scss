@@ -31,12 +31,6 @@
 }
 
 @if (variable-exists(c-dark)) {
-	@media (prefers-color-scheme: dark) {
-		:root {
-			@include clay-css($c-dark);
-		}
-	}
-
 	[data-color-scheme='dark']:root,
 	:root [data-color-scheme='dark'] {
 		@include clay-css($c-dark);
@@ -44,14 +38,13 @@
 }
 
 @if (variable-exists(c-dark-high-contrast)) {
-	@media (prefers-color-scheme: dark) and (prefers-contrast: more) {
-		:root {
+	html[data-color-scheme='dark']:root {
+		@media (prefers-contrast: more) {
 			@include clay-css($c-dark-high-contrast);
 		}
-	}
 
-	[data-color-scheme='dark-high-contrast']:root,
-	:root [data-color-scheme='dark-high-contrast'] {
-		@include clay-css($c-dark-high-contrast);
+		&[data-prefers-contrast='more'] {
+			@include clay-css($c-dark-high-contrast);
+		}
 	}
 }

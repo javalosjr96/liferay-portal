@@ -8,7 +8,7 @@ tests:
     -   asserts:
             -   equal:
                     path: spec.policyName
-                    value: my-release-liferay-dxp-operator-statefulset-scale
+                    value: my-release-liferay-dxp-operator-workload-scale
             -   contains:
                     content: Deny
                     path: spec.validationActions
@@ -24,7 +24,7 @@ tests:
     -   asserts:
             -   equal:
                     path: metadata.name
-                    value: my-release-liferay-dxp-operator-statefulset-scale
+                    value: my-release-liferay-dxp-operator-workload-scale
             -   equal:
                     path: spec.failurePolicy
                     value: Fail
@@ -52,6 +52,20 @@ tests:
             path: kind
             value: ValidatingAdmissionPolicy
         it: Enforces the licensed ceiling on labeled namespaces and exempts the operator
+    -   asserts:
+            -   matchRegex:
+                    path: spec.variables[?(@.name=="replicaCeiling")].expression
+                    pattern: params.status.replicaCeiling
+            -   matchRegex:
+                    path: spec.variables[?(@.name=="replicaCeiling")].expression
+                    pattern: params.status.license.maxClusterNodes
+            -   matchRegex:
+                    path: spec.validations[0].expression
+                    pattern: variables.requestedReplicas <= variables.replicaCeiling
+        documentSelector:
+            path: kind
+            value: ValidatingAdmissionPolicy
+        it: Reads the replica ceiling in force and falls back to the licensed maximum
     -   asserts:
             -   hasDocuments:
                     count: 2

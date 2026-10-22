@@ -60,6 +60,30 @@ public class ActionUtil {
 
 	public static final String PRESELECTED = "_PRESELECTED_";
 
+	public static void checkConfigurationPermission(
+			PortletRequest portletRequest)
+		throws PortalException {
+
+		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
+			WebKeys.THEME_DISPLAY);
+
+		PermissionChecker permissionChecker =
+			themeDisplay.getPermissionChecker();
+
+		String portletId = ParamUtil.getString(
+			portletRequest, "portletResource");
+
+		if (!PortletPermissionUtil.contains(
+				permissionChecker, themeDisplay.getScopeGroupId(),
+				PortletConfigurationLayoutUtil.getLayout(themeDisplay),
+				portletId, ActionKeys.CONFIGURATION)) {
+
+			throw new PrincipalException.MustHavePermission(
+				permissionChecker, Portlet.class.getName(), portletId,
+				ActionKeys.CONFIGURATION);
+		}
+	}
+
 	public static PortletPreferences getLayoutPortletSetup(
 		PortletRequest portletRequest, Portlet portlet) {
 
@@ -88,9 +112,11 @@ public class ActionUtil {
 			for (PublicRenderParameter publicRenderParameter :
 					portlet.getPublicRenderParameters()) {
 
-				if (identifiers.add(publicRenderParameter.getIdentifier())) {
-					publicRenderParameters.add(publicRenderParameter);
+				if (!identifiers.add(publicRenderParameter.getIdentifier())) {
+					continue;
 				}
+
+				publicRenderParameters.add(publicRenderParameter);
 			}
 		}
 
@@ -101,27 +127,14 @@ public class ActionUtil {
 	public static Portlet getPortlet(PortletRequest portletRequest)
 		throws Exception {
 
+		checkConfigurationPermission(portletRequest);
+
 		ThemeDisplay themeDisplay = (ThemeDisplay)portletRequest.getAttribute(
 			WebKeys.THEME_DISPLAY);
 
-		PermissionChecker permissionChecker =
-			themeDisplay.getPermissionChecker();
-
-		String portletId = ParamUtil.getString(
-			portletRequest, "portletResource");
-
-		if (!PortletPermissionUtil.contains(
-				permissionChecker, themeDisplay.getScopeGroupId(),
-				PortletConfigurationLayoutUtil.getLayout(themeDisplay),
-				portletId, ActionKeys.CONFIGURATION)) {
-
-			throw new PrincipalException.MustHavePermission(
-				permissionChecker, Portlet.class.getName(), portletId,
-				ActionKeys.CONFIGURATION);
-		}
-
 		return PortletLocalServiceUtil.getPortletById(
-			themeDisplay.getCompanyId(), portletId);
+			themeDisplay.getCompanyId(),
+			ParamUtil.getString(portletRequest, "portletResource"));
 	}
 
 	public static void getPublicRenderParameterConfigurationList(

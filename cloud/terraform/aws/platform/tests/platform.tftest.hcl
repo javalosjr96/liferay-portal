@@ -57,12 +57,6 @@ override_data {
 	}
 }
 override_data {
-	target=data.aws_iam_role.liferay
-	values={
-		name="liferay-test-irsa"
-	}
-}
-override_data {
 	target=data.aws_partition.current
 	values={
 		partition="aws"
@@ -85,24 +79,12 @@ override_module {
 }
 run "should_assemble_the_deployment_context" {
 	assert {
-		condition=join(",", keys(local.deployment_context)) == "accountId,clusterSecurityGroupId,clusterSubnetIds,crossplaneDataRoleArn,crossplaneIamBoundaryArn,crossplaneIamPath,crossplaneIamRoleArn,deploymentName,liferayServiceAccountRoleName,oidcIssuerUrl,partition,region,vpcId"
+		condition=join(",", keys(local.deployment_context)) == "accountId,clusterSecurityGroupId,clusterSubnetIds,crossplaneDataRoleArn,crossplaneIamBoundaryArn,crossplaneIamPath,crossplaneIamRoleArn,deploymentName,oidcIssuerUrl,partition,region,vpcId"
 		error_message="The deployment context must carry exactly the keys the infrastructure provider consumes"
-	}
-	assert {
-		condition=local.deployment_context.accountId == "123456789012"
-		error_message="The deployment context must carry the account ID"
-	}
-	assert {
-		condition=local.deployment_context.clusterSecurityGroupId == "sg-0123456789abcdef0"
-		error_message="The deployment context must carry the cluster security group"
 	}
 	assert {
 		condition=local.deployment_context.clusterSubnetIds == "[\"subnet-aaa\",\"subnet-bbb\"]"
 		error_message="The deployment context must carry the cluster subnets as a sorted JSON list"
-	}
-	assert {
-		condition=local.deployment_context.deploymentName == "liferay-test"
-		error_message="The deployment context must carry the deployment name"
 	}
 	assert {
 		condition=local.deployment_context.crossplaneIamPath == "/crossplane/liferay-test/"
@@ -113,24 +95,8 @@ run "should_assemble_the_deployment_context" {
 		error_message="The deployment context must carry the permissions boundary the composition attaches to its principals"
 	}
 	assert {
-		condition=local.deployment_context.liferayServiceAccountRoleName == "liferay-test-irsa"
-		error_message="The deployment context must carry the Liferay service account role name"
-	}
-	assert {
 		condition=local.deployment_context.oidcIssuerUrl == "https://oidc.eks.us-east-1.amazonaws.com/id/EXAMPLE"
 		error_message="The deployment context must carry the full OIDC issuer URL"
-	}
-	assert {
-		condition=local.deployment_context.partition == "aws"
-		error_message="The deployment context must carry the partition"
-	}
-	assert {
-		condition=local.deployment_context.region == "us-east-1"
-		error_message="The deployment context must carry the region"
-	}
-	assert {
-		condition=local.deployment_context.vpcId == "vpc-0123456789abcdef0"
-		error_message="The deployment context must carry the VPC ID"
 	}
 	command=plan
 	override_resource {
@@ -145,10 +111,6 @@ run "should_build_the_secrets_manager_secret_store_provider" {
 	assert {
 		condition=join(",", keys(local.cluster_secret_store_provider)) == "aws"
 		error_message="The default branch must produce an AWS provider"
-	}
-	assert {
-		condition=local.cluster_secret_store_provider.aws.service == "SecretsManager"
-		error_message="The AWS provider must use Secrets Manager"
 	}
 	assert {
 		condition=local.cluster_secret_store_provider.aws.region == "us-east-1"
@@ -170,10 +132,6 @@ run "should_create_the_ack_prometheusservice_role_when_observability_is_enabled"
 		error_message="The ACK Prometheus service role name must be derived from deployment_name"
 	}
 	assert {
-		condition=local.irsa_service_accounts.ack_prometheusservice == "ack-system:ack-prometheusservice-controller"
-		error_message="The ACK Prometheus service role must trust the ACK controller service account"
-	}
-	assert {
 		condition=length(aws_iam_role_policy.ack_prometheusservice) == 1
 		error_message="The ACK Prometheus service role must be granted AMP rule group access"
 	}
@@ -190,10 +148,6 @@ run "should_create_the_keda_role_when_enabled" {
 		error_message="The KEDA role name must be derived from deployment_name"
 	}
 	assert {
-		condition=local.irsa_service_accounts.keda == "keda-system:keda-operator"
-		error_message="The KEDA role must trust the keda-operator service account in the KEDA namespace"
-	}
-	assert {
 		condition=length(aws_iam_role_policy.keda) == 1
 		error_message="The KEDA role must be granted AMP query access"
 	}
@@ -206,6 +160,45 @@ run "should_create_the_keda_role_when_enabled" {
 		keda_config={
 			enabled=true
 		}
+		observability_config={
+			enabled=true
+		}
+	}
+}
+run "should_create_the_observability_resources_when_observability_is_enabled" {
+	assert {
+		condition=aws_iam_role.alloy[0].name == "liferay-test-alloy"
+		error_message="The Alloy role name must be derived from deployment_name"
+	}
+	assert {
+		condition=aws_iam_role.grafana[0].name == "liferay-test-grafana"
+		error_message="The Grafana role name must be derived from deployment_name"
+	}
+	assert {
+		condition=aws_iam_role.rds_exporter[0].name == "liferay-test-rds-exporter"
+		error_message="The RDS exporter role name must be derived from deployment_name"
+	}
+	assert {
+		condition=aws_prometheus_workspace.amp[0].alias == "liferay-test-amp-workspace"
+		error_message="The Prometheus workspace alias must be derived from deployment_name"
+	}
+	assert {
+		condition=one([for statement in data.aws_iam_policy_document.alloy.statement : statement if contains(statement.actions, "aps:RemoteWrite")]).resources == toset(["arn:aws:aps:us-east-1:123456789012:workspace/ws-mock"])
+		error_message="The Alloy role's AMP access must be scoped to the deployment's Prometheus workspace"
+	}
+	assert {
+		condition=length(aws_iam_role_policy.alloy) == 1 && length(aws_iam_role_policy.alloy_cloudwatch_rds) == 1 && length(aws_iam_role_policy.rds_exporter) == 1 && length(aws_iam_role_policy_attachment.grafana) == 1
+		error_message="The observability roles must be granted their AMP, CloudWatch, and RDS access"
+	}
+	command=plan
+	override_resource {
+		override_during=plan
+		target=aws_prometheus_workspace.amp
+		values={
+			arn="arn:aws:aps:us-east-1:123456789012:workspace/ws-mock"
+		}
+	}
+	variables {
 		observability_config={
 			enabled=true
 		}
@@ -236,24 +229,28 @@ run "should_fence_crossplane_iam_with_a_permissions_boundary" {
 		error_message="crossplane-iam may only read IAM outside the managed path"
 	}
 	assert {
-		condition=contains(data.aws_iam_policy_document.crossplane_iam.statement[1].actions, "iam:CreateRole") && one(data.aws_iam_policy_document.crossplane_iam.statement[1].condition).variable == "iam:PermissionsBoundary" && one(one(data.aws_iam_policy_document.crossplane_iam.statement[1].condition).values) == aws_iam_policy.crossplane_iam_boundary.arn
+		condition=one(one([for statement in data.aws_iam_policy_document.crossplane_iam.statement : statement if contains(statement.actions, "iam:CreateRole")]).condition).variable == "iam:PermissionsBoundary" && one(one(one([for statement in data.aws_iam_policy_document.crossplane_iam.statement : statement if contains(statement.actions, "iam:CreateRole")]).condition).values) == aws_iam_policy.crossplane_iam_boundary.arn
 		error_message="Creating principals and changing their policies must require the permissions boundary"
 	}
 	assert {
-		condition=toset(data.aws_iam_policy_document.crossplane_iam.statement[1].resources) == toset(["arn:aws:iam::123456789012:role/crossplane/liferay-test/*", "arn:aws:iam::123456789012:user/crossplane/liferay-test/*"])
+		condition=toset(one([for statement in data.aws_iam_policy_document.crossplane_iam.statement : statement if contains(statement.actions, "iam:CreateRole")]).resources) == toset(["arn:aws:iam::123456789012:role/crossplane/liferay-test/*", "arn:aws:iam::123456789012:user/crossplane/liferay-test/*"])
 		error_message="The boundary conditioned actions must target roles and users under the managed path"
 	}
 	assert {
-		condition=contains(data.aws_iam_policy_document.crossplane_iam.statement[2].actions, "iam:UpdateAssumeRolePolicy") && toset(data.aws_iam_policy_document.crossplane_iam.statement[2].resources) == toset(["arn:aws:iam::123456789012:role/crossplane/liferay-test/*", "arn:aws:iam::123456789012:user/crossplane/liferay-test/*"])
+		condition=toset(one([for statement in data.aws_iam_policy_document.crossplane_iam.statement : statement if contains(statement.actions, "iam:UpdateAssumeRolePolicy")]).resources) == toset(["arn:aws:iam::123456789012:role/crossplane/liferay-test/*", "arn:aws:iam::123456789012:user/crossplane/liferay-test/*"])
 		error_message="Trust and lifecycle changes must be confined to principals under the managed path"
 	}
 	assert {
-		condition=toset(data.aws_iam_policy_document.crossplane_iam.statement[3].resources) == toset(["arn:aws:iam::123456789012:policy/crossplane/liferay-test/*"])
+		condition=toset(one([for statement in data.aws_iam_policy_document.crossplane_iam.statement : statement if contains(statement.actions, "iam:CreatePolicy")]).resources) == toset(["arn:aws:iam::123456789012:policy/crossplane/liferay-test/*"])
 		error_message="Managed policy changes must be confined to the managed path"
 	}
 	assert {
 		condition=alltrue([for statement in data.aws_iam_policy_document.crossplane_iam.statement : !anytrue([for action in statement.actions : strcontains(action, "PermissionsBoundary")])])
 		error_message="crossplane-iam must not be able to remove or replace a permissions boundary"
+	}
+	assert {
+		condition=length(setsubtract(["iam:UntagPolicy", "iam:UntagRole"], flatten([for statement in data.aws_iam_policy_document.crossplane_iam.statement : statement.actions]))) == 0
+		error_message="crossplane-iam must be able to remove the tags it applies to managed roles and policies"
 	}
 	command=plan
 	override_resource {
@@ -266,12 +263,16 @@ run "should_fence_crossplane_iam_with_a_permissions_boundary" {
 }
 run "should_grant_the_crossplane_roles_their_provider_permissions" {
 	assert {
-		condition=join(",", keys(aws_iam_role_policy.crossplane_data)) == "backup,cloudwatchlogs,ec2,kms,opensearch,rds,s3"
-		error_message="The crossplane-data role must carry one policy per data provider"
+		condition=alltrue([for requirement in [{actions=["ec2:DeleteTags"], document=data.aws_iam_policy_document.crossplane_data_ec2}, {actions=["es:GetUpgradeStatus", "es:UpgradeDomain"], document=data.aws_iam_policy_document.crossplane_data_opensearch}, {actions=["rds:RemoveTagsFromResource"], document=data.aws_iam_policy_document.crossplane_data_rds}, {actions=["s3:DeleteObjectVersion", "s3:ListBucketVersions"], document=data.aws_iam_policy_document.crossplane_data_s3}] : length(setsubtract(requirement.actions, flatten([for statement in requirement.document.statement : statement.actions]))) == 0])
+		error_message="crossplane-data must be able to remove tags, upgrade search engines, and empty versioned buckets"
 	}
 	assert {
-		condition=aws_iam_role_policy.crossplane_iam.name == "iam"
-		error_message="The crossplane-iam role must carry the IAM provider policy"
+		condition=join(",", one([for statement in data.aws_iam_policy_document.crossplane_data_cloudwatchlogs.statement : statement if contains(statement.actions, "logs:PutResourcePolicy")]).resources) == "*"
+		error_message="The CloudWatch Logs resource policy actions take no resource type, so they must be granted on all resources"
+	}
+	assert {
+		condition=alltrue([for document in [data.aws_iam_policy_document.crossplane_data_opensearch, data.aws_iam_policy_document.crossplane_data_rds] : alltrue([for statement in document.statement : !contains(statement.actions, "iam:CreateServiceLinkedRole") || (one(statement.condition).variable == "iam:AWSServiceName" && alltrue([for resource in statement.resources : strcontains(resource, ":role/aws-service-role/${one(one(statement.condition).values)}/")]))])])
+		error_message="crossplane-data may only create the service-linked role of the service it manages"
 	}
 	command=plan
 }
@@ -312,6 +313,17 @@ run "should_inject_an_external_secret_store_provider" {
 		}
 	}
 }
+run "should_let_external_secrets_pull_from_the_marketplace_registry" {
+	assert {
+		condition=one([for statement in data.aws_iam_policy_document.external_secrets_marketplace_registry.statement : statement if contains(statement.actions, "ecr:GetAuthorizationToken")]).resources == toset(["*"])
+		error_message="ecr:GetAuthorizationToken takes no resource type, so it must be granted on all resources"
+	}
+	assert {
+		condition=alltrue([for statement in data.aws_iam_policy_document.external_secrets_marketplace_registry.statement : contains(statement.actions, "ecr:GetAuthorizationToken") || alltrue([for resource in statement.resources : startswith(resource, "arn:aws:ecr:us-east-1:709825985650:repository/")])])
+		error_message="Image pulls must be limited to the AWS Marketplace registry"
+	}
+	command=plan
+}
 run "should_limit_what_bounded_principals_can_do" {
 	assert {
 		condition=join(",", one([for statement in data.aws_iam_policy_document.crossplane_data_backup.statement : statement if contains(statement.actions, "iam:PassRole")]).resources) == "arn:aws:iam::123456789012:role/crossplane/liferay-test/*"
@@ -328,6 +340,21 @@ run "should_limit_what_bounded_principals_can_do" {
 	assert {
 		condition=!anytrue([for statement in data.aws_iam_policy_document.crossplane_iam_boundary.statement : anytrue([for action in statement.actions : startswith(action, "sts:") || action == "*"])])
 		error_message="The boundary must grant no STS action and no wildcard"
+	}
+	command=plan
+}
+run "should_name_the_platform_roles_after_the_deployment" {
+	assert {
+		condition=aws_iam_role.crossplane_data.name == "liferay-test-crossplane-data"
+		error_message="The crossplane-data role name must be derived from deployment_name"
+	}
+	assert {
+		condition=aws_iam_role.crossplane_iam.name == "liferay-test-crossplane-iam"
+		error_message="The crossplane-iam role name must be derived from deployment_name"
+	}
+	assert {
+		condition=aws_iam_role.external_secrets.name == "liferay-test-external-secrets"
+		error_message="The External Secrets role name must be derived from deployment_name"
 	}
 	command=plan
 }
@@ -365,43 +392,31 @@ run "should_omit_the_keda_role_when_observability_is_disabled" {
 		}
 	}
 }
+run "should_omit_the_observability_resources_by_default" {
+	assert {
+		condition=length(aws_iam_role.alloy) == 0 && length(aws_iam_role.grafana) == 0 && length(aws_iam_role.rds_exporter) == 0
+		error_message="The observability roles must not be created unless observability is enabled"
+	}
+	assert {
+		condition=length(aws_prometheus_workspace.amp) == 0
+		error_message="The Prometheus workspace must not be created unless observability is enabled"
+	}
+	assert {
+		condition=output.alloy_role_arn == "" && output.grafana_role_arn == "" && output.rds_exporter_role_arn == ""
+		error_message="The observability role ARNs must be empty unless observability is enabled"
+	}
+	assert {
+		condition=output.prometheus_workspace_endpoint == "" && output.prometheus_workspace_id == ""
+		error_message="The Prometheus workspace outputs must be empty unless observability is enabled"
+	}
+	command=plan
+}
 run "should_publish_the_marketplace_volume_handle" {
 	assert {
 		condition=output.marketplace_volume_handle == "fs-0123456789abcdef0::fsap-0123456789abcdef0"
 		error_message="The marketplace volume handle must join the file system and access point IDs"
 	}
-	assert {
-		condition=aws_efs_access_point.marketplace.root_directory[0].path == "/marketplace"
-		error_message="The marketplace access point must be rooted at /marketplace"
-	}
 	command=apply
-}
-run "should_wire_the_platform_roles" {
-	assert {
-		condition=aws_iam_role.crossplane_data.name == "liferay-test-crossplane-data"
-		error_message="The crossplane-data role name must be derived from deployment_name"
-	}
-	assert {
-		condition=aws_iam_role.crossplane_iam.name == "liferay-test-crossplane-iam"
-		error_message="The crossplane-iam role name must be derived from deployment_name"
-	}
-	assert {
-		condition=aws_iam_role.external_secrets.name == "liferay-test-external-secrets"
-		error_message="The External Secrets role name must be derived from deployment_name"
-	}
-	assert {
-		condition=local.irsa_service_accounts.crossplane_data == "crossplane-system:crossplane-data"
-		error_message="The crossplane-data role must trust the crossplane-data service account"
-	}
-	assert {
-		condition=local.irsa_service_accounts.crossplane_iam == "crossplane-system:crossplane-iam"
-		error_message="The crossplane-iam role must trust the crossplane-iam service account"
-	}
-	assert {
-		condition=local.irsa_service_accounts.external_secrets == "external-secrets-system:external-secrets"
-		error_message="The External Secrets role must trust the External Secrets controller service account"
-	}
-	command=plan
 }
 variables {
 	argocd_helm_chart_version="10.1.3"

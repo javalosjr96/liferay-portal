@@ -30,8 +30,10 @@ import com.liferay.jenkins.results.parser.test.clazz.JUnitTestClass;
 import com.liferay.jenkins.results.parser.test.clazz.TestClass;
 import com.liferay.jenkins.results.parser.test.clazz.TestClassMethod;
 import com.liferay.jenkins.results.parser.test.clazz.group.AxisTestClassGroup;
+import com.liferay.jenkins.results.parser.testray.TestrayCaseResult;
 import com.liferay.jenkins.results.parser.testray.TestrayCloudBucket;
 import com.liferay.jenkins.results.parser.testray.TestrayCloudObject;
+import com.liferay.jenkins.results.parser.testray.TestrayFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -103,6 +105,8 @@ public class BaseDownstreamBuild extends BaseBuild implements DownstreamBuild {
 			}
 
 			buildReportJSONObject.put("buildCached", true);
+
+			buildReportJSONObject.remove("testrayCaseResultURL");
 
 			JenkinsResultsParserUtil.write(
 				buildReportFile, String.valueOf(buildReportJSONObject));
@@ -273,6 +277,11 @@ public class BaseDownstreamBuild extends BaseBuild implements DownstreamBuild {
 
 		buildReportJSONObject.put("testResults", testResultsJSONArray);
 
+		if (_testrayCaseResultURL != null) {
+			buildReportJSONObject.put(
+				"testrayCaseResultURL", String.valueOf(_testrayCaseResultURL));
+		}
+
 		return buildReportJSONObject;
 	}
 
@@ -288,7 +297,27 @@ public class BaseDownstreamBuild extends BaseBuild implements DownstreamBuild {
 	}
 
 	@Override
-	public DownstreamBuildReport getDownstreamBuildReport() {
+	public synchronized DownstreamBuildReport getDownstreamBuildReport() {
+		if (_downstreamBuildReport != null) {
+			return _downstreamBuildReport;
+		}
+
+		DownstreamBuildReport cachedDownstreamBuildReport =
+			getCachedDownstreamBuildReport();
+
+		if (cachedDownstreamBuildReport != null) {
+			_downstreamBuildReport = cachedDownstreamBuildReport;
+
+			return _downstreamBuildReport;
+		}
+
+		if (!isCompleted()) {
+			return null;
+		}
+
+		_downstreamBuildReport = BuildReportFactory.newDownstreamBuildReport(
+			this);
+
 		return _downstreamBuildReport;
 	}
 
@@ -422,6 +451,17 @@ public class BaseDownstreamBuild extends BaseBuild implements DownstreamBuild {
 		return _gitHubMessageElement;
 	}
 
+	@Override
+	public Job getJob() {
+		TopLevelBuild topLevelBuild = getTopLevelBuild();
+
+		if (topLevelBuild != null) {
+			return topLevelBuild.getJob();
+		}
+
+		return super.getJob();
+	}
+
 	public Map<String, List<String>> getTestClassMethodNamesMap() {
 		String batchName = getBatchName();
 
@@ -455,9 +495,11 @@ public class BaseDownstreamBuild extends BaseBuild implements DownstreamBuild {
 
 				String testMethodName = testClassMethod.getName();
 
-				if (!methodNames.contains(testMethodName)) {
-					methodNames.add(testClassMethod.getName());
+				if (methodNames.contains(testMethodName)) {
+					continue;
 				}
+
+				methodNames.add(testClassMethod.getName());
 			}
 
 			testClassMethodNamesMap.put(
@@ -476,12 +518,57 @@ public class BaseDownstreamBuild extends BaseBuild implements DownstreamBuild {
 		List<TestResult> testResults = new ArrayList<>();
 
 		for (TestResult testResult : getTestResults()) {
-			if (testStatus.equals(testResult.getStatus())) {
-				testResults.add(testResult);
+			if (!testStatus.equals(testResult.getStatus())) {
+				continue;
 			}
+
+			testResults.add(testResult);
 		}
 
 		return testResults;
+	}
+
+	@Override
+	public URL getTestrayCaseResultURL() {
+		synchronized (_testrayCaseResultURLLock) {
+			if (_testrayCaseResultURL != null) {
+				return _testrayCaseResultURL;
+			}
+
+			String testrayImportDisabled = Environment.get(
+				"TESTRAY_IMPORT_DISABLED");
+
+			if (Boolean.parseBoolean(testrayImportDisabled)) {
+				return null;
+			}
+
+			TopLevelBuild topLevelBuild = getTopLevelBuild();
+
+			if (topLevelBuild == null) {
+				return null;
+			}
+
+			try {
+				TestrayCaseResult testrayCaseResult =
+					TestrayFactory.newDownstreamBuildTestrayCaseResult(
+						this, topLevelBuild.getTestrayContext());
+
+				if (testrayCaseResult == null) {
+					return null;
+				}
+
+				_testrayCaseResultURL =
+					testrayCaseResult.getTestrayCaseResultURL();
+			}
+			catch (Exception exception) {
+				System.out.println(
+					JenkinsResultsParserUtil.combine(
+						"Unable to create Testray case result for ",
+						getBuildURL(), ":\n", exception.getMessage()));
+			}
+
+			return _testrayCaseResultURL;
+		}
 	}
 
 	@Override
@@ -489,19 +576,19 @@ public class BaseDownstreamBuild extends BaseBuild implements DownstreamBuild {
 		List<TestResult> uniqueFailureTestResults = new ArrayList<>();
 
 		for (TestResult testResult : getTestResults(null)) {
-			if (!testResult.isFailing()) {
+			if (!testResult.isFailing() || !testResult.isUniqueFailure()) {
 				continue;
 			}
 
-			if (testResult.isUniqueFailure()) {
-				uniqueFailureTestResults.add(testResult);
-			}
+			uniqueFailureTestResults.add(testResult);
 		}
 
 		for (TestResult untestedTestResult : getUntestedTestResults()) {
-			if (untestedTestResult.isUniqueFailure()) {
-				uniqueFailureTestResults.add(untestedTestResult);
+			if (!untestedTestResult.isUniqueFailure()) {
+				continue;
 			}
+
+			uniqueFailureTestResults.add(untestedTestResult);
 		}
 
 		return uniqueFailureTestResults;
@@ -527,9 +614,11 @@ public class BaseDownstreamBuild extends BaseBuild implements DownstreamBuild {
 			List<String> testClassMethodNames =
 				untestedTestClassMethodNamesMap.get(testResultClassName);
 
-			if (testClassMethodNames != null) {
-				testClassMethodNames.remove(testResult.getTestName());
+			if (testClassMethodNames == null) {
+				continue;
 			}
+
+			testClassMethodNames.remove(testResult.getTestName());
 		}
 
 		return untestedTestClassMethodNamesMap;
@@ -601,19 +690,19 @@ public class BaseDownstreamBuild extends BaseBuild implements DownstreamBuild {
 		List<TestResult> upstreamFailureTestResults = new ArrayList<>();
 
 		for (TestResult testResult : getTestResults(null)) {
-			if (!testResult.isFailing()) {
+			if (!testResult.isFailing() || testResult.isUniqueFailure()) {
 				continue;
 			}
 
-			if (!testResult.isUniqueFailure()) {
-				upstreamFailureTestResults.add(testResult);
-			}
+			upstreamFailureTestResults.add(testResult);
 		}
 
 		for (TestResult untestedTestResult : getUntestedTestResults()) {
-			if (!untestedTestResult.isUniqueFailure()) {
-				upstreamFailureTestResults.add(untestedTestResult);
+			if (untestedTestResult.isUniqueFailure()) {
+				continue;
 			}
+
+			upstreamFailureTestResults.add(untestedTestResult);
 		}
 
 		return upstreamFailureTestResults;
@@ -698,6 +787,22 @@ public class BaseDownstreamBuild extends BaseBuild implements DownstreamBuild {
 		}
 
 		return true;
+	}
+
+	@Override
+	public void reset() {
+		super.reset();
+
+		_downstreamBuildReport = null;
+		_testrayCaseResultURL = null;
+
+		Build parentBuild = getParentBuild();
+
+		if (parentBuild instanceof BaseParentBuild) {
+			BaseParentBuild baseParentBuild = (BaseParentBuild)parentBuild;
+
+			baseParentBuild.removeTestrayCaseResultURL(getAxisName());
+		}
 	}
 
 	@Override
@@ -1323,5 +1428,7 @@ public class BaseDownstreamBuild extends BaseBuild implements DownstreamBuild {
 	private String _axisName;
 	private DownstreamBuildReport _downstreamBuildReport;
 	private Element _gitHubMessageElement;
+	private volatile URL _testrayCaseResultURL;
+	private final Object _testrayCaseResultURLLock = new Object();
 
 }

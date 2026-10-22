@@ -9,7 +9,6 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepository;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileEntryWrapper;
-import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -55,11 +54,7 @@ public class HTMLImageAttachmentElementReplacerTest {
 		);
 
 		_htmlImageAttachmentElementReplacer =
-			new HTMLImageAttachmentElementReplacer();
-
-		ReflectionTestUtil.setFieldValue(
-			_htmlImageAttachmentElementReplacer, "_portletFileRepository",
-			_portletFileRepository);
+			new HTMLImageAttachmentElementReplacer(_portletFileRepository);
 	}
 
 	@Test
@@ -68,7 +63,8 @@ public class HTMLImageAttachmentElementReplacerTest {
 			"<img class=\"custom\" data-image-id=\"%s\" src=\"%s\" />",
 			_IMAGE_FILE_ENTRY_ID, StringUtil.randomString());
 		String expectedImgTag = String.format(
-			"<img class=\"custom\" src=\"%s\" />", _FILE_ENTRY_IMAGE_URL);
+			"<img class=\"custom\" src=\"%s\" data-fileentryid=\"%s\" />",
+			_FILE_ENTRY_IMAGE_URL, _IMAGE_FILE_ENTRY_ID);
 
 		String actualTag = _htmlImageAttachmentElementReplacer.replace(
 			originalImgTag, _fileEntry);
@@ -82,7 +78,8 @@ public class HTMLImageAttachmentElementReplacerTest {
 			"<img data-image-id=\"%s\" src=\"%s\" />", _IMAGE_FILE_ENTRY_ID,
 			StringUtil.randomString());
 		String expectedImgTag = String.format(
-			"<img src=\"%s\" />", _FILE_ENTRY_IMAGE_URL);
+			"<img src=\"%s\" data-fileentryid=\"%s\" />", _FILE_ENTRY_IMAGE_URL,
+			_IMAGE_FILE_ENTRY_ID);
 
 		String actualTag = _htmlImageAttachmentElementReplacer.replace(
 			originalImgTag, _fileEntry);

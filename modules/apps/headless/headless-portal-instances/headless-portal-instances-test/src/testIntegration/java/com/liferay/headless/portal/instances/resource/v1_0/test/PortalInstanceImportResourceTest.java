@@ -23,9 +23,11 @@ import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.VirtualHost;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.VirtualHostLocalService;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.HTTPTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -39,6 +41,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
+import com.liferay.portal.util.PortalInstances;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -103,10 +106,33 @@ public class PortalInstanceImportResourceTest
 
 		_testPostPortalInstanceImportBatch();
 		_testPostPortalInstanceImportExistingDBPartition();
+		_testPostPortalInstanceImportExportedValuesInUse();
+		_testPostPortalInstanceImportInProgress();
 		_testPostPortalInstanceImportInvalidSchemaName();
 		_testPostPortalInstanceImportNonexistentDBPartition();
 		_testPostPortalInstanceImportSuccess();
 		_testPostPortalInstanceImportWithoutOmniadminPermission();
+	}
+
+	private void _assertPostPortalInstanceImportProblemTitle(
+			PortalInstanceImport portalInstanceImport, String title)
+		throws Exception {
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_CLASS_NAME_PORTAL_INSTANCE_IMPORT_RESOURCE_IMPL,
+				LoggerTestUtil.ERROR)) {
+
+			portalInstanceImportResource.postPortalInstanceImport(
+				portalInstanceImport);
+
+			Assert.fail();
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
+			Assert.assertEquals(title, problem.getTitle());
+		}
 	}
 
 	private PortalInstanceImportResource
@@ -136,14 +162,14 @@ public class PortalInstanceImportResourceTest
 		PrincipalThreadLocal.setName(name);
 	}
 
-	private void _deleteCompanyByVirtualHost(String virtualHost)
+	private void _deleteCompanyByVirtualHost(String virtualHostname)
 		throws Exception {
 
-		Company company = _companyLocalService.fetchCompanyByVirtualHost(
-			virtualHost);
+		VirtualHost virtualHost = _virtualHostLocalService.fetchVirtualHost(
+			virtualHostname);
 
-		if (company != null) {
-			_deleteCompany(company.getCompanyId());
+		if (virtualHost != null) {
+			_deleteCompany(virtualHost.getCompanyId());
 		}
 	}
 
@@ -182,13 +208,13 @@ public class PortalInstanceImportResourceTest
 		return companyId;
 	}
 
-	private long _getCompanyIdByVirtualHost(String virtualHost)
+	private long _getCompanyIdByVirtualHost(String virtualHostname)
 		throws Exception {
 
-		Company company = _companyLocalService.getCompanyByVirtualHost(
-			virtualHost);
+		VirtualHost virtualHost = _virtualHostLocalService.getVirtualHost(
+			virtualHostname);
 
-		return company.getCompanyId();
+		return virtualHost.getCompanyId();
 	}
 
 	private PortalInstanceImport _randomPortalInstanceImport(long companyId) {
@@ -301,6 +327,71 @@ public class PortalInstanceImportResourceTest
 		}
 	}
 
+	private void _testPostPortalInstanceImportExportedValuesInUse()
+		throws Exception {
+
+		String webId =
+			StringUtil.toLowerCase(RandomTestUtil.randomString()) + ".com";
+
+		Company company = CompanyTestUtil.addCompanyWithWebId(webId);
+
+		long companyId = company.getCompanyId();
+
+		_companyLocalService.exportCompany(companyId);
+
+		_deleteCompany(companyId);
+
+		Company inUseCompany = CompanyTestUtil.addCompanyWithWebId(webId);
+
+		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
+
+		portalInstanceImport.setSchemaName(
+			DBPartitionUtil.getExportedPartitionName(companyId));
+		portalInstanceImport.setVirtualHost(
+			StringUtil.toLowerCase(RandomTestUtil.randomString()) + ".com");
+
+		_assertPostPortalInstanceImportProblemTitle(
+			portalInstanceImport, "Duplicate portal instance ID " + webId);
+
+		portalInstanceImport.setVirtualHost((String)null);
+		portalInstanceImport.setWebId(
+			StringUtil.toLowerCase(RandomTestUtil.randomString()));
+
+		_assertPostPortalInstanceImportProblemTitle(
+			portalInstanceImport, "Duplicate virtual hostname " + webId);
+
+		_deleteCompany(inUseCompany.getCompanyId());
+
+		portalInstanceImport.setWebId((String)null);
+
+		PortalInstance portalInstance =
+			portalInstanceImportResource.postPortalInstanceImport(
+				portalInstanceImport);
+
+		Assert.assertEquals(webId, portalInstance.getPortalInstanceId());
+
+		_deleteCompany(portalInstance.getCompanyId());
+
+		_dropExportedSchema(companyId);
+	}
+
+	private void _testPostPortalInstanceImportInProgress() throws Exception {
+		PortalInstanceImport portalInstanceImport = new PortalInstanceImport();
+
+		portalInstanceImport.setSchemaName(
+			DBPartitionUtil.getExportedPartitionName(
+				RandomTestUtil.randomLong()));
+
+		try (SafeCloseable safeCloseable =
+				PortalInstances.setImportInProcessCompanyIdWithSafeCloseable(
+					RandomTestUtil.randomLong())) {
+
+			_assertPostPortalInstanceImportProblemTitle(
+				portalInstanceImport,
+				"Importing an instance is already in progress");
+		}
+	}
+
 	private void _testPostPortalInstanceImportInvalidSchemaName()
 		throws Exception {
 
@@ -386,6 +477,13 @@ public class PortalInstanceImportResourceTest
 				portalInstanceImport);
 
 		try {
+			Company persistedCompany = _companyLocalService.getCompany(
+				companyId);
+
+			Assert.assertEquals(
+				Integer.valueOf(persistedCompany.getMaxUsers()),
+				portalInstance.getMaxUsers());
+
 			Assert.assertEquals(
 				Long.valueOf(companyId), portalInstance.getCompanyId());
 			Assert.assertEquals(randomId, portalInstance.getPortalInstanceId());
@@ -479,5 +577,8 @@ public class PortalInstanceImportResourceTest
 
 	@Inject
 	private CompanyLocalService _companyLocalService;
+
+	@Inject
+	private VirtualHostLocalService _virtualHostLocalService;
 
 }

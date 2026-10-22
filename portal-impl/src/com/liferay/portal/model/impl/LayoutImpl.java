@@ -315,12 +315,14 @@ public class LayoutImpl extends LayoutBaseImpl {
 				LayoutFriendlyURLLocalServiceUtil.getLayoutFriendlyURLs(
 					getPlid())) {
 
-			if (LanguageUtil.isAvailableLocale(
+			if (!LanguageUtil.isAvailableLocale(
 					layoutFriendlyURL.getGroupId(),
 					layoutFriendlyURL.getLanguageId())) {
 
-				availableLanguageIds.add(layoutFriendlyURL.getLanguageId());
+				continue;
 			}
+
+			availableLanguageIds.add(layoutFriendlyURL.getLanguageId());
 		}
 
 		return availableLanguageIds.toArray(new String[0]);
@@ -385,12 +387,14 @@ public class LayoutImpl extends LayoutBaseImpl {
 		while (iterator.hasNext()) {
 			Layout layout = iterator.next();
 
-			if (layout.isHidden() || !layout.isPublished() ||
-				!LayoutPermissionUtil.contains(
+			if (!layout.isHidden() && layout.isPublished() &&
+				LayoutPermissionUtil.contains(
 					permissionChecker, layout, ActionKeys.VIEW)) {
 
-				iterator.remove();
+				continue;
 			}
+
+			iterator.remove();
 		}
 
 		return layouts;
@@ -436,11 +440,7 @@ public class LayoutImpl extends LayoutBaseImpl {
 			return layoutSet.getCss();
 		}
 
-		Layout masterLayout =
-			LayoutPageTemplateEntryLayoutProviderUtil.
-				getLayoutPageTemplateEntryLayout(
-					getGroupId(), getMasterLayoutPageTemplateEntryERC(),
-					getPlid());
+		Layout masterLayout = _fetchMasterLayout();
 
 		if (masterLayout != null) {
 			return masterLayout.getCssText();
@@ -824,15 +824,7 @@ public class LayoutImpl extends LayoutBaseImpl {
 	}
 
 	public long getMasterLayoutPlid() {
-		if (Validator.isNull(getMasterLayoutPageTemplateEntryERC())) {
-			return 0;
-		}
-
-		Layout masterLayout =
-			LayoutPageTemplateEntryLayoutProviderUtil.
-				getLayoutPageTemplateEntryLayout(
-					getGroupId(), getMasterLayoutPageTemplateEntryERC(),
-					getPlid());
+		Layout masterLayout = _fetchMasterLayout();
 
 		if (masterLayout == null) {
 			return 0;
@@ -923,11 +915,7 @@ public class LayoutImpl extends LayoutBaseImpl {
 		UnicodeProperties typeSettingsUnicodeProperties =
 			getTypeSettingsProperties();
 
-		Layout masterLayout =
-			LayoutPageTemplateEntryLayoutProviderUtil.
-				getLayoutPageTemplateEntryLayout(
-					getGroupId(), getMasterLayoutPageTemplateEntryERC(),
-					getPlid());
+		Layout masterLayout = _fetchMasterLayout();
 
 		if (masterLayout != null) {
 			typeSettingsUnicodeProperties =
@@ -1192,11 +1180,7 @@ public class LayoutImpl extends LayoutBaseImpl {
 	 */
 	@Override
 	public boolean isInheritLookAndFeel() {
-		Layout masterLayout =
-			LayoutPageTemplateEntryLayoutProviderUtil.
-				getLayoutPageTemplateEntryLayout(
-					getGroupId(), getMasterLayoutPageTemplateEntryERC(),
-					getPlid());
+		Layout masterLayout = _fetchMasterLayout();
 
 		if (masterLayout != null) {
 			return masterLayout.isInheritLookAndFeel();
@@ -1614,6 +1598,16 @@ public class LayoutImpl extends LayoutBaseImpl {
 		super.setTypeSettings(_typeSettingsUnicodeProperties.toString());
 	}
 
+	private Layout _fetchMasterLayout() {
+		if (Validator.isNull(getMasterLayoutPageTemplateEntryERC())) {
+			return null;
+		}
+
+		return LayoutPageTemplateEntryLayoutProviderUtil.
+			getLayoutPageTemplateEntryLayout(
+				getGroupId(), getMasterLayoutPageTemplateEntryERC(), getPlid());
+	}
+
 	private ColorScheme _getColorScheme() throws PortalException {
 		if (isInheritLookAndFeel()) {
 			LayoutSet layoutSet = getLayoutSet();
@@ -1621,11 +1615,7 @@ public class LayoutImpl extends LayoutBaseImpl {
 			return layoutSet.getColorScheme();
 		}
 
-		Layout masterLayout =
-			LayoutPageTemplateEntryLayoutProviderUtil.
-				getLayoutPageTemplateEntryLayout(
-					getGroupId(), getMasterLayoutPageTemplateEntryERC(),
-					getPlid());
+		Layout masterLayout = _fetchMasterLayout();
 
 		if (masterLayout != null) {
 			return ThemeLocalServiceUtil.getColorScheme(
@@ -1782,11 +1772,7 @@ public class LayoutImpl extends LayoutBaseImpl {
 			return layoutSet.getTheme();
 		}
 
-		Layout masterLayout =
-			LayoutPageTemplateEntryLayoutProviderUtil.
-				getLayoutPageTemplateEntryLayout(
-					getGroupId(), getMasterLayoutPageTemplateEntryERC(),
-					getPlid());
+		Layout masterLayout = _fetchMasterLayout();
 
 		if (masterLayout != null) {
 			return ThemeLocalServiceUtil.getTheme(

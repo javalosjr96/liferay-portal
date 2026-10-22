@@ -9,11 +9,14 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.commerce.product.model.CPOption;
 import com.liferay.commerce.product.service.CPOptionLocalService;
 import com.liferay.headless.commerce.admin.catalog.client.dto.v1_0.Option;
+import com.liferay.headless.commerce.admin.catalog.client.http.HttpInvoker;
 import com.liferay.headless.commerce.core.util.LanguageUtils;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.test.rule.Inject;
+
+import jakarta.servlet.http.HttpServletResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +45,19 @@ public class OptionResourceTest extends BaseOptionResourceTestCase {
 	@Test
 	public void testDeleteOptionByExternalReferenceCode() throws Exception {
 		super.testDeleteOptionByExternalReferenceCode();
+	}
+
+	@Override
+	@Test
+	public void testGetOptionByExternalReferenceCode() throws Exception {
+		super.testGetOptionByExternalReferenceCode();
+
+		HttpInvoker.HttpResponse httpResponse =
+			optionResource.getOptionByExternalReferenceCodeHttpResponse(
+				RandomTestUtil.randomString());
+
+		Assert.assertEquals(
+			HttpServletResponse.SC_NOT_FOUND, httpResponse.getStatusCode());
 	}
 
 	@Ignore

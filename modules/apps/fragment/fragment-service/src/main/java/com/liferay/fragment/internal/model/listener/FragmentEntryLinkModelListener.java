@@ -16,6 +16,7 @@ import com.liferay.portal.kernel.exception.ModelListenerException;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.BaseModelListener;
+import com.liferay.portal.kernel.model.MVCCModel;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.sanitizer.SanitizerException;
 import com.liferay.portal.kernel.sanitizer.SanitizerUtil;
@@ -68,8 +69,11 @@ public class FragmentEntryLinkModelListener
 			new ArrayList<>();
 
 		try {
+			FragmentEntryLink clonedFragmentEntryLink = MVCCModel.scratchClone(
+				fragmentEntryLink);
+
 			InfoFieldUtil.forEachInfoField(
-				fragmentEntryLink, _fragmentRendererController,
+				clonedFragmentEntryLink, _fragmentRendererController,
 				(infoField, type, unsafeSupplier) ->
 					infoFieldObjectValuePairs.add(
 						new ObjectValuePair<>(infoField, type)));
@@ -165,33 +169,33 @@ public class FragmentEntryLinkModelListener
 							fragmentEntryLink, type, defaultValue));
 				}
 
-				if (!_fragmentEntryProcessorHelper.isMapped(
-						editableValueJSONObject) &&
-					!_fragmentEntryProcessorHelper.isMappedCollection(
-						editableValueJSONObject) &&
-					!_fragmentEntryProcessorHelper.isMappedDisplayPage(
+				if (_fragmentEntryProcessorHelper.isMapped(
+						editableValueJSONObject) ||
+					_fragmentEntryProcessorHelper.isMappedCollection(
+						editableValueJSONObject) ||
+					_fragmentEntryProcessorHelper.isMappedDisplayPage(
 						editableValueJSONObject)) {
 
-					Iterator<String> valueKeysIterator =
-						editableValueJSONObject.keys();
+					continue;
+				}
 
-					while (valueKeysIterator.hasNext()) {
-						String valueKey = valueKeysIterator.next();
+				Iterator<String> valueKeysIterator =
+					editableValueJSONObject.keys();
 
-						if (valueKey.equals("config") ||
-							valueKey.equals("defaultValue")) {
+				while (valueKeysIterator.hasNext()) {
+					String valueKey = valueKeysIterator.next();
 
-							continue;
-						}
+					if (valueKey.equals("config") ||
+						valueKey.equals("defaultValue")) {
 
-						String value = editableValueJSONObject.getString(
-							valueKey);
-
-						editableValueJSONObject.put(
-							valueKey,
-							_sanitizeEditableValue(
-								fragmentEntryLink, type, value));
+						continue;
 					}
+
+					String value = editableValueJSONObject.getString(valueKey);
+
+					editableValueJSONObject.put(
+						valueKey,
+						_sanitizeEditableValue(fragmentEntryLink, type, value));
 				}
 			}
 		}

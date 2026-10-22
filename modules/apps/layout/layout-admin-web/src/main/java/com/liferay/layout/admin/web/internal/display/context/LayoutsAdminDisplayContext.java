@@ -1631,7 +1631,6 @@ public class LayoutsAdminDisplayContext {
 
 		for (long designLibraryGroupId :
 				DesignLibraryUtil.getConnectedDesignLibraryGroupIds(
-					themeDisplay.getCompanyId(),
 					themeDisplay.getScopeGroupId())) {
 
 			_addLayoutPageTemplateCollectionVerticalNavItems(
@@ -1971,18 +1970,20 @@ public class LayoutsAdminDisplayContext {
 			AssetVocabularyServiceUtil.getGroupVocabularies(_getGroupIds());
 
 		for (AssetVocabulary assetVocabulary : assetVocabularies) {
-			if (assetVocabulary.isAssociatedToClassNameId(classNameId) &&
-				assetVocabulary.isRequired(
+			if (!assetVocabulary.isAssociatedToClassNameId(classNameId) ||
+				!assetVocabulary.isRequired(
 					classNameId, 0, themeDisplay.getScopeGroupId())) {
 
-				int assetVocabularyCategoriesCount =
-					AssetCategoryServiceUtil.getVocabularyCategoriesCount(
-						assetVocabulary.getGroupId(),
-						assetVocabulary.getVocabularyId());
+				continue;
+			}
 
-				if (assetVocabularyCategoriesCount > 0) {
-					return true;
-				}
+			int assetVocabularyCategoriesCount =
+				AssetCategoryServiceUtil.getVocabularyCategoriesCount(
+					assetVocabulary.getGroupId(),
+					assetVocabulary.getVocabularyId());
+
+			if (assetVocabularyCategoriesCount > 0) {
+				return true;
 			}
 		}
 

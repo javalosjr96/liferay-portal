@@ -56,6 +56,7 @@ import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -83,6 +84,7 @@ import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.odata.entity.EntityModel;
 import com.liferay.portal.search.rest.dto.v1_0.SearchResult;
 import com.liferay.portal.search.rest.resource.v1_0.SearchResultResource;
@@ -542,8 +544,12 @@ public class BulkActionResourceImpl extends BaseBulkActionResourceImpl {
 		throw new UnsupportedOperationException();
 	}
 
-	private String _getDeletionType(long groupId) throws PortalException {
-		if (_trashHelper.isTrashEnabled(groupId)) {
+	private String _getDeletionType(long groupId, int status)
+		throws PortalException {
+
+		if ((status != WorkflowConstants.STATUS_IN_TRASH) &&
+			_trashHelper.isTrashEnabled(groupId)) {
+
 			return "RECYCLE_BIN";
 		}
 
@@ -876,11 +882,12 @@ public class BulkActionResourceImpl extends BaseBulkActionResourceImpl {
 	}
 
 	private Serializable _getPermissions(
-		JSONObject configurationJSONObject, Permission[] permissions) {
+			JSONObject configurationJSONObject, Permission[] permissions)
+		throws Exception {
 
 		if (ArrayUtil.isNotEmpty(permissions)) {
 			return HashMapBuilder.put(
-				DepotEntry.class.getName(), permissions
+				DepotEntry.class.getName(), _toJSON(permissions)
 			).build();
 		}
 
@@ -896,25 +903,30 @@ public class BulkActionResourceImpl extends BaseBulkActionResourceImpl {
 
 		return HashMapBuilder.put(
 			ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_CONTENTS,
-			() -> _getPermissions(
-				cmsBasicWebContentObjectDefinition.getClassName(),
-				configurationJSONObject.getJSONObject(
-					ObjectEntryFolderConstants.
-						EXTERNAL_REFERENCE_CODE_CONTENTS),
-				roles)
+			() -> _toJSON(
+				_getPermissions(
+					cmsBasicWebContentObjectDefinition.getClassName(),
+					configurationJSONObject.getJSONObject(
+						ObjectEntryFolderConstants.
+							EXTERNAL_REFERENCE_CODE_CONTENTS),
+					roles))
 		).put(
 			ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES,
-			() -> _getPermissions(
-				cmsBasicDocumentObjectDefinition.getClassName(),
-				configurationJSONObject.getJSONObject(
-					ObjectEntryFolderConstants.EXTERNAL_REFERENCE_CODE_FILES),
-				roles)
+			() -> _toJSON(
+				_getPermissions(
+					cmsBasicDocumentObjectDefinition.getClassName(),
+					configurationJSONObject.getJSONObject(
+						ObjectEntryFolderConstants.
+							EXTERNAL_REFERENCE_CODE_FILES),
+					roles))
 		).put(
 			ObjectEntryFolder.class.getName(),
-			() -> _getPermissions(
-				ObjectEntryFolder.class.getName(),
-				configurationJSONObject.getJSONObject("OBJECT_ENTRY_FOLDERS"),
-				roles)
+			() -> _toJSON(
+				_getPermissions(
+					ObjectEntryFolder.class.getName(),
+					configurationJSONObject.getJSONObject(
+						"OBJECT_ENTRY_FOLDERS"),
+					roles))
 		).build();
 	}
 
@@ -1103,7 +1115,9 @@ public class BulkActionResourceImpl extends BaseBulkActionResourceImpl {
 
 		bulkActionItem.setAttributes(
 			() -> HashMapBuilder.<String, Object>put(
-				"deletionType", () -> _getDeletionType(objectEntry.getGroupId())
+				"deletionType",
+				() -> _getDeletionType(
+					objectEntry.getGroupId(), objectEntry.getStatus())
 			).put(
 				"mimeType", _getMimeType(objectDefinition, objectEntry)
 			).put(
@@ -1134,7 +1148,9 @@ public class BulkActionResourceImpl extends BaseBulkActionResourceImpl {
 		bulkActionItem.setAttributes(
 			() -> HashMapBuilder.<String, Object>put(
 				"deletionType",
-				() -> _getDeletionType(objectEntryFolder.getGroupId())
+				() -> _getDeletionType(
+					objectEntryFolder.getGroupId(),
+					objectEntryFolder.getStatus())
 			).put(
 				"itemsCount",
 				() -> {
@@ -1164,6 +1180,24 @@ public class BulkActionResourceImpl extends BaseBulkActionResourceImpl {
 		bulkActionItem.setName(objectEntryFolder::getName);
 
 		return bulkActionItem;
+	}
+
+	private String _toJSON(Permission[] permissions) throws Exception {
+		JSONArray jsonArray = JSONUtil.toJSONArray(
+			permissions,
+			permission -> JSONUtil.put(
+				"actionIds",
+				JSONUtil.putAll((Object[])permission.getActionIds())
+			).put(
+				"roleExternalReferenceCode",
+				permission.getRoleExternalReferenceCode()
+			).put(
+				"roleName", permission.getRoleName()
+			).put(
+				"roleType", permission.getRoleType()
+			));
+
+		return jsonArray.toString();
 	}
 
 	private static final Snapshot<BulkSelectionAction<Object>>

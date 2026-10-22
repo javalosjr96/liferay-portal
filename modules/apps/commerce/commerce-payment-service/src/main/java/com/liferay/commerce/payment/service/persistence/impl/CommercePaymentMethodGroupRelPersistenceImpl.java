@@ -639,6 +639,14 @@ public class CommercePaymentMethodGroupRelPersistenceImpl
 		_collectionPersistenceFinderByGroupId =
 			new FilterCollectionPersistenceFinder<>(
 				this,
+				CommercePaymentMethodGroupRel::
+					getCommercePaymentMethodGroupRelId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
+					new String[] {Long.class.getName()},
+					new String[] {"groupId"}, false),
+				"", CommercePaymentMethodGroupRelModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByGroupId",
 					new String[] {
@@ -647,18 +655,13 @@ public class CommercePaymentMethodGroupRelPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId"}, true),
+				_SQL_COUNT_COMMERCEPAYMENTMETHODGROUPREL_WHERE,
+				_SQL_SELECT_COMMERCEPAYMENTMETHODGROUPREL_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByGroupId",
 					new String[] {Long.class.getName()},
 					new String[] {"groupId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByGroupId",
-					new String[] {Long.class.getName()},
-					new String[] {"groupId"}, false),
-				_SQL_SELECT_COMMERCEPAYMENTMETHODGROUPREL_WHERE,
-				_SQL_COUNT_COMMERCEPAYMENTMETHODGROUPREL_WHERE,
-				CommercePaymentMethodGroupRelModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"commercePaymentMethodGroupRel.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -667,6 +670,16 @@ public class CommercePaymentMethodGroupRelPersistenceImpl
 		_collectionPersistenceFinderByG_A =
 			new FilterCollectionPersistenceFinder<>(
 				this,
+				CommercePaymentMethodGroupRel::
+					getCommercePaymentMethodGroupRelId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_A",
+					new String[] {
+						Long.class.getName(), Boolean.class.getName()
+					},
+					new String[] {"groupId", "active_"}, false),
+				"", CommercePaymentMethodGroupRelModelImpl.ORDER_BY_JPQL,
+				_ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_A",
 					new String[] {
@@ -675,22 +688,15 @@ public class CommercePaymentMethodGroupRelPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "active_"}, true),
+				_SQL_COUNT_COMMERCEPAYMENTMETHODGROUPREL_WHERE,
+				_SQL_SELECT_COMMERCEPAYMENTMETHODGROUPREL_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_A",
 					new String[] {
 						Long.class.getName(), Boolean.class.getName()
 					},
 					new String[] {"groupId", "active_"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_A",
-					new String[] {
-						Long.class.getName(), Boolean.class.getName()
-					},
-					new String[] {"groupId", "active_"}, false),
-				_SQL_SELECT_COMMERCEPAYMENTMETHODGROUPREL_WHERE,
-				_SQL_COUNT_COMMERCEPAYMENTMETHODGROUPREL_WHERE,
-				CommercePaymentMethodGroupRelModelImpl.ORDER_BY_JPQL,
-				_ENTITY_ALIAS_PREFIX, "", "", null,
+				"",
 				new FinderColumn<>(
 					"commercePaymentMethodGroupRel.", "groupId",
 					FinderColumn.Type.LONG, "=", true, true,
@@ -784,4 +790,4 @@ public class CommercePaymentMethodGroupRelPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1937509705
+// LIFERAY-SERVICE-BUILDER-HASH:-570936424

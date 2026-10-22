@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.db.DBResourceUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.upgrade.data.cleanup.DataCleanupPreupgradeProcess;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsValues;
@@ -119,8 +120,24 @@ public class CounterDataCleanupPreupgradeProcess
 				}
 
 				if (!dbInspector.hasTable(tableName)) {
-					if (_log.isWarnEnabled()) {
-						_log.warn("Table " + tableName + " does not exist");
+					if (PropsValues.DATABASE_PARTITION_ENABLED &&
+						!CompanyThreadLocal.isDefaultCompany() &&
+						dbInspector.hasView(tableName)) {
+
+						if (_log.isInfoEnabled()) {
+							_log.info(
+								StringBundler.concat(
+									"Skipping counter ", counterName,
+									" because ", tableName,
+									" is a view in a secondary partition"));
+						}
+					}
+					else if (_log.isWarnEnabled()) {
+						_log.warn(
+							StringBundler.concat(
+								"Skipping counter ", counterName,
+								" because table ", tableName,
+								" does not exist"));
 					}
 
 					continue;
@@ -129,10 +146,11 @@ public class CounterDataCleanupPreupgradeProcess
 				_checkSpecificCounter(
 					counterName, counterValue, dbInspector, tableName);
 
-				if (!counterName.equals(DLFileEntry.class.getName())) {
-					excludedTableNames.add(
-						dbInspector.normalizeName(tableName));
+				if (counterName.equals(DLFileEntry.class.getName())) {
+					continue;
 				}
+
+				excludedTableNames.add(dbInspector.normalizeName(tableName));
 			}
 
 			_checkKernelCounter(
@@ -187,10 +205,12 @@ public class CounterDataCleanupPreupgradeProcess
 		for (Map.Entry<String, Long> entry : maxValues.entrySet()) {
 			long maxValue = entry.getValue();
 
-			if (maxValue > latestCounterValue) {
-				latestCounterValue = maxValue;
-				maxValueTableName = entry.getKey();
+			if (maxValue <= latestCounterValue) {
+				continue;
 			}
+
+			latestCounterValue = maxValue;
+			maxValueTableName = entry.getKey();
 		}
 
 		long counterValue = 0L;

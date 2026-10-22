@@ -1,10 +1,6 @@
 # Generated Workspace File
 
-## Trigger
-
-The branch changed a file that `workspaces/refresh_other_workspaces.sh` regenerates from `liferay-sample-workspace`, in a workspace other than the sample itself.
-
-That script copies the sample workspace over every other workspace with `rsync --archive --delete`, in `liferay-portal` and in the private repository alike. Its `--exclude` patterns name what each workspace owns, and everything else is overwritten or deleted on the next refresh. A change to such a file outside the sample is therefore reverted without a build failure or a warning. A regenerated file may change only through a refresh, and an edit to it belongs in `liferay-sample-workspace`.
+`workspaces/refresh_other_workspaces.sh` copies `liferay-sample-workspace` over every other workspace, so a change to a copied file outside the sample is silently reverted on the next refresh. Such a file may change only through a refresh, and an edit to it belongs in the sample workspace.
 
 ## Match
 
@@ -18,20 +14,20 @@ Build a regex from the `--exclude` patterns of the refresh script at `${SOURCE_S
 
 ```bash
 EXCLUDES_REGEX=$(
-	git show "${SOURCE_SHA}:workspaces/refresh_other_workspaces.sh" |
-	sed -n 's/^[[:space:]]*--exclude[[:space:]]\{1,\}\([^[:space:]\\]*\).*/\1/p' |
-	sed 's/\./\\./g; s/\*/[^\/]*/g' |
-	paste -d '|' -s -
+	git show "${SOURCE_SHA}:workspaces/refresh_other_workspaces.sh" \
+		| sed -n 's/^[[:space:]]*--exclude[[:space:]]\{1,\}\([^[:space:]\\]*\).*/\1/p' \
+		| sed 's/\./\\./g; s/\*/[^\/]*/g' \
+		| paste -d '|' -s -
 )
 ```
 
-Report **NOT VERIFIED** when `EXCLUDES_REGEX` is empty, naming the unreadable script, since an empty regex would mark every file as regenerated.
+Report **NOT VERIFIED** when `${EXCLUDES_REGEX}` is empty, naming the unreadable script, since an empty regex would mark every file as regenerated.
 
 For every changed path of the workspace that does not match `(^|/)(${EXCLUDES_REGEX})(/|$)`, compare the branch's copy against the sample workspace at the same commit:
 
 ```bash
-git show "${SOURCE_SHA}:workspaces/liferay-sample-workspace/<path>" |
-	diff - "${BUILD_ROOT}/<path>"
+git show "${SOURCE_SHA}:workspaces/liferay-sample-workspace/<path>" \
+	| diff - "${BUILD_ROOT}/<path>"
 ```
 
 Read the sample from `${SOURCE_SHA}` and never from a local branch. A local branch goes stale silently, and the comparison then reports a file as diverged because the sample moved on rather than because the branch changed anything.

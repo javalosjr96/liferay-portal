@@ -23,13 +23,14 @@ import java.util.Map;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ServiceScope;
 
 /**
  * @author Riccardo Ferrari
  */
 @Component(
 	property = "batch.engine.task.item.delegate.name=" + ProductBatchEngineTaskItemDelegate.KEY,
-	service = BatchEngineTaskItemDelegate.class
+	scope = ServiceScope.PROTOTYPE, service = BatchEngineTaskItemDelegate.class
 )
 public class ProductBatchEngineTaskItemDelegate
 	extends BaseBatchEngineTaskItemDelegate<Product> {
@@ -49,7 +50,7 @@ public class ProductBatchEngineTaskItemDelegate
 	}
 
 	@Override
-	public Page<Product> read(
+	protected Page<Product> doRead(
 			Filter filter, Pagination pagination, Sort[] sorts,
 			Map<String, Serializable> parameters, String search)
 		throws Exception {

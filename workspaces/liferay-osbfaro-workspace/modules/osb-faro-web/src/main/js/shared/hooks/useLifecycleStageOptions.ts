@@ -7,13 +7,15 @@ import {
 import {useRequest} from 'shared/hooks/useRequest';
 
 export const useLifecycleStageOptions = ({
+	channelId,
 	groupId,
 }: {
+	channelId?: string;
 	groupId: string;
 }): {loading: boolean; options: {label: string; value: string}[]} => {
 	const {data: lifecycles, loading: lifecyclesLoading} = useRequest({
 		dataSourceFn: API.lifecycle.fetchAccountLifecycles,
-		variables: {groupId},
+		variables: {channelId, groupId},
 	});
 
 	const lifecycle = lifecycles?.[0];
@@ -34,11 +36,11 @@ export const useLifecycleStageOptions = ({
 		options: stages
 			.slice()
 			.sort((a, b) => a.displayOrder - b.displayOrder)
-			.map(({id, stageType}) => ({
+			.map(({externalReferenceCode, stageType}) => ({
 				label:
 					lifecycleStagesLabelMap[stageType as LifecycleStages]
 						?.label ?? stageType,
-				value: id,
+				value: externalReferenceCode,
 			})),
 	};
 };

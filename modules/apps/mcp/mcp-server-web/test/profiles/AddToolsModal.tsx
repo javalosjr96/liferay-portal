@@ -194,9 +194,7 @@ describe('AddToolsModal', () => {
 
 		await userEvent.click(checkbox('organizations'));
 
-		await userEvent.click(
-			screen.getByRole('button', {name: 'deselect-all'})
-		);
+		await userEvent.click(screen.getByRole('button', {name: 'clear'}));
 
 		resolve('organizations');
 
@@ -322,10 +320,7 @@ describe('AddToolsModal', () => {
 
 		renderModal();
 
-		expect(await screen.findByText('no-tools-were-found')).toHaveAttribute(
-			'role',
-			'status'
-		);
+		expect(await screen.findByText('no-tools-were-found')).toBeVisible();
 		expect(screen.getByRole('button', {name: 'add'})).toBeDisabled();
 		expect(screen.queryByRole('tree')).not.toBeInTheDocument();
 	});

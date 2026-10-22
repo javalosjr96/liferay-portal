@@ -11,8 +11,8 @@ import com.liferay.asset.link.constants.AssetLinkConstants;
 import com.liferay.asset.link.model.AssetLink;
 import com.liferay.asset.link.service.AssetLinkLocalService;
 import com.liferay.diff.DiffHtml;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
-import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.expando.kernel.model.ExpandoBridge;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
 import com.liferay.knowledge.base.configuration.KBGroupServiceConfiguration;
@@ -569,11 +569,13 @@ public class KBArticleLocalServiceImpl extends KBArticleLocalServiceBaseImpl {
 					WorkflowConstants.STATUS_ANY, QueryUtil.ALL_POS,
 					QueryUtil.ALL_POS, null)) {
 
-			if (includeTrashedEntries ||
-				!_trashHelper.isInTrashExplicitly(kbArticle)) {
+			if (!includeTrashedEntries &&
+				_trashHelper.isInTrashExplicitly(kbArticle)) {
 
-				kbArticleLocalService.deleteKBArticle(kbArticle);
+				continue;
 			}
+
+			kbArticleLocalService.deleteKBArticle(kbArticle);
 		}
 
 		for (KBArticle kbArticle :
@@ -582,11 +584,13 @@ public class KBArticleLocalServiceImpl extends KBArticleLocalServiceBaseImpl {
 					WorkflowConstants.STATUS_IN_TRASH, QueryUtil.ALL_POS,
 					QueryUtil.ALL_POS, null)) {
 
-			if (includeTrashedEntries ||
-				!_trashHelper.isInTrashExplicitly(kbArticle)) {
+			if (!includeTrashedEntries &&
+				_trashHelper.isInTrashExplicitly(kbArticle)) {
 
-				kbArticleLocalService.deleteKBArticle(kbArticle);
+				continue;
 			}
+
+			kbArticleLocalService.deleteKBArticle(kbArticle);
 		}
 	}
 
@@ -729,7 +733,7 @@ public class KBArticleLocalServiceImpl extends KBArticleLocalServiceBaseImpl {
 
 		return kbArticlePersistence.fetchByG_ERC_First(
 			groupId, externalReferenceCode,
-			KBArticleVersionComparator.getInstance(true));
+			KBArticleVersionComparator.getInstance(false));
 	}
 
 	@Override
@@ -738,7 +742,7 @@ public class KBArticleLocalServiceImpl extends KBArticleLocalServiceBaseImpl {
 
 		KBArticle latestKBArticle = kbArticlePersistence.fetchByG_ERC_First(
 			groupId, externalReferenceCode,
-			KBArticleVersionComparator.getInstance(true));
+			KBArticleVersionComparator.getInstance(false));
 
 		if ((latestKBArticle == null) ||
 			(status == WorkflowConstants.STATUS_ANY) ||
@@ -1037,22 +1041,6 @@ public class KBArticleLocalServiceImpl extends KBArticleLocalServiceBaseImpl {
 
 		return kbArticlePersistence.countByG_P_S(
 			groupId, parentResourcePrimKey, status);
-	}
-
-	@Override
-	public List<KBArticle> getKBFolderKBArticles(
-		long groupId, long kbFolderId) {
-
-		return kbArticlePersistence.findByG_KBFI_L_NotS(
-			groupId, kbFolderId, true, WorkflowConstants.STATUS_IN_TRASH);
-	}
-
-	@Override
-	public int getKBFolderKBArticlesCount(
-		long groupId, long kbFolderId, int status) {
-
-		return kbArticlePersistence.countByG_KBFI_S(
-			groupId, kbFolderId, status);
 	}
 
 	@Override

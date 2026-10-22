@@ -862,11 +862,13 @@ public class JUnitBatchTestClassGroup extends BatchTestClassGroup {
 					this, javaTestClassFile);
 			}
 
-			if ((testClass != null) && !testClass.isIgnored() &&
-				testClass.hasTestClassMethods()) {
+			if ((testClass == null) || testClass.isIgnored() ||
+				!testClass.hasTestClassMethods()) {
 
-				addTestClass(testClass);
+				continue;
 			}
+
+			addTestClass(testClass);
 		}
 
 		long duration = System.currentTimeMillis() - start;
@@ -920,11 +922,13 @@ public class JUnitBatchTestClassGroup extends BatchTestClassGroup {
 			TestClass testClass = TestClassFactory.newTestClass(
 				batchTestClassGroup, javaTestClassFile);
 
-			if ((testClass != null) && !testClass.isIgnored() &&
-				testClass.hasTestClassMethods()) {
+			if ((testClass == null) || testClass.isIgnored() ||
+				!testClass.hasTestClassMethods()) {
 
-				addTestClass(testClass);
+				continue;
 			}
+
+			addTestClass(testClass);
 		}
 
 		long duration = System.currentTimeMillis() - start;
@@ -1091,7 +1095,8 @@ public class JUnitBatchTestClassGroup extends BatchTestClassGroup {
 			File javaTestClassFile = getJavaFileFromFullClassName(
 				fullClassName);
 
-			if (!JenkinsResultsParserUtil.isFileIncluded(
+			if ((javaTestClassFile == null) ||
+				!JenkinsResultsParserUtil.isFileIncluded(
 					null, getPathMatchers(getFilterJobProperties()),
 					javaTestClassFile)) {
 

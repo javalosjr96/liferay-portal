@@ -5,8 +5,8 @@
 
 package com.liferay.headless.form.internal.resource.v1_0;
 
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.service.DLAppService;
-import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.dynamic.data.mapping.model.DDMForm;
 import com.liferay.dynamic.data.mapping.model.DDMFormField;
 import com.liferay.dynamic.data.mapping.model.DDMFormInstance;
@@ -187,12 +187,14 @@ public class FormRecordResourceImpl extends BaseFormRecordResourceImpl {
 				for (DDMFormFieldValue ddmFormFieldValue :
 						ddmFormValues.getDDMFormFieldValues()) {
 
-					if (Objects.equals(
+					if (!Objects.equals(
 							ddmFormField.getName(),
 							ddmFormFieldValue.getName())) {
 
-						_setValue(ddmFormFieldValue);
+						continue;
 					}
+
+					_setValue(ddmFormFieldValue);
 				}
 			}
 			catch (Exception exception) {

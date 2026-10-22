@@ -57,6 +57,7 @@ import com.liferay.osb.faro.engine.client.model.IndividualSegmentMembershipChang
 import com.liferay.osb.faro.engine.client.model.IndividualSegmentMembershipChangeAggregation;
 import com.liferay.osb.faro.engine.client.model.IndividualTransformation;
 import com.liferay.osb.faro.engine.client.model.Interest;
+import com.liferay.osb.faro.engine.client.model.LifecycleTriggerResult;
 import com.liferay.osb.faro.engine.client.model.Metric;
 import com.liferay.osb.faro.engine.client.model.PageExperience;
 import com.liferay.osb.faro.engine.client.model.PageVisited;
@@ -185,6 +186,10 @@ public interface ContactsEngineClient {
 		discoverDataSourceFieldCatalogEntries(
 			FaroProject faroProject, DataSource dataSource);
 
+	public long fetchSegmentNewMembersCount(
+			FaroProject faroProject, String id, int rangeKey)
+		throws Exception;
+
 	public <T> T get(
 			FaroProject faroProject, Map<String, String> headers, String path,
 			Map<String, List<String>> queryParameters, Class<T> returnType)
@@ -243,7 +248,8 @@ public interface ContactsEngineClient {
 			FaroProject faroProject, String accountLifecycleId, String id)
 		throws FaroEngineClientException;
 
-	public List<AccountLifecycle> getAccountLifecycles(FaroProject faroProject)
+	public List<AccountLifecycle> getAccountLifecycles(
+			FaroProject faroProject, Long channelId)
 		throws FaroEngineClientException;
 
 	public List<AccountMetric> getAccountMetrics(
@@ -259,10 +265,10 @@ public interface ContactsEngineClient {
 		throws FaroEngineClientException;
 
 	public Results<Account> getAccounts(
-		FaroProject faroProject, String channelId, String filterString,
-		boolean includeAnonymousUsers, String query, String rangeEnd,
-		Integer rangeKey, String rangeStart, String segmentId, int cur,
-		int delta, String sortString);
+		FaroProject faroProject, String accountLifecycleId, String channelId,
+		String filterString, boolean includeAnonymousUsers, String query,
+		String rangeEnd, Integer rangeKey, String rangeStart, String segmentId,
+		int cur, int delta, String sortString);
 
 	public Results<Account> getAccounts(
 		FaroProject faroProject, String channelId, String filterString,
@@ -445,6 +451,9 @@ public interface ContactsEngineClient {
 	public long getDataSourceMetricsAccountsCount(
 		FaroProject faroProject, String dataSourceId);
 
+	public long getDataSourceMetricsCampaignsCount(
+		FaroProject faroProject, String dataSourceId);
+
 	public long getDataSourceMetricsEventsCount(
 		FaroProject faroProject, String dataSourceId);
 
@@ -620,6 +629,10 @@ public interface ContactsEngineClient {
 
 	public Date getLastSeenDate(FaroProject faroProject);
 
+	public LifecycleTriggerResult getNewAccountsLifecycleTriggerResult(
+			FaroProject faroProject, String id, int rangeKey)
+		throws Exception;
+
 	public List<PageExperience> getPageExperiences(
 			FaroProject faroProject, String canonicalUrl, String channelId,
 			String pageTitle)
@@ -651,6 +664,10 @@ public interface ContactsEngineClient {
 		FaroProject faroProject, String individualId, String query,
 		List<String> fields, int cur, int delta,
 		List<OrderByField> orderByFields);
+
+	public LifecycleTriggerResult getStalledAccountsLifecycleTriggerResult(
+			FaroProject faroProject, String id, int rangeKey)
+		throws Exception;
 
 	public long getSyncedIndividualsCount(FaroProject faroProject);
 
@@ -736,5 +753,7 @@ public interface ContactsEngineClient {
 		FaroProject faroProject, String cronExpression, String frequencyType,
 		Date scheduleEndDate, Date scheduleStartDate, String scheduleType,
 		Long segmentId);
+
+	public void validateConnection(FaroProject faroProject) throws Exception;
 
 }

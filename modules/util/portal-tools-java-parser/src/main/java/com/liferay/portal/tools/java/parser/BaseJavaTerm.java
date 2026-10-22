@@ -421,22 +421,24 @@ public abstract class BaseJavaTerm implements JavaTerm {
 			sb.append("\n");
 			sb.append(indent);
 
-			if (!appendSingleLine(
+			if (appendSingleLine(
 					sb, javaTerm, prefix, delimiter, maxLineLength)) {
 
-				if (breakJavaTerms) {
-					appendNewLine(
-						sb, javaTerm, indent, prefix,
-						StringUtil.trimTrailing(delimiter), maxLineLength);
-				}
-				else {
-					appendNewLine(
-						sb, javaTerm, indent, prefix,
-						StringUtil.trimTrailing(delimiter), _FORCE_SINGLE_LINE);
-				}
-
-				sb.append("\n");
+				continue;
 			}
+
+			if (breakJavaTerms) {
+				appendNewLine(
+					sb, javaTerm, indent, prefix,
+					StringUtil.trimTrailing(delimiter), maxLineLength);
+			}
+			else {
+				appendNewLine(
+					sb, javaTerm, indent, prefix,
+					StringUtil.trimTrailing(delimiter), _FORCE_SINGLE_LINE);
+			}
+
+			sb.append("\n");
 		}
 	}
 
@@ -633,6 +635,13 @@ public abstract class BaseJavaTerm implements JavaTerm {
 		return lineLength;
 	}
 
+	protected String toSingleLineString(JavaTerm javaTerm, String indent) {
+		return StringUtil.trimLeading(
+			javaTerm.toString(
+				indent, StringPool.BLANK, StringPool.BLANK,
+				_FORCE_SINGLE_LINE));
+	}
+
 	protected String trimTrailingSpaces(String s) {
 		if (s.length() == 0) {
 			return s;
@@ -720,12 +729,11 @@ public abstract class BaseJavaTerm implements JavaTerm {
 		StringBundler sb = new StringBundler();
 
 		for (char c : s.toCharArray()) {
-			if (Character.isWhitespace(c)) {
-				sb.append(c);
-			}
-			else {
+			if (!Character.isWhitespace(c)) {
 				return sb.toString();
 			}
+
+			sb.append(c);
 		}
 
 		return s;

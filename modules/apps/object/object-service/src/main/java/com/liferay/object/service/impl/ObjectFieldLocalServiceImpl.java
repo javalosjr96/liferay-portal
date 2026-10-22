@@ -77,6 +77,7 @@ import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.language.Language;
 import com.liferay.portal.kernel.lazy.referencing.LazyReferencingThreadLocal;
 import com.liferay.portal.kernel.log.Log;
@@ -417,10 +418,12 @@ public class ObjectFieldLocalServiceImpl
 			_objectFieldSettingLocalService.deleteObjectFieldObjectFieldSetting(
 				objectField);
 
-			if (objectField.isState()) {
-				_objectStateFlowLocalService.deleteObjectFieldObjectStateFlow(
-					objectField.getObjectFieldId());
+			if (!objectField.isState()) {
+				continue;
 			}
+
+			_objectStateFlowLocalService.deleteObjectFieldObjectStateFlow(
+				objectField.getObjectFieldId());
 		}
 	}
 
@@ -529,7 +532,7 @@ public class ObjectFieldLocalServiceImpl
 			Table<?> table = getTable(
 				objectDefinitionId, objectField.getName());
 
-			return table.getColumn(objectField.getDBColumnName());
+			return table.getColumn(objectField.getDefaultDBColumnName());
 		}
 		catch (PortalException portalException) {
 			return ReflectionUtil.throwException(portalException);
@@ -644,25 +647,6 @@ public class ObjectFieldLocalServiceImpl
 
 		for (ObjectField objectField :
 				objectFieldPersistence.findByCompanyId(companyId)) {
-
-			List<ObjectField> objectFields = objectFieldsMap.computeIfAbsent(
-				objectField.getObjectDefinitionId(),
-				objectDefinitionId -> new ArrayList<>());
-
-			objectFields.add(objectField);
-		}
-
-		return objectFieldsMap;
-	}
-
-	@Override
-	public Map<Long, List<ObjectField>> getObjectFieldsMap(
-		long companyId, String businessType) {
-
-		Map<Long, List<ObjectField>> objectFieldsMap = new HashMap<>();
-
-		for (ObjectField objectField :
-				objectFieldPersistence.findByC_BT(companyId, businessType)) {
 
 			List<ObjectField> objectFields = objectFieldsMap.computeIfAbsent(
 				objectField.getObjectDefinitionId(),
@@ -1121,6 +1105,8 @@ public class ObjectFieldLocalServiceImpl
 					DynamicObjectDefinitionTableUtil.getUpdateDefaultValueSQL(
 						dbColumnName, dbType, defaultValue, dbTableName));
 			}
+
+			_objectEntryPersistence.clearCache();
 		}
 
 		return objectField;
@@ -1192,20 +1178,22 @@ public class ObjectFieldLocalServiceImpl
 				}
 			}
 
-			if (objectFieldSetting == null) {
-				if (objectDefinition.isApproved() &&
-					unmodifiableObjectFieldSettingsNames.contains(
-						oldObjectFieldSetting.getName())) {
-
-					_handleException(
-						new ObjectFieldSettingValueException.UnmodifiableValue(
-							oldObjectFieldSetting.getName()),
-						"objectFieldSettings", null);
-				}
-
-				_objectFieldSettingLocalService.deleteObjectFieldSetting(
-					oldObjectFieldSetting.getObjectFieldSettingId());
+			if (objectFieldSetting != null) {
+				continue;
 			}
+
+			if (objectDefinition.isApproved() &&
+				unmodifiableObjectFieldSettingsNames.contains(
+					oldObjectFieldSetting.getName())) {
+
+				_handleException(
+					new ObjectFieldSettingValueException.UnmodifiableValue(
+						oldObjectFieldSetting.getName()),
+					"objectFieldSettings", null);
+			}
+
+			_objectFieldSettingLocalService.deleteObjectFieldSetting(
+				oldObjectFieldSetting.getObjectFieldSettingId());
 		}
 
 		objectFieldBusinessType.predefineObjectFieldSettings(
@@ -1441,9 +1429,11 @@ public class ObjectFieldLocalServiceImpl
 		}
 
 		if (objectField.isLocalized()) {
-			_alterTableDropColumn(
-				objectDefinition.getLocalizationDBTableName(),
-				objectField.getDBColumnName());
+			for (String dbColumnName : objectField.getDBColumnNames()) {
+				_alterTableDropColumn(
+					objectDefinition.getLocalizationDBTableName(),
+					dbColumnName);
+			}
 
 			return objectField;
 		}
@@ -1459,6 +1449,8 @@ public class ObjectFieldLocalServiceImpl
 		for (String dbColumnName : objectField.getDBColumnNames()) {
 			_alterTableDropColumn(objectField.getDBTableName(), dbColumnName);
 		}
+
+		_objectEntryPersistence.clearCache();
 
 		if (objectField.compareBusinessType(
 				ObjectFieldConstants.BUSINESS_TYPE_AUTO_INCREMENT)) {
@@ -1788,18 +1780,27 @@ public class ObjectFieldLocalServiceImpl
 				ResourceConstants.SCOPE_INDIVIDUAL, role.getRoleId(), true);
 
 		for (ResourcePermission resourcePermission : resourcePermissions) {
-			if (!resourcePermission.hasActionId(actionId)) {
-				resourcePermission.addResourceAction(actionId);
-
-				_resourcePermissionLocalService.updateResourcePermission(
-					resourcePermission);
+			if (resourcePermission.hasActionId(actionId)) {
+				continue;
 			}
+
+			resourcePermission.addResourceAction(actionId);
+
+			_resourcePermissionLocalService.updateResourcePermission(
+				resourcePermission);
 		}
 	}
 
 	private void _validateBusinessType(
 			ObjectDefinition objectDefinition, String businessType)
 		throws PortalException {
+
+		if (!FeatureFlagManagerUtil.isEnabled(
+				objectDefinition.getCompanyId(), "LPD-11388") &&
+			businessType.equals(ObjectFieldConstants.BUSINESS_TYPE_LOCATION)) {
+
+			throw new UnsupportedOperationException();
+		}
 
 		if (Objects.equals(
 				objectDefinition.getStorageType(),
@@ -2016,6 +2017,8 @@ public class ObjectFieldLocalServiceImpl
 						StringPool.COMMA,
 						ObjectFieldConstants.BUSINESS_TYPE_INTEGER,
 						StringPool.COMMA,
+						ObjectFieldConstants.BUSINESS_TYPE_LOCATION,
+						StringPool.COMMA,
 						ObjectFieldConstants.BUSINESS_TYPE_LONG_INTEGER,
 						StringPool.COMMA,
 						ObjectFieldConstants.BUSINESS_TYPE_LONG_TEXT,
@@ -2046,12 +2049,13 @@ public class ObjectFieldLocalServiceImpl
 		char[] nameCharArray = name.toCharArray();
 
 		for (char c : nameCharArray) {
-			if (!Validator.isChar(c) && !Validator.isDigit(c)) {
-				_handleException(
-					new ObjectFieldNameException.
-						MustOnlyContainLettersAndDigits(),
-					"name", name);
+			if (Validator.isChar(c) || Validator.isDigit(c)) {
+				continue;
 			}
+
+			_handleException(
+				new ObjectFieldNameException.MustOnlyContainLettersAndDigits(),
+				"name", name);
 		}
 
 		if (!Character.isLowerCase(nameCharArray[0])) {

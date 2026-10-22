@@ -17,6 +17,7 @@ import com.liferay.osb.faro.rest.resource.v1_0.AccountResource;
 import com.liferay.osb.faro.service.FaroProjectLocalService;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.search.Sort;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.vulcan.dto.converter.DTOConverter;
@@ -54,9 +55,10 @@ public class AccountResourceImpl extends BaseAccountResourceImpl {
 
 	@Override
 	public Page<Account> getWorkspaceGroupChannelAccountsPage(
-			Long groupId, String channelId, String lifecycleStage,
-			String rangeEnd, String rangeKey, String rangeStart, String search,
-			Pagination pagination, Sort[] sorts)
+			Long groupId, String channelId, String accountLifecycleId,
+			String lifecycleStage, String rangeEnd, String rangeKey,
+			String rangeStart, String search, Pagination pagination,
+			Sort[] sorts)
 		throws Exception {
 
 		FaroProject faroProject =
@@ -64,8 +66,9 @@ public class AccountResourceImpl extends BaseAccountResourceImpl {
 
 		Results<com.liferay.osb.faro.engine.client.model.Account> results =
 			_contactsEngineClient.getAccounts(
-				faroProject, channelId,
-				_getLifecycleStageFilterString(faroProject, lifecycleStage),
+				faroProject, accountLifecycleId, channelId,
+				_getLifecycleStageFilterString(
+					accountLifecycleId, channelId, faroProject, lifecycleStage),
 				true, search, rangeEnd, TimeRange.getRangeKey(rangeKey),
 				rangeStart, null, FaroPaginationUtil.getCur(pagination),
 				FaroPaginationUtil.getDelta(pagination),
@@ -83,15 +86,17 @@ public class AccountResourceImpl extends BaseAccountResourceImpl {
 			pagination, results.getTotal());
 	}
 
-	private String _getLifecycleStageFilterString(
-		FaroProject faroProject, String lifecycleStage) {
+	private AccountLifecycle _getAccountLifecycle(
+		String accountLifecycleId, String channelId, FaroProject faroProject) {
 
-		if (Validator.isNull(lifecycleStage)) {
-			return null;
+		if (Validator.isNotNull(accountLifecycleId)) {
+			return _contactsEngineClient.getAccountLifecycle(
+				faroProject, accountLifecycleId);
 		}
 
 		List<AccountLifecycle> accountLifecycles =
-			_contactsEngineClient.getAccountLifecycles(faroProject);
+			_contactsEngineClient.getAccountLifecycles(
+				faroProject, GetterUtil.getLong(channelId));
 
 		if (ListUtil.isEmpty(accountLifecycles)) {
 			throw new IllegalArgumentException(
@@ -100,8 +105,20 @@ public class AccountResourceImpl extends BaseAccountResourceImpl {
 
 		AccountLifecycle accountLifecycle = accountLifecycles.get(0);
 
-		accountLifecycle = _contactsEngineClient.getAccountLifecycle(
+		return _contactsEngineClient.getAccountLifecycle(
 			faroProject, accountLifecycle.getId());
+	}
+
+	private String _getLifecycleStageFilterString(
+		String accountLifecycleId, String channelId, FaroProject faroProject,
+		String lifecycleStage) {
+
+		if (Validator.isNull(lifecycleStage)) {
+			return null;
+		}
+
+		AccountLifecycle accountLifecycle = _getAccountLifecycle(
+			accountLifecycleId, channelId, faroProject);
 
 		List<AccountLifecycleStage> accountLifecycleStages =
 			accountLifecycle.getStages();
@@ -114,7 +131,9 @@ public class AccountResourceImpl extends BaseAccountResourceImpl {
 						accountLifecycleStage.getStageType(), lifecycleStage)) {
 
 					return StringBundler.concat(
-						"(lifecycleStatus in ('", accountLifecycleStage.getId(),
+						"(lifecycleStatus@",
+						accountLifecycle.getExternalReferenceCode(), " in ('",
+						accountLifecycleStage.getExternalReferenceCode(),
 						"'))");
 				}
 			}

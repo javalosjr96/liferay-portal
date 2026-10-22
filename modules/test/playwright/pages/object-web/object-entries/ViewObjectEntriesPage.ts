@@ -89,7 +89,7 @@ export class ViewObjectEntriesPage {
 		this.duplicateEntryErrorMessage = page.getByText(
 			'Error:The field values are already in use. Please choose unique values.'
 		);
-		this.editObjectEntryForm = page.locator('[id="editObjectEntry"]');
+		this.editObjectEntryForm = page.locator('[id$="editObjectEntry"]');
 		this.expirationDateInput = page.getByLabel(
 			'Expiration Date' + 'Mandatory',
 			{
@@ -385,6 +385,30 @@ export class ViewObjectEntriesPage {
 		await fileChooser.setFiles(
 			path.join(dirName, '../dependencies', fileName)
 		);
+	}
+
+	/**
+	 * Select a file like `selectFileFromUserComputer`, but also wait for the
+	 * upload and return its temporary file entry ID. Specifically for fields
+	 * set to "Upload Directly from the User's Computer (Documents and Media)",
+	 * since it waits for the `/object_entries/upload_attachment` MVC action
+	 * command, which CMS Files uploads do not use.
+	 */
+	async selectFileFromUserComputerToDocumentsAndMedia(
+		dirName: string,
+		fileName: string
+	) {
+		const uploadResponsePromise = this.page.waitForResponse((response) =>
+			response.url().includes('upload_attachment')
+		);
+
+		await this.selectFileFromUserComputer(dirName, fileName);
+
+		const uploadResponse = await uploadResponsePromise;
+
+		const {file} = await uploadResponse.json();
+
+		return String(file.fileEntryId);
 	}
 
 	getMaximumFileSizeErrorMessage({

@@ -17,7 +17,9 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.PortalPreferenceValueLocalService;
 import com.liferay.portal.kernel.service.PortalPreferencesLocalService;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
-import com.liferay.portal.kernel.transaction.TransactionCallbackUtil;
+import com.liferay.portal.kernel.transaction.Propagation;
+import com.liferay.portal.kernel.transaction.TransactionConfig;
+import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PrefsProps;
 import com.liferay.portal.test.rule.Inject;
@@ -26,7 +28,6 @@ import com.liferay.portlet.PortalPreferencesImpl;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.FutureTask;
-import java.util.concurrent.TimeUnit;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -75,6 +76,30 @@ public class PortalPreferencesLocalServiceTest {
 
 			Assert.assertNull(_prefsProps.getString(companyId, "test.key"));
 
+			PortalPreferencesImpl portalPreferencesImpl =
+				(PortalPreferencesImpl)
+					_portalPreferenceValueLocalService.getPortalPreferences(
+						portalPreferences, false);
+
+			portalPreferencesImpl.setValue(null, "test.key", "test.value");
+
+			try {
+				TransactionInvokerUtil.invoke(
+					_transactionConfig,
+					() -> {
+						_portalPreferencesLocalService.updatePreferences(
+							companyId, PortletKeys.PREFS_OWNER_TYPE_COMPANY,
+							portalPreferencesImpl);
+
+						throw new Exception("Roll back");
+					});
+
+				Assert.fail();
+			}
+			catch (Throwable throwable) {
+				Assert.assertEquals("Roll back", throwable.getMessage());
+			}
+
 			CountDownLatch countDownLatch1 = new CountDownLatch(1);
 			CountDownLatch countDownLatch2 = new CountDownLatch(1);
 			CountDownLatch countDownLatch3 = new CountDownLatch(1);
@@ -83,10 +108,13 @@ public class PortalPreferencesLocalServiceTest {
 				() -> {
 					countDownLatch1.await();
 
-					Assert.assertNull(
-						_prefsProps.getString(companyId, "test.key"));
-
-					countDownLatch2.countDown();
+					try {
+						Assert.assertNull(
+							_prefsProps.getString(companyId, "test.key"));
+					}
+					finally {
+						countDownLatch2.countDown();
+					}
 
 					countDownLatch3.await();
 
@@ -115,17 +143,10 @@ public class PortalPreferencesLocalServiceTest {
 							PortalPreferenceValue portalPreferenceValue)
 						throws ModelListenerException {
 
-						TransactionCallbackUtil.registerCommitCallback(
-							() -> {
-								countDownLatch3.countDown();
-
-								return null;
-							});
-
 						countDownLatch1.countDown();
 
 						try {
-							countDownLatch2.await(5, TimeUnit.SECONDS);
+							countDownLatch2.await();
 						}
 						catch (InterruptedException interruptedException) {
 							ReflectionUtil.throwException(interruptedException);
@@ -135,16 +156,15 @@ public class PortalPreferencesLocalServiceTest {
 				},
 				null);
 
-			PortalPreferencesImpl portalPreferencesImpl =
-				(PortalPreferencesImpl)
-					_portalPreferenceValueLocalService.getPortalPreferences(
-						portalPreferences, false);
-
-			portalPreferencesImpl.setValue(null, "test.key", "test.value");
-
-			_portalPreferencesLocalService.updatePreferences(
-				companyId, PortletKeys.PREFS_OWNER_TYPE_COMPANY,
-				portalPreferencesImpl);
+			try {
+				_portalPreferencesLocalService.updatePreferences(
+					companyId, PortletKeys.PREFS_OWNER_TYPE_COMPANY,
+					portalPreferencesImpl);
+			}
+			finally {
+				countDownLatch1.countDown();
+				countDownLatch3.countDown();
+			}
 
 			futureTask.get();
 		}
@@ -159,6 +179,10 @@ public class PortalPreferencesLocalServiceTest {
 			}
 		}
 	}
+
+	private static final TransactionConfig _transactionConfig =
+		TransactionConfig.Factory.create(
+			Propagation.REQUIRED, new Class<?>[] {Exception.class});
 
 	private BundleContext _bundleContext;
 

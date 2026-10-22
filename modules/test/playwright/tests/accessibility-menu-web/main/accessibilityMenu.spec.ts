@@ -11,6 +11,7 @@ import {loginTest} from '../../../fixtures/loginTest';
 import {doAndGoBack} from '../../../utils/doAndGoBack';
 import {performLoginViaApi, performLogout} from '../../../utils/performLogin';
 import {assertBodyClass} from './utils/assertBodyClass';
+import {assertHTMLAttribute} from './utils/assertHTMLAttribute';
 import {assertUnderlinedLinksValue} from './utils/assertUnderlinedLinksValue';
 
 const test = mergeTests(
@@ -68,6 +69,16 @@ const OPTIONS = [
 			assertBodyClass(page, enabled, /c-prefers-focus-ring/),
 		label: 'Focus Ring Animation',
 	},
+	{
+		assert: (page: Page, enabled: boolean) =>
+			assertBodyClass(page, enabled, /c-prefers-persistent-alerts/),
+		label: 'Persistent Notifications',
+	},
+	{
+		assert: (page: Page, enabled: boolean) =>
+			assertHTMLAttribute(page, enabled, 'data-prefers-contrast', 'more'),
+		label: 'High Contrast',
+	},
 ];
 
 test(
@@ -108,7 +119,7 @@ test(
 
 test(
 	'Accessibility menu options can be controlled via the accessibility menu',
-	{tag: '@LPD-74263'},
+	{tag: ['@LPD-61332', '@LPD-74263']},
 	async ({accessibilityMenuPage, page}) => {
 		await test.step('Open the accessibility menu', async () => {
 			await accessibilityMenuPage.openAccessibilityMenu();
@@ -135,7 +146,7 @@ test(
 
 test(
 	'Accessibility menu options can be controlled via the keyboard',
-	{tag: '@LPD-74263'},
+	{tag: ['@LPD-61332', '@LPD-74263']},
 	async ({accessibilityMenuPage, page}) => {
 		await test.step('Open accessibility menu and focus the close button', async () => {
 			await accessibilityMenuPage.openAccessibilityMenu();

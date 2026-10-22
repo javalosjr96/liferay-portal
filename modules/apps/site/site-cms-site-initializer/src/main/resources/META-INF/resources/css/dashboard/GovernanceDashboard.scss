@@ -1,4 +1,4 @@
-.cms-needs-review.cms-fds-fluid {
+.cms-governance-asset-list.cms-fds-fluid {
 	.container-fluid {
 		margin-top: 0;
 	}
@@ -14,5 +14,15 @@
 
 	.visualization-mode-table {
 		margin-inline: 0;
+	}
+}
+
+.cms-content-age-distribution {
+	.charts-legend {
+		grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+	}
+
+	.charts-legend__label {
+		white-space: nowrap;
 	}
 }

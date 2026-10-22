@@ -21,12 +21,12 @@ import com.liferay.portal.kernel.cache.MultiVMPool;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
-import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.upgrade.registry.UpgradeStepRegistrator;
 import com.liferay.portal.upgrade.test.util.UpgradeTestUtil;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -37,7 +37,6 @@ import org.junit.runner.RunWith;
 /**
  * @author Guilherme Camacho
  */
-@FeatureFlag("LPS-164563")
 @RunWith(Arquillian.class)
 public class ObjectDefinitionSettingUpgradeProcessTest {
 
@@ -50,6 +49,11 @@ public class ObjectDefinitionSettingUpgradeProcessTest {
 	public void setUp() throws Exception {
 		FrontendDataSetTestUtil.initialize(
 			ObjectDefinitionSettingUpgradeProcessTest.class);
+	}
+
+	@After
+	public void tearDown() throws Exception {
+		FrontendDataSetTestUtil.tearDown();
 	}
 
 	@Test

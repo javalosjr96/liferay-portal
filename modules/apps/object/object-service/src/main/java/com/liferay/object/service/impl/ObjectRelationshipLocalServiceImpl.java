@@ -101,6 +101,7 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowInstance;
 import com.liferay.portal.kernel.workflow.WorkflowInstanceManagerUtil;
+import com.liferay.portal.util.PortalInstances;
 import com.liferay.portal.vulcan.util.LocalizedMapUtil;
 
 import java.io.Serializable;
@@ -383,7 +384,9 @@ public class ObjectRelationshipLocalServiceImpl
 
 		// TODO When should we allow an object relationship to be deleted?
 
-		if (objectRelationship.isEdge()) {
+		if (!PortalInstances.isCurrentCompanyInDeletionProcess() &&
+			objectRelationship.isEdge()) {
+
 			throw new ObjectRelationshipEdgeException(
 				"Edge object relationships cannot be deleted",
 				"edge-object-relationships-cannot-be-deleted");
@@ -730,14 +733,16 @@ public class ObjectRelationshipLocalServiceImpl
 				objectRelationshipPersistence.findByCompanyId(
 					objectDefinition.getCompanyId())) {
 
-			if (((objectRelationship.getObjectDefinitionId1() ==
-					objectDefinitionId) ||
-				 (objectRelationship.getObjectDefinitionId2() ==
-					 objectDefinitionId)) &&
-				!objectRelationship.isReverse()) {
+			if (((objectRelationship.getObjectDefinitionId1() !=
+					objectDefinitionId) &&
+				 (objectRelationship.getObjectDefinitionId2() !=
+					 objectDefinitionId)) ||
+				objectRelationship.isReverse()) {
 
-				objectRelationships.add(objectRelationship);
+				continue;
 			}
+
+			objectRelationships.add(objectRelationship);
 		}
 
 		return objectRelationships;
@@ -1275,6 +1280,8 @@ public class ObjectRelationshipLocalServiceImpl
 						objectDefinition2.getDBTableName()));
 		}
 
+		_objectEntryPersistence.clearCache();
+
 		ObjectDBManagerUtil.createIndexMetadata(
 			_currentConnection.getConnection(
 				objectRelationshipPersistence.getDataSource()),
@@ -1471,14 +1478,16 @@ public class ObjectRelationshipLocalServiceImpl
 				_objectFieldSettingPersistence.fetchByOFI_N(
 					objectField.getObjectFieldId(), "objectRelationshipName");
 
-			if ((objectFieldSetting != null) &&
-				StringUtil.equals(
+			if ((objectFieldSetting == null) ||
+				!StringUtil.equals(
 					objectFieldSetting.getValue(),
 					objectRelationship.getName())) {
 
-				_objectFieldLocalService.deleteObjectField(
-					objectField.getObjectFieldId());
+				continue;
 			}
+
+			_objectFieldLocalService.deleteObjectField(
+				objectField.getObjectFieldId());
 		}
 	}
 
@@ -1863,9 +1872,11 @@ public class ObjectRelationshipLocalServiceImpl
 
 			Node node = tree.getNode(objectDefinition1.getObjectDefinitionId());
 
-			if (node.getDepth() > objectDefinition1MaxDepth) {
-				objectDefinition1MaxDepth = node.getDepth();
+			if (node.getDepth() <= objectDefinition1MaxDepth) {
+				continue;
 			}
+
+			objectDefinition1MaxDepth = node.getDepth();
 		}
 
 		int objectDefinition2MaxHeight = 0;
@@ -1879,9 +1890,11 @@ public class ObjectRelationshipLocalServiceImpl
 			int height = tree.getHeight(
 				tree.getNode(objectDefinition2.getObjectDefinitionId()));
 
-			if (height > objectDefinition2MaxHeight) {
-				objectDefinition2MaxHeight = height;
+			if (height <= objectDefinition2MaxHeight) {
+				continue;
 			}
+
+			objectDefinition2MaxHeight = height;
 		}
 
 		treeHeight += objectDefinition1MaxDepth + objectDefinition2MaxHeight;

@@ -21,7 +21,7 @@ import com.liferay.asset.list.service.AssetListEntryUsageLocalService;
 import com.liferay.asset.util.AssetHelper;
 import com.liferay.asset.util.AssetPublisherAddItemHolder;
 import com.liferay.document.library.constants.DLPortletKeys;
-import com.liferay.document.library.util.DLURLHelper;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.processor.PortletRegistry;
 import com.liferay.fragment.renderer.DefaultFragmentRendererContext;
@@ -1337,14 +1337,16 @@ public class ContentManagerImpl implements ContentManager {
 			JSONObject linkJSONObject =
 				containerStyledLayoutStructureItem.getLinkJSONObject();
 
-			if (linkJSONObject != null) {
-				_getLayoutDisplayPageObjectProvider(
-					linkJSONObject, layoutDisplayPageObjectProviders,
-					uniqueLayoutClassedModelUsageKeys);
-				_getLocalizedLayoutDisplayPageObjectProviders(
-					linkJSONObject, layoutDisplayPageObjectProviders,
-					uniqueLayoutClassedModelUsageKeys);
+			if (linkJSONObject == null) {
+				continue;
 			}
+
+			_getLayoutDisplayPageObjectProvider(
+				linkJSONObject, layoutDisplayPageObjectProviders,
+				uniqueLayoutClassedModelUsageKeys);
+			_getLocalizedLayoutDisplayPageObjectProviders(
+				linkJSONObject, layoutDisplayPageObjectProviders,
+				uniqueLayoutClassedModelUsageKeys);
 		}
 	}
 
@@ -1738,9 +1740,11 @@ public class ContentManagerImpl implements ContentManager {
 				}
 			}
 
-			if (restrictedPortletId) {
-				restrictedPortletIds.add(entry.getKey());
+			if (!restrictedPortletId) {
+				continue;
 			}
+
+			restrictedPortletIds.add(entry.getKey());
 		}
 
 		return restrictedPortletIds;

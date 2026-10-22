@@ -414,7 +414,11 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 	public int getCategoryMessagesCount(
 		long groupId, long categoryId, int status) {
 
-		return mbMessageLocalService.getCategoryMessagesCount(
+		if (status == WorkflowConstants.STATUS_ANY) {
+			return mbMessagePersistence.filterCountByG_C(groupId, categoryId);
+		}
+
+		return mbMessagePersistence.filterCountByG_C_S(
 			groupId, categoryId, status);
 	}
 
@@ -468,11 +472,13 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 					break;
 				}
 
-				if (_messageModelResourcePermission.contains(
+				if (!_messageModelResourcePermission.contains(
 						getPermissionChecker(), message, ActionKeys.VIEW)) {
 
-					messages.add(message);
+					continue;
 				}
+
+				messages.add(message);
 			}
 		}
 
@@ -546,11 +552,13 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 					break;
 				}
 
-				if (_messageModelResourcePermission.contains(
+				if (!_messageModelResourcePermission.contains(
 						getPermissionChecker(), message, ActionKeys.VIEW)) {
 
-					messages.add(message);
+					continue;
 				}
+
+				messages.add(message);
 			}
 		}
 
@@ -602,11 +610,13 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 					break;
 				}
 
-				if (_messageModelResourcePermission.contains(
+				if (!_messageModelResourcePermission.contains(
 						getPermissionChecker(), message, ActionKeys.VIEW)) {
 
-					messages.add(message);
+					continue;
 				}
+
+				messages.add(message);
 			}
 		}
 
@@ -649,11 +659,13 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 					break;
 				}
 
-				if (_messageModelResourcePermission.contains(
+				if (!_messageModelResourcePermission.contains(
 						getPermissionChecker(), message, ActionKeys.VIEW)) {
 
-					messages.add(message);
+					continue;
 				}
+
+				messages.add(message);
 			}
 		}
 
@@ -792,11 +804,13 @@ public class MBMessageServiceImpl extends MBMessageServiceBaseImpl {
 					break;
 				}
 
-				if (_messageModelResourcePermission.contains(
+				if (!_messageModelResourcePermission.contains(
 						getPermissionChecker(), message, ActionKeys.VIEW)) {
 
-					messages.add(message);
+					continue;
 				}
+
+				messages.add(message);
 			}
 
 			if (!messages.isEmpty()) {

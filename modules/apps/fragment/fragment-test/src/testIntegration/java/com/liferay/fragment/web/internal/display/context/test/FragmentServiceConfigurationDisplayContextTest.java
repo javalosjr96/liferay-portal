@@ -13,6 +13,7 @@ import com.liferay.layout.test.util.ContentLayoutTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.module.configuration.ConfigurationProvider;
+import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
@@ -80,8 +81,8 @@ public class FragmentServiceConfigurationDisplayContextTest {
 		_systemPropagateContributedFragmentChanges =
 			RandomTestUtil.randomBoolean();
 
-		_configurationProvider.saveSystemConfiguration(
-			FragmentServiceConfiguration.class,
+		ConfigurationTestUtil.saveConfiguration(
+			FragmentServiceConfiguration.class.getName(),
 			HashMapDictionaryBuilder.<String, Object>put(
 				"propagateChanges", _systemPropagateChanges
 			).put(
@@ -92,10 +93,10 @@ public class FragmentServiceConfigurationDisplayContextTest {
 
 	@After
 	public void tearDown() throws Exception {
+		ConfigurationTestUtil.deleteConfiguration(
+			FragmentServiceConfiguration.class.getName());
 		_configurationProvider.deleteCompanyConfiguration(
 			FragmentServiceConfiguration.class, _company.getCompanyId());
-		_configurationProvider.deleteSystemConfiguration(
-			FragmentServiceConfiguration.class);
 	}
 
 	@Test

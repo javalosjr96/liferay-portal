@@ -22,6 +22,7 @@ import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.asset.kernel.service.AssetTagLocalService;
 import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
 import com.liferay.asset.test.util.AssetTestUtil;
+import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.expando.kernel.model.ExpandoColumn;
 import com.liferay.expando.kernel.model.ExpandoColumnConstants;
@@ -43,6 +44,7 @@ import com.liferay.headless.admin.user.client.dto.v1_0.RoleBrief;
 import com.liferay.headless.admin.user.client.dto.v1_0.TaxonomyCategoryBrief;
 import com.liferay.headless.admin.user.client.dto.v1_0.TaxonomyCategoryReference;
 import com.liferay.headless.admin.user.client.dto.v1_0.WebUrl;
+import com.liferay.headless.admin.user.client.http.HttpInvoker;
 import com.liferay.headless.admin.user.client.pagination.Page;
 import com.liferay.headless.admin.user.client.pagination.Pagination;
 import com.liferay.headless.admin.user.client.permission.Permission;
@@ -51,6 +53,7 @@ import com.liferay.headless.admin.user.client.resource.v1_0.OrganizationResource
 import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONUtil;
@@ -91,14 +94,20 @@ import com.liferay.portal.kernel.util.Http;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.SynchronousMailTestRule;
 import com.liferay.portal.vulcan.permission.PermissionUtil;
+
+import jakarta.ws.rs.core.Response;
 
 import java.io.InputStream;
 
@@ -383,6 +392,7 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 
 		_testPatchOrganizationWithImageExternalReferenceCode();
 		_testPatchOrganizationWithKeywords();
+		_testPatchOrganizationWithRoleBriefs();
 	}
 
 	@Override
@@ -431,10 +441,10 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 		super.testPostOrganization();
 
 		_testPostOrganizationBatch();
-		_testPostOrganizationWithCustomFields();
 		_testPostOrganizationWithCommentOverMaximumLength();
+		_testPostOrganizationWithCustomFields();
+		_testPostOrganizationWithImage();
 		_testPostOrganizationWithNameOverMaximumLength();
-		_testPostOrganizationWithImageExternalReferenceCode();
 	}
 
 	@Override
@@ -949,14 +959,23 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 			randomOrganization());
 	}
 
-	private FileEntry _addImageFileEntry() throws Exception {
+	private FileEntry _addImageFileEntry(boolean addPermissions)
+		throws Exception {
+
 		Company company = _companyLocalService.getCompany(
 			TestPropsValues.getCompanyId());
 
 		Group group = company.getGroup();
 
+		ServiceContext serviceContext =
+			ServiceContextTestUtil.getServiceContext(group.getGroupId());
+
+		serviceContext.setAddGroupPermissions(addPermissions);
+		serviceContext.setAddGuestPermissions(addPermissions);
+
 		LocalRepository localRepository =
-			RepositoryProviderUtil.getLocalRepository(group.getGroupId());
+			RepositoryProviderUtil.getLocalRepository(
+				serviceContext.getScopeGroupId());
 
 		byte[] bytes = FileUtil.getBytes(getClass(), "/images/liferay.png");
 
@@ -968,8 +987,7 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 			RandomTestUtil.randomString(), ContentTypes.IMAGE_PNG,
 			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
 			StringPool.BLANK, StringPool.BLANK, inputStream, bytes.length, null,
-			null, null,
-			ServiceContextTestUtil.getServiceContext(group.getGroupId()));
+			null, null, serviceContext);
 	}
 
 	private Organization _addOrganization(
@@ -990,6 +1008,21 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 			});
 
 		return organizationResource.postOrganization(organization);
+	}
+
+	private void _addRoleUsers(Role role, User user, String... actionIds)
+		throws Exception {
+
+		Role regularRole = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			TestPropsValues.getCompanyId(), Role.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(role.getRoleId()), regularRole.getRoleId(),
+			actionIds);
+
+		_userLocalService.addRoleUsers(
+			regularRole.getRoleId(), new long[] {user.getUserId()});
 	}
 
 	private void _addRoleUsers(User user, String... actionIds)
@@ -1102,6 +1135,66 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 					});
 			}
 		};
+	}
+
+	private void _patchOrganizationBatch(
+			String expectedExecuteStatus, long organizationId, Role role,
+			User user)
+		throws Exception {
+
+		Organization organization = new Organization() {
+			{
+				id = String.valueOf(organizationId);
+				roleBriefs = new RoleBrief[] {
+					new RoleBrief() {
+						{
+							externalReferenceCode =
+								role.getExternalReferenceCode();
+							name = role.getName();
+							roleType = role.getType();
+						}
+					}
+				};
+			}
+		};
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				_CLASS_NAME_BATCH_ENGINE_IMPORT_TASK_EXECUTOR_IMPL,
+				LoggerTestUtil.ERROR)) {
+
+			HTTPTestUtil.customize(
+			).withCredentials(
+				user.getEmailAddress(), _PASSWORD
+			).apply(
+				() -> waitForFinish(
+					expectedExecuteStatus,
+					HTTPTestUtil.invokeToJSONObject(
+						JSONUtil.put(
+							_jsonFactory.createJSONObject(
+								organization.toString())
+						).toString(),
+						"headless-admin-user/v1.0/organizations/batch?" +
+							"updateStrategy=PARTIAL_UPDATE",
+						Http.Method.PUT))
+			);
+
+			List<LogEntry> logEntries = logCapture.getLogEntries();
+
+			if (Objects.equals(expectedExecuteStatus, "COMPLETED")) {
+				Assert.assertTrue(logEntries.isEmpty());
+
+				return;
+			}
+
+			LogEntry logEntry = logEntries.get(0);
+
+			Assert.assertEquals(
+				StringBundler.concat(
+					"User ", user.getUserId(), " must have ",
+					ActionKeys.ASSIGN_MEMBERS, " permission for ",
+					Role.class.getName(), " ", role.getRoleId()),
+				logEntry.getMessage());
+		}
 	}
 
 	private void _testDeleteAccountOrganizationWithPermission()
@@ -1371,7 +1464,7 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 
 		Organization randomPatchOrganization = randomPatchOrganization();
 
-		FileEntry fileEntry = _addImageFileEntry();
+		FileEntry fileEntry = _addImageFileEntry(true);
 
 		randomPatchOrganization.setImageExternalReferenceCode(
 			fileEntry.getExternalReferenceCode());
@@ -1393,7 +1486,7 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 
 		Organization randomPatchOrganization = randomPatchOrganization();
 
-		FileEntry fileEntry = _addImageFileEntry();
+		FileEntry fileEntry = _addImageFileEntry(true);
 
 		randomPatchOrganization.setImageExternalReferenceCode(
 			fileEntry.getExternalReferenceCode());
@@ -1422,6 +1515,50 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 
 		Assert.assertTrue(
 			ArrayUtil.containsAll(patchOrganization.getKeywords(), keywords));
+	}
+
+	private void _testPatchOrganizationWithRoleBriefs() throws Exception {
+		Role role1 = _roleLocalService.getRole(
+			TestPropsValues.getCompanyId(), RoleConstants.ADMINISTRATOR);
+
+		com.liferay.portal.kernel.model.Organization
+			serviceBuilderOrganization = OrganizationTestUtil.addOrganization();
+
+		User user = UserTestUtil.addOrganizationAdminUser(
+			serviceBuilderOrganization);
+
+		_userLocalService.updatePassword(
+			user.getUserId(), _PASSWORD, _PASSWORD, false, true);
+
+		_patchOrganizationBatch(
+			"FAILED", serviceBuilderOrganization.getOrganizationId(), role1,
+			user);
+
+		Assert.assertFalse(
+			_roleLocalService.hasGroupRole(
+				serviceBuilderOrganization.getGroupId(), role1.getRoleId()));
+
+		Role role2 = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		_addRoleUsers(role2, user, ActionKeys.VIEW);
+
+		_patchOrganizationBatch(
+			"FAILED", serviceBuilderOrganization.getOrganizationId(), role2,
+			user);
+
+		Assert.assertFalse(
+			_roleLocalService.hasGroupRole(
+				serviceBuilderOrganization.getGroupId(), role2.getRoleId()));
+
+		_addRoleUsers(role2, user, ActionKeys.ASSIGN_MEMBERS, ActionKeys.VIEW);
+
+		_patchOrganizationBatch(
+			"COMPLETED", serviceBuilderOrganization.getOrganizationId(), role2,
+			user);
+
+		Assert.assertTrue(
+			_roleLocalService.hasGroupRole(
+				serviceBuilderOrganization.getGroupId(), role2.getRoleId()));
 	}
 
 	private void _testPostAccountOrganization() throws Exception {
@@ -1527,7 +1664,6 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 			{
 				externalReferenceCode = role2.getExternalReferenceCode();
 				name = role2.getName();
-				roleType = role2.getType();
 			}
 		};
 
@@ -1860,22 +1996,71 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 			expandoColumn.getName(), postOrganizationCustomField.getName());
 	}
 
-	private void _testPostOrganizationWithImageExternalReferenceCode()
-		throws Exception {
+	private void _testPostOrganizationWithImage() throws Exception {
+		Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
 
-		Organization randomOrganization = randomOrganization();
+		_resourcePermissionLocalService.setResourcePermissions(
+			TestPropsValues.getCompanyId(), PortletKeys.PORTAL,
+			ResourceConstants.SCOPE_COMPANY,
+			String.valueOf(TestPropsValues.getCompanyId()), role.getRoleId(),
+			new String[] {ActionKeys.ADD_ORGANIZATION});
 
-		FileEntry fileEntry = _addImageFileEntry();
+		User user = _addUser();
 
-		randomOrganization.setImageExternalReferenceCode(
+		_userLocalService.addRoleUsers(
+			role.getRoleId(), new long[] {user.getUserId()});
+
+		OrganizationResource organizationResource = _getOrganizationResource(
+			_PASSWORD, user);
+
+		FileEntry fileEntry = _addImageFileEntry(false);
+
+		Organization organization = randomOrganization();
+
+		organization.setImageExternalReferenceCode(
 			fileEntry.getExternalReferenceCode());
 
-		randomOrganization.setImageId(0L);
+		HttpInvoker.HttpResponse httpResponse =
+			organizationResource.postOrganizationHttpResponse(organization);
 
-		Organization postOrganization = organizationResource.postOrganization(
-			randomOrganization);
+		Assert.assertEquals(
+			Response.Status.FORBIDDEN.getStatusCode(),
+			httpResponse.getStatusCode());
 
-		Assert.assertTrue(postOrganization.getImageId() > 0);
+		organization = randomOrganization();
+
+		organization.setImageId(fileEntry.getFileEntryId());
+
+		httpResponse = organizationResource.postOrganizationHttpResponse(
+			organization);
+
+		Assert.assertEquals(
+			Response.Status.FORBIDDEN.getStatusCode(),
+			httpResponse.getStatusCode());
+
+		_resourcePermissionLocalService.setResourcePermissions(
+			TestPropsValues.getCompanyId(), DLFileEntry.class.getName(),
+			ResourceConstants.SCOPE_INDIVIDUAL,
+			String.valueOf(fileEntry.getFileEntryId()), role.getRoleId(),
+			new String[] {ActionKeys.VIEW});
+
+		organization = randomOrganization();
+
+		organization.setImageExternalReferenceCode(
+			fileEntry.getExternalReferenceCode());
+		organization.setImageId(0L);
+
+		organization = organizationResource.postOrganization(organization);
+
+		Assert.assertTrue(organization.getImageId() > 0);
+
+		organization = randomOrganization();
+
+		organization.setImageId(fileEntry.getFileEntryId());
+
+		organization = organizationResource.postOrganization(organization);
+
+		Assert.assertTrue(organization.getImageId() > 0);
 	}
 
 	private void _testPostOrganizationWithNameOverMaximumLength()
@@ -1916,7 +2101,7 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 
 		Organization randomPutOrganization = randomOrganization();
 
-		FileEntry fileEntry = _addImageFileEntry();
+		FileEntry fileEntry = _addImageFileEntry(true);
 
 		randomPutOrganization.setImageExternalReferenceCode(
 			fileEntry.getExternalReferenceCode());
@@ -1938,7 +2123,7 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 
 		Organization randomPutOrganization = randomOrganization();
 
-		FileEntry fileEntry = _addImageFileEntry();
+		FileEntry fileEntry = _addImageFileEntry(true);
 
 		randomPutOrganization.setImageExternalReferenceCode(
 			fileEntry.getExternalReferenceCode());
@@ -1955,6 +2140,11 @@ public class OrganizationResourceTest extends BaseOrganizationResourceTestCase {
 		return TransformUtil.transformToArray(
 			users, User::getEmailAddress, String.class);
 	}
+
+	private static final String
+		_CLASS_NAME_BATCH_ENGINE_IMPORT_TASK_EXECUTOR_IMPL =
+			"com.liferay.batch.engine.internal." +
+				"BatchEngineImportTaskExecutorImpl";
 
 	private static final String _PASSWORD = RandomTestUtil.randomString();
 

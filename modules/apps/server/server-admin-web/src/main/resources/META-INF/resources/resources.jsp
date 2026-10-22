@@ -11,23 +11,47 @@
 <liferay-ui:error exception="<%= CaptchaException.class %>" message="captcha-verification-failed" />
 <liferay-ui:error exception="<%= CaptchaTextException.class %>" message="text-verification-failed" />
 
-<liferay-ui:error exception="<%= VerifyException.class %>">
+<c:if test="<%= SessionErrors.contains(renderRequest, VerifyException.class) %>">
 
 	<%
-	VerifyException verifyException = (VerifyException)errorException;
+	VerifyException verifyException = (VerifyException)SessionErrors.get(renderRequest, VerifyException.class);
 	%>
 
-	<pre><%= HtmlUtil.escape(verifyException.getMessage()) %></pre>
-</liferay-ui:error>
+	<clay:alert
+		dismissible="<%= true %>"
+		displayType="danger"
+	>
+		<%= HtmlUtil.escape(verifyException.getMessage()) %>
+	</clay:alert>
+</c:if>
 
-<liferay-ui:error key="verifyDatabaseStateErrors">
+<c:if test='<%= SessionErrors.contains(renderRequest, "verifyDatabaseStateErrors") %>'>
 
 	<%
 	List<String> errorMessages = (List<String>)SessionErrors.get(renderRequest, "verifyDatabaseStateErrors");
 	%>
 
-	<pre><%= HtmlUtil.escape(StringUtil.merge(errorMessages, StringPool.NEW_LINE)) %></pre>
-</liferay-ui:error>
+	<clay:alert
+		dismissible="<%= true %>"
+		displayType="danger"
+	>
+		<liferay-ui:message key="the-database-state-verification-found-the-following-errors" />
+
+		<ul class="mb-0 mt-2">
+
+			<%
+			for (String errorMessage : errorMessages) {
+			%>
+
+				<li><%= HtmlUtil.escape(errorMessage) %></li>
+
+			<%
+			}
+			%>
+
+		</ul>
+	</clay:alert>
+</c:if>
 
 <c:if test='<%= SessionMessages.contains(renderRequest, "verifyDatabaseStateWarnings") %>'>
 
@@ -36,9 +60,24 @@
 	%>
 
 	<clay:alert
+		dismissible="<%= true %>"
 		displayType="warning"
 	>
-		<pre><%= HtmlUtil.escape(StringUtil.merge(warnMessages, StringPool.NEW_LINE)) %></pre>
+		<liferay-ui:message key="the-database-state-verification-found-the-following-warnings" />
+
+		<ul class="mb-0 mt-2">
+
+			<%
+			for (String warnMessage : warnMessages) {
+			%>
+
+				<li><%= HtmlUtil.escape(warnMessage) %></li>
+
+			<%
+			}
+			%>
+
+		</ul>
 	</clay:alert>
 </c:if>
 

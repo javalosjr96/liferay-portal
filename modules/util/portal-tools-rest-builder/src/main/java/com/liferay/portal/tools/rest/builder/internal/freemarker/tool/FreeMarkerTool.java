@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.TextFormatter;
 import com.liferay.portal.kernel.util.TimeZoneUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.JavaMethodParameter;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.JavaMethodSignature;
 import com.liferay.portal.tools.rest.builder.internal.freemarker.tool.java.parser.DTOOpenAPIParser;
@@ -251,12 +252,14 @@ public class FreeMarkerTool {
 				}
 			}
 
-			if (!exists &&
-				!isQueryParameter(
+			if (exists ||
+				isQueryParameter(
 					javaMethodParameter, javaMethodSignature.getOperation())) {
 
-				javaMethodParameters.add(javaMethodParameter);
+				continue;
 			}
+
+			javaMethodParameters.add(javaMethodParameter);
 		}
 
 		return javaMethodParameters;
@@ -410,6 +413,13 @@ public class FreeMarkerTool {
 		}
 
 		return null;
+	}
+
+	public String getFeatureFlag(
+		JavaMethodSignature javaMethodSignature, OpenAPIYAML openAPIYAML) {
+
+		return ResourceOpenAPIParser.getFeatureFlag(
+			javaMethodSignature, openAPIYAML);
 	}
 
 	public String getGraphQLArguments(
@@ -617,18 +627,22 @@ public class FreeMarkerTool {
 				Map<String, Schema> propertySchemas =
 					schema.getPropertySchemas();
 
-				if (propertySchemas != null) {
-					for (String propertyName : propertySchemas.keySet()) {
-						if (_isGraphQLPropertyRelation(
-								javaMethodSignature, parameterName,
-								propertyName, entry.getKey())) {
+				if (propertySchemas == null) {
+					continue;
+				}
 
-							javaMethodSignatureMap.put(
-								methodName,
-								_getJavaMethodSignature(
-									javaMethodSignature, entry.getKey()));
-						}
+				for (String propertyName : propertySchemas.keySet()) {
+					if (!_isGraphQLPropertyRelation(
+							javaMethodSignature, parameterName, propertyName,
+							entry.getKey())) {
+
+						continue;
 					}
+
+					javaMethodSignatureMap.put(
+						methodName,
+						_getJavaMethodSignature(
+							javaMethodSignature, entry.getKey()));
 				}
 			}
 		}
@@ -964,6 +978,13 @@ public class FreeMarkerTool {
 			javaMethodSignatures, propertyName);
 	}
 
+	public String getResourceMethodType(
+		ConfigYAML configYAML, JavaMethodSignature javaMethodSignature) {
+
+		return ResourceOpenAPIParser.getResourceMethodType(
+			configYAML, javaMethodSignature);
+	}
+
 	public String getResourceParameters(
 		ConfigYAML configYAML, List<JavaMethodParameter> javaMethodParameters,
 		Operation operation, Map<String, Schema> schemas, boolean annotation) {
@@ -1012,19 +1033,20 @@ public class FreeMarkerTool {
 	}
 
 	public Set<String> getVulcanBatchImplementationCreateStrategies(
-		List<JavaMethodSignature> javaMethodSignatures,
+		ConfigYAML configYAML, List<JavaMethodSignature> javaMethodSignatures,
 		Map<String, String> properties) {
 
 		return ResourceOpenAPIParser.
 			getVulcanBatchImplementationCreateStrategies(
-				javaMethodSignatures, properties);
+				configYAML, javaMethodSignatures, properties);
 	}
 
 	public Set<String> getVulcanBatchImplementationUpdateStrategies(
-		List<JavaMethodSignature> javaMethodSignatures) {
+		ConfigYAML configYAML, List<JavaMethodSignature> javaMethodSignatures) {
 
 		return ResourceOpenAPIParser.
-			getVulcanBatchImplementationUpdateStrategies(javaMethodSignatures);
+			getVulcanBatchImplementationUpdateStrategies(
+				configYAML, javaMethodSignatures);
 	}
 
 	public Map<String, String> getWritableDTOProperties(
@@ -1070,6 +1092,13 @@ public class FreeMarkerTool {
 		}
 
 		return false;
+	}
+
+	public boolean hasPartialUpsertVulcanBatchImplementation(
+		ConfigYAML configYAML, List<JavaMethodSignature> javaMethodSignatures) {
+
+		return ResourceOpenAPIParser.hasPartialUpsertVulcanBatchImplementation(
+			configYAML, javaMethodSignatures);
 	}
 
 	public boolean hasPath(
@@ -1232,6 +1261,24 @@ public class FreeMarkerTool {
 					"ExternalReferenceCode")) {
 
 			return true;
+		}
+
+		return false;
+	}
+
+	public boolean isGenerateFeatureFlag(
+		ConfigYAML configYAML, OpenAPIYAML openAPIYAML, String schemaName) {
+
+		for (JavaMethodSignature javaMethodSignature :
+				getResourceJavaMethodSignatures(
+					configYAML, openAPIYAML, schemaName)) {
+
+			if (Validator.isNotNull(
+					ResourceOpenAPIParser.getFeatureFlag(
+						javaMethodSignature, openAPIYAML))) {
+
+				return true;
+			}
 		}
 
 		return false;
@@ -1538,9 +1585,11 @@ public class FreeMarkerTool {
 
 				sb.append(": ___");
 
-				if (iterator.hasNext()) {
-					sb.append(", ");
+				if (!iterator.hasNext()) {
+					continue;
 				}
+
+				sb.append(", ");
 			}
 
 			sb.append(")");
@@ -1574,9 +1623,11 @@ public class FreeMarkerTool {
 
 					sb.append(key);
 
-					if (iterator.hasNext()) {
-						sb.append(", ");
+					if (!iterator.hasNext()) {
+						continue;
 					}
+
+					sb.append(", ");
 				}
 			}
 		}
@@ -1721,23 +1772,24 @@ public class FreeMarkerTool {
 
 			Schema schema = schemas.get(schemaName);
 
-			if (schema != null) {
-				Map<String, Schema> propertySchemas =
-					schema.getPropertySchemas();
+			if (schema == null) {
+				continue;
+			}
 
-				if (propertySchemas == null) {
+			Map<String, Schema> propertySchemas = schema.getPropertySchemas();
+
+			if (propertySchemas == null) {
+				continue;
+			}
+
+			for (Map.Entry<String, Schema> entry : propertySchemas.entrySet()) {
+				Schema propertySchema = entry.getValue();
+
+				if (propertySchema.isReadOnly()) {
 					continue;
 				}
 
-				for (Map.Entry<String, Schema> entry :
-						propertySchemas.entrySet()) {
-
-					Schema propertySchema = entry.getValue();
-
-					if (!propertySchema.isReadOnly()) {
-						properties.add(entry.getKey());
-					}
-				}
+				properties.add(entry.getKey());
 			}
 		}
 
@@ -1751,9 +1803,11 @@ public class FreeMarkerTool {
 				sb.append(iterator.next());
 				sb.append("\": ___");
 
-				if (iterator.hasNext()) {
-					sb.append(", ");
+				if (!iterator.hasNext()) {
+					continue;
 				}
+
+				sb.append(", ");
 			}
 
 			sb.append("}' --header 'Content-Type: application/json'");

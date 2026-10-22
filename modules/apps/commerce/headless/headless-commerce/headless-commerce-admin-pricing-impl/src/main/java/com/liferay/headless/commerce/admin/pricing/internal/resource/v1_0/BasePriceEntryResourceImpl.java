@@ -12,6 +12,7 @@ import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.exception.NoSuchModelException;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -374,7 +375,7 @@ public abstract class BasePriceEntryResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-pricing/v1.0/priceEntries/{id}' -d $'{"customFields": ___, "externalReferenceCode": ___, "hasTierPrice": ___, "id": ___, "price": ___, "priceListExternalReferenceCode": ___, "priceListId": ___, "promoPrice": ___, "sku": ___, "skuExternalReferenceCode": ___, "skuId": ___, "tierPrices": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-pricing/v1.0/priceEntries/{id}' -d $'{"customFields": ___, "externalReferenceCode": ___, "hasTierPrice": ___, "id": ___, "price": ___, "priceListExternalReferenceCode": ___, "priceListId": ___, "productExternalReferenceCode": ___, "productType": ___, "promoPrice": ___, "sku": ___, "skuExternalReferenceCode": ___, "skuId": ___, "tierPrices": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Partially updates a price entry by internal ID. JSON Merge Patch over price, promoPrice, and the nested tierPrices collection."
@@ -412,7 +413,7 @@ public abstract class BasePriceEntryResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-pricing/v1.0/priceEntries/by-externalReferenceCode/{externalReferenceCode}' -d $'{"customFields": ___, "externalReferenceCode": ___, "hasTierPrice": ___, "id": ___, "price": ___, "priceListExternalReferenceCode": ___, "priceListId": ___, "promoPrice": ___, "sku": ___, "skuExternalReferenceCode": ___, "skuId": ___, "tierPrices": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'PATCH' 'http://localhost:8080/o/headless-commerce-admin-pricing/v1.0/priceEntries/by-externalReferenceCode/{externalReferenceCode}' -d $'{"customFields": ___, "externalReferenceCode": ___, "hasTierPrice": ___, "id": ___, "price": ___, "priceListExternalReferenceCode": ___, "priceListId": ___, "productExternalReferenceCode": ___, "productType": ___, "promoPrice": ___, "sku": ___, "skuExternalReferenceCode": ___, "skuId": ___, "tierPrices": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Partially updates a price entry addressed by externalReferenceCode. JSON Merge Patch semantics; 404 when ERC unknown."
@@ -452,7 +453,7 @@ public abstract class BasePriceEntryResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-pricing/v1.0/priceLists/by-externalReferenceCode/{externalReferenceCode}/priceEntries' -d $'{"customFields": ___, "externalReferenceCode": ___, "hasTierPrice": ___, "id": ___, "price": ___, "priceListExternalReferenceCode": ___, "priceListId": ___, "promoPrice": ___, "sku": ___, "skuExternalReferenceCode": ___, "skuId": ___, "tierPrices": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-pricing/v1.0/priceLists/by-externalReferenceCode/{externalReferenceCode}/priceEntries' -d $'{"customFields": ___, "externalReferenceCode": ___, "hasTierPrice": ___, "id": ___, "price": ___, "priceListExternalReferenceCode": ___, "priceListId": ___, "productExternalReferenceCode": ___, "productType": ___, "promoPrice": ___, "sku": ___, "skuExternalReferenceCode": ___, "skuId": ___, "tierPrices": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Upserts a price entry under the parent price list by externalReferenceCode. Same pipeline as postPriceListIdPriceEntry with ERC-based price-list resolution."
@@ -490,7 +491,7 @@ public abstract class BasePriceEntryResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-pricing/v1.0/priceLists/{id}/priceEntries' -d $'{"customFields": ___, "externalReferenceCode": ___, "hasTierPrice": ___, "id": ___, "price": ___, "priceListExternalReferenceCode": ___, "priceListId": ___, "promoPrice": ___, "sku": ___, "skuExternalReferenceCode": ___, "skuId": ___, "tierPrices": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/headless-commerce-admin-pricing/v1.0/priceLists/{id}/priceEntries' -d $'{"customFields": ___, "externalReferenceCode": ___, "hasTierPrice": ___, "id": ___, "price": ___, "priceListExternalReferenceCode": ___, "priceListId": ___, "productExternalReferenceCode": ___, "productType": ___, "promoPrice": ___, "sku": ___, "skuExternalReferenceCode": ___, "skuId": ___, "tierPrices": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Upserts a price entry under the parent price list by internal ID. Delegates to the service. The SKU is resolved by skuId or skuExternalReferenceCode; nested tierPrices are cascaded through TierPriceUtil. Validation -- a duplicate-key error -> 409 Conflict when the (priceList, sku) pair already exists; PriceListMinPriceValueException, PriceListMaxPriceValueException, and PriceEntryUnitOfMeasureException -> 400 Bad Request."
@@ -594,6 +595,40 @@ public abstract class BasePriceEntryResourceImpl
 			}
 		}
 
+		if (StringUtil.equalsIgnoreCase(createStrategy, "UPSERT")) {
+			String updateStrategy = (String)parameters.getOrDefault(
+				"updateStrategy", "UPDATE");
+
+			if (StringUtil.equalsIgnoreCase(updateStrategy, "PARTIAL_UPDATE")) {
+				priceEntryUnsafeFunction = priceEntry -> {
+					PriceEntry getPriceEntry = null;
+					PriceEntry persistedPriceEntry = null;
+
+					try {
+						getPriceEntry = getPriceEntryByExternalReferenceCode(
+							priceEntry.getExternalReferenceCode());
+
+						patchPriceEntry(getPriceEntry.getId(), priceEntry);
+					}
+					catch (NoSuchModelException noSuchModelException) {
+						if (parameters.containsKey("externalReferenceCode")) {
+							persistedPriceEntry =
+								postPriceListByExternalReferenceCodePriceEntry(
+									(String)parameters.get(
+										"externalReferenceCode"),
+									priceEntry);
+						}
+						else {
+							throw new NotSupportedException(
+								"One of the following parameters must be specified: [externalReferenceCode]");
+						}
+					}
+
+					return persistedPriceEntry;
+				};
+			}
+		}
+
 		if (priceEntryUnsafeFunction == null) {
 			throw new NotSupportedException(
 				"Create strategy \"" + createStrategy +
@@ -665,7 +700,7 @@ public abstract class BasePriceEntryResourceImpl
 	}
 
 	public Set<String> getAvailableCreateStrategies() {
-		return SetUtil.fromArray("INSERT");
+		return SetUtil.fromArray("INSERT", "UPSERT");
 	}
 
 	public Set<String> getAvailableUpdateStrategies() {
@@ -1338,4 +1373,4 @@ public abstract class BasePriceEntryResourceImpl
 		LogFactoryUtil.getLog(BasePriceEntryResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:2144748278
+// LIFERAY-REST-BUILDER-HASH:-757638839

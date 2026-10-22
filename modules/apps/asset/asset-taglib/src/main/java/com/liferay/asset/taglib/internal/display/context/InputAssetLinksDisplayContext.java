@@ -25,6 +25,7 @@ import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.ListUtil;
@@ -41,7 +42,9 @@ import jakarta.portlet.PortletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.jsp.PageContext;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author José Manuel Navarro
@@ -75,6 +78,8 @@ public class InputAssetLinksDisplayContext {
 			_themeDisplay.getScopeGroupId(),
 			baseAssetRendererFactory.getPortletId());
 
+		Map<Long, JSONArray> groupIdsJSONArrays = new HashMap<>();
+
 		return JSONUtil.toJSONArray(
 			getAssetRendererFactories(),
 			assetRendererFactory -> {
@@ -90,6 +95,11 @@ public class InputAssetLinksDisplayContext {
 					"classNameId",
 					PortalUtil.getClassNameId(
 						assetRendererFactory.getClassName())
+				).put(
+					"groupIds",
+					_getGroupIdsJSONArray(
+						_themeDisplay.getScopeGroupId(), groupIdsJSONArrays,
+						assetRendererFactory.getPortletId())
 				).put(
 					"label",
 					assetRendererFactory.getTypeName(_themeDisplay.getLocale())
@@ -251,6 +261,36 @@ public class InputAssetLinksDisplayContext {
 
 				return assetLink;
 			});
+	}
+
+	private JSONArray _getGroupIdsJSONArray(
+			long groupId, Map<Long, JSONArray> groupIdsJSONArrays,
+			String portletId)
+		throws PortalException {
+
+		StagingGroupHelper stagingGroupHelper =
+			StagingGroupHelperUtil.getStagingGroupHelper();
+
+		long stagedPortletGroupId = stagingGroupHelper.getStagedPortletGroupId(
+			groupId, portletId);
+
+		JSONArray groupIdsJSONArray = groupIdsJSONArrays.get(
+			stagedPortletGroupId);
+
+		if (groupIdsJSONArray != null) {
+			return groupIdsJSONArray;
+		}
+
+		long[] groupIds =
+			SiteConnectedGroupGroupProviderUtil.
+				getCurrentAndAncestorSiteAndDepotGroupIds(
+					new long[] {stagedPortletGroupId});
+
+		groupIdsJSONArray = JSONUtil.putAll(ArrayUtil.toArray(groupIds));
+
+		groupIdsJSONArrays.put(stagedPortletGroupId, groupIdsJSONArray);
+
+		return groupIdsJSONArray;
 	}
 
 	private AssetEntry _getRefererAssetEntry() {

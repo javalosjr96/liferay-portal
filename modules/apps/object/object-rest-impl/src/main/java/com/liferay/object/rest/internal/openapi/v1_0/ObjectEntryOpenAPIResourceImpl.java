@@ -13,8 +13,10 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.rest.dto.v1_0.Assignee;
+import com.liferay.object.rest.dto.v1_0.Coordinates;
 import com.liferay.object.rest.dto.v1_0.FileEntry;
 import com.liferay.object.rest.dto.v1_0.ListEntry;
+import com.liferay.object.rest.dto.v1_0.Location;
 import com.liferay.object.rest.internal.resource.v1_0.CollaboratorResourceImpl;
 import com.liferay.object.rest.internal.resource.v1_0.CommentResourceImpl;
 import com.liferay.object.rest.internal.resource.v1_0.ObjectEntryRelatedObjectsResourceImpl;
@@ -289,6 +291,18 @@ public class ObjectEntryOpenAPIResourceImpl
 		}
 		else if (Objects.equals(
 					objectField.getBusinessType(),
+					ObjectFieldConstants.BUSINESS_TYPE_LOCATION)) {
+
+			return _getDTOProperties(
+				HashMapBuilder.put(
+					"address", String.class.getSimpleName()
+				).put(
+					"coordinates", Coordinates.class.getSimpleName()
+				).build(),
+				objectField, Location.class.getSimpleName());
+		}
+		else if (Objects.equals(
+					objectField.getBusinessType(),
 					ObjectFieldConstants.BUSINESS_TYPE_MULTISELECT_PICKLIST) ||
 				 Objects.equals(
 					 objectField.getBusinessType(),
@@ -402,18 +416,20 @@ public class ObjectEntryOpenAPIResourceImpl
 
 			dtoProperties.addAll(_getDTOProperties(objectField));
 
-			if (objectField.isLocalized()) {
-				dtoProperties.add(
-					new DTOProperty(
-						Collections.singletonMap("x-parent-map", "properties"),
-						objectField.getI18nObjectFieldName(),
-						Map.class.getSimpleName()) {
-
-						{
-							setRequired(objectField.isRequired());
-						}
-					});
+			if (!objectField.isLocalized()) {
+				continue;
 			}
+
+			dtoProperties.add(
+				new DTOProperty(
+					Collections.singletonMap("x-parent-map", "properties"),
+					objectField.getI18nObjectFieldName(),
+					Map.class.getSimpleName()) {
+
+					{
+						setRequired(objectField.isRequired());
+					}
+				});
 		}
 
 		dtoProperty.setDTOProperties(dtoProperties);

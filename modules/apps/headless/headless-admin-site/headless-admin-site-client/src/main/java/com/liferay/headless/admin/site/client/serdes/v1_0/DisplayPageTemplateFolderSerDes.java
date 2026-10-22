@@ -57,6 +57,16 @@ public class DisplayPageTemplateFolderSerDes {
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ssXX");
 
+		if (displayPageTemplateFolder.getActions() != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"actions\": ");
+
+			sb.append(_toJSON(displayPageTemplateFolder.getActions()));
+		}
+
 		if (displayPageTemplateFolder.getCreator() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
@@ -255,6 +265,15 @@ public class DisplayPageTemplateFolderSerDes {
 		DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd'T'HH:mm:ssXX");
 
+		if (displayPageTemplateFolder.getActions() == null) {
+			map.put("actions", null);
+		}
+		else {
+			map.put(
+				"actions",
+				String.valueOf(displayPageTemplateFolder.getActions()));
+		}
+
 		if (displayPageTemplateFolder.getCreator() == null) {
 			map.put("creator", null);
 		}
@@ -381,7 +400,10 @@ public class DisplayPageTemplateFolderSerDes {
 
 		@Override
 		protected boolean parseMaps(String jsonParserFieldName) {
-			if (Objects.equals(jsonParserFieldName, "creator")) {
+			if (Objects.equals(jsonParserFieldName, "actions")) {
+				return true;
+			}
+			else if (Objects.equals(jsonParserFieldName, "creator")) {
 				return false;
 			}
 			else if (Objects.equals(jsonParserFieldName, "dateCreated")) {
@@ -431,7 +453,13 @@ public class DisplayPageTemplateFolderSerDes {
 			DisplayPageTemplateFolder displayPageTemplateFolder,
 			String jsonParserFieldName, Object jsonParserFieldValue) {
 
-			if (Objects.equals(jsonParserFieldName, "creator")) {
+			if (Objects.equals(jsonParserFieldName, "actions")) {
+				if (jsonParserFieldValue != null) {
+					displayPageTemplateFolder.setActions(
+						(Map<String, Map<String, String>>)jsonParserFieldValue);
+				}
+			}
+			else if (Objects.equals(jsonParserFieldName, "creator")) {
 				if (jsonParserFieldValue != null) {
 					displayPageTemplateFolder.setCreator(
 						CreatorSerDes.toDTO((String)jsonParserFieldValue));
@@ -609,4 +637,4 @@ public class DisplayPageTemplateFolderSerDes {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-706782788
+// LIFERAY-REST-BUILDER-HASH:254836485

@@ -1,4 +1,4 @@
-import ClayIcon from '@clayui/icon';
+import ClayIcon from 'shared/components/Icon';
 import ClayList from '@clayui/list';
 import ClaySticker from '@clayui/sticker';
 import Label from '@clayui/label';
@@ -74,6 +74,7 @@ const MarketoCampaignEntities: React.FC<IMarketoCampaignEntitiesProps> = ({
 					<ClayList.ItemField className="justify-content-center">
 						<Label
 							displayType={configured ? 'success' : 'secondary'}
+							inverse
 						>
 							{configured
 								? Liferay.Language.get('configured')

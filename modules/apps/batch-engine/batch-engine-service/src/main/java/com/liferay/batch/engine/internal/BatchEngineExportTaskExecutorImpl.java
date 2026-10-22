@@ -10,6 +10,7 @@ import com.liferay.batch.engine.BatchEngineTaskContentType;
 import com.liferay.batch.engine.BatchEngineTaskExecuteStatus;
 import com.liferay.batch.engine.BatchEngineTaskItemDelegate;
 import com.liferay.batch.engine.BatchEngineTaskItemDelegateRegistry;
+import com.liferay.batch.engine.BatchEngineTaskItemDelegateRegistry.BatchEngineTaskItemDelegateSafeCloseable;
 import com.liferay.batch.engine.ItemClassRegistry;
 import com.liferay.batch.engine.action.ExportTaskPostAction;
 import com.liferay.batch.engine.configuration.BatchEngineTaskCompanyConfiguration;
@@ -196,6 +197,26 @@ public class BatchEngineExportTaskExecutorImpl
 						portalException);
 				}
 			}
+			else {
+				BatchEngineExportTask failedBatchEngineExportTask =
+					_updateBatchEngineExportTask(
+						BatchEngineTaskExecuteStatus.FAILED,
+						batchEngineExportTask, throwable.toString(), false);
+
+				return new Result() {
+
+					@Override
+					public BatchEngineExportTask getBatchEngineExportTask() {
+						return failedBatchEngineExportTask;
+					}
+
+					@Override
+					public InputStream getInputStream() {
+						return null;
+					}
+
+				};
+			}
 		}
 		finally {
 
@@ -232,18 +253,6 @@ public class BatchEngineExportTaskExecutorImpl
 		Map<String, Serializable> parameters = _getParameters(
 			batchEngineExportTask);
 
-		BatchEngineTaskItemDelegate<?> batchEngineTaskItemDelegate =
-			_batchEngineTaskItemDelegateRegistry.getBatchEngineTaskItemDelegate(
-				batchEngineExportTask.getCompanyId(),
-				batchEngineExportTask.getClassName(),
-				batchEngineExportTask.getTaskItemDelegateName());
-
-		if (batchEngineTaskItemDelegate == null) {
-			throw new IllegalStateException(
-				"No batch engine delegate available for class name " +
-					batchEngineExportTask.getClassName());
-		}
-
 		UnsyncByteArrayOutputStream unsyncByteArrayOutputStream =
 			new UnsyncByteArrayOutputStream();
 
@@ -252,17 +261,20 @@ public class BatchEngineExportTaskExecutorImpl
 					batchEngineExportTask, parameters, settings,
 					unsyncByteArrayOutputStream);
 
-			SafeCloseable safeCloseable =
-				NestedFieldsContextThreadLocal.
-					setNestedFieldsContextWithSafeCloseable(
-						new NestedFieldsContext(
-							NestedFieldsContextUtil.limitDepth(
-								GetterUtil.getInteger(
-									parameters.get("batchNestedFieldsDepth"))),
-							NestedFieldsContextUtil.toList(
-								MapUtil.getString(
-									parameters, "batchNestedFields")),
-							batchEngineTaskItemDelegate.getVersion()))) {
+			BatchEngineTaskItemDelegateSafeCloseable
+				batchEngineTaskItemDelegateSafeCloseable =
+					_batchEngineTaskItemDelegateRegistry.
+						getBatchEngineTaskItemDelegateWithSafeCloseable(
+							batchEngineExportTask.getCompanyId(),
+							batchEngineExportTask.getClassName(),
+							batchEngineExportTask.getTaskItemDelegateName());
+
+			SafeCloseable safeCloseable = _getNestedFieldsContextSafeCloseable(
+				batchEngineTaskItemDelegateSafeCloseable, parameters)) {
+
+			BatchEngineTaskItemDelegate<?> batchEngineTaskItemDelegate =
+				batchEngineTaskItemDelegateSafeCloseable.
+					getBatchEngineTaskItemDelegate();
 
 			int maxItems = settings.getMaxItems();
 
@@ -494,6 +506,26 @@ public class BatchEngineExportTaskExecutorImpl
 		filteredParameters.remove("sort");
 
 		return filteredParameters;
+	}
+
+	private SafeCloseable _getNestedFieldsContextSafeCloseable(
+		BatchEngineTaskItemDelegateSafeCloseable
+			batchEngineTaskItemDelegateSafeCloseable,
+		Map<String, Serializable> parameters) {
+
+		BatchEngineTaskItemDelegate<?> batchEngineTaskItemDelegate =
+			batchEngineTaskItemDelegateSafeCloseable.
+				getBatchEngineTaskItemDelegate();
+
+		return NestedFieldsContextThreadLocal.
+			setNestedFieldsContextWithSafeCloseable(
+				new NestedFieldsContext(
+					NestedFieldsContextUtil.limitDepth(
+						GetterUtil.getInteger(
+							parameters.get("batchNestedFieldsDepth"))),
+					NestedFieldsContextUtil.toList(
+						MapUtil.getString(parameters, "batchNestedFields")),
+					batchEngineTaskItemDelegate.getVersion()));
 	}
 
 	private Map<String, Serializable> _getParameters(

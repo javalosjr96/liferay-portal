@@ -1,8 +1,6 @@
 # Poshi Syntax
 
-## Trigger
-
-A Poshi DSL file changed: `*.{function,macro,path,testcase}`.
+Validates the syntax of changed Poshi files without running them.
 
 ## Match
 

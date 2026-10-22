@@ -17,6 +17,7 @@ import com.liferay.fragment.processor.FragmentEntryProcessor;
 import com.liferay.fragment.processor.FragmentEntryProcessorContext;
 import com.liferay.fragment.processor.FragmentEntryProcessorRegistry;
 import com.liferay.fragment.processor.FragmentEntryValidator;
+import com.liferay.fragment.processor.util.FragmentEntryHtmlParserUtil;
 import com.liferay.fragment.renderer.FragmentPortletRenderer;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
@@ -49,7 +50,6 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
 
-import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
@@ -125,14 +125,15 @@ public class FragmentEntryProcessorRegistryImpl
 				fragmentEntryProcessor.getDefaultEditableValuesJSONObject(
 					configurationJSONObject, html);
 
-			if ((defaultEditableValuesJSONObject != null) &&
-				(defaultEditableValuesJSONObject.length() > 0)) {
+			if ((defaultEditableValuesJSONObject == null) ||
+				(defaultEditableValuesJSONObject.length() <= 0)) {
 
-				Class<?> clazz = fragmentEntryProcessor.getClass();
-
-				jsonObject.put(
-					clazz.getName(), defaultEditableValuesJSONObject);
+				continue;
 			}
+
+			Class<?> clazz = fragmentEntryProcessor.getClass();
+
+			jsonObject.put(clazz.getName(), defaultEditableValuesJSONObject);
 		}
 
 		Document document = _getDocument(html);
@@ -146,13 +147,15 @@ public class FragmentEntryProcessorRegistryImpl
 					getDefaultEditableValuesJSONObject(
 						configurationJSONObject, document);
 
-			if ((defaultEditableValuesJSONObject != null) &&
-				(defaultEditableValuesJSONObject.length() > 0)) {
+			if ((defaultEditableValuesJSONObject == null) ||
+				(defaultEditableValuesJSONObject.length() <= 0)) {
 
-				jsonObject.put(
-					defaultEditableValuesFragmentEntryProcessor.getKey(),
-					defaultEditableValuesJSONObject);
+				continue;
 			}
+
+			jsonObject.put(
+				defaultEditableValuesFragmentEntryProcessor.getKey(),
+				defaultEditableValuesJSONObject);
 		}
 
 		return jsonObject;
@@ -191,21 +194,23 @@ public class FragmentEntryProcessorRegistryImpl
 		while (defaultEditableValuesIterator.hasNext()) {
 			String key = defaultEditableValuesIterator.next();
 
-			if (editableFragmentEntryProcessorJSONObject.has(key)) {
-				JSONObject editableValueJSONObject =
-					editableFragmentEntryProcessorJSONObject.getJSONObject(key);
-
-				JSONObject defaultEditableValueJSONObject =
-					defaultEditableFragmentEntryProcessorJSONObject.
-						getJSONObject(key);
-
-				editableValueJSONObject.put(
-					"defaultValue",
-					defaultEditableValueJSONObject.get("defaultValue"));
-
-				defaultEditableFragmentEntryProcessorJSONObject.put(
-					key, editableValueJSONObject);
+			if (!editableFragmentEntryProcessorJSONObject.has(key)) {
+				continue;
 			}
+
+			JSONObject editableValueJSONObject =
+				editableFragmentEntryProcessorJSONObject.getJSONObject(key);
+
+			JSONObject defaultEditableValueJSONObject =
+				defaultEditableFragmentEntryProcessorJSONObject.getJSONObject(
+					key);
+
+			editableValueJSONObject.put(
+				"defaultValue",
+				defaultEditableValueJSONObject.get("defaultValue"));
+
+			defaultEditableFragmentEntryProcessorJSONObject.put(
+				key, editableValueJSONObject);
 		}
 
 		Iterator<String> editableValuesIterator =
@@ -214,10 +219,12 @@ public class FragmentEntryProcessorRegistryImpl
 		while (editableValuesIterator.hasNext()) {
 			String key = editableValuesIterator.next();
 
-			if (!defaultEditableFragmentEntryProcessorJSONObject.has(key)) {
-				defaultEditableFragmentEntryProcessorJSONObject.put(
-					key, editableFragmentEntryProcessorJSONObject.get(key));
+			if (defaultEditableFragmentEntryProcessorJSONObject.has(key)) {
+				continue;
 			}
+
+			defaultEditableFragmentEntryProcessorJSONObject.put(
+				key, editableFragmentEntryProcessorJSONObject.get(key));
 		}
 
 		editableValuesJSONObject.put(
@@ -274,6 +281,10 @@ public class FragmentEntryProcessorRegistryImpl
 		throws PortalException {
 
 		if (fragmentEntryLink.isTypePortlet()) {
+			if (fragmentEntryProcessorContext.isDisablePortletRender()) {
+				return StringPool.BLANK;
+			}
+
 			return _renderWidgetHTML(
 				fragmentEntryLink, fragmentEntryProcessorContext);
 		}
@@ -411,14 +422,7 @@ public class FragmentEntryProcessorRegistryImpl
 		Document document = _documentPortalCache.get(html);
 
 		if (document == null) {
-			document = Jsoup.parseBodyFragment(html);
-
-			Document.OutputSettings outputSettings =
-				new Document.OutputSettings();
-
-			outputSettings.prettyPrint(false);
-
-			document.outputSettings(outputSettings);
+			document = FragmentEntryHtmlParserUtil.parseBodyFragment(html);
 
 			_documentPortalCache.put(html, document);
 		}

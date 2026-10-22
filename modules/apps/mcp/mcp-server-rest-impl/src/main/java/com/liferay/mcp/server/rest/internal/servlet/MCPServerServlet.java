@@ -92,12 +92,14 @@ public class MCPServerServlet extends HttpServlet {
 			String companyIdString = String.valueOf(companyId);
 
 			for (String servletKey : new ArrayList<>(_servlets.keySet())) {
-				if (servletKey.equals(companyIdString) ||
-					servletKey.startsWith(
+				if (!servletKey.equals(companyIdString) &&
+					!servletKey.startsWith(
 						companyIdString + StringPool.UNDERLINE)) {
 
-					_destroy(servletKey);
+					continue;
 				}
+
+				_destroy(servletKey);
 			}
 		}
 	}
@@ -550,7 +552,8 @@ public class MCPServerServlet extends HttpServlet {
 
 		try {
 			Tool tool = ToolSetUtil.getTool(
-				httpServletRequest, restrictFieldsMap, toolName, toolSetName);
+				httpServletRequest, false, restrictFieldsMap, toolName,
+				toolSetName);
 
 			return McpSchema.Tool.builder(
 			).description(

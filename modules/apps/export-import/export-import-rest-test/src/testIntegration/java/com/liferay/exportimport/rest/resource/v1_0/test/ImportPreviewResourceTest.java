@@ -18,6 +18,7 @@ import com.liferay.exportimport.rest.client.dto.v1_0.PreviewPortletDataHandlerSe
 import com.liferay.exportimport.rest.client.dto.v1_0.PreviewSite;
 import com.liferay.exportimport.rest.client.http.HttpInvoker;
 import com.liferay.exportimport.rest.client.resource.v1_0.ImportPreviewResource;
+import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.object.constants.ObjectDefinitionConstants;
 import com.liferay.object.constants.ObjectDefinitionSettingConstants;
@@ -34,11 +35,13 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Layout;
+import com.liferay.portal.kernel.model.LayoutSetPrototype;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
@@ -276,6 +279,9 @@ public class ImportPreviewResourceTest
 			_objectDefinitionLocalService.deleteObjectDefinition(
 				objectDefinition);
 		}
+
+		_testPostSiteImportPreviewWithLayoutSet();
+		_testPostSiteImportPreviewWithLayoutSetPrototypeGroup();
 	}
 
 	private long _addLayoutWithPortlet(Group group, String portletId)
@@ -306,10 +312,17 @@ public class ImportPreviewResourceTest
 	private File _exportLayoutAsFile(long groupId, Group... groups)
 		throws Exception {
 
+		return _exportLayoutAsFile(groupId, null, groups);
+	}
+
+	private File _exportLayoutAsFile(
+			long groupId, long[] layoutIds, Group... groups)
+		throws Exception {
+
 		Map<String, Serializable> parameterMap =
 			ExportImportConfigurationSettingsMapFactoryUtil.
 				buildExportLayoutSettingsMap(
-					TestPropsValues.getUser(), groupId, false, null,
+					TestPropsValues.getUser(), groupId, false, layoutIds,
 					_getExportLayoutParameterMap(groups));
 
 		ExportImportConfiguration exportImportConfiguration =
@@ -574,10 +587,54 @@ public class ImportPreviewResourceTest
 		Assert.assertTrue(additionCount > 0);
 	}
 
+	private void _testPostSiteImportPreviewWithLayoutSet() throws Exception {
+		Layout layout = LayoutTestUtil.addTypeContentLayout(testGroup);
+
+		ImportPreview importPreview =
+			importPreviewResource.postSiteImportPreview(
+				testGroup.getExternalReferenceCode(), 0L, null, null,
+				HashMapBuilder.put(
+					"file",
+					_exportLayoutAsFile(
+						testGroup.getGroupId(),
+						new long[] {layout.getLayoutId()})
+				).build());
+
+		long additionCount = _getAdditionCount(
+			importPreview, LayoutAdminPortletKeys.LAYOUT_SET_LAYOUTS);
+
+		Assert.assertTrue(additionCount > 0);
+	}
+
+	private void _testPostSiteImportPreviewWithLayoutSetPrototypeGroup()
+		throws Exception {
+
+		_layoutSetPrototype = LayoutTestUtil.addLayoutSetPrototype(
+			RandomTestUtil.randomString());
+
+		Group group = _layoutSetPrototype.getGroup();
+
+		ObjectDefinition objectDefinition = _publishObjectDefinitionWithEntries(
+			group.getGroupId(), ObjectDefinitionConstants.SCOPE_SITE);
+
+		_testPostImportPreviewWithObjectEntries(
+			group.getGroupId(), objectDefinition,
+			file -> importPreviewResource.postSiteImportPreview(
+				group.getExternalReferenceCode(), 0L, null, null,
+				HashMapBuilder.put(
+					"file", file
+				).build()));
+
+		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
+	}
+
 	@Inject
 	private GroupLocalService _groupLocalService;
 
 	private ImportPreviewResource _importPreviewResource;
+
+	@DeleteAfterTestRun
+	private LayoutSetPrototype _layoutSetPrototype;
 
 	@Inject
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;

@@ -5,6 +5,8 @@
 
 package com.liferay.jenkins.results.parser;
 
+import java.io.File;
+
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Properties;
@@ -13,6 +15,10 @@ import org.json.JSONObject;
 
 import org.junit.Assert;
 import org.junit.Test;
+
+import org.mockito.ArgumentMatchers;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 
 /**
  * @author Kenji Heigel
@@ -23,13 +29,13 @@ public class PullRequestTest extends com.liferay.jenkins.results.parser.Test {
 	public void testGetCIMergeSHA() throws Exception {
 		PullRequest pullRequest = _newPullRequest();
 
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderOutput(
+		setURLReaderOutput(
 			JenkinsResultsParserUtil.combine(
 				"[{\"filename\": \"test/ci-merge\", ",
 				"\"patch\": \"+abcdef0123456789abcdef0123456789abcdef01\"}]"),
-			"/files", urlReader);
+			"/files");
 
 		Assert.assertEquals(
 			"abcdef0123456789abcdef0123456789abcdef01",
@@ -40,17 +46,41 @@ public class PullRequestTest extends com.liferay.jenkins.results.parser.Test {
 	public void testGetFileNames() throws Exception {
 		PullRequest pullRequest = _newPullRequest();
 
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderOutput(
+		setURLReaderOutput(
 			JenkinsResultsParserUtil.combine(
 				"[{\"filename\": \"modules/apps/foo/Foo.java\"}, ",
 				"{\"filename\": \"portal-impl/Bar.java\"}]"),
-			"/files", urlReader);
+			"/files");
 
 		Assert.assertEquals(
 			Arrays.asList("modules/apps/foo/Foo.java", "portal-impl/Bar.java"),
 			pullRequest.getFileNames());
+	}
+
+	@Test
+	public void testGetUpstreamRemoteGitBranch() {
+		String repositoryName = RandomTestUtil.randomString();
+
+		PullRequest pullRequest = _newPullRequest(
+			RandomTestUtil.randomInt(), RandomTestUtil.randomString(),
+			repositoryName);
+
+		try (MockedStatic<GitUtil> gitUtilMockedStatic = Mockito.mockStatic(
+				GitUtil.class)) {
+
+			pullRequest.getUpstreamRemoteGitBranch();
+
+			gitUtilMockedStatic.verify(
+				() -> GitUtil.getRemoteGitBranch(
+					ArgumentMatchers.eq("master"),
+					ArgumentMatchers.any(File.class),
+					ArgumentMatchers.eq(
+						JenkinsResultsParserUtil.combine(
+							"git@github.com:liferay/", repositoryName,
+							".git"))));
+		}
 	}
 
 	@Test
@@ -87,17 +117,51 @@ public class PullRequestTest extends com.liferay.jenkins.results.parser.Test {
 		return PullRequestFactory.newPullRequest(iterator.next(), null);
 	}
 
+	private PullRequest _newPullRequest(
+		int number, String ownerUsername, String repositoryName) {
+
+		String htmlURL = JenkinsResultsParserUtil.combine(
+			"https://github.com/", ownerUsername, "/", repositoryName, "/pull/",
+			String.valueOf(number));
+
+		return PullRequestFactory.newPullRequest(
+			new JSONObject(
+			).put(
+				"base",
+				new JSONObject(
+				).put(
+					"ref", "master"
+				).put(
+					"repo",
+					new JSONObject(
+					).put(
+						"name", repositoryName
+					).put(
+						"owner",
+						new JSONObject(
+						).put(
+							"login", ownerUsername
+						)
+					)
+				)
+			).put(
+				"html_url", htmlURL
+			).put(
+				"number", number
+			));
+	}
+
 	private PullRequest _newPullRequestWithRequiredTestSuites(
 			String propertyNameSuffix)
 		throws Exception {
 
 		PullRequest pullRequest = _newPullRequest();
 
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderOutput(
+		setURLReaderOutput(
 			"[{\"context\": \"liferay/ci:test:sf\", \"state\": \"success\"}]",
-			"/statuses", urlReader);
+			"/statuses");
 
 		Properties buildProperties = new Properties();
 

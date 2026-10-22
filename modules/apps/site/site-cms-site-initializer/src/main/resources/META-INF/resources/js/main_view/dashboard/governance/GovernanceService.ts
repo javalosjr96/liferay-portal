@@ -3,7 +3,19 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import ApiHelper from '../../../common/services/ApiHelper';
+import ApiHelper, {RequestResult} from '../../../common/services/ApiHelper';
+import {
+	EXPIRING_SOON_THRESHOLD_DAYS,
+	UPCOMING_REVIEW_THRESHOLD_DAYS,
+	WORKFLOW_STATUS,
+} from '../../../common/utils/constants';
+
+export type ContentAgeDateField = 'createDate' | 'modified';
+
+type ContentAgeRange = {
+	fromMonths: number;
+	toMonths?: number;
+};
 
 export type AssetStatistics = {
 	approvedCount: number;
@@ -12,42 +24,87 @@ export type AssetStatistics = {
 	expiredCount: number;
 	expiringSoonCount: number;
 	inDraftCount: number;
+	longStandingDraftsCount: number;
+	missingRequiredFieldsCount: number;
+	overdueWorkflowTasksCount: number;
 	pendingCount: number;
 	reviewDateOverdueCount: number;
 	scheduledCount: number;
+	slaBreachedWorkflowTasksCount: number;
 	totalCount: number;
 	upcomingReviewCount: number;
+	workflowTasksCount: number;
 };
 
-export type DuplicateTitle = {
+export type Contributor = {
 	frequency: number;
-	term: string;
+	name: string | null;
 };
 
-export type DuplicateTopicAsset = {
-	dateModified: string;
-	embedded?: {id: number};
-	entryClassName: string;
-	title: string;
+export type Contributors = {
+	contributors: Contributor[];
+	totalCount: number;
 };
 
-export type StatusFacetBucket = {
+export type FacetBucket = {
 	displayName: string;
 	frequency: number;
 	term: string;
 };
 
-const DUPLICATE_TITLES_AGGREGATION_NAME = 'duplicateTitles';
+export type FreshnessListType =
+	| 'expiredAssets'
+	| 'expiringSoon'
+	| 'overdueReviews'
+	| 'upcomingReviews';
 
-const MAX_FACET_TERMS = 10000;
+const CONTENT_AGE_AGGREGATION_NAME = 'contentAge';
 
-const MINIMUM_DUPLICATE_FREQUENCY = 2;
+const CONTENT_AGE_DATE_FORMAT = 'yyyyMMddHHmmss';
 
-const NEEDS_REVIEW_PAGE_SIZE = 8;
+const CONTENT_AGE_RANGES: ContentAgeRange[] = [
+	{fromMonths: 0, toMonths: 3},
+	{fromMonths: 3, toMonths: 6},
+	{fromMonths: 6, toMonths: 12},
+	{fromMonths: 12, toMonths: 24},
+	{fromMonths: 24},
+];
+
+const CONTRIBUTORS_AGGREGATION_NAME = 'contributors';
+
+const LONG_STANDING_DRAFT_DAYS = 30;
+
+export const GOVERNANCE_ASSET_LIST_PAGE_SIZE = 8;
+
+const MAX_CONTRIBUTORS = 7;
+
+export const MILLISECONDS_PER_DAY = 24 * 60 * 60 * 1000;
 
 const NESTED_FIELDS = 'embedded,systemProperties.objectDefinitionBrief';
 
 const SEARCH_URL = '/o/search/v1.0/search';
+
+const FRESHNESS_LIST_QUERIES: Record<
+	FreshnessListType,
+	() => {filter: string; sort: string}
+> = {
+	expiredAssets: () => ({
+		filter: `status eq ${WORKFLOW_STATUS.EXPIRED}`,
+		sort: 'dateExpiration:asc',
+	}),
+	expiringSoon: () => ({
+		filter: `status eq ${WORKFLOW_STATUS.APPROVED} and dateExpiration le ${getDateInDays(EXPIRING_SOON_THRESHOLD_DAYS).toISOString()}`,
+		sort: 'dateExpiration:asc',
+	}),
+	overdueReviews: () => ({
+		filter: `dateReview lt ${getDateInDays(0).toISOString()}`,
+		sort: 'dateReview:asc',
+	}),
+	upcomingReviews: () => ({
+		filter: `dateReview gt ${getDateInDays(0).toISOString()} and dateReview le ${getDateInDays(UPCOMING_REVIEW_THRESHOLD_DAYS).toISOString()}`,
+		sort: 'dateReview:asc',
+	}),
+};
 
 async function getAssetStatistics(
 	assetLibraryId?: string,
@@ -79,16 +136,156 @@ async function getAssetStatistics(
 	};
 }
 
-function getContentProgress(filter: string, groupId?: number) {
+async function getContributors(
+	filter: string,
+	groupId?: number
+): Promise<RequestResult<Contributors>> {
 	const searchParams = new URLSearchParams({
 		filter: getScopedFilter(filter, groupId),
+		pageSize: '1',
 	});
+
+	const {data, error} = await ApiHelper.post<{
+		searchFacets?: Record<string, FacetBucket[]>;
+		totalCount: number;
+	}>(`${SEARCH_URL}?${searchParams}`, {
+		attributes: {'search.empty.search': true},
+		facetConfigurations: [
+			{
+				aggregationName: CONTRIBUTORS_AGGREGATION_NAME,
+				frequencyThreshold: 1,
+				maxTerms: MAX_CONTRIBUTORS,
+				name: 'user',
+			},
+		],
+	});
+
+	if (!data) {
+		return {data: null, error};
+	}
+
+	const buckets = data.searchFacets?.[CONTRIBUTORS_AGGREGATION_NAME] ?? [];
+
+	const userAccounts = await Promise.all(
+		buckets.map(({term}) =>
+			ApiHelper.get<{name: string}>(
+				`/o/headless-admin-user/v1.0/user-accounts/${term}`
+			)
+		)
+	);
+
+	const failedUserAccount = userAccounts.find(
+		({error, status}) => error && status !== 'NOT_FOUND'
+	);
+
+	if (failedUserAccount?.error) {
+		return {data: null, error: failedUserAccount.error};
+	}
+
+	return {
+		data: {
+			contributors: buckets.map(({frequency}, index) => ({
+				frequency,
+				name: userAccounts[index].data?.name ?? null,
+			})),
+			totalCount: data.totalCount,
+		},
+		error: null,
+	};
+}
+
+function formatSearchDate(date: Date) {
+	return date
+		.toISOString()
+		.replace(/\D/g, '')
+		.slice(0, CONTENT_AGE_DATE_FORMAT.length);
+}
+
+function getDateMonthsAgo(now: Date, months: number) {
+	const date = new Date(now);
+
+	date.setUTCMonth(date.getUTCMonth() - months);
+
+	return date;
+}
+
+function getContentAgeSearchRanges(now: Date) {
+	return CONTENT_AGE_RANGES.map(({fromMonths, toMonths}) => {
+		const from = toMonths ? getDateMonthsAgo(now, toMonths) : new Date(0);
+
+		return `[${formatSearchDate(from)} TO ${formatSearchDate(getDateMonthsAgo(now, fromMonths))}]`;
+	});
+}
+
+async function getContentAgeDistribution(
+	filter: string,
+	dateField: ContentAgeDateField,
+	groupId?: number
+): Promise<RequestResult<number[]>> {
+	const searchParams = new URLSearchParams({
+		filter: getScopedFilter(
+			`${filter} and status eq ${WORKFLOW_STATUS.APPROVED}`,
+			groupId
+		),
+		pageSize: '1',
+	});
+
+	const ranges = getContentAgeSearchRanges(new Date(Date.now()));
+
+	const {data, error} = await ApiHelper.post<{
+		searchFacets?: Record<string, FacetBucket[]>;
+	}>(`${SEARCH_URL}?${searchParams}`, {
+		attributes: {'search.empty.search': true},
+		facetConfigurations: [
+			{
+				aggregationName: CONTENT_AGE_AGGREGATION_NAME,
+				attributes: {
+					field: dateField,
+					format: CONTENT_AGE_DATE_FORMAT,
+					ranges: ranges.map((range) => ({label: range, range})),
+				},
+				frequencyThreshold: 0,
+				name: 'date-range',
+			},
+		],
+	});
+
+	if (!data) {
+		return {data: null, error};
+	}
+
+	const buckets = data.searchFacets?.[CONTENT_AGE_AGGREGATION_NAME] ?? [];
+
+	return {
+		data: ranges.map(
+			(range) => buckets.find(({term}) => term === range)?.frequency ?? 0
+		),
+		error: null,
+	};
+}
+
+function getContentProgress(
+	filter: string,
+	groupId?: number,
+	createdInLastDays?: number
+) {
+	let scopedFilter = getScopedFilter(filter, groupId);
+
+	if (createdInLastDays) {
+		const createdSince = new Date(
+			Date.now() - createdInLastDays * MILLISECONDS_PER_DAY
+		);
+
+		scopedFilter = `${scopedFilter} and dateCreated ge ${createdSince.toISOString()}`;
+	}
+
+	const searchParams = new URLSearchParams({filter: scopedFilter});
 
 	// Facet configurations only work in the POST body, where the empty-search
 	// switch must travel as an attribute (the query parameter is ignored).
 
 	return ApiHelper.post<{
-		searchFacets?: {statusFacet?: StatusFacetBucket[]};
+		searchFacets?: {statusFacet?: FacetBucket[]};
 	}>(`${SEARCH_URL}?${searchParams}`, {
 		attributes: {'search.empty.search': true},
 		facetConfigurations: [
@@ -111,108 +308,90 @@ function getScopedFilter(filter: string, groupId?: number) {
 	return `${filter} and groupIds/any(g:g eq ${Number(groupId)})`;
 }
 
-function getSearchURL(filter: string, sort: string, groupId?: number) {
+function getLongStandingDraftsThresholdDate() {
+	return new Date(
+		Date.now() - LONG_STANDING_DRAFT_DAYS * MILLISECONDS_PER_DAY
+	);
+}
+
+function getAssetListURL(filter: string, sort: string, groupId?: number) {
 	const searchParams = new URLSearchParams({
 		emptySearch: 'true',
 		filter: getScopedFilter(filter, groupId),
 		nestedFields: NESTED_FIELDS,
-		pageSize: String(NEEDS_REVIEW_PAGE_SIZE),
+		pageSize: String(GOVERNANCE_ASSET_LIST_PAGE_SIZE),
 		sort,
 	});
 
 	return `${SEARCH_URL}?${searchParams}`;
 }
 
-async function getCMSEntryClassNames(
-	ercContentStructures: string,
-	ercFileTypes: string,
-	signal?: AbortSignal
-) {
-	const filter = encodeURIComponent(
-		`objectFolderExternalReferenceCode eq '${ercContentStructures}' or objectFolderExternalReferenceCode eq '${ercFileTypes}'`
-	);
-
-	const {data} = await ApiHelper.get<{items: {className: string}[]}>(
-		`/o/object-admin/v1.0/object-definitions?filter=${filter}&pageSize=-1`,
-		signal
-	);
-
-	return (data?.items ?? []).map(({className}) => className).join(',');
-}
-
-async function getDuplicateTitles({
-	entryClassNames,
-	signal,
-	siteId,
-}: {
-	entryClassNames: string;
-	signal?: AbortSignal;
-	siteId?: number;
-}): Promise<DuplicateTitle[] | undefined> {
-	if (!entryClassNames) {
-		return undefined;
-	}
-
+function getAssetsByIdsURL(ids: number[]) {
 	const searchParams = new URLSearchParams({
-		entryClassNames,
-		pageSize: '1',
+		emptySearch: 'true',
+		filter: ids.map((id) => `entryClassPK eq ${id}`).join(' or '),
+		nestedFields: NESTED_FIELDS,
+		pageSize: String(ids.length),
 	});
 
-	if (siteId) {
-		searchParams.set('filter', `groupIds/any(g:g eq ${siteId})`);
-	}
-
-	const {data} = await ApiHelper.post<{
-		searchFacets?: Record<string, DuplicateTitle[]>;
-	}>(
-		`/o/search/v1.0/search?${searchParams}`,
-		{
-			attributes: {'search.empty.search': true},
-			facetConfigurations: [
-				{
-					aggregationName: DUPLICATE_TITLES_AGGREGATION_NAME,
-					attributes: {
-						field: `localized_title_${Liferay.ThemeDisplay.getLanguageId()}_sortable.keyword_lowercase`,
-					},
-					frequencyThreshold: MINIMUM_DUPLICATE_FREQUENCY,
-					maxTerms: MAX_FACET_TERMS,
-					name: 'custom',
-				},
-			],
-		},
-		signal
-	);
-
-	if (!data) {
-		return undefined;
-	}
-
-	return data.searchFacets?.[DUPLICATE_TITLES_AGGREGATION_NAME] ?? [];
+	return `${SEARCH_URL}?${searchParams}`;
 }
 
-async function getDuplicateTopicsCount({
-	entryClassNames,
-	signal,
-	siteId,
-}: {
-	entryClassNames: string;
-	signal?: AbortSignal;
-	siteId?: number;
-}) {
-	const titles = await getDuplicateTitles({entryClassNames, signal, siteId});
+function getQualityAssetsURL(path: string, assetLibraryId?: string) {
+	const searchParams = new URLSearchParams({
+		pageSize: String(GOVERNANCE_ASSET_LIST_PAGE_SIZE),
+		sort: 'title:asc',
+	});
 
-	if (!titles) {
-		return undefined;
+	if (assetLibraryId) {
+		searchParams.set('assetLibraryId', assetLibraryId);
 	}
 
-	return titles.reduce((count, {frequency}) => count + frequency, 0);
+	return `/o/headless-cms/v1.0/${path}?${searchParams}`;
+}
+
+function getBrokenLinkAssetsURL(assetLibraryId?: string) {
+	return getQualityAssetsURL('broken-link-assets', assetLibraryId);
+}
+
+function getMissingRequiredFieldsAssetsURL(assetLibraryId?: string) {
+	return getQualityAssetsURL(
+		'missing-required-fields-assets',
+		assetLibraryId
+	);
+}
+
+function getDateInDays(days: number) {
+	return new Date(Date.now() + days * MILLISECONDS_PER_DAY);
+}
+
+function getFreshnessListURL(
+	type: FreshnessListType,
+	filter: string,
+	groupId?: number
+) {
+	const {filter: typeFilter, sort} = FRESHNESS_LIST_QUERIES[type]();
+
+	return getAssetListURL(`${filter} and ${typeFilter}`, sort, groupId);
+}
+
+function getLongStandingDraftsURL(filter: string, groupId?: number) {
+	return getAssetListURL(
+		`${filter} and status eq ${WORKFLOW_STATUS.DRAFT} and dateModified lt ${getLongStandingDraftsThresholdDate().toISOString()}`,
+		'dateModified:asc',
+		groupId
+	);
 }
 
 export default {
 	getAssetStatistics,
-	getCMSEntryClassNames,
+	getAssetsByIdsURL,
+	getBrokenLinkAssetsURL,
+	getContentAgeDistribution,
 	getContentProgress,
-	getDuplicateTitles,
-	getDuplicateTopicsCount,
-	getSearchURL,
+	getContributors,
+	getFreshnessListURL,
+	getLongStandingDraftsThresholdDate,
+	getLongStandingDraftsURL,
+	getMissingRequiredFieldsAssetsURL,
 };

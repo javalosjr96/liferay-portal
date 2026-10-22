@@ -24,6 +24,7 @@ import {
 	useStyleErrors,
 } from '../../contexts/StyleErrorsContext';
 import {Color, ColorCategoryMap, Field, Token} from '../../types/ColorPicker';
+import isTokenLinkedTo from '../../utils/isTokenLinkedTo';
 import ColorPickerField from './ColorPickerField';
 import {parseColorValue} from './parseColorValue';
 
@@ -50,6 +51,7 @@ interface Props {
 	defaultTokenValue?: string;
 	editedTokenValues: Record<string, Token>;
 	field: Field;
+	labelAfter?: React.ReactNode;
 	onValueSelect: (fieldName: string, value: string) => void;
 	restoreButtonLabel?: string;
 	showLabel?: boolean;
@@ -64,6 +66,7 @@ export default function ColorPicker({
 	defaultTokenValue = '',
 	editedTokenValues,
 	field,
+	labelAfter,
 	onValueSelect,
 	showLabel = true,
 	tokenValues,
@@ -121,9 +124,11 @@ export default function ColorPicker({
 		.filter((token) => token.editorType === 'ColorPicker')
 		.map((token) => ({
 			...token,
-			disabled:
-				token.name === field.name ||
-				editedTokenValues?.[token.name]?.name === field.name,
+			disabled: isTokenLinkedTo({
+				editedTokenValues,
+				linkedName: field.name,
+				name: token.name,
+			}),
 		}));
 
 	tokenColorValues.forEach(
@@ -261,6 +266,8 @@ export default function ColorPicker({
 			<label className={classNames({'sr-only': !showLabel})}>
 				{field.label}
 			</label>
+
+			{labelAfter}
 
 			<div
 				className={classNames('layout__color-picker rounded', {

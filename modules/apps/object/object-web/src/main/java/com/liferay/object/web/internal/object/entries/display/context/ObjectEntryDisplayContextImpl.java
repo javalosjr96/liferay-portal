@@ -871,8 +871,6 @@ public class ObjectEntryDisplayContextImpl
 		ddmFormRenderingContext.addProperty(
 			"availableLocales", LanguageUtil.getAvailableLocales(groupId));
 
-		ddmFormRenderingContext.setContainerId("editObjectEntry");
-
 		if (objectEntry != null) {
 			ddmFormRenderingContext.addProperty(
 				"objectEntryId", objectEntry.getId());
@@ -898,6 +896,8 @@ public class ObjectEntryDisplayContextImpl
 		LiferayPortletResponse liferayPortletResponse =
 			_objectRequestHelper.getLiferayPortletResponse();
 
+		ddmFormRenderingContext.setContainerId(
+			liferayPortletResponse.getNamespace() + "editObjectEntry");
 		ddmFormRenderingContext.setPortletNamespace(
 			liferayPortletResponse.getNamespace());
 
@@ -1379,6 +1379,17 @@ public class ObjectEntryDisplayContextImpl
 				objectDefinition.getExternalReferenceCode());
 
 			ddmFormField.setProperty("objectEntryId", objectEntry.getId());
+		}
+		else if (StringUtil.equals(
+					objectField.getBusinessType(),
+					ObjectFieldConstants.BUSINESS_TYPE_LOCATION)) {
+
+			ddmFormField.setProperty("groupId", _getGroupId());
+
+			ObjectDefinition objectDefinition = getObjectDefinition1();
+
+			ddmFormField.setProperty(
+				"objectDefinitionId", objectDefinition.getObjectDefinitionId());
 		}
 
 		ddmFormField.setReadOnly(readOnly);

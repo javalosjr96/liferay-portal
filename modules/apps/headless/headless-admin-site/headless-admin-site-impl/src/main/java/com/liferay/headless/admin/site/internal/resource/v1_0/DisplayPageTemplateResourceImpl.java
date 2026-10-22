@@ -7,8 +7,6 @@ package com.liferay.headless.admin.site.internal.resource.v1_0;
 
 import com.liferay.client.extension.type.manager.CETManager;
 import com.liferay.depot.constants.DepotConstants;
-import com.liferay.depot.model.DepotEntry;
-import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.exportimport.constants.ExportImportConstants;
 import com.liferay.exportimport.vulcan.batch.engine.ExportImportVulcanBatchEngineTaskItemDelegate;
 import com.liferay.fragment.processor.FragmentEntryProcessorRegistry;
@@ -58,7 +56,6 @@ import com.liferay.portal.kernel.search.Field;
 import com.liferay.portal.kernel.search.Sort;
 import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
-import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
@@ -123,8 +120,6 @@ public class DisplayPageTemplateResourceImpl
 			String displayPageTemplateExternalReferenceCode)
 		throws Exception {
 
-		EnabledUtil.checkDesignLibrariesEnabled(contextCompany);
-
 		_layoutPageTemplateEntryService.deleteLayoutPageTemplateEntry(
 			_getLayoutPageTemplateEntry(
 				displayPageTemplateExternalReferenceCode,
@@ -150,8 +145,6 @@ public class DisplayPageTemplateResourceImpl
 			String displayPageTemplateExternalReferenceCode)
 		throws Exception {
 
-		EnabledUtil.checkDesignLibrariesEnabled(contextCompany);
-
 		return _toDesignLibraryDisplayPageTemplate(
 			designLibraryExternalReferenceCode,
 			_getLayoutPageTemplateEntry(
@@ -164,8 +157,6 @@ public class DisplayPageTemplateResourceImpl
 			String designLibraryExternalReferenceCode,
 			String displayPageTemplateExternalReferenceCode, String roleNames)
 		throws Exception {
-
-		EnabledUtil.checkDesignLibrariesEnabled(contextCompany);
 
 		long groupId = _getDesignLibraryGroupId(
 			designLibraryExternalReferenceCode);
@@ -189,14 +180,8 @@ public class DisplayPageTemplateResourceImpl
 			Sort[] sorts)
 		throws Exception {
 
-		EnabledUtil.checkDesignLibrariesEnabled(contextCompany);
-
 		long groupId = _getDesignLibraryGroupId(
 			designLibraryExternalReferenceCode);
-
-		if (!_hasViewDepotEntryPermission(groupId)) {
-			return Page.of(Collections.emptyList());
-		}
 
 		return _getDisplayPageTemplatesPage(
 			filter, groupId, pagination, search, sorts,
@@ -360,8 +345,6 @@ public class DisplayPageTemplateResourceImpl
 				String displayPageTemplateExternalReferenceCode)
 		throws Exception {
 
-		EnabledUtil.checkDesignLibrariesEnabled(contextCompany);
-
 		LayoutPageTemplateEntry layoutPageTemplateEntry =
 			_getLayoutPageTemplateEntry(
 				displayPageTemplateExternalReferenceCode,
@@ -393,8 +376,6 @@ public class DisplayPageTemplateResourceImpl
 				String designLibraryExternalReferenceCode,
 				String displayPageTemplateExternalReferenceCode)
 		throws Exception {
-
-		EnabledUtil.checkDesignLibrariesEnabled(contextCompany);
 
 		LayoutPageTemplateEntry layoutPageTemplateEntry =
 			_getLayoutPageTemplateEntry(
@@ -490,8 +471,6 @@ public class DisplayPageTemplateResourceImpl
 			String displayPageTemplateExternalReferenceCode,
 			Permission[] permissions)
 		throws Exception {
-
-		EnabledUtil.checkDesignLibrariesEnabled(contextCompany);
 
 		super.putSiteDisplayPageTemplatePermissionsPage(
 			designLibraryExternalReferenceCode,
@@ -823,8 +802,6 @@ public class DisplayPageTemplateResourceImpl
 			String displayPageTemplateExternalReferenceCode)
 		throws Exception {
 
-		EnabledUtil.checkDesignLibrariesEnabled(contextCompany);
-
 		long groupId = _getDesignLibraryGroupId(
 			designLibraryExternalReferenceCode);
 
@@ -1081,15 +1058,6 @@ public class DisplayPageTemplateResourceImpl
 		return unicodeProperties;
 	}
 
-	private boolean _hasViewDepotEntryPermission(long groupId)
-		throws Exception {
-
-		return _depotEntryModelResourcePermission.contains(
-			PermissionThreadLocal.getPermissionChecker(),
-			_depotEntryLocalService.getGroupDepotEntry(groupId),
-			ActionKeys.VIEW);
-	}
-
 	private DisplayPageTemplate _toDesignLibraryDisplayPageTemplate(
 			String designLibraryExternalReferenceCode,
 			LayoutPageTemplateEntry layoutPageTemplateEntry)
@@ -1153,13 +1121,6 @@ public class DisplayPageTemplateResourceImpl
 
 	@Reference
 	private ClassNameLocalService _classNameLocalService;
-
-	@Reference
-	private DepotEntryLocalService _depotEntryLocalService;
-
-	@Reference(target = "(model.class.name=com.liferay.depot.model.DepotEntry)")
-	private ModelResourcePermission<DepotEntry>
-		_depotEntryModelResourcePermission;
 
 	@Reference(
 		target = "(component.name=com.liferay.headless.admin.site.internal.dto.v1_0.converter.DisplayPageTemplateDTOConverter)"

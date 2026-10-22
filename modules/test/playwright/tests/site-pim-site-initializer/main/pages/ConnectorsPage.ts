@@ -6,11 +6,16 @@
 import {Locator, Page, expect} from '@playwright/test';
 
 import {PORTLET_URLS} from '../../../../utils/portletUrls';
+import {waitForAlert} from '../../../../utils/waitForAlert';
 import {DataSetPage} from '../../../site-cms-site-initializer/main/pages/DataSetPage';
 import {EditConnectorPage} from './EditConnectorPage';
 
 export class ConnectorsPage {
 	readonly dataSetFragmentPage: DataSetPage;
+	readonly deleteModal: Locator;
+	readonly deleteModalCancelButton: Locator;
+	readonly deleteModalConfirmButton: Locator;
+	readonly deleteModalTitle: Locator;
 	readonly emptyStateTitle: Locator;
 	readonly filterButton: Locator;
 	readonly filterMenuItem: (name: string) => Locator;
@@ -19,6 +24,16 @@ export class ConnectorsPage {
 
 	constructor(page: Page) {
 		this.dataSetFragmentPage = new DataSetPage(page);
+		this.deleteModal = page.locator('.modal-content');
+		this.deleteModalCancelButton = this.deleteModal.getByRole('button', {
+			exact: true,
+			name: 'Cancel',
+		});
+		this.deleteModalConfirmButton = this.deleteModal.getByRole('button', {
+			exact: true,
+			name: 'Delete',
+		});
+		this.deleteModalTitle = this.deleteModal.locator('.modal-title');
 		this.emptyStateTitle = page.getByText('No Connectors Yet', {
 			exact: true,
 		});
@@ -33,9 +48,11 @@ export class ConnectorsPage {
 	}
 
 	async createConnector({
+		active = false,
 		connector,
 		name,
 	}: {
+		active?: boolean;
 		connector: string;
 		name: string;
 	}) {
@@ -45,20 +62,35 @@ export class ConnectorsPage {
 
 		const editConnectorPage = new EditConnectorPage(this.page);
 
-		await editConnectorPage.createConnector({connector, name});
+		await editConnectorPage.createConnector({active, connector, name});
 
 		await expect(this.getConnector(name)).toBeVisible();
 	}
 
 	async deleteConnector(name: string) {
-		this.page.once('dialog', (dialog) => dialog.accept());
+		await this.openDeleteConfirmation(name);
 
+		await this.deleteModalConfirmButton.click();
+
+		await this.getConnector(name).waitFor({state: 'hidden'});
+	}
+
+	async deleteConnectorIfPresent(name: string) {
+		if (await this.getConnector(name).isVisible()) {
+			await this.deleteConnector(name);
+		}
+	}
+
+	async executeConnector(name: string) {
 		await this.dataSetFragmentPage.execItemAction({
-			action: 'Delete',
+			action: 'Execute',
 			filter: name,
 		});
 
-		await this.getConnector(name).waitFor({state: 'hidden'});
+		await waitForAlert(
+			this.page,
+			'Execution has started successfully and will continue in the background.'
+		);
 	}
 
 	getConnector(name: string) {
@@ -67,6 +99,24 @@ export class ConnectorsPage {
 
 	getConnectorStatus(name: string) {
 		return this.dataSetFragmentPage.getRow(name).locator('.label');
+	}
+
+	async openConnectorSchedule(name: string) {
+		await this.dataSetFragmentPage.execItemAction({
+			action: 'Schedule',
+			filter: name,
+		});
+
+		await this.page.waitForURL(/edit_dispatch_trigger/);
+	}
+
+	async openDeleteConfirmation(name: string) {
+		await this.dataSetFragmentPage.execItemAction({
+			action: 'Delete',
+			filter: name,
+		});
+
+		await this.deleteModal.waitFor({state: 'visible'});
 	}
 
 	async goto() {

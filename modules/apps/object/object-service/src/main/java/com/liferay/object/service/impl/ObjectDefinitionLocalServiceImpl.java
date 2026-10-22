@@ -65,6 +65,7 @@ import com.liferay.object.exception.ObjectDefinitionSystemException;
 import com.liferay.object.exception.ObjectDefinitionValidationException;
 import com.liferay.object.exception.ObjectDefinitionValidationException.ValidationError;
 import com.liferay.object.exception.ObjectDefinitionVersionException;
+import com.liferay.object.exception.ObjectFieldBusinessTypeException;
 import com.liferay.object.exception.ObjectFieldRelationshipTypeException;
 import com.liferay.object.exception.ObjectRelationshipEdgeException;
 import com.liferay.object.exception.RequiredObjectDefinitionException;
@@ -381,12 +382,14 @@ public class ObjectDefinitionLocalServiceImpl
 				objectDefinition.getDBTableName());
 
 		for (ObjectField oldObjectField : oldObjectFields) {
-			if (oldObjectField.isSystem() &&
-				!ObjectFieldUtil.isMetadata(oldObjectField.getName()) &&
-				!_hasObjectField(newObjectFields, oldObjectField)) {
+			if (!oldObjectField.isSystem() ||
+				ObjectFieldUtil.isMetadata(oldObjectField.getName()) ||
+				_hasObjectField(newObjectFields, oldObjectField)) {
 
-				_objectFieldPersistence.remove(oldObjectField);
+				continue;
 			}
+
+			_objectFieldPersistence.remove(oldObjectField);
 		}
 
 		for (ObjectField newObjectField : newObjectFields) {
@@ -527,7 +530,8 @@ public class ObjectDefinitionLocalServiceImpl
 			throw new RequiredObjectDefinitionException();
 		}
 
-		if (ArrayUtil.isNotEmpty(
+		if (!PortalInstances.isCurrentCompanyInDeletionProcess() &&
+			ArrayUtil.isNotEmpty(
 				objectDefinition.getRootObjectDefinitionIds())) {
 
 			throw new ObjectRelationshipEdgeException(
@@ -2629,11 +2633,13 @@ public class ObjectDefinitionLocalServiceImpl
 		}
 
 		for (ValidationError validationError : validationErrors) {
-			if (entryClassName.equals(validationError.getEntryClassName()) &&
-				Validator.isNull(validationError.getEntryKey())) {
+			if (!entryClassName.equals(validationError.getEntryClassName()) ||
+				Validator.isNotNull(validationError.getEntryKey())) {
 
-				validationError.setEntryKey(entryKey);
+				continue;
 			}
+
+			validationError.setEntryKey(entryKey);
 		}
 	}
 
@@ -2771,6 +2777,8 @@ public class ObjectDefinitionLocalServiceImpl
 		String oldClassName = objectDefinition.getClassName();
 		boolean oldEnableObjectEntrySubscription =
 			objectDefinition.isEnableObjectEntrySubscription();
+		String oldFriendlyURLSeparator =
+			objectDefinition.getFriendlyURLSeparator();
 
 		boolean addSystemObjectFields = false;
 
@@ -2934,6 +2942,14 @@ public class ObjectDefinitionLocalServiceImpl
 
 				objectDefinitionLocalService.deployObjectDefinition(
 					objectDefinition);
+
+				if (!StringUtil.equals(
+						oldFriendlyURLSeparator,
+						objectDefinition.getFriendlyURLSeparator())) {
+
+					_registerTransactionCallbackForCluster(
+						_deployObjectDefinitionMethodKey, objectDefinition);
+				}
 			}
 
 			if (active != oldActive) {
@@ -3612,12 +3628,14 @@ public class ObjectDefinitionLocalServiceImpl
 
 			char c = nameCharArray[i];
 
-			if (!Validator.isChar(c) && !Validator.isDigit(c)) {
-				_handleException(
-					new ObjectDefinitionNameException.
-						MustOnlyContainLettersAndDigits(),
-					"name", name);
+			if (Validator.isChar(c) || Validator.isDigit(c)) {
+				continue;
 			}
+
+			_handleException(
+				new ObjectDefinitionNameException.
+					MustOnlyContainLettersAndDigits(),
+				"name", name);
 		}
 
 		if ((system && !Character.isUpperCase(nameCharArray[0])) ||
@@ -3828,44 +3846,43 @@ public class ObjectDefinitionLocalServiceImpl
 					"objectDefinitionSettings", null);
 			}
 
-			if (objectDefinitionSettingsValuesMap.containsKey(
+			if (!objectDefinitionSettingsValuesMap.containsKey(
 					ObjectDefinitionSettingConstants.NAME_ACCEPTED_GROUP_IDS)) {
 
-				if (acceptAllGroups != null) {
-					_handleException(
-						new ObjectDefinitionSettingNameException.
-							NotAllowedNames(
-								objectDefinition.getShortName(),
-								Set.of(
-									ObjectDefinitionSettingConstants.
-										NAME_ACCEPTED_GROUP_IDS)),
-						"objectDefinitionSettings", null);
-				}
+				continue;
+			}
 
-				ObjectScopeProvider objectScopeProvider =
-					_objectScopeProviderRegistry.getObjectScopeProvider(
-						objectDefinition.getScope());
-
-				String acceptedGroupIds = objectDefinitionSettingsValuesMap.get(
-					ObjectDefinitionSettingConstants.NAME_ACCEPTED_GROUP_IDS);
-
-				for (String acceptedGroupId :
-						acceptedGroupIds.split("\\s*,\\s*")) {
-
-					if (objectScopeProvider.isValidGroupId(
-							GetterUtil.getLong(acceptedGroupId))) {
-
-						continue;
-					}
-
-					_handleException(
-						new ObjectDefinitionSettingValueException.InvalidValue(
-							objectDefinition.getShortName(),
+			if (acceptAllGroups != null) {
+				_handleException(
+					new ObjectDefinitionSettingNameException.NotAllowedNames(
+						objectDefinition.getShortName(),
+						Set.of(
 							ObjectDefinitionSettingConstants.
-								NAME_ACCEPTED_GROUP_IDS,
-							acceptedGroupId),
-						"objectDefinitionSettings", null);
+								NAME_ACCEPTED_GROUP_IDS)),
+					"objectDefinitionSettings", null);
+			}
+
+			ObjectScopeProvider objectScopeProvider =
+				_objectScopeProviderRegistry.getObjectScopeProvider(
+					objectDefinition.getScope());
+
+			String acceptedGroupIds = objectDefinitionSettingsValuesMap.get(
+				ObjectDefinitionSettingConstants.NAME_ACCEPTED_GROUP_IDS);
+
+			for (String acceptedGroupId : acceptedGroupIds.split("\\s*,\\s*")) {
+				if (objectScopeProvider.isValidGroupId(
+						GetterUtil.getLong(acceptedGroupId))) {
+
+					continue;
 				}
+
+				_handleException(
+					new ObjectDefinitionSettingValueException.InvalidValue(
+						objectDefinition.getShortName(),
+						ObjectDefinitionSettingConstants.
+							NAME_ACCEPTED_GROUP_IDS,
+						acceptedGroupId),
+					"objectDefinitionSettings", null);
 			}
 		}
 	}
@@ -3890,6 +3907,16 @@ public class ObjectDefinitionLocalServiceImpl
 				objectFieldId);
 
 			return;
+		}
+
+		if (objectField.compareBusinessType(
+				ObjectFieldConstants.BUSINESS_TYPE_LOCATION)) {
+
+			_handleException(
+				new ObjectFieldBusinessTypeException(
+					"Business type location cannot be used as the title " +
+						"object field"),
+				"titleObjectFieldId", objectFieldId);
 		}
 
 		if (Validator.isNotNull(objectField.getRelationshipType())) {
@@ -4023,19 +4050,21 @@ public class ObjectDefinitionLocalServiceImpl
 				ObjectDefinitionSettingConstants.NAME_ACCEPTED_GROUP_IDS,
 				objectDefinitionSettings);
 
-			if (Validator.isNull(acceptedGroupIds) ||
-				!ArrayUtil.exists(
+			if (Validator.isNotNull(acceptedGroupIds) &&
+				ArrayUtil.exists(
 					acceptedGroupIds.split("\\s*,\\s*"),
 					acceptedGroupId -> acceptedGroupId.equals(
 						String.valueOf(workflowDefinitionLink.getGroupId())))) {
 
-				_handleException(
-					new ObjectDefinitionScopeException(
-						StringBundler.concat(
-							"The group ", workflowDefinitionLink.getGroupId(),
-							" is not included in the object definition scope")),
-					"workflowDefinitionLinks", null);
+				continue;
 			}
+
+			_handleException(
+				new ObjectDefinitionScopeException(
+					StringBundler.concat(
+						"The group ", workflowDefinitionLink.getGroupId(),
+						" is not included in the object definition scope")),
+				"workflowDefinitionLinks", null);
 		}
 	}
 
@@ -4331,9 +4360,11 @@ public class ObjectDefinitionLocalServiceImpl
 							objectDefinitionLocalService.getObjectDefinitions(
 								companyId, WorkflowConstants.STATUS_APPROVED)) {
 
-						if (objectDefinition.isActive()) {
-							objectDefinitionDeployer.undeploy(objectDefinition);
+						if (!objectDefinition.isActive()) {
+							continue;
 						}
+
+						objectDefinitionDeployer.undeploy(objectDefinition);
 					}
 				});
 

@@ -149,11 +149,13 @@ public class BookmarksFolderLocalServiceImpl
 			folder.getGroupId(), folder.getFolderId());
 
 		for (BookmarksFolder curFolder : folders) {
-			if (includeTrashedEntries ||
-				!_trashHelper.isInTrashExplicitly(curFolder)) {
+			if (!includeTrashedEntries &&
+				_trashHelper.isInTrashExplicitly(curFolder)) {
 
-				bookmarksFolderLocalService.deleteFolder(curFolder);
+				continue;
 			}
+
+			bookmarksFolderLocalService.deleteFolder(curFolder);
 		}
 
 		// Folder
@@ -299,14 +301,6 @@ public class BookmarksFolderLocalServiceImpl
 
 		return bookmarksFolderFinder.findF_E_ByG_F(
 			groupId, folderId, queryDefinition);
-	}
-
-	@Override
-	public List<Object> getFoldersAndEntries(
-		long groupId, long folderId, int status, int start, int end) {
-
-		return getFoldersAndEntries(
-			groupId, folderId, status, start, end, null);
 	}
 
 	@Override

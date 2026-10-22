@@ -6,11 +6,11 @@
 package com.liferay.headless.admin.user.internal.dto.v1_0.converter;
 
 import com.liferay.document.library.display.context.DLMimeTypeDisplayContext;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
-import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.headless.admin.user.dto.v1_0.FileEntry;
 import com.liferay.headless.admin.user.dto.v1_0.Link;
 import com.liferay.headless.admin.user.dto.v1_0.SharedAsset;
@@ -229,19 +229,20 @@ public class SharedAssetDTOConverter
 				_objectFieldLocalService.getObjectFields(
 					objectDefinition.getObjectDefinitionId())) {
 
-			if (objectField.compareBusinessType(
-					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT) &&
-				Objects.equals(objectField.getName(), "file")) {
+			if (!objectField.compareBusinessType(
+					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT) ||
+				!Objects.equals(objectField.getName(), "file")) {
 
-				Map<String, Serializable> values = objectEntry.getValues();
+				continue;
+			}
 
-				long fileEntryId = GetterUtil.getLong(values.get("file"));
+			Map<String, Serializable> values = objectEntry.getValues();
 
-				if (fileEntryId != 0) {
-					return _getFileEntry(
-						fileEntryId, objectDefinition, objectEntry,
-						objectField);
-				}
+			long fileEntryId = GetterUtil.getLong(values.get("file"));
+
+			if (fileEntryId != 0) {
+				return _getFileEntry(
+					fileEntryId, objectDefinition, objectEntry, objectField);
 			}
 		}
 

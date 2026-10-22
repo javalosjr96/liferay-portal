@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.util.StringParser;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.tools.java.parser.JavaParser;
 import com.liferay.source.formatter.check.util.JavaSourceUtil;
+import com.liferay.source.formatter.check.util.SourceUtil;
 import com.liferay.source.formatter.exception.UpgradeCatchAllException;
 import com.liferay.source.formatter.parser.JavaClass;
 import com.liferay.source.formatter.parser.JavaClassParser;
@@ -88,15 +89,17 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 				expectedMessages.add(_getMessage(jsonObject));
 			}
 
-			if (keys.contains("hasMessage")) {
-				String[] classNames = JSONUtil.toStringArray(
-					jsonObject.getJSONArray("classNames"));
+			if (!keys.contains("hasMessage")) {
+				continue;
+			}
 
-				int count = (classNames.length > 0) ? classNames.length : 1;
+			String[] classNames = JSONUtil.toStringArray(
+				jsonObject.getJSONArray("classNames"));
 
-				for (int y = 0; y < count; y++) {
-					expectedMessages.add(_getMessage(jsonObject));
-				}
+			int count = (classNames.length > 0) ? classNames.length : 1;
+
+			for (int y = 0; y < count; y++) {
+				expectedMessages.add(_getMessage(jsonObject));
 			}
 		}
 
@@ -916,6 +919,14 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 			for (int i = 0; i < fromParameters.size(); i++) {
 				String parameterName = parameterNames.get(i);
 
+				if (SourceUtil.isLiteralString(parameterName.trim()) &&
+					!StringUtil.equals(fromParameters.get(i), "String")) {
+
+					valid = false;
+
+					break;
+				}
+
 				String variableTypeName = getVariableTypeName(
 					javaMethodContent, null, newContent, fileName,
 					StringParser.escapeRegex(parameterName.trim()), true,
@@ -1001,11 +1012,13 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 			int methodEndIndex = _findMatchingClosingBrace(
 				classBody, bodyMatcher.end() - 1);
 
-			if (methodEndIndex != -1) {
-				existingMethods.add(
-					classBody.substring(methodIndex, methodEndIndex + 1));
-				methodNames.add(methodName);
+			if (methodEndIndex == -1) {
+				continue;
 			}
+
+			existingMethods.add(
+				classBody.substring(methodIndex, methodEndIndex + 1));
+			methodNames.add(methodName);
 		}
 
 		newMethod = "\n\t" + newMethod;
@@ -1126,7 +1139,18 @@ public class UpgradeCatchAllCheck extends BaseFileCheck {
 		else if (!_newMessage) {
 			Set<String> keys = jsonObject.keySet();
 
-			if (keys.contains("hasMessage")) {
+			boolean validatedSignature = false;
+
+			String from = jsonObject.getString("from");
+
+			if (from.contains(StringPool.OPEN_PARENTHESIS) &&
+				!from.startsWith("regex:") &&
+				!jsonObject.getBoolean("skipParametersValidation")) {
+
+				validatedSignature = true;
+			}
+
+			if (keys.contains("hasMessage") && !validatedSignature) {
 				Pattern pattern = _getPattern(jsonObject);
 
 				Matcher matcher = pattern.matcher(content);

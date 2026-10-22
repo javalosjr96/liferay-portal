@@ -621,134 +621,6 @@ public class BookmarksEntryPersistenceImpl
 
 	private FilterCollectionPersistenceFinder
 		<BookmarksEntry, NoSuchEntryException>
-			_collectionPersistenceFinderByG_S;
-
-	/**
-	 * Returns an ordered range of all the bookmarks entries where groupId = &#63; and status = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>BookmarksEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param start the lower bound of the range of bookmarks entries
-	 * @param end the upper bound of the range of bookmarks entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching bookmarks entries
-	 */
-	@Override
-	public List<BookmarksEntry> findByG_S(
-		long groupId, int status, int start, int end,
-		OrderByComparator<BookmarksEntry> orderByComparator,
-		boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByG_S.find(
-			finderCache, new Object[] {groupId, status}, start, end,
-			orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first bookmarks entry in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByG_S_First(
-			long groupId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		return _collectionPersistenceFinderByG_S.findFirst(
-			finderCache, new Object[] {groupId, status}, orderByComparator);
-	}
-
-	/**
-	 * Returns the first bookmarks entry in the ordered set where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByG_S_First(
-		long groupId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		return _collectionPersistenceFinderByG_S.fetchFirst(
-			finderCache, new Object[] {groupId, status}, orderByComparator);
-	}
-
-	/**
-	 * Returns an ordered range of all the bookmarks entries that the user has permissions to view where groupId = &#63; and status = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>BookmarksEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @param start the lower bound of the range of bookmarks entries
-	 * @param end the upper bound of the range of bookmarks entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching bookmarks entries that the user has permission to view
-	 */
-	@Override
-	public List<BookmarksEntry> filterFindByG_S(
-		long groupId, int status, int start, int end,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		return _collectionPersistenceFinderByG_S.filterFind(
-			finderCache, new Object[] {groupId, status}, start, end,
-			orderByComparator, groupId);
-	}
-
-	/**
-	 * Removes all the bookmarks entries where groupId = &#63; and status = &#63; from the database.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 */
-	@Override
-	public void removeByG_S(long groupId, int status) {
-		_collectionPersistenceFinderByG_S.remove(
-			finderCache, new Object[] {groupId, status});
-	}
-
-	/**
-	 * Returns the number of bookmarks entries where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @return the number of matching bookmarks entries
-	 */
-	@Override
-	public int countByG_S(long groupId, int status) {
-		return _collectionPersistenceFinderByG_S.count(
-			finderCache, new Object[] {groupId, status});
-	}
-
-	/**
-	 * Returns the number of bookmarks entries that the user has permission to view where groupId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param status the status
-	 * @return the number of matching bookmarks entries that the user has permission to view
-	 */
-	@Override
-	public int filterCountByG_S(long groupId, int status) {
-		return _collectionPersistenceFinderByG_S.filterCount(
-			finderCache, new Object[] {groupId, status}, groupId);
-	}
-
-	private FilterCollectionPersistenceFinder
-		<BookmarksEntry, NoSuchEntryException>
 			_collectionPersistenceFinderByG_NotS;
 
 	/**
@@ -1108,143 +980,6 @@ public class BookmarksEntryPersistenceImpl
 	public int countByC_NotS(long companyId, int status) {
 		return _collectionPersistenceFinderByC_NotS.count(
 			finderCache, new Object[] {companyId, status});
-	}
-
-	private FilterCollectionPersistenceFinder
-		<BookmarksEntry, NoSuchEntryException>
-			_collectionPersistenceFinderByG_U_S;
-
-	/**
-	 * Returns an ordered range of all the bookmarks entries where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>BookmarksEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param start the lower bound of the range of bookmarks entries
-	 * @param end the upper bound of the range of bookmarks entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching bookmarks entries
-	 */
-	@Override
-	public List<BookmarksEntry> findByG_U_S(
-		long groupId, long userId, int status, int start, int end,
-		OrderByComparator<BookmarksEntry> orderByComparator,
-		boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByG_U_S.find(
-			finderCache, new Object[] {groupId, userId, status}, start, end,
-			orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first bookmarks entry in the ordered set where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching bookmarks entry
-	 * @throws NoSuchEntryException if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry findByG_U_S_First(
-			long groupId, long userId, int status,
-			OrderByComparator<BookmarksEntry> orderByComparator)
-		throws NoSuchEntryException {
-
-		return _collectionPersistenceFinderByG_U_S.findFirst(
-			finderCache, new Object[] {groupId, userId, status},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns the first bookmarks entry in the ordered set where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching bookmarks entry, or <code>null</code> if a matching bookmarks entry could not be found
-	 */
-	@Override
-	public BookmarksEntry fetchByG_U_S_First(
-		long groupId, long userId, int status,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		return _collectionPersistenceFinderByG_U_S.fetchFirst(
-			finderCache, new Object[] {groupId, userId, status},
-			orderByComparator);
-	}
-
-	/**
-	 * Returns an ordered range of all the bookmarks entries that the user has permissions to view where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>BookmarksEntryModelImpl</code>.
-	 * </p>
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @param start the lower bound of the range of bookmarks entries
-	 * @param end the upper bound of the range of bookmarks entries (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching bookmarks entries that the user has permission to view
-	 */
-	@Override
-	public List<BookmarksEntry> filterFindByG_U_S(
-		long groupId, long userId, int status, int start, int end,
-		OrderByComparator<BookmarksEntry> orderByComparator) {
-
-		return _collectionPersistenceFinderByG_U_S.filterFind(
-			finderCache, new Object[] {groupId, userId, status}, start, end,
-			orderByComparator, groupId);
-	}
-
-	/**
-	 * Removes all the bookmarks entries where groupId = &#63; and userId = &#63; and status = &#63; from the database.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 */
-	@Override
-	public void removeByG_U_S(long groupId, long userId, int status) {
-		_collectionPersistenceFinderByG_U_S.remove(
-			finderCache, new Object[] {groupId, userId, status});
-	}
-
-	/**
-	 * Returns the number of bookmarks entries where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @return the number of matching bookmarks entries
-	 */
-	@Override
-	public int countByG_U_S(long groupId, long userId, int status) {
-		return _collectionPersistenceFinderByG_U_S.count(
-			finderCache, new Object[] {groupId, userId, status});
-	}
-
-	/**
-	 * Returns the number of bookmarks entries that the user has permission to view where groupId = &#63; and userId = &#63; and status = &#63;.
-	 *
-	 * @param groupId the group ID
-	 * @param userId the user ID
-	 * @param status the status
-	 * @return the number of matching bookmarks entries that the user has permission to view
-	 */
-	@Override
-	public int filterCountByG_U_S(long groupId, long userId, int status) {
-		return _collectionPersistenceFinderByG_U_S.filterCount(
-			finderCache, new Object[] {groupId, userId, status}, groupId);
 	}
 
 	private FilterCollectionPersistenceFinder
@@ -2801,7 +2536,12 @@ public class BookmarksEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_F =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BookmarksEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_F",
+					new String[] {Long.class.getName(), Long.class.getName()},
+					new String[] {"groupId", "folderId"}, false),
+				"", BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_F",
 					new String[] {
@@ -2810,18 +2550,13 @@ public class BookmarksEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "folderId"}, true),
+				_SQL_COUNT_BOOKMARKSENTRY_WHERE,
+				_SQL_SELECT_BOOKMARKSENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_F",
 					new String[] {Long.class.getName(), Long.class.getName()},
 					new String[] {"groupId", "folderId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_F",
-					new String[] {Long.class.getName(), Long.class.getName()},
-					new String[] {"groupId", "folderId"}, false),
-				_SQL_SELECT_BOOKMARKSENTRY_WHERE,
-				_SQL_COUNT_BOOKMARKSENTRY_WHERE,
-				BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"bookmarksEntry.", "groupId", FinderColumn.Type.LONG, "=",
 					true, true, BookmarksEntry::getGroupId),
@@ -2829,43 +2564,16 @@ public class BookmarksEntryPersistenceImpl
 					"bookmarksEntry.", "folderId", FinderColumn.Type.LONG, "=",
 					false, true, true, BookmarksEntry::getFolderId));
 
-		_collectionPersistenceFinderByG_S =
+		_collectionPersistenceFinderByG_NotS =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BookmarksEntry::getEntryId,
 				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_S",
-					new String[] {
-						Long.class.getName(), Integer.class.getName(),
-						Integer.class.getName(), Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"groupId", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_S",
-					new String[] {
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_S",
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_NotS",
 					new String[] {
 						Long.class.getName(), Integer.class.getName()
 					},
 					new String[] {"groupId", "status"}, false),
-				_SQL_SELECT_BOOKMARKSENTRY_WHERE,
-				_SQL_COUNT_BOOKMARKSENTRY_WHERE,
-				BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
-				new FinderColumn<>(
-					"bookmarksEntry.", "groupId", FinderColumn.Type.LONG, "=",
-					true, true, BookmarksEntry::getGroupId),
-				new FinderColumn<>(
-					"bookmarksEntry.", "status", FinderColumn.Type.INTEGER, "=",
-					true, true, BookmarksEntry::getStatus));
-
-		_collectionPersistenceFinderByG_NotS =
-			new FilterCollectionPersistenceFinder<>(
-				this,
+				"", BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_NotS",
 					new String[] {
@@ -2874,17 +2582,8 @@ public class BookmarksEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "status"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_NotS",
-					new String[] {
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "status"}, false),
-				_SQL_SELECT_BOOKMARKSENTRY_WHERE,
 				_SQL_COUNT_BOOKMARKSENTRY_WHERE,
-				BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				_SQL_SELECT_BOOKMARKSENTRY_WHERE, null, null, "",
 				new FinderColumn<>(
 					"bookmarksEntry.", "groupId", FinderColumn.Type.LONG, "=",
 					true, true, BookmarksEntry::getGroupId),
@@ -2921,49 +2620,17 @@ public class BookmarksEntryPersistenceImpl
 					"bookmarksEntry.", "status", FinderColumn.Type.INTEGER,
 					"!=", true, true, BookmarksEntry::getStatus));
 
-		_collectionPersistenceFinderByG_U_S =
+		_collectionPersistenceFinderByG_U_NotS =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BookmarksEntry::getEntryId,
 				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_U_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName(), Integer.class.getName(),
-						Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"groupId", "userId", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_U_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "userId", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "countByG_U_S",
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_NotS",
 					new String[] {
 						Long.class.getName(), Long.class.getName(),
 						Integer.class.getName()
 					},
 					new String[] {"groupId", "userId", "status"}, false),
-				_SQL_SELECT_BOOKMARKSENTRY_WHERE,
-				_SQL_COUNT_BOOKMARKSENTRY_WHERE,
-				BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
-				new FinderColumn<>(
-					"bookmarksEntry.", "groupId", FinderColumn.Type.LONG, "=",
-					true, true, BookmarksEntry::getGroupId),
-				new FinderColumn<>(
-					"bookmarksEntry.", "userId", FinderColumn.Type.LONG, "=",
-					true, true, BookmarksEntry::getUserId),
-				new FinderColumn<>(
-					"bookmarksEntry.", "status", FinderColumn.Type.INTEGER, "=",
-					true, true, BookmarksEntry::getStatus));
-
-		_collectionPersistenceFinderByG_U_NotS =
-			new FilterCollectionPersistenceFinder<>(
-				this,
+				"", BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_U_NotS",
 					new String[] {
@@ -2973,18 +2640,8 @@ public class BookmarksEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "userId", "status"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_NotS",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "userId", "status"}, false),
-				_SQL_SELECT_BOOKMARKSENTRY_WHERE,
 				_SQL_COUNT_BOOKMARKSENTRY_WHERE,
-				BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				_SQL_SELECT_BOOKMARKSENTRY_WHERE, null, null, "",
 				new FinderColumn<>(
 					"bookmarksEntry.", "groupId", FinderColumn.Type.LONG, "=",
 					true, true, BookmarksEntry::getGroupId),
@@ -2997,7 +2654,15 @@ public class BookmarksEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_F_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BookmarksEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_F_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "folderId", "status"}, false),
+				"", BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_F_S",
 					new String[] {
@@ -3007,6 +2672,8 @@ public class BookmarksEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "folderId", "status"}, true),
+				_SQL_COUNT_BOOKMARKSENTRY_WHERE,
+				_SQL_SELECT_BOOKMARKSENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_F_S",
 					new String[] {
@@ -3014,17 +2681,7 @@ public class BookmarksEntryPersistenceImpl
 						Integer.class.getName()
 					},
 					new String[] {"groupId", "folderId", "status"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_F_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "folderId", "status"}, false),
-				_SQL_SELECT_BOOKMARKSENTRY_WHERE,
-				_SQL_COUNT_BOOKMARKSENTRY_WHERE,
-				BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"bookmarksEntry.", "groupId", FinderColumn.Type.LONG, "=",
 					true, true, BookmarksEntry::getGroupId),
@@ -3037,7 +2694,15 @@ public class BookmarksEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_F_NotS =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BookmarksEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_F_NotS",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Integer.class.getName()
+					},
+					new String[] {"groupId", "folderId", "status"}, false),
+				"", BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_F_NotS",
 					new String[] {
@@ -3047,18 +2712,8 @@ public class BookmarksEntryPersistenceImpl
 						OrderByComparator.class.getName()
 					},
 					new String[] {"groupId", "folderId", "status"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_F_NotS",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Integer.class.getName()
-					},
-					new String[] {"groupId", "folderId", "status"}, false),
-				_SQL_SELECT_BOOKMARKSENTRY_WHERE,
 				_SQL_COUNT_BOOKMARKSENTRY_WHERE,
-				BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				_SQL_SELECT_BOOKMARKSENTRY_WHERE, null, null, "",
 				new FinderColumn<>(
 					"bookmarksEntry.", "groupId", FinderColumn.Type.LONG, "=",
 					true, true, BookmarksEntry::getGroupId),
@@ -3071,7 +2726,16 @@ public class BookmarksEntryPersistenceImpl
 
 		_collectionPersistenceFinderByG_U_F_S =
 			new FilterCollectionPersistenceFinder<>(
-				this,
+				this, BookmarksEntry::getEntryId,
+				new FinderPath(
+					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_F_S",
+					new String[] {
+						Long.class.getName(), Long.class.getName(),
+						Long.class.getName(), Integer.class.getName()
+					},
+					new String[] {"groupId", "userId", "folderId", "status"},
+					false),
+				"", BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByG_U_F_S",
 					new String[] {
@@ -3082,6 +2746,8 @@ public class BookmarksEntryPersistenceImpl
 					},
 					new String[] {"groupId", "userId", "folderId", "status"},
 					true),
+				_SQL_COUNT_BOOKMARKSENTRY_WHERE,
+				_SQL_SELECT_BOOKMARKSENTRY_WHERE, null,
 				new FinderPath(
 					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION, "findByG_U_F_S",
 					new String[] {
@@ -3090,18 +2756,7 @@ public class BookmarksEntryPersistenceImpl
 					},
 					new String[] {"groupId", "userId", "folderId", "status"},
 					true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByG_U_F_S",
-					new String[] {
-						Long.class.getName(), Long.class.getName(),
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"groupId", "userId", "folderId", "status"},
-					false),
-				_SQL_SELECT_BOOKMARKSENTRY_WHERE,
-				_SQL_COUNT_BOOKMARKSENTRY_WHERE,
-				BookmarksEntryModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
+				"",
 				new FinderColumn<>(
 					"bookmarksEntry.", "groupId", FinderColumn.Type.LONG, "=",
 					true, true, BookmarksEntry::getGroupId),
@@ -3181,4 +2836,4 @@ public class BookmarksEntryPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:100535218
+// LIFERAY-SERVICE-BUILDER-HASH:-1225147890

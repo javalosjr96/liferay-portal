@@ -20,8 +20,10 @@ import com.liferay.client.extension.type.manager.CETManager;
 import com.liferay.data.engine.rest.resource.v2_0.DataDefinitionResource;
 import com.liferay.depot.service.DepotEntryGroupRelLocalService;
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.document.library.helper.DLURLHelper;
+import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
-import com.liferay.document.library.util.DLURLHelper;
+import com.liferay.document.library.kernel.service.DLFolderLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMStructureLocalService;
 import com.liferay.dynamic.data.mapping.service.DDMTemplateLocalService;
 import com.liferay.dynamic.data.mapping.util.DefaultDDMStructureHelper;
@@ -77,7 +79,6 @@ import com.liferay.portal.kernel.service.ThemeLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
-import com.liferay.portal.kernel.settings.ArchivedSettingsFactory;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.zip.ZipWriterFactory;
@@ -115,7 +116,6 @@ public class SiteInitializerExtension {
 		AccountResource.Factory accountResourceFactory,
 		AccountRoleLocalService accountRoleLocalService,
 		AccountRoleResource.Factory accountRoleResourceFactory,
-		ArchivedSettingsFactory archivedSettingsFactory,
 		AssetCategoryLocalService assetCategoryLocalService,
 		AssetEntryLocalService assetEntryLocalService,
 		AssetLinkLocalService assetLinkLocalService,
@@ -132,8 +132,9 @@ public class SiteInitializerExtension {
 		DependencyManager dependencyManager,
 		DepotEntryGroupRelLocalService depotEntryGroupRelLocalService,
 		DepotEntryLocalService depotEntryLocalService,
+		DLFileEntryLocalService dlFileEntryLocalService,
 		DLFileEntryTypeLocalService dlFileEntryTypeLocalService,
-		DLURLHelper dlURLHelper,
+		DLFolderLocalService dlFolderLocalService, DLURLHelper dlURLHelper,
 		DocumentFolderResource.Factory documentFolderResourceFactory,
 		DocumentResource.Factory documentResourceFactory,
 		ExpandoValueLocalService expandoValueLocalService,
@@ -211,15 +212,15 @@ public class SiteInitializerExtension {
 			accountEntryLocalService, accountEntryOrganizationRelLocalService,
 			accountGroupLocalService, accountGroupRelService,
 			accountResourceFactory, accountRoleLocalService,
-			accountRoleResourceFactory, archivedSettingsFactory,
-			assetCategoryLocalService, assetEntryLocalService,
-			assetLinkLocalService, assetListEntryLocalService,
-			blogPostingResourceFactory, cetManager,
+			accountRoleResourceFactory, assetCategoryLocalService,
+			assetEntryLocalService, assetLinkLocalService,
+			assetListEntryLocalService, blogPostingResourceFactory, cetManager,
 			clientExtensionEntryLocalService, companyLocalService,
 			configurationProvider, dataDefinitionResourceFactory,
 			ddmStructureLocalService, ddmTemplateLocalService,
 			defaultDDMStructureHelper, depotEntryGroupRelLocalService,
-			depotEntryLocalService, dlFileEntryTypeLocalService, dlURLHelper,
+			depotEntryLocalService, dlFileEntryLocalService,
+			dlFileEntryTypeLocalService, dlFolderLocalService, dlURLHelper,
 			documentFolderResourceFactory, documentResourceFactory,
 			expandoValueLocalService, fragmentEntryLinkLocalService,
 			fragmentsImporter, groupLocalService, journalArticleLocalService,

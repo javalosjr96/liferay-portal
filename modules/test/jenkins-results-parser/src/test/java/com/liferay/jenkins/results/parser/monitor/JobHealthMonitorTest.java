@@ -9,7 +9,6 @@ import com.liferay.jenkins.results.parser.JenkinsMasterTestUtil;
 import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
 import com.liferay.jenkins.results.parser.RandomTestUtil;
 import com.liferay.jenkins.results.parser.ReflectionTestUtil;
-import com.liferay.jenkins.results.parser.UrlReader;
 
 import java.io.IOException;
 
@@ -45,7 +44,7 @@ public class JobHealthMonitorTest
 		MasterResourceReader.clearInstances();
 
 		JenkinsMasterTestUtil.getJenkinsMaster(
-			_MASTER_NAME, "http://" + _MASTER_NAME);
+			_MASTER_NAME, _MASTER_REMOTE_URL, "http://" + _MASTER_NAME);
 	}
 
 	@Test
@@ -281,21 +280,21 @@ public class JobHealthMonitorTest
 
 		testEquals(MonitorResult.Status.UNKNOWN, monitorResult.getStatus());
 		testEquals(
-			"Job generate-reports-controller has the schedule 0 0 31 2 *, " +
-				"which never comes round",
+			"Job generate-reports-controller has an invalid schedule: 0 0 31 " +
+				"2 *",
 			monitorResult.getMessage());
 	}
 
 	@Test
 	public void testExecuteCronUnreadableSchedule() throws Exception {
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderException(new IOException(), _JOB_CONFIG_URL, urlReader);
+		setURLReaderException(new IOException(), _JOB_CONFIG_URL);
 
 		_setJobsJSONObject(
 			_newJobJSONObject(
-				42, "SUCCESS", JenkinsResultsParserUtil.getCurrentTimeMillis()),
-			urlReader);
+				42, "SUCCESS",
+				JenkinsResultsParserUtil.getCurrentTimeMillis()));
 
 		MonitorResult monitorResult = _execute(_newMonitorProperties());
 
@@ -343,7 +342,7 @@ public class JobHealthMonitorTest
 
 	@Test
 	public void testExecuteJobMissingFromMaster() throws Exception {
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
 		JSONObject jobsJSONObject = new JSONObject(
 		).put(
@@ -357,14 +356,14 @@ public class JobHealthMonitorTest
 			)
 		);
 
-		setUrlReaderOutput(
-			jobsJSONObject.toString(), _MASTER_API_URL, urlReader);
+		setURLReaderOutput(jobsJSONObject.toString(), _MASTER_API_URL);
 
 		MonitorResult monitorResult = _execute(_newMonitorProperties());
 
 		testEquals(MonitorResult.Status.CRITICAL, monitorResult.getStatus());
 		testEquals(
-			"Job generate-reports-controller was not found on http://test-9-1",
+			"Job generate-reports-controller was not found on " +
+				_MASTER_REMOTE_URL,
 			monitorResult.getMessage());
 	}
 
@@ -639,10 +638,11 @@ public class JobHealthMonitorTest
 
 		MonitorResult monitorResult = _execute(_newMonitorProperties());
 
-		testEquals(MonitorResult.Status.CRITICAL, monitorResult.getStatus());
 		testEquals(
-			"Unable to read http://test-9-1: java.io.IOException",
+			JenkinsResultsParserUtil.combine(
+				"Unable to read ", _MASTER_REMOTE_URL, ": java.io.IOException"),
 			monitorResult.getMessage());
+		testEquals(MonitorResult.Status.CRITICAL, monitorResult.getStatus());
 	}
 
 	@Test
@@ -717,17 +717,29 @@ public class JobHealthMonitorTest
 
 	@Test
 	public void testExecuteUnreadableResponse() throws Exception {
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderOutput(
-			RandomTestUtil.randomString(), _MASTER_API_URL, urlReader);
+		setURLReaderOutput(RandomTestUtil.randomString(), _MASTER_API_URL);
 
 		MonitorResult monitorResult = _execute(_newMonitorProperties());
 
-		testEquals(MonitorResult.Status.CRITICAL, monitorResult.getStatus());
 		testEquals(
-			"Unable to read http://test-9-1: Unable to create JSON object",
+			JenkinsResultsParserUtil.combine(
+				"Unable to read ", _MASTER_REMOTE_URL,
+				": Unable to create a JSON object from the response body"),
 			monitorResult.getMessage());
+		testEquals(MonitorResult.Status.CRITICAL, monitorResult.getStatus());
+	}
+
+	@Test
+	public void testGetLinkURLs() {
+		JobHealthMonitor jobHealthMonitor = _newJobHealthMonitor(
+			_newMonitorProperties());
+
+		testEquals(
+			Collections.singletonList(
+				"https://test-9-1.liferay.com/job/generate-reports-controller"),
+			jobHealthMonitor.getLinkURLs());
 	}
 
 	@Test
@@ -888,17 +900,14 @@ public class JobHealthMonitorTest
 	private void _setJobJSONObject(String configXML, JSONObject jobJSONObject)
 		throws Exception {
 
-		UrlReader urlReader = mockUrlReader();
+		mockURLReaders();
 
-		setUrlReaderOutput(configXML, _JOB_CONFIG_URL, urlReader);
+		setURLReaderOutput(configXML, _JOB_CONFIG_URL);
 
-		_setJobsJSONObject(jobJSONObject, urlReader);
+		_setJobsJSONObject(jobJSONObject);
 	}
 
-	private void _setJobsJSONObject(
-			JSONObject jobJSONObject, UrlReader urlReader)
-		throws Exception {
-
+	private void _setJobsJSONObject(JSONObject jobJSONObject) throws Exception {
 		JSONObject jobsJSONObject = new JSONObject(
 		).put(
 			"jobs",
@@ -908,8 +917,7 @@ public class JobHealthMonitorTest
 			)
 		);
 
-		setUrlReaderOutput(
-			jobsJSONObject.toString(), _MASTER_API_URL, urlReader);
+		setURLReaderOutput(jobsJSONObject.toString(), _MASTER_API_URL);
 	}
 
 	private void _testJobHealthMonitorExpectedIllegalArgumentException(
@@ -918,7 +926,7 @@ public class JobHealthMonitorTest
 		try {
 			_newJobHealthMonitor(monitorProperties);
 
-			Assert.fail("Expected IllegalArgumentException");
+			Assert.fail();
 		}
 		catch (IllegalArgumentException illegalArgumentException) {
 		}
@@ -953,5 +961,8 @@ public class JobHealthMonitorTest
 		"http://test-9-1/api/json?tree=jobs";
 
 	private static final String _MASTER_NAME = "test-9-1";
+
+	private static final String _MASTER_REMOTE_URL =
+		"https://test-9-1.liferay.com/";
 
 }

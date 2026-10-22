@@ -21,7 +21,6 @@ import jakarta.annotation.Generated;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
-import jakarta.validation.constraints.NotNull;
 
 import jakarta.xml.bind.annotation.XmlRootElement;
 
@@ -45,8 +44,7 @@ import java.util.function.Supplier;
 	value = "PriceModifierCategory"
 )
 @io.swagger.v3.oas.annotations.media.Schema(
-	description = "AssetCategory binding that restricts a price modifier to products tagged with a specific category. Backed by price modifier link with the AssetCategory class name.",
-	requiredProperties = {"categoryId", "priceModifierId"}
+	description = "AssetCategory binding that restricts a price modifier to products tagged with a specific category. Backed by price modifier link with the AssetCategory class name."
 )
 @JsonFilter("Liferay.Vulcan")
 @XmlRootElement(name = "PriceModifierCategory")
@@ -242,7 +240,6 @@ public class PriceModifierCategory implements Serializable {
 		description = "Reference to the category entity (FK identifier)."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	@NotNull
 	protected Long categoryId;
 
 	@JsonIgnore
@@ -388,11 +385,60 @@ public class PriceModifierCategory implements Serializable {
 		description = "Reference to the priceModifier entity (FK identifier)."
 	)
 	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
-	@NotNull
 	protected Long priceModifierId;
 
 	@JsonIgnore
 	private Supplier<Long> _priceModifierIdSupplier;
+
+	@io.swagger.v3.oas.annotations.media.Schema(
+		description = "External reference code of the vocabulary that owns the category; on read the value mirrors the vocabulary's external reference code, and on write it is used only during an import to create the missing category inside the counterpart of that vocabulary.",
+		example = "AB-34098-789-N"
+	)
+	public String getVocabularyExternalReferenceCode() {
+		if (_vocabularyExternalReferenceCodeSupplier != null) {
+			vocabularyExternalReferenceCode =
+				_vocabularyExternalReferenceCodeSupplier.get();
+
+			_vocabularyExternalReferenceCodeSupplier = null;
+		}
+
+		return vocabularyExternalReferenceCode;
+	}
+
+	public void setVocabularyExternalReferenceCode(
+		String vocabularyExternalReferenceCode) {
+
+		this.vocabularyExternalReferenceCode = vocabularyExternalReferenceCode;
+
+		_vocabularyExternalReferenceCodeSupplier = null;
+	}
+
+	@JsonIgnore
+	public void setVocabularyExternalReferenceCode(
+		UnsafeSupplier<String, Exception>
+			vocabularyExternalReferenceCodeUnsafeSupplier) {
+
+		_vocabularyExternalReferenceCodeSupplier = () -> {
+			try {
+				return vocabularyExternalReferenceCodeUnsafeSupplier.get();
+			}
+			catch (RuntimeException runtimeException) {
+				throw runtimeException;
+			}
+			catch (Exception exception) {
+				throw new RuntimeException(exception);
+			}
+		};
+	}
+
+	@GraphQLField(
+		description = "External reference code of the vocabulary that owns the category; on read the value mirrors the vocabulary's external reference code, and on write it is used only during an import to create the missing category inside the counterpart of that vocabulary."
+	)
+	@JsonProperty(access = JsonProperty.Access.READ_WRITE)
+	protected String vocabularyExternalReferenceCode;
+
+	@JsonIgnore
+	private Supplier<String> _vocabularyExternalReferenceCodeSupplier;
 
 	@Override
 	public boolean equals(Object object) {
@@ -514,6 +560,23 @@ public class PriceModifierCategory implements Serializable {
 			sb.append("\"priceModifierId\": ");
 
 			sb.append(priceModifierId);
+		}
+
+		String vocabularyExternalReferenceCode =
+			getVocabularyExternalReferenceCode();
+
+		if (vocabularyExternalReferenceCode != null) {
+			if (sb.length() > 1) {
+				sb.append(", ");
+			}
+
+			sb.append("\"vocabularyExternalReferenceCode\": ");
+
+			sb.append("\"");
+
+			sb.append(_escape(vocabularyExternalReferenceCode));
+
+			sb.append("\"");
 		}
 
 		sb.append("}");
@@ -638,4 +701,4 @@ public class PriceModifierCategory implements Serializable {
 	private Map<String, Serializable> _extendedProperties;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-482662219
+// LIFERAY-REST-BUILDER-HASH:-1805511056

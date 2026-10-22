@@ -1,8 +1,20 @@
 accessControl:
     allowedCIDRs: []
     enabled: false
+argoWorkflows:
+    gateway:
+        clientTrafficPolicySpec: {}
+        enabled: false
+        envoyProxy:
+            podAnnotations: {}
+            replicas: 2
+            serviceAnnotations: {}
+        hostname: ""
+        tls:
+            externalSecretKey: ""
 argocd:
     gateway:
+        clientTrafficPolicySpec: {}
         enabled: false
         envoyProxy:
             podAnnotations: {}
@@ -28,9 +40,10 @@ clusterSecretStore:
     enabled: false
     name: ""
     provider: {}
+database:
+    engine: ""
 deploymentContext:
     deploymentName: ""
-    region: ""
 gateway:
     envoyProxy:
         podAnnotations: {}
@@ -91,12 +104,15 @@ liferay:
     path: ""
     repoURL: ""
     targetRevision: ""
+    valuesPrefix: liferay-default.
+networkPolicy:
+    apiServerSources: []
 observability:
     enabled: false
     namespace: observability
     parameters: []
     repoURL: oci://us-central1-docker.pkg.dev/external-assets-prd/liferay-helm-chart/observability
-    targetRevision: 1.1.1
+    targetRevision: 1.1.2
 operatorApplications:
     ackPrometheusService:
         enabled: false
@@ -189,7 +205,7 @@ operatorApplications:
                         cpu: 15m
                         memory: 128Mi
             function-tag-manager:
-                package: xpkg.upbound.io/crossplane-contrib/function-tag-manager:v0.6.0
+                package: xpkg.upbound.io/crossplane-contrib/function-tag-manager:v0.8.2
                 resources:
                     limits:
                         memory: 256Mi
@@ -259,11 +275,14 @@ operatorApplications:
         repoURL: oci://us-central1-docker.pkg.dev/external-assets-prd/liferay-helm-chart/liferay-dxp-operator
         targetRevision: 0.1.2
         values:
+            clientExtensions:
+                enabled: true
             fullnameOverride: dxp-operator
+            onlineActivationWorkflow:
+                enabled: true
     eckOperator:
         chart: eck-operator
         enabled: true
-        masterIpv4CidrBlock: 172.16.0.0/28
         name: eck-operator
         namespace: elastic-system
         namespaceLabels:

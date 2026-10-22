@@ -25,6 +25,7 @@ import {pagesAdminPagesTest} from '../../../fixtures/pagesAdminPagesTest';
 import createTempFile from '../../../utils/createTempFile';
 import {getRandomInt} from '../../../utils/getRandomInt';
 import getRandomString from '../../../utils/getRandomString';
+import {setItemsPerPage} from '../../../utils/pagination';
 import {waitForAlert} from '../../../utils/waitForAlert';
 import getFragmentDefinition from '../../layout-content-page-editor-web/main/utils/getFragmentDefinition';
 import getPageDefinition from '../../layout-content-page-editor-web/main/utils/getPageDefinition';
@@ -85,6 +86,8 @@ test.describe('Collection Display', () => {
 		await collectionsPage.goto(site.friendlyUrlPath);
 
 		await page.getByRole('link', {name: 'Collection Providers'}).click();
+
+		await setItemsPerPage(page, 60);
 
 		await expect(
 			page.getByText(objectDefinition.name).first()
@@ -372,7 +375,7 @@ test.describe('Collection Display', () => {
 				);
 
 				await expect(
-					page.getByLabel('Collection', {exact: true})
+					page.getByRole('textbox', {exact: true, name: 'Collection'})
 				).toHaveValue(objectDefinition.label['en_US']);
 			});
 		}

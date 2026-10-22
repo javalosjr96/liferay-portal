@@ -158,6 +158,8 @@ public class StyleBookEntryVersionPersistenceTest {
 
 		newStyleBookEntryVersion.setThemeId(RandomTestUtil.randomString());
 
+		newStyleBookEntryVersion.setStatus(RandomTestUtil.nextInt());
+
 		newStyleBookEntryVersion = _persistence.update(
 			newStyleBookEntryVersion);
 
@@ -229,6 +231,9 @@ public class StyleBookEntryVersionPersistenceTest {
 		Assert.assertEquals(
 			existingStyleBookEntryVersion.getThemeId(),
 			newStyleBookEntryVersion.getThemeId());
+		Assert.assertEquals(
+			existingStyleBookEntryVersion.getStatus(),
+			newStyleBookEntryVersion.getStatus());
 	}
 
 	@Test
@@ -315,23 +320,6 @@ public class StyleBookEntryVersionPersistenceTest {
 			RandomTestUtil.nextLong(), RandomTestUtil.nextInt());
 
 		_persistence.countByGroupId_Version(0L, 0);
-	}
-
-	@Test
-	public void testCountByG_D() throws Exception {
-		_persistence.countByG_D(
-			RandomTestUtil.nextLong(), RandomTestUtil.randomBoolean());
-
-		_persistence.countByG_D(0L, RandomTestUtil.randomBoolean());
-	}
-
-	@Test
-	public void testCountByG_D_Version() throws Exception {
-		_persistence.countByG_D_Version(
-			RandomTestUtil.nextLong(), RandomTestUtil.randomBoolean(),
-			RandomTestUtil.nextInt());
-
-		_persistence.countByG_D_Version(0L, RandomTestUtil.randomBoolean(), 0);
 	}
 
 	@Test
@@ -488,7 +476,7 @@ public class StyleBookEntryVersionPersistenceTest {
 			"groupId", true, "companyId", true, "userId", true, "userName",
 			true, "createDate", true, "modifiedDate", true,
 			"defaultStyleBookEntry", true, "name", true, "previewFileEntryId",
-			true, "styleBookEntryKey", true, "themeId", true);
+			true, "styleBookEntryKey", true, "themeId", true, "status", true);
 	}
 
 	@Test
@@ -849,6 +837,8 @@ public class StyleBookEntryVersionPersistenceTest {
 
 		styleBookEntryVersion.setThemeId(RandomTestUtil.randomString());
 
+		styleBookEntryVersion.setStatus(RandomTestUtil.nextInt());
+
 		_styleBookEntryVersions.add(_persistence.update(styleBookEntryVersion));
 
 		return styleBookEntryVersion;
@@ -860,4 +850,4 @@ public class StyleBookEntryVersionPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1722767333
+// LIFERAY-SERVICE-BUILDER-HASH:2054328667

@@ -28,6 +28,43 @@ data "aws_iam_policy_document" "ack_prometheusservice" {
 		]
 	}
 }
+data "aws_iam_policy_document" "alloy" {
+	statement {
+		actions=[
+			"aps:GetLabels",
+			"aps:GetMetricMetadata",
+			"aps:GetSeries",
+			"aps:QueryMetrics",
+			"aps:RemoteWrite",
+		]
+		effect="Allow"
+		resources=aws_prometheus_workspace.amp[*].arn
+	}
+}
+data "aws_iam_policy_document" "alloy_cloudwatch_rds" {
+	statement {
+		actions=[
+			"cloudwatch:GetMetricData",
+			"cloudwatch:GetMetricStatistics",
+			"cloudwatch:ListMetrics",
+		]
+		effect="Allow"
+		resources=["*"]
+	}
+	statement {
+		actions=[
+			"rds:DescribeDBInstances",
+			"rds:ListTagsForResource",
+		]
+		effect="Allow"
+		resources=["*"]
+	}
+	statement {
+		actions=["tag:GetResources"]
+		effect="Allow"
+		resources=["*"]
+	}
+}
 data "aws_iam_policy_document" "crossplane_data_backup" {
 	statement {
 		actions=["backup:*"]
@@ -85,18 +122,24 @@ data "aws_iam_policy_document" "crossplane_data_cloudwatchlogs" {
 		actions=[
 			"logs:CreateLogGroup",
 			"logs:DeleteLogGroup",
-			"logs:DeleteResourcePolicy",
 			"logs:DeleteRetentionPolicy",
 			"logs:DescribeLogGroups",
-			"logs:DescribeResourcePolicies",
 			"logs:ListTagsForResource",
-			"logs:PutResourcePolicy",
 			"logs:PutRetentionPolicy",
 			"logs:TagResource",
 			"logs:UntagResource",
 		]
 		effect="Allow"
 		resources=["arn:${local.partition}:logs:${var.region}:${local.account_id}:log-group:*"]
+	}
+	statement {
+		actions=[
+			"logs:DeleteResourcePolicy",
+			"logs:DescribeResourcePolicies",
+			"logs:PutResourcePolicy",
+		]
+		effect="Allow"
+		resources=["*"]
 	}
 }
 data "aws_iam_policy_document" "crossplane_data_ec2" {
@@ -108,6 +151,7 @@ data "aws_iam_policy_document" "crossplane_data_ec2" {
 			"ec2:CreateTags",
 			"ec2:DeleteNetworkInterface",
 			"ec2:DeleteSecurityGroup",
+			"ec2:DeleteTags",
 			"ec2:DescribeAvailabilityZones",
 			"ec2:DescribeNetworkInterfaces",
 			"ec2:DescribeSecurityGroupRules",
@@ -162,15 +206,27 @@ data "aws_iam_policy_document" "crossplane_data_opensearch" {
 			"es:DescribeDomainNodes",
 			"es:ESHttpGet",
 			"es:ESHttpPut",
+			"es:GetUpgradeStatus",
 			"es:ListDomainNames",
 			"es:ListTags",
 			"es:RemoveTags",
 			"es:UpdateDomainConfig",
+			"es:UpgradeDomain",
 			"kms:CreateGrant",
 			"kms:DescribeKey",
 		]
 		effect="Allow"
 		resources=["*"]
+	}
+	statement {
+		actions=["iam:CreateServiceLinkedRole"]
+		condition {
+			test="StringEquals"
+			values=["opensearchservice.amazonaws.com"]
+			variable="iam:AWSServiceName"
+		}
+		effect="Allow"
+		resources=["arn:${local.partition}:iam::${local.account_id}:role/aws-service-role/opensearchservice.amazonaws.com/*"]
 	}
 }
 data "aws_iam_policy_document" "crossplane_data_rds" {
@@ -188,6 +244,7 @@ data "aws_iam_policy_document" "crossplane_data_rds" {
 			"rds:ListTagsForResource",
 			"rds:ModifyDBInstance",
 			"rds:ModifyDBSubnetGroup",
+			"rds:RemoveTagsFromResource",
 			"rds:RestoreDBInstanceFromDBSnapshot",
 		]
 		effect="Allow"
@@ -202,6 +259,16 @@ data "aws_iam_policy_document" "crossplane_data_rds" {
 		]
 		effect="Allow"
 		resources=["*"]
+	}
+	statement {
+		actions=["iam:CreateServiceLinkedRole"]
+		condition {
+			test="StringEquals"
+			values=["rds.amazonaws.com"]
+			variable="iam:AWSServiceName"
+		}
+		effect="Allow"
+		resources=["arn:${local.partition}:iam::${local.account_id}:role/aws-service-role/rds.amazonaws.com/*"]
 	}
 }
 data "aws_iam_policy_document" "crossplane_data_s3" {
@@ -228,6 +295,7 @@ data "aws_iam_policy_document" "crossplane_data_s3" {
 			"s3:GetReplicationConfiguration",
 			"s3:ListBucket",
 			"s3:ListBucketMultipartUploads",
+			"s3:ListBucketVersions",
 			"s3:PutBucketAcl",
 			"s3:PutBucketCORS",
 			"s3:PutBucketOwnershipControls",
@@ -245,6 +313,7 @@ data "aws_iam_policy_document" "crossplane_data_s3" {
 	statement {
 		actions=[
 			"s3:DeleteObject",
+			"s3:DeleteObjectVersion",
 			"s3:GetObject",
 			"s3:PutObject",
 		]
@@ -256,6 +325,7 @@ data "aws_iam_policy_document" "crossplane_iam" {
 	statement {
 		actions=[
 			"iam:GetAccessKeyLastUsed",
+			"iam:GetLoginProfile",
 			"iam:GetPolicy",
 			"iam:GetPolicyVersion",
 			"iam:GetRole",
@@ -266,9 +336,14 @@ data "aws_iam_policy_document" "crossplane_iam" {
 			"iam:ListAttachedUserPolicies",
 			"iam:ListGroupsForUser",
 			"iam:ListInstanceProfilesForRole",
+			"iam:ListMFADevices",
 			"iam:ListPolicyVersions",
 			"iam:ListRolePolicies",
+			"iam:ListSSHPublicKeys",
+			"iam:ListServiceSpecificCredentials",
+			"iam:ListSigningCertificates",
 			"iam:ListUserPolicies",
+			"iam:ListVirtualMFADevices",
 		]
 		effect="Allow"
 		resources=["*"]
@@ -299,10 +374,12 @@ data "aws_iam_policy_document" "crossplane_iam" {
 		actions=[
 			"iam:CreateAccessKey",
 			"iam:DeleteAccessKey",
+			"iam:DeleteLoginProfile",
 			"iam:DeleteRole",
 			"iam:DeleteUser",
 			"iam:TagRole",
 			"iam:TagUser",
+			"iam:UntagRole",
 			"iam:UntagUser",
 			"iam:UpdateAccessKey",
 			"iam:UpdateAssumeRolePolicy",
@@ -321,6 +398,7 @@ data "aws_iam_policy_document" "crossplane_iam" {
 			"iam:DeletePolicy",
 			"iam:DeletePolicyVersion",
 			"iam:TagPolicy",
+			"iam:UntagPolicy",
 		]
 		effect="Allow"
 		resources=["arn:${local.partition}:iam::${local.account_id}:policy${local.crossplane_iam_path}*"]
@@ -387,6 +465,22 @@ data "aws_iam_policy_document" "external_secrets" {
 		]
 	}
 }
+data "aws_iam_policy_document" "external_secrets_marketplace_registry" {
+	statement {
+		actions=["ecr:GetAuthorizationToken"]
+		effect="Allow"
+		resources=["*"]
+	}
+	statement {
+		actions=[
+			"ecr:BatchCheckLayerAvailability",
+			"ecr:BatchGetImage",
+			"ecr:GetDownloadUrlForLayer",
+		]
+		effect="Allow"
+		resources=["arn:${local.partition}:ecr:us-east-1:709825985650:repository/*"]
+	}
+}
 data "aws_iam_policy_document" "irsa" {
 	for_each=local.irsa_service_accounts
 	statement {
@@ -420,8 +514,32 @@ data "aws_iam_policy_document" "keda" {
 		resources=["arn:${local.partition}:aps:${var.region}:${local.account_id}:workspace/*"]
 	}
 }
-data "aws_iam_role" "liferay" {
-	name="${var.deployment_name}-irsa"
+data "aws_iam_policy_document" "rds_exporter" {
+	statement {
+		actions=[
+			"cloudwatch:GetMetricData",
+			"cloudwatch:GetMetricStatistics",
+		]
+		effect="Allow"
+		resources=["*"]
+	}
+	statement {
+		actions=[
+			"ec2:DescribeAccountAttributes",
+			"ec2:DescribeInstanceTypes",
+		]
+		effect="Allow"
+		resources=["*"]
+	}
+	statement {
+		actions=[
+			"rds:DescribeDBClusters",
+			"rds:DescribeDBInstances",
+			"rds:ListTagsForResource",
+		]
+		effect="Allow"
+		resources=["*"]
+	}
 }
 data "aws_partition" "current" {
 }

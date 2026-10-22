@@ -145,6 +145,11 @@ public class XMLWorkflowValidator implements WorkflowValidator {
 
 		String value = scriptLanguage.getValue();
 
+		if (Objects.equals(value, ScriptLanguage.DRL.getValue())) {
+			throw new KaleoDefinitionValidationException.
+				NotAllowedScriptLanguage("DRL is not allowed");
+		}
+
 		if (Objects.equals(value, ScriptLanguage.GROOVY.getValue())) {
 			throw new KaleoDefinitionValidationException.
 				NotAllowedScriptLanguage("Groovy is not allowed");
@@ -165,9 +170,11 @@ public class XMLWorkflowValidator implements WorkflowValidator {
 		throws WorkflowException {
 
 		for (Action action : actions) {
-			if (action instanceof ScriptAction scriptAction) {
-				_validateScriptLanguage(name, scriptAction.getScriptLanguage());
+			if (!(action instanceof ScriptAction scriptAction)) {
+				continue;
 			}
+
+			_validateScriptLanguage(name, scriptAction.getScriptLanguage());
 		}
 	}
 
@@ -180,10 +187,11 @@ public class XMLWorkflowValidator implements WorkflowValidator {
 		}
 
 		for (Assignment assignment : assignments) {
-			if (assignment instanceof ScriptAssignment scriptAssignment) {
-				_validateScriptLanguage(
-					name, scriptAssignment.getScriptLanguage());
+			if (!(assignment instanceof ScriptAssignment scriptAssignment)) {
+				continue;
 			}
+
+			_validateScriptLanguage(name, scriptAssignment.getScriptLanguage());
 		}
 	}
 

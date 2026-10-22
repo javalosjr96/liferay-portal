@@ -6,6 +6,8 @@
 package com.liferay.osb.faro.web.internal.controller.contacts;
 
 import com.liferay.osb.faro.engine.client.ContactsEngineClient;
+import com.liferay.osb.faro.engine.client.model.AccountLifecycle;
+import com.liferay.osb.faro.engine.client.model.AccountLifecycleStage;
 import com.liferay.osb.faro.engine.client.model.Individual;
 import com.liferay.osb.faro.engine.client.model.Metric;
 import com.liferay.osb.faro.engine.client.model.Results;
@@ -16,6 +18,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -109,6 +112,60 @@ public class AccountFaroControllerTest {
 			_faroProject, id, channelId, search, rangeEnd, rangeKey, rangeStart,
 			page, pageSize, sortString
 		);
+	}
+
+	@Test
+	public void testSearchFDSFieldValuesWithLifecycleStatus() throws Exception {
+		AccountLifecycle accountLifecycle = new AccountLifecycle();
+
+		AccountLifecycleStage accountLifecycleStage =
+			new AccountLifecycleStage();
+
+		String externalReferenceCode = RandomTestUtil.randomString();
+
+		accountLifecycleStage.setExternalReferenceCode(externalReferenceCode);
+
+		String id = RandomTestUtil.randomString();
+
+		accountLifecycleStage.setId(id);
+
+		String stageType = RandomTestUtil.randomString();
+
+		accountLifecycleStage.setStageType(stageType);
+
+		accountLifecycle.setStages(
+			Collections.singletonList(accountLifecycleStage));
+
+		String accountLifecycleId = RandomTestUtil.randomString();
+
+		Mockito.when(
+			_contactsEngineClient.getAccountLifecycle(
+				_faroProject, accountLifecycleId)
+		).thenReturn(
+			accountLifecycle
+		);
+
+		long channelId = RandomTestUtil.randomLong();
+		long groupId = RandomTestUtil.randomLong();
+		int page = RandomTestUtil.randomInt();
+		int pageSize = RandomTestUtil.randomInt();
+		String query = RandomTestUtil.randomString();
+
+		FaroFDSResultsDisplay<Object> faroFDSResultsDisplay =
+			_accountFaroController.searchFDSFieldValues(
+				groupId, accountLifecycleId, channelId, "lifecycleStatus",
+				query, page, pageSize);
+
+		List<?> items = faroFDSResultsDisplay.getItems();
+
+		Assert.assertEquals(items.toString(), 1, items.size());
+
+		Map<String, String> stageMap = (Map<String, String>)items.get(0);
+
+		Assert.assertEquals(
+			externalReferenceCode, stageMap.get("externalReferenceCode"));
+		Assert.assertEquals(id, stageMap.get("id"));
+		Assert.assertEquals(stageType, stageMap.get("stageType"));
 	}
 
 	private final AccountFaroController _accountFaroController =

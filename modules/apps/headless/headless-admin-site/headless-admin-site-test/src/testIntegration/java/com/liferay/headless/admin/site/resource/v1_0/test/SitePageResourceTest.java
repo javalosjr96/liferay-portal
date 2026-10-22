@@ -29,6 +29,7 @@ import com.liferay.fragment.model.FragmentEntry;
 import com.liferay.fragment.model.FragmentEntryLink;
 import com.liferay.fragment.service.FragmentEntryLinkLocalService;
 import com.liferay.headless.admin.site.client.custom.field.CustomField;
+import com.liferay.headless.admin.site.client.dto.v1_0.AdvancedStylingConfig;
 import com.liferay.headless.admin.site.client.dto.v1_0.BasicFragmentInstancePageElementDefinition;
 import com.liferay.headless.admin.site.client.dto.v1_0.ContentPageSettings;
 import com.liferay.headless.admin.site.client.dto.v1_0.ContentPageSpecification;
@@ -1126,11 +1127,13 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 			PageSpecification pageSpecification =
 				pageSpecificationVersion.getPageSpecification();
 
-			if (pageSpecification != null) {
-				Assert.assertEquals(
-					draftLayout.getExternalReferenceCode(),
-					pageSpecification.getExternalReferenceCode());
+			if (pageSpecification == null) {
+				continue;
 			}
+
+			Assert.assertEquals(
+				draftLayout.getExternalReferenceCode(),
+				pageSpecification.getExternalReferenceCode());
 		}
 
 		Assert.assertEquals(
@@ -1384,7 +1387,8 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 
 	private void _assertWidgetPageWidgetInstances(
 		GeneralConfig.ApplicationDecorator applicationDecorator, int count,
-		String customApplicationDecorator, SitePage sitePage) {
+		String customApplicationDecorator, String customCSS,
+		String customCSSClassName, SitePage sitePage) {
 
 		List<WidgetPageWidgetInstance> widgetPageWidgetInstances =
 			_getWidgetPageWidgetInstances(sitePage);
@@ -1394,6 +1398,15 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 
 			WidgetLookAndFeelConfig widgetLookAndFeelConfig =
 				widgetPageWidgetInstance.getWidgetLookAndFeelConfig();
+
+			AdvancedStylingConfig advancedStylingConfig =
+				widgetLookAndFeelConfig.getAdvancedStylingConfig();
+
+			Assert.assertEquals(
+				customCSS, advancedStylingConfig.getCustomCSS());
+			Assert.assertEquals(
+				customCSSClassName,
+				advancedStylingConfig.getCustomCSSClassNames());
 
 			GeneralConfig generalConfig =
 				widgetLookAndFeelConfig.getGeneralConfig();
@@ -2314,15 +2327,25 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 		};
 	}
 
-	private void _setWidgetPageWidgetInstancesApplicationDecorator(
+	private void _setWidgetPageWidgetInstancesWidgetLookAndFeelConfig(
 		GeneralConfig.ApplicationDecorator applicationDecorator,
-		String customApplicationDecorator, SitePage sitePage) {
+		String customApplicationDecorator, String customCSS,
+		String customCSSClassName, SitePage sitePage) {
 
 		for (WidgetPageWidgetInstance widgetPageWidgetInstance :
 				_getWidgetPageWidgetInstances(sitePage)) {
 
 			WidgetLookAndFeelConfig widgetLookAndFeelConfig =
 				new WidgetLookAndFeelConfig();
+
+			AdvancedStylingConfig advancedStylingConfig =
+				new AdvancedStylingConfig();
+
+			advancedStylingConfig.setCustomCSS(customCSS);
+			advancedStylingConfig.setCustomCSSClassNames(customCSSClassName);
+
+			widgetLookAndFeelConfig.setAdvancedStylingConfig(
+				advancedStylingConfig);
 
 			GeneralConfig generalConfig = new GeneralConfig();
 
@@ -2606,10 +2629,24 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 		Layout layout = LayoutTestUtil.addTypePortletLayout(testGroup);
 
 		String customApplicationDecorator = RandomTestUtil.randomString();
+		String customCSS = RandomTestUtil.randomString();
+		String customCSSClassName = RandomTestUtil.randomString();
 
 		LayoutTestUtil.addPortletToLayout(
 			layout, AssetPublisherPortletKeys.ASSET_PUBLISHER,
 			HashMapBuilder.put(
+				"portletSetupCss",
+				new String[] {
+					JSONUtil.put(
+						"advancedData",
+						JSONUtil.put(
+							"customCSS", customCSS
+						).put(
+							"customCSSClassName", customCSSClassName
+						)
+					).toString()
+				}
+			).put(
 				"portletSetupPortletDecoratorId",
 				new String[] {customApplicationDecorator}
 			).build());
@@ -2622,7 +2659,8 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 			layout.getExternalReferenceCode());
 
 		_assertWidgetPageWidgetInstances(
-			null, 1, customApplicationDecorator, sitePage);
+			null, 1, customApplicationDecorator, customCSS, customCSSClassName,
+			sitePage);
 	}
 
 	private void _testGetSiteSitePagesPageWithFlatten() throws Exception {
@@ -3337,9 +3375,11 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 			for (LogEntry logEntry : logEntries) {
 				String message = logEntry.getMessage();
 
-				if (message.contains("LayoutPageTemplateEntry")) {
-					count++;
+				if (!message.contains("LayoutPageTemplateEntry")) {
+					continue;
 				}
+
+				count++;
 			}
 
 			Assert.assertEquals(
@@ -4764,12 +4804,14 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 		for (int i = 0; i < pageExperiences.length; i++) {
 			PageExperience pageExperience = pageExperiences[i];
 
-			if (!Objects.equals(
+			if (Objects.equals(
 					pageExperience.getKey(),
 					SegmentsExperienceConstants.KEY_DEFAULT)) {
 
-				pageExperience.setPriority(i + 1);
+				continue;
 			}
+
+			pageExperience.setPriority(i + 1);
 		}
 
 		Comparator<PageExperience> comparator = Comparator.comparingInt(
@@ -5445,12 +5487,16 @@ public class SitePageResourceTest extends BaseSitePageResourceTestCase {
 				UnsafeFunction<SitePage, SitePage, Exception> unsafeFunction)
 		throws Exception {
 
-		_setWidgetPageWidgetInstancesApplicationDecorator(
-			applicationDecorator, customApplicationDecorator, sitePage);
+		String customCSS = RandomTestUtil.randomString();
+		String customCSSClassName = RandomTestUtil.randomString();
+
+		_setWidgetPageWidgetInstancesWidgetLookAndFeelConfig(
+			applicationDecorator, customApplicationDecorator, customCSS,
+			customCSSClassName, sitePage);
 
 		_assertWidgetPageWidgetInstances(
 			expectedApplicationDecorator, 3, expectedCustomApplicationDecorator,
-			unsafeFunction.apply(sitePage));
+			customCSS, customCSSClassName, unsafeFunction.apply(sitePage));
 	}
 
 	private void _testUpdateSiteSitePageWithPriority(

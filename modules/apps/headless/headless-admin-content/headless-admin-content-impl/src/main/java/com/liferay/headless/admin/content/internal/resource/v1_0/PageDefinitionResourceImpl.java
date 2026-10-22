@@ -42,10 +42,10 @@ import com.liferay.portal.kernel.servlet.DummyHttpServletResponse;
 import com.liferay.portal.kernel.servlet.DynamicServletRequest;
 import com.liferay.portal.kernel.servlet.ServletContextPool;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.theme.ThemeUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.WebKeys;
-import com.liferay.taglib.util.ThemeUtil;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -59,10 +59,6 @@ import jakarta.ws.rs.ext.Providers;
 import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
-
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -185,20 +181,15 @@ public class PageDefinitionResourceImpl extends BasePageDefinitionResourceImpl {
 
 		LayoutSet layoutSet = layout.getLayoutSet();
 
-		Document document = Jsoup.parse(
-			ThemeUtil.include(
-				ServletContextPool.get(StringPool.BLANK),
-				contextHttpServletRequest, contextHttpServletResponse,
-				"portal_normal.ftl", layoutSet.getTheme(), false));
+		String html = ThemeUtil.include(
+			ServletContextPool.get(StringPool.BLANK), contextHttpServletRequest,
+			contextHttpServletResponse, "portal_normal.ftl",
+			layoutSet.getTheme(), false);
 
 		_layoutLocalService.deleteLayout(layout.getPlid(), serviceContext);
 
-		Element bodyElement = document.body();
-
-		bodyElement.html(sb.toString());
-
 		return Response.ok(
-			document.html()
+			ThemeUtil.replaceBodyContent(html, sb.toString())
 		).build();
 	}
 

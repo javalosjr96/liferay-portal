@@ -1,12 +1,6 @@
 # Instance Wrapper Build
 
-## Trigger
-
-- `portal-impl/src/com/liferay/portal/tools/instance_wrappers.xml` changed.
-
-- OR a Java file whose fully qualified name appears as a `<class name="...">` value in that XML was modified.
-
-- OR (**Output-Only Catch-Up Regen**) the diff contains a class referenced by the XML and no XML change is present.
+Regenerates the instance wrappers declared in `instance_wrappers.xml` and commits whatever has drifted from them.
 
 ## Match
 

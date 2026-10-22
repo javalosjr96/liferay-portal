@@ -973,31 +973,6 @@ definition {
 	}
 
 	@summary = "Default summary"
-	macro viewDefaultLanguagesConfiguration() {
-		AssertChecked.assertCheckedNotVisible(
-			key_languagesOption = "Use the default language options.",
-			locator1 = "Radio#DEPOT_LANGUAGES_OPTION");
-
-		AssertNotChecked.assertNotCheckedNotVisible(
-			key_languagesOption = "Define a custom default language and additional active languages for this asset library.",
-			locator1 = "Radio#DEPOT_LANGUAGES_OPTION");
-
-		AssertTextEquals.assertPartialText(
-			key_language = "English (United States)",
-			locator1 = "LanguageConfiguration#DEPOT_DEFAULT_LANGUAGE",
-			value1 = "English (United States)");
-
-		for (var language : list "English (United States),Arabic (Saudi Arabia),Catalan (Spain),Chinese (China),Dutch (Netherlands),Finnish (Finland),French (France),German (Germany),Hungarian (Hungary),Japanese (Japan),Portuguese (Brazil),Spanish (Spain),Swedish (Sweden)") {
-			AssertTextEquals.assertPartialText(
-				key_language = ${language},
-				locator1 = "LanguageConfiguration#DEPOT_AVAILABLE_LANGUAGES",
-				value1 = ${language});
-		}
-
-		AssertElementPresent(locator1 = "Button#SAVE");
-	}
-
-	@summary = "Default summary"
 	macro viewDepotConfiguration(configuration = null, toggleSwitchLabel = null) {
 		if (${configuration} == "enabled") {
 			AssertChecked.assertCheckedNotVisible(
@@ -1009,21 +984,6 @@ definition {
 				key_toggleSwitchLabel = ${toggleSwitchLabel},
 				locator1 = "ToggleSwitch#ANY_TOGGLE_SWITCH");
 		}
-	}
-
-	@summary = "Default summary"
-	macro viewDMWorkflowPresent(dmFolderName = null) {
-		DMFolder.gotoEditCP(folderName = ${dmFolderName});
-
-		if (IsElementNotPresent.isNotVisible(locator1 = "Radio#WORKFLOW_PARENT_FOLDER")) {
-			Click(locator1 = "DocumentsAndMediaEditFolder#WORKFLOW_DOCUMENT_TYPE_RESTRICTIONS_TOGGLE");
-		}
-
-		AssertVisible(locator1 = "Radio#WORKFLOW_PARENT_FOLDER");
-
-		AssertVisible(locator1 = "Radio#WORKFLOW_SPECIFIC_RESTRICTIONS");
-
-		AssertVisible(locator1 = "Radio#WORKFLOW_DEFAULT_WORKFLOW");
 	}
 
 	@summary = "Default summary"
@@ -1130,9 +1090,21 @@ definition {
 			cardSubtitle = ${userScreenName});
 
 		if (isSet(viewOnly)) {
-			AssertElementNotPresent(
-				key_card = ${userScreenName},
-				locator1 = "Card#CARD_ELLIPSIS");
+			if (IsElementPresent(key_card = ${userScreenName}, locator1 = "Card#CARD_ELLIPSIS")) {
+				Click.waitForMenuToggleJSClick(
+					key_card = ${userScreenName},
+					locator1 = "Card#CARD_ELLIPSIS");
+
+				AssertElementPresent(
+					key_menuItem = "Unassign Roles",
+					locator1 = "MenuItem#ANY_MENU_ITEM");
+
+				for (var menuItem : list "Assign Roles,Remove Membership") {
+					AssertElementNotPresent(
+						key_menuItem = ${menuItem},
+						locator1 = "MenuItem#ANY_MENU_ITEM");
+				}
+			}
 		}
 		else {
 			AssertVisible(
@@ -1175,7 +1147,7 @@ definition {
 	@summary = "Default summary"
 	macro viewNoConnectedSiteCP() {
 		AssertTextEquals(
-			locator1 = "Message#SUBTITLE",
+			locator1 = "Message#EMPTY_INFO_COMPACT",
 			value1 = "No sites are connected yet.");
 	}
 
@@ -1202,13 +1174,6 @@ definition {
 		AssertElementNotPresent(
 			key_panel = ${panelName},
 			locator1 = "Panel#PANEL");
-	}
-
-	@summary = "Default summary"
-	macro viewNoWorkflowResource() {
-		AssertTextEquals.assertPartialText(
-			locator1 = "Message#EMPTY_INFO",
-			value1 = "No entries were found.");
 	}
 
 	@summary = "Default summary"

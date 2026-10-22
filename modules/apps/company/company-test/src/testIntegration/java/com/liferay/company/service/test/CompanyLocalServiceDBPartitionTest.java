@@ -32,6 +32,7 @@ import com.liferay.portal.kernel.exception.CompanyVirtualHostException;
 import com.liferay.portal.kernel.exception.CompanyWebIdException;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
@@ -43,7 +44,9 @@ import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.repository.LocalRepository;
 import com.liferay.portal.kernel.repository.RepositoryFactory;
 import com.liferay.portal.kernel.repository.registry.RepositoryDefiner;
+import com.liferay.portal.kernel.security.auth.CompanyInheritableThreadLocalCallable;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.PortletLocalService;
@@ -63,6 +66,9 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.transaction.Propagation;
+import com.liferay.portal.kernel.transaction.TransactionConfig;
+import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -77,11 +83,15 @@ import com.liferay.portal.service.impl.ClassNameLocalServiceImpl;
 import com.liferay.portal.service.impl.CompanyLocalServiceImpl;
 import com.liferay.portal.service.impl.ResourceActionLocalServiceImpl;
 import com.liferay.portal.spring.aop.AopInvocationHandler;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.portal.test.rule.TransactionalTestRule;
 import com.liferay.portal.util.PortalInstances;
+import com.liferay.search.experiences.model.SXPBlueprint;
+import com.liferay.search.experiences.service.SXPBlueprintLocalService;
 
 import jakarta.portlet.Portlet;
 
@@ -97,6 +107,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.apache.felix.cm.PersistenceManager;
 
@@ -111,11 +127,14 @@ import org.junit.runner.RunWith;
 
 import org.osgi.framework.Bundle;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Constants;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
+import org.osgi.service.cm.ManagedService;
+import org.osgi.service.cm.ManagedServiceFactory;
 
 /**
  * @author Mariano Álvaro Sáiz
@@ -359,6 +378,7 @@ public class CompanyLocalServiceDBPartitionTest
 			CompanyLocalServiceTestUtil.createFactoryConfiguration(
 				_configurationAdmin, company.getCompanyId());
 
+		String factoryPid = configuration.getFactoryPid();
 		String pid = configuration.getPid();
 
 		companyLocalService.exportCompany(company.getCompanyId());
@@ -424,8 +444,28 @@ public class CompanyLocalServiceDBPartitionTest
 					exportedWebId);
 			}
 
-			company = companyLocalService.addDBPartitionCompany(
-				company.getCompanyId(), name, virtualHostname, webId);
+			List<String> pids = new CopyOnWriteArrayList<>();
+
+			ServiceRegistration<ManagedServiceFactory> serviceRegistration =
+				_bundleContext.registerService(
+					ManagedServiceFactory.class,
+					new ConfigurationTestUtil.InternalManagerServiceFactory(
+						factoryPid,
+						(servicePid, properties) -> pids.add(servicePid)),
+					MapUtil.singletonDictionary(
+						Constants.SERVICE_PID, factoryPid));
+
+			try {
+				_waitForConfigurationUpdates();
+
+				company = companyLocalService.addDBPartitionCompany(
+					company.getCompanyId(), name, virtualHostname, webId);
+
+				_waitForConfigurationUpdates();
+			}
+			finally {
+				serviceRegistration.unregister();
+			}
 
 			Assert.assertTrue(
 				ArrayUtil.contains(
@@ -443,6 +483,8 @@ public class CompanyLocalServiceDBPartitionTest
 				CompanyLocalServiceTestUtil.assertConfiguration(
 					_configurationAdmin, _persistenceManager, pid, true);
 			}
+
+			Assert.assertTrue(pids.toString(), pids.contains(pid));
 		}
 		finally {
 			db.runSQL(
@@ -584,6 +626,74 @@ public class CompanyLocalServiceDBPartitionTest
 	}
 
 	@Test
+	public void testAddDBPartitionCompanyWhenTransactionFails()
+		throws Exception {
+
+		Company company = CompanyTestUtil.addCompany();
+
+		try {
+			companyLocalService.exportCompany(company.getCompanyId());
+
+			_companyLocalService.deleteCompany(company);
+
+			Throwable throwable = _invokeInTransaction(
+				() -> {
+					try {
+						companyLocalService.addDBPartitionCompany(
+							company.getCompanyId(),
+							RandomTestUtil.randomString(76), null, null);
+					}
+					catch (PortalException portalException) {
+						Assert.assertTrue(
+							PortalInstances.isCompanyInImportProcess());
+
+						List<String> partitionNames = _getPartitionNames();
+
+						Assert.assertTrue(
+							partitionNames.contains(
+								CompanyLocalServiceTestUtil.getPartitionName(
+									company.getCompanyId())));
+
+						throw portalException;
+					}
+
+					return null;
+				});
+
+			Assert.assertSame(PortalException.class, throwable.getClass());
+
+			Assert.assertFalse(
+				ArrayUtil.contains(
+					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+					company.getCompanyId()));
+
+			CompanyLocalServiceTestUtil.checkStandaloneDBPartitionTables(
+				connection, dbPartitionDB,
+				DBPartitionUtil.getExportedPartitionName(
+					company.getCompanyId()),
+				"Company", "VirtualHost");
+
+			Assert.assertFalse(PortalInstances.isCompanyInImportProcess());
+		}
+		finally {
+			db.runSQL(
+				dbPartitionDB.getDropPartitionSQL(
+					DBPartitionUtil.getExportedPartitionName(
+						company.getCompanyId())));
+
+			if (ArrayUtil.contains(
+					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+					company.getCompanyId())) {
+
+				companyLocalService.deleteCompany(company);
+			}
+			else {
+				removeDBPartitions(new long[] {company.getCompanyId()});
+			}
+		}
+	}
+
+	@Test
 	public void testCopyDBPartitionCompany() throws Exception {
 		long rulesCount = _getRulesCount(defaultPartitionName);
 
@@ -604,6 +714,19 @@ public class CompanyLocalServiceDBPartitionTest
 
 			ObjectDefinition objectDefinition =
 				ObjectDefinitionTestUtil.publishObjectDefinition();
+
+			SXPBlueprint sxpBlueprint =
+				_sxpBlueprintLocalService.addSXPBlueprint(
+					null, TestPropsValues.getUserId(),
+					JSONUtil.put(
+						"generalConfiguration",
+						JSONUtil.put(
+							"searchableAssetTypes",
+							JSONUtil.put(objectDefinition.getClassName()))
+					).toString(),
+					Collections.emptyMap(), StringPool.BLANK, StringPool.BLANK,
+					RandomTestUtil.randomLocaleStringMap(),
+					ServiceContextTestUtil.getServiceContext());
 
 			copiedCompany = companyLocalService.copyDBPartitionCompany(
 				TestPropsValues.getCompanyId(), null, name, virtualHostname,
@@ -663,6 +786,17 @@ public class CompanyLocalServiceDBPartitionTest
 					ListUtil.isNotEmpty(
 						_resourcePermissionLocalService.getResourcePermissions(
 							copiedObjectDefinition.getPortletId())));
+
+				SXPBlueprint copiedSXPBlueprint =
+					_sxpBlueprintLocalService.getSXPBlueprint(
+						sxpBlueprint.getSXPBlueprintId());
+
+				Assert.assertEquals(
+					StringUtil.replace(
+						sxpBlueprint.getConfigurationJSON(),
+						objectDefinition.getClassName(),
+						copiedObjectDefinition.getClassName()),
+					copiedSXPBlueprint.getConfigurationJSON());
 			}
 
 			companyLocalService.deleteCompany(copiedCompany);
@@ -794,6 +928,58 @@ public class CompanyLocalServiceDBPartitionTest
 					toCompanyId);
 
 			safeCloseable.close();
+		}
+		finally {
+			companyLocalService.deleteCompany(company);
+		}
+	}
+
+	@Test
+	public void testCopyDBPartitionCompanyWhenTransactionFails()
+		throws Exception {
+
+		Company company = CompanyTestUtil.addCompany();
+
+		long toCompanyId = RandomTestUtil.nextLong();
+
+		try {
+			Throwable throwable = _invokeInTransaction(
+				() -> {
+					try {
+						companyLocalService.copyDBPartitionCompany(
+							company.getCompanyId(), toCompanyId,
+							RandomTestUtil.randomString(76),
+							StringUtil.toLowerCase(
+								RandomTestUtil.randomString()),
+							RandomTestUtil.randomString());
+					}
+					catch (PortalException portalException) {
+						Assert.assertTrue(
+							PortalInstances.isCompanyInCopyProcess());
+
+						List<String> partitionNames = _getPartitionNames();
+
+						Assert.assertTrue(
+							partitionNames.contains(
+								CompanyLocalServiceTestUtil.getPartitionName(
+									toCompanyId)));
+
+						throw portalException;
+					}
+
+					return null;
+				});
+
+			Assert.assertSame(PortalException.class, throwable.getClass());
+
+			Assert.assertFalse(
+				ArrayUtil.contains(
+					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+					toCompanyId));
+
+			_checkPartitionDoesNotExist(toCompanyId);
+
+			Assert.assertFalse(PortalInstances.isCompanyInCopyProcess());
 		}
 		finally {
 			companyLocalService.deleteCompany(company);
@@ -1049,9 +1235,9 @@ public class CompanyLocalServiceDBPartitionTest
 
 			// Reverse order to generate different class name IDs
 
-			_classNameLocalService.addClassName(_CLASS_NAME_2);
+			_classNameLocalService.getClassName(_CLASS_NAME_2);
 
-			_classNameLocalService.addClassName(_CLASS_NAME_1);
+			_classNameLocalService.getClassName(_CLASS_NAME_1);
 
 			_counter = _counterLocalService.increment(
 				CompanyLocalServiceDBPartitionTest.class.getName());
@@ -1310,24 +1496,7 @@ public class CompanyLocalServiceDBPartitionTest
 	}
 
 	private void _checkPartitionDoesNotExist(long companyId) throws Exception {
-		List<String> partitionNames = new ArrayList<>();
-
-		DatabaseMetaData databaseMetaData = connection.getMetaData();
-
-		if (db.getDBType() == DBType.MYSQL) {
-			try (ResultSet resultSet = databaseMetaData.getSchemas()) {
-				while (resultSet.next()) {
-					partitionNames.add(resultSet.getString("TABLE_SCHEM"));
-				}
-			}
-		}
-		else {
-			try (ResultSet resultSet = databaseMetaData.getCatalogs()) {
-				while (resultSet.next()) {
-					partitionNames.add(resultSet.getString("TABLE_CAT"));
-				}
-			}
-		}
+		List<String> partitionNames = _getPartitionNames();
 
 		Assert.assertFalse(
 			partitionNames.contains(
@@ -1421,6 +1590,26 @@ public class CompanyLocalServiceDBPartitionTest
 		throw new SQLException("At least one database partition is required");
 	}
 
+	private List<String> _getPartitionNames() throws Exception {
+		List<String> partitionNames = new ArrayList<>();
+
+		DatabaseMetaData databaseMetaData = connection.getMetaData();
+
+		try (ResultSet resultSet = databaseMetaData.getCatalogs()) {
+			while (resultSet.next()) {
+				partitionNames.add(resultSet.getString("TABLE_CAT"));
+			}
+		}
+
+		try (ResultSet resultSet = databaseMetaData.getSchemas()) {
+			while (resultSet.next()) {
+				partitionNames.add(resultSet.getString("TABLE_SCHEM"));
+			}
+		}
+
+		return partitionNames;
+	}
+
 	private int _getResourcePermissionsCount(
 			String partitionName, long companyId)
 		throws Exception {
@@ -1483,6 +1672,69 @@ public class CompanyLocalServiceDBPartitionTest
 		}
 
 		return false;
+	}
+
+	private Throwable _invokeInTransaction(Callable<Void> callable)
+		throws Exception {
+
+		long userId = TestPropsValues.getUserId();
+
+		FutureTask<Throwable> futureTask = new FutureTask<>(
+			new CompanyInheritableThreadLocalCallable<>(
+				() -> {
+					PrincipalThreadLocal.setName(userId);
+
+					try {
+						TransactionInvokerUtil.invoke(
+							TransactionConfig.Factory.create(
+								Propagation.REQUIRED,
+								new Class<?>[] {Exception.class}),
+							callable);
+
+						return null;
+					}
+					catch (Throwable throwable) {
+						return throwable;
+					}
+				}));
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"org.hibernate.engine.jdbc.spi.SqlExceptionHelper",
+				LoggerTestUtil.OFF)) {
+
+			Thread thread = new Thread(futureTask);
+
+			thread.setDaemon(true);
+			thread.setName(
+				CompanyLocalServiceDBPartitionTest.class.getSimpleName() +
+					"-invokeInTransaction");
+
+			thread.start();
+
+			return futureTask.get(10, TimeUnit.MINUTES);
+		}
+		catch (TimeoutException timeoutException) {
+			futureTask.cancel(true);
+
+			throw timeoutException;
+		}
+	}
+
+	private void _waitForConfigurationUpdates() throws Exception {
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+
+		ServiceRegistration<ManagedService> serviceRegistration =
+			_bundleContext.registerService(
+				ManagedService.class, properties -> countDownLatch.countDown(),
+				MapUtil.singletonDictionary(
+					Constants.SERVICE_PID, RandomTestUtil.randomString()));
+
+		try {
+			countDownLatch.await();
+		}
+		finally {
+			serviceRegistration.unregister();
+		}
 	}
 
 	private static final String _CLASS_NAME_1 =
@@ -1551,6 +1803,9 @@ public class CompanyLocalServiceDBPartitionTest
 		filter = "(&(objectClass=com.liferay.document.library.kernel.store.Store)(default=true))"
 	)
 	private Store _store;
+
+	@Inject
+	private SXPBlueprintLocalService _sxpBlueprintLocalService;
 
 	@Inject
 	private VirtualHostLocalService _virtualHostLocalService;

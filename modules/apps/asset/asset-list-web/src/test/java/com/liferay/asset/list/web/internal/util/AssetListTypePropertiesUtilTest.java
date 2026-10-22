@@ -13,7 +13,6 @@ import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.bag.ObjectFieldBag;
 import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
 import com.liferay.portal.json.JSONFactoryImpl;
-import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -57,8 +56,6 @@ public class AssetListTypePropertiesUtilTest {
 	public static void setUpClass() {
 		_setUpJSONFactoryUtil();
 
-		_featureFlagManagerUtilMockedStatic = Mockito.mockStatic(
-			FeatureFlagManagerUtil.class);
 		_listTypeEntryLocalServiceUtilMockedStatic = Mockito.mockStatic(
 			ListTypeEntryLocalServiceUtil.class);
 		_objectDefinitionLocalServiceUtilMockedStatic = Mockito.mockStatic(
@@ -68,7 +65,6 @@ public class AssetListTypePropertiesUtilTest {
 
 	@AfterClass
 	public static void tearDownClass() {
-		_featureFlagManagerUtilMockedStatic.close();
 		_listTypeEntryLocalServiceUtilMockedStatic.close();
 		_objectDefinitionLocalServiceUtilMockedStatic.close();
 		_portalUtilMockedStatic.close();
@@ -76,17 +72,9 @@ public class AssetListTypePropertiesUtilTest {
 
 	@Before
 	public void setUp() {
-		_featureFlagManagerUtilMockedStatic.reset();
 		_listTypeEntryLocalServiceUtilMockedStatic.reset();
 		_objectDefinitionLocalServiceUtilMockedStatic.reset();
 		_portalUtilMockedStatic.reset();
-
-		_featureFlagManagerUtilMockedStatic.when(
-			() -> FeatureFlagManagerUtil.isEnabled(
-				Mockito.anyLong(), Mockito.eq("LPD-74731"))
-		).thenReturn(
-			true
-		);
 
 		_portalUtilMockedStatic.when(
 			() -> PortalUtil.getClassName(Mockito.anyLong())
@@ -109,12 +97,12 @@ public class AssetListTypePropertiesUtilTest {
 		);
 
 		_setUpObjectDefinition(
-			_CLASS_NAME_ID_1, _LABEL_1, Collections.singletonList(objectField));
+			_CLASS_NAME_ID_1, _EXTERNAL_REFERENCE_CODE_1, _LABEL_1,
+			Collections.singletonList(objectField));
 
 		JSONArray typePropertiesJSONArray =
 			AssetListTypePropertiesUtil.getTypePropertiesJSONArray(
-				new long[] {_CLASS_NAME_ID_1}, new long[] {_CLASS_TYPE_ID_1},
-				_COMPANY_ID, LocaleUtil.US);
+				new long[] {_CLASS_NAME_ID_1}, _COMPANY_ID, LocaleUtil.US);
 
 		JSONObject groupJSONObject = typePropertiesJSONArray.getJSONObject(0);
 
@@ -127,9 +115,11 @@ public class AssetListTypePropertiesUtilTest {
 
 			String name = itemJSONObject.getString("name");
 
-			if (name.equals("externalReferenceCode")) {
-				type = itemJSONObject.getString("type");
+			if (!name.equals("externalReferenceCode")) {
+				continue;
 			}
+
+			type = itemJSONObject.getString("type");
 		}
 
 		Assert.assertEquals(itemsJSONArray.toString(), "keyword", type);
@@ -154,12 +144,12 @@ public class AssetListTypePropertiesUtilTest {
 	@Test
 	public void testGetTypePropertiesJSONArrayEmitsOneGroupPerPair() {
 		_setUpObjectDefinition(
-			_CLASS_NAME_ID_1, _LABEL_1,
+			_CLASS_NAME_ID_1, _EXTERNAL_REFERENCE_CODE_1, _LABEL_1,
 			Collections.singletonList(
 				_mockObjectField(
 					ObjectFieldConstants.BUSINESS_TYPE_TEXT, "title")));
 		_setUpObjectDefinition(
-			_CLASS_NAME_ID_2, _LABEL_2,
+			_CLASS_NAME_ID_2, _EXTERNAL_REFERENCE_CODE_2, _LABEL_2,
 			Arrays.asList(
 				_mockObjectField(
 					ObjectFieldConstants.BUSINESS_TYPE_TEXT, "title"),
@@ -168,8 +158,7 @@ public class AssetListTypePropertiesUtilTest {
 
 		JSONArray jsonArray =
 			AssetListTypePropertiesUtil.getTypePropertiesJSONArray(
-				new long[] {_CLASS_NAME_ID_1, _CLASS_NAME_ID_2},
-				new long[] {_CLASS_TYPE_ID_1, _CLASS_TYPE_ID_2}, _COMPANY_ID,
+				new long[] {_CLASS_NAME_ID_1, _CLASS_NAME_ID_2}, _COMPANY_ID,
 				LocaleUtil.US);
 
 		Assert.assertEquals(jsonArray.toString(), 3, jsonArray.length());
@@ -186,9 +175,8 @@ public class AssetListTypePropertiesUtilTest {
 		JSONObject itemJSONObject1 = itemsJSONArray1.getJSONObject(0);
 
 		Assert.assertEquals(
-			_CLASS_NAME_ID_1, itemJSONObject1.getLong("classNameId"));
-		Assert.assertEquals(
-			_CLASS_TYPE_ID_1, itemJSONObject1.getLong("classTypeId"));
+			_EXTERNAL_REFERENCE_CODE_1,
+			itemJSONObject1.getString("objectDefinitionExternalReferenceCode"));
 		Assert.assertEquals("title", itemJSONObject1.getString("name"));
 
 		JSONObject groupJSONObject2 = jsonArray.getJSONObject(2);
@@ -203,17 +191,15 @@ public class AssetListTypePropertiesUtilTest {
 		JSONObject itemJSONObject2 = itemsJSONArray2.getJSONObject(0);
 
 		Assert.assertEquals(
-			_CLASS_NAME_ID_2, itemJSONObject2.getLong("classNameId"));
-		Assert.assertEquals(
-			_CLASS_TYPE_ID_2, itemJSONObject2.getLong("classTypeId"));
+			_EXTERNAL_REFERENCE_CODE_2,
+			itemJSONObject2.getString("objectDefinitionExternalReferenceCode"));
 		Assert.assertEquals("title", itemJSONObject2.getString("name"));
 
 		JSONObject itemJSONObject3 = itemsJSONArray2.getJSONObject(1);
 
 		Assert.assertEquals(
-			_CLASS_NAME_ID_2, itemJSONObject3.getLong("classNameId"));
-		Assert.assertEquals(
-			_CLASS_TYPE_ID_2, itemJSONObject3.getLong("classTypeId"));
+			_EXTERNAL_REFERENCE_CODE_2,
+			itemJSONObject3.getString("objectDefinitionExternalReferenceCode"));
 		Assert.assertEquals("priority", itemJSONObject3.getString("name"));
 		Assert.assertEquals("integer", itemJSONObject3.getString("type"));
 	}
@@ -222,7 +208,7 @@ public class AssetListTypePropertiesUtilTest {
 	public void testGetTypePropertiesJSONArrayEmitsSortableFlagsForCommonFields() {
 		JSONArray jsonArray =
 			AssetListTypePropertiesUtil.getTypePropertiesJSONArray(
-				new long[0], new long[0], _COMPANY_ID, LocaleUtil.US);
+				new long[0], _COMPANY_ID, LocaleUtil.US);
 
 		JSONObject groupJSONObject = jsonArray.getJSONObject(0);
 
@@ -248,7 +234,7 @@ public class AssetListTypePropertiesUtilTest {
 	@Test
 	public void testGetTypePropertiesJSONArrayEmitsSortableFlagsForObjectFields() {
 		_setUpObjectDefinition(
-			_CLASS_NAME_ID_1, _LABEL_1,
+			_CLASS_NAME_ID_1, _EXTERNAL_REFERENCE_CODE_1, _LABEL_1,
 			Arrays.asList(
 				_mockObjectField(
 					ObjectFieldConstants.BUSINESS_TYPE_BOOLEAN, "active"),
@@ -270,8 +256,7 @@ public class AssetListTypePropertiesUtilTest {
 
 		JSONArray jsonArray =
 			AssetListTypePropertiesUtil.getTypePropertiesJSONArray(
-				new long[] {_CLASS_NAME_ID_1}, new long[] {_CLASS_TYPE_ID_1},
-				_COMPANY_ID, LocaleUtil.US);
+				new long[] {_CLASS_NAME_ID_1}, _COMPANY_ID, LocaleUtil.US);
 
 		JSONArray itemsJSONArray = JSONUtil.getValueAsJSONArray(
 			jsonArray, "JSONObject/1", "JSONArray/items");
@@ -301,7 +286,7 @@ public class AssetListTypePropertiesUtilTest {
 	@Test
 	public void testGetTypePropertiesJSONArrayEmitsTypeGroupWithEmptyItemsWhenNoFieldsFilterable() {
 		_setUpObjectDefinition(
-			_CLASS_NAME_ID_1, _LABEL_1,
+			_CLASS_NAME_ID_1, _EXTERNAL_REFERENCE_CODE_1, _LABEL_1,
 			Collections.singletonList(
 				_mockObjectField(
 					ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT,
@@ -309,8 +294,7 @@ public class AssetListTypePropertiesUtilTest {
 
 		JSONArray jsonArray =
 			AssetListTypePropertiesUtil.getTypePropertiesJSONArray(
-				new long[] {_CLASS_NAME_ID_1}, new long[] {_CLASS_TYPE_ID_1},
-				_COMPANY_ID, LocaleUtil.US);
+				new long[] {_CLASS_NAME_ID_1}, _COMPANY_ID, LocaleUtil.US);
 
 		Assert.assertEquals(jsonArray.toString(), 2, jsonArray.length());
 
@@ -327,15 +311,14 @@ public class AssetListTypePropertiesUtilTest {
 	@Test
 	public void testGetTypePropertiesJSONArrayIncludesOneTypeGroup() {
 		_setUpObjectDefinition(
-			_CLASS_NAME_ID_1, _LABEL_1,
+			_CLASS_NAME_ID_1, _EXTERNAL_REFERENCE_CODE_1, _LABEL_1,
 			Collections.singletonList(
 				_mockObjectField(
 					ObjectFieldConstants.BUSINESS_TYPE_TEXT, "title")));
 
 		JSONArray jsonArray =
 			AssetListTypePropertiesUtil.getTypePropertiesJSONArray(
-				new long[] {_CLASS_NAME_ID_1}, new long[] {_CLASS_TYPE_ID_1},
-				_COMPANY_ID, LocaleUtil.US);
+				new long[] {_CLASS_NAME_ID_1}, _COMPANY_ID, LocaleUtil.US);
 
 		Assert.assertEquals(jsonArray.toString(), 2, jsonArray.length());
 
@@ -351,9 +334,8 @@ public class AssetListTypePropertiesUtilTest {
 		JSONObject itemJSONObject = itemsJSONArray.getJSONObject(0);
 
 		Assert.assertEquals(
-			_CLASS_NAME_ID_1, itemJSONObject.getLong("classNameId"));
-		Assert.assertEquals(
-			_CLASS_TYPE_ID_1, itemJSONObject.getLong("classTypeId"));
+			_EXTERNAL_REFERENCE_CODE_1,
+			itemJSONObject.getString("objectDefinitionExternalReferenceCode"));
 		Assert.assertEquals("title", itemJSONObject.getString("name"));
 		Assert.assertEquals("text", itemJSONObject.getString("type"));
 	}
@@ -373,7 +355,8 @@ public class AssetListTypePropertiesUtilTest {
 		);
 
 		_setUpObjectDefinition(
-			_CLASS_NAME_ID_1, _LABEL_1, Collections.singletonList(objectField));
+			_CLASS_NAME_ID_1, _EXTERNAL_REFERENCE_CODE_1, _LABEL_1,
+			Collections.singletonList(objectField));
 
 		ListTypeEntry approvedListTypeEntry = Mockito.mock(ListTypeEntry.class);
 
@@ -412,8 +395,7 @@ public class AssetListTypePropertiesUtilTest {
 
 		JSONArray jsonArray =
 			AssetListTypePropertiesUtil.getTypePropertiesJSONArray(
-				new long[] {_CLASS_NAME_ID_1}, new long[] {_CLASS_TYPE_ID_1},
-				_COMPANY_ID, LocaleUtil.US);
+				new long[] {_CLASS_NAME_ID_1}, _COMPANY_ID, LocaleUtil.US);
 
 		Assert.assertEquals(jsonArray.toString(), 2, jsonArray.length());
 
@@ -451,7 +433,7 @@ public class AssetListTypePropertiesUtilTest {
 	public void testGetTypePropertiesJSONArrayReturnsOnlyCommonFieldsGroupWhenNoClassNameIds() {
 		JSONArray jsonArray =
 			AssetListTypePropertiesUtil.getTypePropertiesJSONArray(
-				new long[0], new long[0], _COMPANY_ID, LocaleUtil.US);
+				new long[0], _COMPANY_ID, LocaleUtil.US);
 
 		Assert.assertEquals(jsonArray.toString(), 1, jsonArray.length());
 
@@ -482,7 +464,7 @@ public class AssetListTypePropertiesUtilTest {
 	@Test
 	public void testGetTypePropertiesJSONArraySkipsNonexistentClassNameId() {
 		_setUpObjectDefinition(
-			_CLASS_NAME_ID_1, _LABEL_1,
+			_CLASS_NAME_ID_1, _EXTERNAL_REFERENCE_CODE_1, _LABEL_1,
 			Collections.singletonList(
 				_mockObjectField(
 					ObjectFieldConstants.BUSINESS_TYPE_TEXT, "title")));
@@ -490,7 +472,7 @@ public class AssetListTypePropertiesUtilTest {
 		JSONArray jsonArray =
 			AssetListTypePropertiesUtil.getTypePropertiesJSONArray(
 				new long[] {_CLASS_NAME_ID_1, RandomTestUtil.randomLong()},
-				new long[] {_CLASS_TYPE_ID_1, 0}, _COMPANY_ID, LocaleUtil.US);
+				_COMPANY_ID, LocaleUtil.US);
 
 		Assert.assertEquals(jsonArray.toString(), 2, jsonArray.length());
 
@@ -544,10 +526,17 @@ public class AssetListTypePropertiesUtilTest {
 	}
 
 	private void _setUpObjectDefinition(
-		long classNameId, String label, List<ObjectField> objectFields) {
+		long classNameId, String externalReferenceCode, String label,
+		List<ObjectField> objectFields) {
 
 		ObjectDefinition objectDefinition = Mockito.mock(
 			ObjectDefinition.class);
+
+		Mockito.when(
+			objectDefinition.getExternalReferenceCode()
+		).thenReturn(
+			externalReferenceCode
+		);
 
 		Mockito.when(
 			objectDefinition.getLabel(LocaleUtil.US, true)
@@ -589,18 +578,18 @@ public class AssetListTypePropertiesUtilTest {
 
 	private static final long _CLASS_NAME_ID_2 = RandomTestUtil.randomLong();
 
-	private static final long _CLASS_TYPE_ID_1 = RandomTestUtil.randomLong();
-
-	private static final long _CLASS_TYPE_ID_2 = RandomTestUtil.randomLong();
-
 	private static final long _COMPANY_ID = RandomTestUtil.randomLong();
+
+	private static final String _EXTERNAL_REFERENCE_CODE_1 =
+		RandomTestUtil.randomString();
+
+	private static final String _EXTERNAL_REFERENCE_CODE_2 =
+		RandomTestUtil.randomString();
 
 	private static final String _LABEL_1 = RandomTestUtil.randomString();
 
 	private static final String _LABEL_2 = RandomTestUtil.randomString();
 
-	private static MockedStatic<FeatureFlagManagerUtil>
-		_featureFlagManagerUtilMockedStatic;
 	private static MockedStatic<ListTypeEntryLocalServiceUtil>
 		_listTypeEntryLocalServiceUtilMockedStatic;
 	private static MockedStatic<ObjectDefinitionLocalServiceUtil>

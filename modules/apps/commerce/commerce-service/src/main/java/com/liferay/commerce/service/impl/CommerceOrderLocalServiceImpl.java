@@ -641,15 +641,6 @@ public class CommerceOrderLocalServiceImpl
 		}
 	}
 
-	/**
-	 * @deprecated As of Athanasius (7.3.x), delete by commerceAccountId
-	 */
-	@Deprecated
-	@Override
-	public void deleteCommerceOrders(long userId, Date date, int status) {
-		commerceOrderPersistence.removeByU_LtC_O(userId, date, status);
-	}
-
 	@Override
 	public void deleteCommerceOrdersByAccountId(
 			long commerceAccountId, Date date, int status)
@@ -795,14 +786,6 @@ public class CommerceOrderLocalServiceImpl
 			commerceOrderLocalService.searchCommerceOrders(searchContext);
 
 		return baseModelSearchResult.getBaseModels();
-	}
-
-	@Override
-	public List<CommerceOrder> getCommerceOrders(
-		long groupId, String commercePaymentMethodKey) {
-
-		return commerceOrderPersistence.findByG_CP(
-			groupId, commercePaymentMethodKey);
 	}
 
 	@Override
@@ -3119,14 +3102,16 @@ public class CommerceOrderLocalServiceImpl
 				}
 			}
 
-			if (defaultCommerceShippingOption != null) {
-				commerceOrder.setCommerceShippingMethodId(
-					commerceShippingMethod.getCommerceShippingMethodId());
-				commerceOrder.setShippingAmount(
-					defaultCommerceShippingOption.getAmount());
-				commerceOrder.setShippingOptionName(
-					defaultCommerceShippingOption.getKey());
+			if (defaultCommerceShippingOption == null) {
+				continue;
 			}
+
+			commerceOrder.setCommerceShippingMethodId(
+				commerceShippingMethod.getCommerceShippingMethodId());
+			commerceOrder.setShippingAmount(
+				defaultCommerceShippingOption.getAmount());
+			commerceOrder.setShippingOptionName(
+				defaultCommerceShippingOption.getKey());
 		}
 	}
 

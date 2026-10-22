@@ -506,30 +506,24 @@ passwords.encryption.algorithm=NONE</echo>
 				<available file="@{workspace.dir}/gradle/wrapper/gradle-wrapper.properties" />
 				<then>
 					<local name="gradle.wrapper.bin.file.name" />
-					<local name="gradle.wrapper.bin.file.url" />
+					<local name="gradle.wrapper.distributionUrl" />
 
-					<beanshell>
-						<![CDATA[
-							import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
+					<loadproperties prefix="gradle.wrapper." srcFile="@{workspace.dir}/gradle/wrapper/gradle-wrapper.properties">
+						<filterchain>
+							<linecontainsregexp>
+								<regexp pattern="^\s*distributionUrl\s*[=:]" />
+							</linecontainsregexp>
+						</filterchain>
+					</loadproperties>
 
-							File gradleWrapperPropertiesFile = new File("@{workspace.dir}" + "/gradle/wrapper/gradle-wrapper.properties");
-
-							Properties gradleWrapperProperties = JenkinsResultsParserUtil.getProperties(new File[] {gradleWrapperPropertiesFile});
-
-							String distributionURL = gradleWrapperProperties.getProperty("distributionUrl");
-
-							project.setProperty("gradle.wrapper.bin.file.name", distributionURL.replaceAll(".*/([^/]+)", "$1"));
-
-							project.setProperty("gradle.wrapper.bin.file.url", distributionURL);
-						]]>
-					</beanshell>
+					<basename file="${gradle.wrapper.distributionUrl}" property="gradle.wrapper.bin.file.name" />
 
 					<if>
-						<matches pattern="https?://" string="${gradle.wrapper.bin.file.url}" />
+						<matches pattern="https?://" string="${gradle.wrapper.distributionUrl}" />
 						<then>
 							<mirrors-get
 								dest="@{workspace.dir}/gradle/wrapper/${gradle.wrapper.bin.file.name}"
-								src="${gradle.wrapper.bin.file.url}"
+								src="${gradle.wrapper.distributionUrl}"
 							/>
 						</then>
 						<elseif>
@@ -538,25 +532,18 @@ passwords.encryption.algorithm=NONE</echo>
 							</not>
 							<then>
 								<execute>
-									cp @{workspace.dir}/gradle/wrapper/${gradle.wrapper.bin.file.url} @{workspace.dir}/gradle/wrapper/${gradle.wrapper.bin.file.name}
+									cp @{workspace.dir}/gradle/wrapper/${gradle.wrapper.distributionUrl} @{workspace.dir}/gradle/wrapper/${gradle.wrapper.bin.file.name}
 								</execute>
 							</then>
 						</elseif>
 					</if>
 
-					<beanshell>
-						<![CDATA[
-							import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
-
-							File gradleWrapperPropertiesFile = new File("@{workspace.dir}" + "/gradle/wrapper/gradle-wrapper.properties");
-
-							Properties gradleWrapperProperties = JenkinsResultsParserUtil.getProperties(new File[] {gradleWrapperPropertiesFile});
-
-							gradleWrapperProperties.setProperty("distributionUrl", "./" + project.getProperty("gradle.wrapper.bin.file.name"));
-
-							JenkinsResultsParserUtil.writePropertiesFile(gradleWrapperPropertiesFile, gradleWrapperProperties, true);
-						]]>
-					</beanshell>
+					<replaceregexp
+						byline="true"
+						file="@{workspace.dir}/gradle/wrapper/gradle-wrapper.properties"
+						match="^(\s*distributionUrl\s*[=:]).*$"
+						replace="\1./${gradle.wrapper.bin.file.name}"
+					/>
 				</then>
 			</if>
 		</sequential>
@@ -2069,9 +2056,28 @@ jdbc.default.connectionProperties=oracle.jdbc.ReadTimeout=0;oracle.net.CONNECT_T
 
 					Properties gradleProperties = JenkinsResultsParserUtil.getProperties(new File[] {new File("@{workspace.dir}", "gradle.properties")});
 
-					String product = gradleProperties.getProperty("liferay.workspace.product");
+					String product = JenkinsResultsParserUtil.getProperty(gradleProperties, "liferay.workspace.product");
 
 					if (JenkinsResultsParserUtil.isNullOrEmpty(product)) {
+						String workspaceBundleURL = JenkinsResultsParserUtil.getProperty(gradleProperties, "liferay.workspace.bundle.url");
+
+						if (JenkinsResultsParserUtil.isNullOrEmpty(workspaceBundleURL)) {
+							return;
+						}
+
+						File bundleFile = new File(mirrorDirName, workspaceBundleURL.replaceFirst("^https?://[^/]+/", ""));
+
+						if (bundleFile.exists()) {
+							project.setProperty("workspace.bundle.url", "file:" + bundleFile.getAbsolutePath());
+
+							System.out.println("Using the mirrored bundle at " + bundleFile);
+						}
+						else {
+							project.setProperty("workspace.bundle.url", workspaceBundleURL);
+
+							System.out.println("Using the workspace bundle at " + workspaceBundleURL);
+						}
+
 						return;
 					}
 
@@ -8119,7 +8125,7 @@ org.apache.catalina.startup.ClassLoaderFactory.level=INFO]]>
 				--add-host www.dog.com:127.0.0.1 \
 				--add-host www.easy.com:127.0.0.1 \
 				--add-host www.fox.com:127.0.0.1 \
-				--env=SE_NODE_SESSION_TIMEOUT=600 \
+				--env=SE_NODE_SESSION_TIMEOUT=${timeout.app.server.wait} \
 				--mount type=bind,source=${host.git.dir}/${portal.dir.name},target=${portal.dir} \
 			</start-docker-container>
 
@@ -8382,7 +8388,7 @@ ${docker.start.error}</fail>
 						<equals arg1="${database.type}" arg2="mariadb" />
 					</and>
 					<then>
-						<property name="docker.database.wait.condition">mariadb-admin ping > /dev/null 2>&amp;1</property>
+						<property name="docker.database.wait.condition">mariadb-admin --host=${database.host} --protocol=TCP ping > /dev/null 2>&amp;1</property>
 					</then>
 				</elseif>
 				<elseif>
@@ -8391,7 +8397,7 @@ ${docker.start.error}</fail>
 						<equals arg1="${database.type}" arg2="mysql" />
 					</or>
 					<then>
-						<property name="docker.database.wait.condition">mysqladmin ping > /dev/null 2>&amp;1</property>
+						<property name="docker.database.wait.condition">mysqladmin --host=${database.host} --protocol=TCP ping > /dev/null 2>&amp;1</property>
 					</then>
 				</elseif>
 				<elseif>
@@ -10004,10 +10010,39 @@ create database lportal${databases.size} encoding = 'UTF8';</echo>
 							</then>
 						</if>
 
-						<copy
-							file="${sql.dir}${sql.file}"
-							tofile="create.sql"
-						/>
+						<if>
+							<or>
+								<available file="${sql.dir}${sql.file}" />
+								<not>
+									<or>
+										<equals arg1="${database.type}" arg2="mariadb" />
+										<equals arg1="${database.type}" arg2="mysql" />
+										<equals arg1="${database.type}" arg2="postgresql" />
+									</or>
+								</not>
+							</or>
+							<then>
+								<copy
+									file="${sql.dir}${sql.file}"
+									tofile="create.sql"
+								/>
+							</then>
+							<elseif>
+								<equals arg1="${database.type}" arg2="postgresql" />
+								<then>
+									<echo file="create.sql">
+drop database if exists lportal;
+
+create database lportal encoding = 'UTF8';</echo>
+								</then>
+							</elseif>
+							<else>
+								<echo file="create.sql">
+drop database if exists lportal;
+
+create database lportal character set utf8mb4;</echo>
+							</else>
+						</if>
 					</else>
 				</if>
 
@@ -15167,7 +15202,7 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 	<target depends="build-sql-file" name="rebuild-database">
 		<trycatch property="rebuild.database.error">
 			<try>
-				<retry retrycount="2">
+				<retry retrycount="2" retrydelay="10000">
 					<sequential>
 						<if>
 							<equals arg1="${skip.delete.liferay.home}" arg2="true" />
@@ -15195,7 +15230,7 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 	<target depends="build-sql-file-playwright" name="rebuild-database-playwright">
 		<trycatch property="rebuild.database.error">
 			<try>
-				<retry retrycount="2">
+				<retry retrycount="2" retrydelay="10000">
 					<sequential>
 						<rebuild-database skip.delete.liferay.home="true" />
 					</sequential>

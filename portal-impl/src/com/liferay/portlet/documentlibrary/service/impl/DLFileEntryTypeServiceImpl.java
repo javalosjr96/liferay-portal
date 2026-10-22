@@ -15,6 +15,7 @@ import com.liferay.petra.sql.dsl.query.FromStep;
 import com.liferay.petra.sql.dsl.query.GroupByStep;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.InlineSQLHelperUtil;
 import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionRegistryUtil;
@@ -318,12 +319,14 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 
 			DLFileEntryType fileEntryType = iterator.next();
 
-			if ((fileEntryType.getFileEntryTypeId() > 0) &&
-				!dlFileEntryTypeModelResourcePermission.contains(
+			if ((fileEntryType.getFileEntryTypeId() <= 0) ||
+				dlFileEntryTypeModelResourcePermission.contains(
 					permissionChecker, fileEntryType, ActionKeys.VIEW)) {
 
-				iterator.remove();
+				continue;
 			}
+
+			iterator.remove();
 		}
 
 		return fileEntryTypes;
@@ -359,6 +362,12 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 					predicate = predicate.and(
 						groupIdsPredicate.withParentheses());
 				}
+
+				predicate = predicate.and(
+					InlineSQLHelperUtil.getPermissionWherePredicate(
+						DLFileEntryType.class,
+						DLFileEntryTypeTable.INSTANCE.fileEntryTypeId,
+						groupIds));
 
 				if (includeBasicFileEntryType) {
 					predicate = predicate.withParentheses(

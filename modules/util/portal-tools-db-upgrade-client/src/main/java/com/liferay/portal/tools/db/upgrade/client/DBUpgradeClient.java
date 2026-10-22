@@ -71,12 +71,7 @@ public class DBUpgradeClient {
 			CommandLine commandLine = commandLineParser.parse(options, args);
 
 			if (commandLine.hasOption("help")) {
-				new HelpFormatter(
-				).printHelp(
-					"Liferay Portal Tools Database Upgrade Client", options
-				);
-
-				return;
+				_printHelpAndExit(_LIFERAY_COMMON_EXIT_CODE_OK, options);
 			}
 
 			List<String> jvmOpts = new ArrayList<>();
@@ -146,19 +141,16 @@ public class DBUpgradeClient {
 			dbUpgradeClient.upgrade();
 		}
 		catch (ParseException parseException) {
-			System.err.println("Unable to parse command line properties:");
+			System.err.println(parseException.getMessage());
 
-			parseException.printStackTrace();
-
-			new HelpFormatter(
-			).printHelp(
-				"Liferay Portal Tools Database Upgrade Client", options
-			);
+			_printHelpAndExit(_LIFERAY_COMMON_EXIT_CODE_HELP, options);
 		}
 		catch (Exception exception) {
 			System.err.println("Error running upgrade:");
 
 			exception.printStackTrace();
+
+			System.exit(_LIFERAY_COMMON_EXIT_CODE_BAD);
 		}
 	}
 
@@ -315,7 +307,7 @@ public class DBUpgradeClient {
 				"Remove " + file + " prior to running an upgrade to prevent " +
 					"possible conflicts.");
 
-			System.exit(1);
+			System.exit(_LIFERAY_COMMON_EXIT_CODE_BAD);
 		}
 
 		try {
@@ -333,7 +325,7 @@ public class DBUpgradeClient {
 				"Stopping the upgrade process. Please fix the errors and try " +
 					"again.");
 
-			System.exit(1);
+			System.exit(_LIFERAY_COMMON_EXIT_CODE_BAD);
 		}
 	}
 
@@ -347,9 +339,11 @@ public class DBUpgradeClient {
 		defaultJVMOpts.put("-Xmx", "-Xmx4096m");
 
 		for (Map.Entry<String, String> entry : defaultJVMOpts.entrySet()) {
-			if (!_containsPrefix(jvmOpts, entry.getKey())) {
-				jvmOpts.add(entry.getValue());
+			if (_containsPrefix(jvmOpts, entry.getKey())) {
+				continue;
 			}
+
+			jvmOpts.add(entry.getValue());
 		}
 	}
 
@@ -383,6 +377,19 @@ public class DBUpgradeClient {
 				"s", "shell", false, "Automatically connect to GoGo shell."));
 
 		return options;
+	}
+
+	private static void _printHelpAndExit(int exitCode, Options options) {
+		HelpFormatter helpFormatter = new HelpFormatter();
+
+		helpFormatter.setSyntaxPrefix("Usage: ");
+
+		helpFormatter.printHelp(
+			System.getProperty("launcher", "db_upgrade_client") +
+				" [parameters]",
+			"Liferay Portal Tools Database Upgrade Client", options, null);
+
+		System.exit(exitCode);
 	}
 
 	private void _appendClassPath(StringBuilder sb, File dir)
@@ -678,9 +685,11 @@ public class DBUpgradeClient {
 				File testDir = _getResolvedDir(
 					allowAbsolutePaths, baseDir, dirName);
 
-				if ((testDir == null) || !_isValidDir(testDir)) {
-					hasErrors = true;
+				if ((testDir != null) && _isValidDir(testDir)) {
+					continue;
 				}
+
+				hasErrors = true;
 			}
 
 			if (!hasErrors) {
@@ -793,10 +802,12 @@ public class DBUpgradeClient {
 							"liferay.home")),
 					response);
 
-				if (_appServer == null) {
-					System.err.println(
-						response + " is an unsupported application server.");
+				if (_appServer != null) {
+					continue;
 				}
+
+				System.err.println(
+					response + " is an unsupported application server.");
 			}
 
 			File dir = _appServer.getDir();
@@ -1085,9 +1096,11 @@ public class DBUpgradeClient {
 
 			dataSource = Database.getDatabase(response);
 
-			if (dataSource == null) {
-				System.err.println(response + " is an unsupported database.");
+			if (dataSource != null) {
+				continue;
 			}
+
+			System.err.println(response + " is an unsupported database.");
 		}
 
 		System.out.println(
@@ -1212,6 +1225,15 @@ public class DBUpgradeClient {
 	private static final String _GOGO_SHELL_PREFIX = "g! ";
 
 	private static final String _JAVA_HOME = System.getenv("JAVA_HOME");
+
+	/**
+	 * https://github.com/liferay/liferay-docker/blob/master/_liferay_common.sh
+	 */
+	private static final int _LIFERAY_COMMON_EXIT_CODE_BAD = 1;
+
+	private static final int _LIFERAY_COMMON_EXIT_CODE_HELP = 2;
+
+	private static final int _LIFERAY_COMMON_EXIT_CODE_OK = 0;
 
 	private static final Pattern _gogoShellAddressPattern = Pattern.compile(
 		"^([^\\:]+):([0-9]{1,5})$");

@@ -6,10 +6,11 @@
 package com.liferay.site.cms.site.initializer.internal.servlet;
 
 import com.liferay.diff.DiffHtml;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
-import com.liferay.document.library.util.DLURLHelper;
 import com.liferay.list.type.service.ListTypeEntryLocalService;
+import com.liferay.object.constants.ObjectFieldConstants;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectEntryLocalService;
@@ -31,6 +32,8 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.servlet.ServletResponseUtil;
 import com.liferay.portal.kernel.util.ContentTypes;
+import com.liferay.portal.kernel.util.SetUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.site.cms.site.initializer.internal.comparison.ObjectEntryVersionFieldValueResolver;
 
 import jakarta.servlet.Servlet;
@@ -150,6 +153,13 @@ public class CompareObjectEntryVersionsCMSServlet extends BaseCMSServlet {
 						targetFieldValues.get(fieldName));
 
 				if (sourceDisplayValue.equals(targetDisplayValue)) {
+					if (_isShownUnchanged(sourceDisplayValue, objectField)) {
+						sourceDiffsJSONObject.put(
+							fieldName, sourceDisplayValue);
+						targetDiffsJSONObject.put(
+							fieldName, targetDisplayValue);
+					}
+
 					continue;
 				}
 
@@ -193,8 +203,31 @@ public class CompareObjectEntryVersionsCMSServlet extends BaseCMSServlet {
 		}
 	}
 
+	private boolean _isShownUnchanged(
+		String displayValue, ObjectField objectField) {
+
+		if (objectField == null) {
+			return false;
+		}
+
+		if (ObjectFieldConstants.BUSINESS_TYPE_ATTACHMENT.equals(
+				objectField.getBusinessType())) {
+
+			return Validator.isNotNull(displayValue);
+		}
+
+		return _shownUnchangedObjectFieldBusinessTypes.contains(
+			objectField.getBusinessType());
+	}
+
 	private static final Log _log = LogFactoryUtil.getLog(
 		CompareObjectEntryVersionsCMSServlet.class);
+
+	private static final Set<String> _shownUnchangedObjectFieldBusinessTypes =
+		SetUtil.fromArray(
+			ObjectFieldConstants.BUSINESS_TYPE_BOOLEAN,
+			ObjectFieldConstants.BUSINESS_TYPE_PHONE_NUMBER,
+			ObjectFieldConstants.BUSINESS_TYPE_RICH_TEXT);
 
 	@Reference
 	private DiffHtml _diffHtml;

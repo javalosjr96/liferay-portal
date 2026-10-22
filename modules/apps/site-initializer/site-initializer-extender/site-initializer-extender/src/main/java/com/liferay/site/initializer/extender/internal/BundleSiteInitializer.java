@@ -42,12 +42,15 @@ import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryGroupRelLocalService;
 import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.document.library.helper.DLURLHelper;
 import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.model.DLFileEntryType;
 import com.liferay.document.library.kernel.model.DLFolder;
+import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.service.DLAppLocalServiceUtil;
+import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryTypeLocalService;
-import com.liferay.document.library.util.DLURLHelper;
+import com.liferay.document.library.kernel.service.DLFolderLocalService;
 import com.liferay.dynamic.data.lists.model.DDLRecord;
 import com.liferay.dynamic.data.mapping.constants.DDMTemplateConstants;
 import com.liferay.dynamic.data.mapping.exception.NoSuchStructureException;
@@ -181,7 +184,6 @@ import com.liferay.portal.kernel.service.ThemeLocalService;
 import com.liferay.portal.kernel.service.UserGroupLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalService;
-import com.liferay.portal.kernel.settings.ArchivedSettingsFactory;
 import com.liferay.portal.kernel.template.TemplateConstants;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
@@ -284,7 +286,6 @@ public class BundleSiteInitializer implements SiteInitializer {
 		AccountResource.Factory accountResourceFactory,
 		AccountRoleLocalService accountRoleLocalService,
 		AccountRoleResource.Factory accountRoleResourceFactory,
-		ArchivedSettingsFactory archivedSettingsFactory,
 		AssetCategoryLocalService assetCategoryLocalService,
 		AssetEntryLocalService assetEntryLocalService,
 		AssetLinkLocalService assetLinkLocalService,
@@ -300,8 +301,9 @@ public class BundleSiteInitializer implements SiteInitializer {
 		DefaultDDMStructureHelper defaultDDMStructureHelper,
 		DepotEntryGroupRelLocalService depotEntryGroupRelLocalService,
 		DepotEntryLocalService depotEntryLocalService,
+		DLFileEntryLocalService dlFileEntryLocalService,
 		DLFileEntryTypeLocalService dlFileEntryTypeLocalService,
-		DLURLHelper dlURLHelper,
+		DLFolderLocalService dlFolderLocalService, DLURLHelper dlURLHelper,
 		DocumentFolderResource.Factory documentFolderResourceFactory,
 		DocumentResource.Factory documentResourceFactory,
 		ExpandoValueLocalService expandoValueLocalService,
@@ -378,7 +380,6 @@ public class BundleSiteInitializer implements SiteInitializer {
 		_accountResourceFactory = accountResourceFactory;
 		_accountRoleLocalService = accountRoleLocalService;
 		_accountRoleResourceFactory = accountRoleResourceFactory;
-		_archivedSettingsFactory = archivedSettingsFactory;
 		_assetCategoryLocalService = assetCategoryLocalService;
 		_assetEntryLocalService = assetEntryLocalService;
 		_assetLinkLocalService = assetLinkLocalService;
@@ -394,7 +395,9 @@ public class BundleSiteInitializer implements SiteInitializer {
 		_defaultDDMStructureHelper = defaultDDMStructureHelper;
 		_depotEntryGroupRelLocalService = depotEntryGroupRelLocalService;
 		_depotEntryLocalService = depotEntryLocalService;
+		_dlFileEntryLocalService = dlFileEntryLocalService;
 		_dlFileEntryTypeLocalService = dlFileEntryTypeLocalService;
+		_dlFolderLocalService = dlFolderLocalService;
 		_dlURLHelper = dlURLHelper;
 		_documentFolderResourceFactory = documentFolderResourceFactory;
 		_documentResourceFactory = documentResourceFactory;
@@ -650,12 +653,14 @@ public class BundleSiteInitializer implements SiteInitializer {
 						AccountEntry.class.getName(),
 						accountEntry.getAccountEntryId());
 
-				if (accountGroupRel == null) {
-					_accountGroupRelService.addAccountGroupRel(
-						accountGroup.getAccountGroupId(),
-						AccountEntry.class.getName(),
-						accountEntry.getAccountEntryId());
+				if (accountGroupRel != null) {
+					continue;
 				}
+
+				_accountGroupRelService.addAccountGroupRel(
+					accountGroup.getAccountGroupId(),
+					AccountEntry.class.getName(),
+					accountEntry.getAccountEntryId());
 			}
 		}
 	}
@@ -2196,12 +2201,14 @@ public class BundleSiteInitializer implements SiteInitializer {
 
 			Group scopeGroup = serviceContext.getScopeGroup();
 
-			if (scopeGroup.isSite()) {
-				_depotEntryGroupRelLocalService.addDepotEntryGroupRel(
-					(group != null) ? group.getClassPK() :
-						depotEntry.getDepotEntryId(),
-					serviceContext.getScopeGroupId());
+			if (!scopeGroup.isSite()) {
+				continue;
 			}
+
+			_depotEntryGroupRelLocalService.addDepotEntryGroupRel(
+				(group != null) ? group.getClassPK() :
+					depotEntry.getDepotEntryId(),
+				serviceContext.getScopeGroupId());
 		}
 	}
 
@@ -2237,18 +2244,19 @@ public class BundleSiteInitializer implements SiteInitializer {
 				).toString());
 		}
 
-		Page<DocumentFolder> documentFoldersPage =
-			documentFolderResource.getSiteDocumentFoldersPage(
-				groupId, true, null, null,
-				documentFolderResource.toFilter(
-					StringBundler.concat(
-						"name eq '", documentFolder.getName(), "'")),
-				null, null);
+		DLFolder dlFolder = null;
 
-		DocumentFolder existingDocumentFolder =
-			documentFoldersPage.fetchFirstItem();
+		if (documentFolderId != null) {
+			dlFolder = _dlFolderLocalService.fetchFolder(
+				groupId, documentFolderId, documentFolder.getName());
+		}
+		else {
+			dlFolder = _dlFolderLocalService.fetchFolder(
+				groupId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+				documentFolder.getName());
+		}
 
-		if (existingDocumentFolder == null) {
+		if (dlFolder == null) {
 			if (documentFolderId != null) {
 				documentFolder =
 					documentFolderResource.postDocumentFolderDocumentFolder(
@@ -2261,7 +2269,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 		}
 		else {
 			documentFolder = documentFolderResource.putDocumentFolder(
-				existingDocumentFolder.getId(), documentFolder);
+				dlFolder.getFolderId(), documentFolder);
 		}
 
 		return documentFolder.getId();
@@ -2333,16 +2341,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 			Document document = null;
 
 			if (documentFolderId != null) {
-				Page<Document> documentsPage =
-					documentResource.getDocumentFolderDocumentsPage(
-						documentFolderId, false, null, null,
-						documentResource.toFilter(
-							StringBundler.concat("title eq '", fileName, "'")),
-						null, null);
+				DLFileEntry dlFileEntry =
+					_dlFileEntryLocalService.fetchFileEntry(
+						groupId, documentFolderId, fileName);
 
-				Document existingDocument = documentsPage.fetchFirstItem();
-
-				if (existingDocument == null) {
+				if (dlFileEntry == null) {
 					document = documentResource.postDocumentFolderDocument(
 						documentFolderId,
 						MultipartBody.of(
@@ -2356,7 +2359,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 				}
 				else {
 					document = documentResource.putDocument(
-						existingDocument.getId(),
+						dlFileEntry.getFileEntryId(),
 						MultipartBody.of(
 							Collections.singletonMap(
 								"file",
@@ -2368,16 +2371,12 @@ public class BundleSiteInitializer implements SiteInitializer {
 				}
 			}
 			else {
-				Page<Document> documentsPage =
-					documentResource.getSiteDocumentsPage(
-						groupId, false, null, null,
-						documentResource.toFilter(
-							StringBundler.concat("title eq '", fileName, "'")),
-						null, null);
+				DLFileEntry dlFileEntry =
+					_dlFileEntryLocalService.fetchFileEntry(
+						groupId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+						fileName);
 
-				Document existingDocument = documentsPage.fetchFirstItem();
-
-				if (existingDocument == null) {
+				if (dlFileEntry == null) {
 					document = documentResource.postSiteDocument(
 						groupId,
 						MultipartBody.of(
@@ -2391,7 +2390,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 				}
 				else {
 					document = documentResource.putDocument(
-						existingDocument.getId(),
+						dlFileEntry.getFileEntryId(),
 						MultipartBody.of(
 							Collections.singletonMap(
 								"file",
@@ -2500,24 +2499,25 @@ public class BundleSiteInitializer implements SiteInitializer {
 					_getExpandoAttributeValue(jsonObject));
 			}
 
-			if (jsonObject.has("properties")) {
-				UnicodeProperties unicodeProperties = new UnicodeProperties(
-					true);
-
-				JSONObject propertiesJSONObject = jsonObject.getJSONObject(
-					"properties");
-
-				Map<String, Object> map = propertiesJSONObject.toMap();
-
-				for (Map.Entry<String, Object> entry : map.entrySet()) {
-					unicodeProperties.setProperty(
-						TextFormatter.format(entry.getKey(), TextFormatter.K),
-						String.valueOf(entry.getValue()));
-				}
-
-				expandoBridge.setAttributeProperties(
-					jsonObject.getString("name"), unicodeProperties);
+			if (!jsonObject.has("properties")) {
+				continue;
 			}
+
+			UnicodeProperties unicodeProperties = new UnicodeProperties(true);
+
+			JSONObject propertiesJSONObject = jsonObject.getJSONObject(
+				"properties");
+
+			Map<String, Object> map = propertiesJSONObject.toMap();
+
+			for (Map.Entry<String, Object> entry : map.entrySet()) {
+				unicodeProperties.setProperty(
+					TextFormatter.format(entry.getKey(), TextFormatter.K),
+					String.valueOf(entry.getValue()));
+			}
+
+			expandoBridge.setAttributeProperties(
+				jsonObject.getString("name"), unicodeProperties);
 		}
 	}
 
@@ -2971,12 +2971,14 @@ public class BundleSiteInitializer implements SiteInitializer {
 		resourcePaths = sortedResourcePaths;
 
 		for (String resourcePath : resourcePaths) {
-			if (resourcePath.endsWith("/")) {
-				layoutsMap.putAll(
-					_addOrUpdateLayout(
-						layout.getLayoutId(), resourcePath, serviceContext,
-						stringUtilReplaceValues));
+			if (!resourcePath.endsWith("/")) {
+				continue;
 			}
+
+			layoutsMap.putAll(
+				_addOrUpdateLayout(
+					layout.getLayoutId(), resourcePath, serviceContext,
+					stringUtilReplaceValues));
 		}
 
 		return layoutsMap;
@@ -3135,12 +3137,14 @@ public class BundleSiteInitializer implements SiteInitializer {
 		resourcePaths = sortedResourcePaths;
 
 		for (String resourcePath : resourcePaths) {
-			if (resourcePath.endsWith("/")) {
-				layoutsMap.putAll(
-					_addOrUpdateLayout(
-						LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, resourcePath,
-						serviceContext, stringUtilReplaceValues));
+			if (!resourcePath.endsWith("/")) {
+				continue;
 			}
+
+			layoutsMap.putAll(
+				_addOrUpdateLayout(
+					LayoutConstants.DEFAULT_PARENT_LAYOUT_ID, resourcePath,
+					serviceContext, stringUtilReplaceValues));
 		}
 	}
 
@@ -3795,7 +3799,9 @@ public class BundleSiteInitializer implements SiteInitializer {
 					jsonObject.getString("resourceName")),
 				ResourceAction -> ResourceAction.getActionId(), String.class);
 
-			if (!ArrayUtil.containsAll(resourceActionIds, actionIds)) {
+			if (ArrayUtil.isNotEmpty(actionIds) &&
+				!ArrayUtil.containsAll(resourceActionIds, actionIds)) {
+
 				if (_log.isWarnEnabled()) {
 					_log.warn(
 						StringBundler.concat(
@@ -4093,6 +4099,8 @@ public class BundleSiteInitializer implements SiteInitializer {
 				siteNavigationMenuItemSettings,
 			Map<String, String> stringUtilReplaceValues)
 		throws Exception {
+
+		_languageKeyResolver.expand(serviceContext.getCompanyId(), jsonObject);
 
 		SiteNavigationMenu siteNavigationMenu =
 			_siteNavigationMenuLocalService.
@@ -4796,12 +4804,14 @@ public class BundleSiteInitializer implements SiteInitializer {
 				parentResourcePath);
 
 			for (String resourcePath : resourcePaths) {
-				if (resourcePath.endsWith("/")) {
-					_addOrUpdateLayoutContent(
-						layout, resourcePath,
-						segmentsExperience.getSegmentsExperienceId(),
-						serviceContext, stringUtilReplaceValues);
+				if (!resourcePath.endsWith("/")) {
+					continue;
 				}
+
+				_addOrUpdateLayoutContent(
+					layout, resourcePath,
+					segmentsExperience.getSegmentsExperienceId(),
+					serviceContext, stringUtilReplaceValues);
 			}
 		}
 	}
@@ -5204,13 +5214,15 @@ public class BundleSiteInitializer implements SiteInitializer {
 						rolesJSONArray.getString(j)));
 			}
 
-			if (ListUtil.isNotEmpty(roles)) {
-				User user = _userLocalService.fetchUserByEmailAddress(
-					serviceContext.getCompanyId(),
-					jsonObject.getString("emailAddress"));
-
-				_roleLocalService.addUserRoles(user.getUserId(), roles);
+			if (ListUtil.isEmpty(roles)) {
+				continue;
 			}
+
+			User user = _userLocalService.fetchUserByEmailAddress(
+				serviceContext.getCompanyId(),
+				jsonObject.getString("emailAddress"));
+
+			_roleLocalService.addUserRoles(user.getUserId(), roles);
 		}
 	}
 
@@ -5768,9 +5780,11 @@ public class BundleSiteInitializer implements SiteInitializer {
 					fetchAssetCategoryByExternalReferenceCode(
 						externalReferenceCode, groupId);
 
-			if (assetCategory != null) {
-				assetCategoryIds.add(assetCategory.getCategoryId());
+			if (assetCategory == null) {
+				continue;
 			}
+
+			assetCategoryIds.add(assetCategory.getCategoryId());
 		}
 
 		return ArrayUtil.toLongArray(assetCategoryIds);
@@ -6262,11 +6276,13 @@ public class BundleSiteInitializer implements SiteInitializer {
 					LayoutUtilityPageEntryTypeConverter.convertToInternalValue(
 						type));
 
-			if (layoutUtilityPageEntry != null) {
-				_layoutUtilityPageEntryLocalService.
-					setDefaultLayoutUtilityPageEntry(
-						layoutUtilityPageEntry.getLayoutUtilityPageEntryId());
+			if (layoutUtilityPageEntry == null) {
+				continue;
 			}
+
+			_layoutUtilityPageEntryLocalService.
+				setDefaultLayoutUtilityPageEntry(
+					layoutUtilityPageEntry.getLayoutUtilityPageEntryId());
 		}
 	}
 
@@ -6436,7 +6452,7 @@ public class BundleSiteInitializer implements SiteInitializer {
 		_layoutSetLocalService.updateLookAndFeel(
 			serviceContext.getScopeGroupId(), privateLayout,
 			_getThemeId(
-				serviceContext.getCompanyId(), StringPool.BLANK,
+				serviceContext.getCompanyId(), layoutSet.getThemeId(),
 				metadataJSONObject.getString("themeName")),
 			layoutSet.getColorSchemeId(), css);
 
@@ -6505,7 +6521,6 @@ public class BundleSiteInitializer implements SiteInitializer {
 	private final AccountResource.Factory _accountResourceFactory;
 	private final AccountRoleLocalService _accountRoleLocalService;
 	private final AccountRoleResource.Factory _accountRoleResourceFactory;
-	private final ArchivedSettingsFactory _archivedSettingsFactory;
 	private final AssetCategoryLocalService _assetCategoryLocalService;
 	private final AssetEntryLocalService _assetEntryLocalService;
 	private final AssetLinkLocalService _assetLinkLocalService;
@@ -6526,7 +6541,9 @@ public class BundleSiteInitializer implements SiteInitializer {
 		_depotEntryGroupRelLocalService;
 	private final DepotEntryLocalService _depotEntryLocalService;
 	private boolean _dialectThemeDetected;
+	private final DLFileEntryLocalService _dlFileEntryLocalService;
 	private final DLFileEntryTypeLocalService _dlFileEntryTypeLocalService;
+	private final DLFolderLocalService _dlFolderLocalService;
 	private final DLURLHelper _dlURLHelper;
 	private final DocumentFolderResource.Factory _documentFolderResourceFactory;
 	private final DocumentResource.Factory _documentResourceFactory;

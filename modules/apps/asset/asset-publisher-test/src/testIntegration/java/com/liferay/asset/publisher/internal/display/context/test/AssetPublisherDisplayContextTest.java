@@ -16,12 +16,23 @@ import com.liferay.asset.list.constants.AssetListPortletKeys;
 import com.liferay.asset.publisher.constants.AssetPublisherPortletKeys;
 import com.liferay.asset.publisher.constants.AssetPublisherWebKeys;
 import com.liferay.asset.publisher.util.AssetEntryResult;
+import com.liferay.blogs.constants.BlogsPortletKeys;
+import com.liferay.blogs.model.BlogsEntry;
+import com.liferay.depot.constants.DepotConstants;
+import com.liferay.depot.model.DepotEntry;
+import com.liferay.depot.service.DepotEntryGroupRelLocalService;
+import com.liferay.depot.service.DepotEntryLocalService;
+import com.liferay.exportimport.kernel.staging.StagingUtil;
 import com.liferay.journal.constants.JournalFolderConstants;
+import com.liferay.journal.constants.JournalPortletKeys;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.test.util.JournalTestUtil;
 import com.liferay.layout.test.util.LayoutTestUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.ConfigurationTestUtil;
+import com.liferay.portal.kernel.json.JSONArray;
+import com.liferay.portal.kernel.json.JSONObject;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.Layout;
@@ -33,6 +44,7 @@ import com.liferay.portal.kernel.portlet.bridges.mvc.constants.MVCRenderConstant
 import com.liferay.portal.kernel.portlet.url.builder.PortletURLBuilder;
 import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
+import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
@@ -49,11 +61,13 @@ import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.theme.PortletDisplay;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
 import com.liferay.portal.kernel.util.JavaConstants;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
@@ -224,6 +238,46 @@ public class AssetPublisherDisplayContextTest {
 		_testGetAssetEntryResultsOrderByColumn(
 			"publishedDate",
 			Arrays.asList(assetEntry2, assetEntry3, assetEntry1));
+	}
+
+	@Test
+	public void testGetAssetEntryTypesJSONArrayWithUnstagedPortlet()
+		throws Exception {
+
+		Layout layout = LayoutTestUtil.addTypePortletLayout(_group);
+
+		GroupTestUtil.enableLocalStaging(_group);
+
+		_setStagedPortlet(BlogsPortletKeys.BLOGS, true);
+		_setStagedPortlet(JournalPortletKeys.JOURNAL, false);
+
+		_depotEntry = _depotEntryLocalService.addDepotEntry(
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()
+			).build(),
+			null, DepotConstants.TYPE_ASSET_LIBRARY,
+			ServiceContextTestUtil.getServiceContext());
+
+		Group stagingGroup = _group.getStagingGroup();
+
+		_depotEntryGroupRelLocalService.addDepotEntryGroupRel(
+			_depotEntry.getDepotEntryId(), stagingGroup.getGroupId());
+
+		JSONArray jsonArray = ReflectionTestUtil.invoke(
+			_getAssetPublisherDisplayContext(
+				layout, new PortletPreferencesImpl()),
+			"getAssetEntryTypesJSONArray", new Class<?>[] {long.class},
+			stagingGroup.getGroupId());
+
+		Assert.assertArrayEquals(
+			new long[] {
+				stagingGroup.getGroupId(), _company.getGroupId(),
+				_depotEntry.getGroupId()
+			},
+			_getGroupIds(BlogsEntry.class.getName(), jsonArray));
+		Assert.assertArrayEquals(
+			new long[] {_group.getGroupId(), _company.getGroupId()},
+			_getGroupIds(JournalArticle.class.getName(), jsonArray));
 	}
 
 	@Test
@@ -459,6 +513,21 @@ public class AssetPublisherDisplayContextTest {
 			AssetPublisherWebKeys.ASSET_PUBLISHER_DISPLAY_CONTEXT);
 	}
 
+	private long[] _getGroupIds(String className, JSONArray jsonArray) {
+		long classNameId = _portal.getClassNameId(className);
+
+		for (int i = 0; i < jsonArray.length(); i++) {
+			JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+			if (jsonObject.getLong("classNameId") == classNameId) {
+				return JSONUtil.toLongArray(
+					jsonObject.getJSONArray("groupIds"));
+			}
+		}
+
+		return null;
+	}
+
 	private String _getPortletURLString() throws Exception {
 		PortletPreferences portletPreferences = new PortletPreferencesImpl();
 
@@ -499,6 +568,21 @@ public class AssetPublisherDisplayContextTest {
 		themeDisplay.setUser(TestPropsValues.getUser());
 
 		return themeDisplay;
+	}
+
+	private void _setStagedPortlet(String portletId, boolean staged)
+		throws Exception {
+
+		_group = _groupLocalService.getGroup(_group.getGroupId());
+
+		UnicodeProperties typeSettingsUnicodeProperties =
+			_group.getTypeSettingsProperties();
+
+		typeSettingsUnicodeProperties.setProperty(
+			StagingUtil.getStagedPortletId(portletId), String.valueOf(staged));
+
+		_group = _groupLocalService.updateGroup(
+			_group.getGroupId(), typeSettingsUnicodeProperties.toString());
 	}
 
 	private List<AssetEntry> _testGetAssetEntryResults(
@@ -569,7 +653,19 @@ public class AssetPublisherDisplayContextTest {
 	private ConfigurationAdmin _configurationAdmin;
 
 	@DeleteAfterTestRun
+	private DepotEntry _depotEntry;
+
+	@Inject
+	private DepotEntryGroupRelLocalService _depotEntryGroupRelLocalService;
+
+	@Inject
+	private DepotEntryLocalService _depotEntryLocalService;
+
+	@DeleteAfterTestRun
 	private Group _group;
+
+	@Inject
+	private GroupLocalService _groupLocalService;
 
 	@Inject
 	private LayoutLocalService _layoutLocalService;

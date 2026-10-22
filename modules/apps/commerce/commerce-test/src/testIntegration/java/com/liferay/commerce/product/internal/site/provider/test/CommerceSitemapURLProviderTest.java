@@ -10,8 +10,7 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.asset.kernel.model.AssetCategory;
 import com.liferay.asset.kernel.model.AssetCategoryConstants;
 import com.liferay.asset.kernel.model.AssetVocabulary;
-import com.liferay.asset.kernel.service.AssetCategoryLocalService;
-import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
+import com.liferay.asset.test.util.AssetTestUtil;
 import com.liferay.commerce.account.test.util.CommerceAccountTestUtil;
 import com.liferay.commerce.currency.model.CommerceCurrency;
 import com.liferay.commerce.currency.test.util.CommerceCurrencyTestUtil;
@@ -22,11 +21,13 @@ import com.liferay.commerce.product.model.CPInstance;
 import com.liferay.commerce.product.model.CProduct;
 import com.liferay.commerce.product.model.CommerceCatalog;
 import com.liferay.commerce.product.model.CommerceChannel;
+import com.liferay.commerce.product.service.CommerceChannelLocalService;
 import com.liferay.commerce.product.test.util.CPTestUtil;
 import com.liferay.commerce.product.url.CPFriendlyURL;
 import com.liferay.commerce.test.util.CommerceTestUtil;
 import com.liferay.friendly.url.model.FriendlyURLEntry;
 import com.liferay.friendly.url.service.FriendlyURLEntryLocalService;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -53,6 +54,7 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PortalUtil;
@@ -62,8 +64,8 @@ import com.liferay.portal.kernel.util.TreeMapBuilder;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
-import com.liferay.portal.kernel.xml.Node;
 import com.liferay.portal.kernel.xml.SAXReader;
+import com.liferay.portal.test.rule.FeatureFlag;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -75,10 +77,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.InputStream;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import org.junit.Assert;
@@ -164,80 +165,132 @@ public class CommerceSitemapURLProviderTest {
 
 	@Test
 	public void testAssetCategorySitemapURLProvider() throws Exception {
-		String title = RandomTestUtil.randomString();
+		AssetCategory assetCategory = _addAssetCategory(
+			AssetTestUtil.addVocabulary(_company.getGroupId()),
+			AssetCategoryConstants.DEFAULT_PARENT_CATEGORY_ID);
 
-		Map<Locale, String> titleMap = Collections.singletonMap(
-			LocaleUtil.getSiteDefault(), title);
-
-		AssetVocabulary assetVocabulary =
-			_assetVocabularyLocalService.addVocabulary(
-				_serviceContext.getUserId(), _company.getGroupId(),
-				_group.getName(_themeDisplay.getLocale()), _serviceContext);
-
-		AssetCategory assetCategory = _assetCategoryLocalService.addCategory(
-			null, _serviceContext.getUserId(), assetVocabulary.getGroupId(),
-			AssetCategoryConstants.DEFAULT_PARENT_CATEGORY_ID, titleMap, null,
-			assetVocabulary.getVocabularyId(), false, new String[0],
-			_serviceContext);
-
-		FriendlyURLEntry friendlyURLEntry =
-			_friendlyURLEntryLocalService.addFriendlyURLEntry(
-				_company.getGroupId(),
-				_portal.getClassNameId(AssetCategory.class),
-				assetCategory.getCategoryId(), title, _serviceContext);
-
-		Document document = _saxReader.createDocument();
-
-		document.setXMLEncoding("UTF-8");
-
-		Element rootElement = document.addElement(
-			"urlset", "http://www.sitemaps.org/schemas/sitemap/0.9");
-
-		rootElement.addAttribute(
-			"xmlns:xsi", "http://www.w3.org/2001/XMLSchema-instance");
-		rootElement.addAttribute(
-			"xsi:schemaLocation",
-			"http://www.w3.org/1999/xhtml " +
-				"http://www.w3.org/2002/08/xhtml/xhtml1-strict.xsd");
-		rootElement.addAttribute("xmlns:xhtml", "http://www.w3.org/1999/xhtml");
-
-		LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
-			_group.getGroupId(), false);
-
-		long plid = _portal.getPlidFromPortletId(
-			layoutSet.getGroupId(), layoutSet.isPrivateLayout(),
+		Element element = _visitLayout(
+			_assetCategorySitemapURLProvider,
 			CPPortletKeys.CP_CATEGORY_CONTENT_WEB);
 
-		Layout layout = _layoutLocalService.getLayout(plid);
+		Assert.assertTrue(element.hasContent());
 
-		_httpServletRequest.setAttribute(WebKeys.LAYOUT, layout);
+		List<String> sitemapURLs = _getSitemapURLs(element.elements());
 
-		_themeDisplay.setLayoutSet(layout.getLayoutSet());
+		Assert.assertTrue(
+			sitemapURLs.toString(),
+			sitemapURLs.contains(_getAssetCategoryFriendlyURL(assetCategory)));
+	}
 
-		_assetCategorySitemapURLProvider.visitLayout(
-			rootElement, layout.getUuid(), layoutSet, _themeDisplay);
+	@Test
+	public void testAssetCategorySitemapURLProviderFriendlyURLTranslation()
+		throws Exception {
 
-		Assert.assertTrue(rootElement.hasContent());
+		List<Locale> companyAvailableLocales = new ArrayList<>(
+			_language.getCompanyAvailableLocales(_company.getCompanyId()));
+		Locale siteDefaultLocale = LocaleUtil.getSiteDefault();
 
-		List<Node> nodes = rootElement.content();
+		GroupTestUtil.updateDisplaySettings(
+			_group.getGroupId(), companyAvailableLocales, siteDefaultLocale);
 
-		Node node = nodes.get(0);
+		Locale translatedLocale = null;
 
-		String currentSiteURL = _portal.getGroupFriendlyURL(
-			layout.getLayoutSet(), _themeDisplay, false, false);
+		for (Locale companyAvailableLocale : companyAvailableLocales) {
+			if (!companyAvailableLocale.equals(siteDefaultLocale)) {
+				translatedLocale = companyAvailableLocale;
 
-		String urlSeparator = _cpFriendlyURL.getAssetCategoryURLSeparator(
-			_themeDisplay.getCompanyId());
+				break;
+			}
+		}
 
-		String categoryFriendlyURL =
-			currentSiteURL + urlSeparator +
-				friendlyURLEntry.getUrlTitle(_themeDisplay.getLanguageId());
+		Assert.assertNotNull(translatedLocale);
 
-		Assert.assertTrue(node.hasContent());
+		AssetCategory assetCategory = _addAssetCategory(
+			AssetTestUtil.addVocabulary(_company.getGroupId()),
+			AssetCategoryConstants.DEFAULT_PARENT_CATEGORY_ID);
 
-		String xml = node.asXML();
+		String translatedURLTitle =
+			"translated-" +
+				StringUtil.toLowerCase(RandomTestUtil.randomString());
 
-		Assert.assertTrue(xml.contains(categoryFriendlyURL));
+		_friendlyURLEntryLocalService.updateFriendlyURLEntryLocalization(
+			_friendlyURLEntryLocalService.getMainFriendlyURLEntry(
+				_portal.getClassNameId(AssetCategory.class),
+				assetCategory.getCategoryId()),
+			_language.getLanguageId(translatedLocale), translatedURLTitle);
+
+		Element element = _visitLayout(
+			_assetCategorySitemapURLProvider,
+			CPPortletKeys.CP_CATEGORY_CONTENT_WEB);
+
+		String assetCategoryFriendlyURL = _getAssetCategoryFriendlyURL(
+			assetCategory);
+		String assetCategoryURLSeparator =
+			_cpFriendlyURL.getAssetCategoryURLSeparator(
+				_themeDisplay.getCompanyId());
+
+		List<Element> elements = ListUtil.filter(
+			element.elements(),
+			curElement -> {
+				String locString = curElement.elementText("loc");
+
+				return Objects.equals(locString, assetCategoryFriendlyURL) ||
+					   locString.endsWith(
+						   assetCategoryURLSeparator + translatedURLTitle);
+			});
+
+		List<String> sitemapURLs = _getSitemapURLs(elements);
+
+		Assert.assertEquals(sitemapURLs.toString(), 2, sitemapURLs.size());
+		Assert.assertTrue(
+			sitemapURLs.toString(),
+			sitemapURLs.remove(assetCategoryFriendlyURL));
+		Assert.assertNotEquals(
+			_getAssetCategoryFriendlyURL(translatedURLTitle),
+			sitemapURLs.get(0));
+
+		for (Element curElement : elements) {
+			List<String> hrefLangs = _getHrefLangs(curElement);
+
+			Assert.assertTrue(
+				hrefLangs.toString(),
+				hrefLangs.contains(
+					LocaleUtil.toW3cLanguageId(siteDefaultLocale)));
+			Assert.assertTrue(
+				hrefLangs.toString(),
+				hrefLangs.contains(
+					LocaleUtil.toW3cLanguageId(translatedLocale)));
+			Assert.assertTrue(
+				hrefLangs.toString(), hrefLangs.contains("x-default"));
+		}
+	}
+
+	@Test
+	public void testAssetCategorySitemapURLProviderWithChildAssetCategories()
+		throws Exception {
+
+		AssetVocabulary assetVocabulary = AssetTestUtil.addVocabulary(
+			_company.getGroupId());
+
+		AssetCategory assetCategory = _addAssetCategory(
+			assetVocabulary, AssetCategoryConstants.DEFAULT_PARENT_CATEGORY_ID);
+
+		AssetCategory childAssetCategory = _addAssetCategory(
+			assetVocabulary, assetCategory.getCategoryId());
+
+		Element element = _visitLayout(
+			_assetCategorySitemapURLProvider,
+			CPPortletKeys.CP_CATEGORY_CONTENT_WEB);
+
+		List<String> sitemapURLs = _getSitemapURLs(element.elements());
+
+		Assert.assertTrue(
+			sitemapURLs.toString(),
+			sitemapURLs.contains(_getAssetCategoryFriendlyURL(assetCategory)));
+		Assert.assertTrue(
+			sitemapURLs.toString(),
+			sitemapURLs.contains(
+				_getAssetCategoryFriendlyURL(childAssetCategory)));
 	}
 
 	@Test
@@ -256,7 +309,8 @@ public class CommerceSitemapURLProviderTest {
 			_cpFriendlyURL.getProductURLSeparator(_themeDisplay.getCompanyId()),
 			friendlyURLEntry.getUrlTitle(_themeDisplay.getLanguageId()));
 
-		Element element = _visitLayout();
+		Element element = _visitLayout(
+			_cpDefinitionSitemapURLProvider, CPPortletKeys.CP_CONTENT_WEB);
 
 		String xml = element.asXML();
 
@@ -275,11 +329,12 @@ public class CommerceSitemapURLProviderTest {
 	public void testCPDefinitionSitemapURLProviderReflectsTranslatedFriendlyURL()
 		throws Exception {
 
-		List<Locale> siteLocales = new ArrayList<>(
+		List<Locale> companyAvailableLocales = new ArrayList<>(
 			_language.getCompanyAvailableLocales(_company.getCompanyId()));
 
 		GroupTestUtil.updateDisplaySettings(
-			_group.getGroupId(), siteLocales, siteLocales.get(0));
+			_group.getGroupId(), companyAvailableLocales,
+			companyAvailableLocales.get(0));
 
 		CPDefinition cpDefinition = _addCPDefinition();
 
@@ -288,19 +343,51 @@ public class CommerceSitemapURLProviderTest {
 				_portal.getClassNameId(CProduct.class),
 				cpDefinition.getCProductId());
 
-		String translatedUrlTitle =
+		String translatedURLTitle =
 			"translated-" +
 				StringUtil.toLowerCase(RandomTestUtil.randomString());
 
 		_friendlyURLEntryLocalService.updateFriendlyURLEntryLocalization(
-			friendlyURLEntry, _language.getLanguageId(siteLocales.get(1)),
-			translatedUrlTitle);
+			friendlyURLEntry,
+			_language.getLanguageId(companyAvailableLocales.get(1)),
+			translatedURLTitle);
 
-		Element element = _visitLayout();
+		Element element = _visitLayout(
+			_cpDefinitionSitemapURLProvider, CPPortletKeys.CP_CONTENT_WEB);
 
 		String xml = element.asXML();
 
-		Assert.assertTrue(xml, xml.contains(translatedUrlTitle));
+		Assert.assertTrue(xml, xml.contains(translatedURLTitle));
+	}
+
+	@FeatureFlag("LPD-109588")
+	@Test
+	public void testCPDefinitionSitemapURLProviderWhenGuestBrowsingIsDisabled()
+		throws Exception {
+
+		CPDefinition cpDefinition = _addCPDefinition();
+
+		FriendlyURLEntry friendlyURLEntry =
+			_friendlyURLEntryLocalService.getMainFriendlyURLEntry(
+				_portal.getClassNameId(CProduct.class),
+				cpDefinition.getCProductId());
+
+		CommerceTestUtil.runWithGuestBrowsingDisabled(
+			_commerceChannelLocalService.getCommerceChannelGroupIdBySiteGroupId(
+				_group.getGroupId()),
+			() -> {
+				Element element = _visitLayout(
+					_cpDefinitionSitemapURLProvider,
+					CPPortletKeys.CP_CONTENT_WEB);
+
+				String xml = element.asXML();
+
+				Assert.assertFalse(
+					xml,
+					xml.contains(
+						friendlyURLEntry.getUrlTitle(
+							_themeDisplay.getLanguageId())));
+			});
 	}
 
 	@Test
@@ -314,7 +401,8 @@ public class CommerceSitemapURLProviderTest {
 					_company.getCompanyId(),
 					PropsKeys.LOCALE_PREPEND_FRIENDLY_URL_STYLE, "2")) {
 
-			Element element = _visitLayout();
+			Element element = _visitLayout(
+				_cpDefinitionSitemapURLProvider, CPPortletKeys.CP_CONTENT_WEB);
 
 			String xml = element.asXML();
 
@@ -346,7 +434,9 @@ public class CommerceSitemapURLProviderTest {
 						_company.getCompanyId(),
 						PropsKeys.LOCALE_PREPEND_FRIENDLY_URL_STYLE, "2")) {
 
-				Element element = _visitLayout();
+				Element element = _visitLayout(
+					_cpDefinitionSitemapURLProvider,
+					CPPortletKeys.CP_CONTENT_WEB);
 
 				String xml = element.asXML();
 
@@ -358,6 +448,23 @@ public class CommerceSitemapURLProviderTest {
 				_company.getCompanyId(), layoutSet.getLayoutSetId(),
 				new TreeMap<>());
 		}
+	}
+
+	private AssetCategory _addAssetCategory(
+			AssetVocabulary assetVocabulary, long parentAssetCategoryId)
+		throws Exception {
+
+		AssetCategory assetCategory = AssetTestUtil.addCategory(
+			assetVocabulary.getGroupId(), assetVocabulary.getVocabularyId(),
+			parentAssetCategoryId);
+
+		_friendlyURLEntryLocalService.addFriendlyURLEntry(
+			_company.getGroupId(), _portal.getClassNameId(AssetCategory.class),
+			assetCategory.getCategoryId(),
+			assetCategory.getTitle(LocaleUtil.getSiteDefault()),
+			_serviceContext);
+
+		return assetCategory;
 	}
 
 	private CPDefinition _addCPDefinition() throws Exception {
@@ -372,7 +479,53 @@ public class CommerceSitemapURLProviderTest {
 		return cpInstance.getCPDefinition();
 	}
 
-	private Element _visitLayout() throws Exception {
+	private String _getAssetCategoryFriendlyURL(AssetCategory assetCategory)
+		throws Exception {
+
+		FriendlyURLEntry friendlyURLEntry =
+			_friendlyURLEntryLocalService.getMainFriendlyURLEntry(
+				_portal.getClassNameId(AssetCategory.class),
+				assetCategory.getCategoryId());
+
+		return _getAssetCategoryFriendlyURL(
+			friendlyURLEntry.getUrlTitle(_themeDisplay.getLanguageId()));
+	}
+
+	private String _getAssetCategoryFriendlyURL(String urlTitle)
+		throws Exception {
+
+		return StringBundler.concat(
+			_portal.getGroupFriendlyURL(
+				_layoutSetLocalService.getLayoutSet(_group.getGroupId(), false),
+				_themeDisplay, false, false),
+			_cpFriendlyURL.getAssetCategoryURLSeparator(
+				_themeDisplay.getCompanyId()),
+			urlTitle);
+	}
+
+	private List<String> _getHrefLangs(Element urlElement) {
+		return TransformUtil.transform(
+			urlElement.elements(),
+			childElement -> {
+				String elementName = childElement.getName();
+
+				if (elementName.equals("link")) {
+					return childElement.attributeValue("hreflang");
+				}
+
+				return null;
+			});
+	}
+
+	private List<String> _getSitemapURLs(List<Element> elements) {
+		return TransformUtil.transform(
+			elements, element -> element.elementText("loc"));
+	}
+
+	private Element _visitLayout(
+			SitemapURLProvider sitemapURLProvider, String portletId)
+		throws Exception {
+
 		Document document = _saxReader.createDocument();
 
 		document.setXMLEncoding("UTF-8");
@@ -391,24 +544,20 @@ public class CommerceSitemapURLProviderTest {
 		LayoutSet layoutSet = _layoutSetLocalService.getLayoutSet(
 			_group.getGroupId(), false);
 
-		long plid = _portal.getPlidFromPortletId(
-			layoutSet.getGroupId(), layoutSet.isPrivateLayout(),
-			CPPortletKeys.CP_CONTENT_WEB);
-
-		Layout layout = _layoutLocalService.getLayout(plid);
+		Layout layout = _layoutLocalService.getLayout(
+			_portal.getPlidFromPortletId(
+				layoutSet.getGroupId(), layoutSet.isPrivateLayout(),
+				portletId));
 
 		_httpServletRequest.setAttribute(WebKeys.LAYOUT, layout);
 
 		_themeDisplay.setLayoutSet(layout.getLayoutSet());
 
-		_cpDefinitionSitemapURLProvider.visitLayout(
+		sitemapURLProvider.visitLayout(
 			element, layout.getUuid(), layoutSet, _themeDisplay);
 
 		return element;
 	}
-
-	@Inject
-	private AssetCategoryLocalService _assetCategoryLocalService;
 
 	@Inject(
 		filter = "component.name=com.liferay.commerce.product.internal.site.provider.AssetCategorySitemapURLProvider",
@@ -417,7 +566,7 @@ public class CommerceSitemapURLProviderTest {
 	private SitemapURLProvider _assetCategorySitemapURLProvider;
 
 	@Inject
-	private AssetVocabularyLocalService _assetVocabularyLocalService;
+	private CommerceChannelLocalService _commerceChannelLocalService;
 
 	private CommerceCurrency _commerceCurrency;
 	private Company _company;

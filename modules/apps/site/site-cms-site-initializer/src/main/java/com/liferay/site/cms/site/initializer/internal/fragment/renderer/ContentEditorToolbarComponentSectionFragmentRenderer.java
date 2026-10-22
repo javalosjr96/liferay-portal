@@ -89,7 +89,9 @@ public class ContentEditorToolbarComponentSectionFragmentRenderer
 
 		HashMapBuilder.HashMapWrapper<String, Object> hashMapWrapper =
 			HashMapBuilder.<String, Object>put(
-				"backURL", ParamUtil.getString(httpServletRequest, "redirect")
+				"backURL",
+				PortalUtil.escapeRedirect(
+					ParamUtil.getString(httpServletRequest, "redirect"))
 			).put(
 				"groupId", InfoItemUtil.getGroupId(httpServletRequest)
 			);
@@ -218,6 +220,8 @@ public class ContentEditorToolbarComponentSectionFragmentRenderer
 						}
 
 						return JSONUtil.put(
+							"businessType", objectField.getBusinessType()
+						).put(
 							"label",
 							objectField.getLabel(themeDisplay.getLocale())
 						).put(

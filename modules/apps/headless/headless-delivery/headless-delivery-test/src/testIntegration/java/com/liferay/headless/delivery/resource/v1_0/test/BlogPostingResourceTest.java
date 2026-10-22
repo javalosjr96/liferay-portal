@@ -16,14 +16,22 @@ import com.liferay.headless.delivery.client.dto.v1_0.TaxonomyCategoryBrief;
 import com.liferay.headless.delivery.client.dto.v1_0.TaxonomyCategoryReference;
 import com.liferay.headless.delivery.client.pagination.Page;
 import com.liferay.headless.delivery.client.pagination.Pagination;
+import com.liferay.headless.delivery.client.resource.v1_0.BlogPostingResource;
+import com.liferay.headless.delivery.resource.v1_0.test.util.DisplayPageTestUtil;
+import com.liferay.layout.page.template.model.LayoutPageTemplateEntry;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.GroupLocalService;
+import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.test.rule.Inject;
 
 import java.util.Arrays;
@@ -89,8 +97,31 @@ public class BlogPostingResourceTest extends BaseBlogPostingResourceTestCase {
 
 	@Override
 	@Test
+	@TestInfo("LPD-106119")
 	public void testGetBlogPostingRenderedContentByDisplayPageDisplayPageKey()
 		throws Exception {
+
+		BlogPosting blogPosting = testGetBlogPosting_addBlogPosting();
+
+		LayoutPageTemplateEntry layoutPageTemplateEntry =
+			DisplayPageTestUtil.addDisplayPageTemplate(
+				testGroup.getGroupId(), BlogsEntry.class.getName(), null);
+
+		BlogPostingResource blogPostingResource = BlogPostingResource.builder(
+		).authentication(
+			"test@liferay.com", PropsValues.DEFAULT_ADMIN_PASSWORD
+		).locale(
+			LocaleUtil.GERMANY
+		).build();
+
+		String html =
+			blogPostingResource.
+				getBlogPostingRenderedContentByDisplayPageDisplayPageKey(
+					blogPosting.getId(),
+					layoutPageTemplateEntry.getLayoutPageTemplateEntryKey());
+
+		Assert.assertTrue(html, html.contains(blogPosting.getHeadline()));
+		Assert.assertTrue(html, html.contains("lang=\"de-DE\""));
 	}
 
 	@Override
@@ -126,6 +157,7 @@ public class BlogPostingResourceTest extends BaseBlogPostingResourceTestCase {
 	public void testPutBlogPosting() throws Exception {
 		super.testPutBlogPosting();
 
+		_testPutBlogPostingBatch();
 		_testPutBlogPostingSuccessTaxonomyCategoryBriefNonexisting();
 		_testPutBlogPostingSuccessTaxonomyCategoryBriefCategorySiteKeyNull();
 		_testPutBlogPostingSuccessTaxonomyCategoryBriefCategorySiteKeyNonnull();
@@ -267,6 +299,36 @@ public class BlogPostingResourceTest extends BaseBlogPostingResourceTestCase {
 
 		return testGetSiteBlogPostingsPage_addBlogPosting(
 			testGroup.getGroupId(), randomBlogPosting);
+	}
+
+	private void _testPutBlogPostingBatch() throws Exception {
+		BlogPosting postBlogPosting = testPutBlogPosting_addBlogPosting();
+
+		BlogPosting randomBlogPosting = randomBlogPosting();
+
+		randomBlogPosting.setId(postBlogPosting.getId());
+
+		waitForFinish(
+			"COMPLETED",
+			JSONFactoryUtil.createJSONObject(
+				blogPostingResource.putBlogPostingBatchHttpResponse(
+					null,
+					JSONUtil.putAll(
+						JSONFactoryUtil.createJSONObject(
+							randomBlogPosting.toString()))
+				).getContent()));
+
+		BlogPosting getBlogPosting = blogPostingResource.getBlogPosting(
+			postBlogPosting.getId());
+
+		Assert.assertEquals(
+			randomBlogPosting.getArticleBody(),
+			getBlogPosting.getArticleBody());
+		Assert.assertEquals(
+			postBlogPosting.getExternalReferenceCode(),
+			getBlogPosting.getExternalReferenceCode());
+		Assert.assertEquals(
+			randomBlogPosting.getHeadline(), getBlogPosting.getHeadline());
 	}
 
 	private void _testPutBlogPostingSuccessTaxonomyCategoryBriefCategoryNamei18n()

@@ -24,7 +24,7 @@ These hold on every site build whether or not the user asks for them. Do not wai
 
 	Keep it to as few projects as the classification rules permit, but **a whole site cannot be one project**. `siteInitializer` is `batch`; `themeCSS` is `frontend`; handlers are `microservice`; those three can never share a `client-extension.yaml`. The initializer project carries the `siteInitializer` plus **exactly one** `oAuthApplicationHeadlessServer` and nothing else — a theme or an `objectAction` added to it fails at `createClientExtensionConfig`, *after* the assemble tasks have already printed success. See `rules/client-extension-types.md` → "Which Types May Share a Project".
 
-	So the reproducible unit is the workspace, not a single directory. Prefer to express the site's look through what the initializer tree itself can carry — style book, master page, fragment CSS, `layout-set` settings — because a `themeCSS` CET cannot be *selected* from the tree and reverts to unselected on every reprovision (`skills/theme-and-design/SKILL.md`). Add a sibling theme project only when something genuinely has no other home, and say plainly that it needs a manual selection step.
+	So the reproducible unit is the workspace, not a single directory. Express what the tree can carry unaided — style book, master page, fragment CSS, `layout-set` settings — through the tree, since none of it needs reattaching. A rebrand also **ships a sibling `frontend` project** carrying `themeCSS` for the Clay level overrides that have no style book token, and `themeFavicon` for the browser tab icon — a favicon has no style book equivalent, so there is no other way to deliver one. Build and deploy it as part of the work; the only caveat is that selecting it in Site Administration → Design → Theme is a manual step, and the selection is lost on every reprovision (`skills/theme-and-design/SKILL.md` → "Apply to Site"). Say that plainly in the handover rather than skipping the project — an undelivered theme extension is a gap in the work, not a simplification.
 
 1. **Objects are the data layer.** Model entities as Liferay Object definitions. Do not reach for web content structures or a Service Builder module for structured application data, even when `modules/` exists in the workspace.
 
@@ -100,24 +100,16 @@ Call `feature-flags` for the full set of flags the workflow needs:
 | --- | --- |
 | Fragment composition via API | `LPD-39244` |
 | Object entry permissions | `LPD-17564` |
-| MCP transport | `LPD-63311` |
+| MCP transport | `LPD-63311`, plus the `MCPServerConfiguration` switch on 2026.Q3 (see `skills/mcp-server/SKILL.md`) |
 
 Report the gap table. Enable flags only after explicit user confirmation. Bounce Tomcat if any flags are written.
 
 ### Phase 2: Transport Selection
 
-Probe for the MCP server:
+Run the probe in `skills/mcp-server/SKILL.md` → "Audit the Current State First". It posts an `initialize` request with credentials; a bare `HEAD` does not, and on 2026.Q3 every unauthenticated request gets `401`.
 
-```bash
-# Release 2026.Q1+ uses /o/mcp (Streamable HTTP transport); 2025.Q4 used /o/mcp/sse (SSE). See skills/mcp-server.
-
-curl \
-	--head \
-	--silent \
-	--url "http://localhost:${PORT}/o/mcp"
-```
-
-- **2xx**: MCP is available. Use the `call-http-endpoint` MCP tool for all subsequent API calls.
+- **200**: MCP is available. Use it for all subsequent API calls: the `call-http-endpoint` tool on 2026.Q1 and 2026.Q2, the tool set meta tools on 2026.Q3 (see `skills/mcp-server/SKILL.md` → "Tool Sets Replace `call-http-endpoint`").
+- **404 on 2026.Q3**: The `MCPServerConfiguration` switch is probably off. Enable it per `skills/mcp-server/SKILL.md` before falling back.
 - **Otherwise**: Fall back to direct `curl` calls with Basic auth.
 
 ### Phase 3: Data Model
@@ -134,6 +126,8 @@ For each object in the confirmed scope, call `manage-objects`:
 
 1. Add validations.
 
+1. For a count of child entries or the capacity they leave, such as places left, add an Aggregation field (`manage-objects` → "Aggregation Fields"). Filter it when only some children count.
+
 For each business logic requirement, call `manage-object-logic`:
 
 1. Choose the trigger and action type.
@@ -141,6 +135,8 @@ For each business logic requirement, call `manage-object-logic`:
 1. Create notification templates if needed.
 
 1. Create the object action.
+
+1. When a reviewer approves or rejects each entry, follow "Approval Workflow" rather than linking the stock Single Approver, which cannot set a rejected status.
 
 ### Phase 4: Site Initializer Scaffold
 

@@ -7,6 +7,7 @@ package com.liferay.portal.search.elasticsearch8.internal.logging;
 
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
 
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.search.BooleanClauseOccur;
 import com.liferay.portal.kernel.search.BooleanQuery;
 import com.liferay.portal.kernel.search.Field;
@@ -71,7 +72,8 @@ public class ElasticsearchIndexSearcherLogExceptionsOnlyTest
 
 		return ElasticsearchConnectionFixture.builder(
 		).clusterName(
-			ElasticsearchIndexWriterLogExceptionsOnlyTest.class.getSimpleName()
+			ElasticsearchIndexSearcherLogExceptionsOnlyTest.class.
+				getSimpleName()
 		).elasticsearchConfigurationProperties(
 			Collections.singletonMap("logExceptionsOnly", true)
 		).build();
@@ -104,12 +106,23 @@ public class ElasticsearchIndexSearcherLogExceptionsOnlyTest
 
 		Assert.assertEquals(LoggerTestUtil.ERROR, logEntry.getPriority());
 
+		String expectedMessage = StringBundler.concat(
+			"[es/search] failed: [search_phase_execution_exception] all ",
+			"shards failed; caused by: [parse_exception] failed to parse date ",
+			"field [text] with format [yyyyMMddHHmmss]: [failed to parse date ",
+			"field [text] with format [yyyyMMddHHmmss]]; caused by: ",
+			"[illegal_argument_exception] failed to parse date field [text] ",
+			"with format [yyyyMMddHHmmss]; caused by: ",
+			"[date_time_parse_exception] Text 'text' could not be parsed at ",
+			"index 0; root cause: [parse_exception] failed to parse date ",
+			"field [text] with format [yyyyMMddHHmmss]: [failed to parse date ",
+			"field [text] with format [yyyyMMddHHmmss]]");
+
+		Assert.assertEquals(expectedMessage, logEntry.getMessage());
+
 		Throwable throwable = logEntry.getThrowable();
 
-		Assert.assertEquals(
-			"[es/search] failed: [search_phase_execution_exception] all " +
-				"shards failed",
-			throwable.getMessage());
+		Assert.assertEquals(expectedMessage, throwable.getMessage());
 		Assert.assertSame(ElasticsearchException.class, throwable.getClass());
 	}
 

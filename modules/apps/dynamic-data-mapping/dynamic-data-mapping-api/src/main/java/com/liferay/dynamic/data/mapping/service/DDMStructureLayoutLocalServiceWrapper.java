@@ -519,16 +519,6 @@ public class DDMStructureLayoutLocalServiceWrapper
 
 	@Override
 	public java.util.List<DDMStructureLayout> getStructureLayouts(
-		long groupId, long classNameId, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<DDMStructureLayout>
-			orderByComparator) {
-
-		return _ddmStructureLayoutLocalService.getStructureLayouts(
-			groupId, classNameId, start, end, orderByComparator);
-	}
-
-	@Override
-	public java.util.List<DDMStructureLayout> getStructureLayouts(
 		long groupId, long classNameId, long structureVersionId) {
 
 		return _ddmStructureLayoutLocalService.getStructureLayouts(
@@ -554,39 +544,11 @@ public class DDMStructureLayoutLocalServiceWrapper
 	}
 
 	@Override
-	public int getStructureLayoutsCount(long groupId, long classNameId) {
-		return _ddmStructureLayoutLocalService.getStructureLayoutsCount(
-			groupId, classNameId);
-	}
-
-	@Override
 	public int getStructureLayoutsCount(
 		long groupId, long classNameId, long structureVersionId) {
 
 		return _ddmStructureLayoutLocalService.getStructureLayoutsCount(
 			groupId, classNameId, structureVersionId);
-	}
-
-	@Override
-	public java.util.List<DDMStructureLayout> search(
-			long companyId, long[] groupIds, long classNameId, String keywords,
-			int start, int end,
-			com.liferay.portal.kernel.util.OrderByComparator<DDMStructureLayout>
-				orderByComparator)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _ddmStructureLayoutLocalService.search(
-			companyId, groupIds, classNameId, keywords, start, end,
-			orderByComparator);
-	}
-
-	@Override
-	public int searchCount(
-			long companyId, long[] groupIds, long classNameId, String keywords)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _ddmStructureLayoutLocalService.searchCount(
-			companyId, groupIds, classNameId, keywords);
 	}
 
 	/**
@@ -672,4 +634,4 @@ public class DDMStructureLayoutLocalServiceWrapper
 	private DDMStructureLayoutLocalService _ddmStructureLayoutLocalService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1551073653
+// LIFERAY-SERVICE-BUILDER-HASH:1705599997

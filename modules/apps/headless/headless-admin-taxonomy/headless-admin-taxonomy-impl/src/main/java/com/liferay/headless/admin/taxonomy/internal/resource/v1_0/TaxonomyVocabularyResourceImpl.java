@@ -37,6 +37,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.User;
@@ -177,6 +178,22 @@ public class TaxonomyVocabularyResourceImpl
 			@Override
 			public String getSectionKey() {
 				return ExportImportConstants.SECTION_KEY_CONTENT_AND_DATA;
+			}
+
+			@Override
+			public boolean isScopeSupported(long companyId, long groupId) {
+				Group group = _groupLocalService.fetchGroup(groupId);
+
+				if ((group != null) && group.isDepot()) {
+					return true;
+				}
+
+				if ((group != null) && group.isLayoutPrototype()) {
+					return false;
+				}
+
+				return ExportImportDescriptor.super.isScopeSupported(
+					companyId, groupId);
 			}
 
 			@Override
@@ -526,16 +543,6 @@ public class TaxonomyVocabularyResourceImpl
 		Group group = _groupLocalService.getGroup(siteId);
 
 		if (group.isCMS()) {
-			if (ArrayUtil.isNotEmpty(taxonomyVocabulary.getProjects())) {
-				_assetVocabularyGroupRelLocalService.
-					setAssetVocabularyGroupRels(
-						assetVocabulary.getVocabularyId(),
-						TaxonomyGroupUtil.getProjectGroupIds(
-							taxonomyVocabulary.getProjects(),
-							group.getCompanyId()),
-						DepotConstants.TYPE_PROJECT);
-			}
-
 			if (ArrayUtil.isNotEmpty(taxonomyVocabulary.getAssetLibraries())) {
 				_assetVocabularyGroupRelLocalService.
 					setAssetVocabularyGroupRels(
@@ -544,6 +551,16 @@ public class TaxonomyVocabularyResourceImpl
 							taxonomyVocabulary.getAssetLibraries(),
 							group.getCompanyId()),
 						DepotConstants.TYPE_SPACE);
+			}
+
+			if (ArrayUtil.isNotEmpty(taxonomyVocabulary.getProjects())) {
+				_assetVocabularyGroupRelLocalService.
+					setAssetVocabularyGroupRels(
+						assetVocabulary.getVocabularyId(),
+						_getProjectGroupIds(
+							group.getCompanyId(),
+							taxonomyVocabulary.getProjects()),
+						DepotConstants.TYPE_PROJECT);
 			}
 		}
 
@@ -852,6 +869,19 @@ public class TaxonomyVocabularyResourceImpl
 		return objectDefinition.getLabelCurrentLanguageId();
 	}
 
+	private long[] _getProjectGroupIds(long companyId, Project[] projects)
+		throws Exception {
+
+		long[] projectGroupIds = TaxonomyGroupUtil.getProjectGroupIds(
+			companyId, projects);
+
+		if (ArrayUtil.isEmpty(projectGroupIds)) {
+			return new long[] {GroupConstants.ANY_PARENT_GROUP_ID};
+		}
+
+		return projectGroupIds;
+	}
+
 	private Project[] _getProjects(AssetVocabulary assetVocabulary) {
 		List<AssetVocabularyGroupRel> assetVocabularyGroupRels =
 			_assetVocabularyGroupRelLocalService.
@@ -963,12 +993,14 @@ public class TaxonomyVocabularyResourceImpl
 			Long classTypePK = _getClassTypePK(
 				classNameId, assetType.getSubtype(), groupId);
 
-			if (classTypePK != null) {
-				classTypePKs[i] = classTypePK;
-
-				requiredClassNameIds[i] = GetterUtil.getBoolean(
-					assetType.getRequired());
+			if (classTypePK == null) {
+				continue;
 			}
+
+			classTypePKs[i] = classTypePK;
+
+			requiredClassNameIds[i] = GetterUtil.getBoolean(
+				assetType.getRequired());
 		}
 
 		assetVocabularySettingsHelper.setClassNameIdsAndClassTypePKs(
@@ -1168,15 +1200,6 @@ public class TaxonomyVocabularyResourceImpl
 		Group group = _groupLocalService.getGroup(assetVocabulary.getGroupId());
 
 		if (group.isCMS()) {
-			if (taxonomyVocabulary.getProjects() != null) {
-				_assetVocabularyGroupRelLocalService.
-					setAssetVocabularyGroupRels(
-						assetVocabulary.getVocabularyId(),
-						TaxonomyGroupUtil.getProjectGroupIds(
-							taxonomyVocabulary.getProjects(), companyId),
-						DepotConstants.TYPE_PROJECT);
-			}
-
 			if (taxonomyVocabulary.getAssetLibraries() != null) {
 				_assetVocabularyGroupRelLocalService.
 					setAssetVocabularyGroupRels(
@@ -1184,6 +1207,15 @@ public class TaxonomyVocabularyResourceImpl
 						TaxonomyGroupUtil.getAssetLibraryGroupIds(
 							taxonomyVocabulary.getAssetLibraries(), companyId),
 						DepotConstants.TYPE_SPACE);
+			}
+
+			if (taxonomyVocabulary.getProjects() != null) {
+				_assetVocabularyGroupRelLocalService.
+					setAssetVocabularyGroupRels(
+						assetVocabulary.getVocabularyId(),
+						_getProjectGroupIds(
+							companyId, taxonomyVocabulary.getProjects()),
+						DepotConstants.TYPE_PROJECT);
 			}
 		}
 

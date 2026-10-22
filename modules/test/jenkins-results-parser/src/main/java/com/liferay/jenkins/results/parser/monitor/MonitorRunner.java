@@ -109,9 +109,11 @@ public class MonitorRunner {
 		for (Monitor monitor : monitors) {
 			long timeoutMillis = _getTimeoutMillis(monitor);
 
-			if (timeoutMillis > maximumTimeoutMillis) {
-				maximumTimeoutMillis = timeoutMillis;
+			if (timeoutMillis <= maximumTimeoutMillis) {
+				continue;
 			}
+
+			maximumTimeoutMillis = timeoutMillis;
 		}
 
 		int batchesCount = ((monitorsCount + _threadCount) - 1) / _threadCount;
@@ -224,9 +226,9 @@ public class MonitorRunner {
 			}
 
 			return new MonitorResult(
-				durationMillis, monitorResult.getMessage(),
-				monitorResult.getMetrics(), monitorResult.getStatus(),
-				monitorResult.getTimestamp());
+				durationMillis, monitorResult.getLinkURLs(),
+				monitorResult.getMessage(), monitorResult.getMetrics(),
+				monitorResult.getStatus(), monitorResult.getTimestamp());
 		}
 		catch (ExecutionException executionException) {
 			Throwable throwable = executionException.getCause();
