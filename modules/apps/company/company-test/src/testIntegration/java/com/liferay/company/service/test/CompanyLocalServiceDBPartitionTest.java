@@ -1595,18 +1595,15 @@ public class CompanyLocalServiceDBPartitionTest
 
 		DatabaseMetaData databaseMetaData = connection.getMetaData();
 
-		if (db.getDBType() == DBType.MYSQL) {
-			try (ResultSet resultSet = databaseMetaData.getSchemas()) {
-				while (resultSet.next()) {
-					partitionNames.add(resultSet.getString("TABLE_SCHEM"));
-				}
+		try (ResultSet resultSet = databaseMetaData.getCatalogs()) {
+			while (resultSet.next()) {
+				partitionNames.add(resultSet.getString("TABLE_CAT"));
 			}
 		}
-		else {
-			try (ResultSet resultSet = databaseMetaData.getCatalogs()) {
-				while (resultSet.next()) {
-					partitionNames.add(resultSet.getString("TABLE_CAT"));
-				}
+
+		try (ResultSet resultSet = databaseMetaData.getSchemas()) {
+			while (resultSet.next()) {
+				partitionNames.add(resultSet.getString("TABLE_SCHEM"));
 			}
 		}
 
