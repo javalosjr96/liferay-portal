@@ -149,6 +149,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	@Test
 	@TestInfo("LPS-108239")
 	public void testAddDBPartition() throws Exception {
+		dropSchemas();
 		addDBPartitions();
 
 		try (Statement statement = connection.createStatement()) {
@@ -191,6 +192,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 				resourceName, "VIEW", 1);
 
 		try {
+			dropSchemas();
 			addDBPartitions();
 
 			for (long companyId : COMPANY_IDS) {
@@ -243,6 +245,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 					PortalInstancePool.getDefaultCompanyId())) {
 
+			dropSchemas();
 			addDBPartitions();
 
 			insertPartitionRequiredData();
@@ -338,6 +341,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 			long companyCount = _getDefaultSchemaCount("Company");
 			long virtualHostCount = _getDefaultSchemaCount("VirtualHost");
 
+			dropSchemas();
 			addDBPartitions();
 			insertPartitionRequiredData();
 
@@ -520,6 +524,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	@Test
 	@TestInfo("LPS-199893")
 	public void testExportDBPartition() throws Exception {
+		dropSchemas();
 		addDBPartitions();
 
 		insertPartitionRequiredData();
@@ -621,6 +626,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	@TestInfo("LPS-130898")
 	public void testForEachCompanyId() throws Exception {
 		try {
+			dropSchemas();
 			addDBPartitions();
 
 			insertPartitionRequiredData();
@@ -684,6 +690,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	@Test
 	@TestInfo("LPS-137423")
 	public void testRemoveDBPartition() throws Exception {
+		dropSchemas();
 		addDBPartitions();
 
 		for (long companyId : COMPANY_IDS) {
