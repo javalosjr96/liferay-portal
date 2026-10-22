@@ -440,6 +440,10 @@ public class PortalInstanceCopyResourceTest
 				_CLASS_NAME_PORTAL_INSTANCE_COPY_RESOURCE_IMPL,
 				LoggerTestUtil.OFF);
 			LogCapture logCapture2 = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.portal.vulcan.internal.jaxrs.exception.mapper." +
+					"ExceptionMapper",
+				LoggerTestUtil.OFF);
+			LogCapture logCapture3 = LoggerTestUtil.configureLog4JLogger(
 				"org.hibernate.engine.jdbc.spi.SqlExceptionHelper",
 				LoggerTestUtil.OFF)) {
 
