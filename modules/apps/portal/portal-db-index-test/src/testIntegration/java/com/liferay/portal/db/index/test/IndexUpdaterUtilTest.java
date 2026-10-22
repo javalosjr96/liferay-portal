@@ -514,8 +514,10 @@ public class IndexUpdaterUtilTest {
 			}
 
 			try (Connection connection = DataAccess.getConnection();
+
 				PreparedStatement preparedStatement =
 					connection.prepareStatement("select id1 from TestTable");
+
 				ResultSet resultSet = preparedStatement.executeQuery()) {
 
 				Assert.assertTrue(resultSet.next());
