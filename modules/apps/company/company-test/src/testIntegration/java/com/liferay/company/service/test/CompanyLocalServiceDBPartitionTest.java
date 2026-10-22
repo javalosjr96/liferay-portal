@@ -44,6 +44,7 @@ import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.repository.LocalRepository;
 import com.liferay.portal.kernel.repository.RepositoryFactory;
 import com.liferay.portal.kernel.repository.registry.RepositoryDefiner;
+import com.liferay.portal.kernel.security.auth.CompanyInheritableThreadLocalCallable;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
@@ -1662,25 +1663,26 @@ public class CompanyLocalServiceDBPartitionTest
 		long userId = TestPropsValues.getUserId();
 
 		FutureTask<Throwable> futureTask = new FutureTask<>(
-			() -> {
-				PrincipalThreadLocal.setName(userId);
+			new CompanyInheritableThreadLocalCallable<>(
+				() -> {
+					PrincipalThreadLocal.setName(userId);
 
-				try (SafeCloseable safeCloseable =
-						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-							_defaultCompanyId)) {
+					try (SafeCloseable safeCloseable =
+							CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+								_defaultCompanyId)) {
 
-					TransactionInvokerUtil.invoke(
-						TransactionConfig.Factory.create(
-							Propagation.REQUIRED,
-							new Class<?>[] {Exception.class}),
-						callable);
+						TransactionInvokerUtil.invoke(
+							TransactionConfig.Factory.create(
+								Propagation.REQUIRED,
+								new Class<?>[] {Exception.class}),
+							callable);
 
-					return null;
-				}
-				catch (Throwable throwable) {
-					return throwable;
-				}
-			});
+						return null;
+					}
+					catch (Throwable throwable) {
+						return throwable;
+					}
+				}));
 
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				"org.hibernate.engine.jdbc.spi.SqlExceptionHelper",
