@@ -1667,10 +1667,7 @@ public class CompanyLocalServiceDBPartitionTest
 				() -> {
 					PrincipalThreadLocal.setName(userId);
 
-					try (SafeCloseable safeCloseable =
-							CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-								_defaultCompanyId)) {
-
+					try {
 						TransactionInvokerUtil.invoke(
 							TransactionConfig.Factory.create(
 								Propagation.REQUIRED,
