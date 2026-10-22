@@ -347,12 +347,13 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcessTest
 		}
 	}
 
-	private String _getColumnName(String columnName, String tableName)
+	private String _getColumnName(
+			String columnName, Connection connection, String tableName)
 		throws Exception {
 
-		DBInspector dbInspector = new DBInspector(_connection);
+		DatabaseMetaData databaseMetaData = connection.getMetaData();
 
-		DatabaseMetaData databaseMetaData = _connection.getMetaData();
+		DBInspector dbInspector = new DBInspector(connection);
 
 		try (ResultSet resultSet = databaseMetaData.getColumns(
 				dbInspector.getCatalog(), dbInspector.getSchema(), tableName,
@@ -395,20 +396,14 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcessTest
 	}
 
 	private void _renameColumn(
-			String columnName, String newColumnName, String tableName)
+			String columnName, Connection connection, String newColumnName,
+			String tableName)
 		throws Exception {
 
-		DBPartitionUtil.forEachCompanyId(
-			companyId -> {
-				try (Connection connection = DataAccess.getConnection()) {
-					_db.alterColumnName(
-						connection, tableName, columnName,
-						columnName + _TEMP_SUFFIX);
-					_db.alterColumnName(
-						connection, tableName, columnName + _TEMP_SUFFIX,
-						newColumnName);
-				}
-			});
+		_db.alterColumnName(
+			connection, tableName, columnName, columnName + _TEMP_SUFFIX);
+		_db.alterColumnName(
+			connection, tableName, columnName + _TEMP_SUFFIX, newColumnName);
 	}
 
 	private void _testUpgradeWithPortalTable(
@@ -429,12 +424,19 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcessTest
 
 		_serviceComponentLocalService.addServiceComponent(serviceComponent);
 
-		_renameColumn("createDate", "CREATEDATE", "PasswordTracker");
-
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				DatabaseTableAndColumnCaseDataCleanupPreupgradeProcess.class.
 					getName(),
 				LoggerTestUtil.INFO)) {
+
+			DBPartitionUtil.forEachCompanyId(
+				companyId -> {
+					try (Connection connection = DataAccess.getConnection()) {
+						_renameColumn(
+							"createDate", connection, "CREATEDATE",
+							"PasswordTracker");
+					}
+				});
 
 			upgrade();
 
@@ -447,24 +449,35 @@ public class DatabaseTableAndColumnCaseDataCleanupPreupgradeProcessTest
 						"createDate because it was incorrectly cased"));
 
 			Assert.assertEquals(
-				"createDate", _getColumnName("createDate", "PasswordTracker"));
+				"createDate",
+				_getColumnName("createDate", _connection, "PasswordTracker"));
 		}
 		finally {
 			_serviceComponentLocalService.deleteServiceComponent(
 				serviceComponent);
 
-			String columnName = _getColumnName(
-				"createDate", "PasswordTracker");
+			DBPartitionUtil.forEachCompanyId(
+				companyId -> {
+					try (Connection connection = DataAccess.getConnection()) {
+						String columnName = _getColumnName(
+							"createDate", connection, "PasswordTracker");
 
-			if ((columnName != null) && !columnName.equals("createDate")) {
-				_renameColumn(columnName, "createDate", "PasswordTracker");
-			}
+						if ((columnName != null) &&
+							!columnName.equals("createDate")) {
+
+							_renameColumn(
+								columnName, connection, "createDate",
+								"PasswordTracker");
+						}
+					}
+				});
 		}
 	}
 
 	private void _testUpgradeWithServiceComponentTable(
-			String columnType, String invalidColumnName, String invalidTableName,
-			String testColumnName, String testTableName)
+			String columnType, String invalidColumnName,
+			String invalidTableName, String testColumnName,
+			String testTableName)
 		throws Exception {
 
 		ServiceComponent serviceComponent =
