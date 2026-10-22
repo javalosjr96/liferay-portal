@@ -331,14 +331,6 @@ public class IndexUpdaterUtilTest {
 	}
 
 	@Test
-	public void testUpdateIndexRetryNoStatus() throws Exception {
-		_testUpdateIndexRetry(
-			StringPool.BLANK, 7,
-			"insert into TestTable values(1, 2, 3, 4, '5', '6')",
-			"insert into TestTable values(7, 9, 10, 11, '5', '6')");
-	}
-
-	@Test
 	public void testUpdateIndexRetryStatus() throws Exception {
 		_testUpdateIndexRetry(
 			", status INTEGER", 7,
@@ -353,9 +345,12 @@ public class IndexUpdaterUtilTest {
 	@Test
 	public void testUpdateIndexRetryWorkflowStatus() throws Exception {
 		_testUpdateIndexRetry(
-			", status INTEGER, statusByUserId LONG", 1,
+			", status INTEGER, statusByUserId LONG", 4,
 			StringBundler.concat(
 				"insert into TestTable values(1, 2, 3, 4, '5', '6', ",
+				WorkflowConstants.STATUS_APPROVED, ", 0)"),
+			StringBundler.concat(
+				"insert into TestTable values(4, 5, 6, 7, '5', '6', ",
 				WorkflowConstants.STATUS_APPROVED, ", 0)"),
 			StringBundler.concat(
 				"insert into TestTable values(7, 9, 10, 11, '5', '6', ",
