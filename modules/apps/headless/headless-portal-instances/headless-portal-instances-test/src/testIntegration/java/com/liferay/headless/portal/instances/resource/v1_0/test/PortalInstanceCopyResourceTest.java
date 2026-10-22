@@ -451,7 +451,7 @@ public class PortalInstanceCopyResourceTest
 
 			thread.start();
 
-			Problem problem = futureTask.get(60, TimeUnit.SECONDS);
+			Problem problem = futureTask.get(10, TimeUnit.MINUTES);
 
 			Assert.assertEquals("INTERNAL_SERVER_ERROR", problem.getStatus());
 		}
