@@ -647,6 +647,13 @@ public class CompanyLocalServiceDBPartitionTest
 						Assert.assertTrue(
 							PortalInstances.isCompanyInImportProcess());
 
+						List<String> partitionNames = _getPartitionNames();
+
+						Assert.assertTrue(
+							partitionNames.contains(
+								CompanyLocalServiceTestUtil.getPartitionName(
+									company.getCompanyId())));
+
 						throw portalException;
 					}
 
@@ -949,6 +956,13 @@ public class CompanyLocalServiceDBPartitionTest
 					catch (PortalException portalException) {
 						Assert.assertTrue(
 							PortalInstances.isCompanyInCopyProcess());
+
+						List<String> partitionNames = _getPartitionNames();
+
+						Assert.assertTrue(
+							partitionNames.contains(
+								CompanyLocalServiceTestUtil.getPartitionName(
+									toCompanyId)));
 
 						throw portalException;
 					}
@@ -1482,24 +1496,7 @@ public class CompanyLocalServiceDBPartitionTest
 	}
 
 	private void _checkPartitionDoesNotExist(long companyId) throws Exception {
-		List<String> partitionNames = new ArrayList<>();
-
-		DatabaseMetaData databaseMetaData = connection.getMetaData();
-
-		if (db.getDBType() == DBType.MYSQL) {
-			try (ResultSet resultSet = databaseMetaData.getSchemas()) {
-				while (resultSet.next()) {
-					partitionNames.add(resultSet.getString("TABLE_SCHEM"));
-				}
-			}
-		}
-		else {
-			try (ResultSet resultSet = databaseMetaData.getCatalogs()) {
-				while (resultSet.next()) {
-					partitionNames.add(resultSet.getString("TABLE_CAT"));
-				}
-			}
-		}
+		List<String> partitionNames = _getPartitionNames();
 
 		Assert.assertFalse(
 			partitionNames.contains(
@@ -1591,6 +1588,29 @@ public class CompanyLocalServiceDBPartitionTest
 		}
 
 		throw new SQLException("At least one database partition is required");
+	}
+
+	private List<String> _getPartitionNames() throws Exception {
+		List<String> partitionNames = new ArrayList<>();
+
+		DatabaseMetaData databaseMetaData = connection.getMetaData();
+
+		if (db.getDBType() == DBType.MYSQL) {
+			try (ResultSet resultSet = databaseMetaData.getSchemas()) {
+				while (resultSet.next()) {
+					partitionNames.add(resultSet.getString("TABLE_SCHEM"));
+				}
+			}
+		}
+		else {
+			try (ResultSet resultSet = databaseMetaData.getCatalogs()) {
+				while (resultSet.next()) {
+					partitionNames.add(resultSet.getString("TABLE_CAT"));
+				}
+			}
+		}
+
+		return partitionNames;
 	}
 
 	private int _getResourcePermissionsCount(
