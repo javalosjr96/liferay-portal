@@ -444,11 +444,19 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 			return company;
 		}
-		catch (Throwable throwable) {
+		catch (Throwable throwable1) {
 			TransactionCallbackUtil.registerCompletionCallback(
 				() -> {
 					try {
 						_removeDBPartition(companyId, true);
+					}
+					catch (Throwable throwable2) {
+						throwable1.addSuppressed(throwable2);
+
+						_log.error(
+							"Unable to remove database partition for company " +
+								companyId,
+							throwable2);
 					}
 					finally {
 						safeCloseable1.close();
@@ -457,7 +465,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					return null;
 				});
 
-			throw new PortalException(throwable);
+			throw new PortalException(throwable1);
 		}
 	}
 
@@ -680,11 +688,19 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 			return company;
 		}
-		catch (Throwable throwable) {
+		catch (Throwable throwable1) {
 			TransactionCallbackUtil.registerCompletionCallback(
 				() -> {
 					try {
 						_removeDBPartition(companyId, false);
+					}
+					catch (Throwable throwable2) {
+						throwable1.addSuppressed(throwable2);
+
+						_log.error(
+							"Unable to remove database partition for company " +
+								companyId,
+							throwable2);
 					}
 					finally {
 						safeCloseable1.close();
@@ -693,7 +709,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					return null;
 				});
 
-			throw new PortalException(throwable);
+			throw new PortalException(throwable1);
 		}
 	}
 
