@@ -44,6 +44,7 @@ import com.liferay.portal.util.PortalInstances;
 import java.util.Arrays;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -454,6 +455,11 @@ public class PortalInstanceCopyResourceTest
 			Problem problem = futureTask.get(10, TimeUnit.MINUTES);
 
 			Assert.assertEquals("INTERNAL_SERVER_ERROR", problem.getStatus());
+		}
+		catch (TimeoutException timeoutException) {
+			futureTask.cancel(true);
+
+			throw timeoutException;
 		}
 
 		Assert.assertFalse(PortalInstances.isCompanyInCopyProcess());
