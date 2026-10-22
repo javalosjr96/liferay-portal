@@ -27,6 +27,7 @@ import com.liferay.portal.kernel.service.ReleaseLocalServiceUtil;
 import com.liferay.portal.kernel.util.LoggingTimer;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -267,6 +268,14 @@ public class IndexUpdaterUtil {
 			String orderByColumns = StringUtil.merge(
 				db.getPrimaryKeyColumnNames(connection, tableName),
 				StringPool.COMMA_AND_SPACE);
+
+			if (dbInspector.hasColumn(tableName, "status") &&
+				dbInspector.hasColumn(tableName, "statusByUserId")) {
+
+				orderByColumns = StringBundler.concat(
+					"case when status = ", WorkflowConstants.STATUS_APPROVED,
+					" then 1 else 0 end, ", orderByColumns);
+			}
 
 			DuplicateUniqueFinderRowsCleaner duplicateUniqueFinderRowsCleaner =
 				new DuplicateUniqueFinderRowsCleaner(
