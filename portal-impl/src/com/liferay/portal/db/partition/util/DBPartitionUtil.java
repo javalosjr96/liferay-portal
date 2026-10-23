@@ -762,8 +762,9 @@ public class DBPartitionUtil {
 					if (StringUtil.equalsIgnoreCase(
 							fromTableName, "RememberMeToken")) {
 
-						statement.executeUpdate(
-							"delete from " + partitionTableName);
+						_deleteData(
+							toTableName, targetPartitionName, statement,
+							StringPool.BLANK);
 
 						continue;
 					}
