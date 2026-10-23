@@ -759,6 +759,15 @@ public class DBPartitionUtil {
 						continue;
 					}
 
+					if (StringUtil.equalsIgnoreCase(
+							fromTableName, "RememberMeToken")) {
+
+						statement.executeUpdate(
+							"delete from " + partitionTableName);
+
+						continue;
+					}
+
 					if (dbInspector.hasColumn(fromTableName, "companyId")) {
 						statement.executeUpdate(
 							StringBundler.concat(
