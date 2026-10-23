@@ -3,10 +3,10 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {ProfileTool} from '../types';
+import {ProfileTool} from '../types/ProfileTool';
 import confirmAndRemoveProfileToolAction from './actions/confirmAndRemoveProfileToolAction';
-import openAddToolsModal from './actions/openAddToolsModal';
-import openRestrictFieldsModal from './actions/openRestrictFieldsModal';
+import openAddToolsModalAction from './actions/openAddToolsModalAction';
+import openRestrictFieldsModalAction from './actions/openRestrictFieldsModalAction';
 
 interface CreationActionItem {
 	href?: string;
@@ -37,7 +37,7 @@ export default function ProfileToolsFDSPropsTransformer({
 				...item,
 				href: undefined,
 				onClick: ({loadData}: {loadData: () => void}) =>
-					openAddToolsModal({loadData, profileERC}),
+					openAddToolsModalAction({loadData, profileERC}),
 			})),
 		},
 		onActionDropdownItemClick({
@@ -53,7 +53,7 @@ export default function ProfileToolsFDSPropsTransformer({
 				confirmAndRemoveProfileToolAction({itemData, loadData});
 			}
 			else if (action?.data?.id === 'restrict-fields') {
-				openRestrictFieldsModal({itemData, loadData});
+				openRestrictFieldsModalAction({itemData, loadData});
 			}
 		},
 	};

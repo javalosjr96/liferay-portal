@@ -7,27 +7,24 @@ import {ClayButtonWithIcon} from '@clayui/button';
 import {Text} from '@clayui/core';
 import ClayLoadingIndicator from '@clayui/loading-indicator';
 import ClayPopover from '@clayui/popover';
-import {isNullOrUndefined} from '@liferay/layout-js-components-web';
+import {sub} from 'frontend-js-web';
 import React, {useContext, useState} from 'react';
 
 import {getImage} from '../../../../common/utils/getImage';
 import {GovernanceContext} from '../GovernanceContext';
-import getGovernanceHealth from '../getGovernanceHealth';
+import getGovernanceHealth, {GovernanceDimension} from '../getGovernanceHealth';
 
 import './GovernanceHealth.scss';
 
 const MAX_SCORE = 100;
 
-const NO_SCORE = '—';
-
-const METRICS = [
-	Liferay.Language.get('reliability-help'),
-	Liferay.Language.get('freshness-help'),
-	Liferay.Language.get('flow-help'),
-	Liferay.Language.get('originality-help'),
+const SCORE_RULES = [
+	Liferay.Language.get('governance-health-issues-help'),
+	Liferay.Language.get('governance-health-warnings-help'),
+	Liferay.Language.get('governance-health-informational-help'),
 ];
 
-function ScoreHelp({title}: {title: string}) {
+function ScoreHelp() {
 	const [show, setShow] = useState(false);
 
 	return (
@@ -35,9 +32,10 @@ function ScoreHelp({title}: {title: string}) {
 			alignPosition="right-top"
 			closeOnClickOutside
 			disableScroll
-			header={title}
+			header={Liferay.Language.get('about-this-dashboard')}
 			onShowChange={setShow}
 			show={show}
+			size="lg"
 			trigger={
 				<ClayButtonWithIcon
 					aria-expanded={show}
@@ -53,23 +51,53 @@ function ScoreHelp({title}: {title: string}) {
 			<p>{Liferay.Language.get('governance-health-help')}</p>
 
 			<ul className="mb-0 pl-4">
-				{METRICS.map((metric) => (
-					<li key={metric}>{metric}</li>
+				{SCORE_RULES.map((rule) => (
+					<li key={rule}>{rule}</li>
 				))}
 			</ul>
 		</ClayPopover>
 	);
 }
 
-function SubScore({label, value}: {label: string; value?: number}) {
+function getIssuesLabel(issues: number, warnings = 0) {
+	const issuesLabel = sub(
+		issues === 1
+			? Liferay.Language.get('x-issue')
+			: Liferay.Language.get('x-issues'),
+		issues
+	);
+
+	if (!warnings) {
+		return issuesLabel;
+	}
+
+	return `${issuesLabel} · ${sub(
+		warnings === 1
+			? Liferay.Language.get('x-warning')
+			: Liferay.Language.get('x-warnings'),
+		warnings
+	)}`;
+}
+
+function SubScore({
+	dimension: {issues, score, warnings},
+	label,
+}: {
+	dimension: GovernanceDimension;
+	label: string;
+}) {
 	return (
 		<div className="cms-governance-health__sub-score">
-			<span className="d-block font-weight-bold text-7">
-				{isNullOrUndefined(value) ? NO_SCORE : value}
+			<span className="d-block font-weight-semi-bold text-9">
+				{score}
 			</span>
 
-			<span className="d-block font-weight-semi-bold text-2 text-secondary">
+			<span className="d-block font-weight-semi-bold text-3 text-secondary">
 				{label}
+			</span>
+
+			<span className="d-block text-2 text-secondary">
+				{getIssuesLabel(issues, warnings)}
 			</span>
 		</div>
 	);
@@ -84,56 +112,56 @@ export function GovernanceHealth() {
 
 	return (
 		<section
+			aria-busy={loadingStatistics}
 			aria-label={title}
-			className="align-items-md-center cms-governance-health d-flex flex-column flex-md-row justify-content-between my-4 pl-4 pr-4 pr-md-5 py-3 rounded-lg"
+			className="align-items-lg-center cms-governance-health d-flex flex-column flex-lg-row justify-content-between my-4 pl-4 pr-4 pr-lg-5 py-4 rounded-lg"
 			style={{
 				backgroundImage: `url(${getImage('governance_health_banner.svg')})`,
 			}}
 		>
-			<div className="mb-2">
-				<div className="align-items-center d-flex my-1">
+			<div className="flex-shrink-0 my-2">
+				<div className="align-items-center d-flex mb-2">
 					<Text size={6} weight="semi-bold">
 						{title}
 					</Text>
 
-					<ScoreHelp title={title} />
+					<ScoreHelp />
 				</div>
 
-				{loadingStatistics ? (
-					<ClayLoadingIndicator size="sm" />
-				) : health ? (
-					<div className="align-items-baseline d-flex mb-1">
-						<Text size={9} weight="bold">
-							{health.score}
-						</Text>
+				{health ? (
+					<>
+						<div className="align-items-baseline d-flex">
+							<Text size={11} weight="bold">
+								{health.score}
+							</Text>
 
-						<Text color="secondary" size={7}>
-							/{MAX_SCORE}
+							<Text size={9}>/{MAX_SCORE}</Text>
+						</div>
+
+						<Text color="secondary" size={3}>
+							{getIssuesLabel(health.issues)}
 						</Text>
-					</div>
+					</>
+				) : loadingStatistics ? (
+					<ClayLoadingIndicator size="sm" />
 				) : null}
 			</div>
 
 			{health ? (
-				<div className="c-gap-4 c-gap-md-5 d-flex flex-wrap mr-md-3 mt-3 mt-md-4">
+				<div className="c-gap-4 d-flex flex-wrap mt-3 mt-lg-0">
 					<SubScore
-						label={Liferay.Language.get('reliability')}
-						value={health.reliability}
+						dimension={health.quality}
+						label={Liferay.Language.get('quality')}
 					/>
 
 					<SubScore
+						dimension={health.freshness}
 						label={Liferay.Language.get('freshness')}
-						value={health.freshness}
 					/>
 
 					<SubScore
-						label={Liferay.Language.get('flow')}
-						value={health.flow}
-					/>
-
-					<SubScore
-						label={Liferay.Language.get('originality')}
-						value={health.originality}
+						dimension={health.operations}
+						label={Liferay.Language.get('operations')}
 					/>
 				</div>
 			) : null}

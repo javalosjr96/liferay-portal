@@ -21,17 +21,21 @@ import com.liferay.petra.concurrent.NoticeableFuture;
 import com.liferay.petra.process.ProcessChannel;
 import com.liferay.petra.process.ProcessException;
 import com.liferay.petra.process.ProcessExecutor;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.security.key.secret.SecretResolver;
 
 import java.io.File;
 
 import java.util.Date;
 import java.util.Map;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -64,14 +68,16 @@ public class TalendDispatchTaskExecutor extends BaseDispatchTaskExecutor {
 			throw new PortalException("Unable to fetch Talend archive");
 		}
 
-		TalendProcess talendProcess = _getTalendProcess(
-			dispatchTrigger, talendArchive);
-
-		if (_log.isTraceEnabled()) {
-			_log.trace("Execute Talend process " + talendProcess.toString());
-		}
-
 		try {
+			if (_log.isTraceEnabled()) {
+				_log.trace(
+					"Execute Talend process for dispatch trigger ID " +
+						dispatchTrigger.getDispatchTriggerId());
+			}
+
+			TalendProcess talendProcess = _getTalendProcess(
+				dispatchTrigger, talendArchive);
+
 			ProcessChannel<TalendProcessOutput> processChannel =
 				_processExecutor.execute(
 					talendProcess.getProcessConfig(),
@@ -159,8 +165,22 @@ public class TalendDispatchTaskExecutor extends BaseDispatchTaskExecutor {
 			for (Map.Entry<String, String> propEntry :
 					dispatchTaskSettingsUnicodeProperties.entrySet()) {
 
-				talendProcessBuilder.contextParam(
-					propEntry.getKey(), propEntry.getValue());
+				String name = propEntry.getKey();
+				String value = propEntry.getValue();
+
+				if (!Objects.equals(name, "JAVA_OPTS")) {
+					value = _secretResolver.resolve(
+						dispatchTrigger.getCompanyId(),
+						StringBundler.concat(
+							DispatchTrigger.class.getSimpleName(),
+							StringPool.SLASH, dispatchTrigger.getCompanyId(),
+							StringPool.SLASH,
+							dispatchTrigger.getDispatchTriggerId(),
+							StringPool.SLASH, name),
+						value);
+				}
+
+				talendProcessBuilder.contextParam(name, value);
 			}
 		}
 
@@ -178,5 +198,8 @@ public class TalendDispatchTaskExecutor extends BaseDispatchTaskExecutor {
 
 	@Reference
 	private ProcessExecutor _processExecutor;
+
+	@Reference
+	private SecretResolver _secretResolver;
 
 }

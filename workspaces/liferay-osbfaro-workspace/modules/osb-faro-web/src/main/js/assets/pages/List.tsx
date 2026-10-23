@@ -12,7 +12,12 @@ import {AssetObjectTypes} from 'shared/util/constants';
 import {CSVType} from 'shared/components/download-report/utils';
 import {DownloadStaticCSVReport} from 'shared/components/download-report/DownloadStaticCSVReport';
 import {DropdownRangeKey} from 'shared/components/dropdown-range-key/DropdownRangeKey';
-import {FrontendDataSet, pagination} from 'shared/components/FrontendDataSet';
+import {
+	EMPTY_STATE_IMAGE,
+	EMPTY_STATE_REDUCED_MOTION_IMAGE,
+	FrontendDataSet,
+	pagination,
+} from 'shared/components/FrontendDataSet';
 import {getAssetDescriptorByRESTType} from 'assets/descriptors';
 import {getMimeType} from 'assets/components/mime-type';
 import {InfoPanel} from 'assets/components/InfoPanel';
@@ -456,7 +461,7 @@ const List = () => {
 				</div>
 			</BasePage.SubHeader>
 
-			<BasePage.Body fluid sidebarOpened={!!infoPanelData}>
+			<BasePage.Body fluid>
 				<Card minHeight={300}>
 					<FrontendDataSet
 
@@ -497,7 +502,9 @@ const List = () => {
 						emptyState={{
 							description:
 								assetsEmptyStateDescription as unknown as string,
-							image: '/states/satellite.svg',
+							image: EMPTY_STATE_IMAGE,
+							imageReducedMotion:
+								EMPTY_STATE_REDUCED_MOTION_IMAGE,
 							title: Liferay.Language.get('no-assets-were-found'),
 						}}
 						filters={filters}

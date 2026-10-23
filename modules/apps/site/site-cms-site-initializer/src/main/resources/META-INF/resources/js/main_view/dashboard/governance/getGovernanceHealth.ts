@@ -3,95 +3,115 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {isNullOrUndefined} from '@liferay/layout-js-components-web';
-
 import {AssetStatistics} from './GovernanceService';
 
+export type GovernanceDimension = {
+	issues: number;
+	score: number;
+	warnings: number;
+};
+
 export type GovernanceHealth = {
-	flow: number;
-	freshness: number;
-	originality?: number;
-	reliability: number;
+	freshness: GovernanceDimension;
+	issues: number;
+	operations: GovernanceDimension;
+	quality: GovernanceDimension;
 	score: number;
 };
 
-type WeightedSubScore = {
-	value: number;
-	weight: number;
+type Signal = {
+	count: number;
+	scope: number;
+	severity: number;
 };
 
-const FLOW_PENALTY = 4;
+const FRESHNESS_WEIGHT = 30;
 
-const FLOW_WEIGHT = 25;
+const OPERATIONS_WEIGHT = 30;
 
-const FRESHNESS_PENALTY = 3;
+const QUALITY_WEIGHT = 40;
 
-const FRESHNESS_WEIGHT = 20;
-
-const ORIGINALITY_PENALTY = 2;
-
-const ORIGINALITY_WEIGHT = 15;
-
-const RELIABILITY_PENALTY = 5;
-
-const RELIABILITY_WEIGHT = 40;
-
-function getScore(subScores: WeightedSubScore[]) {
-	const weight = subScores.reduce((total, subScore) => {
-		return total + subScore.weight;
-	}, 0);
-
-	const weighted = subScores.reduce((total, subScore) => {
-		return total + subScore.value * subScore.weight;
-	}, 0);
-
-	return Math.round(weighted / weight);
+function getScore(score: number, issues: number) {
+	return issues ? Math.min(score, 99) : score;
 }
 
-function getSubScore(total: number, penalty: number) {
-	return Math.max(0, 100 - total * penalty);
+function getDimension(signals: Signal[], warnings = 0): GovernanceDimension {
+	let issues = 0;
+	let penalty = 0;
+
+	for (const {count, scope, severity} of signals) {
+		issues += count;
+
+		if (scope) {
+			penalty += (count * severity * 100) / scope;
+		}
+	}
+
+	return {
+		issues,
+		score: getScore(Math.round(Math.max(0, 100 - penalty)), issues),
+		warnings,
+	};
 }
 
 export default function getGovernanceHealth(
 	statistics: AssetStatistics
 ): GovernanceHealth {
-	const flow = getSubScore(statistics.inDraftCount, FLOW_PENALTY);
+	const assets = statistics.totalCount;
+	const tasks = statistics.workflowTasksCount;
 
-	const freshness = getSubScore(
-		statistics.expiringSoonCount + statistics.upcomingReviewCount,
-		FRESHNESS_PENALTY
+	const freshness = getDimension(
+		[
+			{count: statistics.expiredCount, scope: assets, severity: 1.75},
+			{
+				count: statistics.reviewDateOverdueCount,
+				scope: assets,
+				severity: 1.5,
+			},
+		],
+		statistics.expiringSoonCount + statistics.upcomingReviewCount
 	);
 
-	const reliability = getSubScore(
-		statistics.brokenLinksCount +
-			statistics.expiredCount +
-			statistics.pendingCount +
-			statistics.reviewDateOverdueCount,
-		RELIABILITY_PENALTY
-	);
+	const operations = getDimension([
+		{
+			count: Math.max(
+				statistics.overdueWorkflowTasksCount,
+				statistics.slaBreachedWorkflowTasksCount
+			),
+			scope: tasks,
+			severity: 2,
+		},
+		{
+			count: statistics.longStandingDraftsCount,
+			scope: assets,
+			severity: 1.5,
+		},
+	]);
 
-	const subScores: WeightedSubScore[] = [
-		{value: flow, weight: FLOW_WEIGHT},
-		{value: freshness, weight: FRESHNESS_WEIGHT},
-		{value: reliability, weight: RELIABILITY_WEIGHT},
-	];
+	const quality = getDimension([
+		{count: statistics.brokenLinksCount, scope: assets, severity: 2},
+		{
+			count: statistics.missingRequiredFieldsCount,
+			scope: assets,
+			severity: 1.5,
+		},
+	]);
 
-	if (isNullOrUndefined(statistics.duplicatedCount)) {
-		return {flow, freshness, reliability, score: getScore(subScores)};
-	}
-
-	const originality = getSubScore(
-		statistics.duplicatedCount,
-		ORIGINALITY_PENALTY
-	);
-
-	subScores.push({value: originality, weight: ORIGINALITY_WEIGHT});
+	const issues = freshness.issues + operations.issues + quality.issues;
 
 	return {
-		flow,
 		freshness,
-		originality,
-		reliability,
-		score: getScore(subScores),
+		issues,
+		operations,
+		quality,
+		score: getScore(
+			Math.round(
+				(freshness.score * FRESHNESS_WEIGHT +
+					operations.score * OPERATIONS_WEIGHT +
+					quality.score * QUALITY_WEIGHT) /
+					100
+			),
+			issues
+		),
 	};
 }

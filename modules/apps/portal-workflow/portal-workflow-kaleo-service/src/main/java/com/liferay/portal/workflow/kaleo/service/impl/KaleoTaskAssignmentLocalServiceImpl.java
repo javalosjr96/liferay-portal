@@ -7,6 +7,7 @@ package com.liferay.portal.workflow.kaleo.service.impl;
 
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
@@ -192,7 +193,16 @@ public class KaleoTaskAssignmentLocalServiceImpl
 
 			User user = null;
 
-			if (userAssignment.getUserId() > 0) {
+			if (FeatureFlagManagerUtil.isEnabled(
+					serviceContext.getCompanyId(), "LPD-49856") &&
+				Validator.isNotNull(
+					userAssignment.getExternalReferenceCode())) {
+
+				user = _userLocalService.getUserByExternalReferenceCode(
+					userAssignment.getExternalReferenceCode(),
+					serviceContext.getCompanyId());
+			}
+			else if (userAssignment.getUserId() > 0) {
 				user = _userLocalService.getUser(userAssignment.getUserId());
 			}
 			else if (Validator.isNotNull(userAssignment.getEmailAddress())) {

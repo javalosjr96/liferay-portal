@@ -6,6 +6,7 @@
 package com.liferay.oauth2.provider.internal.configuration;
 
 import com.liferay.oauth2.provider.model.OAuth2Application;
+import com.liferay.oauth2.provider.scope.liferay.LiferayOAuth2Scope;
 import com.liferay.oauth2.provider.scope.liferay.ScopeLocator;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2ApplicationScopeAliasesLocalService;
@@ -23,6 +24,8 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -95,6 +98,12 @@ public class ConfigurationFactoryTest {
 		);
 
 		Mockito.when(
+			_oAuth2Application.getCompanyId()
+		).thenReturn(
+			_companyId
+		);
+
+		Mockito.when(
 			_oAuth2Application.getOAuth2ApplicationId()
 		).thenReturn(
 			1L
@@ -156,14 +165,6 @@ public class ConfigurationFactoryTest {
 
 		_oAuth2ApplicationScopeAliasesLocalService = Mockito.mock(
 			OAuth2ApplicationScopeAliasesLocalService.class);
-
-		Mockito.when(
-			_oAuth2ApplicationScopeAliasesLocalService.
-				fetchOAuth2ApplicationScopeAliases(
-					Mockito.anyLong(), Mockito.anyList())
-		).thenReturn(
-			null
-		);
 
 		PortalK8sConfigMapModifier portalK8sConfigMapModifier = Mockito.mock(
 			PortalK8sConfigMapModifier.class);
@@ -375,6 +376,55 @@ public class ConfigurationFactoryTest {
 			_serviceUid, _labels.get("ext.lxc.liferay.com/serviceUid"));
 		Assert.assertEquals(
 			"ext-init", _labels.get("lxc.liferay.com/metadataType"));
+	}
+
+	@Test
+	public void testUpdateScopes() throws Exception {
+		OAuth2ProviderApplicationUserAgentConfigurationFactory
+			configurationFactory =
+				new OAuth2ProviderApplicationUserAgentConfigurationFactory();
+
+		configurationFactory.oAuth2ApplicationLocalService =
+			_oAuth2ApplicationLocalService;
+		configurationFactory.oAuth2ApplicationScopeAliasesLocalService =
+			_oAuth2ApplicationScopeAliasesLocalService;
+		configurationFactory.scopeLocator = _scopeLocator;
+
+		String scopeAlias1 = RandomTestUtil.randomString();
+
+		Mockito.when(
+			_oAuth2ApplicationScopeAliasesLocalService.getScopeAliasesList(
+				Mockito.anyLong())
+		).thenReturn(
+			Arrays.asList(scopeAlias1)
+		);
+
+		String scopeAlias2 = RandomTestUtil.randomString();
+
+		List<String> scopeAliasesList = Arrays.asList(scopeAlias1, scopeAlias2);
+
+		configurationFactory.updateScopes(_oAuth2Application, scopeAliasesList);
+
+		Mockito.verify(
+			_oAuth2ApplicationLocalService, Mockito.never()
+		).updateScopeAliases(
+			Mockito.anyLong(), Mockito.anyString(), Mockito.anyLong(),
+			Mockito.anyList()
+		);
+
+		Mockito.when(
+			_scopeLocator.getLiferayOAuth2Scopes(_companyId, scopeAlias2)
+		).thenReturn(
+			Collections.singletonList(Mockito.mock(LiferayOAuth2Scope.class))
+		);
+
+		configurationFactory.updateScopes(_oAuth2Application, scopeAliasesList);
+
+		Mockito.verify(
+			_oAuth2ApplicationLocalService
+		).updateScopeAliases(
+			1L, "UserName", 1L, scopeAliasesList
+		);
 	}
 
 	private void _activateHeadlessServerConfigurationFactory(

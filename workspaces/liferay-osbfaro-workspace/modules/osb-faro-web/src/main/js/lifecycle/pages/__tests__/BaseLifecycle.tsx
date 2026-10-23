@@ -5,7 +5,13 @@ import ModalRenderer from 'shared/components/ModalRenderer';
 import React from 'react';
 import URLConstants from 'shared/util/url-constants';
 import {ChannelContext} from 'shared/context/channel';
-import {cleanup, fireEvent, render, screen} from '@testing-library/react';
+import {
+	cleanup,
+	fireEvent,
+	render,
+	screen,
+	within,
+} from '@testing-library/react';
 import {MemoryRouter, useLocation} from 'react-router-dom';
 import {mockChannelContext} from 'test/mock-channel-context';
 import {Provider} from 'react-redux';
@@ -13,6 +19,7 @@ import {Routes, toRoute} from 'shared/util/router';
 import {useCurrentUser} from 'shared/hooks/useCurrentUser';
 import {useDataSources} from 'shared/context/dataSources';
 import {useRequest} from 'shared/hooks/useRequest';
+import {setBodyWidth} from 'test/body-width';
 
 jest.unmock('react-dom');
 
@@ -29,45 +36,73 @@ jest.mock('shared/hooks/useCurrentUser', () => ({
 }));
 
 jest.mock('shared/util/breadcrumbs', () => ({
+	...jest.requireActual('shared/util/breadcrumbs'),
 	getHome: jest.fn(({label}: {label?: string} = {}) => ({
 		active: false,
 		label: label || 'Home',
 	})),
 }));
 
+const mockUseParams = jest.fn();
+
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
-	useParams: () => ({
-		channelId: '123',
-		groupId: '23',
-	}),
+	useParams: () => mockUseParams(),
 }));
 
-jest.mock('lifecycle/components/FilterPicker', () => ({
-	__esModule: true,
-	default: ({
+jest.mock('lifecycle/components/FilterPicker', () => {
+	const {useLifecycle} = jest.requireActual(
+		'lifecycle/context/LifecycleContext'
+	);
+
+	const FilterPicker = ({
 		entityLabel,
 		filterKey,
 	}: {
 		entityLabel: string;
-		filterKey: string;
-	}) => (
-		<div
-			data-entity-label={entityLabel}
-			data-testid={`filter-${filterKey}`}
-		/>
-	),
-}));
+		filterKey: 'countryFilter' | 'industryFilter';
+	}) => {
+		const {filters, updateFilters} = useLifecycle();
+
+		return (
+			<button
+				data-entity-label={entityLabel}
+				data-testid={`filter-${filterKey}`}
+				data-value={filters[filterKey]}
+				onClick={() => updateFilters({[filterKey]: 'picked'})}
+				type="button"
+			/>
+		);
+	};
+
+	return {__esModule: true, default: FilterPicker};
+});
 
 jest.mock('lifecycle/components/OverviewSection', () => ({
 	__esModule: true,
 	default: () => <div data-testid="overview-section" />,
 }));
 
-jest.mock('lifecycle/components/LifecycleChart', () => ({
-	__esModule: true,
-	default: () => <div data-testid="lifecycle-chart" />,
-}));
+jest.mock('lifecycle/components/LifecycleChart', () => {
+	const {useLifecycle} = jest.requireActual(
+		'lifecycle/context/LifecycleContext'
+	);
+
+	const LifecycleChart = () => {
+		const {filters, selectStage} = useLifecycle();
+
+		return (
+			<button
+				data-stage={filters.lifecycleStageFilter ?? ''}
+				data-testid="lifecycle-chart"
+				onClick={() => selectStage('ENGAGED')}
+				type="button"
+			/>
+		);
+	};
+
+	return {__esModule: true, default: LifecycleChart};
+});
 
 jest.mock('shared/components/accounts-data-set/AccountsDataSet', () => ({
 	__esModule: true,
@@ -104,45 +139,56 @@ const buildAccountMetrics = (totalCount: number) =>
 
 const useRequestImpl =
 	({
-		lifecycles = [{id: '1'}],
+		lifecycle = {id: '1'},
+		lifecycleError = false,
 		metricsLoading = false,
 		processedDate = 1700000000000,
 		totalCount = 1,
 	}: {
-		lifecycles?: {
+		lifecycle?: {
+			defaultAccountLifecycle?: boolean;
 			id: string;
 			name?: string;
 			processedDate?: number | null;
-		}[];
+		} | null;
+		lifecycleError?: boolean;
 		metricsLoading?: boolean;
 		processedDate?: number | null;
 		totalCount?: number;
 	} = {}) =>
-	({dataSourceFn}: {dataSourceFn?: unknown} = {}) =>
-		dataSourceFn === API.lifecycle.fetchLifecycles
-			? {
-					data: lifecycles.map((lifecycle) => ({
-						processedDate,
-						...lifecycle,
-					})),
-					error: false,
-					loading: false,
-				}
-			: {
-					data: buildAccountMetrics(totalCount),
-					error: false,
-					loading: metricsLoading,
-				};
+	({
+		dataSourceFn,
+		skipRequest,
+	}: {
+		dataSourceFn?: unknown;
+		skipRequest?: boolean;
+	} = {}) => {
+		if (skipRequest) {
+			return {data: null, error: false, loading: true};
+		}
 
-const store = mockStore();
+		if (dataSourceFn === API.accounts.fetchMetrics) {
+			return {
+				data: buildAccountMetrics(totalCount),
+				error: false,
+				loading: metricsLoading,
+			};
+		}
+
+		return {
+			data: lifecycle && {processedDate, ...lifecycle},
+			error: lifecycleError,
+			loading: false,
+		};
+	};
 
 const LocationProbe = () => (
 	<div data-testid="location">{useLocation().pathname}</div>
 );
 
-const renderPage = (initialEntries = ['/workspace/23/123/lifecycles']) =>
+const renderPage = (initialEntries = ['/workspace/23/123/lifecycle/1']) =>
 	render(
-		<Provider store={store}>
+		<Provider store={mockStore()}>
 			<ModalRenderer />
 
 			<ChannelContext.Provider value={mockChannelContext() as any}>
@@ -160,7 +206,19 @@ describe('BaseLifecycle', () => {
 		jest.clearAllMocks();
 
 		(API as any).accounts = {fetchMetrics: jest.fn()};
-		(API as any).lifecycle = {fetchLifecycles: jest.fn()};
+		(API as any).lifecycle = {
+			fetchLifecycle: jest.fn(),
+			fetchLifecyclesPage: jest.fn(),
+			setDefaultLifecycle: jest.fn(() => Promise.resolve()),
+		};
+
+		mockUseParams.mockReturnValue({
+			channelId: '123',
+			groupId: '23',
+			lifecycleId: '1',
+		});
+
+		setBodyWidth(1440);
 
 		mockedUseCurrentUser.mockReturnValue({isAdmin: () => true});
 		mockedUseDataSources.mockReturnValue({empty: false, loading: false});
@@ -169,38 +227,142 @@ describe('BaseLifecycle', () => {
 
 	afterEach(cleanup);
 
+	it('resets the filters and reloads the data when switching lifecycles', () => {
+		const {rerender} = renderPage();
+
+		fireEvent.click(screen.getByTestId('filter-industryFilter'));
+		fireEvent.click(screen.getByTestId('filter-countryFilter'));
+		fireEvent.click(screen.getByTestId('lifecycle-chart'));
+
+		expect(screen.getByTestId('filter-industryFilter')).toHaveAttribute(
+			'data-value',
+			'picked'
+		);
+		expect(screen.getByTestId('filter-countryFilter')).toHaveAttribute(
+			'data-value',
+			'picked'
+		);
+		expect(screen.getByTestId('lifecycle-chart')).toHaveAttribute(
+			'data-stage',
+			'ENGAGED'
+		);
+
+		mockUseParams.mockReturnValue({
+			channelId: '123',
+			groupId: '23',
+			lifecycleId: '2',
+		});
+
+		rerender(
+			<Provider store={mockStore()}>
+				<ChannelContext.Provider value={mockChannelContext() as any}>
+					<MemoryRouter
+						initialEntries={['/workspace/23/123/lifecycle/2']}
+					>
+						<BaseLifecycle />
+					</MemoryRouter>
+				</ChannelContext.Provider>
+			</Provider>
+		);
+
+		expect(screen.getByTestId('filter-industryFilter')).toHaveAttribute(
+			'data-value',
+			''
+		);
+		expect(screen.getByTestId('filter-countryFilter')).toHaveAttribute(
+			'data-value',
+			''
+		);
+		expect(screen.getByTestId('lifecycle-chart')).toHaveAttribute(
+			'data-stage',
+			''
+		);
+
+		const requestVariables = mockedUseRequest.mock.calls.map(
+			([{variables}]) => variables
+		);
+
+		expect(requestVariables).toContainEqual({
+			groupId: '23',
+			lifecycleId: '2',
+		});
+		expect(requestVariables).toContainEqual(
+			expect.objectContaining({
+				country: '',
+				industry: '',
+				lifecycleId: '2',
+			})
+		);
+	});
+
 	it('titles the page with the lifecycle name', () => {
 		mockedUseRequest.mockImplementation(
 			useRequestImpl({
-				lifecycles: [{id: '1', name: "Tiago's Lifecycle"}],
+				lifecycle: {id: '1', name: "Tiago's Lifecycle"},
 				totalCount: 5,
 			})
 		);
 
 		renderPage();
 
-		expect(screen.getByText("Tiago's Lifecycle")).toBeInTheDocument();
-		expect(screen.queryByText('Lifecycles')).toBeNull();
-	});
-
-	it('titles the page generically when no lifecycle exists', () => {
-		mockedUseRequest.mockImplementation(
-			useRequestImpl({lifecycles: [], totalCount: 5})
-		);
-
-		renderPage();
-
-		expect(screen.getByText('Lifecycles')).toBeInTheDocument();
+		expect(
+			screen.getByRole('heading', {name: "Tiago's Lifecycle"})
+		).toBeInTheDocument();
 	});
 
 	it('titles the page generically when the lifecycle is unnamed', () => {
+		renderPage();
+
+		expect(
+			screen.getByRole('heading', {name: /^lifecycles$/i})
+		).toBeInTheDocument();
+	});
+
+	it('shows the lifecycle in the breadcrumb after the lifecycles', () => {
 		mockedUseRequest.mockImplementation(
-			useRequestImpl({lifecycles: [{id: '1'}], totalCount: 5})
+			useRequestImpl({
+				lifecycle: {id: '1', name: 'Growth Hub'},
+				totalCount: 5,
+			})
 		);
 
 		renderPage();
 
-		expect(screen.getByText('Lifecycles')).toBeInTheDocument();
+		expect(
+			screen.getByRole('link', {name: /^lifecycles$/i})
+		).toHaveAttribute(
+			'href',
+			toRoute(Routes.LIFECYCLE, {channelId: '123', groupId: '23'})
+		);
+		expect(screen.getAllByText('Growth Hub').length).toBeGreaterThan(1);
+	});
+
+	describe('when the lifecycle does not exist', () => {
+		beforeEach(() => {
+			mockedUseRequest.mockImplementation(
+				useRequestImpl({lifecycle: null, lifecycleError: true})
+			);
+		});
+
+		it('renders the not found page', () => {
+			renderPage();
+
+			expect(
+				screen.getByText(/lifecycle not found/i)
+			).toBeInTheDocument();
+			expect(screen.queryByTestId('overview-section')).toBeNull();
+		});
+
+		it('links back to the lifecycles', () => {
+			renderPage();
+
+			expect(
+				screen.getByRole('link', {name: /go to lifecycles/i})
+			).toHaveAttribute(
+				'href',
+				toRoute(Routes.LIFECYCLE, {channelId: '123', groupId: '23'})
+			);
+		});
 	});
 
 	it('renders neither an empty state nor content while loading', () => {
@@ -310,43 +472,6 @@ describe('BaseLifecycle', () => {
 		});
 	});
 
-	describe('when no lifecycles are configured', () => {
-		beforeEach(() => {
-			mockedUseRequest.mockImplementation(
-				useRequestImpl({lifecycles: []})
-			);
-		});
-
-		it('renders the "Configure a New Lifecycle" empty state', () => {
-			renderPage();
-
-			expect(
-				screen.getByText('Configure a New Lifecycle')
-			).toBeInTheDocument();
-			expect(
-				screen.getByText(
-					'Complete the configuration to start seeing insights.'
-				)
-			).toBeInTheDocument();
-			expect(screen.queryByTestId('overview-section')).toBeNull();
-			expect(screen.queryByTestId('filter-industryFilter')).toBeNull();
-		});
-
-		it('renders the New Lifecycle action linking to the create route', () => {
-			renderPage();
-
-			expect(
-				screen.getByRole('link', {name: 'New Lifecycle'})
-			).toHaveAttribute(
-				'href',
-				toRoute(Routes.LIFECYCLE_CREATE, {
-					channelId: '123',
-					groupId: '23',
-				})
-			);
-		});
-	});
-
 	describe('when the lifecycle is still processing', () => {
 		beforeEach(() => {
 			mockedUseRequest.mockImplementation(
@@ -368,15 +493,13 @@ describe('BaseLifecycle', () => {
 	const openActionsMenu = () =>
 		fireEvent.click(screen.getByRole('button', {name: 'Menu'}));
 
-	describe('the Lifecycle Configuration action', () => {
+	describe('the Edit action', () => {
 		it('navigates to the edit route when clicked by an admin', () => {
 			renderPage();
 
 			openActionsMenu();
 
-			fireEvent.click(
-				screen.getByRole('menuitem', {name: 'Lifecycle Configuration'})
-			);
+			fireEvent.click(screen.getByRole('menuitem', {name: /^edit$/i}));
 
 			expect(screen.getByTestId('location')).toHaveTextContent(
 				toRoute(Routes.LIFECYCLE_EDIT, {
@@ -394,8 +517,117 @@ describe('BaseLifecycle', () => {
 
 			openActionsMenu();
 
-			expect(screen.queryByText('Lifecycle Configuration')).toBeNull();
+			expect(
+				screen.queryByRole('menuitem', {name: /^edit$/i})
+			).toBeNull();
 		});
+	});
+
+	describe('the default lifecycle', () => {
+		it('pins the title of the default lifecycle', () => {
+			mockedUseRequest.mockImplementation(
+				useRequestImpl({
+					lifecycle: {defaultAccountLifecycle: true, id: '1'},
+				})
+			);
+
+			renderPage();
+
+			expect(
+				screen.getByRole('img', {name: /default/i})
+			).toBeInTheDocument();
+		});
+
+		it('shows no sticker beside another lifecycle', () => {
+			mockedUseRequest.mockImplementation(
+				useRequestImpl({
+					lifecycle: {defaultAccountLifecycle: false, id: '1'},
+				})
+			);
+
+			const {container} = renderPage();
+
+			expect(screen.queryByRole('img', {name: /default/i})).toBeNull();
+			expect(
+				container.querySelector('.title-section .sticker')
+			).toBeNull();
+		});
+
+		it('hides Set Default on the default lifecycle', () => {
+			mockedUseRequest.mockImplementation(
+				useRequestImpl({
+					lifecycle: {defaultAccountLifecycle: true, id: '1'},
+				})
+			);
+
+			renderPage();
+
+			openActionsMenu();
+
+			expect(
+				screen.queryByRole('menuitem', {name: /set.default/i})
+			).toBeNull();
+		});
+
+		it('pins the title once the lifecycle is set as default', async () => {
+			mockedUseRequest.mockImplementation(
+				useRequestImpl({
+					lifecycle: {defaultAccountLifecycle: false, id: '1'},
+				})
+			);
+
+			renderPage();
+
+			openActionsMenu();
+
+			fireEvent.click(
+				screen.getByRole('menuitem', {name: /set.default/i})
+			);
+
+			expect(API.lifecycle.setDefaultLifecycle).toHaveBeenCalledWith({
+				groupId: '23',
+				lifecycleId: '1',
+			});
+
+			expect(
+				await screen.findByRole('img', {name: /default/i})
+			).toBeInTheDocument();
+		});
+	});
+
+	describe('the Show Details action', () => {
+		it('opens the details of the open lifecycle in the side panel', () => {
+			mockedUseRequest.mockImplementation(
+				useRequestImpl({
+					lifecycle: {id: '1', name: 'Growth Hub'},
+					totalCount: 5,
+				})
+			);
+
+			renderPage();
+
+			openActionsMenu();
+
+			fireEvent.click(
+				screen.getByRole('menuitem', {name: /show.details/i})
+			);
+
+			expect(
+				screen.getByRole('tab', {name: /^details$/i})
+			).toBeInTheDocument();
+			expect(screen.queryByRole('button', {name: /^back$/i})).toBeNull();
+			expect(
+				screen.getByRole('button', {name: /switch dashboard/i})
+			).toHaveAttribute('aria-expanded', 'true');
+		});
+	});
+
+	it('does not offer the View action on the open dashboard', () => {
+		renderPage();
+
+		openActionsMenu();
+
+		expect(screen.queryByRole('menuitem', {name: /^view$/i})).toBeNull();
 	});
 
 	describe('the Manage Notifications action', () => {
@@ -426,6 +658,62 @@ describe('BaseLifecycle', () => {
 		});
 	});
 
+	describe('the Switch Dashboard button', () => {
+		const getSwitchButton = () =>
+			screen.getByRole('button', {name: /switch dashboard/i});
+
+		it('starts with the panel closed', () => {
+			renderPage();
+
+			expect(getSwitchButton()).toHaveAttribute('aria-expanded', 'false');
+		});
+
+		it('opens and closes the switch panel', () => {
+			renderPage();
+
+			fireEvent.click(getSwitchButton());
+
+			expect(getSwitchButton()).toHaveAttribute('aria-expanded', 'true');
+			expect(getSwitchButton()).toHaveClass(
+				'active',
+				'btn-outline-borderless'
+			);
+			expect(
+				screen
+					.getByText(/switch lifecycle dashboard/i)
+					.closest('.sidebar')
+			).not.toHaveAttribute('inert');
+
+			fireEvent.click(getSwitchButton());
+
+			expect(getSwitchButton()).toHaveAttribute('aria-expanded', 'false');
+		});
+
+		it('closes the panel from its close button', () => {
+			renderPage();
+
+			fireEvent.click(getSwitchButton());
+
+			const panel = screen
+				.getByText(/switch lifecycle dashboard/i)
+				.closest('.sidebar') as HTMLElement;
+
+			fireEvent.click(
+				within(panel).getByRole('button', {name: /^close$/i})
+			);
+
+			expect(getSwitchButton()).toHaveAttribute('aria-expanded', 'false');
+		});
+	});
+
+	it('lays the dashboard out at full width', () => {
+		const {container} = renderPage();
+
+		expect(screen.getByTestId('overview-section')).toBeInTheDocument();
+		expect(container.querySelector('.page-container')).toBeNull();
+		expect(container.querySelector('.header-container')).toBeNull();
+	});
+
 	it('renders the lifecycle content when account data is available', () => {
 		renderPage();
 
@@ -445,5 +733,108 @@ describe('BaseLifecycle', () => {
 			screen.getByText(/^\S+ \d+, \d{4} – \S+ \d+, \d{4}$/)
 		).toBeInTheDocument();
 		expect(screen.queryByText('No Account Data Available')).toBeNull();
+	});
+
+	describe('when the panel is open beside the dashboard', () => {
+		const LIST_LIFECYCLES = [
+			{id: '1', name: 'Growth Hub'},
+			{id: '2', name: 'Partner Lifecycle'},
+		];
+
+		beforeEach(() => {
+			const dashboardRequest = useRequestImpl({
+				lifecycle: {
+					defaultAccountLifecycle: false,
+					id: '1',
+					name: 'Growth Hub',
+				},
+			});
+
+			mockedUseRequest.mockImplementation(
+				(options: {
+					dataSourceFn?: unknown;
+					variables?: {defaultChangeCount?: number};
+				}) => {
+					if (
+						options.dataSourceFn !==
+						API.lifecycle.fetchLifecyclesPage
+					) {
+						return dashboardRequest(options);
+					}
+
+					const defaultLifecycleId = options.variables
+						?.defaultChangeCount
+						? '1'
+						: '2';
+
+					return {
+						data: {
+							items: LIST_LIFECYCLES.map((lifecycle) => ({
+								...lifecycle,
+								defaultAccountLifecycle:
+									lifecycle.id === defaultLifecycleId,
+							})),
+							lastPage: 1,
+							page: 1,
+							pageSize: 20,
+							totalCount: LIST_LIFECYCLES.length,
+						},
+						error: false,
+						loading: false,
+						refetch: jest.fn(),
+					};
+				}
+			);
+		});
+
+		const getRow = (name: string) =>
+			within(
+				screen
+					.getByText(/switch lifecycle dashboard/i)
+					.closest('.sidebar') as HTMLElement
+			)
+				.getByRole('link', {name})
+				.closest('li') as HTMLElement;
+
+		it('moves the pin in the list when the header sets the default', async () => {
+			renderPage();
+
+			fireEvent.click(
+				screen.getByRole('button', {name: /switch dashboard/i})
+			);
+
+			expect(
+				within(getRow('Partner Lifecycle')).getByRole('img', {
+					name: /default/i,
+				})
+			).toBeInTheDocument();
+
+			openActionsMenu();
+
+			fireEvent.click(
+				screen.getByRole('menuitem', {name: /set.default/i})
+			);
+
+			expect(
+				await within(getRow('Growth Hub')).findByRole('img', {
+					name: /default/i,
+				})
+			).toBeInTheDocument();
+			expect(
+				within(getRow('Partner Lifecycle')).queryByRole('img', {
+					name: /default/i,
+				})
+			).toBeNull();
+
+			fireEvent.click(
+				within(getRow('Growth Hub')).getByRole('button', {
+					name: /actions for/i,
+				})
+			);
+
+			expect(
+				screen.queryByRole('menuitem', {name: /set.default/i})
+			).toBeNull();
+		});
 	});
 });

@@ -3,15 +3,15 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {postPrompt} from '../../services/postPrompt';
-import {PromptActionContext} from '../../types';
-import {openErrorToast, openSuccessToast} from '../../utils';
+import PromptService from '../../services/PromptService';
+import {PromptActionContext} from '../../types/Prompt';
+import {openErrorToast, openSuccessToast} from '../../utils/toasts';
 
 export default async function duplicatePromptAction({
 	itemData,
 	loadData,
 }: PromptActionContext) {
-	const {data: saved, error} = await postPrompt({
+	const {data: saved, error} = await PromptService.postPrompt({
 		description: itemData.description ?? '',
 		identifier: `copy-of-${itemData.identifier}`,
 		name: Liferay.Util.sub(

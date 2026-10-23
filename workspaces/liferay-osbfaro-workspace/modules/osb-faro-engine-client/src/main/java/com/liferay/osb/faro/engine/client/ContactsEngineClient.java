@@ -86,7 +86,7 @@ public interface ContactsEngineClient {
 
 	public AccountLifecycle addAccountLifecycle(
 		FaroProject faroProject, AccountLifecycle accountLifecycle,
-		String channelId);
+		String channelId, long userId);
 
 	public Results<BlockedKeyword> addBlockedKeywords(
 		FaroProject faroProject, List<String> keywords);
@@ -248,8 +248,10 @@ public interface ContactsEngineClient {
 			FaroProject faroProject, String accountLifecycleId, String id)
 		throws FaroEngineClientException;
 
-	public List<AccountLifecycle> getAccountLifecycles(
-			FaroProject faroProject, Long channelId)
+	public Results<AccountLifecycle> getAccountLifecycles(
+			FaroProject faroProject, Long channelId,
+			Boolean defaultAccountLifecycle, String query, int cur, int delta,
+			String sortString)
 		throws FaroEngineClientException;
 
 	public List<AccountMetric> getAccountMetrics(
@@ -373,6 +375,11 @@ public interface ContactsEngineClient {
 	public Results<Account> getCampaignAccounts(
 			FaroProject faroProject, long channelId, String filterString,
 			String id, String query, String sortString, int cur, int delta)
+		throws FaroEngineClientException;
+
+	public Results<Individual> getCampaignIndividuals(
+			FaroProject faroProject, long channelId, String id, String query,
+			String sortString, int cur, int delta)
 		throws FaroEngineClientException;
 
 	public List<CampaignMetric> getCampaignMetrics(
@@ -684,6 +691,9 @@ public interface ContactsEngineClient {
 	public void insertBQProjects(List<FaroProject> faroProjects)
 		throws Exception;
 
+	public AccountLifecycle patchAccountLifecycle(
+		FaroProject faroProject, String id, Boolean defaultAccountLifecycle);
+
 	public Channel patchChannel(
 		FaroProject faroProject, String id, String name);
 
@@ -720,7 +730,8 @@ public interface ContactsEngineClient {
 	public void setEngineURL(String engineURL);
 
 	public AccountLifecycle updateAccountLifecycle(
-		FaroProject faroProject, AccountLifecycle accountLifecycle);
+		FaroProject faroProject, AccountLifecycle accountLifecycle,
+		long userId);
 
 	public void updateAccountLifecycleStageRule(
 		FaroProject faroProject, String filterMetadata, String filterString,

@@ -4,6 +4,8 @@ import Loading from 'shared/components/Loading';
 import React from 'react';
 import {
 	columns,
+	EMPTY_STATE_IMAGE,
+	EMPTY_STATE_REDUCED_MOTION_IMAGE,
 	FrontendDataSet,
 	pagination,
 	rangeSelectors,
@@ -148,7 +150,8 @@ const AccountsDataSet: React.FC<IAccountsDataSetProps> = ({
 					description: Liferay.Language.get(
 						'no-accounts-were-synced-from-the-connected-data-sources'
 					),
-					image: '/states/satellite.svg',
+					image: EMPTY_STATE_IMAGE,
+					imageReducedMotion: EMPTY_STATE_REDUCED_MOTION_IMAGE,
 					title: Liferay.Language.get('no-accounts-found'),
 				}}
 				filters={[

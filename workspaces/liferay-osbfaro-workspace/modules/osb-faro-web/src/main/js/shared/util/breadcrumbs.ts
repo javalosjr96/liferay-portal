@@ -60,10 +60,18 @@ export const getAccounts = ({channelId, groupId}: IBasicSidebarRouteArgs) => ({
 	label: Liferay.Language.get('accounts'),
 });
 
-export const getCampaigns = ({channelId, groupId}: IBasicSidebarRouteArgs) => ({
-	href: toRoute(Routes.CAMPAIGNS, {channelId, groupId}),
-	label: Liferay.Language.get('campaigns'),
-});
+export const getCampaigns = ({
+	channelId,
+	groupId,
+	queryValues,
+}: IBasicSidebarRouteArgs & {queryValues?: {[key: string]: any}}) => {
+	const href = toRoute(Routes.CAMPAIGNS, {channelId, groupId});
+
+	return {
+		href: queryValues ? setUriQueryValues(queryValues, href) : href,
+		label: Liferay.Language.get('campaigns'),
+	};
+};
 
 export const getIndividuals = ({
 	LDPEnabled,
@@ -80,6 +88,14 @@ export const getIndividuals = ({
 		}
 	),
 	label: Liferay.Language.get('individuals'),
+});
+
+export const getLifecycles = ({
+	channelId,
+	groupId,
+}: IBasicSidebarRouteArgs) => ({
+	href: toRoute(Routes.LIFECYCLE, {channelId, groupId}),
+	label: Liferay.Language.get('lifecycles'),
 });
 
 export const getSegments = ({channelId, groupId}: IBasicSidebarRouteArgs) => ({

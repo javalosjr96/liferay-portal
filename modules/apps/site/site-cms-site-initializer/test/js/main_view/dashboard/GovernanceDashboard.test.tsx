@@ -42,13 +42,18 @@ const STATISTICS = {
 	approvedCount: 0,
 	brokenLinksCount: 7,
 	expiredCount: 6,
-	expiringSoonCount: 0,
+	expiringSoonCount: 2,
 	inDraftCount: 3,
+	longStandingDraftsCount: 2,
+	missingRequiredFieldsCount: 4,
+	overdueWorkflowTasksCount: 2,
 	pendingCount: 4,
 	reviewDateOverdueCount: 3,
 	scheduledCount: 0,
-	totalCount: 0,
+	slaBreachedWorkflowTasksCount: 1,
+	totalCount: 100,
 	upcomingReviewCount: 0,
+	workflowTasksCount: 20,
 };
 
 const ADDITIONAL_PROPS = {
@@ -138,30 +143,60 @@ describe('[CMS Dashboard] GovernanceDashboard', () => {
 		);
 	});
 
-	it('shows the four sub-scores next to the global score', async () => {
+	it('shows the three sub-scores next to the global score', async () => {
 		render(<GovernanceDashboard additionalProps={ADDITIONAL_PROPS} />);
 
 		const banner = await screen.findByRole('region', {
 			name: 'governance-health',
 		});
 
-		const flow = await within(banner).findByText('flow');
+		const quality = await within(banner).findByText('quality');
 
-		expect(flow.previousSibling).toHaveTextContent('88');
+		expect(quality.previousSibling).toHaveTextContent('80');
+		expect(quality.nextSibling).toHaveTextContent('x-issues');
+
+		const freshness = within(banner).getByText('freshness');
+
+		expect(freshness.previousSibling).toHaveTextContent('85');
+		expect(freshness.nextSibling).toHaveTextContent(
+			'x-issues · x-warnings'
+		);
+
+		const operations = within(banner).getByText('operations');
+
+		expect(operations.previousSibling).toHaveTextContent('77');
+		expect(operations.nextSibling).toHaveTextContent('x-issues');
 
 		expect(
-			within(banner).getByText('originality').previousSibling
-		).toHaveTextContent('—');
+			within(banner).getByText('81').parentElement?.nextSibling
+		).toHaveTextContent('x-issues');
+	});
 
-		expect(
-			within(banner).getByText('reliability').previousSibling
-		).toHaveTextContent('0');
+	it('uses the singular for a single issue or warning', async () => {
+		mockedGovernanceService.getAssetStatistics.mockResolvedValue({
+			data: {
+				...STATISTICS,
+				brokenLinksCount: 0,
+				expiredCount: 1,
+				expiringSoonCount: 1,
+				longStandingDraftsCount: 0,
+				missingRequiredFieldsCount: 0,
+				overdueWorkflowTasksCount: 0,
+				reviewDateOverdueCount: 0,
+				slaBreachedWorkflowTasksCount: 0,
+			},
+			error: null,
+		} as any);
 
-		expect(
-			within(banner).getByText('freshness').previousSibling
-		).toHaveTextContent('100');
+		render(<GovernanceDashboard additionalProps={ADDITIONAL_PROPS} />);
 
-		expect(within(banner).getByText('49')).toBeInTheDocument();
+		const banner = await screen.findByRole('region', {
+			name: 'governance-health',
+		});
+
+		const freshness = await within(banner).findByText('freshness');
+
+		expect(freshness.nextSibling).toHaveTextContent('x-issue · x-warning');
 	});
 
 	it('explains what the score measures in a popover', async () => {
@@ -181,9 +216,13 @@ describe('[CMS Dashboard] GovernanceDashboard', () => {
 			await screen.findByText('governance-health-help')
 		).toBeInTheDocument();
 
-		expect(screen.getByText('reliability-help')).toBeInTheDocument();
+		expect(
+			screen.getByText('governance-health-issues-help')
+		).toBeInTheDocument();
 
-		expect(screen.getByText('flow-help')).toBeInTheDocument();
+		expect(
+			screen.getByText('governance-health-warnings-help')
+		).toBeInTheDocument();
 	});
 
 	it('closes the popover with the escape key', async () => {

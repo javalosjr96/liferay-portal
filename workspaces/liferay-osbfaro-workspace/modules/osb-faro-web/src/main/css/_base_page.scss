@@ -112,23 +112,39 @@
 		padding: 16px 0;
 	}
 
-	.fluid-body-root {
-		display: flex;
+	.fluid-body-root .card-root {
+		width: 100%;
+	}
 
-		&.sidebar-opened .card-root {
-			max-width: calc(100% - 488px - 1rem);
-		}
+	&.c-slideout-push-end {
+		padding-right: var(--base-page-sidebar-width);
+	}
 
-		.card-root {
-			margin: 1rem;
-			width: 100%;
-		}
+	&.c-slideout-push-start {
+		padding-left: var(--base-page-sidebar-width);
+	}
 
-		.info-panel-root {
-			height: calc(100vh - #{$toolbarHeight});
-			position: fixed;
-			top: $toolbarHeight;
-			transform: translateY(-1px);
+	&.base-page-sidebar-overlay {
+		padding-left: 0;
+		padding-right: 0;
+	}
+
+	.base-page-sidebar-backdrop {
+		z-index: calc(#{$cadmin-zindex-c-slideout} - 1);
+	}
+
+	.sidebar.base-page-sidebar {
+		border-left: 1px solid $cadmin-secondary-l2;
+		box-shadow: none;
+
+		.pagination-bar {
+			.pagination {
+				margin-top: $cadmin-pagination-margin-top-mobile;
+			}
+
+			.pagination-results {
+				margin-left: auto;
+			}
 		}
 	}
 }

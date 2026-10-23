@@ -17,14 +17,17 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextFactory;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.key.secret.SecretResolver;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectAuthenticationHandler;
 import com.liferay.portal.security.sso.openid.connect.OpenIdConnectServiceException;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectConstants;
 import com.liferay.portal.security.sso.openid.connect.constants.OpenIdConnectWebKeys;
 import com.liferay.portal.security.sso.openid.connect.internal.session.manager.OfflineOpenIdConnectSessionManager;
+import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectClientInformationUtil;
 import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectHttpUtil;
 import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectProviderUtil;
 import com.liferay.portal.security.sso.openid.connect.internal.util.OpenIdConnectRequestParametersUtil;
@@ -76,6 +79,7 @@ import java.util.Map;
 
 import net.minidev.json.JSONObject;
 
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -125,8 +129,9 @@ public class OpenIdConnectAuthenticationHandlerImpl
 				openIdConnectAuthenticationSession.getOAuthClientEntryId());
 
 		OIDCClientInformation oidcClientInformation =
-			OIDCClientInformation.parse(
-				JSONObjectUtils.parse(oAuthClientEntry.getInfoJSON()));
+			OpenIdConnectClientInformationUtil.getOIDCClientInformation(
+				_configurationAdmin, oAuthClientEntry, _secretResolver,
+				_userLocalService);
 
 		OIDCProviderMetadata oidcProviderMetadata =
 			_authorizationServerMetadataResolver.resolveOIDCProviderMetadata(
@@ -493,6 +498,9 @@ public class OpenIdConnectAuthenticationHandlerImpl
 		_authorizationServerMetadataResolver;
 
 	@Reference
+	private ConfigurationAdmin _configurationAdmin;
+
+	@Reference
 	private Language _language;
 
 	@Reference
@@ -507,5 +515,11 @@ public class OpenIdConnectAuthenticationHandlerImpl
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private SecretResolver _secretResolver;
+
+	@Reference
+	private UserLocalService _userLocalService;
 
 }

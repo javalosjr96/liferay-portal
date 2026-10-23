@@ -6,6 +6,7 @@
 package com.liferay.portal.tools.db.migration.importer;
 
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
+import com.liferay.portal.kernel.test.TestInfo;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,18 +29,40 @@ public class DBCopyTablesProcessTest {
 	}
 
 	@Test
-	public void testValidateTablesFailsWhenMissingColumn() {
+	@TestInfo("LPD-110096")
+	public void testValidateTablesFailsWhenColumnNamesDiffer() {
 		try {
 			_testValidateTables(
-				Arrays.asList("userId", "screenName", "email"),
-				Arrays.asList("userId", "screenName"));
+				Arrays.asList("emailAddress", "userId"),
+				Arrays.asList("screenName", "userId"));
+
+			Assert.fail();
 		}
 		catch (Exception exception) {
 			Assert.assertTrue(exception instanceof IllegalArgumentException);
 
 			Assert.assertEquals(
-				"Source table User_ has 3 columns, but target table User_ " +
-					"has only 2 in the default schema\n",
+				"Column emailAddress of source table User_ does not exist in " +
+					"target table User_ in the default schema\n",
+				exception.getMessage());
+		}
+	}
+
+	@Test
+	public void testValidateTablesFailsWhenMissingColumn() {
+		try {
+			_testValidateTables(
+				Arrays.asList("userId", "screenName", "email"),
+				Arrays.asList("userId", "screenName"));
+
+			Assert.fail();
+		}
+		catch (Exception exception) {
+			Assert.assertTrue(exception instanceof IllegalArgumentException);
+
+			Assert.assertEquals(
+				"Column email of source table User_ does not exist in target " +
+					"table User_ in the default schema\n",
 				exception.getMessage());
 		}
 	}

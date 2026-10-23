@@ -6,6 +6,7 @@
 package com.liferay.portal.template.velocity.internal;
 
 import com.liferay.petra.io.unsync.UnsyncStringWriter;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.configuration.metatype.bnd.util.ConfigurableUtil;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.template.StringTemplateResource;
@@ -363,6 +364,25 @@ public class VelocityTemplateTest {
 		String result = unsyncStringWriter.toString();
 
 		Assert.assertEquals(_TEST_VALUE, result);
+	}
+
+	@Test
+	public void testProcessTemplate9() throws Exception {
+		Template template = new VelocityTemplate(
+			new MockTemplateResource(_TEMPLATE_FILE_NAME), null,
+			_velocityEngine, _templateContextHelper, _templateResourceCache,
+			true);
+
+		try (SafeCloseable safeCloseable =
+				RestrictedTemplateThreadLocal.setRestrictedWithSafeCloseable(
+					true)) {
+
+			template.processTemplate(new UnsyncStringWriter());
+
+			Assert.assertTrue(RestrictedTemplateThreadLocal.isRestricted());
+		}
+
+		Assert.assertFalse(RestrictedTemplateThreadLocal.isRestricted());
 	}
 
 	private static final String _TEMPLATE_FILE_NAME = "test.vm";

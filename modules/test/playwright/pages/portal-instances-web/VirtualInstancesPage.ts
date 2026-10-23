@@ -36,6 +36,7 @@ export class VirtualInstancesPage {
 	readonly exportInstanceConfirmButton: Locator;
 	readonly importInstanceErrorMessage: Locator;
 	readonly importInstanceNameField: Locator;
+	readonly importInstanceNonexistentSchemaErrorMessage: Locator;
 	readonly importInstanceSchemaNameField: Locator;
 	readonly importInstanceSubmitButton: Locator;
 	readonly importInstanceVirtualHostField: Locator;
@@ -104,6 +105,10 @@ export class VirtualInstancesPage {
 			'Name',
 			{exact: true}
 		);
+		this.importInstanceNonexistentSchemaErrorMessage =
+			this.importInstanceFrame.getByText(
+				'The exported schema does not exist.'
+			);
 		this.importInstanceSchemaNameField =
 			this.importInstanceFrame.getByLabel('Schema Name');
 		this.importInstanceSubmitButton = page
@@ -247,6 +252,12 @@ export class VirtualInstancesPage {
 	deletionStartedMessage(name: string) {
 		return this.page.getByText(
 			`The instance ${name} is being deleted. You will be notified when it finishes.`
+		);
+	}
+
+	exportedSchemaExistsMessage(schemaName: string) {
+		return this.page.getByText(
+			`The exported schema ${schemaName} already exists.`
 		);
 	}
 
@@ -456,7 +467,7 @@ export class VirtualInstancesPage {
 		}).toPass({intervals: [1000], timeout: 300 * 1000});
 	}
 
-	async startVirtualInstanceExport(name: string) {
+	async submitExportVirtualInstance(name: string) {
 		await this.goto();
 
 		const row = this.page.getByRole('row').filter({hasText: name});
@@ -471,12 +482,12 @@ export class VirtualInstancesPage {
 		});
 
 		await this.exportInstanceConfirmButton.click();
-
-		await expect(this.exportStartedMessage(name)).toBeVisible();
 	}
 
 	async exportVirtualInstance(name: string) {
-		await this.startVirtualInstanceExport(name);
+		await this.submitExportVirtualInstance(name);
+
+		await expect(this.exportStartedMessage(name)).toBeVisible();
 
 		return this.waitForExportNotification(name);
 	}

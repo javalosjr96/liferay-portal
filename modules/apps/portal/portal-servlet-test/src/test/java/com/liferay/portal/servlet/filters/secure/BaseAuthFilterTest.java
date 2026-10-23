@@ -6,6 +6,7 @@
 package com.liferay.portal.servlet.filters.secure;
 
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.UserConstants;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.security.access.control.AccessControl;
 import com.liferay.portal.kernel.security.access.control.AccessControlUtil;
@@ -292,6 +293,37 @@ public class BaseAuthFilterTest {
 		Assert.assertNull(redirectURL);
 	}
 
+	@Test
+	public void testProcessFilter() {
+		try {
+			_portalUtil.setPortal(new TestUserPortalImpl());
+
+			_processFilter();
+
+			HttpServletRequest httpServletRequest =
+				(HttpServletRequest)_mockFilterChain.getRequest();
+
+			Assert.assertEquals(
+				HttpServletRequest.FORM_AUTH, httpServletRequest.getAuthType());
+
+			setUp();
+
+			_mockHttpServletRequest.setParameter(
+				"authType", HttpServletRequest.BASIC_AUTH);
+
+			_processFilter();
+
+			httpServletRequest =
+				(HttpServletRequest)_mockFilterChain.getRequest();
+
+			Assert.assertEquals(
+				HttpServletRequest.FORM_AUTH, httpServletRequest.getAuthType());
+		}
+		finally {
+			_portalUtil.setPortal(_testPortalImpl);
+		}
+	}
+
 	private void _processFilter() {
 		_authFilter.init(_mockFilterConfig);
 
@@ -414,6 +446,19 @@ public class BaseAuthFilterTest {
 		@Override
 		public User initUser(HttpServletRequest httpServletRequest) {
 			return new UserImpl();
+		}
+
+	}
+
+	private static class TestUserPortalImpl extends PortalImpl {
+
+		@Override
+		public User initUser(HttpServletRequest httpServletRequest) {
+			User user = new UserImpl();
+
+			user.setType(UserConstants.TYPE_REGULAR);
+
+			return user;
 		}
 
 	}

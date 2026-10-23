@@ -123,6 +123,13 @@ public abstract class BaseProductNavigationControlMenuEntry
 	public void setPanelState(
 		HttpServletRequest httpServletRequest, String key, String panelState) {
 
+		if (Objects.equals(
+				panelState,
+				SessionClicks.get(httpServletRequest, key, "closed"))) {
+
+			return;
+		}
+
 		SessionClicks.put(httpServletRequest, key, panelState);
 	}
 

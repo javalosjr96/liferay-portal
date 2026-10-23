@@ -15,11 +15,15 @@ import {
 	WorkflowStatus,
 } from '../../../../common/utils/constants';
 import {getImage} from '../../../../common/utils/getImage';
+import toDatePart from '../../../../common/utils/toDatePart';
 import {getStatusSelectedData} from '../../../quick_filters/quickFilterUpdates';
 import {BaseCard} from '../../common/BaseCard';
 import PickerTrigger from '../../common/PickerTrigger';
 import {GovernanceContext} from '../GovernanceContext';
-import GovernanceService, {FacetBucket} from '../GovernanceService';
+import GovernanceService, {
+	FacetBucket,
+	MILLISECONDS_PER_DAY,
+} from '../GovernanceService';
 import getAllSectionHref, {getSpaceFilters} from '../getAllSectionHref';
 import {GovernanceAdditionalProps} from '../types';
 
@@ -84,7 +88,9 @@ function getSegments(
 		});
 	}
 
-	return segments.filter(({value}) => value > 0);
+	return segments
+		.filter(({value}) => value > 0)
+		.sort((segment1, segment2) => segment2.value - segment1.value);
 }
 
 export function ContentProgress({
@@ -126,6 +132,9 @@ export function ContentProgress({
 	}, [additionalProps.contentProgressFilter, space.siteId, timeRangeDays]);
 
 	const segments = useMemo(() => {
+		const createdSince = toDatePart(
+			new Date(Date.now() - timeRangeDays * MILLISECONDS_PER_DAY)
+		);
 		const spaceFilters = getSpaceFilters(space);
 
 		return getSegments(buckets ?? [], (statuses) =>
@@ -140,11 +149,19 @@ export function ContentProgress({
 							}))
 						),
 					},
+					{
+						id: FDS_FILTER_ID.DATE_CREATED,
+						selectedData: {
+							exclude: false,
+							from: createdSince,
+							to: null,
+						},
+					},
 					...spaceFilters,
 				],
 			})
 		);
-	}, [additionalProps.allSectionFDSName, buckets, space]);
+	}, [additionalProps.allSectionFDSName, buckets, space, timeRangeDays]);
 
 	return (
 		<BaseCard
@@ -162,7 +179,7 @@ export function ContentProgress({
 					)}
 				</Picker>
 			}
-			className="cms-content-progress custom-empty-state"
+			className="cms-content-progress custom-empty-state h-100"
 			description={Liferay.Language.get(
 				'this-is-the-progress-of-content-creation-and-completion-across-the-selected-spaces'
 			)}

@@ -41,6 +41,11 @@ const CONFIG_IN_URL_OFF = 'off' as EConfigInURLBehavior;
 
 const {cur, delta, deltaValues} = FaroConstants.pagination;
 
+export const EMPTY_STATE_IMAGE = '/states/empty_state.svg';
+
+export const EMPTY_STATE_REDUCED_MOTION_IMAGE =
+	'/states/empty_state_reduced_motion.svg';
+
 export const rangeSelectors = [
 	{
 		label: Liferay.Language.get('last-24-hours'),

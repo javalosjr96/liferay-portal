@@ -1,6 +1,7 @@
 ---
 
 allowed-tools: [Agent, Bash, Edit, Glob, Grep, Read, Skill, Write]
+argument-hint: "[--skip-pr-reviewer <reason>]"
 description: Check that a PR is ready to be sent for review.
 name: pr-check
 
@@ -64,7 +65,7 @@ The **Forward Target** is the repository `ci:forward` merges a pull request into
 
 	Exit `0` means the branch merges cleanly, so continue. Exit `1` means `ci:forward` will refuse the pull request. The lines after the first, up to the first blank line, name the conflicted files, and `git log --format='%h %s' "HEAD..${FORWARD_TIP}" -- <files>` names the commits of the forward target that touched them. Stop the run, give the developer both lists, and say what fixes it: rebase onto `${FORWARD_TIP}`, resolve the conflicts, run pr-check again, and send the pull request to the forward target directly. Offer to run the rebase, handle its conflicts the way the rebase step above does, and start pr-check over once it completes. Any other exit means the merge was not checked, so warn the developer and continue.
 
-- **Skills current in `liferay-portal-ee`.** In `liferay-portal-ee` only, run `git fetch <remote> master`. When `git rev-parse master` differs from `git rev-parse FETCH_HEAD`, the copied skills are stale, so stop the run and tell the developer to copy them again from the latest `master`.
+- **Skills current in `liferay-portal-ee`.** In `liferay-portal-ee` only, and only when this skill's directory lies inside `${REPO_ROOT}`, run `git fetch <remote> master`. A skill read from outside the checkout, such as a personal skill linked to a `liferay-portal` checkout, was not copied, so it cannot be stale and the check is skipped. When `git rev-parse master` differs from `git rev-parse FETCH_HEAD`, the copied skills are stale, so stop the run and tell the developer to copy them again from the latest `master`.
 
 - **Diff baseline is `${BASE_REF}`.** That is `${FORWARD_TIP}` for a branch that sits on the forward target, and local `${BASE_BRANCH}` otherwise. After the rebase, the three dot diff against `${BASE_REF}` is the baseline.
 
@@ -113,6 +114,10 @@ The **Forward Target** is the repository `ci:forward` merges a pull request into
 
 ## Input
 
+### Arguments
+
+`--skip-pr-reviewer` skips the [PR Reviewer](validations/branch/pr-reviewer.md) validation for this run. A skip requires a reason: take it from the text following the flag when present, otherwise prompt the developer for one. Do not dispatch the validation, and leave it out of the Pass 1 estimate. List it in the Results Summary as `NOT VERIFIED` with the note `**PR Reviewer was skipped with --skip-pr-reviewer.** <reason>`, so that the skip and its reason travel into the PR description. Without the flag, run PR Reviewer whenever it fires.
+
 ### Diff
 
 ```bash
@@ -135,7 +140,7 @@ The folder a validation file sits in decides its scope. A validation sees only t
 
 Paths directly under `workspaces` that sit in no workspace, such as the refresh scripts, belong to the portal scope.
 
-In every workspace other than `liferay-sample-workspace`, a changed path that `workspaces/refresh_other_workspaces.sh` regenerates is seen only by [Generated Workspace File](validations/workspaces/generated-file.md). Such a path may change only through a refresh, and building it would only repeat what the sample workspace already checks. A path is regenerated when it does not match the regex that validation builds from the script's `--exclude` patterns. A workspace whose changed paths are all regenerated therefore runs no other workspace validation. Generated Workspace File in turn sees only regenerated paths, so it runs only for a workspace where the branch changed a regenerated path.
+In every workspace other than `liferay-sample-workspace`, a changed path that `workspaces/refresh_other_workspaces.sh` regenerates is seen only by [Generated Workspace File](validations/workspaces/generated-file.md). Such a path may change only through a refresh, and building it would only repeat what the sample workspace already checks. A path is regenerated when it does not match the regex that validation builds from the script's `--exclude` patterns. A workspace whose changed paths are all regenerated therefore runs no other workspace validation. Generated Workspace File in turn sees only regenerated paths, so it runs only for a workspace where the branch changed a regenerated path. A checkout without `workspaces/refresh_other_workspaces.sh`, such as `liferay-portal-ee`, regenerates nothing, so every changed path of a workspace goes to the other workspace validations and Generated Workspace File never runs.
 
 Run only the validations in the scopes the settings enable, and skip every validation the settings name. When the portal scope is disabled, list every changed path that belongs to no workspace in the Results Summary as unchecked, so that a change nothing examined never reads as a pass.
 
@@ -171,6 +176,8 @@ The procedure runs in two passes over the validations, in the order below. The o
 
 1. [Generated Workspace File](validations/workspaces/generated-file.md)
 
+1. [PR Reviewer](validations/branch/pr-reviewer.md)
+
 1. [Source Format](validations/branch/source-format.md)
 
 1. [Workspace Source Format](validations/workspaces/source-format.md)
@@ -188,6 +195,8 @@ The procedure runs in two passes over the validations, in the order below. The o
 1. [ConcurrentMapperHashMap Usage](validations/branch/concurrent-mapper-hash-map-usage.md)
 
 1. [CacheField Usage](validations/branch/cache-field-usage.md)
+
+1. [Startup Sync Usage](validations/branch/startup-sync-usage.md)
 
 1. [HTML Escaping](validations/branch/html-escaping.md)
 

@@ -8,6 +8,8 @@ import {
 	getFullDayMonthFormat,
 	getHourOnlyFormat,
 	getMonthYearFormat,
+	NUMERIC_DATE_TIME_FORMAT,
+	SHORT_DATE_TIME_FORMAT,
 	usesTwelveHourClock,
 } from '../date';
 
@@ -31,6 +33,18 @@ describe('locale-aware date/time format lookups', () => {
 			expect(formatDate(moment.utc(DATE), getHourOnlyFormat())).toBe(
 				'2 PM'
 			);
+		});
+
+		it('NUMERIC_DATE_TIME_FORMAT should pad every numeric field', () => {
+			expect(
+				formatDate(moment.utc(DATE), NUMERIC_DATE_TIME_FORMAT)
+			).toMatch(/^06\/10\/2026, 02:30\sp\.m\.$/);
+		});
+
+		it('SHORT_DATE_TIME_FORMAT should name the month', () => {
+			expect(
+				formatDate(moment.utc(DATE), SHORT_DATE_TIME_FORMAT)
+			).toMatch(/^Jun 10, 2026, 02:30\sp\.m\.$/);
 		});
 
 		it('getDayMonthFormat should be month-first', () => {

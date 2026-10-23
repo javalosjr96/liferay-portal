@@ -6,7 +6,6 @@
 package com.liferay.jenkins.results.parser;
 
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.json.JSONObject;
 
@@ -19,9 +18,9 @@ public class PlaywrightTestReport extends BaseTestReport {
 	public String getTestClassName() {
 		String testName = super.getTestName();
 
-		Matcher matcher = _playwrightTestNamePattern.matcher(testName);
+		Matcher matcher = _testNameMultiPattern.find(testName);
 
-		if (!matcher.find()) {
+		if (matcher == null) {
 			return testName;
 		}
 
@@ -32,9 +31,9 @@ public class PlaywrightTestReport extends BaseTestReport {
 	public String getTestName() {
 		String testName = super.getTestName();
 
-		Matcher matcher = _playwrightTestNamePattern.matcher(testName);
+		Matcher matcher = _testNameMultiPattern.find(testName);
 
-		if (!matcher.find()) {
+		if (matcher == null) {
 			return testName;
 		}
 
@@ -47,7 +46,8 @@ public class PlaywrightTestReport extends BaseTestReport {
 		super(downstreamBuildReport, jsonObject);
 	}
 
-	private static final Pattern _playwrightTestNamePattern = Pattern.compile(
-		"(?<testClassName>[^\\s]+\\.ts)\\.(?<testName>.+)");
+	private static final MultiPattern _testNameMultiPattern = new MultiPattern(
+		"(?<testClassName>[^\\s]+\\.ts)\\.(?<testName>.+)",
+		"(?<testClassName>.*Test)\\.(?<testName>[^\\.]+)");
 
 }

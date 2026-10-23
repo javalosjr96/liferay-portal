@@ -1,6 +1,11 @@
 import CampaignsDataSet from '../CampaignsDataSet';
 import React from 'react';
 import {cleanup, render, screen} from '@testing-library/react';
+import {
+	EMPTY_STATE_IMAGE,
+	EMPTY_STATE_REDUCED_MOTION_IMAGE,
+} from 'shared/components/FrontendDataSet';
+import {MemoryRouter} from 'react-router-dom';
 import {warmFrontendDataSet} from 'test/warm-frontend-data-set';
 
 jest.unmock('react-dom');
@@ -18,8 +23,12 @@ jest.mock('@liferay/frontend-data-set-web', () => ({
 
 const getFields = () => lastFDSProps.views[0].schema.fields;
 
-const renderDataSet = () =>
-	render(<CampaignsDataSet channelId="123" groupId="23" />);
+const renderDataSet = (initialEntry = '/') =>
+	render(
+		<MemoryRouter initialEntries={[initialEntry]}>
+			<CampaignsDataSet channelId="123" groupId="23" />
+		</MemoryRouter>
+	);
 
 beforeAll(warmFrontendDataSet);
 
@@ -43,7 +52,43 @@ describe('CampaignsDataSet', () => {
 		renderDataSet();
 
 		expect(lastFDSProps.apiURL).toBe(
-			'/o/faro/contacts/23/campaigns?channelId=123'
+			'/o/faro/contacts/23/campaigns?channelId=123&rangeKey=30'
+		);
+	});
+
+	it('should ask the endpoint for the range in the URL', () => {
+		renderDataSet('/?rangeKey=7');
+
+		expect(lastFDSProps.apiURL).toBe(
+			'/o/faro/contacts/23/campaigns?channelId=123&rangeKey=7'
+		);
+	});
+
+	it('should ask the endpoint for a custom range by its bounds alone', () => {
+		renderDataSet(
+			'/?rangeEnd=2026-10-20&rangeKey=CUSTOM&rangeStart=2026-10-01'
+		);
+
+		expect(lastFDSProps.apiURL).toBe(
+			'/o/faro/contacts/23/campaigns?channelId=123&rangeEnd=2026-10-20&rangeStart=2026-10-01'
+		);
+	});
+
+	it('should keep the custom range key on the campaign link', () => {
+		renderDataSet(
+			'/?rangeEnd=2026-10-20&rangeKey=CUSTOM&rangeStart=2026-10-01'
+		);
+
+		const {container} = render(
+			lastFDSProps.customDataRenderers.campaignNameRenderer({
+				itemData: {id: '7'},
+				value: 'Multi-Cloud Solutions Guide',
+			})
+		);
+
+		expect(container.querySelector('a')).toHaveAttribute(
+			'href',
+			'/workspace/23/123/campaigns/7?rangeEnd=2026-10-20&rangeKey=CUSTOM&rangeStart=2026-10-01'
 		);
 	});
 
@@ -102,7 +147,7 @@ describe('CampaignsDataSet', () => {
 		expect(lastFDSProps.showManagementBar).not.toBe(false);
 	});
 
-	it('should link the campaign name at its detail screen', () => {
+	it('should link the campaign name at its detail screen, keeping the range', () => {
 		renderDataSet();
 
 		const {container} = render(
@@ -114,7 +159,7 @@ describe('CampaignsDataSet', () => {
 
 		expect(container.querySelector('a')).toHaveAttribute(
 			'href',
-			'/workspace/23/123/campaigns/7'
+			'/workspace/23/123/campaigns/7?rangeKey=30'
 		);
 	});
 
@@ -161,12 +206,12 @@ describe('CampaignsDataSet', () => {
 		);
 	});
 
-	it('should illustrate the empty state with the satellite', () => {
+	it('should illustrate the empty state with the theme empty state image', () => {
 		renderDataSet();
 
-		expect(lastFDSProps.emptyState.image).toBe('/states/satellite.svg');
+		expect(lastFDSProps.emptyState.image).toBe(EMPTY_STATE_IMAGE);
 		expect(lastFDSProps.emptyState.imageReducedMotion).toBe(
-			'/states/satellite.svg'
+			EMPTY_STATE_REDUCED_MOTION_IMAGE
 		);
 	});
 

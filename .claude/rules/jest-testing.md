@@ -15,9 +15,9 @@ Tests assert behavior perceptible to the user, not internal implementation. Ask 
 
 ## File Naming
 
-Place tests in a sibling `test` directory at the module root, mirroring the subpath under `src/main/resources/META-INF/resources/js`. A source file at `src/main/resources/META-INF/resources/js/utils/convertRGBtoHex.ts` has its test at `test/utils/convertRGBtoHex.ts`.
+Place tests in a sibling `test` directory at the module root, mirroring the subpath under `src/main/resources/META-INF/resources/js`, and name each one after its unit with a `.test` suffix before the extension. A source file at `src/main/resources/META-INF/resources/js/utils/convertRGBtoHex.ts` has its test at `test/utils/convertRGBtoHex.test.ts`, and a source file at `src/main/resources/META-INF/resources/js/components/color_picker/ColorPicker.tsx` has its test at `test/components/color_picker/ColorPicker.test.tsx`.
 
-The shared Jest config in `modules/frontend-sdk/node-scripts/util/jest/getJestConfig.js` picks up every file under `test` via a `testMatch` pattern, except `test/stories` and `test/__lib__` which are excluded so they can hold fixtures, helpers, and Storybook artifacts.
+The shared Jest config in `modules/frontend-sdk/node-scripts/util/jest/getJestConfig.js` picks up every file under `test` via a `testMatch` pattern, with or without the suffix, except `test/stories` and `test/__lib__`, which are excluded so they can hold fixtures, helpers, and Storybook artifacts. The suffix does not keep a file out of the run: put shared mocks in `test/__lib__`, or exclude their folder in the module's `package.json` with `jest.testPathIgnorePatterns`, as `mcp-server-web` does for `test/mocks`.
 
 Do not colocate tests next to source files, and do not use `__tests__` directories.
 
@@ -143,7 +143,7 @@ Check these locations in order before implementing your own:
 
 1. `@testing-library/react` autocalls `cleanup` after every test as long as an `afterEach` exists in scope, so an explicit `afterEach(cleanup)` is not required. Tests that already include it are fine; do not add it in new code unless a specific case demands it.
 
-1. Reset call history with `jest.clearAllMocks()` in `beforeEach`. The shared Jest config does not set `clearMocks: true`, so call histories on `Liferay.*` and your own spies persist between tests unless cleared. `fetch` is the exception: the shared `setupAfterEnv.js` already calls `fetch.mockRestore()` in an `afterEach` hook, so you do not need to reset fetch yourself.
+1. Call `jest.clearAllMocks()` in `beforeEach` only when the suite asserts on the call history of a mock shared between tests, such as a `Liferay.*` global, a module level `jest.fn()`, or a shared spy. A mock created inside a test or passed as a prop on each render starts empty, and the shared `setupAfterEnv.js` restores `fetch` after every test, so none of them needs clearing. The shared Jest config does not set `clearMocks: true`, which is why a shared history persists.
 
 1. Stub browser APIs and external modules with `jest.spyOn`, then call `jest.restoreAllMocks()` in `afterEach` so the spy does not leak into other suites. Note that `restoreAllMocks` only undoes `jest.spyOn` setups; for `jest.fn()` mocks, use `clearAllMocks` (history) or `resetAllMocks` (history + implementation) as needed.
 

@@ -406,6 +406,30 @@ public class OAuth2ApplicationLocalServiceImpl
 	}
 
 	@Override
+	public OAuth2Application deleteClientCredentialsGrant(
+			long oAuth2ApplicationId)
+		throws PortalException {
+
+		OAuth2Application oAuth2Application =
+			oAuth2ApplicationPersistence.findByPrimaryKey(oAuth2ApplicationId);
+
+		List<GrantType> allowedGrantTypesList =
+			oAuth2Application.getAllowedGrantTypesList();
+
+		allowedGrantTypesList.remove(GrantType.CLIENT_CREDENTIALS);
+
+		oAuth2Application.setAllowedGrantTypesList(allowedGrantTypesList);
+
+		oAuth2Application = oAuth2ApplicationPersistence.update(
+			oAuth2Application);
+
+		_oAuth2AuthorizationLocalService.deleteOAuth2Authorizations(
+			oAuth2Application.getClientCredentialUserId(), oAuth2ApplicationId);
+
+		return oAuth2Application;
+	}
+
+	@Override
 	public OAuth2Application deleteOAuth2Application(long oAuth2ApplicationId)
 		throws PortalException {
 
@@ -471,6 +495,24 @@ public class OAuth2ApplicationLocalServiceImpl
 
 			deleteOAuth2Application(oAuth2Application.getOAuth2ApplicationId());
 		}
+	}
+
+	@Override
+	public OAuth2Application deleteScopeAliases(long oAuth2ApplicationId)
+		throws PortalException {
+
+		OAuth2Application oAuth2Application =
+			oAuth2ApplicationPersistence.findByPrimaryKey(oAuth2ApplicationId);
+
+		oAuth2Application.setOAuth2ApplicationScopeAliasesId(0);
+
+		oAuth2Application = oAuth2ApplicationPersistence.update(
+			oAuth2Application);
+
+		_oAuth2AuthorizationLocalService.deleteOAuth2Authorizations(
+			oAuth2Application.getClientCredentialUserId(), oAuth2ApplicationId);
+
+		return oAuth2Application;
 	}
 
 	@Override

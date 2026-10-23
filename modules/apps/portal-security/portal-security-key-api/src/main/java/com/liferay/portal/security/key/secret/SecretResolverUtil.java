@@ -18,13 +18,31 @@ public class SecretResolverUtil {
 			return value;
 		}
 
+		SecretResolver secretResolver = _getSecretResolver();
+
+		return secretResolver.resolve(companyId, value);
+	}
+
+	public static String resolve(
+		long companyId, String identifier, String value) {
+
+		if (!KeyReferenceUtil.isKeyReference(value)) {
+			return value;
+		}
+
+		SecretResolver secretResolver = _getSecretResolver();
+
+		return secretResolver.resolve(companyId, identifier, value);
+	}
+
+	private static SecretResolver _getSecretResolver() {
 		SecretResolver secretResolver = _secretResolverSnapshot.get();
 
 		if (secretResolver == null) {
 			throw new IllegalStateException("Secret resolver is unavailable");
 		}
 
-		return secretResolver.resolve(companyId, value);
+		return secretResolver;
 	}
 
 	private static final Snapshot<SecretResolver> _secretResolverSnapshot =

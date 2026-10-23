@@ -4,10 +4,11 @@
  */
 
 import {openModal} from 'frontend-js-components-web';
+import {escapeHTML} from 'frontend-js-web';
 
-import {deleteProfile} from '../../services/deleteProfile';
-import {ProfileActionContext} from '../../types';
-import {openErrorToast, openSuccessToast} from '../../utils';
+import ProfileService from '../../services/ProfileService';
+import {ProfileActionContext} from '../../types/Profile';
+import {openErrorToast, openSuccessToast} from '../../utils/toasts';
 
 export default function confirmAndDeleteProfileAction({
 	itemData,
@@ -26,7 +27,7 @@ export default function confirmAndDeleteProfileAction({
 					Liferay.Language.get(
 						'this-will-permanently-delete-x-profile-from-your-mcp-server-configuration'
 					),
-					`<strong>${Liferay.Util.escapeHTML(name)}</strong>`
+					`<strong>${escapeHTML(name)}</strong>`
 				)}
 				${Liferay.Language.get('anyone-using-this-profile-will-lose-access-immediately')}
 			</p>
@@ -45,7 +46,9 @@ export default function confirmAndDeleteProfileAction({
 				onClick: async ({processClose}: {processClose: () => void}) => {
 					processClose();
 
-					const {error} = await deleteProfile(externalReferenceCode);
+					const {error} = await ProfileService.deleteProfile(
+						externalReferenceCode
+					);
 
 					if (error) {
 						openErrorToast(error);

@@ -1,8 +1,15 @@
 import sendRequest from 'shared/util/request';
+import {buildSortString, NAME} from 'shared/util/pagination';
+import {ENABLE_LIFECYCLE_DASHBOARDS_API} from 'shared/util/feature-flags';
+import {legacyLifecycleApi} from './lifecycle-legacy';
+import {OrderByDirections} from 'shared/util/constants';
 
 export interface ILifecycle {
+	authorName?: string | null;
+	defaultAccountLifecycle?: boolean;
 	description?: string;
 	id: string;
+	modifiedDate?: number | null;
 	name?: string;
 	processedDate?: number | null;
 	segmentId?: string;
@@ -21,6 +28,7 @@ export interface ILifecycleStage {
 	externalReferenceCode: string;
 	id: string;
 	maxDuration: number | null;
+	name?: string;
 	stageType: string;
 }
 
@@ -28,20 +36,26 @@ export interface ILifecycleDetail extends ILifecycle {
 	stages?: ILifecycleStage[];
 }
 
+export interface ILifecyclesPage {
+	items: ILifecycleDetail[];
+	lastPage: number;
+	page: number;
+	pageSize: number;
+	totalCount: number;
+}
+
 interface IFetchLifecycles {
 	channelId?: string;
+	defaultAccountLifecycle?: boolean;
 	groupId: string;
 }
 
-export async function fetchLifecycles({
-	channelId,
-	groupId,
-}: IFetchLifecycles): Promise<ILifecycle[]> {
-	return sendRequest({
-		data: {channelId},
-		method: 'GET',
-		path: `contacts/${groupId}/account-lifecycle`,
-	});
+interface IFetchLifecyclesPage {
+	channelId?: string;
+	groupId: string;
+	page: number;
+	pageSize: number;
+	search?: string;
 }
 
 interface IFetchLifecycle {
@@ -49,15 +63,89 @@ interface IFetchLifecycle {
 	lifecycleId: string;
 }
 
-export async function fetchLifecycle({
+const requestFirstLifecyclePage = ({
+	channelId,
+	defaultAccountLifecycle,
+	groupId,
+}: IFetchLifecycles): Promise<ILifecyclesPage> =>
+	sendRequest({
+		data: {
+			...(channelId && {channelId}),
+			...(defaultAccountLifecycle && {defaultAccountLifecycle}),
+			page: 1,
+			pageSize: 1,
+			sort: buildSortString({
+				field: NAME,
+				sortOrder: OrderByDirections.Ascending,
+			}),
+		},
+		method: 'GET',
+		path: `contacts/${groupId}/account-lifecycle`,
+	});
+
+const requestFirstLifecycles = async (
+	params: IFetchLifecycles
+): Promise<ILifecycleDetail[]> =>
+	(await requestFirstLifecyclePage(params)).items;
+
+const requestLifecyclesPage = ({
+	channelId,
+	groupId,
+	page,
+	pageSize,
+	search = '',
+}: IFetchLifecyclesPage): Promise<ILifecyclesPage> =>
+	sendRequest({
+		data: {
+			...(channelId && {channelId}),
+			page,
+			pageSize,
+			...(search.trim() && {search: search.trim()}),
+			sort: buildSortString({
+				field: NAME,
+				sortOrder: OrderByDirections.Ascending,
+			}),
+		},
+		method: 'GET',
+		path: `contacts/${groupId}/account-lifecycle`,
+	});
+
+const requestLifecycle = ({
 	groupId,
 	lifecycleId,
-}: IFetchLifecycle): Promise<ILifecycleDetail> {
-	return sendRequest({
+}: IFetchLifecycle): Promise<ILifecycleDetail> =>
+	sendRequest({
 		method: 'GET',
 		path: `contacts/${groupId}/account-lifecycle/${lifecycleId}`,
 	});
-}
+
+const requestDefaultLifecycle = ({
+	groupId,
+	lifecycleId,
+}: IFetchLifecycle): Promise<ILifecycleDetail> =>
+	sendRequest({
+		data: {defaultAccountLifecycle: true},
+		method: 'PATCH',
+		path: `contacts/${groupId}/account-lifecycle/${lifecycleId}`,
+	});
+
+const realLifecycleApi = {
+	fetchLifecycle: requestLifecycle,
+	fetchLifecycles: requestFirstLifecycles,
+	fetchLifecyclesPage: requestLifecyclesPage,
+	setDefaultLifecycle: requestDefaultLifecycle,
+};
+
+const lifecycleApi: typeof realLifecycleApi = ENABLE_LIFECYCLE_DASHBOARDS_API
+	? realLifecycleApi
+	: {...realLifecycleApi, ...legacyLifecycleApi};
+
+export const {
+	fetchLifecycle,
+	fetchLifecycles,
+	fetchLifecyclesPage,
+	setDefaultLifecycle,
+} = lifecycleApi;
 
 interface ILifecycleStagePayload {
 	accountLifecycleStageRule: IAccountLifecycleStageRule;
@@ -185,9 +273,9 @@ export async function fetchAccountLifecycles({
 	channelId?: string;
 	groupId: string;
 }): Promise<IAccountLifecycle[]> {
-	return sendRequest({
-		data: {channelId},
-		method: 'GET',
-		path: `contacts/${groupId}/account-lifecycle`,
+	return fetchLifecycles({
+		channelId,
+		defaultAccountLifecycle: !!channelId,
+		groupId,
 	});
 }

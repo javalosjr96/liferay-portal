@@ -7,6 +7,7 @@ package com.liferay.upload.web.internal;
 
 import com.liferay.document.library.kernel.service.DLAppService;
 import com.liferay.petra.function.UnsafeFunction;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.editor.constants.EditorConstants;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -17,10 +18,7 @@ import com.liferay.upload.AttachmentElementHandler;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
-import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
@@ -42,16 +40,31 @@ public class HTMLImageAttachmentElementHandler
 				saveTempFileUnsafeFunction)
 		throws PortalException {
 
-		StringBuffer sb = new StringBuffer(content.length());
+		int index = content.indexOf(_ATTRIBUTE_DATA_IMAGE_ID_PREFIX);
+
+		if (index == -1) {
+			return content;
+		}
+
+		StringBundler sb = new StringBundler();
 
 		Map<Long, FileEntry> fileEntries = new HashMap<>();
+		int lastIndex = 0;
 
-		Matcher matcher = _tempAttachmentPattern.matcher(content);
+		while (index != -1) {
+			int startIndex = content.lastIndexOf(CharPool.LESS_THAN, index);
+			int endIndex = content.indexOf(CharPool.GREATER_THAN, index) + 1;
 
-		while (matcher.find()) {
-			String imgTag = matcher.group(0);
+			if (!_isImgTag(content, startIndex, index, endIndex)) {
+				index = content.indexOf(
+					_ATTRIBUTE_DATA_IMAGE_ID_PREFIX, index + 1);
 
-			long fileEntryId = GetterUtil.getLong(matcher.group(1));
+				continue;
+			}
+
+			String imgTag = content.substring(startIndex, endIndex);
+
+			long fileEntryId = _getFileEntryId(content, index);
 
 			FileEntry fileEntry = fileEntries.get(fileEntryId);
 
@@ -62,42 +75,50 @@ public class HTMLImageAttachmentElementHandler
 				fileEntries.put(fileEntryId, fileEntry);
 			}
 
-			matcher.appendReplacement(
-				sb,
-				Matcher.quoteReplacement(
-					_htmlImageAttachmentElementReplacer.replace(
-						imgTag, fileEntry)));
+			sb.append(content.substring(lastIndex, startIndex));
+			sb.append(
+				HTMLImageAttachmentElementReplacerUtil.replace(
+					imgTag, fileEntry, _portletFileRepository));
+
+			lastIndex = endIndex;
+
+			index = content.indexOf(_ATTRIBUTE_DATA_IMAGE_ID_PREFIX, endIndex);
 		}
 
-		matcher.appendTail(sb);
+		sb.append(content.substring(lastIndex));
 
 		return sb.toString();
 	}
 
-	@Activate
-	protected void activate() {
-		_htmlImageAttachmentElementReplacer =
-			new HTMLImageAttachmentElementReplacer(_portletFileRepository);
+	private long _getFileEntryId(String content, int index) {
+		int beginIndex = index + _ATTRIBUTE_DATA_IMAGE_ID_PREFIX.length();
+
+		return GetterUtil.getLong(
+			content.substring(
+				beginIndex, content.indexOf(CharPool.QUOTE, beginIndex)));
 	}
 
-	private static final String _ATTRIBUTE_LIST_REGEXP =
-		"(?:\\s*?\\w+\\s*?=\\s*?\"[^\"]*\")*?\\s*?";
+	private boolean _isImgTag(
+		String content, int startIndex, int index, int endIndex) {
 
-	private static final Pattern _tempAttachmentPattern;
+		if ((endIndex == 0) ||
+			(content.lastIndexOf(CharPool.GREATER_THAN, index) > startIndex) ||
+			!content.startsWith("<img", startIndex) ||
+			(content.charAt(startIndex + 4) > CharPool.SPACE) ||
+			(content.charAt(index - 1) > CharPool.SPACE) ||
+			(content.charAt(endIndex - 2) != CharPool.FORWARD_SLASH)) {
 
-	static {
-		_tempAttachmentPattern = Pattern.compile(
-			StringBundler.concat(
-				"<\\s*?img", _ATTRIBUTE_LIST_REGEXP,
-				EditorConstants.ATTRIBUTE_DATA_IMAGE_ID, "\\s*?=\\s*?\"",
-				"([^\"]*)\"", _ATTRIBUTE_LIST_REGEXP, "/>"));
+			return false;
+		}
+
+		return true;
 	}
+
+	private static final String _ATTRIBUTE_DATA_IMAGE_ID_PREFIX =
+		EditorConstants.ATTRIBUTE_DATA_IMAGE_ID + "=\"";
 
 	@Reference
 	private DLAppService _dlAppService;
-
-	private HTMLImageAttachmentElementReplacer
-		_htmlImageAttachmentElementReplacer;
 
 	@Reference
 	private PortletFileRepository _portletFileRepository;
