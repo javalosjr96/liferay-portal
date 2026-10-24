@@ -74,6 +74,7 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.UnicodeProperties;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.repository.liferayrepository.LiferayRepository;
 import com.liferay.portal.repository.registry.RepositoryClassDefinition;
 import com.liferay.portal.repository.registry.RepositoryClassDefinitionCatalogUtil;
@@ -636,6 +637,7 @@ public class CompanyLocalServiceDBPartitionTest
 
 		String indexNameCurrent = company.getIndexNameCurrent();
 		String indexNameNext = company.getIndexNameNext();
+		String key = company.getKey();
 
 		Company copiedCompany = null;
 		RememberMeToken rememberMeToken = null;
@@ -688,13 +690,13 @@ public class CompanyLocalServiceDBPartitionTest
 			Assert.assertEquals(
 				newIndexNameCurrent, company.getIndexNameCurrent());
 			Assert.assertEquals(newIndexNameNext, company.getIndexNameNext());
+			Assert.assertEquals(key, company.getKey());
 			Assert.assertNotNull(
 				_rememberMeTokenLocalService.fetchRememberMeToken(
 					rememberMeToken.getRememberMeTokenId()));
 
 			_assertCopyDBPartitionCompanyIsolation(
-				copiedCompanyId, company.getKey(),
-				rememberMeToken.getRememberMeTokenId());
+				copiedCompanyId, key, rememberMeToken.getRememberMeTokenId());
 
 			_assertCompanyConfiguration(copiedCompanyId, configuration);
 
@@ -773,8 +775,7 @@ public class CompanyLocalServiceDBPartitionTest
 			_assertCopyDBPartitionCompanyId(
 				TestPropsValues.getCompanyId(), copiedCompany.getCompanyId());
 			_assertCopyDBPartitionCompanyIsolation(
-				copiedCompanyId, company.getKey(),
-				rememberMeToken.getRememberMeTokenId());
+				copiedCompanyId, key, rememberMeToken.getRememberMeTokenId());
 
 			Assert.assertEquals(
 				rulesCount,
@@ -1387,7 +1388,7 @@ public class CompanyLocalServiceDBPartitionTest
 			Company copiedCompany = companyLocalService.getCompany(
 				copiedCompanyId);
 
-			Assert.assertNotNull(copiedCompany.getKey());
+			Assert.assertTrue(Validator.isNotNull(copiedCompany.getKey()));
 			Assert.assertNotEquals(key, copiedCompany.getKey());
 			Assert.assertEquals(
 				StringPool.BLANK, copiedCompany.getIndexNameCurrent());
