@@ -695,8 +695,7 @@ public class CompanyLocalServiceDBPartitionTest
 				_rememberMeTokenLocalService.fetchRememberMeToken(
 					rememberMeToken.getRememberMeTokenId()));
 
-			_assertCopyDBPartitionCompanyIsolation(
-				copiedCompanyId, key, rememberMeToken.getRememberMeTokenId());
+			_assertCopyDBPartitionCompanyIsolation(copiedCompanyId, key);
 
 			_assertCompanyConfiguration(copiedCompanyId, configuration);
 
@@ -774,8 +773,7 @@ public class CompanyLocalServiceDBPartitionTest
 				copiedCompany, name, virtualHostname, webId);
 			_assertCopyDBPartitionCompanyId(
 				TestPropsValues.getCompanyId(), copiedCompany.getCompanyId());
-			_assertCopyDBPartitionCompanyIsolation(
-				copiedCompanyId, key, rememberMeToken.getRememberMeTokenId());
+			_assertCopyDBPartitionCompanyIsolation(copiedCompanyId, key);
 
 			Assert.assertEquals(
 				rulesCount,
@@ -1378,7 +1376,7 @@ public class CompanyLocalServiceDBPartitionTest
 	}
 
 	private void _assertCopyDBPartitionCompanyIsolation(
-			long copiedCompanyId, String key, long rememberMeTokenId)
+			long copiedCompanyId, String key)
 		throws Exception {
 
 		try (SafeCloseable safeCloseable =
@@ -1394,9 +1392,8 @@ public class CompanyLocalServiceDBPartitionTest
 				StringPool.BLANK, copiedCompany.getIndexNameCurrent());
 			Assert.assertEquals(
 				StringPool.BLANK, copiedCompany.getIndexNameNext());
-			Assert.assertNull(
-				_rememberMeTokenLocalService.fetchRememberMeToken(
-					rememberMeTokenId));
+			Assert.assertEquals(
+				0, _rememberMeTokenLocalService.getRememberMeTokensCount());
 		}
 	}
 
