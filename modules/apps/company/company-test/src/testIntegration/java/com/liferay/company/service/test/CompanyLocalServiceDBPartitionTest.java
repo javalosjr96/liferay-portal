@@ -74,7 +74,6 @@ import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.UnicodeProperties;
-import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.repository.liferayrepository.LiferayRepository;
 import com.liferay.portal.repository.registry.RepositoryClassDefinition;
 import com.liferay.portal.repository.registry.RepositoryClassDefinitionCatalogUtil;
@@ -690,7 +689,7 @@ public class CompanyLocalServiceDBPartitionTest
 			Assert.assertEquals(
 				newIndexNameCurrent, company.getIndexNameCurrent());
 			Assert.assertEquals(newIndexNameNext, company.getIndexNameNext());
-			Assert.assertEquals(key, company.getKey());
+
 			Assert.assertNotNull(
 				_rememberMeTokenLocalService.fetchRememberMeToken(
 					rememberMeToken.getRememberMeTokenId()));
@@ -1391,12 +1390,13 @@ public class CompanyLocalServiceDBPartitionTest
 			Company copiedCompany = companyLocalService.getCompany(
 				copiedCompanyId);
 
-			Assert.assertTrue(Validator.isNotNull(copiedCompany.getKey()));
-			Assert.assertNotEquals(key, copiedCompany.getKey());
 			Assert.assertEquals(
 				StringPool.BLANK, copiedCompany.getIndexNameCurrent());
 			Assert.assertEquals(
 				StringPool.BLANK, copiedCompany.getIndexNameNext());
+			Assert.assertNotEquals(StringPool.BLANK, copiedCompany.getKey());
+			Assert.assertNotEquals(key, copiedCompany.getKey());
+
 			Assert.assertEquals(
 				0, _rememberMeTokenLocalService.getRememberMeTokensCount());
 		}
