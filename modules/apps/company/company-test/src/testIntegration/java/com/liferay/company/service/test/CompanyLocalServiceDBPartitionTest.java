@@ -800,20 +800,25 @@ public class CompanyLocalServiceDBPartitionTest
 				ConfigurationTestUtil.deleteConfiguration(configuration);
 			}
 
-			if (copiedCompany != null) {
-				companyLocalService.deleteCompany(copiedCompany.getCompanyId());
+			try {
+				if (copiedCompany != null) {
+					companyLocalService.deleteCompany(
+						copiedCompany.getCompanyId());
+				}
 			}
+			finally {
+				try (SafeCloseable safeCloseable =
+						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+							company.getCompanyId())) {
 
-			try (SafeCloseable safeCloseable =
-					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						company.getCompanyId())) {
+					companyLocalService.updateIndexNames(
+						company.getCompanyId(), indexNameCurrent,
+						indexNameNext);
 
-				companyLocalService.updateIndexNames(
-					company.getCompanyId(), indexNameCurrent, indexNameNext);
-
-				if (rememberMeToken != null) {
-					_rememberMeTokenLocalService.deleteRememberMeToken(
-						rememberMeToken);
+					if (rememberMeToken != null) {
+						_rememberMeTokenLocalService.deleteRememberMeToken(
+							rememberMeToken);
+					}
 				}
 			}
 		}
