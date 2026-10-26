@@ -37,6 +37,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.RememberMeToken;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.User;
@@ -49,6 +50,7 @@ import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.PortletLocalService;
+import com.liferay.portal.kernel.service.RememberMeTokenLocalService;
 import com.liferay.portal.kernel.service.RepositoryLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.service.ResourcePermissionLocalService;
@@ -72,6 +74,7 @@ import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.repository.liferayrepository.LiferayRepository;
 import com.liferay.portal.repository.registry.RepositoryClassDefinition;
@@ -102,6 +105,7 @@ import java.sql.Types;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -789,7 +793,15 @@ public class CompanyLocalServiceDBPartitionTest
 			RandomTestUtil.randomString());
 		String webId = RandomTestUtil.randomString();
 
+		Company company = companyLocalService.getCompany(
+			TestPropsValues.getCompanyId());
+
+		String indexNameCurrent = company.getIndexNameCurrent();
+		String indexNameNext = company.getIndexNameNext();
+		String key = company.getKey();
+
 		Company copiedCompany = null;
+		RememberMeToken rememberMeToken = null;
 
 		try (AutoCloseable autoCloseable =
 				ReflectionTestUtil.setFieldValueWithAutoCloseable(
@@ -810,6 +822,20 @@ public class CompanyLocalServiceDBPartitionTest
 			SafeCloseable safeCloseable1 =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 					TestPropsValues.getCompanyId())) {
+
+			String newIndexNameCurrent = StringUtil.toLowerCase(
+				RandomTestUtil.randomString());
+			String newIndexNameNext = StringUtil.toLowerCase(
+				RandomTestUtil.randomString());
+
+			companyLocalService.updateIndexNames(
+				company.getCompanyId(), newIndexNameCurrent, newIndexNameNext);
+
+			rememberMeToken = _rememberMeTokenLocalService.addRememberMeToken(
+				company.getCompanyId(), TestPropsValues.getUserId(),
+				new Date(System.currentTimeMillis() + Time.DAY),
+				value -> {
+				});
 
 			ObjectDefinition objectDefinition =
 				ObjectDefinitionTestUtil.publishObjectDefinition();
@@ -839,6 +865,18 @@ public class CompanyLocalServiceDBPartitionTest
 				copiedCompany, name, virtualHostname, webId);
 
 			long copiedCompanyId = copiedCompany.getCompanyId();
+
+			company = companyLocalService.getCompany(company.getCompanyId());
+
+			Assert.assertEquals(
+				newIndexNameCurrent, company.getIndexNameCurrent());
+			Assert.assertEquals(newIndexNameNext, company.getIndexNameNext());
+
+			Assert.assertNotNull(
+				_rememberMeTokenLocalService.fetchRememberMeToken(
+					rememberMeToken.getRememberMeTokenId()));
+
+			_assertCopyDBPartitionCompanyIsolation(copiedCompanyId, key);
 
 			_assertCompanyConfiguration(copiedCompanyId, configuration);
 
@@ -916,6 +954,7 @@ public class CompanyLocalServiceDBPartitionTest
 				copiedCompany, name, virtualHostname, webId);
 			_assertCopyDBPartitionCompanyId(
 				TestPropsValues.getCompanyId(), copiedCompany.getCompanyId());
+			_assertCopyDBPartitionCompanyIsolation(copiedCompanyId, key);
 
 			Assert.assertEquals(
 				rulesCount,
@@ -942,8 +981,26 @@ public class CompanyLocalServiceDBPartitionTest
 				ConfigurationTestUtil.deleteConfiguration(configuration);
 			}
 
-			if (copiedCompany != null) {
-				companyLocalService.deleteCompany(copiedCompany.getCompanyId());
+			try {
+				if (copiedCompany != null) {
+					companyLocalService.deleteCompany(
+						copiedCompany.getCompanyId());
+				}
+			}
+			finally {
+				try (SafeCloseable safeCloseable =
+						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+							company.getCompanyId())) {
+
+					companyLocalService.updateIndexNames(
+						company.getCompanyId(), indexNameCurrent,
+						indexNameNext);
+
+					if (rememberMeToken != null) {
+						_rememberMeTokenLocalService.deleteRememberMeToken(
+							rememberMeToken);
+					}
+				}
 			}
 		}
 	}
@@ -1504,6 +1561,29 @@ public class CompanyLocalServiceDBPartitionTest
 		}
 	}
 
+	private void _assertCopyDBPartitionCompanyIsolation(
+			long copiedCompanyId, String key)
+		throws Exception {
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					copiedCompanyId)) {
+
+			Company copiedCompany = companyLocalService.getCompany(
+				copiedCompanyId);
+
+			Assert.assertEquals(
+				StringPool.BLANK, copiedCompany.getIndexNameCurrent());
+			Assert.assertEquals(
+				StringPool.BLANK, copiedCompany.getIndexNameNext());
+			Assert.assertNotEquals(StringPool.BLANK, copiedCompany.getKey());
+			Assert.assertNotEquals(key, copiedCompany.getKey());
+
+			Assert.assertEquals(
+				0, _rememberMeTokenLocalService.getRememberMeTokensCount());
+		}
+	}
+
 	private void _assertExportedCompanyNotUpdated(
 			long companyId, String virtualHostname, String webId)
 		throws Exception {
@@ -1791,6 +1871,9 @@ public class CompanyLocalServiceDBPartitionTest
 
 	@Inject
 	private PortletLocalService _portletLocalService;
+
+	@Inject
+	private RememberMeTokenLocalService _rememberMeTokenLocalService;
 
 	@Inject
 	private RepositoryFactory _repositoryFactory;
