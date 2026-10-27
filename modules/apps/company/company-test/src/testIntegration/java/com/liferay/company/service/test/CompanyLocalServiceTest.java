@@ -48,9 +48,11 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.CompanyInfo;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.LayoutSetPrototype;
+import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.OrganizationConstants;
@@ -1082,11 +1084,22 @@ public class CompanyLocalServiceTest {
 		_testUpdateCompanyVirtualHostnames(
 			new String[] {
 				"abc.com", "255.0.0.0", "0:0:0:0:0:0:0:1", "::1",
-				"0000:0000:0000:0000:0000:0000:0000:0001"
+				"0000:0000:0000:0000:0000:0000:0000:0001",
+				StringUtil.toLowerCase(
+					RandomTestUtil.randomString(
+						ModelHintsUtil.getMaxLength(
+							VirtualHost.class.getName(), "hostname")))
 			},
 			false);
 		_testUpdateCompanyVirtualHostnames(
-			new String[] {StringPool.BLANK, "localhost", ".abc"}, true);
+			new String[] {
+				StringPool.BLANK, "localhost", ".abc",
+				StringUtil.toLowerCase(
+					RandomTestUtil.randomString(
+						ModelHintsUtil.getMaxLength(
+							VirtualHost.class.getName(), "hostname") + 1))
+			},
+			true);
 	}
 
 	@Test
@@ -1616,11 +1629,19 @@ public class CompanyLocalServiceTest {
 						GroupConstants.DEFAULT_PARENT_GROUP_ID);
 
 					names = new String[] {
-						StringPool.BLANK, group.getDescriptiveName()
+						StringPool.BLANK, group.getDescriptiveName(),
+						RandomTestUtil.randomString(
+							ModelHintsUtil.getMaxLength(
+								CompanyInfo.class.getName(), "name") + 1)
 					};
 				}
 				else {
-					names = new String[] {RandomTestUtil.randomString()};
+					names = new String[] {
+						RandomTestUtil.randomString(),
+						RandomTestUtil.randomString(
+							ModelHintsUtil.getMaxLength(
+								CompanyInfo.class.getName(), "name"))
+					};
 				}
 
 				_testUpdateCompanyNames(_company, names, expectFailure);
