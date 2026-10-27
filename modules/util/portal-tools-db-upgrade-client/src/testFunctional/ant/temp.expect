@@ -1,0 +1,21 @@
+#!/usr/bin/expect
+
+spawn /home/jorge/dev/l1/liferay-portal/../bundles/tools/portal-tools-db-upgrade-client/db_upgrade_client.sh -s
+
+set timeout 1200
+
+expect {
+	"Connecting to Gogo shell" {}
+	timeout {send_user "No Gogoshell messages display";exit 2}
+}
+
+expect {
+	"Type \"help\" to get available upgrade and verify commands.\r\nType \"help \{command\}\" to get additional information about the command. For example, \"help upgrade:list\".\r\nEnter \"exit\" or \"quit\" to exit." {send "exit\r"}
+	timeout {send_user "No Gogoshell messages display";exit 2}
+}
+
+set timeout 10
+
+expect {
+	"Unable to open Gogo shell" {send_user "The Gogo shell connection failed";exit 2}
+}
