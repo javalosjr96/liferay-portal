@@ -1998,13 +1998,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			throw new CompanyNameException();
 		}
 
-		int maxLength = ModelHintsUtil.getMaxLength(
-			CompanyInfo.class.getName(), "name");
-
-		if (name.length() > maxLength) {
-			throw new CompanyNameException(
-				"Name must not exceed " + maxLength + " characters");
-		}
+		_validateNameMaxLength(name);
 	}
 
 	protected void validateVirtualHost(String webId, String virtualHostname)
@@ -2660,17 +2654,14 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	}
 
 	private void _validateMaxLengths(
-		String name, String virtualHostname, String webId) {
+			String name, String virtualHostname, String webId)
+		throws CompanyNameException {
 
-		int maxLength = ModelHintsUtil.getMaxLength(
-			CompanyInfo.class.getName(), "name");
-
-		if (Validator.isNotNull(name) && (name.length() > maxLength)) {
-			throw new IllegalArgumentException(
-				"Name must not exceed " + maxLength + " characters");
+		if (Validator.isNotNull(name)) {
+			_validateNameMaxLength(name);
 		}
 
-		maxLength = ModelHintsUtil.getMaxLength(
+		int maxLength = ModelHintsUtil.getMaxLength(
 			VirtualHost.class.getName(), "hostname");
 
 		if (Validator.isNotNull(virtualHostname) &&
@@ -2687,6 +2678,18 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		if (Validator.isNotNull(webId) && (webId.length() > maxLength)) {
 			throw new IllegalArgumentException(
 				"Web ID must not exceed " + maxLength + " characters");
+		}
+	}
+
+	private void _validateNameMaxLength(String name)
+		throws CompanyNameException {
+
+		int maxLength = ModelHintsUtil.getMaxLength(
+			CompanyInfo.class.getName(), "name");
+
+		if (name.length() > maxLength) {
+			throw new CompanyNameException(
+				"Name must not exceed " + maxLength + " characters");
 		}
 	}
 
