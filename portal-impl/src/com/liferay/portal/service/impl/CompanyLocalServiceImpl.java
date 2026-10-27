@@ -387,6 +387,10 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 				GetterUtil.getString(webId), lowerCaseVirtualHostname);
 		}
 
+		if (Validator.isNotNull(name)) {
+			_validateNameMaxLength(name);
+		}
+
 		try (SafeCloseable safeCloseable1 =
 				PortalInstances.setImportInProcessCompanyIdWithSafeCloseable(
 					companyId)) {
@@ -1988,13 +1992,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			throw new CompanyNameException();
 		}
 
-		int maxLength = ModelHintsUtil.getMaxLength(
-			CompanyInfo.class.getName(), "name");
-
-		if (name.length() > maxLength) {
-			throw new CompanyNameException(
-				"Name must not exceed " + maxLength + " characters");
-		}
+		_validateNameMaxLength(name);
 	}
 
 	protected void validateVirtualHost(String webId, String virtualHostname)
@@ -2624,6 +2622,18 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			PropsKeys.LOCALES, newLanguageIds);
 
 		_groupLocalService.updateGroup(group);
+	}
+
+	private void _validateNameMaxLength(String name)
+		throws CompanyNameException {
+
+		int maxLength = ModelHintsUtil.getMaxLength(
+			CompanyInfo.class.getName(), "name");
+
+		if (name.length() > maxLength) {
+			throw new CompanyNameException(
+				"Name must not exceed " + maxLength + " characters");
+		}
 	}
 
 	private static final String _DEFAULT_VIRTUAL_HOST = "localhost";
