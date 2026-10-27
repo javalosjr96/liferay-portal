@@ -1999,14 +1999,15 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		throws PortalException {
 
 		try {
-			int maxLength = ModelHintsUtil.getMaxLength(
-				VirtualHost.class.getName(), "hostname");
-
 			if (Validator.isNull(virtualHostname)) {
 				throw new CompanyVirtualHostException(
 					"Virtual hostname is null");
 			}
-			else if (virtualHostname.length() > maxLength) {
+
+			int maxLength = ModelHintsUtil.getMaxLength(
+				VirtualHost.class.getName(), "hostname");
+
+			if (virtualHostname.length() > maxLength) {
 				throw new CompanyVirtualHostException(
 					"Virtual hostname must not exceed " + maxLength +
 						" characters");
