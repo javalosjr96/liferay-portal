@@ -177,7 +177,8 @@ public class InventoryAnalysisResourceImpl
 
 		return new Expression[] {
 			ObjectDefinitionTable.INSTANCE.externalReferenceCode,
-			ObjectDefinitionTable.INSTANCE.label
+			DSLFunctionFactoryUtil.castClobText(
+				ObjectDefinitionTable.INSTANCE.label)
 		};
 	}
 
@@ -386,7 +387,11 @@ public class InventoryAnalysisResourceImpl
 				"count_"
 			),
 			ObjectDefinitionTable.INSTANCE.externalReferenceCode.as("key_"),
-			ObjectDefinitionTable.INSTANCE.label.as("title")
+			DSLFunctionFactoryUtil.castClobText(
+				ObjectDefinitionTable.INSTANCE.label
+			).as(
+				"title"
+			)
 		};
 	}
 
