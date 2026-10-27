@@ -389,7 +389,8 @@ public class DLFileEntryTypeServiceImpl extends DLFileEntryTypeServiceBaseImpl {
 					}
 
 					Predicate keywordPredicate = DSLFunctionFactoryUtil.lower(
-						DLFileEntryTypeTable.INSTANCE.name
+						DSLFunctionFactoryUtil.castClobText(
+							DLFileEntryTypeTable.INSTANCE.name)
 					).like(
 						keyword
 					).or(
