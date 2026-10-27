@@ -60,6 +60,7 @@ import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.GroupTable;
 import com.liferay.portal.kernel.model.LayoutPrototype;
 import com.liferay.portal.kernel.model.LayoutSetPrototype;
+import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.OrganizationConstants;
 import com.liferay.portal.kernel.model.PasswordPolicy;
@@ -1986,15 +1987,31 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		if ((group != null) || Validator.isNull(name)) {
 			throw new CompanyNameException();
 		}
+
+		int maxLength = ModelHintsUtil.getMaxLength(
+			CompanyInfo.class.getName(), "name");
+
+		if (name.length() > maxLength) {
+			throw new CompanyNameException(
+				"Name must not exceed " + maxLength + " characters");
+		}
 	}
 
 	protected void validateVirtualHost(String webId, String virtualHostname)
 		throws PortalException {
 
 		try {
+			int maxLength = ModelHintsUtil.getMaxLength(
+				VirtualHost.class.getName(), "hostname");
+
 			if (Validator.isNull(virtualHostname)) {
 				throw new CompanyVirtualHostException(
 					"Virtual hostname is null");
+			}
+			else if (virtualHostname.length() > maxLength) {
+				throw new CompanyVirtualHostException(
+					"Virtual hostname must not exceed " + maxLength +
+						" characters");
 			}
 			else if (virtualHostname.equals(_DEFAULT_VIRTUAL_HOST) &&
 					 !webId.equals(PropsValues.COMPANY_DEFAULT_WEB_ID)) {
