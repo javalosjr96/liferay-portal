@@ -661,12 +661,12 @@ public class LayoutPersistenceTest {
 			"companyId", true, "userId", true, "userName", true, "createDate",
 			true, "modifiedDate", true, "parentPlid", true, "privateLayout",
 			true, "layoutId", true, "parentLayoutId", true, "classNameId", true,
-			"classPK", true, "launchSetId", true, "name", true, "keywords",
-			true, "robots", true, "type", true, "hidden", true, "system", true,
-			"friendlyURL", true, "iconImageId", true, "themeId", true,
-			"colorSchemeId", true, "styleBookEntryERC", true,
-			"styleBookEntryScopeERC", true, "priority", true,
-			"faviconFileEntryERC", true, "faviconFileEntryScopeERC", true,
+			"classPK", true, "launchSetId", true, "keywords", true, "robots",
+			true, "type", true, "hidden", true, "system", true, "friendlyURL",
+			true, "iconImageId", true, "themeId", true, "colorSchemeId", true,
+			"styleBookEntryERC", true, "styleBookEntryScopeERC", true,
+			"priority", true, "faviconFileEntryERC", true,
+			"faviconFileEntryScopeERC", true,
 			"masterLayoutPageTemplateEntryERC", true,
 			"portletLayoutPageTemplateEntryERC", true,
 			"portletLayoutPageTemplateEntryScopeERC", true,
@@ -1096,4 +1096,4 @@ public class LayoutPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:2105995314
+// LIFERAY-SERVICE-BUILDER-HASH:1839968294
