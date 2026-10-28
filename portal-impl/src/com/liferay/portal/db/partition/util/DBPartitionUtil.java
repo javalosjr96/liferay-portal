@@ -98,9 +98,6 @@ public class DBPartitionUtil {
 
 			String partitionName = getPartitionName(companyId);
 
-			// Check for the partition outside _addDBPartition, because its
-			// rollback drops the schema when DDL is not transactional.
-
 			if (_dbPartitionDB.existsPartition(connection, partitionName)) {
 				throw new IllegalArgumentException(
 					StringBundler.concat(
