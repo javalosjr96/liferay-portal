@@ -7,7 +7,6 @@ package com.liferay.headless.portal.instances.internal.jaxrs.exception.mapper;
 
 import com.liferay.portal.kernel.exception.CompanyMaxUsersException;
 import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.vulcan.accept.language.AcceptLanguage;
 import com.liferay.portal.vulcan.jaxrs.exception.mapper.BaseExceptionMapper;
 import com.liferay.portal.vulcan.jaxrs.exception.mapper.Problem;
@@ -39,15 +38,11 @@ public class CompanyMaxUsersExceptionMapper
 	protected Problem getProblem(
 		CompanyMaxUsersException companyMaxUsersException) {
 
-		String key = "unable-to-add-any-more-users-to-the-company";
-
-		if (Validator.isNotNull(companyMaxUsersException.getMessage())) {
-			key = "please-enter-a-valid-max-users";
-		}
-
 		return new Problem(
 			Response.Status.BAD_REQUEST,
-			_language.get(_acceptLanguage.getPreferredLocale(), key));
+			_language.get(
+				_acceptLanguage.getPreferredLocale(),
+				"please-enter-a-valid-max-users"));
 	}
 
 	@Context
