@@ -151,6 +151,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
+import java.net.IDN;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -1912,6 +1913,13 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 				virtualHostname);
 
 			if (virtualHost == null) {
+				long virtualHostsCount = _virtualHostPersistence.countByNotL_H(
+					0, _getIDNHostnames(virtualHostname));
+
+				if (virtualHostsCount > 0) {
+					throw new CompanyVirtualHostException();
+				}
+
 				_virtualHostLocalService.updateVirtualHosts(
 					companyId, 0,
 					TreeMapBuilder.put(
@@ -2021,19 +2029,22 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					"Virtual hostname is invalid");
 			}
 
-			VirtualHost virtualHost = _virtualHostLocalService.fetchVirtualHost(
-				virtualHostname);
+			for (String hostname : _getIDNHostnames(virtualHostname)) {
+				VirtualHost virtualHost =
+					_virtualHostLocalService.fetchVirtualHost(hostname);
 
-			if (virtualHost == null) {
-				return;
-			}
+				if (virtualHost == null) {
+					continue;
+				}
 
-			Company virtualHostnameCompany =
-				companyPersistence.findByPrimaryKey(virtualHost.getCompanyId());
+				Company virtualHostnameCompany =
+					companyPersistence.findByPrimaryKey(
+						virtualHost.getCompanyId());
 
-			if (!webId.equals(virtualHostnameCompany.getWebId())) {
-				throw new CompanyVirtualHostException(
-					"Duplicate virtual hostname " + virtualHostname);
+				if (!webId.equals(virtualHostnameCompany.getWebId())) {
+					throw new CompanyVirtualHostException(
+						"Duplicate virtual hostname " + virtualHostname);
+				}
 			}
 		}
 		catch (CompanyVirtualHostException companyVirtualHostException) {
@@ -2451,6 +2462,28 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		catch (EncryptorException encryptorException) {
 			throw new SystemException(encryptorException);
 		}
+	}
+
+	private String[] _getIDNHostnames(String hostname) {
+		Set<String> hostnames = new HashSet<>();
+
+		hostnames.add(hostname);
+		hostnames.add(IDN.toUnicode(hostname));
+
+		try {
+			String asciiHostname = IDN.toASCII(hostname);
+
+			if (hostname.equals(IDN.toUnicode(asciiHostname))) {
+				hostnames.add(asciiHostname);
+			}
+		}
+		catch (IllegalArgumentException illegalArgumentException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(illegalArgumentException);
+			}
+		}
+
+		return ArrayUtil.toStringArray(hostnames);
 	}
 
 	private long _getNextCompanyId() {

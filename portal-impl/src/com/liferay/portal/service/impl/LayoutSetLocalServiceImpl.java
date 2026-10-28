@@ -53,6 +53,7 @@ import java.io.InputStream;
 
 import java.net.IDN;
 
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -563,9 +564,15 @@ public class LayoutSetLocalServiceImpl extends LayoutSetLocalServiceBaseImpl {
 			groupId, privateLayout);
 
 		if (!virtualHostnames.isEmpty()) {
+			Set<String> hostnames = new HashSet<>();
+
+			for (String virtualHostname : virtualHostnames.keySet()) {
+				Collections.addAll(
+					hostnames, _getIDNHostnames(virtualHostname));
+			}
+
 			long virtualHostsCount = _virtualHostPersistence.countByNotL_H(
-				layoutSet.getLayoutSetId(),
-				ArrayUtil.toStringArray(virtualHostnames.keySet()));
+				layoutSet.getLayoutSetId(), ArrayUtil.toStringArray(hostnames));
 
 			if (virtualHostsCount > 0) {
 				throw new LayoutSetVirtualHostException();
@@ -662,6 +669,28 @@ public class LayoutSetLocalServiceImpl extends LayoutSetLocalServiceBaseImpl {
 
 			newSettingsUnicodeProperties.setProperty("javascript", javaScript);
 		}
+	}
+
+	private String[] _getIDNHostnames(String hostname) {
+		Set<String> hostnames = new HashSet<>();
+
+		hostnames.add(hostname);
+		hostnames.add(IDN.toUnicode(hostname));
+
+		try {
+			String asciiHostname = IDN.toASCII(hostname);
+
+			if (hostname.equals(IDN.toUnicode(asciiHostname))) {
+				hostnames.add(asciiHostname);
+			}
+		}
+		catch (IllegalArgumentException illegalArgumentException) {
+			if (_log.isDebugEnabled()) {
+				_log.debug(illegalArgumentException);
+			}
+		}
+
+		return ArrayUtil.toStringArray(hostnames);
 	}
 
 	private LayoutSetBranch _getLayoutSetBranch(LayoutSet layoutSet)
