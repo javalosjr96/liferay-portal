@@ -21,10 +21,12 @@ import com.liferay.asset.kernel.model.AssetVocabularyGroupRelTable;
 import com.liferay.asset.kernel.model.AssetVocabularyTable;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.object.constants.ObjectFolderConstants;
+import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectDefinitionTable;
 import com.liferay.object.model.ObjectEntryTable;
 import com.liferay.object.model.ObjectEntryVersionTable;
 import com.liferay.object.model.ObjectFolderTable;
+import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
 import com.liferay.petra.sql.dsl.DSLFunctionFactoryUtil;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
@@ -119,7 +121,7 @@ public class InventoryAnalysisResourceImpl
 
 							return GetterUtil.get(
 								_localization.getLocalization(
-									(String)object[2],
+									_getTitleXML(object[2]),
 									preferredLocale.toString()),
 								LanguageUtil.get(preferredLocale, "unknown"));
 						});
@@ -177,8 +179,7 @@ public class InventoryAnalysisResourceImpl
 
 		return new Expression[] {
 			ObjectDefinitionTable.INSTANCE.externalReferenceCode,
-			DSLFunctionFactoryUtil.castClobText(
-				ObjectDefinitionTable.INSTANCE.label)
+			ObjectDefinitionTable.INSTANCE.objectDefinitionId
 		};
 	}
 
@@ -387,16 +388,31 @@ public class InventoryAnalysisResourceImpl
 				"count_"
 			),
 			ObjectDefinitionTable.INSTANCE.externalReferenceCode.as("key_"),
-			DSLFunctionFactoryUtil.castClobText(
-				ObjectDefinitionTable.INSTANCE.label
-			).as(
-				"title"
-			)
+			ObjectDefinitionTable.INSTANCE.objectDefinitionId.as("title")
 		};
+	}
+
+	private String _getTitleXML(Object title) {
+		if (title instanceof String) {
+			return (String)title;
+		}
+
+		ObjectDefinition objectDefinition =
+			_objectDefinitionLocalService.fetchObjectDefinition(
+				GetterUtil.getLong(title));
+
+		if (objectDefinition == null) {
+			return null;
+		}
+
+		return objectDefinition.getLabel();
 	}
 
 	@Reference
 	private Localization _localization;
+
+	@Reference
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
 
 	@Reference
 	private ObjectEntryLocalService _objectEntryLocalService;
