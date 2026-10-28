@@ -13,9 +13,12 @@ import com.liferay.counter.kernel.service.persistence.CounterFinder;
 import com.liferay.counter.model.CounterRegister;
 import com.liferay.document.library.kernel.model.DLFolderConstants;
 import com.liferay.document.library.kernel.store.Store;
+import com.liferay.expando.kernel.model.ExpandoTable;
+import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.test.util.ObjectDefinitionTestUtil;
+import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.io.unsync.UnsyncByteArrayInputStream;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
@@ -27,6 +30,9 @@ import com.liferay.portal.db.partition.test.util.BaseDBPartitionTestCase;
 import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBType;
+import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.dao.orm.EntityCacheUtil;
+import com.liferay.portal.kernel.dao.orm.FinderCacheUtil;
 import com.liferay.portal.kernel.db.partition.DBPartition;
 import com.liferay.portal.kernel.exception.CompanyVirtualHostException;
 import com.liferay.portal.kernel.exception.CompanyWebIdException;
@@ -64,6 +70,9 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.transaction.Propagation;
+import com.liferay.portal.kernel.transaction.TransactionConfig;
+import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -88,6 +97,7 @@ import com.liferay.search.experiences.service.SXPBlueprintLocalService;
 
 import jakarta.portlet.Portlet;
 
+import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -100,8 +110,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.felix.cm.PersistenceManager;
 
@@ -284,6 +296,13 @@ public class CompanyLocalServiceDBPartitionTest
 			_company2.getVirtualHostname());
 
 		Assert.assertEquals(counter + 2, virtualHost.getVirtualHostId());
+	}
+
+	@Test
+	public void testAddCompanyWhenCallerTransactionRollsBack()
+		throws Exception {
+
+		_testWhenCallerTransactionRollsBack(CompanyTestUtil::addCompany);
 	}
 
 	@Test
@@ -803,6 +822,19 @@ public class CompanyLocalServiceDBPartitionTest
 				companyLocalService.deleteCompany(copiedCompany.getCompanyId());
 			}
 		}
+	}
+
+	@Test
+	public void testCopyDBPartitionCompanyWhenCallerTransactionRollsBack()
+		throws Exception {
+
+		_company2 = CompanyTestUtil.addCompany();
+
+		_testWhenCallerTransactionRollsBack(
+			() -> companyLocalService.copyDBPartitionCompany(
+				_company2.getCompanyId(), null, RandomTestUtil.randomString(),
+				StringUtil.toLowerCase(RandomTestUtil.randomString()),
+				RandomTestUtil.randomString()));
 	}
 
 	@Test
@@ -1579,6 +1611,83 @@ public class CompanyLocalServiceDBPartitionTest
 		return false;
 	}
 
+	private void _testWhenCallerTransactionRollsBack(
+			UnsafeSupplier<Company, Exception> unsafeSupplier)
+		throws Exception {
+
+		AtomicReference<Company> companyReference = new AtomicReference<>();
+		IllegalStateException illegalStateException =
+			new IllegalStateException();
+		String tableName = RandomTestUtil.randomString();
+		AtomicReference<Throwable> throwableReference = new AtomicReference<>();
+
+		try {
+			Assert.assertThrows(
+				IllegalStateException.class,
+				() -> TransactionInvokerUtil.invoke(
+					_requiredTransactionConfig,
+					(Callable<Void>)() -> {
+						_expandoTableLocalService.addTable(
+							TestPropsValues.getCompanyId(),
+							User.class.getName(), tableName);
+
+						throwableReference.set(
+							Assert.assertThrows(
+								Throwable.class,
+								() -> TransactionInvokerUtil.invoke(
+									_nestedTransactionConfig,
+									(Callable<Void>)() -> {
+										companyReference.set(
+											unsafeSupplier.get());
+
+										throw illegalStateException;
+									})));
+
+						throw new IllegalStateException();
+					}));
+
+			_company1 = companyReference.get();
+
+			Assert.assertSame(illegalStateException, throwableReference.get());
+
+			EntityCacheUtil.clearCache();
+			FinderCacheUtil.clearCache();
+
+			Assert.assertNull(
+				_expandoTableLocalService.fetchTable(
+					TestPropsValues.getCompanyId(),
+					_portal.getClassNameId(User.class), tableName));
+
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						_company1.getCompanyId())) {
+
+				ObjectDefinition objectDefinition =
+					_objectDefinitionLocalService.fetchSystemObjectDefinition(
+						_company1.getCompanyId(), "User");
+
+				Assert.assertNotNull(objectDefinition);
+
+				try (Connection connection = DataAccess.getConnection()) {
+					DBInspector dbInspector = new DBInspector(connection);
+
+					Assert.assertTrue(
+						dbInspector.hasTable(
+							objectDefinition.getExtensionDBTableName()));
+				}
+			}
+		}
+		finally {
+			ExpandoTable expandoTable = _expandoTableLocalService.fetchTable(
+				TestPropsValues.getCompanyId(),
+				_portal.getClassNameId(User.class), tableName);
+
+			if (expandoTable != null) {
+				_expandoTableLocalService.deleteTable(expandoTable);
+			}
+		}
+	}
+
 	private void _waitForConfigurationUpdates() throws Exception {
 		CountDownLatch countDownLatch = new CountDownLatch(1);
 
@@ -1604,6 +1713,12 @@ public class CompanyLocalServiceDBPartitionTest
 
 	private static BundleContext _bundleContext;
 	private static long _defaultCompanyId;
+	private static final TransactionConfig _nestedTransactionConfig =
+		TransactionConfig.Factory.create(
+			Propagation.NESTED, new Class<?>[] {Exception.class});
+	private static final TransactionConfig _requiredTransactionConfig =
+		TransactionConfig.Factory.create(
+			Propagation.REQUIRED, new Class<?>[] {Exception.class});
 	private static SafeCloseable _safeCloseable;
 
 	private ClassName _className1;
@@ -1631,6 +1746,9 @@ public class CompanyLocalServiceDBPartitionTest
 
 	@Inject
 	private CounterLocalService _counterLocalService;
+
+	@Inject
+	private ExpandoTableLocalService _expandoTableLocalService;
 
 	@Inject
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
