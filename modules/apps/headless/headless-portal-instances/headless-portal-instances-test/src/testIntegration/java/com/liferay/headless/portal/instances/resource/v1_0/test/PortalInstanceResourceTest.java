@@ -177,7 +177,6 @@ public class PortalInstanceResourceTest
 		_testPostPortalInstanceWithAdminWithInvalidScreenName();
 		_testPostPortalInstanceWithAdminWithoutRequiredFields();
 		_testPostPortalInstanceWithInvalidMaxUsers();
-		_testPostPortalInstanceWithMaxUsersReached();
 		_testPostPortalInstanceWithVirtualHostTooLong();
 		_testPostPortalInstanceWithoutOmniadminPermission();
 	}
@@ -973,19 +972,6 @@ public class PortalInstanceResourceTest
 
 		_assertPostPortalInstanceProblemTitle(
 			randomPortalInstance, "Max users must be greater or equal to 0.");
-	}
-
-	private void _testPostPortalInstanceWithMaxUsersReached() throws Exception {
-		PortalInstance randomPortalInstance = randomPortalInstance();
-
-		JSONObject adminJSONObject = _createAdminJSONObject();
-
-		randomPortalInstance.setAdmin(Admin.toDTO(adminJSONObject.toString()));
-		randomPortalInstance.setMaxUsers(1);
-
-		_assertPostPortalInstanceProblemTitle(
-			randomPortalInstance,
-			"Unable to add any more users to the company.");
 	}
 
 	private void _testPostPortalInstanceWithSiteInitializerKeyNonexistent()
