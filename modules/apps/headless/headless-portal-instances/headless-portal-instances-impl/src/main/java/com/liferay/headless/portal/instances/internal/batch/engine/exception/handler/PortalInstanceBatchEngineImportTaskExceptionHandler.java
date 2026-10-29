@@ -256,7 +256,8 @@ public class PortalInstanceBatchEngineImportTaskExceptionHandler
 			if (message.startsWith(
 					"Unable to import the database partition ")) {
 
-				return "the-exported-schema-version-does-not-match-the-current-schema-version";
+				return "the-exported-schema-version-does-not-match-the-" +
+					"current-schema-version";
 			}
 
 			return null;
