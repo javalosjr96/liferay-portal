@@ -115,10 +115,6 @@ public interface WorkflowTaskManager {
 			Boolean completed)
 		throws WorkflowException;
 
-	public List<WorkflowTransition> getWorkflowTaskWorkflowTransitions(
-			long workflowTaskId)
-		throws WorkflowException;
-
 	public List<WorkflowTask> getWorkflowTasks(
 			long companyId, Boolean completed, int start, int end,
 			OrderByComparator<WorkflowTask> orderByComparator)
@@ -155,6 +151,13 @@ public interface WorkflowTaskManager {
 
 	public default boolean isNotifiableUser(long userId, long workflowTaskId)
 		throws PortalException {
+
+		throw new UnsupportedOperationException();
+	}
+
+	public default List<WorkflowTransition> liberalGetNextWorkflowTransitions(
+			long workflowTaskId)
+		throws WorkflowException {
 
 		throw new UnsupportedOperationException();
 	}

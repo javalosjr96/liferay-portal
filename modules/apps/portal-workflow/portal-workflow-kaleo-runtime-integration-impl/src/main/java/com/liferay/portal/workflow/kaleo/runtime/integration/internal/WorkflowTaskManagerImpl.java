@@ -293,7 +293,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 		throws WorkflowException {
 
 		return TransformUtil.transform(
-			getNextWorkflowTransitions(workflowTaskId),
+			liberalGetNextWorkflowTransitions(workflowTaskId),
 			WorkflowTransition::getName);
 	}
 
@@ -302,38 +302,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			long workflowTaskId)
 		throws WorkflowException {
 
-		try {
-			KaleoTaskInstanceToken kaleoTaskInstanceToken =
-				_kaleoTaskInstanceTokenLocalService.getKaleoTaskInstanceToken(
-					workflowTaskId);
-
-			if (kaleoTaskInstanceToken.isCompleted()) {
-				return Collections.emptyList();
-			}
-
-			KaleoTask kaleoTask = kaleoTaskInstanceToken.getKaleoTask();
-
-			KaleoNode kaleoNode = kaleoTask.getKaleoNode();
-
-			return TransformUtil.transform(
-				kaleoNode.getKaleoTransitions(),
-				kaleoTransition -> new DefaultWorkflowTransition() {
-					{
-						setLabelMap(kaleoTransition.getLabelMap());
-						setName(kaleoTransition.getName());
-						setSourceNodeName(
-							kaleoTransition.getSourceKaleoNodeName());
-						setTargetNodeName(
-							kaleoTransition.getTargetKaleoNodeName());
-					}
-				});
-		}
-		catch (WorkflowException workflowException) {
-			throw workflowException;
-		}
-		catch (Exception exception) {
-			throw new WorkflowException(exception);
-		}
+		return _getNextWorkflowTransitions(false, workflowTaskId);
 	}
 
 	@Override
@@ -502,42 +471,6 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 	}
 
 	@Override
-	public List<WorkflowTransition> getWorkflowTaskWorkflowTransitions(
-			long workflowTaskId)
-		throws WorkflowException {
-
-		try {
-			KaleoTaskInstanceToken kaleoTaskInstanceToken =
-				_kaleoTaskInstanceTokenLocalService.getKaleoTaskInstanceToken(
-					workflowTaskId);
-
-			if (kaleoTaskInstanceToken.isCompleted()) {
-				return Collections.emptyList();
-			}
-
-			KaleoTask kaleoTask = kaleoTaskInstanceToken.getKaleoTask();
-
-			KaleoNode kaleoNode = kaleoTask.getKaleoNode();
-
-			return TransformUtil.transform(
-				kaleoNode.getKaleoTransitions(),
-				kaleoTransition -> new DefaultWorkflowTransition() {
-					{
-						setLabelMap(kaleoTransition.getLabelMap());
-						setName(kaleoTransition.getName());
-						setSourceNodeName(
-							kaleoTransition.getSourceKaleoNodeName());
-						setTargetNodeName(
-							kaleoTransition.getTargetKaleoNodeName());
-					}
-				});
-		}
-		catch (PortalException portalException) {
-			throw new WorkflowException(portalException);
-		}
-	}
-
-	@Override
 	public List<WorkflowTask> getWorkflowTasks(
 			long companyId, Boolean completed, int start, int end,
 			OrderByComparator<WorkflowTask> orderByComparator)
@@ -699,7 +632,7 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 
 		try {
 			KaleoTaskInstanceToken kaleoTaskInstanceToken =
-				_kaleoTaskInstanceTokenLocalService.getKaleoTaskInstanceToken(
+				_kaleoTaskInstanceTokenService.getKaleoTaskInstanceToken(
 					workflowTaskId);
 
 			if (kaleoTaskInstanceToken.isCompleted()) {
@@ -750,6 +683,14 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 
 		return _kaleoTaskInstanceTokenLocalService.isNotifiableUser(
 			userId, workflowTaskId);
+	}
+
+	@Override
+	public List<WorkflowTransition> liberalGetNextWorkflowTransitions(
+			long workflowTaskId)
+		throws WorkflowException {
+
+		return _getNextWorkflowTransitions(true, workflowTaskId);
 	}
 
 	@Override
@@ -931,12 +872,59 @@ public class WorkflowTaskManagerImpl implements WorkflowTaskManager {
 			kaleoTaskAssignment, executionContext);
 	}
 
+	private List<WorkflowTransition> _getNextWorkflowTransitions(
+			boolean liberal, long workflowTaskId)
+		throws WorkflowException {
+
+		try {
+			KaleoTaskInstanceToken kaleoTaskInstanceToken = null;
+
+			if (liberal) {
+				kaleoTaskInstanceToken =
+					_kaleoTaskInstanceTokenLocalService.
+						getKaleoTaskInstanceToken(workflowTaskId);
+			}
+			else {
+				kaleoTaskInstanceToken =
+					_kaleoTaskInstanceTokenService.getKaleoTaskInstanceToken(
+						workflowTaskId);
+			}
+
+			if (kaleoTaskInstanceToken.isCompleted()) {
+				return Collections.emptyList();
+			}
+
+			KaleoTask kaleoTask = kaleoTaskInstanceToken.getKaleoTask();
+
+			KaleoNode kaleoNode = kaleoTask.getKaleoNode();
+
+			return TransformUtil.transform(
+				kaleoNode.getKaleoTransitions(),
+				kaleoTransition -> new DefaultWorkflowTransition() {
+					{
+						setLabelMap(kaleoTransition.getLabelMap());
+						setName(kaleoTransition.getName());
+						setSourceNodeName(
+							kaleoTransition.getSourceKaleoNodeName());
+						setTargetNodeName(
+							kaleoTransition.getTargetKaleoNodeName());
+					}
+				});
+		}
+		catch (WorkflowException workflowException) {
+			throw workflowException;
+		}
+		catch (Exception exception) {
+			throw new WorkflowException(exception);
+		}
+	}
+
 	private List<User> _getUsers(int actionType, long workflowTaskId)
 		throws WorkflowException {
 
 		try {
 			KaleoTaskInstanceToken kaleoTaskInstanceToken =
-				_kaleoTaskInstanceTokenLocalService.getKaleoTaskInstanceToken(
+				_kaleoTaskInstanceTokenService.getKaleoTaskInstanceToken(
 					workflowTaskId);
 
 			if (kaleoTaskInstanceToken.isCompleted() &&

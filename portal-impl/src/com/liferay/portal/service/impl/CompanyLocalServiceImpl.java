@@ -397,12 +397,12 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 						companyId)) {
 
-				companyPersistence.clearCache();
-				_virtualHostPersistence.clearCache();
-
 				Company dbPartitionCompany = TransactionInvokerUtil.invoke(
 					_transactionConfig,
 					() -> {
+						companyPersistence.clearCache();
+						_virtualHostPersistence.clearCache();
+
 						Company company = companyPersistence.findByPrimaryKey(
 							companyId);
 
@@ -431,6 +431,9 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 						return _addDBPartitionCompany(company);
 					});
+
+				companyPersistence.clearCache();
+				_virtualHostPersistence.clearCache();
 
 				return _registerDBPartitionCompany(dbPartitionCompany);
 			}
@@ -680,6 +683,13 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			throw new RequiredCompanyException(
 				"Select another default company before deleting company " +
 					companyId);
+		}
+
+		if (Objects.equals(
+				PortalInstances.getCopyInProcessCompanyId(), companyId)) {
+
+			throw new UnsupportedOperationException(
+				"Copying an instance is already in progress");
 		}
 
 		SafeCloseable safeCloseable1 =

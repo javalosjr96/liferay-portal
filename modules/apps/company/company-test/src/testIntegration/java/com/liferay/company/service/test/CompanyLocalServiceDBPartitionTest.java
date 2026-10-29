@@ -498,6 +498,45 @@ public class CompanyLocalServiceDBPartitionTest
 	}
 
 	@Test
+	public void testAddDBPartitionCompanyWhenCompanyCachedAsMissing()
+		throws Exception {
+
+		Company company = CompanyTestUtil.addCompany();
+
+		companyLocalService.exportCompany(company.getCompanyId());
+
+		try {
+			companyLocalService.deleteCompany(company);
+
+			Assert.assertNull(
+				companyLocalService.fetchCompany(company.getCompanyId()));
+
+			String name = RandomTestUtil.randomString();
+
+			company = companyLocalService.addDBPartitionCompany(
+				company.getCompanyId(), name, null, null);
+
+			Assert.assertEquals(name, company.getName());
+		}
+		finally {
+			db.runSQL(
+				dbPartitionDB.getDropPartitionSQL(
+					DBPartitionUtil.getExportedPartitionName(
+						company.getCompanyId())));
+
+			if (ArrayUtil.contains(
+					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+					company.getCompanyId())) {
+
+				companyLocalService.deleteCompany(company);
+			}
+			else {
+				removeDBPartitions(new long[] {company.getCompanyId()});
+			}
+		}
+	}
+
+	@Test
 	public void testAddDBPartitionCompanyWhenCompanyLocalServiceFails()
 		throws Exception {
 
@@ -909,6 +948,50 @@ public class CompanyLocalServiceDBPartitionTest
 
 		CompanyLocalServiceTestUtil.assertConfiguration(
 			_configurationAdmin, _persistenceManager, pid, false);
+	}
+
+	@Test
+	public void testDeleteCompanyWhenCopyInProcess() throws Exception {
+
+		// A company being copied is not deleted
+
+		_company1 = CompanyTestUtil.addCompany();
+
+		try (SafeCloseable safeCloseable =
+				PortalInstances.setCopyInProcessCompanyIdWithSafeCloseable(
+					_company1.getCompanyId())) {
+
+			UnsupportedOperationException unsupportedOperationException =
+				Assert.assertThrows(
+					UnsupportedOperationException.class,
+					() -> companyLocalService.deleteCompany(_company1));
+
+			Assert.assertEquals(
+				"Copying an instance is already in progress",
+				unsupportedOperationException.getMessage());
+		}
+
+		Assert.assertFalse(
+			PortalInstances.isCompanyInDeletionProcess(
+				_company1.getCompanyId()));
+		Assert.assertTrue(
+			ArrayUtil.contains(
+				CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+				_company1.getCompanyId()));
+
+		// A company is deleted while another company is being copied
+
+		try (SafeCloseable safeCloseable =
+				PortalInstances.setCopyInProcessCompanyIdWithSafeCloseable(
+					RandomTestUtil.nextLong())) {
+
+			companyLocalService.deleteCompany(_company1);
+		}
+
+		Assert.assertFalse(
+			ArrayUtil.contains(
+				CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+				_company1.getCompanyId()));
 	}
 
 	@Test

@@ -39,6 +39,7 @@ import com.liferay.info.field.type.RelationshipInfoFieldType;
 import com.liferay.info.field.type.SelectInfoFieldType;
 import com.liferay.info.field.type.TextInfoFieldType;
 import com.liferay.info.form.InfoForm;
+import com.liferay.info.item.InfoItemEntry;
 import com.liferay.info.item.InfoItemFieldValues;
 import com.liferay.info.item.InfoItemServiceRegistry;
 import com.liferay.info.item.provider.InfoItemFieldValuesProvider;
@@ -102,7 +103,6 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 
 import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalAccessor;
@@ -163,9 +163,9 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 				InfoFormValidationException infoFormValidationException =
 					(InfoFormValidationException)infoFormException;
 
-				if (Objects.equals(
-						infoField.getUniqueId(),
-						infoFormValidationException.getInfoFieldUniqueId())) {
+				if (_isShowErrorMessage(
+						httpServletRequest, infoField,
+						infoFormValidationException)) {
 
 					errorMessage =
 						infoFormValidationException.getLocalizedMessage(locale);
@@ -334,14 +334,8 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 
 		Set<Locale> availableLocales = _language.getAvailableLocales(groupId);
 
-		Locale siteDefaultLocale = locale;
-
-		try {
-			siteDefaultLocale = _portal.getSiteDefaultLocale(groupId);
-		}
-		catch (PortalException portalException) {
-			_log.error(portalException);
-		}
+		Locale siteDefaultLocale = _getSiteDefaultLocale(
+			groupId, httpServletRequest, locale);
 
 		Locale currentLocale = _getCurrentLocale(
 			availableLocales, locale, siteDefaultLocale);
@@ -1011,70 +1005,29 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 		Object infoParameterMapValue = infoFormParameterMap.get(
 			infoField.getUniqueId());
 
-		if (!(infoParameterMapValue instanceof RelatedInfoFieldValue<?>)) {
-			if (infoParameterMapValue == null) {
-				return StringPool.BLANK;
-			}
+		InfoItemEntry infoItemEntry =
+			(InfoItemEntry)httpServletRequest.getAttribute(
+				LayoutStructureRendererConstants.LAYOUT_INFO_ITEM_ENTRY);
 
-			if (infoParameterMapValue instanceof Map) {
-				return _parseLocalizedValues(
-					infoField, (Map<Locale, ?>)infoParameterMapValue);
-			}
+		if ((infoItemEntry != null) &&
+			Validator.isNotNull(infoItemEntry.getExternalReferenceCode())) {
 
-			return infoParameterMapValue;
+			infoParameterMapValue = infoItemEntry.getValue(
+				infoField.getUniqueId());
 		}
 
-		RelatedInfoFieldValue<?> relatedInfoFieldValue =
-			(RelatedInfoFieldValue<?>)infoParameterMapValue;
+		if ((infoParameterMapValue == null) ||
+			(infoParameterMapValue instanceof RelatedInfoFieldValue<?>)) {
 
-		String parentExternalReferenceCode =
-			(String)httpServletRequest.getAttribute(
-				LayoutStructureRendererConstants.
-					LAYOUT_PARENT_ITEM_EXTERNAL_REFERENCE_CODE);
-		String relatedItemExternalReferenceCode =
-			(String)httpServletRequest.getAttribute(
-				LayoutStructureRendererConstants.
-					LAYOUT_RELATED_ITEM_EXTERNAL_REFERENCE_CODE);
-
-		InfoFieldValue<?> infoFieldValue =
-			relatedInfoFieldValue.getInfoFieldValue(
-				relatedItemExternalReferenceCode, parentExternalReferenceCode);
-
-		if (infoFieldValue == null) {
 			return StringPool.BLANK;
 		}
 
-		if (infoField.getInfoFieldType() == DateInfoFieldType.INSTANCE) {
-			SimpleDateFormat simpleDateFormat = new SimpleDateFormat(
-				"yyyy-MM-dd");
-
-			try {
-				return simpleDateFormat.format(infoFieldValue.getValue());
-			}
-			catch (IllegalArgumentException illegalArgumentException) {
-				if (_log.isDebugEnabled()) {
-					_log.debug(illegalArgumentException);
-				}
-
-				return null;
-			}
-		}
-
-		Object value = infoFieldValue.getValue();
-
-		if (value instanceof List) {
-			return ListUtil.toString((List<?>)value, StringPool.BLANK);
-		}
-
-		if (value instanceof InfoLocalizedValue) {
-			InfoLocalizedValue<?> infoLocalizedValue =
-				(InfoLocalizedValue<?>)value;
-
+		if (infoParameterMapValue instanceof Map) {
 			return _parseLocalizedValues(
-				infoField, infoLocalizedValue.getValues());
+				infoField, (Map<Locale, ?>)infoParameterMapValue);
 		}
 
-		return String.valueOf(value);
+		return infoParameterMapValue;
 	}
 
 	private String _getInputLabel(
@@ -1203,6 +1156,30 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 		return selectedOptions;
 	}
 
+	private Locale _getSiteDefaultLocale(
+		long groupId, HttpServletRequest httpServletRequest, Locale locale) {
+
+		ThemeDisplay themeDisplay =
+			(ThemeDisplay)httpServletRequest.getAttribute(
+				WebKeys.THEME_DISPLAY);
+
+		if ((themeDisplay != null) &&
+			(themeDisplay.getSiteDefaultLocale() != null) &&
+			(themeDisplay.getSiteGroupId() == groupId)) {
+
+			return themeDisplay.getSiteDefaultLocale();
+		}
+
+		try {
+			return _portal.getSiteDefaultLocale(groupId);
+		}
+		catch (PortalException portalException) {
+			_log.error(portalException);
+		}
+
+		return locale;
+	}
+
 	private String _getStep(Integer decimalPartMaxLength) {
 		if (decimalPartMaxLength == null) {
 			return StringPool.BLANK;
@@ -1308,6 +1285,37 @@ public class FragmentEntryInputTemplateNodeContextHelperImpl
 		}
 
 		return false;
+	}
+
+	private boolean _isShowErrorMessage(
+		HttpServletRequest httpServletRequest, InfoField<?> infoField,
+		InfoFormValidationException infoFormValidationException) {
+
+		if (!Objects.equals(
+				infoField.getUniqueId(),
+				infoFormValidationException.getInfoFieldUniqueId())) {
+
+			return false;
+		}
+
+		String externalReferenceCode =
+			infoFormValidationException.getExternalReferenceCode();
+
+		if (Validator.isNull(externalReferenceCode)) {
+			return true;
+		}
+
+		String layoutRelatedItemExternalReferenceCode =
+			(String)httpServletRequest.getAttribute(
+				LayoutStructureRendererConstants.
+					LAYOUT_RELATED_ITEM_EXTERNAL_REFERENCE_CODE);
+
+		if (Validator.isNull(layoutRelatedItemExternalReferenceCode)) {
+			return true;
+		}
+
+		return Objects.equals(
+			externalReferenceCode, layoutRelatedItemExternalReferenceCode);
 	}
 
 	private Map<Locale, String> _parseLocalizedValues(

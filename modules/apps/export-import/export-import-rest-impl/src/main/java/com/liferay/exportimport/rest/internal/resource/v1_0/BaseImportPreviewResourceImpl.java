@@ -76,6 +76,7 @@ public abstract class BaseImportPreviewResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/export-import/v1.0/asset-libraries/{assetLibraryExternalReferenceCode}/import-preview'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
+		description = "Uploads a file to import into the specified asset library and retrieves its portlet data handlers and counts. The import process of the same scope imports the user's last uploaded file.",
 		requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "multipart/form-data", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PostAssetLibraryImportPreviewRequestBody.class)))
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
@@ -85,10 +86,7 @@ public abstract class BaseImportPreviewResourceImpl
 				name = "assetLibraryExternalReferenceCode", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "plid"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "portletId"
 			)
@@ -112,9 +110,6 @@ public abstract class BaseImportPreviewResourceImpl
 			@jakarta.ws.rs.PathParam("assetLibraryExternalReferenceCode")
 			String assetLibraryExternalReferenceCode,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("plid")
-			Long plid,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("portletId")
 			String portletId,
 			MultipartBody multipartBody)
@@ -135,10 +130,7 @@ public abstract class BaseImportPreviewResourceImpl
 				name = "assetLibraryExternalReferenceCode", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "plid"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "portletId"
 			),
@@ -165,9 +157,6 @@ public abstract class BaseImportPreviewResourceImpl
 			@jakarta.validation.constraints.NotNull
 			@jakarta.ws.rs.PathParam("assetLibraryExternalReferenceCode")
 			String assetLibraryExternalReferenceCode,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("plid")
-			Long plid,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("portletId")
 			String portletId,
@@ -200,15 +189,13 @@ public abstract class BaseImportPreviewResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/export-import/v1.0/import-preview'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
+		description = "Uploads a file to import into the instance and retrieves its portlet data handlers, counts, and sites. The import process of the same scope imports the user's last uploaded file.",
 		requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "multipart/form-data", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PostImportPreviewRequestBody.class)))
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "plid"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "portletId"
 			)
@@ -226,9 +213,6 @@ public abstract class BaseImportPreviewResourceImpl
 	@Override
 	public ImportPreview postImportPreview(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("plid")
-			Long plid,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("portletId")
 			String portletId,
 			MultipartBody multipartBody)
@@ -245,10 +229,7 @@ public abstract class BaseImportPreviewResourceImpl
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "plid"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "portletId"
 			),
@@ -269,9 +250,6 @@ public abstract class BaseImportPreviewResourceImpl
 	@jakarta.ws.rs.Produces("application/json")
 	@Override
 	public Response postImportPreviewBatch(
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("plid")
-			Long plid,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("portletId")
 			String portletId,
@@ -304,6 +282,7 @@ public abstract class BaseImportPreviewResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/export-import/v1.0/sites/{siteExternalReferenceCode}/import-preview'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
+		description = "Uploads a file to import into the specified site and retrieves its portlet data handlers and counts. The import process of the same scope imports the user's last uploaded file.",
 		requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @io.swagger.v3.oas.annotations.media.Content(mediaType = "multipart/form-data", schema = @io.swagger.v3.oas.annotations.media.Schema(implementation = PostSiteImportPreviewRequestBody.class)))
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
@@ -313,12 +292,14 @@ public abstract class BaseImportPreviewResourceImpl
 				name = "siteExternalReferenceCode", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "plid"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "portletId"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The external reference code of the site page that holds the portlet. Without it, the portlet is handled as an application rather than a widget on a page.",
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "sitePageExternalReferenceCode"
 			)
 		}
 	)
@@ -338,11 +319,11 @@ public abstract class BaseImportPreviewResourceImpl
 			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
 			String siteExternalReferenceCode,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("plid")
-			Long plid,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("portletId")
 			String portletId,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.ws.rs.QueryParam("sitePageExternalReferenceCode")
+			String sitePageExternalReferenceCode,
 			MultipartBody multipartBody)
 		throws Exception {
 
@@ -361,12 +342,14 @@ public abstract class BaseImportPreviewResourceImpl
 				name = "siteExternalReferenceCode", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
-				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "plid"
-			),
-			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "portletId"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The external reference code of the site page that holds the portlet. Without it, the portlet is handled as an application rather than a widget on a page.",
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "sitePageExternalReferenceCode"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
@@ -392,11 +375,11 @@ public abstract class BaseImportPreviewResourceImpl
 			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
 			String siteExternalReferenceCode,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("plid")
-			Long plid,
-			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("portletId")
 			String portletId,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.ws.rs.QueryParam("sitePageExternalReferenceCode")
+			String sitePageExternalReferenceCode,
 			MultipartBody multipartBody,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("callbackURL")
@@ -439,7 +422,6 @@ public abstract class BaseImportPreviewResourceImpl
 					importPreview -> postAssetLibraryImportPreview(
 						(String)parameters.get(
 							"assetLibraryExternalReferenceCode"),
-						_parseLong((String)parameters.get("plid")),
 						(String)parameters.get("portletId"),
 						(MultipartBody)null);
 			}
@@ -447,14 +429,13 @@ public abstract class BaseImportPreviewResourceImpl
 				importPreviewUnsafeFunction =
 					importPreview -> postSiteImportPreview(
 						(String)parameters.get("siteExternalReferenceCode"),
-						_parseLong((String)parameters.get("plid")),
 						(String)parameters.get("portletId"),
+						(String)parameters.get("sitePageExternalReferenceCode"),
 						(MultipartBody)null);
 			}
 			else {
 				importPreviewUnsafeFunction =
 					importPreview -> postImportPreview(
-						_parseLong((String)parameters.get("plid")),
 						(String)parameters.get("portletId"),
 						(MultipartBody)null);
 			}
@@ -566,14 +547,6 @@ public abstract class BaseImportPreviewResourceImpl
 
 		throw new UnsupportedOperationException(
 			"This method needs to be implemented");
-	}
-
-	private Long _parseLong(String value) {
-		if (value != null) {
-			return Long.parseLong(value);
-		}
-
-		return null;
 	}
 
 	@Override
@@ -1165,4 +1138,4 @@ public abstract class BaseImportPreviewResourceImpl
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1754486788
+// LIFERAY-REST-BUILDER-HASH:-1985711980

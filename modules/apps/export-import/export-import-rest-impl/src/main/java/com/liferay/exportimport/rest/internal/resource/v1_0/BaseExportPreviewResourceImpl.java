@@ -48,6 +48,9 @@ public abstract class BaseExportPreviewResourceImpl
 	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/export-import/v1.0/asset-libraries/{assetLibraryExternalReferenceCode}/export-preview'  -u 'test@liferay.com:test'
 	 */
+	@io.swagger.v3.oas.annotations.Operation(
+		description = "Retrieves the portlet data handlers and counts for an export of the specified asset library, or of one of its portlets."
+	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -55,22 +58,27 @@ public abstract class BaseExportPreviewResourceImpl
 				name = "assetLibraryExternalReferenceCode", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The date filter's type. Without it, all the content is counted.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "dateRangeType"
+				name = "dateFilterType"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The end date of a DateRange filter.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "endDate"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The number of hours of a LastHours filter.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "plid"
+				name = "hours"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "portletId"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The start date of a DateRange filter.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "startDate"
 			)
@@ -93,14 +101,14 @@ public abstract class BaseExportPreviewResourceImpl
 			@jakarta.ws.rs.PathParam("assetLibraryExternalReferenceCode")
 			String assetLibraryExternalReferenceCode,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("dateRangeType")
-			String dateRangeType,
+			@jakarta.ws.rs.QueryParam("dateFilterType")
+			String dateFilterType,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("endDate")
 			Date endDate,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("plid")
-			Long plid,
+			@jakarta.ws.rs.QueryParam("hours")
+			Integer hours,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("portletId")
 			String portletId,
@@ -117,25 +125,33 @@ public abstract class BaseExportPreviewResourceImpl
 	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/export-import/v1.0/export-preview'  -u 'test@liferay.com:test'
 	 */
+	@io.swagger.v3.oas.annotations.Operation(
+		description = "Retrieves the portlet data handlers and counts for an export of the instance, or of one of its portlets."
+	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The date filter's type. Without it, all the content is counted.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "dateRangeType"
+				name = "dateFilterType"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The end date of a DateRange filter.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "endDate"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The number of hours of a LastHours filter.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "plid"
+				name = "hours"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "portletId"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The start date of a DateRange filter.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "startDate"
 			)
@@ -152,14 +168,14 @@ public abstract class BaseExportPreviewResourceImpl
 	@Override
 	public ExportPreview getExportPreview(
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("dateRangeType")
-			String dateRangeType,
+			@jakarta.ws.rs.QueryParam("dateFilterType")
+			String dateFilterType,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("endDate")
 			Date endDate,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("plid")
-			Long plid,
+			@jakarta.ws.rs.QueryParam("hours")
+			Integer hours,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("portletId")
 			String portletId,
@@ -176,6 +192,9 @@ public abstract class BaseExportPreviewResourceImpl
 	 *
 	 * curl -X 'GET' 'http://localhost:8080/o/export-import/v1.0/sites/{siteExternalReferenceCode}/export-preview'  -u 'test@liferay.com:test'
 	 */
+	@io.swagger.v3.oas.annotations.Operation(
+		description = "Retrieves the portlet data handlers and counts for an export of the specified site, or of one of its portlets."
+	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
 			@io.swagger.v3.oas.annotations.Parameter(
@@ -183,22 +202,32 @@ public abstract class BaseExportPreviewResourceImpl
 				name = "siteExternalReferenceCode", required = true
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The date filter's type. Without it, all the content is counted.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "dateRangeType"
+				name = "dateFilterType"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The end date of a DateRange filter.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "endDate"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The number of hours of a LastHours filter.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
-				name = "plid"
+				name = "hours"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "portletId"
 			),
 			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The external reference code of the site page that holds the portlet. Without it, the portlet is handled as an application rather than a widget on a page.",
+				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
+				name = "sitePageExternalReferenceCode"
+			),
+			@io.swagger.v3.oas.annotations.Parameter(
+				description = "The start date of a DateRange filter.",
 				in = io.swagger.v3.oas.annotations.enums.ParameterIn.QUERY,
 				name = "startDate"
 			)
@@ -219,17 +248,20 @@ public abstract class BaseExportPreviewResourceImpl
 			@jakarta.ws.rs.PathParam("siteExternalReferenceCode")
 			String siteExternalReferenceCode,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("dateRangeType")
-			String dateRangeType,
+			@jakarta.ws.rs.QueryParam("dateFilterType")
+			String dateFilterType,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("endDate")
 			Date endDate,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
-			@jakarta.ws.rs.QueryParam("plid")
-			Long plid,
+			@jakarta.ws.rs.QueryParam("hours")
+			Integer hours,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("portletId")
 			String portletId,
+			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
+			@jakarta.ws.rs.QueryParam("sitePageExternalReferenceCode")
+			String sitePageExternalReferenceCode,
 			@io.swagger.v3.oas.annotations.Parameter(hidden = true)
 			@jakarta.ws.rs.QueryParam("startDate")
 			Date startDate)
@@ -683,4 +715,4 @@ public abstract class BaseExportPreviewResourceImpl
 		LogFactoryUtil.getLog(BaseExportPreviewResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1545059954
+// LIFERAY-REST-BUILDER-HASH:526038344

@@ -22,6 +22,7 @@ import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
+import com.liferay.staging.StagingGroupHelper;
 
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -108,6 +109,12 @@ public class EmptyModelManagerImpl implements EmptyModelManager {
 				Group group = _groupLocalService.fetchGroup(groupId);
 
 				if (group != null) {
+					if (_stagingGroupHelper.isCompanyGroup(group)) {
+						throw new IllegalArgumentException(
+							"Group " + groupId +
+								" is the export/import company group");
+					}
+
 					companyId = group.getCompanyId();
 				}
 
@@ -133,6 +140,23 @@ public class EmptyModelManagerImpl implements EmptyModelManager {
 
 	@Override
 	public void reportMissingReference(
+		String className, long companyId, String externalReferenceCode) {
+
+		if (!ExportImportThreadLocal.isImportInProcess()) {
+			return;
+		}
+
+		_exportImportReportEntryLocalService.getOrAddExportImportReportEntry(
+			0, companyId, externalReferenceCode,
+			_classNameLocalService.getClassNameId(className), 0,
+			GetterUtil.getLong(
+				ExportImportThreadLocal.getExportImportConfigurationId()),
+			ExportImportReportEntryConstants.TYPE_MISSING_REFERENCE, null, null,
+			className);
+	}
+
+	@Override
+	public void reportMissingReference(
 		String className, String externalReferenceCode, long groupId) {
 
 		if (!ExportImportThreadLocal.isImportInProcess()) {
@@ -145,6 +169,11 @@ public class EmptyModelManagerImpl implements EmptyModelManager {
 			return;
 		}
 
+		if (_stagingGroupHelper.isCompanyGroup(group)) {
+			throw new IllegalArgumentException(
+				"Group " + groupId + " is the export/import company group");
+		}
+
 		_exportImportReportEntryLocalService.getOrAddExportImportReportEntry(
 			groupId, group.getCompanyId(), externalReferenceCode,
 			_classNameLocalService.getClassNameId(className), 0,
@@ -152,6 +181,32 @@ public class EmptyModelManagerImpl implements EmptyModelManager {
 				ExportImportThreadLocal.getExportImportConfigurationId()),
 			ExportImportReportEntryConstants.TYPE_MISSING_REFERENCE, null, null,
 			className);
+	}
+
+	@Override
+	public void resolveMissingReference(
+		String className, long companyId, String externalReferenceCode,
+		long groupId) {
+
+		if (!ExportImportThreadLocal.isImportInProcess()) {
+			return;
+		}
+
+		try {
+			_exportImportReportEntryLocalService.
+				resolveMissingReferenceExportImportReportEntries(
+					groupId, companyId, externalReferenceCode,
+					_classNameLocalService.getClassNameId(className));
+		}
+		catch (Exception exception) {
+			_log.error(
+				StringBundler.concat(
+					"Unable to resolve the export/import report entries for ",
+					"the class external reference code \"",
+					externalReferenceCode, "\" and class name \"", className,
+					"\""),
+				exception);
+		}
 	}
 
 	@Override
@@ -195,5 +250,8 @@ public class EmptyModelManagerImpl implements EmptyModelManager {
 
 	@Reference
 	private GroupLocalService _groupLocalService;
+
+	@Reference
+	private StagingGroupHelper _stagingGroupHelper;
 
 }

@@ -6,16 +6,16 @@ templates:
     -   charts/liferay-default/templates/scaledobject.yaml
 tests:
     -   asserts:
-            -   hasDocuments:
-                    count: 0
-        it: Omits ScaledObject when autoscaling is disabled
-    -   asserts:
             -   equal:
                     path: spec.triggers[1].metadata.serverAddress
                     value: ""
         it: Leaves the server address empty when the monitor workspace endpoint is unavailable
         set:
             liferay-default.autoscaling.enabled: true
+    -   asserts:
+            -   hasDocuments:
+                    count: 0
+        it: Omits ScaledObject when autoscaling is disabled
     -   asserts:
             -   isKind:
                     of: ScaledObject
@@ -51,4 +51,4 @@ tests:
         it: Renders ScaledObject with the Azure monitor workspace query endpoint when autoscaling is enabled
         set:
             liferay-default.autoscaling.enabled: true
-            liferay-default.autoscaling.keda.prometheusServerAddress: https://liferay-test-amw-abcd.eastus.prometheus.monitor.azure.com
+            liferay-default.autoscaling.keda.prometheusTriggerMetadata.serverAddress: https://liferay-test-amw-abcd.eastus.prometheus.monitor.azure.com

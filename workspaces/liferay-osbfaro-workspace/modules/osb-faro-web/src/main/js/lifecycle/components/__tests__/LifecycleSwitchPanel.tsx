@@ -33,7 +33,7 @@ jest.mock('shared/hooks/useCurrentUser', () => ({
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
-	useParams: () => ({channelId: '123', groupId: '23', lifecycleId: '1'}),
+	useParams: () => ({channelId: '123', groupId: '23', lifecycleId: 'erc-1'}),
 }));
 
 const mockedUseCurrentUser = useCurrentUser as jest.Mock;
@@ -41,11 +41,11 @@ const mockedUseRequest = useRequest as jest.Mock;
 
 const STAGE = {
 	description: '',
-	displayOrder: 1,
 	externalReferenceCode: 'stage',
 	id: 'stage',
 	maxDuration: null,
-	stageType: 'AWARE',
+	priority: 1,
+	stageName: 'Aware',
 };
 
 const LIFECYCLES: ILifecycleDetail[] = [
@@ -53,6 +53,7 @@ const LIFECYCLES: ILifecycleDetail[] = [
 		authorName: 'Anneta Smith',
 		defaultAccountLifecycle: true,
 		description: 'Unifies acquisition and expansion.',
+		externalReferenceCode: 'erc-1',
 		id: '1',
 		modifiedDate: Date.UTC(2026, 9, 2, 17, 53),
 		name: 'Growth and Retention Hub',
@@ -60,6 +61,7 @@ const LIFECYCLES: ILifecycleDetail[] = [
 	},
 	{
 		defaultAccountLifecycle: false,
+		externalReferenceCode: 'erc-2',
 		id: '2',
 		modifiedDate: Date.UTC(2026, 9, 1, 9, 5),
 		name: 'Partner Lifecycle',
@@ -67,6 +69,7 @@ const LIFECYCLES: ILifecycleDetail[] = [
 	{
 		authorName: 'Marcus Reed',
 		defaultAccountLifecycle: false,
+		externalReferenceCode: 'erc-3',
 		id: '3',
 		name: 'Expansion Lifecycle',
 		stages: [STAGE],
@@ -76,9 +79,11 @@ const LIFECYCLES: ILifecycleDetail[] = [
 const Panel = ({
 	initialView = {type: 'switch'},
 	onDefaultChange = jest.fn(),
+	openLifecycle = LIFECYCLES[0],
 }: {
 	initialView?: LifecyclePanelView | null;
 	onDefaultChange?: (lifecycleId: string) => void;
+	openLifecycle?: ILifecycleDetail;
 }) => {
 	const [view, setView] = useState<LifecyclePanelView | null>(initialView);
 
@@ -90,6 +95,7 @@ const Panel = ({
 				defaultChangeCount={0}
 				onDefaultChange={onDefaultChange}
 				onViewChange={setView}
+				openLifecycle={openLifecycle}
 				view={view}
 			/>
 		</BasePage>
@@ -160,7 +166,7 @@ describe('LifecycleSwitchPanel', () => {
 
 	afterEach(cleanup);
 
-	it('lists every lifecycle linking to its dashboard', () => {
+	it('lists every lifecycle linking to its dashboard by external reference code', () => {
 		renderPanel();
 
 		expect(
@@ -170,7 +176,7 @@ describe('LifecycleSwitchPanel', () => {
 			toRoute(Routes.LIFECYCLE_DASHBOARD, {
 				channelId: '123',
 				groupId: '23',
-				lifecycleId: '2',
+				lifecycleId: 'erc-2',
 			})
 		);
 		expect(document.querySelectorAll('.list-group-item-flex')).toHaveLength(
@@ -202,6 +208,12 @@ describe('LifecycleSwitchPanel', () => {
 		expect(getRow('Growth and Retention Hub')).toHaveClass('active');
 		expect(getRow('Partner Lifecycle')).not.toHaveClass('active');
 		expect(getRow('Expansion Lifecycle')).not.toHaveClass('active');
+	});
+
+	it('highlights the open lifecycle by its external reference code across versions', () => {
+		renderPanel({openLifecycle: {...LIFECYCLES[0], id: '10'}});
+
+		expect(getRow('Growth and Retention Hub')).toHaveClass('active');
 	});
 
 	it('shows the modified date and its author when known', () => {
@@ -452,39 +464,5 @@ describe('LifecycleSwitchPanel', () => {
 		expect(screen.getByTestId('view')).toHaveTextContent(
 			JSON.stringify({type: 'switch'})
 		);
-	});
-
-	describe('with lifecycles in the legacy format', () => {
-		beforeEach(() =>
-			mockLifecyclesPage(
-				LIFECYCLES.map(({description, id, name, stages}) => ({
-					description,
-					id,
-					name,
-					stages,
-				}))
-			)
-		);
-
-		it('shows no pin, author or modified date', () => {
-			renderPanel();
-
-			expect(screen.queryByRole('img', {name: /default/i})).toBeNull();
-			expect(screen.queryByText(/anneta smith/i)).toBeNull();
-			expect(screen.queryByText(/oct \d+, 2026/i)).toBeNull();
-		});
-
-		it('does not offer Set Default', () => {
-			renderPanel();
-
-			openRowMenu('Partner Lifecycle');
-
-			expect(
-				screen.queryByRole('menuitem', {name: /set.default/i})
-			).toBeNull();
-			expect(
-				screen.getByRole('menuitem', {name: /show.details/i})
-			).toBeInTheDocument();
-		});
 	});
 });

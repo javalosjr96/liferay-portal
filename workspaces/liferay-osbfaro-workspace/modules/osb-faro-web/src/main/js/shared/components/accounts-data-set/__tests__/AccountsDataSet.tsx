@@ -8,7 +8,14 @@ import {RangeKeyTimeRanges} from 'shared/util/constants';
 import {useRequest} from 'shared/hooks/useRequest';
 import {warmFrontendDataSet} from 'test/warm-frontend-data-set';
 
-const DEFAULT_STAGE_ITEMS = [
+interface IStageItem {
+	externalReferenceCode: string;
+	id: string;
+	stageName?: string;
+	stageType?: LifecycleStages;
+}
+
+const DEFAULT_STAGE_ITEMS: IStageItem[] = [
 	{
 		externalReferenceCode: 'erc-stage-9990',
 		id: '9990',
@@ -106,7 +113,7 @@ jest.mock('shared/hooks/useRequest', () => ({
 
 const mockedUseRequest = useRequest as jest.Mock;
 
-const mockStages = (items: typeof DEFAULT_STAGE_ITEMS | undefined) => {
+const mockStages = (items: IStageItem[] | undefined) => {
 	mockedUseRequest.mockReturnValue({
 		data: items ? {items} : undefined,
 		loading: false,
@@ -360,14 +367,14 @@ describe('AccountsDataSet', () => {
 		]);
 	});
 
-	it('should preload the lifecycleStatus filter with the stage external reference code and localized label when lifecycleStageFilter prop is provided', async () => {
+	it('should preload the lifecycleStatus filter with the external reference code and label of the stage whose id is in lifecycleStageFilter', async () => {
 		await renderAccountsDataSet(
 			<AccountsDataSet
 				accountLifecycleId="al-1"
 				apiURL="fake-url"
 				channelId="123"
 				groupId="23"
-				lifecycleStageFilter={LifecycleStages.AT_RISK}
+				lifecycleStageFilter="9993"
 			/>
 		);
 
@@ -390,7 +397,7 @@ describe('AccountsDataSet', () => {
 				apiURL="fake-url"
 				channelId="123"
 				groupId="23"
-				lifecycleStageFilter={LifecycleStages.AT_RISK}
+				lifecycleStageFilter="9993"
 			/>
 		);
 
@@ -573,7 +580,7 @@ describe('AccountsDataSet', () => {
 				apiURL="fake-url"
 				channelId="123"
 				groupId="23"
-				lifecycleStageFilter={LifecycleStages.AWARE}
+				lifecycleStageFilter="9990"
 				stageSelectionNonce={0}
 			/>
 		);
@@ -586,7 +593,7 @@ describe('AccountsDataSet', () => {
 				apiURL="fake-url"
 				channelId="123"
 				groupId="23"
-				lifecycleStageFilter={LifecycleStages.AWARE}
+				lifecycleStageFilter="9990"
 				stageSelectionNonce={1}
 			/>
 		);

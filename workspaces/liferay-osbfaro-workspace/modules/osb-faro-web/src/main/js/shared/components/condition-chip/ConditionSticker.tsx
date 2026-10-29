@@ -4,9 +4,11 @@ import getCN from 'classnames';
 import React from 'react';
 import {DATA_TYPE_ICONS_MAP, DataTypes} from 'shared/types/DataTypes';
 
+type StickerDisplayType = 'primary' | 'success' | 'warning';
+
 export type ConditionStickerType =
-	| {dataType: DataTypes; symbol?: never}
-	| {dataType?: never; symbol: string};
+	| {dataType: DataTypes; displayType?: StickerDisplayType; symbol?: never}
+	| {dataType?: never; displayType?: StickerDisplayType; symbol: string};
 
 type ConditionStickerProps = ConditionStickerType & {
 	className?: string;
@@ -14,17 +16,17 @@ type ConditionStickerProps = ConditionStickerType & {
 
 const ConditionSticker: React.FC<ConditionStickerProps> = ({
 	className,
-	...type
+	dataType,
+	displayType = 'primary',
+	symbol,
 }) => (
 	<ClaySticker
 		className={getCN('condition-sticker flex-shrink-0', className)}
-		displayType="primary"
+		displayType={displayType}
 	>
 		<ClayIcon
 			symbol={
-				type.dataType !== undefined
-					? DATA_TYPE_ICONS_MAP[type.dataType]
-					: type.symbol
+				dataType !== undefined ? DATA_TYPE_ICONS_MAP[dataType] : symbol!
 			}
 		/>
 	</ClaySticker>

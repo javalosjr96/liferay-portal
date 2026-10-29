@@ -48,7 +48,7 @@ const LifecycleRedirect = () => {
 				to={toRoute(Routes.LIFECYCLE_DASHBOARD, {
 					channelId,
 					groupId,
-					lifecycleId: defaultLifecycle.id,
+					lifecycleId: defaultLifecycle.externalReferenceCode,
 				})}
 			/>
 		);
@@ -89,10 +89,13 @@ const LifecycleRedirect = () => {
 						groupId: groupId!,
 						label: selectedChannel?.name,
 					}),
-					breadcrumbs.getLifecycles({
-						channelId: channelId!,
-						groupId: groupId!,
-					}),
+					{
+						...breadcrumbs.getLifecycles({
+							channelId: channelId!,
+							groupId: groupId!,
+						}),
+						active: true,
+					},
 				]}
 				fluid
 				groupId={groupId!}

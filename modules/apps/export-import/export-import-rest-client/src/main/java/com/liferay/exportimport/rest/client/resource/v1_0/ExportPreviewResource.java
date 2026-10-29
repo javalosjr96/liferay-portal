@@ -36,37 +36,37 @@ public interface ExportPreviewResource {
 	}
 
 	public ExportPreview getAssetLibraryExportPreview(
-			String assetLibraryExternalReferenceCode, String dateRangeType,
-			java.util.Date endDate, Long plid, String portletId,
+			String assetLibraryExternalReferenceCode, String dateFilterType,
+			java.util.Date endDate, Integer hours, String portletId,
 			java.util.Date startDate)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse getAssetLibraryExportPreviewHttpResponse(
-			String assetLibraryExternalReferenceCode, String dateRangeType,
-			java.util.Date endDate, Long plid, String portletId,
+			String assetLibraryExternalReferenceCode, String dateFilterType,
+			java.util.Date endDate, Integer hours, String portletId,
 			java.util.Date startDate)
 		throws Exception;
 
 	public ExportPreview getExportPreview(
-			String dateRangeType, java.util.Date endDate, Long plid,
+			String dateFilterType, java.util.Date endDate, Integer hours,
 			String portletId, java.util.Date startDate)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse getExportPreviewHttpResponse(
-			String dateRangeType, java.util.Date endDate, Long plid,
+			String dateFilterType, java.util.Date endDate, Integer hours,
 			String portletId, java.util.Date startDate)
 		throws Exception;
 
 	public ExportPreview getSiteExportPreview(
-			String siteExternalReferenceCode, String dateRangeType,
-			java.util.Date endDate, Long plid, String portletId,
-			java.util.Date startDate)
+			String siteExternalReferenceCode, String dateFilterType,
+			java.util.Date endDate, Integer hours, String portletId,
+			String sitePageExternalReferenceCode, java.util.Date startDate)
 		throws Exception;
 
 	public HttpInvoker.HttpResponse getSiteExportPreviewHttpResponse(
-			String siteExternalReferenceCode, String dateRangeType,
-			java.util.Date endDate, Long plid, String portletId,
-			java.util.Date startDate)
+			String siteExternalReferenceCode, String dateFilterType,
+			java.util.Date endDate, Integer hours, String portletId,
+			String sitePageExternalReferenceCode, java.util.Date startDate)
 		throws Exception;
 
 	public static class Builder {
@@ -179,15 +179,15 @@ public interface ExportPreviewResource {
 		implements ExportPreviewResource {
 
 		public ExportPreview getAssetLibraryExportPreview(
-				String assetLibraryExternalReferenceCode, String dateRangeType,
-				java.util.Date endDate, Long plid, String portletId,
+				String assetLibraryExternalReferenceCode, String dateFilterType,
+				java.util.Date endDate, Integer hours, String portletId,
 				java.util.Date startDate)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
 				getAssetLibraryExportPreviewHttpResponse(
-					assetLibraryExternalReferenceCode, dateRangeType, endDate,
-					plid, portletId, startDate);
+					assetLibraryExternalReferenceCode, dateFilterType, endDate,
+					hours, portletId, startDate);
 
 			String content = httpResponse.getContent();
 
@@ -251,8 +251,8 @@ public interface ExportPreviewResource {
 		public HttpInvoker.HttpResponse
 				getAssetLibraryExportPreviewHttpResponse(
 					String assetLibraryExternalReferenceCode,
-					String dateRangeType, java.util.Date endDate, Long plid,
-					String portletId, java.util.Date startDate)
+					String dateFilterType, java.util.Date endDate,
+					Integer hours, String portletId, java.util.Date startDate)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -279,9 +279,9 @@ public interface ExportPreviewResource {
 			DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 				"yyyy-MM-dd'T'HH:mm:ssXX");
 
-			if (dateRangeType != null) {
+			if (dateFilterType != null) {
 				httpInvoker.parameter(
-					"dateRangeType", String.valueOf(dateRangeType));
+					"dateFilterType", String.valueOf(dateFilterType));
 			}
 
 			if (endDate != null) {
@@ -289,8 +289,8 @@ public interface ExportPreviewResource {
 					"endDate", liferayToJSONDateFormat.format(endDate));
 			}
 
-			if (plid != null) {
-				httpInvoker.parameter("plid", String.valueOf(plid));
+			if (hours != null) {
+				httpInvoker.parameter("hours", String.valueOf(hours));
 			}
 
 			if (portletId != null) {
@@ -320,13 +320,13 @@ public interface ExportPreviewResource {
 		}
 
 		public ExportPreview getExportPreview(
-				String dateRangeType, java.util.Date endDate, Long plid,
+				String dateFilterType, java.util.Date endDate, Integer hours,
 				String portletId, java.util.Date startDate)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
 				getExportPreviewHttpResponse(
-					dateRangeType, endDate, plid, portletId, startDate);
+					dateFilterType, endDate, hours, portletId, startDate);
 
 			String content = httpResponse.getContent();
 
@@ -388,7 +388,7 @@ public interface ExportPreviewResource {
 		}
 
 		public HttpInvoker.HttpResponse getExportPreviewHttpResponse(
-				String dateRangeType, java.util.Date endDate, Long plid,
+				String dateFilterType, java.util.Date endDate, Integer hours,
 				String portletId, java.util.Date startDate)
 			throws Exception {
 
@@ -416,9 +416,9 @@ public interface ExportPreviewResource {
 			DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 				"yyyy-MM-dd'T'HH:mm:ssXX");
 
-			if (dateRangeType != null) {
+			if (dateFilterType != null) {
 				httpInvoker.parameter(
-					"dateRangeType", String.valueOf(dateRangeType));
+					"dateFilterType", String.valueOf(dateFilterType));
 			}
 
 			if (endDate != null) {
@@ -426,8 +426,8 @@ public interface ExportPreviewResource {
 					"endDate", liferayToJSONDateFormat.format(endDate));
 			}
 
-			if (plid != null) {
-				httpInvoker.parameter("plid", String.valueOf(plid));
+			if (hours != null) {
+				httpInvoker.parameter("hours", String.valueOf(hours));
 			}
 
 			if (portletId != null) {
@@ -453,15 +453,15 @@ public interface ExportPreviewResource {
 		}
 
 		public ExportPreview getSiteExportPreview(
-				String siteExternalReferenceCode, String dateRangeType,
-				java.util.Date endDate, Long plid, String portletId,
-				java.util.Date startDate)
+				String siteExternalReferenceCode, String dateFilterType,
+				java.util.Date endDate, Integer hours, String portletId,
+				String sitePageExternalReferenceCode, java.util.Date startDate)
 			throws Exception {
 
 			HttpInvoker.HttpResponse httpResponse =
 				getSiteExportPreviewHttpResponse(
-					siteExternalReferenceCode, dateRangeType, endDate, plid,
-					portletId, startDate);
+					siteExternalReferenceCode, dateFilterType, endDate, hours,
+					portletId, sitePageExternalReferenceCode, startDate);
 
 			String content = httpResponse.getContent();
 
@@ -523,9 +523,9 @@ public interface ExportPreviewResource {
 		}
 
 		public HttpInvoker.HttpResponse getSiteExportPreviewHttpResponse(
-				String siteExternalReferenceCode, String dateRangeType,
-				java.util.Date endDate, Long plid, String portletId,
-				java.util.Date startDate)
+				String siteExternalReferenceCode, String dateFilterType,
+				java.util.Date endDate, Integer hours, String portletId,
+				String sitePageExternalReferenceCode, java.util.Date startDate)
 			throws Exception {
 
 			HttpInvoker httpInvoker = HttpInvoker.newHttpInvoker();
@@ -552,9 +552,9 @@ public interface ExportPreviewResource {
 			DateFormat liferayToJSONDateFormat = new SimpleDateFormat(
 				"yyyy-MM-dd'T'HH:mm:ssXX");
 
-			if (dateRangeType != null) {
+			if (dateFilterType != null) {
 				httpInvoker.parameter(
-					"dateRangeType", String.valueOf(dateRangeType));
+					"dateFilterType", String.valueOf(dateFilterType));
 			}
 
 			if (endDate != null) {
@@ -562,12 +562,18 @@ public interface ExportPreviewResource {
 					"endDate", liferayToJSONDateFormat.format(endDate));
 			}
 
-			if (plid != null) {
-				httpInvoker.parameter("plid", String.valueOf(plid));
+			if (hours != null) {
+				httpInvoker.parameter("hours", String.valueOf(hours));
 			}
 
 			if (portletId != null) {
 				httpInvoker.parameter("portletId", String.valueOf(portletId));
+			}
+
+			if (sitePageExternalReferenceCode != null) {
+				httpInvoker.parameter(
+					"sitePageExternalReferenceCode",
+					String.valueOf(sitePageExternalReferenceCode));
 			}
 
 			if (startDate != null) {
@@ -603,4 +609,4 @@ public interface ExportPreviewResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:687878337
+// LIFERAY-REST-BUILDER-HASH:1969900056

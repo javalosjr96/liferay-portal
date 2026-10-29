@@ -5,12 +5,8 @@
 
 package com.liferay.osb.faro.web.internal.search;
 
-import com.liferay.osb.faro.constants.FaroProjectConstants;
 import com.liferay.osb.faro.model.FaroProject;
-import com.liferay.osb.faro.provisioning.client.model.display.main.FaroSubscriptionDisplay;
 import com.liferay.osb.faro.service.FaroProjectLocalService;
-import com.liferay.osb.faro.service.FaroProjectUsageLocalService;
-import com.liferay.osb.faro.web.internal.util.JSONUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery;
 import com.liferay.portal.kernel.log.Log;
@@ -34,7 +30,6 @@ import com.liferay.portal.kernel.util.Validator;
 import jakarta.portlet.PortletRequest;
 import jakarta.portlet.PortletResponse;
 
-import java.util.Date;
 import java.util.Locale;
 
 import org.osgi.service.component.annotations.Component;
@@ -53,9 +48,8 @@ public class FaroProjectIndexer extends BaseIndexer<FaroProject> {
 			Field.COMPANY_ID, Field.ENTRY_CLASS_NAME, Field.ENTRY_CLASS_PK,
 			Field.GROUP_ID, Field.NAME, Field.UID, Field.USER_ID,
 			"corpProjectName", "corpProjectUuid", "createDate",
-			"dataSourceConnected", "individualsLimit", "individualsUsage",
-			"lastAccessDate", "offline", "pageViewsLimit", "pageViewsUsage",
-			"subscription", "subscriptionName");
+			"individualsUsage", "lastAccessDate", "offline", "pageViewsUsage",
+			"subscriptionName");
 	}
 
 	@Override
@@ -159,64 +153,18 @@ public class FaroProjectIndexer extends BaseIndexer<FaroProject> {
 			"corpProjectName", faroProject.getCorpProjectName());
 		document.addKeyword(
 			"corpProjectUuid", faroProject.getCorpProjectUuid());
-		document.addDate("createDate", new Date(faroProject.getCreateTime()));
-		document.addKeyword(
-			"dataSourceConnected", faroProject.isDataSourceConnected());
-
-		FaroSubscriptionDisplay faroSubscriptionDisplay = JSONUtil.readValue(
-			faroProject.getSubscription(), FaroSubscriptionDisplay.class);
-
+		document.addDate("createDate", faroProject.getCreateDate());
 		document.addNumber(
-			"individualsLimit", faroSubscriptionDisplay.getIndividualsLimit());
-		document.addNumber(
-			"individualsUsage",
-			_getUsage(
-				faroSubscriptionDisplay.
-					getIndividualsCountSinceLastAnniversary(),
-				faroSubscriptionDisplay.getIndividualsLimit()));
-		document.addDate(
-			"lastAnniversaryDate",
-			faroSubscriptionDisplay.getLastAnniversaryDate());
+			"individualsUsage", faroProject.getIndividualsUsage());
+		document.addDate("lastAccessDate", faroProject.getLastAccessDate());
 
-		document.addDate(
-			"lastAccessDate", new Date(faroProject.getLastAccessTime()));
-
-		try {
-			if (!StringUtil.equals(
-					faroProject.getState(), FaroProjectConstants.STATE_READY)) {
-
-				document.addKeyword("offline", StringPool.TRUE);
-			}
-			else {
-				faroSubscriptionDisplay.setCounts(
-					faroProject, _faroProjectUsageLocalService);
-
-				if (_log.isInfoEnabled()) {
-					_log.info(
-						"Finished setting counts " + faroProject.getGroupId());
-				}
-			}
-		}
-		catch (Exception exception) {
+		if (faroProject.isOffline()) {
 			document.addKeyword("offline", StringPool.TRUE);
-
-			_log.error(exception);
 		}
 
-		document.addNumber(
-			"pageViewsLimit", faroSubscriptionDisplay.getPageViewsLimit());
-		document.addNumber(
-			"pageViewsUsage",
-			_getUsage(
-				faroSubscriptionDisplay.getPageViewsCountSinceLastAnniversary(),
-				faroSubscriptionDisplay.getPageViewsLimit()));
+		document.addNumber("pageViewsUsage", faroProject.getPageViewsUsage());
 		document.addKeyword(
-			"subscription",
-			JSONUtil.writeValueAsString(faroSubscriptionDisplay));
-		document.addKeyword(
-			"subscriptionName",
-			StringUtil.removeSubstring(
-				faroSubscriptionDisplay.getName(), "Liferay Analytics Cloud "));
+			"subscriptionName", faroProject.getShortSubscriptionName());
 
 		if (Validator.isNull(faroProject.getWeDeployKey())) {
 			if (_log.isInfoEnabled()) {
@@ -272,24 +220,11 @@ public class FaroProjectIndexer extends BaseIndexer<FaroProject> {
 		return _faroProjectLocalService.getIndexableActionableDynamicQuery();
 	}
 
-	private double _getUsage(long count, long limit) {
-		if ((count == 0) || (limit == 0)) {
-			return 0.0;
-		}
-
-		double usage = 100.0 * count / limit;
-
-		return Math.round(usage * 100) / 100.0;
-	}
-
 	private static final Log _log = LogFactoryUtil.getLog(
 		FaroProjectIndexer.class);
 
 	@Reference
 	private FaroProjectLocalService _faroProjectLocalService;
-
-	@Reference
-	private FaroProjectUsageLocalService _faroProjectUsageLocalService;
 
 	@Reference
 	private IndexWriterHelper _indexWriterHelper;

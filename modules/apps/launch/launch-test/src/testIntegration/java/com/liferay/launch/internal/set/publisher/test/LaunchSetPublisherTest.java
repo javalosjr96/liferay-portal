@@ -17,9 +17,14 @@ import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntry;
 import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCActionCommand;
+import com.liferay.portal.kernel.scheduler.SchedulerEngineHelper;
+import com.liferay.portal.kernel.scheduler.StorageType;
+import com.liferay.portal.kernel.scheduler.messaging.SchedulerResponse;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.test.portlet.MockActionResponse;
@@ -33,6 +38,7 @@ import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -42,6 +48,7 @@ import jakarta.portlet.PortletException;
 
 import java.io.Serializable;
 
+import java.util.Date;
 import java.util.Map;
 
 import org.junit.After;
@@ -54,6 +61,7 @@ import org.junit.runner.RunWith;
 
 /**
  * @author Alejandro Tardín
+ * @author Jose Luis Navarro
  */
 @RunWith(Arquillian.class)
 public class LaunchSetPublisherTest {
@@ -78,7 +86,10 @@ public class LaunchSetPublisherTest {
 	}
 
 	@After
-	public void tearDown() {
+	public void tearDown() throws Exception {
+		_launchSetPublisher.unschedulePublish(
+			_launchSetObjectEntry.getObjectEntryId());
+
 		ServiceContextThreadLocal.popServiceContext();
 	}
 
@@ -216,6 +227,59 @@ public class LaunchSetPublisherTest {
 			otherPublishedVersion);
 	}
 
+	@Test
+	public void testSchedulePublish() throws Exception {
+		long launchSetId = _launchSetObjectEntry.getObjectEntryId();
+
+		Assert.assertThrows(
+			PortalException.class,
+			() -> _launchSetPublisher.schedulePublish(
+				new Date(System.currentTimeMillis() - Time.MINUTE), launchSetId,
+				TestPropsValues.getUserId()));
+		Assert.assertThrows(
+			PortalException.class,
+			() -> _launchSetPublisher.schedulePublish(
+				null, launchSetId, TestPropsValues.getUserId()));
+
+		Date date = new Date(System.currentTimeMillis() + Time.DAY);
+
+		_launchSetPublisher.schedulePublish(
+			date, launchSetId, TestPropsValues.getUserId());
+
+		_assertScheduledDateAndStatus(date, WorkflowConstants.STATUS_SCHEDULED);
+
+		Assert.assertThrows(
+			PortalException.class,
+			() -> _launchSetPublisher.schedulePublish(
+				new Date(System.currentTimeMillis() + Time.DAY), launchSetId,
+				TestPropsValues.getUserId()));
+		_assertScheduledDateAndStatus(date, WorkflowConstants.STATUS_SCHEDULED);
+	}
+
+	@Test
+	public void testUnschedulePublish() throws Exception {
+		long launchSetId = _launchSetObjectEntry.getObjectEntryId();
+
+		_launchSetPublisher.unschedulePublish(launchSetId);
+
+		_assertScheduledDateAndStatus(null, WorkflowConstants.STATUS_DRAFT);
+
+		_launchSetPublisher.schedulePublish(
+			new Date(System.currentTimeMillis() + Time.DAY), launchSetId,
+			TestPropsValues.getUserId());
+
+		_launchSetPublisher.unschedulePublish(launchSetId);
+
+		_assertScheduledDateAndStatus(null, WorkflowConstants.STATUS_DRAFT);
+
+		Date date = new Date(System.currentTimeMillis() + Time.WEEK);
+
+		_launchSetPublisher.schedulePublish(
+			date, launchSetId, TestPropsValues.getUserId());
+
+		_assertScheduledDateAndStatus(date, WorkflowConstants.STATUS_SCHEDULED);
+	}
+
 	private ObjectEntry _addLaunchEntryObjectEntry(
 			long launchSetId, String className, long classPK,
 			String baseVersionKey)
@@ -281,6 +345,48 @@ public class LaunchSetPublisherTest {
 		Assert.assertNull(
 			launchEntryManager.fetchDraft(
 				MapUtil.getLong(values, "classPK"), draftId));
+	}
+
+	private void _assertScheduledDateAndStatus(
+			Date expectedDate, int expectedStatus)
+		throws Exception {
+
+		long launchSetId = _launchSetObjectEntry.getObjectEntryId();
+
+		ObjectEntry launchSetObjectEntry =
+			_objectEntryLocalService.getObjectEntry(launchSetId);
+
+		Assert.assertEquals(expectedStatus, launchSetObjectEntry.getStatus());
+
+		SchedulerResponse schedulerResponse =
+			_schedulerEngineHelper.getScheduledJob(
+				StringBundler.concat(
+					launchSetId, StringPool.AT,
+					launchSetObjectEntry.getCompanyId()),
+				"liferay/launch_set_scheduled_publish", StorageType.PERSISTED);
+
+		Date scheduledDate = null;
+
+		if (schedulerResponse != null) {
+			scheduledDate = _schedulerEngineHelper.getStartDate(
+				schedulerResponse);
+		}
+
+		Map<String, Serializable> values = launchSetObjectEntry.getValues();
+
+		Date scheduledDateValue = (Date)values.get("scheduledDate");
+
+		if (expectedDate == null) {
+			Assert.assertNull(scheduledDate);
+			Assert.assertNull(scheduledDateValue);
+
+			return;
+		}
+
+		Assert.assertEquals(expectedDate, scheduledDate);
+		Assert.assertEquals(
+			expectedDate.getTime() / Time.SECOND,
+			scheduledDateValue.getTime() / Time.SECOND);
 	}
 
 	private LaunchEntryManager _getJournalArticleLaunchEntryManager() {
@@ -362,6 +468,9 @@ public class LaunchSetPublisherTest {
 
 	@Inject
 	private ObjectEntryLocalService _objectEntryLocalService;
+
+	@Inject
+	private SchedulerEngineHelper _schedulerEngineHelper;
 
 	private ServiceContext _serviceContext;
 

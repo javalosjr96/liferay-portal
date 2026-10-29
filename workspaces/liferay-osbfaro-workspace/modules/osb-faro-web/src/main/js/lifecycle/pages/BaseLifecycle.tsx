@@ -72,7 +72,15 @@ const LifecycleOverview = () => {
 	return <OverviewSection loading={overviewLoading} metrics={overviewData} />;
 };
 
-const LifecycleStagesSection = () => {
+interface ILifecycleStagesSectionProps {
+	description?: string;
+	name?: string;
+}
+
+const LifecycleStagesSection = ({
+	description,
+	name,
+}: ILifecycleStagesSectionProps) => {
 	const {filters, lifecycleId} = useLifecycle();
 
 	const {groupId} = useParams();
@@ -96,8 +104,10 @@ const LifecycleStagesSection = () => {
 
 	return (
 		<LifecycleChart
+			description={description}
 			error={!!stagesError}
 			loading={stagesLoading}
+			name={name}
 			stages={stagesData}
 		/>
 	);
@@ -172,16 +182,16 @@ const BaseLifecycle = () => {
 		}));
 
 	const defaultAccountLifecycle = defaultLifecycleId
-		? defaultLifecycleId === lifecycleId
+		? defaultLifecycleId === lifecycle?.id
 		: lifecycle?.defaultAccountLifecycle;
 
 	const openLifecycle = lifecycle && {...lifecycle, defaultAccountLifecycle};
 
-	const actions = useLifecycleActions({
+	const {actions, manageNotificationsModal} = useLifecycleActions({
 		lifecycle: openLifecycle,
-		onDefaultChange: () => changeDefault(lifecycleId!),
+		onDefaultChange: () => changeDefault(lifecycle!.id),
 		onShowDetails: () =>
-			setPanelView({lifecycleId: lifecycleId!, type: 'details'}),
+			setPanelView({lifecycleId: lifecycle!.id, type: 'details'}),
 	});
 
 	const processing = lifecycle?.processedDate == null;
@@ -199,19 +209,17 @@ const BaseLifecycle = () => {
 
 	const authorized = currentUser.isAdmin();
 
-	const loading = dataSourcesLoading || lifecycleLoading;
-
-	const title = lifecycle?.name || Liferay.Language.get('lifecycles');
+	const title = lifecycle?.name ?? '';
 
 	const hasContent =
-		!loading &&
+		!dataSourcesLoading &&
 		!noDataSources &&
 		!processing &&
 		!accountMetricsLoading &&
 		!!totalAccounts;
 
 	const renderBody = () => {
-		if (loading) {
+		if (dataSourcesLoading) {
 			return <Loading />;
 		}
 
@@ -255,14 +263,21 @@ const BaseLifecycle = () => {
 			<>
 				<LifecycleOverview />
 
-				<LifecycleStagesSection />
+				<LifecycleStagesSection
+					description={lifecycle?.description}
+					name={lifecycle?.name}
+				/>
 
 				<LifecycleAccounts />
 			</>
 		);
 	};
 
-	if (!lifecycleLoading && (lifecycleError || !lifecycle)) {
+	if (lifecycleLoading) {
+		return <Loading />;
+	}
+
+	if (lifecycleError || !lifecycle) {
 		return (
 			<ErrorPage
 				href={toRoute(Routes.LIFECYCLE, {channelId, groupId})}
@@ -276,10 +291,10 @@ const BaseLifecycle = () => {
 	}
 
 	return (
-		<BasePage documentTitle={title}>
+		<BasePage documentTitle={title || Liferay.Language.get('lifecycles')}>
 			<LifecycleContextProvider
 				key={lifecycleId}
-				lifecycleId={lifecycleId}
+				lifecycleId={lifecycle?.id}
 			>
 				<BasePage.Header
 					breadcrumbs={[
@@ -388,6 +403,8 @@ const BaseLifecycle = () => {
 				triggerRef={switchButtonRef}
 				view={panelView}
 			/>
+
+			{manageNotificationsModal}
 		</BasePage>
 	);
 };

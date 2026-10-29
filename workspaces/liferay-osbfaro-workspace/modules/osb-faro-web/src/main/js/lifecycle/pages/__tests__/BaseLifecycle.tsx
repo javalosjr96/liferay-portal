@@ -1,7 +1,6 @@
 import * as API from 'shared/api';
 import BaseLifecycle from '../BaseLifecycle';
 import mockStore from 'test/mock-store';
-import ModalRenderer from 'shared/components/ModalRenderer';
 import React from 'react';
 import URLConstants from 'shared/util/url-constants';
 import {ChannelContext} from 'shared/context/channel';
@@ -176,7 +175,11 @@ const useRequestImpl =
 		}
 
 		return {
-			data: lifecycle && {processedDate, ...lifecycle},
+			data: lifecycle && {
+				externalReferenceCode: `erc-${lifecycle.id}`,
+				processedDate,
+				...lifecycle,
+			},
 			error: lifecycleError,
 			loading: false,
 		};
@@ -186,11 +189,9 @@ const LocationProbe = () => (
 	<div data-testid="location">{useLocation().pathname}</div>
 );
 
-const renderPage = (initialEntries = ['/workspace/23/123/lifecycle/1']) =>
+const renderPage = (initialEntries = ['/workspace/23/123/lifecycle/erc-1']) =>
 	render(
 		<Provider store={mockStore()}>
-			<ModalRenderer />
-
 			<ChannelContext.Provider value={mockChannelContext() as any}>
 				<MemoryRouter initialEntries={initialEntries}>
 					<BaseLifecycle />
@@ -215,7 +216,7 @@ describe('BaseLifecycle', () => {
 		mockUseParams.mockReturnValue({
 			channelId: '123',
 			groupId: '23',
-			lifecycleId: '1',
+			lifecycleId: 'erc-1',
 		});
 
 		setBodyWidth(1440);
@@ -227,7 +228,7 @@ describe('BaseLifecycle', () => {
 
 	afterEach(cleanup);
 
-	it('resets the filters and reloads the data when switching lifecycles', () => {
+	it('resets the filters and loads the current version when switching lifecycles', () => {
 		const {rerender} = renderPage();
 
 		fireEvent.click(screen.getByTestId('filter-industryFilter'));
@@ -250,14 +251,18 @@ describe('BaseLifecycle', () => {
 		mockUseParams.mockReturnValue({
 			channelId: '123',
 			groupId: '23',
-			lifecycleId: '2',
+			lifecycleId: 'erc-2',
 		});
+
+		mockedUseRequest.mockImplementation(
+			useRequestImpl({lifecycle: {id: '2'}, totalCount: 5})
+		);
 
 		rerender(
 			<Provider store={mockStore()}>
 				<ChannelContext.Provider value={mockChannelContext() as any}>
 					<MemoryRouter
-						initialEntries={['/workspace/23/123/lifecycle/2']}
+						initialEntries={['/workspace/23/123/lifecycle/erc-2']}
 					>
 						<BaseLifecycle />
 					</MemoryRouter>
@@ -284,7 +289,7 @@ describe('BaseLifecycle', () => {
 
 		expect(requestVariables).toContainEqual({
 			groupId: '23',
-			lifecycleId: '2',
+			lifecycleId: 'erc-2',
 		});
 		expect(requestVariables).toContainEqual(
 			expect.objectContaining({
@@ -310,12 +315,12 @@ describe('BaseLifecycle', () => {
 		).toBeInTheDocument();
 	});
 
-	it('titles the page generically when the lifecycle is unnamed', () => {
+	it('shows no generic title before the lifecycle name is known', () => {
 		renderPage();
 
 		expect(
-			screen.getByRole('heading', {name: /^lifecycles$/i})
-		).toBeInTheDocument();
+			screen.queryByRole('heading', {name: /^lifecycles$/i})
+		).toBeNull();
 	});
 
 	it('shows the lifecycle in the breadcrumb after the lifecycles', () => {
@@ -363,6 +368,24 @@ describe('BaseLifecycle', () => {
 				toRoute(Routes.LIFECYCLE, {channelId: '123', groupId: '23'})
 			);
 		});
+	});
+
+	it('renders only a loading state, without the header, until the lifecycle arrives', () => {
+		const dashboardRequest = useRequestImpl();
+
+		mockedUseRequest.mockImplementation(
+			(options: {dataSourceFn?: unknown}) =>
+				options.dataSourceFn === API.lifecycle.fetchLifecycle
+					? {data: undefined, error: false, loading: true}
+					: dashboardRequest(options)
+		);
+
+		const {container} = renderPage();
+
+		expect(container.querySelector('.breadcrumb')).toBeNull();
+		expect(
+			screen.queryByRole('button', {name: /switch.dashboard/i})
+		).toBeNull();
 	});
 
 	it('renders neither an empty state nor content while loading', () => {
@@ -505,7 +528,7 @@ describe('BaseLifecycle', () => {
 				toRoute(Routes.LIFECYCLE_EDIT, {
 					channelId: '123',
 					groupId: '23',
-					lifecycleId: '1',
+					lifecycleId: 'erc-1',
 				})
 			);
 		});
@@ -631,7 +654,7 @@ describe('BaseLifecycle', () => {
 	});
 
 	describe('the Manage Notifications action', () => {
-		it('opens the manage notifications modal when clicked', () => {
+		it('opens the manage notifications modal when clicked', async () => {
 			renderPage();
 
 			openActionsMenu();
@@ -641,7 +664,7 @@ describe('BaseLifecycle', () => {
 			);
 
 			expect(
-				screen.getByText('Manage Lifecycle Notifications')
+				await screen.findByText('Manage Lifecycle Notifications')
 			).toBeInTheDocument();
 		});
 
@@ -773,6 +796,7 @@ describe('BaseLifecycle', () => {
 								...lifecycle,
 								defaultAccountLifecycle:
 									lifecycle.id === defaultLifecycleId,
+								externalReferenceCode: `erc-${lifecycle.id}`,
 							})),
 							lastPage: 1,
 							page: 1,
