@@ -1712,7 +1712,9 @@ public class CompanyLocalServiceDBPartitionTest
 
 		String exportedPartitionName = DBPartitionUtil.getExportedPartitionName(
 			companyId);
+
 		String exportedSchemaVersion = RandomTestUtil.randomString();
+
 		String schemaVersion = _getSchemaVersion(servletContextName);
 
 		_updateSchemaVersion(
