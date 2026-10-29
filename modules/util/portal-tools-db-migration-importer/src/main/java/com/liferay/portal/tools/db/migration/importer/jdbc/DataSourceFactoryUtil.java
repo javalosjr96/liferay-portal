@@ -51,6 +51,10 @@ public class DataSourceFactoryUtil {
 
 		HikariConfig hikariConfig = new HikariConfig();
 
+		if (StringUtil.equals(driverClassName, "com.mysql.cj.jdbc.Driver")) {
+			hikariConfig.addDataSourceProperty("useCursorFetch", "true");
+		}
+
 		hikariConfig.setConnectionTimeout(30000);
 		hikariConfig.setDriverClassName(driverClassName);
 		hikariConfig.setIdleTimeout(600000);
