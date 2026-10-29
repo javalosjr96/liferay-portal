@@ -36,6 +36,7 @@ import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ClassName;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.CompanyConstants;
+import com.liferay.portal.kernel.model.ReleaseConstants;
 import com.liferay.portal.kernel.model.Repository;
 import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.User;
@@ -634,6 +635,115 @@ public class CompanyLocalServiceDBPartitionTest
 						company.getCompanyId()),
 					"Company", "VirtualHost");
 			}
+		}
+		finally {
+			db.runSQL(
+				dbPartitionDB.getDropPartitionSQL(
+					DBPartitionUtil.getExportedPartitionName(
+						company.getCompanyId())));
+
+			if (ArrayUtil.contains(
+					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+					company.getCompanyId())) {
+
+				companyLocalService.deleteCompany(company);
+			}
+			else {
+				removeDBPartitions(new long[] {company.getCompanyId()});
+			}
+		}
+	}
+
+	@Test
+	public void testAddDBPartitionCompanyWhenReleaseIsMissing()
+		throws Exception {
+
+		Company company = CompanyTestUtil.addCompany();
+
+		try {
+			companyLocalService.exportCompany(company.getCompanyId());
+
+			companyLocalService.deleteCompany(company);
+
+			String exportedPartitionName =
+				DBPartitionUtil.getExportedPartitionName(
+					company.getCompanyId());
+
+			db.runSQL(
+				StringBundler.concat(
+					"delete from ", exportedPartitionName,
+					".Release_ where servletContextName = ",
+					"'com.liferay.object.service'"));
+
+			try {
+				companyLocalService.addDBPartitionCompany(
+					company.getCompanyId(), null, null, null);
+
+				Assert.fail();
+			}
+			catch (IllegalArgumentException illegalArgumentException) {
+				Assert.assertEquals(
+					StringBundler.concat(
+						"Unable to import the database partition ",
+						exportedPartitionName,
+						" because it has no schema version for ",
+						"com.liferay.object.service"),
+					illegalArgumentException.getMessage());
+			}
+
+			Assert.assertFalse(
+				ArrayUtil.contains(
+					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+					company.getCompanyId()));
+			Assert.assertFalse(
+				dbPartitionDB.existsPartition(
+					connection,
+					DBPartitionUtil.getPartitionName(company.getCompanyId())));
+			Assert.assertTrue(
+				DBPartitionUtil.existsExportedPartition(
+					company.getCompanyId()));
+		}
+		finally {
+			db.runSQL(
+				dbPartitionDB.getDropPartitionSQL(
+					DBPartitionUtil.getExportedPartitionName(
+						company.getCompanyId())));
+
+			if (ArrayUtil.contains(
+					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+					company.getCompanyId())) {
+
+				companyLocalService.deleteCompany(company);
+			}
+			else {
+				removeDBPartitions(new long[] {company.getCompanyId()});
+			}
+		}
+	}
+
+	@Test
+	public void testAddDBPartitionCompanyWhenSchemaVersionDiffers()
+		throws Exception {
+
+		Company company = CompanyTestUtil.addCompany();
+
+		try {
+			companyLocalService.exportCompany(company.getCompanyId());
+
+			companyLocalService.deleteCompany(company);
+
+			_testAddDBPartitionCompanyWhenSchemaVersionDiffers(
+				company.getCompanyId(), "com.liferay.object.service");
+			_testAddDBPartitionCompanyWhenSchemaVersionDiffers(
+				company.getCompanyId(),
+				ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME);
+
+			String name = RandomTestUtil.randomString();
+
+			company = companyLocalService.addDBPartitionCompany(
+				company.getCompanyId(), name, null, null);
+
+			Assert.assertEquals(name, company.getName());
 		}
 		finally {
 			db.runSQL(
@@ -1559,6 +1669,23 @@ public class CompanyLocalServiceDBPartitionTest
 		}
 	}
 
+	private String _getSchemaVersion(String servletContextName)
+		throws Exception {
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				"select schemaVersion from Release_ where servletContextName " +
+					"= ?")) {
+
+			preparedStatement.setString(1, servletContextName);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				resultSet.next();
+
+				return resultSet.getString("schemaVersion");
+			}
+		}
+	}
+
 	private boolean _hasResourceActionsCached(long companyId) {
 		AopInvocationHandler aopInvocationHandler =
 			ProxyUtil.fetchInvocationHandler(
@@ -1577,6 +1704,58 @@ public class CompanyLocalServiceDBPartitionTest
 		}
 
 		return false;
+	}
+
+	private void _testAddDBPartitionCompanyWhenSchemaVersionDiffers(
+			long companyId, String servletContextName)
+		throws Exception {
+
+		String exportedPartitionName = DBPartitionUtil.getExportedPartitionName(
+			companyId);
+		String exportedSchemaVersion = RandomTestUtil.randomString();
+		String schemaVersion = _getSchemaVersion(servletContextName);
+
+		_updateSchemaVersion(
+			exportedPartitionName, exportedSchemaVersion, servletContextName);
+
+		try {
+			companyLocalService.addDBPartitionCompany(
+				companyId, null, null, null);
+
+			Assert.fail();
+		}
+		catch (IllegalArgumentException illegalArgumentException) {
+			Assert.assertEquals(
+				StringBundler.concat(
+					"Unable to import the database partition ",
+					exportedPartitionName, " because the schema version of ",
+					servletContextName, " is ", exportedSchemaVersion,
+					" instead of ", schemaVersion),
+				illegalArgumentException.getMessage());
+		}
+
+		Assert.assertFalse(
+			ArrayUtil.contains(
+				CompanyLocalServiceTestUtil.getCompanyIdsBySQL(), companyId));
+		Assert.assertFalse(
+			dbPartitionDB.existsPartition(
+				connection, DBPartitionUtil.getPartitionName(companyId)));
+		Assert.assertTrue(DBPartitionUtil.existsExportedPartition(companyId));
+
+		_updateSchemaVersion(
+			exportedPartitionName, schemaVersion, servletContextName);
+	}
+
+	private void _updateSchemaVersion(
+			String partitionName, String schemaVersion,
+			String servletContextName)
+		throws Exception {
+
+		db.runSQL(
+			StringBundler.concat(
+				"update ", partitionName, ".Release_ set schemaVersion = '",
+				schemaVersion, "' where servletContextName = '",
+				servletContextName, "'"));
 	}
 
 	private void _waitForConfigurationUpdates() throws Exception {
