@@ -9,25 +9,29 @@ import com.liferay.exportimport.kernel.lar.ExportImportHelper;
 import com.liferay.exportimport.kernel.lar.PortletDataContextFactory;
 import com.liferay.exportimport.lar.DeletionSystemEventExporter;
 import com.liferay.exportimport.portlet.data.handler.provider.PortletDataHandlerProvider;
+import com.liferay.exportimport.rest.dto.v1_0.DateFilter;
 import com.liferay.exportimport.rest.dto.v1_0.ExportPreview;
-import com.liferay.exportimport.rest.dto.v1_0.PreviewPortletDataHandler;
+import com.liferay.exportimport.rest.dto.v1_0.PortletDataHandler;
 import com.liferay.exportimport.rest.internal.util.GroupUtil;
+import com.liferay.exportimport.rest.internal.util.LayoutUtil;
 import com.liferay.exportimport.rest.internal.util.ParameterMapUtil;
 import com.liferay.exportimport.rest.internal.util.PermissionUtil;
-import com.liferay.exportimport.rest.internal.util.PreviewPortletDataHandlerUtil;
+import com.liferay.exportimport.rest.internal.util.PortletDataHandlerUtil;
 import com.liferay.exportimport.rest.resource.v1_0.ExportPreviewResource;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.model.Portlet;
 import com.liferay.portal.kernel.service.PortletLocalService;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Validator;
+
+import jakarta.ws.rs.BadRequestException;
 
 import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -44,53 +48,70 @@ public class ExportPreviewResourceImpl extends BaseExportPreviewResourceImpl {
 
 	@Override
 	public ExportPreview getAssetLibraryExportPreview(
-			String assetLibraryExternalReferenceCode, String dateRangeType,
-			Date endDate, Long plid, String portletId, Date startDate)
+			String assetLibraryExternalReferenceCode, String dateFilterType,
+			Date endDate, Integer hours, String portletId, Date startDate)
 		throws Exception {
 
 		return _getExportPreview(
-			dateRangeType, endDate,
+			dateFilterType, endDate,
 			GroupUtil.getAssetLibraryGroup(
 				contextCompany.getCompanyId(),
 				assetLibraryExternalReferenceCode),
-			GetterUtil.getLong(plid), portletId, startDate);
+			hours, portletId, null, startDate);
 	}
 
 	@Override
 	public ExportPreview getExportPreview(
-			String dateRangeType, Date endDate, Long plid, String portletId,
-			Date startDate)
+			String dateFilterType, Date endDate, Integer hours,
+			String portletId, Date startDate)
 		throws Exception {
 
 		return _getExportPreview(
-			dateRangeType, endDate,
-			GroupUtil.getCompanyGroup(contextCompany.getCompanyId()),
-			GetterUtil.getLong(plid), portletId, startDate);
+			dateFilterType, endDate,
+			GroupUtil.getCompanyGroup(contextCompany.getCompanyId()), hours,
+			portletId, null, startDate);
 	}
 
 	@Override
 	public ExportPreview getSiteExportPreview(
-			String siteExternalReferenceCode, String dateRangeType,
-			Date endDate, Long plid, String portletId, Date startDate)
+			String siteExternalReferenceCode, String dateFilterType,
+			Date endDate, Integer hours, String portletId,
+			String sitePageExternalReferenceCode, Date startDate)
 		throws Exception {
 
 		return _getExportPreview(
-			dateRangeType, endDate,
+			dateFilterType, endDate,
 			GroupUtil.getSiteGroup(
-				contextCompany.getCompanyId(), siteExternalReferenceCode),
-			GetterUtil.getLong(plid), portletId, startDate);
+				contextCompany.getCompanyId(), siteExternalReferenceCode,
+				portletId),
+			hours, portletId, sitePageExternalReferenceCode, startDate);
 	}
 
 	private ExportPreview _getExportPreview(
-			String dateRangeType, Date endDate, Group group, long plid,
-			String portletId, Date startDate)
+			String dateFilterType, Date endDate, Group group, Integer hours,
+			String portletId, String sitePageExternalReferenceCode,
+			Date startDate)
 		throws Exception {
 
-		long groupId = group.getGroupId();
+		Layout layout = LayoutUtil.getPortletLayout(
+			group, portletId, sitePageExternalReferenceCode);
+
+		Group scopeGroup = GroupUtil.getScopeGroup(group, layout, portletId);
+
+		long groupId = scopeGroup.getGroupId();
 
 		PermissionUtil.checkExportPermission(
 			contextCompany.getCompanyId(), groupId,
 			PermissionUtil.getGroupActionId(portletId));
+
+		if (Objects.equals(
+				dateFilterType,
+				DateFilter.Type.FROM_LAST_PUBLISH_DATE.getValue())) {
+
+			throw new BadRequestException(
+				"A \"FromLastPublishDate\" date filter applies only to " +
+					"publications");
+		}
 
 		boolean portletScoped = !Validator.isBlank(portletId);
 
@@ -106,34 +127,28 @@ public class ExportPreviewResourceImpl extends BaseExportPreviewResourceImpl {
 				contextCompany.getCompanyId(), false, groupId);
 		}
 
-		Locale locale = contextAcceptLanguage.getPreferredLocale();
-
 		Map<String, String[]> parameterMap =
 			ParameterMapUtil.putDateRangeParameters(
-				dateRangeType, startDate, endDate, new LinkedHashMap<>(),
-				contextUser);
+				dateFilterType, startDate, endDate, hours,
+				new LinkedHashMap<>(), contextUser);
 
-		Map<String, List<PreviewPortletDataHandler>>
-			previewPortletDataHandlersMap =
-				PreviewPortletDataHandlerUtil.getPreviewPortletDataHandlersMap(
-					_deletionSystemEventExporter, group, locale, parameterMap,
-					plid, _portletDataContextFactory,
-					_portletDataHandlerProvider, portlets, portletScoped,
-					contextUser.getTimeZone());
+		PortletDataHandler[] exportPortletDataHandlers =
+			PortletDataHandlerUtil.getExportPortletDataHandlers(
+				_deletionSystemEventExporter, scopeGroup,
+				contextAcceptLanguage.getPreferredLocale(), parameterMap,
+				(layout == null) ? 0 : layout.getPlid(),
+				_portletDataContextFactory, _portletDataHandlerProvider,
+				portlets, portletScoped, contextUser.getTimeZone());
 
 		return new ExportPreview() {
 			{
 				setAdditionCount(
-					() -> PreviewPortletDataHandlerUtil.getAdditionCount(
-						previewPortletDataHandlersMap));
+					() -> PortletDataHandlerUtil.getAdditionCount(
+						exportPortletDataHandlers));
 				setDeletionCount(
-					() -> PreviewPortletDataHandlerUtil.getDeletionCount(
-						previewPortletDataHandlersMap));
-				setPreviewPortletDataHandlerSections(
-					() ->
-						PreviewPortletDataHandlerUtil.
-							toPreviewPortletDataHandlerSections(
-								locale, previewPortletDataHandlersMap));
+					() -> PortletDataHandlerUtil.getDeletionCount(
+						exportPortletDataHandlers));
+				setPortletDataHandlers(() -> exportPortletDataHandlers);
 			}
 		};
 	}

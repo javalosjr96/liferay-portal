@@ -2,14 +2,14 @@ import React from 'react';
 import StageConfigurationPanel from '../StageConfigurationPanel';
 import {
 	createStageCondition,
-	DEFAULT_MAX_DAYS,
 	IStageCondition,
 	IStageConfig,
 	MatchLogic,
 } from 'lifecycle/utils/stageConfiguration';
+import {LIFECYCLE_STAGE_DEFAULT_MAX_DAYS} from 'lifecycle/utils/constants';
 import {ICatalogField} from 'shared/api/catalog';
 import {fireEvent, render, screen} from '@testing-library/react';
-import {LifecycleStages} from 'contacts/pages/account/utils/constants';
+import {MemoryRouter} from 'react-router-dom';
 
 jest.mock('shared/util/date', () => ({
 	...jest.requireActual('shared/util/date'),
@@ -22,9 +22,11 @@ const baseValue: IStageConfig = {
 	conditions: [createStageCondition()],
 	description: '',
 	id: null,
+	key: 'stage-key',
 	matchLogic: MatchLogic.All,
-	maxTimeDays: DEFAULT_MAX_DAYS,
+	maxTimeDays: LIFECYCLE_STAGE_DEFAULT_MAX_DAYS,
 	maxTimeEnabled: true,
+	name: 'Aware',
 };
 
 const withCondition = (
@@ -93,15 +95,15 @@ const renderPanel = (
 	props: Partial<React.ComponentProps<typeof StageConfigurationPanel>> = {}
 ) =>
 	render(
-		<StageConfigurationPanel
-			defaultExpanded
-			fields={mockFields}
-			index={1}
-			onChange={jest.fn()}
-			stageType={LifecycleStages.AWARE}
-			value={baseValue}
-			{...props}
-		/>
+		<MemoryRouter>
+			<StageConfigurationPanel
+				fields={mockFields}
+				lifecycleName="Growth and Retention Hub"
+				onChange={jest.fn()}
+				value={baseValue}
+				{...props}
+			/>
+		</MemoryRouter>
 	);
 
 describe('StageConfigurationPanel', () => {
@@ -127,11 +129,115 @@ describe('StageConfigurationPanel', () => {
 		expect(screen.getByText('Configured')).toBeInTheDocument();
 	});
 
-	it('renders the stage name and trigger', () => {
+	it('shows the lifecycle and the stage in the breadcrumb', () => {
 		renderPanel();
 
-		expect(screen.getByText('Aware')).toBeInTheDocument();
-		expect(screen.getByText('Trigger')).toBeInTheDocument();
+		const breadcrumb = screen.getByRole('navigation', {
+			name: /breadcrumb/i,
+		});
+
+		expect(breadcrumb).toHaveTextContent(/growth and retention hub/i);
+		expect(breadcrumb).toHaveTextContent(/aware/i);
+	});
+
+	it('goes back to the summary from the lifecycle in the breadcrumb', () => {
+		const onSelectSummary = jest.fn();
+
+		renderPanel({onSelectSummary});
+
+		fireEvent.click(
+			screen.getByRole('button', {name: /growth and retention hub/i})
+		);
+
+		expect(onSelectSummary).toHaveBeenCalled();
+	});
+
+	it('edits the stage name', () => {
+		const onChange = jest.fn();
+
+		renderPanel({onChange});
+
+		const nameInput = screen.getByLabelText(/^name/i);
+
+		expect(nameInput).toHaveValue('Aware');
+		expect(nameInput).toHaveAttribute(
+			'placeholder',
+			expect.stringMatching(/new stage/i)
+		);
+
+		fireEvent.change(nameInput, {target: {value: 'Qualified'}});
+
+		expect(onChange).toHaveBeenCalledWith(
+			expect.objectContaining({name: 'Qualified'})
+		);
+	});
+
+	it('asks for a unique name once a duplicate name is left', () => {
+		renderPanel({isFieldErrorVisible: () => true, nameTaken: true});
+
+		expect(screen.getByText(/enter a unique name/i)).toBeInTheDocument();
+	});
+
+	it('shows the required error before the unique name error', () => {
+		renderPanel({
+			isFieldErrorVisible: () => true,
+			nameTaken: true,
+			value: {...baseValue, name: ''},
+		});
+
+		expect(
+			screen.getByText(/^the name field is required/i)
+		).toBeInTheDocument();
+		expect(screen.queryByText(/enter a unique name/i)).toBeNull();
+	});
+
+	it('stops the stage name at the character limit', () => {
+		renderPanel({value: {...baseValue, name: 'a'.repeat(24)}});
+
+		expect(screen.getByLabelText(/^name/i)).toHaveAttribute(
+			'maxLength',
+			'24'
+		);
+		expect(
+			screen.getByText(/the character limit has been reached/i)
+		).toBeInTheDocument();
+	});
+
+	it('stops the stage description at the character limit', () => {
+		renderPanel({value: {...baseValue, description: 'a'.repeat(120)}});
+
+		expect(screen.getByLabelText(/^description/i)).toHaveAttribute(
+			'maxLength',
+			'120'
+		);
+		expect(
+			screen.getByText(/the character limit has been reached/i)
+		).toBeInTheDocument();
+	});
+
+	it('groups the stage conditions into progression and triggers', () => {
+		renderPanel();
+
+		expect(screen.getByText(/stage conditions/i)).toBeInTheDocument();
+		expect(
+			screen.getByText(/define how accounts move/i)
+		).toBeInTheDocument();
+		expect(screen.getByText(/define entry triggers/i)).toBeInTheDocument();
+		expect(
+			screen.getByRole('switch', {name: /enable max time in stage/i})
+		).toBeInTheDocument();
+	});
+
+	it('collapses a section from its header', () => {
+		renderPanel();
+
+		const progression = screen.getByRole('button', {name: /progression/i});
+
+		expect(progression).toHaveAttribute('aria-expanded', 'true');
+
+		fireEvent.click(progression);
+
+		expect(progression).toHaveAttribute('aria-expanded', 'false');
 	});
 
 	it('renders the stage description input and persists typed text', () => {
@@ -158,7 +264,9 @@ describe('StageConfigurationPanel', () => {
 		expect(screen.getByText('Account')).toBeInTheDocument();
 		expect(screen.queryByText('Select Entity')).toBeNull();
 		expect(screen.getByText('Select Attribute')).toBeInTheDocument();
-		expect(screen.getByRole('spinbutton')).toHaveValue(DEFAULT_MAX_DAYS);
+		expect(screen.getByRole('spinbutton')).toHaveValue(
+			LIFECYCLE_STAGE_DEFAULT_MAX_DAYS
+		);
 	});
 
 	it('does not cap the max-time value at the default number of days', () => {

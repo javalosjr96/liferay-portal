@@ -64,6 +64,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.sql.DataSource;
 
@@ -1510,6 +1512,8 @@ public class DBPartitionUtil {
 						sourcePartitionName + " because it does not exist");
 			}
 
+			_validateSchemaVersions(connection, sourcePartitionName);
+
 			if (Validator.isNull(webId)) {
 				_validateWebId(connection, companyId, sourcePartitionName);
 			}
@@ -1676,6 +1680,13 @@ public class DBPartitionUtil {
 			_defaultPartitionName = _dbPartitionDB.getDefaultPartitionName(
 				connection);
 		}
+
+		_defaultPartitionNamePattern = Pattern.compile(
+			StringBundler.concat(
+				"(?<![\\w$])[`\"]?",
+				Pattern.quote(StringUtil.toLowerCase(_defaultPartitionName)),
+				"[`\"]?", _REGEX_SQL_WHITESPACE, "\\."),
+			Pattern.DOTALL);
 	}
 
 	private static boolean _isCopyableQuartzTable(String tableName) {
@@ -1843,6 +1854,48 @@ public class DBPartitionUtil {
 		}
 	}
 
+	private static void _validateSchemaVersions(
+			Connection connection, String partitionName)
+		throws SQLException {
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"select Release1.servletContextName, ",
+					"Release1.schemaVersion, Release2.releaseId, ",
+					"Release2.schemaVersion as exportedSchemaVersion from ",
+					_defaultPartitionName, ".Release_ Release1 left join ",
+					partitionName, ".Release_ Release2 on ",
+					"Release1.servletContextName = ",
+					"Release2.servletContextName where Release2.releaseId is ",
+					"null or Release1.schemaVersion != Release2.schemaVersion ",
+					"order by Release1.servletContextName"));
+
+			ResultSet resultSet = preparedStatement.executeQuery()) {
+
+			if (!resultSet.next()) {
+				return;
+			}
+
+			String servletContextName = resultSet.getString(
+				"servletContextName");
+
+			if (resultSet.getLong("releaseId") == 0) {
+				throw new IllegalArgumentException(
+					StringBundler.concat(
+						"Unable to import the database partition ",
+						partitionName, " because it has no schema version for ",
+						servletContextName));
+			}
+
+			throw new IllegalArgumentException(
+				StringBundler.concat(
+					"Unable to import the database partition ", partitionName,
+					" because the schema version of ", servletContextName,
+					" is ", resultSet.getString("exportedSchemaVersion"),
+					" instead of ", resultSet.getString("schemaVersion")));
+		}
+	}
+
 	private static void _validateVirtualHostnames(
 			Connection connection, long companyId, String partitionName,
 			String virtualHostname)
@@ -1936,6 +1989,23 @@ public class DBPartitionUtil {
 						throw new UnsupportedOperationException(
 							"Unsupported SQL: " + sql);
 					}
+
+					Matcher quotedStringMatcher = _quotedStringPattern.matcher(
+						lowerCaseSQL);
+
+					String unquotedSQL = quotedStringMatcher.replaceAll("''");
+
+					Matcher defaultPartitionNameMatcher =
+						_defaultPartitionNamePattern.matcher(unquotedSQL);
+					Matcher setPartitionMatcher = _setPartitionPattern.matcher(
+						unquotedSQL);
+
+					if (defaultPartitionNameMatcher.find() ||
+						setPartitionMatcher.lookingAt()) {
+
+						throw new UnsupportedOperationException(
+							"Unsupported SQL: " + sql);
+					}
 				}
 
 				Connection connection = statement.getConnection();
@@ -2018,6 +2088,9 @@ public class DBPartitionUtil {
 	private static final String _CLASS_NAME_PREFIX_CUSTOM_OBJECT_DEFINITION =
 		"com.liferay.object.model.ObjectDefinition#";
 
+	private static final String _REGEX_SQL_WHITESPACE =
+		"(?:\\s++|/\\*.*?\\*/|--[^\\n]*+|#[^\\n]*+)*+";
+
 	private static final String _TABLE_NAME_PREFIX_QUARTZ = GetterUtil.get(
 		PropsUtil.get("persisted.scheduler.org.quartz.jobStore.tablePrefix"),
 		"QUARTZ_");
@@ -2028,5 +2101,14 @@ public class DBPartitionUtil {
 	private static DBPartitionDB _dbPartitionDB;
 	private static volatile long _defaultCompanyId;
 	private static String _defaultPartitionName;
+	private static Pattern _defaultPartitionNamePattern;
+	private static final Pattern _quotedStringPattern = Pattern.compile(
+		"'(?:[^'\\\\]++|\\\\.|'')*+'");
+	private static final Pattern _setPartitionPattern = Pattern.compile(
+		StringBundler.concat(
+			_REGEX_SQL_WHITESPACE, "(?:use\\b|set\\b", _REGEX_SQL_WHITESPACE,
+			"(?:(?:local|session)\\b", _REGEX_SQL_WHITESPACE,
+			")?(?:schema|search_path)\\b)"),
+		Pattern.DOTALL);
 
 }

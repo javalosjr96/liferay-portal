@@ -6,8 +6,8 @@
 package com.liferay.exportimport.rest.client.serdes.v1_0;
 
 import com.liferay.exportimport.rest.client.dto.v1_0.ImportPreview;
-import com.liferay.exportimport.rest.client.dto.v1_0.PreviewPortletDataHandlerSection;
-import com.liferay.exportimport.rest.client.dto.v1_0.PreviewSite;
+import com.liferay.exportimport.rest.client.dto.v1_0.PortletDataHandler;
+import com.liferay.exportimport.rest.client.dto.v1_0.Site;
 import com.liferay.exportimport.rest.client.json.BaseJSONParser;
 
 import jakarta.annotation.Generated;
@@ -128,29 +128,22 @@ public class ImportPreviewSerDes {
 			sb.append(importPreview.getFileSize());
 		}
 
-		if (importPreview.getPreviewPortletDataHandlerSections() != null) {
+		if (importPreview.getPortletDataHandlers() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"previewPortletDataHandlerSections\": ");
+			sb.append("\"portletDataHandlers\": ");
 
 			sb.append("[");
 
-			for (int i = 0;
-				 i <
-					 importPreview.
-						 getPreviewPortletDataHandlerSections().length;
+			for (int i = 0; i < importPreview.getPortletDataHandlers().length;
 				 i++) {
 
 				sb.append(
-					String.valueOf(
-						importPreview.getPreviewPortletDataHandlerSections()
-							[i]));
+					String.valueOf(importPreview.getPortletDataHandlers()[i]));
 
-				if ((i + 1) < importPreview.
-						getPreviewPortletDataHandlerSections().length) {
-
+				if ((i + 1) < importPreview.getPortletDataHandlers().length) {
 					sb.append(", ");
 				}
 			}
@@ -158,19 +151,19 @@ public class ImportPreviewSerDes {
 			sb.append("]");
 		}
 
-		if (importPreview.getPreviewSites() != null) {
+		if (importPreview.getSites() != null) {
 			if (sb.length() > 1) {
 				sb.append(", ");
 			}
 
-			sb.append("\"previewSites\": ");
+			sb.append("\"sites\": ");
 
 			sb.append("[");
 
-			for (int i = 0; i < importPreview.getPreviewSites().length; i++) {
-				sb.append(String.valueOf(importPreview.getPreviewSites()[i]));
+			for (int i = 0; i < importPreview.getSites().length; i++) {
+				sb.append(String.valueOf(importPreview.getSites()[i]));
 
-				if ((i + 1) < importPreview.getPreviewSites().length) {
+				if ((i + 1) < importPreview.getSites().length) {
 					sb.append(", ");
 				}
 			}
@@ -248,23 +241,20 @@ public class ImportPreviewSerDes {
 			map.put("fileSize", String.valueOf(importPreview.getFileSize()));
 		}
 
-		if (importPreview.getPreviewPortletDataHandlerSections() == null) {
-			map.put("previewPortletDataHandlerSections", null);
+		if (importPreview.getPortletDataHandlers() == null) {
+			map.put("portletDataHandlers", null);
 		}
 		else {
 			map.put(
-				"previewPortletDataHandlerSections",
-				String.valueOf(
-					importPreview.getPreviewPortletDataHandlerSections()));
+				"portletDataHandlers",
+				String.valueOf(importPreview.getPortletDataHandlers()));
 		}
 
-		if (importPreview.getPreviewSites() == null) {
-			map.put("previewSites", null);
+		if (importPreview.getSites() == null) {
+			map.put("sites", null);
 		}
 		else {
-			map.put(
-				"previewSites",
-				String.valueOf(importPreview.getPreviewSites()));
+			map.put("sites", String.valueOf(importPreview.getSites()));
 		}
 
 		return map;
@@ -304,12 +294,11 @@ public class ImportPreviewSerDes {
 				return false;
 			}
 			else if (Objects.equals(
-						jsonParserFieldName,
-						"previewPortletDataHandlerSections")) {
+						jsonParserFieldName, "portletDataHandlers")) {
 
 				return false;
 			}
-			else if (Objects.equals(jsonParserFieldName, "previewSites")) {
+			else if (Objects.equals(jsonParserFieldName, "sites")) {
 				return false;
 			}
 
@@ -356,45 +345,38 @@ public class ImportPreviewSerDes {
 				}
 			}
 			else if (Objects.equals(
-						jsonParserFieldName,
-						"previewPortletDataHandlerSections")) {
+						jsonParserFieldName, "portletDataHandlers")) {
 
 				if (jsonParserFieldValue != null) {
 					Object[] jsonParserFieldValues =
 						(Object[])jsonParserFieldValue;
 
-					PreviewPortletDataHandlerSection[]
-						previewPortletDataHandlerSectionsArray =
-							new PreviewPortletDataHandlerSection
-								[jsonParserFieldValues.length];
+					PortletDataHandler[] portletDataHandlersArray =
+						new PortletDataHandler[jsonParserFieldValues.length];
 
-					for (int i = 0;
-						 i < previewPortletDataHandlerSectionsArray.length;
-						 i++) {
-
-						previewPortletDataHandlerSectionsArray[i] =
-							PreviewPortletDataHandlerSectionSerDes.toDTO(
+					for (int i = 0; i < portletDataHandlersArray.length; i++) {
+						portletDataHandlersArray[i] =
+							PortletDataHandlerSerDes.toDTO(
 								(String)jsonParserFieldValues[i]);
 					}
 
-					importPreview.setPreviewPortletDataHandlerSections(
-						previewPortletDataHandlerSectionsArray);
+					importPreview.setPortletDataHandlers(
+						portletDataHandlersArray);
 				}
 			}
-			else if (Objects.equals(jsonParserFieldName, "previewSites")) {
+			else if (Objects.equals(jsonParserFieldName, "sites")) {
 				if (jsonParserFieldValue != null) {
 					Object[] jsonParserFieldValues =
 						(Object[])jsonParserFieldValue;
 
-					PreviewSite[] previewSitesArray =
-						new PreviewSite[jsonParserFieldValues.length];
+					Site[] sitesArray = new Site[jsonParserFieldValues.length];
 
-					for (int i = 0; i < previewSitesArray.length; i++) {
-						previewSitesArray[i] = PreviewSiteSerDes.toDTO(
+					for (int i = 0; i < sitesArray.length; i++) {
+						sitesArray[i] = SiteSerDes.toDTO(
 							(String)jsonParserFieldValues[i]);
 					}
 
-					importPreview.setPreviewSites(previewSitesArray);
+					importPreview.setSites(sitesArray);
 				}
 			}
 		}
@@ -484,4 +466,4 @@ public class ImportPreviewSerDes {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:1202981042
+// LIFERAY-REST-BUILDER-HASH:1312778682

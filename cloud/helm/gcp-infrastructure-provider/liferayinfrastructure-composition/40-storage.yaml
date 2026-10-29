@@ -8,7 +8,6 @@ metadata:
     annotations:
         gotemplating.fn.crossplane.io/composition-resource-name: liferay-gcs-bucket-{{ $dataPlane }}
     labels:
-        {{- $labels | toYaml | nindent 8 }}
         dataPlane: {{ $dataPlane }}
     name: {{ $baseName }}-dl-{{ $dataPlane }}
 spec:
@@ -19,9 +18,8 @@ spec:
         {{- end }}
         forceDestroy: {{ or $forceDestroy (ne $dataPlane $activeDataPlane) }}
         labels:
-            {{- merge (dict) $backupTargetLabels ($storage.tags | default dict) | toYaml | nindent 12 }}
-            active: {{ printf "%t" (eq $dataPlane $activeDataPlane) | quote }}
-        location: {{ $storage.region | default $region }}
+            {{- merge (dict "active" (eq $dataPlane $activeDataPlane | toString)) $backupTargetLabels $xr.spec.storage.tags | toYaml | nindent 12 }}
+        location: {{ $region }}
         storageClass: STANDARD
         uniformBucketLevelAccess: true
         versioning:
@@ -34,7 +32,6 @@ metadata:
     annotations:
         gotemplating.fn.crossplane.io/composition-resource-name: liferay-gcs-iam-{{ $dataPlane }}
     labels:
-        {{- $labels | toYaml | nindent 8 }}
         dataPlane: {{ $dataPlane }}
 spec:
     forProvider:

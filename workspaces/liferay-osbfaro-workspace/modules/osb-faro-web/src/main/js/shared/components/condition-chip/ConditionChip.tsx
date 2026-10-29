@@ -13,15 +13,32 @@ interface IConditionChipProps {
 	handle?: React.ReactNode;
 	label: React.ReactNode;
 	name: string;
-	onRemove: () => void;
+	onRemove?: () => void;
+	onSelect?: () => void;
 	overline?: React.ReactNode;
+	selected?: boolean;
+	staticSticker?: boolean;
 	sticker: ConditionStickerType;
 }
 
 const CONTROL_SELECTOR = '[data-chip-control]';
 
 const ConditionChip = React.forwardRef<HTMLDivElement, IConditionChipProps>(
-	({dragState, handle, label, name, onRemove, overline, sticker}, ref) => {
+	(
+		{
+			dragState,
+			handle,
+			label,
+			name,
+			onRemove,
+			onSelect,
+			overline,
+			selected,
+			staticSticker,
+			sticker,
+		},
+		ref
+	) => {
 		const chipRef = useRef<HTMLDivElement>(null);
 
 		const getControls = () =>
@@ -39,6 +56,14 @@ const ConditionChip = React.forwardRef<HTMLDivElement, IConditionChipProps>(
 			const target = event.target as HTMLElement;
 
 			if (target === chipRef.current) {
+				if (onSelect && event.key === 'Enter') {
+					event.preventDefault();
+
+					onSelect();
+
+					return;
+				}
+
 				if (event.key === ' ' || event.key === 'Enter') {
 					event.preventDefault();
 
@@ -75,14 +100,19 @@ const ConditionChip = React.forwardRef<HTMLDivElement, IConditionChipProps>(
 
 		return (
 			<div
+				aria-current={selected ? 'true' : undefined}
 				aria-label={name}
 				className={getCN(
 					'align-items-center condition-chip d-flex rounded-lg',
 					{
 						'condition-chip-draggable': !!handle,
+						'condition-chip-selectable': !!onSelect,
+						'condition-chip-selected': selected,
+						'condition-chip-static-sticker': staticSticker,
 						[`condition-chip-${dragState}`]: dragState,
 					}
 				)}
+				onClick={onSelect}
 				onKeyDown={handleKeyDown}
 				ref={mergeRef(ref, chipRef)}
 				role="group"
@@ -99,7 +129,7 @@ const ConditionChip = React.forwardRef<HTMLDivElement, IConditionChipProps>(
 								<Text
 									color="secondary"
 									size={1}
-									weight="semi-bold"
+									weight="normal"
 								>
 									{overline}
 								</Text>
@@ -107,30 +137,40 @@ const ConditionChip = React.forwardRef<HTMLDivElement, IConditionChipProps>(
 						)}
 
 						<span className="d-block">
-							<Text size={3} weight="semi-bold">
+							<Text size={4} weight="semi-bold">
 								{label}
 							</Text>
 						</span>
 					</span>
 				</div>
 
-				<ClayButtonWithIcon
-					aria-label={
-						sub(Liferay.Language.get('remove-x'), [name]) as string
-					}
-					className="condition-chip-remove flex-shrink-0 mr-1"
-					data-chip-control
-					data-html2canvas-ignore
-					displayType="unstyled"
-					monospaced
-					onClick={onRemove}
-					size="sm"
-					symbol="times-circle"
-					tabIndex={-1}
-					title={
-						sub(Liferay.Language.get('remove-x'), [name]) as string
-					}
-				/>
+				{onRemove && (
+					<ClayButtonWithIcon
+						aria-label={
+							sub(Liferay.Language.get('remove-x'), [
+								name,
+							]) as string
+						}
+						className="condition-chip-remove flex-shrink-0 mr-1"
+						data-chip-control
+						data-html2canvas-ignore
+						displayType="unstyled"
+						monospaced
+						onClick={(event) => {
+							event.stopPropagation();
+
+							onRemove();
+						}}
+						size="sm"
+						symbol="times-circle"
+						tabIndex={-1}
+						title={
+							sub(Liferay.Language.get('remove-x'), [
+								name,
+							]) as string
+						}
+					/>
+				)}
 			</div>
 		);
 	}

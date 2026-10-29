@@ -11,6 +11,7 @@ import com.liferay.asset.kernel.service.AssetEntryLocalService;
 import com.liferay.asset.kernel.service.AssetEntryLocalServiceUtil;
 import com.liferay.knowledge.base.constants.KBArticleConstants;
 import com.liferay.knowledge.base.constants.KBFolderConstants;
+import com.liferay.knowledge.base.constants.KBPortletKeys;
 import com.liferay.knowledge.base.exception.DuplicateKBArticleExternalReferenceCodeException;
 import com.liferay.knowledge.base.exception.KBArticleContentException;
 import com.liferay.knowledge.base.exception.KBArticleDisplayDateException;
@@ -33,14 +34,20 @@ import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONFactoryUtil;
+import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.lock.Lock;
 import com.liferay.portal.kernel.lock.LockManagerUtil;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.PersistedModel;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.model.UserNotificationEvent;
+import com.liferay.portal.kernel.notifications.UserNotificationFeedEntry;
+import com.liferay.portal.kernel.notifications.UserNotificationHandler;
 import com.liferay.portal.kernel.service.ClassNameLocalServiceUtil;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.service.WorkflowDefinitionLinkLocalServiceUtil;
 import com.liferay.portal.kernel.test.TestInfo;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
@@ -1096,6 +1103,52 @@ public class KBArticleLocalServiceTest {
 			WorkflowConstants.STATUS_DRAFT, kbArticle.getStatus());
 	}
 
+	@Test
+	public void testExpireKBArticleSendsNotificationToSubscriber()
+		throws Exception {
+
+		_serviceContext.setPortletId(KBPortletKeys.KNOWLEDGE_BASE_ADMIN);
+
+		KBArticle kbArticle = _addKbArticle();
+		User user = UserTestUtil.addUser(_group.getGroupId());
+
+		_kbArticleLocalService.subscribeKBArticle(
+			user.getUserId(), _group.getGroupId(),
+			kbArticle.getResourcePrimKey());
+
+		kbArticle = _kbArticleLocalService.expireKBArticle(
+			_user.getUserId(), kbArticle.getResourcePrimKey(), _serviceContext);
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_EXPIRED, kbArticle.getStatus());
+
+		List<UserNotificationEvent> userNotificationEvents =
+			_userNotificationEventLocalService.getUserNotificationEvents(
+				user.getUserId());
+
+		Assert.assertEquals(
+			userNotificationEvents.toString(), 1,
+			userNotificationEvents.size());
+
+		UserNotificationEvent userNotificationEvent =
+			userNotificationEvents.get(0);
+
+		JSONObject payloadJSONObject = JSONFactoryUtil.createJSONObject(
+			userNotificationEvent.getPayload());
+
+		Assert.assertEquals(
+			kbArticle.getTitle(), payloadJSONObject.getString("entryTitle"));
+
+		UserNotificationFeedEntry userNotificationFeedEntry =
+			_userNotificationHandler.interpret(
+				userNotificationEvent,
+				ServiceContextTestUtil.getServiceContext(_group.getGroupId()));
+
+		Assert.assertEquals(
+			"A knowledge base article has expired.",
+			userNotificationFeedEntry.getTitle());
+	}
+
 	@FeatureFlag("LPD-11003")
 	@Test
 	public void testExpireKBArticleWithLock() throws PortalException {
@@ -1642,6 +1695,28 @@ public class KBArticleLocalServiceTest {
 		Assert.assertNull(latestKBArticle.getReviewDate());
 	}
 
+	@Test
+	public void testRestoreKBArticleFromTrashWhenKBArticleIsExpired()
+		throws Exception {
+
+		KBArticle kbArticle = _addKbArticle();
+
+		_kbArticleLocalService.expireKBArticle(
+			_user.getUserId(), kbArticle.getResourcePrimKey(), _serviceContext);
+
+		_kbArticleLocalService.moveKBArticleToTrash(
+			_user.getUserId(), kbArticle.getResourcePrimKey());
+
+		_kbArticleLocalService.restoreKBArticleFromTrash(
+			_user.getUserId(), kbArticle.getResourcePrimKey());
+
+		kbArticle = _kbArticleLocalService.getLatestKBArticle(
+			kbArticle.getResourcePrimKey(), WorkflowConstants.STATUS_ANY);
+
+		Assert.assertEquals(
+			WorkflowConstants.STATUS_EXPIRED, kbArticle.getStatus());
+	}
+
 	@FeatureFlag("LPD-11003")
 	@Test
 	public void testRevertKBArticleWithLock() throws PortalException {
@@ -2105,5 +2180,14 @@ public class KBArticleLocalServiceTest {
 
 	private ServiceContext _serviceContext;
 	private User _user;
+
+	@Inject
+	private UserNotificationEventLocalService
+		_userNotificationEventLocalService;
+
+	@Inject(
+		filter = "jakarta.portlet.name=" + KBPortletKeys.KNOWLEDGE_BASE_ADMIN
+	)
+	private UserNotificationHandler _userNotificationHandler;
 
 }

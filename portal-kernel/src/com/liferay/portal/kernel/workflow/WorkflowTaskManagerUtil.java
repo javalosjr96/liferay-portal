@@ -208,17 +208,6 @@ public class WorkflowTaskManagerUtil {
 			companyId, userId, workflowInstanceId, completed);
 	}
 
-	public static List<WorkflowTransition> getWorkflowTaskWorkflowTransitions(
-			long workflowTaskId)
-		throws WorkflowException {
-
-		WorkflowTaskManager workflowTaskManager =
-			_workflowTaskManagerSnapshot.get();
-
-		return workflowTaskManager.getWorkflowTaskWorkflowTransitions(
-			workflowTaskId);
-	}
-
 	public static List<WorkflowTask> getWorkflowTasks(
 			long companyId, Boolean completed, int start, int end,
 			OrderByComparator<WorkflowTask> orderByComparator)
@@ -310,6 +299,17 @@ public class WorkflowTaskManagerUtil {
 			_workflowTaskManagerSnapshot.get();
 
 		return workflowTaskManager.isNotifiableUser(userId, workflowTaskId);
+	}
+
+	public static List<WorkflowTransition> liberalGetNextWorkflowTransitions(
+			long workflowTaskId)
+		throws WorkflowException {
+
+		WorkflowTaskManager workflowTaskManager =
+			_workflowTaskManagerSnapshot.get();
+
+		return workflowTaskManager.liberalGetNextWorkflowTransitions(
+			workflowTaskId);
 	}
 
 	public static List<WorkflowTask> search(

@@ -44,6 +44,7 @@ import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.security.audit.event.generators.util.AuditMessageBuilder;
 
 import jakarta.mail.internet.InternetAddress;
 
@@ -192,6 +193,10 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 		if (mfaTimeBasedOTPEntry != null) {
 			_mfaTimeBasedOTPEntryLocalService.deleteMFATimeBasedOTPEntry(
 				mfaTimeBasedOTPEntry);
+
+			_mfaTimeBasedOTPAuditMessageBuilder.routeAuditMessage(
+				_mfaTimeBasedOTPAuditMessageBuilder.
+					buildSetupRemovedAuditMessage(userId));
 		}
 	}
 
@@ -218,6 +223,10 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 						userId, mfaTimeBasedOTPSharedSecret);
 
 				if (timeBasedOTPEntry != null) {
+					_mfaTimeBasedOTPAuditMessageBuilder.routeAuditMessage(
+						_mfaTimeBasedOTPAuditMessageBuilder.
+							buildSetupAddedAuditMessage(userId));
+
 					return true;
 				}
 			}
@@ -588,6 +597,19 @@ public class TimeBasedOTPBrowserSetupMFAChecker
 			_setVerificationResult(auditMessage, "not_verified");
 
 			return auditMessage;
+		}
+
+		public AuditMessage buildSetupAddedAuditMessage(long userId) {
+			return AuditMessageBuilder.buildAuditMessage(
+				User.class.getName(), userId,
+				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_SETUP_ADDED, null);
+		}
+
+		public AuditMessage buildSetupRemovedAuditMessage(long userId) {
+			return AuditMessageBuilder.buildAuditMessage(
+				User.class.getName(), userId,
+				MFATimeBasedOTPEventTypes.MFA_TIMEBASED_OTP_SETUP_REMOVED,
+				null);
 		}
 
 		public AuditMessage
