@@ -1869,6 +1869,7 @@ public class DBPartitionUtil {
 					"Release2.servletContextName where Release2.releaseId is ",
 					"null or Release1.schemaVersion != Release2.schemaVersion ",
 					"order by Release1.servletContextName"));
+
 			ResultSet resultSet = preparedStatement.executeQuery()) {
 
 			if (!resultSet.next()) {
