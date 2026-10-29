@@ -106,6 +106,8 @@ public class LayoutPreviewRendererImpl implements LayoutPreviewRenderer {
 		long[] originalSegmentsExperienceIds = GetterUtil.getLongValues(
 			httpServletRequest.getAttribute(
 				SegmentsWebKeys.SEGMENTS_EXPERIENCE_IDS));
+		Locale originalSiteDefaultLocale =
+			LocaleThreadLocal.getSiteDefaultLocale();
 		Locale originalThemeDisplayLocale =
 			LocaleThreadLocal.getThemeDisplayLocale();
 
@@ -137,6 +139,11 @@ public class LayoutPreviewRendererImpl implements LayoutPreviewRenderer {
 
 			themeDisplay.setShowSignInIcon(true);
 			themeDisplay.setSignedIn(false);
+
+			if (layout.getGroupId() != originalThemeDisplay.getSiteGroupId()) {
+				themeDisplay.setSiteDefaultLocale(
+					_portal.getSiteDefaultLocale(layout.getGroupId()));
+			}
 
 			User guestUser = _userLocalService.getGuestUser(
 				themeDisplay.getCompanyId());
@@ -205,6 +212,7 @@ public class LayoutPreviewRendererImpl implements LayoutPreviewRenderer {
 
 			layout.setClassNameId(originalClassNameId);
 
+			LocaleThreadLocal.setSiteDefaultLocale(originalSiteDefaultLocale);
 			LocaleThreadLocal.setThemeDisplayLocale(originalThemeDisplayLocale);
 
 			ServiceContextThreadLocal.popServiceContext();

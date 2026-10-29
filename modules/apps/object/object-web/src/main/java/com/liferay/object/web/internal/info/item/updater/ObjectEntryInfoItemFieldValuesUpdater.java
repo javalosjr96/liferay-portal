@@ -130,6 +130,8 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 					false, null, null, null, null, themeDisplay.getLocale(),
 					null, themeDisplay.getUser());
 
+			dtoConverterContext.setAttribute("addActions", Boolean.FALSE);
+
 			_deleteRelatedObjectEntries(
 				themeDisplay.getCompanyId(), dtoConverterContext,
 				infoItemFieldValues, objectEntry, scopeKey);
@@ -224,6 +226,8 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 					false, null, null, null, null, themeDisplay.getLocale(),
 					null, themeDisplay.getUser());
 
+			updateDTOConverterContext.setAttribute("addActions", Boolean.FALSE);
+
 			if (objectEntryManager instanceof
 					DefaultObjectEntryManager defaultObjectEntryManager) {
 
@@ -241,13 +245,16 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 			ObjectEntry updatedObjectEntry = ObjectEntryUtil.toObjectEntry(
 				objectDefinition, dtoObjectEntry);
 
-			_relateMainObjectEntry(
-				infoItemFieldValues, objectDefinition, updatedObjectEntry,
-				serviceContext, themeDisplay.getUserId());
+			if (objectDefinition.isDefaultStorageType()) {
+				_relateMainObjectEntry(
+					infoItemFieldValues, objectDefinition, updatedObjectEntry,
+					serviceContext, themeDisplay.getUserId());
 
-			_relateNestedObjectEntries(
-				themeDisplay.getCompanyId(), updatedObjectEntry.getGroupId(),
-				infoItemFieldValues, serviceContext, themeDisplay.getUserId());
+				_relateNestedObjectEntries(
+					themeDisplay.getCompanyId(),
+					updatedObjectEntry.getGroupId(), infoItemFieldValues,
+					serviceContext, themeDisplay.getUserId());
+			}
 
 			return updatedObjectEntry;
 		}
@@ -536,6 +543,10 @@ public class ObjectEntryInfoItemFieldValuesUpdater
 
 					objectDefinitionMap.put(
 						objectDefinitionName, objectDefinition);
+				}
+
+				if (!objectDefinition.isDefaultStorageType()) {
+					continue;
 				}
 
 				DefaultObjectEntryManager defaultObjectEntryManager =

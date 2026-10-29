@@ -6,7 +6,6 @@ import {
 	stageConfigsFromLifecycle,
 } from 'lifecycle/utils/lifecyclePayload';
 import {
-	createDefaultStageConfigs,
 	createStageCondition,
 	IStageCondition,
 	IStageConfig,
@@ -24,9 +23,11 @@ const buildStage = (
 	conditions: conditions.map(buildCondition),
 	description: 'A stage',
 	id: null,
+	key: 'stage-key',
 	matchLogic: MatchLogic.All,
 	maxTimeDays: 90,
 	maxTimeEnabled: true,
+	name: 'Aware',
 	...stage,
 });
 
@@ -319,33 +320,68 @@ describe('buildStageFilterMetadata', () => {
 });
 
 describe('buildCreateLifecyclePayload', () => {
-	it('maps every stage with its order, type, and derived rule', () => {
+	it('sends the lifecycle description and every stage by name, in list order', () => {
 		const payload = buildCreateLifecyclePayload({
 			channelId: '123',
+			description: 'Lifecycle for qualified accounts',
 			groupId: '23',
 			name: 'My Lifecycle',
-			stageConfigs: createDefaultStageConfigs(),
+			stageConfigs: [
+				buildStage([{}], {name: 'Aware'}),
+				buildStage([{}], {name: 'Qualified'}),
+				buildStage([{}], {name: 'Pipeline'}),
+			],
 		});
 
 		expect(payload.channelId).toBe('123');
+		expect(payload.description).toBe('Lifecycle for qualified accounts');
 		expect(payload.name).toBe('My Lifecycle');
-		expect(payload.stages).toHaveLength(6);
-		expect(payload.stages[0].displayOrder).toBe(1);
-		expect(payload.stages[0].stageType).toBe('AWARE');
+		expect(
+			payload.stages.map(({priority, stageName}) => [priority, stageName])
+		).toEqual([
+			[1, 'Aware'],
+			[2, 'Qualified'],
+			[3, 'Pipeline'],
+		]);
 		expect(payload.stages[0].accountLifecycleStageRule).toHaveProperty(
 			'filterString'
 		);
 		expect(payload.stages[0].accountLifecycleStageRule).toHaveProperty(
 			'filterMetadata'
 		);
+	});
+
+	it('names each rule after the lifecycle and the stage', () => {
+		const payload = buildCreateLifecyclePayload({
+			channelId: '123',
+			description: '',
+			groupId: '23',
+			name: 'My Lifecycle',
+			stageConfigs: [buildStage([{}], {name: 'Qualified'})],
+		});
+
 		expect(payload.stages[0].accountLifecycleStageRule.name).toBe(
-			'My Lifecycle Stage AWARE Criteria'
+			'My Lifecycle Stage Qualified Criteria'
 		);
+	});
+
+	it('sends no stage type and no id for new stages', () => {
+		const payload = buildCreateLifecyclePayload({
+			channelId: '123',
+			description: '',
+			groupId: '23',
+			name: 'My Lifecycle',
+			stageConfigs: [buildStage()],
+		});
+
+		expect(payload.stages[0]).not.toHaveProperty('stageType');
+		expect(payload.stages[0]).not.toHaveProperty('id');
 	});
 
 	it('sends a null maxDuration when the stage limit is disabled', () => {
 		const payload = buildCreateLifecyclePayload({
 			channelId: '123',
+			description: '',
 			groupId: '23',
 			name: 'My Lifecycle',
 			stageConfigs: [buildStage([{}], {maxTimeEnabled: false})],
@@ -358,6 +394,7 @@ describe('buildCreateLifecyclePayload', () => {
 describe('buildUpdateLifecyclePayload', () => {
 	it('includes the stage id when present and omits it otherwise', () => {
 		const payload = buildUpdateLifecyclePayload({
+			description: 'Saved description',
 			groupId: '23',
 			lifecycleId: '9',
 			name: 'My Lifecycle',
@@ -367,10 +404,30 @@ describe('buildUpdateLifecyclePayload', () => {
 			],
 		});
 
+		expect(payload.description).toBe('Saved description');
 		expect(payload.groupId).toBe('23');
 		expect(payload.lifecycleId).toBe('9');
 		expect(payload.stages[0].id).toBe('stage-1');
 		expect(payload.stages[1]).not.toHaveProperty('id');
+	});
+
+	it('numbers the stages 1 to N from their list order', () => {
+		const payload = buildUpdateLifecyclePayload({
+			description: '',
+			groupId: '23',
+			lifecycleId: '9',
+			name: 'My Lifecycle',
+			stageConfigs: [
+				buildStage([{}], {id: 'stage-3', name: 'Pipeline'}),
+				buildStage([{}], {id: 'stage-1', name: 'Aware'}),
+			],
+		});
+
+		expect(payload.stages.map(({id, priority}) => [priority, id])).toEqual([
+			[1, 'stage-3'],
+			[2, 'stage-1'],
+		]);
+		expect(payload.stages[0]).not.toHaveProperty('stageType');
 	});
 });
 
@@ -402,19 +459,20 @@ describe('stageConfigsFromLifecycle', () => {
 						"(account.annualRevenue gt 1000) or (account.industry eq 'Technology')",
 				},
 				description: 'Saved description',
-				displayOrder: 1,
 				externalReferenceCode: 'erc-stage-1',
 				id: 'stage-1',
 				maxDuration: 30,
-				stageType: 'AWARE',
+				priority: 1,
+				stageName: 'Aware',
 			},
 		]);
 
-		expect(configs).toHaveLength(6);
+		expect(configs).toHaveLength(1);
 
 		const [aware] = configs;
 
 		expect(aware.id).toBe('stage-1');
+		expect(aware.name).toBe('Aware');
 		expect(aware.description).toBe('Saved description');
 		expect(aware.matchLogic).toBe(MatchLogic.Any);
 		expect(aware.conditions).toHaveLength(2);
@@ -440,11 +498,11 @@ describe('stageConfigsFromLifecycle', () => {
 					filterString: '(account.annualRevenue gt 1000)',
 				},
 				description: 'Saved description',
-				displayOrder: 1,
 				externalReferenceCode: 'erc-stage-1',
 				id: 'stage-1',
 				maxDuration: 30,
-				stageType: 'AWARE',
+				priority: 1,
+				stageName: 'Aware',
 			},
 		]);
 
@@ -466,36 +524,88 @@ describe('stageConfigsFromLifecycle', () => {
 					filterString: '',
 				},
 				description: 'Saved description',
-				displayOrder: 1,
 				externalReferenceCode: 'erc-stage-1',
 				id: 'stage-1',
 				maxDuration: 30,
-				stageType: 'AWARE',
+				priority: 1,
+				stageName: 'Aware',
 			},
 		]);
 
 		expect(aware.conditions[0].key).not.toBe(aware.conditions[1].key);
 	});
 
-	it('falls back to defaults for stages absent from the response', () => {
-		const configs = stageConfigsFromLifecycle([]);
+	it('orders the stages by display order', () => {
+		const configs = stageConfigsFromLifecycle([
+			{
+				description: 'Third',
+				externalReferenceCode: 'erc-stage-3',
+				id: 'stage-3',
+				maxDuration: null,
+				priority: 3,
+				stageName: 'Pipeline',
+			},
+			{
+				description: 'First',
+				externalReferenceCode: 'erc-stage-1',
+				id: 'stage-1',
+				maxDuration: null,
+				priority: 1,
+				stageName: 'Aware',
+			},
+			{
+				description: 'Second',
+				externalReferenceCode: 'erc-stage-2',
+				id: 'stage-2',
+				maxDuration: null,
+				priority: 2,
+				stageName: 'Qualified',
+			},
+		]);
 
-		expect(configs).toHaveLength(6);
-		expect(configs.every((config) => config.id === null)).toBe(true);
-		expect(configs[0].conditions).toHaveLength(1);
-		expect(configs[0].conditions[0].field).toBeNull();
-		expect(configs[0].matchLogic).toBe(MatchLogic.All);
+		expect(configs.map(({name}) => name)).toEqual([
+			'Aware',
+			'Qualified',
+			'Pipeline',
+		]);
+	});
+
+	it('gives every stage its own client key', () => {
+		const configs = stageConfigsFromLifecycle([
+			{
+				description: 'First',
+				externalReferenceCode: 'erc-stage-1',
+				id: 'stage-1',
+				maxDuration: null,
+				priority: 1,
+				stageName: 'Aware',
+			},
+			{
+				description: 'Second',
+				externalReferenceCode: 'erc-stage-2',
+				id: 'stage-2',
+				maxDuration: null,
+				priority: 2,
+				stageName: 'Qualified',
+			},
+		]);
+
+		expect(configs[0].key).not.toBe(configs[1].key);
+	});
+
+	it('starts with no stages when the lifecycle has none', () => {
+		expect(stageConfigsFromLifecycle([])).toEqual([]);
 	});
 
 	it('disables the stage limit when maxDuration is null', () => {
 		const [aware] = stageConfigsFromLifecycle([
 			{
 				description: 'Saved',
-				displayOrder: 1,
 				externalReferenceCode: 'erc-stage-1',
 				id: 'stage-1',
 				maxDuration: null,
-				stageType: 'AWARE',
+				priority: 1,
+				stageName: 'Aware',
 			},
 		]);
 

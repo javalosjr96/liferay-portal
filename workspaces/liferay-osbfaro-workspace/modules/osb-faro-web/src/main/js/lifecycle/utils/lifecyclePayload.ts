@@ -1,18 +1,18 @@
 import {
-	createDefaultStageConfigs,
 	createStageCondition,
-	DEFAULT_MAX_DAYS,
+	createStageKey,
 	IStageCondition,
 	IStageConfig,
-	LIFECYCLE_STAGE_ORDER,
 	MatchLogic,
 } from 'lifecycle/utils/stageConfiguration';
+import {LIFECYCLE_STAGE_DEFAULT_MAX_DAYS} from 'lifecycle/utils/constants';
 import {ILifecycleStage} from 'shared/api/lifecycle';
 import {
 	Operator,
 	OperatorType,
 	resolveOperatorType,
 } from 'lifecycle/utils/lifecycleOperators';
+import {sortBy} from 'lodash';
 
 export interface IStageRulePayload {
 	filterMetadata: string;
@@ -23,20 +23,22 @@ export interface IStageRulePayload {
 export interface IStagePayload {
 	accountLifecycleStageRule: IStageRulePayload;
 	description: string;
-	displayOrder: number;
 	id?: string;
 	maxDuration: number | null;
-	stageType: string;
+	priority: number;
+	stageName: string;
 }
 
 export interface ICreateLifecyclePayload {
 	channelId: string;
+	description: string;
 	groupId: string;
 	name: string;
 	stages: IStagePayload[];
 }
 
 export interface IUpdateLifecyclePayload {
+	description: string;
 	groupId: string;
 	lifecycleId: string;
 	name: string;
@@ -137,8 +139,8 @@ export const buildStageFilterMetadata = (stage: IStageConfig): string =>
 		matchLogic: stage.matchLogic,
 	});
 
-export const buildStageRuleName = (lifecycleName: string, stageType: string) =>
-	`${lifecycleName} Stage ${stageType} Criteria`;
+export const buildStageRuleName = (lifecycleName: string, stageName: string) =>
+	`${lifecycleName} Stage ${stageName} Criteria`;
 
 const buildStagePayload = (
 	stage: IStageConfig,
@@ -148,51 +150,56 @@ const buildStagePayload = (
 	accountLifecycleStageRule: {
 		filterMetadata: buildStageFilterMetadata(stage),
 		filterString: buildStageFilter(stage),
-		name: buildStageRuleName(lifecycleName, LIFECYCLE_STAGE_ORDER[index]),
+		name: buildStageRuleName(lifecycleName, stage.name),
 	},
 	description: stage.description,
-	displayOrder: index + 1,
+	...(stage.id ? {id: stage.id} : {}),
 	maxDuration: stage.maxTimeEnabled ? stage.maxTimeDays : null,
-	stageType: LIFECYCLE_STAGE_ORDER[index],
+	priority: index + 1,
+	stageName: stage.name,
 });
+
+const buildStagePayloads = (stageConfigs: IStageConfig[], name: string) =>
+	stageConfigs.map((stage, index) => buildStagePayload(stage, index, name));
 
 export const buildCreateLifecyclePayload = ({
 	channelId,
+	description,
 	groupId,
 	name,
 	stageConfigs,
 }: {
 	channelId: string;
+	description: string;
 	groupId: string;
 	name: string;
 	stageConfigs: IStageConfig[];
 }): ICreateLifecyclePayload => ({
 	channelId,
+	description,
 	groupId,
 	name,
-	stages: stageConfigs.map((stage, index) =>
-		buildStagePayload(stage, index, name)
-	),
+	stages: buildStagePayloads(stageConfigs, name),
 });
 
 export const buildUpdateLifecyclePayload = ({
+	description,
 	groupId,
 	lifecycleId,
 	name,
 	stageConfigs,
 }: {
+	description: string;
 	groupId: string;
 	lifecycleId: string;
 	name: string;
 	stageConfigs: IStageConfig[];
 }): IUpdateLifecyclePayload => ({
+	description,
 	groupId,
 	lifecycleId,
 	name,
-	stages: stageConfigs.map((stage, index) => ({
-		...buildStagePayload(stage, index, name),
-		...(stage.id ? {id: stage.id} : {}),
-	})),
+	stages: buildStagePayloads(stageConfigs, name),
 });
 
 interface IStageConditionMetadata {
@@ -260,24 +267,16 @@ export const stageRuleFromStage = (
 	};
 };
 
+const stageConfigFromStage = (stage: ILifecycleStage): IStageConfig => ({
+	...stageRuleFromStage(stage),
+	description: stage.description ?? '',
+	id: stage.id,
+	key: createStageKey(),
+	maxTimeDays: stage.maxDuration ?? LIFECYCLE_STAGE_DEFAULT_MAX_DAYS,
+	maxTimeEnabled: stage.maxDuration != null,
+	name: stage.stageName ?? '',
+});
+
 export const stageConfigsFromLifecycle = (
 	stages: ILifecycleStage[] = []
-): IStageConfig[] => {
-	const defaults = createDefaultStageConfigs();
-
-	return LIFECYCLE_STAGE_ORDER.map((stageType, index) => {
-		const stage = stages.find((current) => current.stageType === stageType);
-
-		if (!stage) {
-			return defaults[index];
-		}
-
-		return {
-			...stageRuleFromStage(stage),
-			description: stage.description || defaults[index].description,
-			id: stage.id,
-			maxTimeDays: stage.maxDuration ?? DEFAULT_MAX_DAYS,
-			maxTimeEnabled: stage.maxDuration != null,
-		};
-	});
-};
+): IStageConfig[] => sortBy(stages, 'priority').map(stageConfigFromStage);

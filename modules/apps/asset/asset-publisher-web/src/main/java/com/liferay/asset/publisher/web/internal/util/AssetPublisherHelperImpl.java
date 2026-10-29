@@ -157,13 +157,26 @@ public class AssetPublisherHelperImpl implements AssetPublisherHelper {
 				timeZone, userId, start, end);
 		}
 
-		int total = _assetEntryService.getEntriesCount(assetEntryQuery);
-
 		assetEntryQuery.setEnd(end);
 		assetEntryQuery.setStart(start);
 
-		List<AssetEntry> assetEntries = _assetEntryService.getEntries(
-			assetEntryQuery);
+		List<AssetEntry> assetEntries = null;
+
+		if (assetEntryQuery.isEnablePermissions()) {
+			assetEntries = _assetEntryService.getEntries(assetEntryQuery);
+		}
+		else {
+			assetEntries = _assetEntryLocalService.getEntries(assetEntryQuery);
+		}
+
+		int total = 0;
+
+		if (assetEntryQuery.isEnablePermissions()) {
+			total = _assetEntryService.getEntriesCount(assetEntryQuery);
+		}
+		else {
+			total = _assetEntryLocalService.getEntriesCount(assetEntryQuery);
+		}
 
 		return new BaseModelSearchResult<>(assetEntries, total);
 	}

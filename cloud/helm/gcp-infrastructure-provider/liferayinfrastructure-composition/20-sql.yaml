@@ -1,72 +1,60 @@
-{{- $availabilityType := $database.availabilityType | default "ZONAL" }}
-{{- $backupConfiguration := $database.backupConfiguration | default dict }}
-{{- $edition := $database.edition | default "ENTERPRISE" }}
+{{- $database := $xr.spec.database }}
+{{- $databaseInstanceNameFormat := printf "%s-db-instance-%%s" $xr.metadata.name }}
+{{- $databasePort := "5432" }}
 {{- $instanceType := $database.instanceType | default "db-custom-1-3840" }}
 
-{{- if and (eq $edition "ENTERPRISE_PLUS") (not (hasPrefix "db-perf-optimized-" $instanceType)) }}
-{{- fail (printf "database.edition=ENTERPRISE_PLUS requires a db-perf-optimized-* instance type (got %q)" $instanceType) }}
-{{- end }}
-
-{{- if eq $availabilityType "REGIONAL" }}
-{{- if not $backupConfiguration.enabled }}
-{{- fail "database.availabilityType=REGIONAL requires database.backupConfiguration.enabled=true" }}
-{{- end }}
-
-{{- if not $backupConfiguration.pointInTimeRecoveryEnabled }}
-{{- fail "database.availabilityType=REGIONAL requires database.backupConfiguration.pointInTimeRecoveryEnabled=true" }}
-{{- end }}
-{{- end }}
-
-{{- range $i, $dataPlane := $dataPlanes }}
-{{- $databaseInstanceName := printf "%s-db-instance-%s" $xr.metadata.name $dataPlane }}
-{{- if $i }}
+{{- range $dataPlane := $dataPlanes }}
+{{- $rootPasswordName := printf "liferay-database-%s-root-password" $dataPlane }}
 ---
-{{- end }}
-apiVersion: sql.gcp.m.upbound.io/v1beta1
-kind: DatabaseInstance
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: Object
 metadata:
     annotations:
-        gotemplating.fn.crossplane.io/composition-resource-name: database-primary-{{ $dataPlane }}
-    labels:
-        {{- $labels | toYaml | nindent 8 }}
-        dataPlane: {{ $dataPlane }}
-    name: {{ $databaseInstanceName }}
+        gotemplating.fn.crossplane.io/composition-resource-name: database-root-password-generator-{{ $dataPlane }}
+    name: {{ $baseName }}-db-root-password-generator-{{ $dataPlane }}
 spec:
     forProvider:
-        databaseVersion: {{ $database.databaseVersion | default "POSTGRES_18" }}
-        deletionProtection: {{ and ($database.deletionProtection | default ($xr.spec.deletionProtection | default false)) (eq $dataPlane $activeDataPlane) }}
-        {{- if $cmkEnabled }}
-        encryptionKmsKeyName: {{ $cmkKeyName }}
-        {{- end }}
-        region: {{ $region }}
-        rootPasswordSecretRef:
-            key: password
-            name: {{ $database.rootPasswordSecretName }}
-        settings:
-            availabilityType: {{ $availabilityType }}
-            {{- if or $backupConfiguration.enabled $backupConfiguration.pointInTimeRecoveryEnabled }}
-            backupConfiguration:
-                enabled: {{ $backupConfiguration.enabled | default false }}
-                pointInTimeRecoveryEnabled: {{ $backupConfiguration.pointInTimeRecoveryEnabled | default false }}
-            {{- end }}
-            databaseFlags:
-                -   name: cloudsql.iam_authentication
-                    value: "on"
-            diskSize: {{ $database.storageGB | default 10 }}
-            diskType: PD_SSD
-            edition: {{ $edition }}
-            insightsConfig:
-                queryInsightsEnabled: {{ $database.queryInsightsEnabled | default true }}
-            ipConfiguration:
-                ipv4Enabled: false
-                privateNetwork: projects/{{ $env.projectId }}/global/networks/{{ $env.vpcName }}
-                sslMode: TRUSTED_CLIENT_CERTIFICATE_REQUIRED
-            retainBackupsOnDelete: true
-            tier: {{ $instanceType }}
-            userLabels:
-                {{- $backupTargetLabels | toYaml | nindent 16 }}
-                active: {{ printf "%t" (eq $dataPlane $activeDataPlane) | quote }}
-    managementPolicies: {{ $databaseInstanceManagementPolicies }}
+        manifest:
+            apiVersion: generators.external-secrets.io/v1alpha1
+            kind: Password
+            metadata:
+                name: {{ $rootPasswordName }}
+                namespace: {{ $namespace }}
+            spec:
+                allowRepeat: false
+                digits: 5
+                length: 24
+                noUpper: false
+                symbolCharacters: -_$@
+                symbols: 2
+    managementPolicies: {{ $managementPolicies }}
+---
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: Object
+metadata:
+    annotations:
+        gotemplating.fn.crossplane.io/composition-resource-name: database-root-password-{{ $dataPlane }}
+    name: {{ $baseName }}-db-root-password-{{ $dataPlane }}
+spec:
+    forProvider:
+        manifest:
+            apiVersion: external-secrets.io/v1
+            kind: ExternalSecret
+            metadata:
+                name: {{ $rootPasswordName }}
+                namespace: {{ $namespace }}
+            spec:
+                dataFrom:
+                    -   sourceRef:
+                            generatorRef:
+                                apiVersion: generators.external-secrets.io/v1alpha1
+                                kind: Password
+                                name: {{ $rootPasswordName }}
+                refreshInterval: 0s
+                target:
+                    creationPolicy: Owner
+                    name: {{ $rootPasswordName }}
+    managementPolicies: {{ $managementPolicies }}
 ---
 apiVersion: sql.gcp.m.upbound.io/v1beta1
 kind: Database
@@ -75,7 +63,6 @@ metadata:
         crossplane.io/external-name: {{ $databaseName }}
         gotemplating.fn.crossplane.io/composition-resource-name: liferay-db-{{ $dataPlane }}
     labels:
-        {{- $labels | toYaml | nindent 8 }}
         dataPlane: {{ $dataPlane }}
     name: {{ $xr.metadata.name }}-db-{{ $dataPlane }}
 spec:
@@ -86,6 +73,54 @@ spec:
             matchLabels:
                 dataPlane: {{ $dataPlane }}
     managementPolicies: ["Create", "Observe", "Update"]
+---
+{{- $databaseInstanceName := printf $databaseInstanceNameFormat $dataPlane }}
+apiVersion: sql.gcp.m.upbound.io/v1beta1
+kind: DatabaseInstance
+metadata:
+    annotations:
+        gotemplating.fn.crossplane.io/composition-resource-name: database-primary-{{ $dataPlane }}
+    labels:
+        dataPlane: {{ $dataPlane }}
+    name: {{ $databaseInstanceName }}
+spec:
+    forProvider:
+        databaseVersion: {{ printf "POSTGRES_%s" ($database.version | default "18") }}
+        deletionProtection: {{ and (not $forceDestroy) (eq $dataPlane $activeDataPlane) }}
+        {{- if $cmkEnabled }}
+        encryptionKeyName: {{ $cmkKeyName }}
+        {{- end }}
+        region: {{ $region }}
+        rootPasswordSecretRef:
+            key: password
+            name: {{ $rootPasswordName }}
+        settings:
+            availabilityType: {{ $database.highAvailability | ternary "REGIONAL" "ZONAL" }}
+            {{- if $database.highAvailability }}
+            backupConfiguration:
+                backupRetentionSettings:
+                    retainedBackups: 7
+                enabled: true
+                pointInTimeRecoveryEnabled: true
+                transactionLogRetentionDays: 7
+            {{- end }}
+            databaseFlags:
+                -   name: cloudsql.iam_authentication
+                    value: "on"
+            diskSize: {{ $database.storageGB }}
+            diskType: PD_SSD
+            edition: {{ hasPrefix "db-perf-optimized-" $instanceType | ternary "ENTERPRISE_PLUS" "ENTERPRISE" }}
+            insightsConfig:
+                queryInsightsEnabled: true
+            ipConfiguration:
+                ipv4Enabled: false
+                privateNetwork: projects/{{ $env.projectId }}/global/networks/{{ $env.vpcName }}
+                sslMode: TRUSTED_CLIENT_CERTIFICATE_REQUIRED
+            retainBackupsOnDelete: true
+            tier: {{ $instanceType }}
+            userLabels:
+                {{- merge (dict "active" (eq $dataPlane $activeDataPlane | toString)) $backupTargetLabels | toYaml | nindent 16 }}
+    managementPolicies: {{ $xr.spec.backup.enabled | ternary ((list "*") | toJson) $managementPolicies }}
 {{- if not (and (eq $dataPlane $targetActiveDataPlane) (eq $restorePhase "provisioning")) }}
 ---
 apiVersion: sql.gcp.m.upbound.io/v1beta1
@@ -95,7 +130,6 @@ metadata:
         crossplane.io/external-name: {{ $databaseIamUser }}
         gotemplating.fn.crossplane.io/composition-resource-name: liferay-iam-user-{{ $dataPlane }}
     labels:
-        {{- $labels | toYaml | nindent 8 }}
         dataPlane: {{ $dataPlane }}
     name: {{ $xr.metadata.name }}-db-user-{{ $dataPlane }}
 spec:
@@ -106,12 +140,157 @@ spec:
         type: CLOUD_IAM_SERVICE_ACCOUNT
     managementPolicies: ["Create", "Observe", "Update"]
 {{- end }}
+{{- $isDatabaseInstanceReady := false }}
+{{- $observedDatabaseInstance := dig (printf "database-primary-%s" $dataPlane) "resource" dict $observedResources }}
+{{- range $condition := dig "status" "conditions" list $observedDatabaseInstance }}
+    {{- if and (eq $condition.type "Ready") (eq $condition.status "True") }}
+        {{- $isDatabaseInstanceReady = true }}
+    {{- end }}
+{{- end }}
+{{- if and $isDatabaseInstanceReady (not (and (eq $restorePhase "provisioning") (eq $dataPlane $targetActiveDataPlane))) }}
+{{- $jobName := printf "%s-db-grant-%s" $xr.metadata.name $dataPlane }}
+---
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: Object
+metadata:
+    annotations:
+        gotemplating.fn.crossplane.io/composition-resource-name: liferay-db-grant-job-{{ $dataPlane }}
+    labels:
+        dataPlane: {{ $dataPlane }}
+    name: {{ $jobName }}
+spec:
+    forProvider:
+        manifest:
+            apiVersion: batch/v1
+            kind: Job
+            metadata:
+                labels:
+                    dataPlane: {{ $dataPlane }}
+                name: {{ $jobName }}
+                namespace: {{ $namespace }}
+            spec:
+                template:
+                    spec:
+                        containers:
+                            -   args:
+                                    -   |
+                                            set -o errexit
+
+                                            function main {
+                                                until pg_isready --host 127.0.0.1 --port {{ $databasePort }} --username postgres
+                                                do 
+                                                    sleep 2
+                                                done
+
+                                                psql --dbname {{ $databaseName }} --host 127.0.0.1 --set ON_ERROR_STOP=1 --username postgres <<EOF
+                                            DO \$\$
+
+                                            BEGIN
+                                                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'liferay_shared_owner')
+                                                THEN
+                                                    CREATE ROLE liferay_shared_owner NOLOGIN;
+                                                END IF;
+                                            END \$\$;
+
+                                            GRANT liferay_shared_owner TO postgres;
+
+                                            ALTER DATABASE "{{ $databaseName }}" OWNER TO liferay_shared_owner;
+
+                                            GRANT CONNECT, TEMPORARY ON DATABASE "{{ $databaseName }}" TO "{{ $databaseIamUser }}";
+
+                                            GRANT liferay_shared_owner TO "{{ $databaseIamUser }}";
+
+                                            ALTER ROLE "{{ $databaseIamUser }}" SET ROLE liferay_shared_owner;
+                                            EOF
+
+                                                timeout=$(($(date +%s) + 600))
+
+                                                until PGCONNECT_TIMEOUT=10 PGPASSWORD=iam psql --command "SELECT 1" --dbname {{ $databaseName }} --host 127.0.0.1 --port {{ $databasePort }} --username "{{ $databaseIamUser }}" >/dev/null 2>&1
+                                                do
+                                                    if [ $(date +%s) -ge $timeout ]
+                                                    then
+                                                        echo "{{ $databaseIamUser }} could not be authenticated" >&2
+
+                                                        exit 1
+                                                    fi
+
+                                                    sleep 2
+                                                done
+                                            }
+
+                                            main
+                                command:
+                                    -   /bin/sh
+                                    -   -c
+                                env:
+                                    -   name: PGPASSWORD
+                                        valueFrom:
+                                            secretKeyRef:
+                                                key: password
+                                                name: {{ $rootPasswordName }}
+                                image: postgres:18-alpine
+                                name: sql-runner
+                                resources:
+                                    limits:
+                                        cpu: 200m
+                                        memory: 256Mi
+                                    requests:
+                                        cpu: 100m
+                                        memory: 128Mi
+                                securityContext:
+                                    allowPrivilegeEscalation: false
+                                    capabilities:
+                                        drop:
+                                            -   ALL
+                                    runAsNonRoot: true
+                                    runAsUser: 1000
+                                    seccompProfile:
+                                        type: RuntimeDefault
+                        initContainers:
+                            -   args:
+                                    -   --auto-iam-authn
+                                    -   --port={{ $databasePort }}
+                                    -   --private-ip
+                                    -   --structured-logs
+                                    -   "{{ dig "status" "atProvider" "connectionName" "" $observedDatabaseInstance }}"
+                                image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.25.4
+                                name: cloud-sql-proxy
+                                resources:
+                                    limits:
+                                        cpu: 200m
+                                        memory: 256Mi
+                                    requests:
+                                        cpu: 100m
+                                        memory: 128Mi
+                                restartPolicy: Always
+                                securityContext:
+                                    allowPrivilegeEscalation: false
+                                    capabilities:
+                                        drop:
+                                            -   ALL
+                                    runAsNonRoot: true
+                                    runAsUser: 65532
+                                    seccompProfile:
+                                        type: RuntimeDefault
+                        restartPolicy: OnFailure
+                        securityContext:
+                            fsGroup: 1000
+                            runAsNonRoot: true
+                            seccompProfile:
+                                type: RuntimeDefault
+                        serviceAccountName: liferay-default
+                        volumes:
+                            -   emptyDir: {}
+                                name: term-log
+    managementPolicies: ["Create", "Delete", "Observe"]
+    readiness:
+        celQuery: object.status.succeeded == 1
+        policy: DeriveFromCelQuery
+{{- end }}
 {{- end }}
 {{- range $dataPlane := list "blue" "green" }}
-{{- $databaseInstanceName := printf "%s-db-instance-%s" $xr.metadata.name $dataPlane }}
-{{- $databaseResourceName := printf "liferay-db-%s" $dataPlane }}
-{{- $userResourceName := printf "liferay-iam-user-%s" $dataPlane }}
-{{- if or (has $dataPlane $dataPlanes) (and $.observed.resources (index $.observed.resources $databaseResourceName)) }}
+{{- $databaseInstanceName := printf $databaseInstanceNameFormat $dataPlane }}
+{{- if or (has $dataPlane $dataPlanes) (hasKey $observedResources (printf "liferay-db-%s" $dataPlane)) }}
 ---
 apiVersion: protection.crossplane.io/v1beta1
 kind: Usage
@@ -132,7 +311,7 @@ spec:
         resourceRef:
             name: {{ $databaseInstanceName }}
 {{- end }}
-{{- if and (or (has $dataPlane $dataPlanes) (and $.observed.resources (index $.observed.resources $userResourceName))) (not (and (eq $restorePhase "provisioning") (eq $dataPlane $targetActiveDataPlane))) }}
+{{- if and (or (has $dataPlane $dataPlanes) (hasKey $observedResources (printf "liferay-iam-user-%s" $dataPlane))) (not (and (eq $restorePhase "provisioning") (eq $dataPlane $targetActiveDataPlane))) }}
 ---
 apiVersion: protection.crossplane.io/v1beta1
 kind: Usage

@@ -18,24 +18,23 @@ interface IEditLifecycleFormProps {
 }
 
 const EditLifecycleForm: React.FC<IEditLifecycleFormProps> = ({lifecycle}) => {
-	const {groupId, lifecycleId} = useParams();
+	const {groupId} = useParams();
+
+	const form = useLifecycleSettingsForm({
+		description: lifecycle.description ?? '',
+		name: lifecycle.name ?? '',
+		stageConfigs: () => stageConfigsFromLifecycle(lifecycle.stages),
+	});
 
 	const {
-		canSubmit,
 		catalogError,
-		catalogFields,
 		catalogLoading,
+		lifecycleDescription,
 		lifecycleName,
-		lifecycleURL,
 		refetchCatalog,
-		setLifecycleName,
 		stageConfigs,
 		submit,
-		updateStage,
-	} = useLifecycleSettingsForm(
-		() => stageConfigsFromLifecycle(lifecycle.stages),
-		lifecycle.name ?? ''
-	);
+	} = form;
 
 	if (catalogLoading) {
 		return <Loading />;
@@ -54,8 +53,9 @@ const EditLifecycleForm: React.FC<IEditLifecycleFormProps> = ({lifecycle}) => {
 			() =>
 				API.lifecycle.updateLifecycle(
 					buildUpdateLifecyclePayload({
+						description: lifecycleDescription,
 						groupId: groupId!,
-						lifecycleId: lifecycleId!,
+						lifecycleId: lifecycle.id,
 						name: lifecycleName,
 						stageConfigs,
 					})
@@ -65,15 +65,12 @@ const EditLifecycleForm: React.FC<IEditLifecycleFormProps> = ({lifecycle}) => {
 
 	return (
 		<LifecycleSettingsForm
-			backURL={lifecycleURL}
-			catalogFields={catalogFields?.items}
-			lifecycleName={lifecycleName}
-			onLifecycleNameChange={setLifecycleName}
-			onStageChange={updateStage}
+			authorName={lifecycle.authorName ?? ''}
+			form={form}
+			modifiedDate={lifecycle.modifiedDate}
 			onSubmit={handleSave}
-			stageConfigs={stageConfigs}
-			submitDisabled={!canSubmit}
-			submitLabel={Liferay.Language.get('save')}
+			submitLabel={Liferay.Language.get('save-lifecycle')}
+			title={Liferay.Language.get('edit-lifecycle')}
 		/>
 	);
 };

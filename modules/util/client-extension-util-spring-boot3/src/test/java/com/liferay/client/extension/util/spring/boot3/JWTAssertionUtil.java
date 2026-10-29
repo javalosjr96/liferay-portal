@@ -18,6 +18,7 @@ import java.time.Instant;
 
 import java.util.Date;
 import java.util.Scanner;
+import java.util.UUID;
 
 /**
  * @author Arthur Chan
@@ -28,10 +29,29 @@ public class JWTAssertionUtil {
 	public static final String JWKS = _readJWKS();
 
 	public static String getJWTWithClientId(String clientId) throws Exception {
-		JWKSet jwkSet = JWKSet.parse(JWKS);
+		return _getJWT(
+			_getJWTClaimsSetBuilder(
+				"localhost"
+			).claim(
+				"client_id", clientId
+			).build());
+	}
 
-		RSAKey rsaKey = (RSAKey)jwkSet.getKeyByKeyId(_KEY_ID);
+	public static String getJWTWithExternalReferenceCode(
+			String externalReferenceCode, String issuer)
+		throws Exception {
 
+		return _getJWT(
+			_getJWTClaimsSetBuilder(
+				issuer
+			).claim(
+				"client_id", String.valueOf(UUID.randomUUID())
+			).claim(
+				"external_reference_code", externalReferenceCode
+			).build());
+	}
+
+	private static String _getJWT(JWTClaimsSet jwtClaimsSet) throws Exception {
 		JWSHeader jwsHeader = new JWSHeader.Builder(
 			JWSAlgorithm.RS256
 		).keyID(
@@ -40,31 +60,32 @@ public class JWTAssertionUtil {
 			new JOSEObjectType("at+jwt")
 		).build();
 
-		SignedJWT signedJWT = new SignedJWT(
-			jwsHeader, _getJWTClaimsSet(clientId));
+		SignedJWT signedJWT = new SignedJWT(jwsHeader, jwtClaimsSet);
+
+		JWKSet jwkSet = JWKSet.parse(JWKS);
+
+		RSAKey rsaKey = (RSAKey)jwkSet.getKeyByKeyId(_KEY_ID);
 
 		signedJWT.sign(new RSASSASigner(rsaKey));
 
 		return signedJWT.serialize();
 	}
 
-	private static JWTClaimsSet _getJWTClaimsSet(String clientId) {
+	private static JWTClaimsSet.Builder _getJWTClaimsSetBuilder(String issuer) {
 		Instant instant = Instant.now();
 
 		return new JWTClaimsSet.Builder(
 		).audience(
 			"localhost"
-		).claim(
-			"client_id", clientId
 		).expirationTime(
 			Date.from(instant.plusSeconds(3600))
 		).issueTime(
 			Date.from(instant)
 		).issuer(
-			"localhost"
+			issuer
 		).subject(
 			"none"
-		).build();
+		);
 	}
 
 	private static String _readJWKS() {

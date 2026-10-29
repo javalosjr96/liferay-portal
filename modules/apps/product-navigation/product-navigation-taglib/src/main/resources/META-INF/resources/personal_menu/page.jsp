@@ -83,6 +83,8 @@ if (size != null) {
 	).put(
 		"label", label
 	).put(
+		"showColorSchemeButton", FeatureFlagManagerUtil.isEnabled("LPD-57922") && (themeDisplay.isShowControlPanelIcon() || GroupPermissionUtil.contains(themeDisplay.getPermissionChecker(), themeDisplay.getScopeGroup(), ActionKeys.VIEW_SITE_ADMINISTRATION))
+	).put(
 		"size", size
 	).put(
 		"userName", HtmlUtil.escape(user2.getFullName())

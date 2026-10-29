@@ -152,55 +152,50 @@ public class ImportPreview implements Cloneable, Serializable {
 
 	protected Long fileSize;
 
-	public PreviewPortletDataHandlerSection[]
-		getPreviewPortletDataHandlerSections() {
-
-		return previewPortletDataHandlerSections;
+	public PortletDataHandler[] getPortletDataHandlers() {
+		return portletDataHandlers;
 	}
 
-	public void setPreviewPortletDataHandlerSections(
-		PreviewPortletDataHandlerSection[] previewPortletDataHandlerSections) {
+	public void setPortletDataHandlers(
+		PortletDataHandler[] portletDataHandlers) {
 
-		this.previewPortletDataHandlerSections =
-			previewPortletDataHandlerSections;
+		this.portletDataHandlers = portletDataHandlers;
 	}
 
-	public void setPreviewPortletDataHandlerSections(
-		UnsafeSupplier<PreviewPortletDataHandlerSection[], Exception>
-			previewPortletDataHandlerSectionsUnsafeSupplier) {
+	public void setPortletDataHandlers(
+		UnsafeSupplier<PortletDataHandler[], Exception>
+			portletDataHandlersUnsafeSupplier) {
 
 		try {
-			previewPortletDataHandlerSections =
-				previewPortletDataHandlerSectionsUnsafeSupplier.get();
+			portletDataHandlers = portletDataHandlersUnsafeSupplier.get();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected PreviewPortletDataHandlerSection[]
-		previewPortletDataHandlerSections;
+	protected PortletDataHandler[] portletDataHandlers;
 
-	public PreviewSite[] getPreviewSites() {
-		return previewSites;
+	public Site[] getSites() {
+		return sites;
 	}
 
-	public void setPreviewSites(PreviewSite[] previewSites) {
-		this.previewSites = previewSites;
+	public void setSites(Site[] sites) {
+		this.sites = sites;
 	}
 
-	public void setPreviewSites(
-		UnsafeSupplier<PreviewSite[], Exception> previewSitesUnsafeSupplier) {
+	public void setSites(
+		UnsafeSupplier<Site[], Exception> sitesUnsafeSupplier) {
 
 		try {
-			previewSites = previewSitesUnsafeSupplier.get();
+			sites = sitesUnsafeSupplier.get();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected PreviewSite[] previewSites;
+	protected Site[] sites;
 
 	@Override
 	public ImportPreview clone() throws CloneNotSupportedException {
@@ -234,4 +229,4 @@ public class ImportPreview implements Cloneable, Serializable {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-831052032
+// LIFERAY-REST-BUILDER-HASH:-1046802192

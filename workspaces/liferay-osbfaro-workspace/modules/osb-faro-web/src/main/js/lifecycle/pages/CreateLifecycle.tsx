@@ -5,32 +5,36 @@ import Loading from 'shared/components/Loading';
 import React from 'react';
 import RouteNotFound from 'shared/components/RouteNotFound';
 import {buildCreateLifecyclePayload} from 'lifecycle/utils/lifecyclePayload';
-import {createDefaultStageConfigs} from 'lifecycle/utils/stageConfiguration';
 import {useLifecycleSettingsForm} from 'lifecycle/hooks/useLifecycleSettingsForm';
+import {useCurrentUser} from 'shared/hooks/useCurrentUser';
 import {useParams} from 'react-router-dom';
 import {useRequest} from 'shared/hooks/useRequest';
 
 const CreateLifecycle = () => {
 	const {channelId, groupId} = useParams();
 
+	const currentUser = useCurrentUser();
+
 	const {data: lifecycles, loading} = useRequest({
 		dataSourceFn: API.lifecycle.fetchLifecycles,
 		variables: {channelId, groupId: groupId!},
 	});
 
+	const form = useLifecycleSettingsForm({
+		description: '',
+		name: '',
+		stageConfigs: () => [],
+	});
+
 	const {
-		canSubmit,
 		catalogError,
-		catalogFields,
 		catalogLoading,
+		lifecycleDescription,
 		lifecycleName,
-		lifecycleURL,
 		refetchCatalog,
-		setLifecycleName,
 		stageConfigs,
 		submit,
-		updateStage,
-	} = useLifecycleSettingsForm(createDefaultStageConfigs, '');
+	} = form;
 
 	if (loading || catalogLoading) {
 		return <Loading />;
@@ -54,6 +58,7 @@ const CreateLifecycle = () => {
 				API.lifecycle.createLifecycle(
 					buildCreateLifecyclePayload({
 						channelId: channelId!,
+						description: lifecycleDescription,
 						groupId: groupId!,
 						name: lifecycleName,
 						stageConfigs,
@@ -64,15 +69,11 @@ const CreateLifecycle = () => {
 
 	return (
 		<LifecycleSettingsForm
-			backURL={lifecycleURL}
-			catalogFields={catalogFields?.items}
-			lifecycleName={lifecycleName}
-			onLifecycleNameChange={setLifecycleName}
-			onStageChange={updateStage}
+			authorName={currentUser.name}
+			form={form}
 			onSubmit={handleCreate}
-			stageConfigs={stageConfigs}
-			submitDisabled={!canSubmit}
-			submitLabel={Liferay.Language.get('create')}
+			submitLabel={Liferay.Language.get('create-lifecycle')}
+			title={Liferay.Language.get('new-lifecycle')}
 		/>
 	);
 };

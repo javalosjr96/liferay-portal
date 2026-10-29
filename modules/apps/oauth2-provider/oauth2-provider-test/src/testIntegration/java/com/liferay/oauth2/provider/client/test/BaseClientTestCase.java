@@ -5,12 +5,18 @@
 
 package com.liferay.oauth2.provider.client.test;
 
+import com.liferay.oauth2.provider.constants.OAuth2ApplicationConstants;
+import com.liferay.oauth2.provider.model.OAuth2Application;
 import com.liferay.oauth2.provider.model.OAuth2Authorization;
+import com.liferay.oauth2.provider.service.OAuth2ApplicationLocalService;
 import com.liferay.oauth2.provider.service.OAuth2AuthorizationLocalService;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.json.JSONObjectImpl;
 import com.liferay.portal.kernel.cookies.constants.CookiesConstants;
+import com.liferay.portal.kernel.dao.orm.DynamicQuery;
+import com.liferay.portal.kernel.dao.orm.Property;
+import com.liferay.portal.kernel.dao.orm.PropertyFactoryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.json.JSONException;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -20,6 +26,7 @@ import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.DigesterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -42,6 +49,7 @@ import jakarta.ws.rs.ext.RuntimeDelegate;
 import java.net.URI;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.BiFunction;
@@ -54,6 +62,7 @@ import org.apache.cxf.jaxrs.impl.RuntimeDelegateImpl;
 
 import org.junit.After;
 import org.junit.AfterClass;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 
@@ -207,13 +216,16 @@ public abstract class BaseClientTestCase {
 		invocationBuilder.cookie(cookieSupportNewCookie);
 		invocationBuilder.cookie(jSessionIdNewCookie);
 
-		MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
-
-		formData.add("login", login);
-		formData.add("password", password);
-		formData.add("p_auth", pAuthToken);
-
-		response = invocationBuilder.post(Entity.form(formData));
+		response = invocationBuilder.post(
+			Entity.form(
+				new MultivaluedHashMap<>(
+					HashMapBuilder.put(
+						"login", login
+					).put(
+						"p_auth", pAuthToken
+					).put(
+						"password", password
+					).build())));
 
 		newCookies = response.getCookies();
 
@@ -314,7 +326,7 @@ public abstract class BaseClientTestCase {
 			BiFunction<String, Invocation.Builder, Response>
 				authorizationCodePKCEBiFunction =
 					getExchangeAuthorizationCodePKCEBiFunction(
-						authorizationCode, null, codeVerifier);
+						authorizationCode, codeVerifier, null);
 
 			return authorizationCodePKCEBiFunction.apply(
 				clientId, invocationBuilder);
@@ -338,29 +350,33 @@ public abstract class BaseClientTestCase {
 	protected Response getClientCredentialsResponse(
 		String clientId, Invocation.Builder invocationBuilder) {
 
-		MultivaluedMap<String, String> formData = new MultivaluedHashMap<>();
-
-		formData.add("client_id", clientId);
-		formData.add("client_secret", CLIENT_SECRET);
-		formData.add("grant_type", "client_credentials");
-
-		return invocationBuilder.post(Entity.form(formData));
+		return invocationBuilder.post(
+			Entity.form(
+				new MultivaluedHashMap<>(
+					HashMapBuilder.put(
+						"client_id", clientId
+					).put(
+						"client_secret", CLIENT_SECRET
+					).put(
+						"grant_type", "client_credentials"
+					).build())));
 	}
 
 	protected BiFunction<String, Invocation.Builder, Response>
 		getClientCredentialsResponseBiFunction(String scope) {
 
-		return (clientId, invocationBuilder) -> {
-			MultivaluedMap<String, String> formData =
-				new MultivaluedHashMap<>();
-
-			formData.add("client_id", clientId);
-			formData.add("client_secret", CLIENT_SECRET);
-			formData.add("grant_type", "client_credentials");
-			formData.add("scope", scope);
-
-			return invocationBuilder.post(Entity.form(formData));
-		};
+		return (clientId, invocationBuilder) -> invocationBuilder.post(
+			Entity.form(
+				new MultivaluedHashMap<>(
+					HashMapBuilder.put(
+						"client_id", clientId
+					).put(
+						"client_secret", CLIENT_SECRET
+					).put(
+						"grant_type", "client_credentials"
+					).put(
+						"scope", scope
+					).build())));
 	}
 
 	protected Function<Function<WebTarget, Invocation.Builder>, Response>
@@ -405,10 +421,8 @@ public abstract class BaseClientTestCase {
 				return response;
 			}
 
-			MultivaluedMap<String, String> formData =
-				new MultivaluedHashMap<>();
-
-			formData.add("oauthDecision", "allow");
+			HashMapBuilder.HashMapWrapper<String, String> hashMapWrapper =
+				HashMapBuilder.put("oauthDecision", "allow");
 
 			for (Map.Entry<String, String[]> entry : parameterMap.entrySet()) {
 				String key = entry.getKey();
@@ -417,18 +431,20 @@ public abstract class BaseClientTestCase {
 					continue;
 				}
 
-				formData.add(
+				hashMapWrapper.put(
 					key.substring("oauth2_".length()), entry.getValue()[0]);
 			}
 
 			if (extraParameters != null) {
-				formData.putAll(extraParameters);
+				hashMapWrapper.put(
+					extraParameters.keySet(), extraParameters::getFirst);
 			}
 
 			invocationBuilder = invocationBuilderFunction.apply(
 				getAuthorizeDecisionWebTarget());
 
-			return invocationBuilder.post(Entity.form(formData));
+			return invocationBuilder.post(
+				Entity.form(new MultivaluedHashMap<>(hashMapWrapper.build())));
 		};
 	}
 
@@ -454,46 +470,82 @@ public abstract class BaseClientTestCase {
 				login, password, hostname, invocationBuilderFunction));
 	}
 
+	protected OAuth2Application getDynamicRegistratorOAuth2Application()
+		throws Exception {
+
+		DynamicQuery dynamicQuery =
+			_oAuth2ApplicationLocalService.dynamicQuery();
+
+		Property companyIdProperty = PropertyFactoryUtil.forName("companyId");
+
+		dynamicQuery.add(companyIdProperty.eq(TestPropsValues.getCompanyId()));
+
+		Property nameProperty = PropertyFactoryUtil.forName("name");
+
+		dynamicQuery.add(
+			nameProperty.eq(
+				OAuth2ApplicationConstants.NAME_DYNAMIC_REGISTRATOR));
+
+		List<OAuth2Application> oAuth2Applications =
+			_oAuth2ApplicationLocalService.dynamicQuery(dynamicQuery);
+
+		Assert.assertFalse(oAuth2Applications.isEmpty());
+
+		return oAuth2Applications.get(0);
+	}
+
 	protected BiFunction<String, Invocation.Builder, Response>
 		getExchangeAuthorizationCodeBiFunction(
 			String authorizationCode, String redirectUri) {
 
-		return (clientId, invocationBuilder) -> {
-			MultivaluedMap<String, String> formData =
-				new MultivaluedHashMap<>();
+		return (clientId, invocationBuilder) -> invocationBuilder.post(
+			Entity.form(
+				new MultivaluedHashMap<>(
+					HashMapBuilder.put(
+						"client_id", clientId
+					).put(
+						"client_secret", CLIENT_SECRET
+					).put(
+						"code", authorizationCode
+					).put(
+						"grant_type", "authorization_code"
+					).put(
+						"redirect_uri",
+						() -> {
+							if (Validator.isNull(redirectUri)) {
+								return null;
+							}
 
-			formData.add("client_id", clientId);
-			formData.add("client_secret", CLIENT_SECRET);
-			formData.add("code", authorizationCode);
-			formData.add("grant_type", "authorization_code");
-
-			if (Validator.isNotNull(redirectUri)) {
-				formData.add("redirect_uri", redirectUri);
-			}
-
-			return invocationBuilder.post(Entity.form(formData));
-		};
+							return redirectUri;
+						}
+					).build())));
 	}
 
 	protected BiFunction<String, Invocation.Builder, Response>
 		getExchangeAuthorizationCodePKCEBiFunction(
-			String authorizationCode, String redirectUri, String codeVerifier) {
+			String authorizationCode, String codeVerifier, String redirectUri) {
 
-		return (clientId, invocationBuilder) -> {
-			MultivaluedMap<String, String> formData =
-				new MultivaluedHashMap<>();
+		return (clientId, invocationBuilder) -> invocationBuilder.post(
+			Entity.form(
+				new MultivaluedHashMap<>(
+					HashMapBuilder.put(
+						"client_id", clientId
+					).put(
+						"code", authorizationCode
+					).put(
+						"code_verifier", codeVerifier
+					).put(
+						"grant_type", "authorization_code"
+					).put(
+						"redirect_uri",
+						() -> {
+							if (Validator.isNull(redirectUri)) {
+								return null;
+							}
 
-			formData.add("client_id", clientId);
-			formData.add("code", authorizationCode);
-			formData.add("code_verifier", codeVerifier);
-			formData.add("grant_type", "authorization_code");
-
-			if (Validator.isNotNull(redirectUri)) {
-				formData.add("redirect_uri", redirectUri);
-			}
-
-			return invocationBuilder.post(Entity.form(formData));
-		};
+							return redirectUri;
+						}
+					).build())));
 	}
 
 	protected Invocation.Builder getInvocationBuilder(
@@ -537,37 +589,64 @@ public abstract class BaseClientTestCase {
 	protected BiFunction<String, Invocation.Builder, Response>
 		getResourceOwnerPasswordBiFunction(String userName, String password) {
 
-		return (clientId, invocationBuilder) -> {
-			MultivaluedMap<String, String> formData =
-				new MultivaluedHashMap<>();
-
-			formData.add("client_id", clientId);
-			formData.add("client_secret", CLIENT_SECRET);
-			formData.add("grant_type", "password");
-			formData.add("password", password);
-			formData.add("username", userName);
-
-			return invocationBuilder.post(Entity.form(formData));
-		};
+		return (clientId, invocationBuilder) -> invocationBuilder.post(
+			Entity.form(
+				new MultivaluedHashMap<>(
+					HashMapBuilder.put(
+						"client_id", clientId
+					).put(
+						"client_secret", CLIENT_SECRET
+					).put(
+						"grant_type", "password"
+					).put(
+						"password", password
+					).put(
+						"username", userName
+					).build())));
 	}
 
 	protected BiFunction<String, Invocation.Builder, Response>
 		getResourceOwnerPasswordBiFunction(
 			String userName, String password, String scope) {
 
-		return (clientId, invocationBuilder) -> {
-			MultivaluedMap<String, String> formData =
-				new MultivaluedHashMap<>();
+		return (clientId, invocationBuilder) -> invocationBuilder.post(
+			Entity.form(
+				new MultivaluedHashMap<>(
+					HashMapBuilder.put(
+						"client_id", clientId
+					).put(
+						"client_secret", CLIENT_SECRET
+					).put(
+						"grant_type", "password"
+					).put(
+						"password", password
+					).put(
+						"scope", scope
+					).put(
+						"username", userName
+					).build())));
+	}
 
-			formData.add("client_id", clientId);
-			formData.add("client_secret", CLIENT_SECRET);
-			formData.add("grant_type", "password");
-			formData.add("password", password);
-			formData.add("scope", scope);
-			formData.add("username", userName);
+	protected String getToken(OAuth2Application oAuth2Application) {
+		WebTarget tokenWebTarget = getTokenWebTarget();
 
-			return invocationBuilder.post(Entity.form(formData));
-		};
+		Invocation.Builder invocationBuilder = tokenWebTarget.request();
+
+		String tokenString = parseTokenString(
+			invocationBuilder.post(
+				Entity.form(
+					new MultivaluedHashMap<>(
+						HashMapBuilder.put(
+							"client_id", oAuth2Application.getClientId()
+						).put(
+							"client_secret", oAuth2Application.getClientSecret()
+						).put(
+							"grant_type", "client_credentials"
+						).build()))));
+
+		Assert.assertNotNull(tokenString);
+
+		return tokenString;
 	}
 
 	protected String getToken(String clientId) {
@@ -709,6 +788,9 @@ public abstract class BaseClientTestCase {
 
 	private BundleActivator _bundleActivator;
 	private BundleContext _bundleContext;
+
+	@Inject
+	private OAuth2ApplicationLocalService _oAuth2ApplicationLocalService;
 
 	@Inject
 	private OAuth2AuthorizationLocalService _oAuth2AuthorizationLocalService;

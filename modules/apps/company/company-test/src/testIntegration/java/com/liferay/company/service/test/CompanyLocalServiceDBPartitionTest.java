@@ -68,6 +68,7 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
+import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.UnicodeProperties;
@@ -102,6 +103,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.felix.cm.PersistenceManager;
 
@@ -498,6 +500,45 @@ public class CompanyLocalServiceDBPartitionTest
 	}
 
 	@Test
+	public void testAddDBPartitionCompanyWhenCompanyCachedAsMissing()
+		throws Exception {
+
+		Company company = CompanyTestUtil.addCompany();
+
+		companyLocalService.exportCompany(company.getCompanyId());
+
+		try {
+			companyLocalService.deleteCompany(company);
+
+			Assert.assertNull(
+				companyLocalService.fetchCompany(company.getCompanyId()));
+
+			String name = RandomTestUtil.randomString();
+
+			company = companyLocalService.addDBPartitionCompany(
+				company.getCompanyId(), name, null, null);
+
+			Assert.assertEquals(name, company.getName());
+		}
+		finally {
+			db.runSQL(
+				dbPartitionDB.getDropPartitionSQL(
+					DBPartitionUtil.getExportedPartitionName(
+						company.getCompanyId())));
+
+			if (ArrayUtil.contains(
+					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+					company.getCompanyId())) {
+
+				companyLocalService.deleteCompany(company);
+			}
+			else {
+				removeDBPartitions(new long[] {company.getCompanyId()});
+			}
+		}
+	}
+
+	@Test
 	public void testAddDBPartitionCompanyWhenCompanyLocalServiceFails()
 		throws Exception {
 
@@ -856,6 +897,48 @@ public class CompanyLocalServiceDBPartitionTest
 	}
 
 	@Test
+	public void testCopyDBPartitionCompanyWhenSourceIsInUse() throws Exception {
+		AtomicLong ticketId = new AtomicLong();
+
+		Company copiedCompany = null;
+
+		try {
+			try (AutoCloseable autoCloseable = _addTicketDuringCopySchema(
+					TestPropsValues.getCompanyId(), ticketId)) {
+
+				copiedCompany = companyLocalService.copyDBPartitionCompany(
+					TestPropsValues.getCompanyId(), null,
+					RandomTestUtil.randomString(),
+					StringUtil.toLowerCase(RandomTestUtil.randomString()),
+					RandomTestUtil.randomString());
+			}
+
+			_assertCounter(
+				CompanyLocalServiceTestUtil.getPartitionName(
+					copiedCompany.getCompanyId()),
+				ticketId.get());
+		}
+		finally {
+			if (copiedCompany != null) {
+				companyLocalService.deleteCompany(copiedCompany.getCompanyId());
+			}
+
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(
+						StringBundler.concat(
+							"delete from ",
+							CompanyLocalServiceTestUtil.getPartitionName(
+								TestPropsValues.getCompanyId()),
+							".Ticket where ticketId = ?"))) {
+
+				preparedStatement.setLong(1, ticketId.get());
+
+				preparedStatement.executeUpdate();
+			}
+		}
+	}
+
+	@Test
 	public void testDeleteCompany() throws Exception {
 		_company1 = CompanyTestUtil.addCompany();
 
@@ -940,6 +1023,34 @@ public class CompanyLocalServiceDBPartitionTest
 				ArrayUtil.contains(
 					CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
 					_company1.getCompanyId()));
+		}
+	}
+
+	@Test
+	public void testExportCompanyWhenSourceIsInUse() throws Exception {
+		Company company = CompanyTestUtil.addCompany();
+
+		AtomicLong ticketId = new AtomicLong();
+
+		try {
+			try (AutoCloseable autoCloseable = _addTicketDuringCopySchema(
+					company.getCompanyId(), ticketId)) {
+
+				companyLocalService.exportCompany(company.getCompanyId());
+			}
+
+			_assertCounter(
+				DBPartitionUtil.getExportedPartitionName(
+					company.getCompanyId()),
+				ticketId.get());
+		}
+		finally {
+			db.runSQL(
+				dbPartitionDB.getDropPartitionSQL(
+					DBPartitionUtil.getExportedPartitionName(
+						company.getCompanyId())));
+
+			companyLocalService.deleteCompany(company);
 		}
 	}
 
@@ -1114,6 +1225,52 @@ public class CompanyLocalServiceDBPartitionTest
 			_counterLocalService.reset(
 				CompanyLocalServiceDBPartitionTest.class.getName(), 100000);
 		}
+	}
+
+	private long _addTicket(long companyId) throws Exception {
+		long ticketId;
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId)) {
+
+			ticketId = _counterLocalService.increment(
+				Counter.class.getName(), PropsValues.COUNTER_INCREMENT * 100);
+		}
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"insert into ",
+					CompanyLocalServiceTestUtil.getPartitionName(companyId),
+					".Ticket (mvccVersion, ticketId, companyId) values (0, ?, ",
+					"?)"))) {
+
+			preparedStatement.setLong(1, ticketId);
+			preparedStatement.setLong(2, companyId);
+
+			preparedStatement.executeUpdate();
+		}
+
+		return ticketId;
+	}
+
+	private AutoCloseable _addTicketDuringCopySchema(
+		long companyId, AtomicLong ticketId) {
+
+		return ReflectionTestUtil.setFieldValueWithAutoCloseable(
+			DBPartitionUtil.class, "_dbPartitionDB",
+			ProxyUtil.newProxyInstance(
+				DBPartitionDB.class.getClassLoader(),
+				new Class<?>[] {DBPartitionDB.class},
+				(proxy, method, args) -> {
+					if (Objects.equals(method.getName(), "getCreateTableSQL") &&
+						StringUtil.equalsIgnoreCase(
+							(String)args[3], "Ticket")) {
+
+						ticketId.set(_addTicket(companyId));
+					}
+
+					return method.invoke(dbPartitionDB, args);
+				}));
 	}
 
 	private void _assertCache(long companyId, boolean cached) throws Exception {
@@ -1318,6 +1475,35 @@ public class CompanyLocalServiceDBPartitionTest
 						}
 					}
 				}
+			}
+		}
+	}
+
+	private void _assertCounter(String partitionName, long ticketId)
+		throws Exception {
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"select ticketId from ", partitionName,
+					".Ticket where ticketId = ?"))) {
+
+			preparedStatement.setLong(1, ticketId);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				Assert.assertTrue(resultSet.next());
+			}
+		}
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"select currentId from ", partitionName,
+					".Counter where name = ?"))) {
+
+			preparedStatement.setString(1, Counter.class.getName());
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				Assert.assertTrue(resultSet.next());
+				Assert.assertTrue(resultSet.getLong("currentId") >= ticketId);
 			}
 		}
 	}

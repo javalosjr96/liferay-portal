@@ -4,12 +4,30 @@ kind: BucketIAMMember
 metadata:
     annotations:
         gotemplating.fn.crossplane.io/composition-resource-name: liferay-gsa-overlay-bucket-iam
-    labels:
-        {{- $labels | toYaml | nindent 8 }}
 spec:
     forProvider:
         bucket: {{ $overlayBucketName }}
         member: serviceAccount:{{ $gsaEmail }}
         role: roles/storage.objectViewer
+    managementPolicies: {{ $managementPolicies }}
+---
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: Object
+metadata:
+    annotations:
+        crossplane.io/external-name: {{ $baseName }}-overlay-bucket-details-secret
+        gotemplating.fn.crossplane.io/composition-resource-name: overlay-bucket-details-secret
+    name: {{ $baseName }}-overlay-bucket-details-secret
+spec:
+    forProvider:
+        manifest:
+            apiVersion: v1
+            data:
+                LIFERAY_OVERLAY_BUCKET_NAME: {{ $overlayBucketName | b64enc | quote }}
+            kind: Secret
+            metadata:
+                name: overlay-bucket-details
+                namespace: {{ $namespace }}
+            type: Opaque
     managementPolicies: {{ $managementPolicies }}
 {{- end }}

@@ -31,43 +31,26 @@ public class IsolatedAttributesHttpServletRequestTest {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Test
-	@TestInfo("LPD-103742")
+	@TestInfo({"LPD-103742", "LPD-112108"})
 	public void testGetAttribute() {
 		_testGetAttribute();
+		_testGetAttributeWithReplacedRequest();
 		_testGetAttributeWithRequestDispatcherAttribute();
+		_testGetAttributeWithRestoredRequest();
 	}
 
 	@Test
-	@TestInfo("LPD-103742")
+	@TestInfo({"LPD-103742", "LPD-112108"})
 	public void testGetAttributeNames() {
-		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
-
-		String name1 = RandomTestUtil.randomString();
-
-		httpServletRequest.setAttribute(name1, RandomTestUtil.randomString());
-
-		IsolatedAttributesHttpServletRequest
-			isolatedAttributesHttpServletRequest =
-				new IsolatedAttributesHttpServletRequest(httpServletRequest);
-
-		isolatedAttributesHttpServletRequest.removeAttribute(name1);
-
-		String name2 = RandomTestUtil.randomString();
-
-		isolatedAttributesHttpServletRequest.setAttribute(
-			name2, RandomTestUtil.randomString());
-
-		List<String> names = Collections.list(
-			isolatedAttributesHttpServletRequest.getAttributeNames());
-
-		Assert.assertEquals(names.toString(), 1, names.size());
-		Assert.assertEquals(name2, names.get(0));
+		_testGetAttributeNames();
+		_testGetAttributeNamesWithRequestDispatcherAttribute();
 	}
 
 	@Test
-	@TestInfo("LPD-103742")
+	@TestInfo({"LPD-103742", "LPD-112108"})
 	public void testRemoveAttribute() {
 		_testRemoveAttribute();
+		_testRemoveAttributeWithReplacedRequest();
 		_testRemoveAttributeWithRequestDispatcherAttribute();
 	}
 
@@ -103,6 +86,101 @@ public class IsolatedAttributesHttpServletRequestTest {
 		Assert.assertEquals(value1, httpServletRequest.getAttribute(name));
 	}
 
+	private void _testGetAttributeNames() {
+		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+
+		String name1 = RandomTestUtil.randomString();
+
+		httpServletRequest.setAttribute(name1, RandomTestUtil.randomString());
+
+		IsolatedAttributesHttpServletRequest
+			isolatedAttributesHttpServletRequest =
+				new IsolatedAttributesHttpServletRequest(httpServletRequest);
+
+		isolatedAttributesHttpServletRequest.removeAttribute(name1);
+
+		String name2 = RandomTestUtil.randomString();
+
+		isolatedAttributesHttpServletRequest.setAttribute(
+			name2, RandomTestUtil.randomString());
+
+		List<String> names = Collections.list(
+			isolatedAttributesHttpServletRequest.getAttributeNames());
+
+		Assert.assertEquals(name2, names.get(0));
+		Assert.assertEquals(names.toString(), 1, names.size());
+	}
+
+	private void _testGetAttributeNamesWithRequestDispatcherAttribute() {
+		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+
+		IsolatedAttributesHttpServletRequest
+			isolatedAttributesHttpServletRequest1 =
+				new IsolatedAttributesHttpServletRequest(httpServletRequest);
+
+		isolatedAttributesHttpServletRequest1.setAttribute(
+			JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH,
+			RandomTestUtil.randomString());
+
+		IsolatedAttributesHttpServletRequest
+			isolatedAttributesHttpServletRequest2 =
+				new IsolatedAttributesHttpServletRequest(httpServletRequest);
+
+		isolatedAttributesHttpServletRequest2.removeAttribute(
+			JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH);
+
+		Assert.assertEquals(
+			Collections.singletonList(
+				JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH),
+			Collections.list(
+				isolatedAttributesHttpServletRequest1.getAttributeNames()));
+		Assert.assertEquals(
+			Collections.emptyList(),
+			Collections.list(
+				isolatedAttributesHttpServletRequest2.getAttributeNames()));
+
+		isolatedAttributesHttpServletRequest1.setRequest(
+			new MockHttpServletRequest());
+
+		Assert.assertEquals(
+			Collections.emptyList(),
+			Collections.list(
+				isolatedAttributesHttpServletRequest1.getAttributeNames()));
+	}
+
+	private void _testGetAttributeWithReplacedRequest() {
+		HttpServletRequest httpServletRequest1 = new MockHttpServletRequest();
+
+		IsolatedAttributesHttpServletRequest
+			isolatedAttributesHttpServletRequest =
+				new IsolatedAttributesHttpServletRequest(httpServletRequest1);
+
+		String value1 = RandomTestUtil.randomString();
+
+		isolatedAttributesHttpServletRequest.setAttribute(
+			JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH, value1);
+
+		HttpServletRequest httpServletRequest2 = new MockHttpServletRequest();
+		String value2 = RandomTestUtil.randomString();
+
+		httpServletRequest2.setAttribute(
+			JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH, value2);
+
+		isolatedAttributesHttpServletRequest.setRequest(httpServletRequest2);
+
+		Assert.assertEquals(
+			value2,
+			isolatedAttributesHttpServletRequest.getAttribute(
+				JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH));
+
+		isolatedAttributesHttpServletRequest.setRequest(httpServletRequest1);
+
+		Assert.assertEquals(
+			value1,
+			isolatedAttributesHttpServletRequest.getAttribute(
+				JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH));
+	}
+
 	private void _testGetAttributeWithRequestDispatcherAttribute() {
 		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
 
@@ -135,6 +213,39 @@ public class IsolatedAttributesHttpServletRequestTest {
 				JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH));
 	}
 
+	private void _testGetAttributeWithRestoredRequest() {
+		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+
+		IsolatedAttributesHttpServletRequest
+			isolatedAttributesHttpServletRequest1 =
+				new IsolatedAttributesHttpServletRequest(httpServletRequest);
+
+		String value = RandomTestUtil.randomString();
+
+		isolatedAttributesHttpServletRequest1.setAttribute(
+			JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH, value);
+
+		isolatedAttributesHttpServletRequest1.setRequest(
+			new MockHttpServletRequest());
+		isolatedAttributesHttpServletRequest1.setAttribute(
+			JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH,
+			RandomTestUtil.randomString());
+		isolatedAttributesHttpServletRequest1.setRequest(httpServletRequest);
+
+		IsolatedAttributesHttpServletRequest
+			isolatedAttributesHttpServletRequest2 =
+				new IsolatedAttributesHttpServletRequest(httpServletRequest);
+
+		isolatedAttributesHttpServletRequest2.setAttribute(
+			JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH,
+			RandomTestUtil.randomString());
+
+		Assert.assertEquals(
+			value,
+			isolatedAttributesHttpServletRequest1.getAttribute(
+				JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH));
+	}
+
 	private void _testRemoveAttribute() {
 		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
 
@@ -153,6 +264,37 @@ public class IsolatedAttributesHttpServletRequestTest {
 			isolatedAttributesHttpServletRequest.getAttribute(name));
 
 		Assert.assertEquals(value, httpServletRequest.getAttribute(name));
+	}
+
+	private void _testRemoveAttributeWithReplacedRequest() {
+		IsolatedAttributesHttpServletRequest
+			isolatedAttributesHttpServletRequest =
+				new IsolatedAttributesHttpServletRequest(
+					new MockHttpServletRequest());
+
+		isolatedAttributesHttpServletRequest.setAttribute(
+			JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH,
+			RandomTestUtil.randomString());
+
+		isolatedAttributesHttpServletRequest.removeAttribute(
+			JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH);
+
+		Assert.assertNull(
+			isolatedAttributesHttpServletRequest.getAttribute(
+				JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH));
+
+		HttpServletRequest httpServletRequest = new MockHttpServletRequest();
+		String value = RandomTestUtil.randomString();
+
+		httpServletRequest.setAttribute(
+			JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH, value);
+
+		isolatedAttributesHttpServletRequest.setRequest(httpServletRequest);
+
+		Assert.assertEquals(
+			value,
+			isolatedAttributesHttpServletRequest.getAttribute(
+				JavaConstants.JAKARTA_SERVLET_INCLUDE_SERVLET_PATH));
 	}
 
 	private void _testRemoveAttributeWithRequestDispatcherAttribute() {

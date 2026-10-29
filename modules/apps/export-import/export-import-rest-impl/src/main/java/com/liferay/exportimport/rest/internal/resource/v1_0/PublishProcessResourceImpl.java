@@ -15,15 +15,17 @@ import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
 import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalService;
 import com.liferay.exportimport.kernel.staging.Staging;
+import com.liferay.exportimport.portlet.data.handler.provider.PortletDataHandlerProvider;
 import com.liferay.exportimport.rest.dto.v1_0.ProcessProgress;
 import com.liferay.exportimport.rest.dto.v1_0.PublishProcess;
 import com.liferay.exportimport.rest.dto.v1_0.PublishProcessRequest;
 import com.liferay.exportimport.rest.dto.v1_0.Status;
 import com.liferay.exportimport.rest.internal.util.BackgroundTaskUtil;
 import com.liferay.exportimport.rest.internal.util.GroupUtil;
+import com.liferay.exportimport.rest.internal.util.LayoutUtil;
 import com.liferay.exportimport.rest.internal.util.ParameterMapUtil;
 import com.liferay.exportimport.rest.internal.util.PermissionUtil;
-import com.liferay.exportimport.rest.internal.util.PreviewPortletDataHandlerUtil;
+import com.liferay.exportimport.rest.internal.util.PortletDataHandlerUtil;
 import com.liferay.exportimport.rest.resource.v1_0.PublishProcessResource;
 import com.liferay.headless.delivery.dto.v1_0.util.CreatorUtil;
 import com.liferay.petra.string.StringPool;
@@ -34,32 +36,23 @@ import com.liferay.portal.kernel.backgroundtask.display.BackgroundTaskDisplayFac
 import com.liferay.portal.kernel.dao.orm.DynamicQuery;
 import com.liferay.portal.kernel.dao.orm.RestrictionsFactoryUtil;
 import com.liferay.portal.kernel.language.Language;
-import com.liferay.portal.kernel.messaging.DestinationNames;
 import com.liferay.portal.kernel.model.Group;
-import com.liferay.portal.kernel.scheduler.Trigger;
-import com.liferay.portal.kernel.scheduler.TriggerFactory;
 import com.liferay.portal.kernel.search.Sort;
-import com.liferay.portal.kernel.service.LayoutService;
+import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.UserLocalService;
-import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.StringUtil;
-import com.liferay.portal.kernel.util.TimeZoneUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 import com.liferay.staging.StagingGroupHelper;
 
-import jakarta.ws.rs.BadRequestException;
-
 import java.io.Serializable;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.TimeZone;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -191,10 +184,17 @@ public class PublishProcessResourceImpl extends BasePublishProcessResourceImpl {
 
 		Map<String, String[]> parameterMap =
 			ParameterMapUtil.putDateRangeParameters(
-				publishProcessRequest.getDateRangeTypeAsString(),
-				publishProcessRequest.getStartDate(),
-				publishProcessRequest.getEndDate(),
-				ParameterMapUtil.toParameterMap(publishProcessRequest),
+				publishProcessRequest.getDateFilter(),
+				ParameterMapUtil.toParameterMap(
+					publishProcessRequest,
+					PortletDataHandlerUtil.getExportPortletDataHandlers(
+						stagingGroup,
+						contextAcceptLanguage.getPreferredLocale(), 0,
+						_portletDataHandlerProvider,
+						_exportImportHelper.getExportablePortlets(
+							contextCompany.getCompanyId(), false,
+							stagingGroupId),
+						false)),
 				contextUser);
 
 		parameterMap =
@@ -205,48 +205,20 @@ public class PublishProcessResourceImpl extends BasePublishProcessResourceImpl {
 			PortletDataHandlerKeys.PERFORM_DIRECT_BINARY_IMPORT,
 			new String[] {Boolean.TRUE.toString()});
 
-		boolean privateLayout = parameterMap.containsKey(
-			PreviewPortletDataHandlerUtil.PRIVATE_PAGES_CONTROL_NAME);
-		boolean publicLayout = parameterMap.containsKey(
-			PreviewPortletDataHandlerUtil.PUBLIC_PAGES_CONTROL_NAME);
-
-		if (privateLayout && publicLayout) {
-			throw new BadRequestException(
-				"Unable to request both private and public pages");
-		}
-
-		if (privateLayout && !stagingGroup.isPrivateLayoutsEnabled()) {
-			throw new BadRequestException("Private pages are not enabled");
-		}
-
-		String[] values = parameterMap.get(
-			privateLayout ?
-				PreviewPortletDataHandlerUtil.PRIVATE_PAGES_CONTROL_NAME :
-					PreviewPortletDataHandlerUtil.PUBLIC_PAGES_CONTROL_NAME);
-
-		long[] layoutIds = null;
-
-		if ((values == null) || Boolean.parseBoolean(values[0])) {
-			layoutIds = _exportImportHelper.getAllLayoutIds(
-				stagingGroupId, privateLayout);
-		}
-		else {
-			layoutIds = GetterUtil.getLongValues(values);
-		}
+		boolean privateLayout = LayoutUtil.isPrivateLayout(parameterMap);
 
 		Group liveGroup = GroupUtil.getLiveGroup(stagingGroup);
-
-		if (!Validator.isBlank(publishProcessRequest.getCronExpression())) {
-			return _scheduleSitePublishProcess(
-				layoutIds, liveGroup, parameterMap, privateLayout,
-				publishProcessRequest, stagingGroup);
-		}
 
 		Map<String, Serializable> settingsMap =
 			_exportImportConfigurationSettingsMapFactory.
 				buildPublishLayoutLocalSettingsMap(
 					contextUser, stagingGroupId, liveGroup.getGroupId(),
-					privateLayout, layoutIds, parameterMap);
+					privateLayout,
+					LayoutUtil.getLayoutIds(
+						_layoutLocalService.getLayouts(
+							stagingGroupId, privateLayout),
+						parameterMap),
+					parameterMap);
 
 		ExportImportConfiguration exportImportConfiguration =
 			_exportImportConfigurationLocalService.
@@ -352,60 +324,6 @@ public class PublishProcessResourceImpl extends BasePublishProcessResourceImpl {
 		return false;
 	}
 
-	private PublishProcess _scheduleSitePublishProcess(
-			long[] layoutIds, Group liveGroup,
-			Map<String, String[]> parameterMap, boolean privateLayout,
-			PublishProcessRequest publishProcessRequest, Group stagingGroup)
-		throws Exception {
-
-		Date date = new Date();
-		Date scheduleStartDate = publishProcessRequest.getScheduleStartDate();
-
-		if (scheduleStartDate == null) {
-			scheduleStartDate = date;
-		}
-		else if (scheduleStartDate.before(date)) {
-			throw new BadRequestException(
-				"The schedule start date must be in the future");
-		}
-
-		String cronExpression = publishProcessRequest.getCronExpression();
-		String groupName = _staging.getSchedulerGroupName(
-			DestinationNames.LAYOUTS_LOCAL_PUBLISHER, liveGroup.getGroupId());
-		String name = publishProcessRequest.getName();
-
-		String timeZoneId = publishProcessRequest.getTimeZoneId();
-
-		if (Validator.isBlank(timeZoneId)) {
-			TimeZone timeZone = TimeZoneUtil.getDefault();
-
-			timeZoneId = timeZone.getID();
-		}
-
-		_validateCronExpression(
-			cronExpression, groupName, name,
-			publishProcessRequest.getScheduleEndDate(), scheduleStartDate,
-			timeZoneId);
-
-		parameterMap.put(
-			ParameterMapUtil.CRON_EXPRESSION, new String[] {cronExpression});
-		parameterMap.put(
-			ParameterMapUtil.TIME_ZONE_ID, new String[] {timeZoneId});
-
-		_layoutService.schedulePublishToLive(
-			stagingGroup.getGroupId(), liveGroup.getGroupId(), privateLayout,
-			layoutIds, parameterMap, groupName, cronExpression,
-			scheduleStartDate, publishProcessRequest.getScheduleEndDate(),
-			name);
-
-		return new PublishProcess() {
-			{
-				setDateCreated(Date::new);
-				setName(() -> name);
-			}
-		};
-	}
-
 	private PublishProcess _toPublishProcess(BackgroundTask backgroundTask) {
 		return new PublishProcess() {
 			{
@@ -459,28 +377,6 @@ public class PublishProcessResourceImpl extends BasePublishProcessResourceImpl {
 		return PublishProcess.Type.MANUAL;
 	}
 
-	private void _validateCronExpression(
-		String cronExpression, String groupName, String name,
-		Date scheduleEndDate, Date scheduleStartDate, String timeZoneId) {
-
-		Trigger trigger = null;
-
-		try {
-			trigger = _triggerFactory.createTrigger(
-				name, groupName, scheduleStartDate, scheduleEndDate,
-				cronExpression, TimeZone.getTimeZone(timeZoneId));
-		}
-		catch (Exception exception) {
-			throw new BadRequestException(
-				"The publication schedule is invalid", exception);
-		}
-
-		if (trigger.getFireDateAfter(new Date(0)) == null) {
-			throw new BadRequestException(
-				"The publication schedule never runs");
-		}
-	}
-
 	private static final String[] _CLASS_NAMES_TASK_EXECUTOR = {
 		BackgroundTaskExecutorNames.LAYOUT_STAGING_BACKGROUND_TASK_EXECUTOR
 	};
@@ -510,19 +406,19 @@ public class PublishProcessResourceImpl extends BasePublishProcessResourceImpl {
 	private Language _language;
 
 	@Reference
-	private LayoutService _layoutService;
+	private LayoutLocalService _layoutLocalService;
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private PortletDataHandlerProvider _portletDataHandlerProvider;
 
 	@Reference
 	private Staging _staging;
 
 	@Reference
 	private StagingGroupHelper _stagingGroupHelper;
-
-	@Reference
-	private TriggerFactory _triggerFactory;
 
 	@Reference
 	private UserLocalService _userLocalService;

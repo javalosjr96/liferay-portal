@@ -13,6 +13,7 @@ import com.liferay.depot.constants.DepotRolesConstants;
 import com.liferay.depot.service.DepotEntryGroupRelLocalService;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.document.library.kernel.service.DLFileEntryLocalService;
+import com.liferay.document.library.text.DLFileEntryTextProvider;
 import com.liferay.exportimport.kernel.empty.model.EmptyModelManager;
 import com.liferay.exportimport.kernel.empty.model.EmptyModelManagerUtil;
 import com.liferay.fragment.cache.FragmentEntryLinkCache;
@@ -369,7 +370,6 @@ public class ObjectDefinitionLocalServiceImpl
 			systemObjectDefinitionManager.getLabelMap());
 		objectDefinition.setPluralLabelMap(
 			systemObjectDefinitionManager.getPluralLabelMap());
-		objectDefinition.setVersion(systemObjectDefinitionManager.getVersion());
 
 		objectDefinition = objectDefinitionPersistence.update(objectDefinition);
 
@@ -392,6 +392,8 @@ public class ObjectDefinitionLocalServiceImpl
 			_objectFieldPersistence.remove(oldObjectField);
 		}
 
+		boolean updateVersion = true;
+
 		for (ObjectField newObjectField : newObjectFields) {
 			ObjectField oldObjectField = _objectFieldPersistence.fetchByODI_N(
 				objectDefinition.getObjectDefinitionId(),
@@ -413,27 +415,43 @@ public class ObjectDefinitionLocalServiceImpl
 					newObjectField.isRequired(), newObjectField.isState(),
 					newObjectField.getObjectFieldSettings());
 			}
-			else {
-				if (!Objects.equals(
+			else if (!oldObjectField.isSystem()) {
+				_log.error(
+					StringBundler.concat(
+						"Unable to add system object field \"",
+						newObjectField.getName(), "\" to object definition \"",
+						objectDefinition.getName(),
+						"\" because a custom object field has the same name"));
+
+				updateVersion = false;
+			}
+			else if (!Objects.equals(
 						oldObjectField.getDBType(),
 						newObjectField.getDBType()) ||
-					!Objects.equals(
-						oldObjectField.isRequired(),
-						newObjectField.isRequired())) {
+					 !Objects.equals(
+						 oldObjectField.isRequired(),
+						 newObjectField.isRequired())) {
 
-					oldObjectField.setBusinessType(
-						newObjectField.getBusinessType());
-					oldObjectField.setDBType(newObjectField.getDBType());
-					oldObjectField.setRequired(newObjectField.isRequired());
+				oldObjectField.setBusinessType(
+					newObjectField.getBusinessType());
+				oldObjectField.setDBType(newObjectField.getDBType());
+				oldObjectField.setRequired(newObjectField.isRequired());
 
-					_objectFieldPersistence.update(oldObjectField);
-				}
+				_objectFieldPersistence.update(oldObjectField);
 			}
 		}
 
 		_addOrUpdateObjectActions(
 			userId, objectDefinition.getObjectDefinitionId(),
 			systemObjectDefinitionManager.getObjectActions());
+
+		if (updateVersion) {
+			objectDefinition.setVersion(
+				systemObjectDefinitionManager.getVersion());
+
+			objectDefinition = objectDefinitionPersistence.update(
+				objectDefinition);
+		}
 
 		return objectDefinition;
 	}
@@ -1087,10 +1105,10 @@ public class ObjectDefinitionLocalServiceImpl
 			_accountEntryLocalService, _accountEntryOrganizationRelLocalService,
 			_assetEntryLocalService, _bundleContext,
 			_depotEntryGroupRelLocalService, _depotEntryLocalService,
-			_dlFileEntryLocalService, _groupLocalService,
-			_kaleoDefinitionLocalService, _listTypeLocalService,
-			_objectActionLocalService, objectDefinitionLocalService,
-			_objectDefinitionSettingLocalService,
+			_dlFileEntryLocalService, _dlFileEntryTextProvider,
+			_groupLocalService, _kaleoDefinitionLocalService,
+			_listTypeLocalService, _objectActionLocalService,
+			objectDefinitionLocalService, _objectDefinitionSettingLocalService,
 			_objectEntryFolderLocalService, _objectEntryLocalService,
 			_objectEntryService, _objectFieldBusinessTypeRegistry,
 			_objectFieldLocalService, _objectFolderLocalService,
@@ -4125,6 +4143,9 @@ public class ObjectDefinitionLocalServiceImpl
 
 	@Reference
 	private DLFileEntryLocalService _dlFileEntryLocalService;
+
+	@Reference
+	private DLFileEntryTextProvider _dlFileEntryTextProvider;
 
 	@Reference
 	private EmptyModelManager _emptyModelManager;

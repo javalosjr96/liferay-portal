@@ -1,60 +1,24 @@
+.stage-metrics-track {
+	scroll-snap-type: x mandatory;
+	scrollbar-width: none;
+}
+
 .stage-metrics {
-	min-width: 0;
+	flex: 1 0 calc((100% - 4rem) / 5);
+	min-width: 11.5rem;
+	scroll-snap-align: start;
 
 	&__bar {
-		background-color: $cadmin-indigo-l2;
-		border-radius: 8px;
-		max-height: 136px;
+		background-color: $cadmin-indigo;
 
 		&--empty {
 			border: 1px dashed $cadmin-secondary-l2;
 		}
 	}
-}
 
-.stage-progression {
-	position: relative;
-
-	&::before,
-	&::after {
-		border-left: 1px dashed $cadmin-secondary-l2;
-		bottom: 1rem;
-		content: '';
+	&__conversion {
+		bottom: 0.5rem;
 		position: absolute;
-		top: 0;
-		z-index: 1;
-	}
-
-	&::before {
-		left: 0;
-	}
-
-	&::after {
-		right: 0;
-	}
-
-	&__fill {
-		background: $cadmin-light-d1;
-	}
-
-	@include media-breakpoint-down(md) {
-		&::before {
-			border-bottom: 1px dashed $cadmin-secondary-l2;
-			border-left: none;
-			bottom: auto;
-			left: 0;
-			right: 0;
-			top: 50%;
-			z-index: 0;
-		}
-
-		&::after {
-			display: none;
-		}
-
-		.label-inverse-info {
-			position: relative;
-			z-index: 1;
-		}
+		right: 0.5rem;
 	}
 }

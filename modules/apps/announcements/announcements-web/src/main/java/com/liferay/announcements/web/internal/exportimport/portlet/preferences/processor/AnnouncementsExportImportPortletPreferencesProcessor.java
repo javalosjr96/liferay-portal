@@ -12,12 +12,13 @@ import com.liferay.exportimport.kernel.lar.PortletDataException;
 import com.liferay.exportimport.portlet.preferences.processor.Capability;
 import com.liferay.exportimport.portlet.preferences.processor.ExportImportPortletPreferencesProcessor;
 import com.liferay.exportimport.portlet.preferences.processor.ExportImportPortletPreferencesProcessorHelper;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.portal.kernel.util.Validator;
 
 import jakarta.portlet.PortletPreferences;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Function;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -48,7 +49,11 @@ public class AnnouncementsExportImportPortletPreferencesProcessor
 		throws PortletDataException {
 
 		_updateSelectedScopeGroupExternalReferenceCodes(
-			companyId, portletPreferences);
+			portletPreferences,
+			externalReferenceCode ->
+				_exportImportPortletPreferencesProcessorHelper.
+					getGroupExportPortletPreferencesExternalReferenceCode(
+						companyId, externalReferenceCode));
 	}
 
 	@Override
@@ -57,22 +62,44 @@ public class AnnouncementsExportImportPortletPreferencesProcessor
 			PortletPreferences portletPreferences)
 		throws PortletDataException {
 
-		_updateSelectedScopeGroupExternalReferenceCodes(
+		processExportPortletPreferences(
 			portletDataContext.getCompanyId(), portletPreferences);
 
 		return portletPreferences;
 	}
 
 	@Override
+	public void processImportPortletPreferences(
+			long companyId, PortletPreferences portletPreferences)
+		throws PortletDataException {
+
+		_updateSelectedScopeGroupExternalReferenceCodes(
+			portletPreferences,
+			externalReferenceCode ->
+				_exportImportPortletPreferencesProcessorHelper.
+					getGroupImportPortletPreferencesExternalReferenceCode(
+						companyId, externalReferenceCode));
+	}
+
+	@Override
 	public PortletPreferences processImportPortletPreferences(
-		PortletDataContext portletDataContext,
-		PortletPreferences portletPreferences) {
+			PortletDataContext portletDataContext,
+			PortletPreferences portletPreferences)
+		throws PortletDataException {
+
+		_updateSelectedScopeGroupExternalReferenceCodes(
+			portletPreferences,
+			externalReferenceCode ->
+				_exportImportPortletPreferencesProcessorHelper.
+					getGroupImportPortletPreferencesExternalReferenceCode(
+						portletDataContext, externalReferenceCode));
 
 		return portletPreferences;
 	}
 
 	private void _updateSelectedScopeGroupExternalReferenceCodes(
-			long companyId, PortletPreferences portletPreferences)
+			PortletPreferences portletPreferences,
+			Function<String, String> externalReferenceCodeFunction)
 		throws PortletDataException {
 
 		String selectedScopeGroupExternalReferenceCodes =
@@ -88,24 +115,16 @@ public class AnnouncementsExportImportPortletPreferencesProcessor
 				AnnouncementsUtil.toStringList(
 					selectedScopeGroupExternalReferenceCodes);
 
-			List<String> newExternalReferenceCodes = new ArrayList<>(
-				externalReferenceCodes.size());
-
-			for (String externalReferenceCode : externalReferenceCodes) {
-				newExternalReferenceCodes.add(
-					_exportImportPortletPreferencesProcessorHelper.
-						getGroupExportPortletPreferencesExternalReferenceCode(
-							companyId, externalReferenceCode));
-			}
-
 			portletPreferences.setValue(
 				"selectedScopeGroupExternalReferenceCodes",
-				AnnouncementsUtil.toJSON(newExternalReferenceCodes));
+				AnnouncementsUtil.toJSON(
+					TransformUtil.transform(
+						externalReferenceCodes,
+						externalReferenceCodeFunction::apply)));
 		}
 		catch (Exception exception) {
 			throw new PortletDataException(
-				"Unable to update portlet preferences during export",
-				exception);
+				"Unable to update portlet preferences", exception);
 		}
 	}
 
