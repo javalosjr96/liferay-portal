@@ -345,6 +345,12 @@ public class PortalInstanceBatchEngineImportTaskExceptionHandlerTest {
 			new IllegalArgumentException(
 				"Unable to insert the database partition " +
 					RandomTestUtil.randomString()));
+		_assertImportErrorMessageKey(
+			"the-exported-schema-version-does-not-match-the-current-schema-" +
+				"version",
+			new IllegalArgumentException(
+				"Unable to import the database partition " +
+					RandomTestUtil.randomString()));
 	}
 
 	@Test
