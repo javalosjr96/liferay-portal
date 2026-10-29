@@ -8,7 +8,21 @@ Import-Package:\
 	\
 	!io.prometheus.client.*,\
 	\
-	!javassist.*
+	!javassist.*,\
+	\
+	com.ibm.db2.jcc;resolution:=optional,\
+	\
+	com.microsoft.sqlserver.jdbc;resolution:=optional,\
+	\
+	com.mysql.cj.jdbc;resolution:=optional,\
+	\
+	oracle.jdbc;resolution:=optional,\
+	\
+	org.mariadb.jdbc;resolution:=optional,\
+	\
+	org.postgresql;resolution:=optional;version="[0.0.0,9999.0.0)",\
+	\
+	*
 -includeresource:\
 	@com.liferay.portal.tools.db.migration.importer.jar!/com/liferay/portal/tools/db/migration/importer/*.class,\
 	@com.liferay.portal.tools.db.migration.importer.jar!/com/liferay/portal/tools/db/migration/importer/jdbc/*.class,\
