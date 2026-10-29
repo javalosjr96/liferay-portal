@@ -1566,6 +1566,8 @@ public class DBPartitionUtil {
 		try {
 			_checkImportDBPartition(connection, companyId);
 
+			_validateSchemaVersions(connection, sourcePartitionName);
+
 			if (Validator.isNull(webId)) {
 				_validateWebId(connection, companyId, sourcePartitionName);
 			}
@@ -1903,6 +1905,48 @@ public class DBPartitionUtil {
 			preparedStatement.setLong(2, companyId);
 
 			preparedStatement.executeUpdate();
+		}
+	}
+
+	private static void _validateSchemaVersions(
+			Connection connection, String partitionName)
+		throws SQLException {
+
+		try (PreparedStatement preparedStatement = connection.prepareStatement(
+				StringBundler.concat(
+					"select Release1.servletContextName, ",
+					"Release1.schemaVersion, Release2.releaseId, ",
+					"Release2.schemaVersion as exportedSchemaVersion from ",
+					_defaultPartitionName, ".Release_ Release1 left join ",
+					partitionName, ".Release_ Release2 on ",
+					"Release1.servletContextName = ",
+					"Release2.servletContextName where Release2.releaseId is ",
+					"null or Release1.schemaVersion != Release2.schemaVersion ",
+					"order by Release1.servletContextName"));
+
+			ResultSet resultSet = preparedStatement.executeQuery()) {
+
+			if (!resultSet.next()) {
+				return;
+			}
+
+			String servletContextName = resultSet.getString(
+				"servletContextName");
+
+			if (resultSet.getLong("releaseId") == 0) {
+				throw new IllegalArgumentException(
+					StringBundler.concat(
+						"Unable to import the database partition ",
+						partitionName, " because it has no schema version for ",
+						servletContextName));
+			}
+
+			throw new IllegalArgumentException(
+				StringBundler.concat(
+					"Unable to import the database partition ", partitionName,
+					" because the schema version of ", servletContextName,
+					" is ", resultSet.getString("exportedSchemaVersion"),
+					" instead of ", resultSet.getString("schemaVersion")));
 		}
 	}
 
