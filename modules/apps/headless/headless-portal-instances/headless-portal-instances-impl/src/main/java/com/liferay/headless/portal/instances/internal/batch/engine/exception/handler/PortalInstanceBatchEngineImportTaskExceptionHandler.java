@@ -206,6 +206,16 @@ public class PortalInstanceBatchEngineImportTaskExceptionHandler
 			return "the-default-instance-cannot-be-deleted";
 		}
 
+		if (throwable instanceof UnsupportedOperationException) {
+			String message = GetterUtil.getString(throwable.getMessage());
+
+			if (message.equals("Copying an instance is already in progress")) {
+				return "copying-an-instance-is-already-in-progress";
+			}
+
+			return null;
+		}
+
 		if (throwable instanceof UserEmailAddressException) {
 			return "please-enter-a-valid-email-address";
 		}
