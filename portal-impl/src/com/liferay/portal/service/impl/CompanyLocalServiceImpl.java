@@ -685,6 +685,13 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					companyId);
 		}
 
+		if (Objects.equals(
+				PortalInstances.getCopyInProcessCompanyId(), companyId)) {
+
+			throw new UnsupportedOperationException(
+				"Copying an instance is already in progress");
+		}
+
 		SafeCloseable safeCloseable1 =
 			PortalInstances.setCompanyInDeletionProcessWithSafeCloseable(
 				companyId);
