@@ -211,6 +211,15 @@ public class PortalInstanceBatchEngineImportTaskExceptionHandlerTest {
 			new NoSuchCompanyException(
 				"No Company exists with the key {webId=missing}"));
 		_assertErrorMessageKey(null, new PortalException(new Exception()));
+		_assertErrorMessageKey(null, new UnsupportedOperationException());
+		_assertErrorMessageKey(
+			null,
+			new UnsupportedOperationException(
+				RandomTestUtil.randomLong() + " is already in deletion"));
+		_assertErrorMessageKey(
+			"copying-an-instance-is-already-in-progress",
+			new UnsupportedOperationException(
+				"Copying an instance is already in progress"));
 		_assertErrorMessageKey(
 			"please-enter-a-valid-email-address",
 			new UserEmailAddressException.MustNotBeNull());
