@@ -18,12 +18,14 @@ import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.portal.instances.constants.PortalInstancesNotificationConstants;
 import com.liferay.portal.instances.constants.PortalInstancesPortletKeys;
+import com.liferay.portal.kernel.exception.NoSuchCompanyException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserNotificationEvent;
 import com.liferay.portal.kernel.model.VirtualHost;
@@ -36,6 +38,7 @@ import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.service.VirtualHostLocalService;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.PrefsPropsTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -170,7 +173,11 @@ public class PortalInstanceResourceTest
 		_testPostPortalInstanceWithAdmin();
 		_testPostPortalInstanceWithAdminAndCompanyStrangers();
 		_testPostPortalInstanceWithAdminCredentials();
+		_testPostPortalInstanceWithAdminWithInvalidPassword();
+		_testPostPortalInstanceWithAdminWithInvalidScreenName();
 		_testPostPortalInstanceWithAdminWithoutRequiredFields();
+		_testPostPortalInstanceWithInvalidMaxUsers();
+		_testPostPortalInstanceWithVirtualHostTooLong();
 		_testPostPortalInstanceWithoutOmniadminPermission();
 	}
 
@@ -344,8 +351,15 @@ public class PortalInstanceResourceTest
 
 		randomPortalInstance.setAdmin(Admin.toDTO(adminJSONObject.toString()));
 
+		_assertPostPortalInstanceProblemTitle(randomPortalInstance, title);
+	}
+
+	private void _assertPostPortalInstanceProblemTitle(
+			PortalInstance portalInstance, String title)
+		throws Exception {
+
 		try {
-			portalInstanceResource.postPortalInstance(randomPortalInstance);
+			portalInstanceResource.postPortalInstance(portalInstance);
 
 			Assert.fail();
 		}
@@ -355,6 +369,11 @@ public class PortalInstanceResourceTest
 			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
 			Assert.assertEquals(title, problem.getTitle());
 		}
+
+		Assert.assertThrows(
+			NoSuchCompanyException.class,
+			() -> _companyLocalService.getCompanyByWebId(
+				portalInstance.getPortalInstanceId()));
 	}
 
 	private void _assertProblemExceptionProblemStatus(
@@ -408,6 +427,16 @@ public class PortalInstanceResourceTest
 		}
 
 		return copyPortalInstance;
+	}
+
+	private JSONObject _createAdminJSONObject() {
+		return JSONUtil.put(
+			"emailAddress", RandomTestUtil.randomString() + "@liferay.com"
+		).put(
+			"familyName", RandomTestUtil.randomString()
+		).put(
+			"givenName", RandomTestUtil.randomString()
+		);
 	}
 
 	private PortalInstanceResource _createUserPortalInstanceResource()
@@ -881,6 +910,35 @@ public class PortalInstanceResourceTest
 		}
 	}
 
+	private void _testPostPortalInstanceWithAdminWithInvalidPassword()
+		throws Exception {
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_DEFAULT_POLICY_CHECK_SYNTAX", true)) {
+
+			JSONObject adminJSONObject = _createAdminJSONObject();
+
+			_assertPostPortalInstanceProblemTitle(
+				adminJSONObject.put(
+					"password",
+					RandomTestUtil.randomString(
+						PropsValues.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH - 1)),
+				"Please enter a valid password.");
+		}
+	}
+
+	private void _testPostPortalInstanceWithAdminWithInvalidScreenName()
+		throws Exception {
+
+		JSONObject adminJSONObject = _createAdminJSONObject();
+
+		_assertPostPortalInstanceProblemTitle(
+			adminJSONObject.put(
+				"screenName", RandomTestUtil.randomString() + "!"),
+			"Please enter a valid screen name.");
+	}
+
 	private void _testPostPortalInstanceWithAdminWithoutRequiredFields()
 		throws Exception {
 
@@ -905,6 +963,15 @@ public class PortalInstanceResourceTest
 				"givenName", RandomTestUtil.randomString()
 			),
 			"Email address must not be null");
+	}
+
+	private void _testPostPortalInstanceWithInvalidMaxUsers() throws Exception {
+		PortalInstance randomPortalInstance = randomPortalInstance();
+
+		randomPortalInstance.setMaxUsers(-1);
+
+		_assertPostPortalInstanceProblemTitle(
+			randomPortalInstance, "Max users must be greater or equal to 0.");
 	}
 
 	private void _testPostPortalInstanceWithSiteInitializerKeyNonexistent()
@@ -933,6 +1000,22 @@ public class PortalInstanceResourceTest
 		Assert.assertNull(
 			_virtualHostLocalService.fetchVirtualHost(
 				randomPortalInstance.getVirtualHost()));
+	}
+
+	private void _testPostPortalInstanceWithVirtualHostTooLong()
+		throws Exception {
+
+		PortalInstance randomPortalInstance = randomPortalInstance();
+
+		int maxLength = ModelHintsUtil.getMaxLength(
+			VirtualHost.class.getName(), "hostname");
+
+		randomPortalInstance.setVirtualHost(
+			StringUtil.toLowerCase(RandomTestUtil.randomString(maxLength + 1)));
+
+		_assertPostPortalInstanceProblemTitle(
+			randomPortalInstance,
+			"Virtual hostname must not exceed " + maxLength + " characters");
 	}
 
 	private void _testPostPortalInstanceWithoutAdmin() throws Exception {

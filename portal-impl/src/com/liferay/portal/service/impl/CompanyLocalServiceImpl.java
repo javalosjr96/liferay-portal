@@ -60,6 +60,7 @@ import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.GroupTable;
 import com.liferay.portal.kernel.model.LayoutPrototype;
 import com.liferay.portal.kernel.model.LayoutSetPrototype;
+import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.OrganizationConstants;
 import com.liferay.portal.kernel.model.PasswordPolicy;
@@ -384,6 +385,10 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		if (Validator.isNotNull(lowerCaseVirtualHostname)) {
 			validateVirtualHost(
 				GetterUtil.getString(webId), lowerCaseVirtualHostname);
+		}
+
+		if (Validator.isNotNull(name)) {
+			_validateNameMaxLength(name);
 		}
 
 		try (SafeCloseable safeCloseable1 =
@@ -1986,6 +1991,8 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		if ((group != null) || Validator.isNull(name)) {
 			throw new CompanyNameException();
 		}
+
+		_validateNameMaxLength(name);
 	}
 
 	protected void validateVirtualHost(String webId, String virtualHostname)
@@ -1995,6 +2002,15 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			if (Validator.isNull(virtualHostname)) {
 				throw new CompanyVirtualHostException(
 					"Virtual hostname is null");
+			}
+
+			int maxLength = ModelHintsUtil.getMaxLength(
+				VirtualHost.class.getName(), "hostname");
+
+			if (virtualHostname.length() > maxLength) {
+				throw new CompanyVirtualHostException(
+					"Virtual hostname must not exceed " + maxLength +
+						" characters");
 			}
 			else if (virtualHostname.equals(_DEFAULT_VIRTUAL_HOST) &&
 					 !webId.equals(PropsValues.COMPANY_DEFAULT_WEB_ID)) {
@@ -2607,6 +2623,18 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			PropsKeys.LOCALES, newLanguageIds);
 
 		_groupLocalService.updateGroup(group);
+	}
+
+	private void _validateNameMaxLength(String name)
+		throws CompanyNameException {
+
+		int maxLength = ModelHintsUtil.getMaxLength(
+			CompanyInfo.class.getName(), "name");
+
+		if (name.length() > maxLength) {
+			throw new CompanyNameException(
+				"Name must not exceed " + maxLength + " characters");
+		}
 	}
 
 	private static final String _DEFAULT_VIRTUAL_HOST = "localhost";

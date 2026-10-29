@@ -22,6 +22,8 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.CompanyInfo;
+import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.VirtualHost;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
@@ -111,6 +113,7 @@ public class PortalInstanceImportResourceTest
 		_testPostPortalInstanceImportInvalidSchemaName();
 		_testPostPortalInstanceImportNonexistentDBPartition();
 		_testPostPortalInstanceImportSuccess();
+		_testPostPortalInstanceImportValuesTooLong();
 		_testPostPortalInstanceImportWithoutOmniadminPermission();
 	}
 
@@ -492,6 +495,55 @@ public class PortalInstanceImportResourceTest
 		finally {
 			_deleteCompany(portalInstance.getCompanyId());
 
+			_dropExportedSchema(companyId);
+		}
+	}
+
+	private void _testPostPortalInstanceImportValuesTooLong()
+		throws Exception {
+
+		long companyId = _exportCompany();
+
+		try {
+			PortalInstanceImport portalInstanceImport =
+				new PortalInstanceImport();
+
+			portalInstanceImport.setSchemaName(
+				DBPartitionUtil.getExportedPartitionName(companyId));
+			portalInstanceImport.setName(
+				RandomTestUtil.randomString(
+					ModelHintsUtil.getMaxLength(
+						CompanyInfo.class.getName(), "name") + 1));
+
+			_assertPostPortalInstanceImportProblemTitle(
+				portalInstanceImport, "Please enter a valid name.");
+
+			portalInstanceImport.setName((String)null);
+
+			int virtualHostMaxLength = ModelHintsUtil.getMaxLength(
+				VirtualHost.class.getName(), "hostname");
+
+			portalInstanceImport.setVirtualHost(
+				StringUtil.toLowerCase(
+					RandomTestUtil.randomString(virtualHostMaxLength + 1)));
+
+			_assertPostPortalInstanceImportProblemTitle(
+				portalInstanceImport,
+				"Virtual hostname must not exceed " + virtualHostMaxLength +
+					" characters");
+
+			portalInstanceImport.setVirtualHost((String)null);
+
+			PortalInstance portalInstance =
+				portalInstanceImportResource.postPortalInstanceImport(
+					portalInstanceImport);
+
+			Assert.assertEquals(
+				Long.valueOf(companyId), portalInstance.getCompanyId());
+
+			_deleteCompany(portalInstance.getCompanyId());
+		}
+		finally {
 			_dropExportedSchema(companyId);
 		}
 	}
