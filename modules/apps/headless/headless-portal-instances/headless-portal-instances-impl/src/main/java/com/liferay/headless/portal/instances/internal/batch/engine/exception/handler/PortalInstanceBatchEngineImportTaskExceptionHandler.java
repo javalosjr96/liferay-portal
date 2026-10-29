@@ -253,6 +253,12 @@ public class PortalInstanceBatchEngineImportTaskExceptionHandler
 				return "the-exported-schema-does-not-exist";
 			}
 
+			if (message.startsWith(
+					"Unable to import the database partition ")) {
+
+				return "the-exported-schema-version-does-not-match-the-current-schema-version";
+			}
+
 			return null;
 		}
 
