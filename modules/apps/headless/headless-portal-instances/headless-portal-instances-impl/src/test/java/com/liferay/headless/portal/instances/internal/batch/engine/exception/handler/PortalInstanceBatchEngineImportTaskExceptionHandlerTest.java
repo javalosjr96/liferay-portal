@@ -213,6 +213,10 @@ public class PortalInstanceBatchEngineImportTaskExceptionHandlerTest {
 		_assertErrorMessageKey(null, new PortalException(new Exception()));
 		_assertErrorMessageKey(null, new UnsupportedOperationException());
 		_assertErrorMessageKey(
+			null,
+			new UnsupportedOperationException(
+				RandomTestUtil.randomLong() + " is already in deletion"));
+		_assertErrorMessageKey(
 			"copying-an-instance-is-already-in-progress",
 			new UnsupportedOperationException(
 				"Copying an instance is already in progress"));
