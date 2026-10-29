@@ -3678,6 +3678,12 @@ jdbc.read.password=password</echo>
 					<then>
 						<prepare-database-jndi />
 
+						<local name="database.read.url" />
+
+						<condition else="jdbc:mysql://${database.host}/lportal?useUnicode=true&amp;amp;characterEncoding=UTF-8&amp;amp;useFastDateParsing=false&amp;amp;serverTimezone=GMT&amp;amp;dontTrackOpenResources=true&amp;amp;holdResultsOpenOverStatementClose=true" property="database.read.url" value="jdbc:postgresql://${database.host}:5432/lportal">
+							<equals arg1="${database.type}" arg2="postgresql" />
+						</condition>
+
 						<replace
 							file="${app.server.dir}/conf/context.xml"
 						>
@@ -3707,7 +3713,7 @@ jdbc.read.password=password</echo>
 											name="jdbc/LiferayReadPool"
 											password="password"
 											type="javax.sql.DataSource"
-											url="jdbc:mysql://${database.host}/lportal?useUnicode=true&amp;characterEncoding=UTF-8&amp;useFastDateParsing=false&amp;serverTimezone=GMT&amp;dontTrackOpenResources=true&amp;holdResultsOpenOverStatementClose=true"
+											url="${database.read.url}"
 											username="read_only_user"
 										/>
 								]]>
