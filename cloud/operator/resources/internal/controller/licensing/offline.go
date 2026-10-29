@@ -9,16 +9,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"time"
 
 	licensingv1alpha1 "github.com/liferay/liferay-portal/cloud/operator/api/licensing/v1alpha1"
 	addon "github.com/liferay/liferay-portal/cloud/operator/internal/addon"
 	provisioning "github.com/liferay/liferay-portal/cloud/operator/internal/provisioning"
 	corev1 "k8s.io/api/core/v1"
-	meta "k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	types "k8s.io/apimachinery/pkg/types"
-	controllerruntime "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
@@ -28,32 +24,36 @@ func (liferayEnvironmentReconciler *LiferayEnvironmentReconciler) awaitOfflineAc
 	context context.Context,
 	environmentID string,
 	liferayEnvironment *licensingv1alpha1.LiferayEnvironment,
-) (controllerruntime.Result, error) {
+) (stepOutcome, error) {
 	logf.FromContext(context).V(1).Info(
 		"Awaiting offline activation bundle", "environmentID", environmentID,
 	)
 
-	meta.SetStatusCondition(
-		&liferayEnvironment.Status.Conditions,
-		metav1.Condition{
-			Message: "Waiting for the offline activation bundle to be provided",
-			Reason:  "AwaitingOfflineActivationBundle",
-			Status:  metav1.ConditionFalse,
-			Type:    conditionActivated,
-		},
+	return liferayEnvironmentReconciler.deferOfflineActivation(
+		context, liferayEnvironment,
+		"Waiting for the offline activation bundle to be provided", phasePending,
+		"AwaitingOfflineActivationBundle",
 	)
+}
 
-	liferayEnvironment.Status.Phase = "Pending"
+func (liferayEnvironmentReconciler *LiferayEnvironmentReconciler) deferOfflineActivation(
+	context context.Context,
+	liferayEnvironment *licensingv1alpha1.LiferayEnvironment,
+	message string,
+	phase string,
+	reason string,
+) (stepOutcome, error) {
+	setCondition(conditionActivated, liferayEnvironment, message, reason, metav1.ConditionFalse)
+
+	liferayEnvironment.Status.Phase = phase
 
 	if error := liferayEnvironmentReconciler.enforceLastKnownLicense(
 		context, liferayEnvironment,
 	); error != nil {
-		return controllerruntime.Result{}, error
+		return stepOutcome{}, error
 	}
 
-	return liferayEnvironmentReconciler.finishAfter(
-		context, liferayEnvironment, 15*time.Second,
-	)
+	return stopAfter(activationPollInterval), nil
 }
 
 func (liferayEnvironmentReconciler *LiferayEnvironmentReconciler) extractOfflineAddOns(
@@ -106,21 +106,21 @@ func (liferayEnvironmentReconciler *LiferayEnvironmentReconciler) handleOfflineA
 	environmentID string,
 	liferayEnvironment *licensingv1alpha1.LiferayEnvironment,
 	privateKey *rsa.PrivateKey,
-) (*provisioning.Entitlements, controllerruntime.Result, error) {
+) (*provisioning.Entitlements, stepOutcome, error) {
 	logger := logf.FromContext(context)
 
 	if error := liferayEnvironmentReconciler.publishOfflineRequest(
 		context, environmentID, liferayEnvironment, privateKey,
 	); error != nil {
-		return nil, controllerruntime.Result{}, error
+		return nil, stepOutcome{}, error
 	}
 
 	if liferayEnvironment.Spec.OfflineActivationBundle == "" {
-		result, error := liferayEnvironmentReconciler.awaitOfflineActivationBundle(
+		stepOutcome, error := liferayEnvironmentReconciler.awaitOfflineActivationBundle(
 			context, environmentID, liferayEnvironment,
 		)
 
-		return nil, result, error
+		return nil, stepOutcome, error
 	}
 
 	offlineActivationBundlePath := liferayEnvironmentReconciler.offlineActivationBundlePath(
@@ -130,11 +130,11 @@ func (liferayEnvironmentReconciler *LiferayEnvironmentReconciler) handleOfflineA
 	entitlements, error := readOfflineActivationBundle(offlineActivationBundlePath)
 
 	if isOfflineActivationBundleNotFound(error) {
-		result, error := liferayEnvironmentReconciler.awaitOfflineActivationBundle(
+		stepOutcome, error := liferayEnvironmentReconciler.awaitOfflineActivationBundle(
 			context, environmentID, liferayEnvironment,
 		)
 
-		return nil, result, error
+		return nil, stepOutcome, error
 	}
 
 	if error != nil {
@@ -143,55 +143,25 @@ func (liferayEnvironmentReconciler *LiferayEnvironmentReconciler) handleOfflineA
 			"offlineActivationBundlePath", offlineActivationBundlePath, "environmentID", environmentID,
 		)
 
-		meta.SetStatusCondition(
-			&liferayEnvironment.Status.Conditions,
-			metav1.Condition{
-				Message: error.Error(),
-				Reason:  "OfflineActivationBundleInvalid",
-				Status:  metav1.ConditionFalse,
-				Type:    conditionActivated,
-			},
+		stepOutcome, error := liferayEnvironmentReconciler.deferOfflineActivation(
+			context, liferayEnvironment, error.Error(), phaseDegraded,
+			"OfflineActivationBundleInvalid",
 		)
 
-		liferayEnvironment.Status.Phase = "Degraded"
-
-		if error := liferayEnvironmentReconciler.enforceLastKnownLicense(
-			context, liferayEnvironment,
-		); error != nil {
-			return nil, controllerruntime.Result{}, error
-		}
-
-		result, error := liferayEnvironmentReconciler.finishAfter(
-			context, liferayEnvironment, 15*time.Second,
-		)
-
-		return nil, result, error
-	}
-
-	if liferayEnvironment.Status.ActivatedAt == nil {
-		now := metav1.Now()
-
-		liferayEnvironment.Status.ActivatedAt = &now
+		return nil, stepOutcome, error
 	}
 
 	logger.Info(
-		"Environment activated from offline activation bundle", "environmentID", environmentID,
+		"Environment was activated from the offline activation bundle", "environmentID", environmentID,
 	)
 
-	meta.SetStatusCondition(
-		&liferayEnvironment.Status.Conditions,
-		metav1.Condition{
-			Reason: "Activated",
-			Status: metav1.ConditionTrue,
-			Type:   conditionActivated,
-		},
-	)
+	markActivated(liferayEnvironment)
 
 	if error := liferayEnvironmentReconciler.persistEntitlementsSecret(context, entitlements, liferayEnvironment); error != nil {
-		return nil, controllerruntime.Result{}, error
+		return nil, stepOutcome{}, error
 	}
 
-	return entitlements, controllerruntime.Result{}, nil
+	return entitlements, proceed(), nil
 }
 
 func isOfflineActivationBundleNotFound(error error) bool {
@@ -202,7 +172,7 @@ func (liferayEnvironmentReconciler *LiferayEnvironmentReconciler) offlineActivat
 	liferayEnvironment *licensingv1alpha1.LiferayEnvironment,
 ) string {
 	return filepath.Join(
-		liferayEnvironmentReconciler.environmentDir(liferayEnvironment.Namespace),
+		liferayEnvironmentReconciler.getEnvironmentDir(liferayEnvironment.Namespace),
 		liferayEnvironment.Spec.OfflineActivationBundle,
 	)
 }
@@ -212,15 +182,11 @@ func (liferayEnvironmentReconciler *LiferayEnvironmentReconciler) persistOffline
 	liferayEnvironment *licensingv1alpha1.LiferayEnvironment,
 	payload string,
 ) error {
-	identityName := liferayEnvironment.Name + identitySecretSuffix
-
 	secret := &corev1.Secret{}
 
 	if error := liferayEnvironmentReconciler.Get(
-		context, types.NamespacedName{
-			Name:      identityName,
-			Namespace: liferayEnvironment.Namespace,
-		}, secret); error != nil {
+		context, getIdentitySecretKey(liferayEnvironment), secret,
+	); error != nil {
 		return error
 	}
 
@@ -241,7 +207,7 @@ func (liferayEnvironmentReconciler *LiferayEnvironmentReconciler) persistOffline
 	}
 
 	logf.FromContext(context).Info(
-		"Stored offline request in identity secret", "secret", identityName,
+		"Offline request was stored in the identity secret", "secret", secret.Name,
 	)
 
 	return nil

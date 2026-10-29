@@ -5,6 +5,7 @@
 
 import {Locator, Page, expect} from '@playwright/test';
 
+import {waitForAlert} from '../../utils/waitForAlert';
 import {GlobalMenuPage} from '../product-navigation-applications-menu/GlobalMenuPage';
 
 export class SamlAdminPage {
@@ -14,7 +15,6 @@ export class SamlAdminPage {
 	readonly page: Page;
 	readonly samlRoleField: Locator;
 	readonly saveButton: Locator;
-	readonly successMessage: Locator;
 
 	constructor(page: Page) {
 		this.globalMenuPage = new GlobalMenuPage(page);
@@ -23,9 +23,6 @@ export class SamlAdminPage {
 		this.page = page;
 		this.samlRoleField = page.getByLabel('SAML Role');
 		this.saveButton = page.getByRole('button', {name: 'Save'});
-		this.successMessage = page.getByText(
-			'Your request completed successfully'
-		);
 	}
 
 	async configureSAML(
@@ -49,9 +46,7 @@ export class SamlAdminPage {
 
 			await this.saveButton.click();
 
-			await expect(await this.successMessage).toBeVisible();
-
-			await this.page.getByLabel('Close').click();
+			await waitForAlert(this.page);
 		}
 		else if (enabled === undefined) {
 			enabled = false;
@@ -74,9 +69,7 @@ export class SamlAdminPage {
 		if (updated) {
 			await this.saveButton.click();
 
-			await expect(await this.successMessage).toBeVisible();
-
-			await this.page.getByLabel('Close').click();
+			await waitForAlert(this.page);
 		}
 
 		if (enabled) {
@@ -91,9 +84,7 @@ export class SamlAdminPage {
 
 			await this.saveButton.click();
 
-			await expect(await this.successMessage).toBeVisible();
-
-			await this.page.getByLabel('Close').click();
+			await waitForAlert(this.page);
 		}
 	}
 
@@ -101,8 +92,8 @@ export class SamlAdminPage {
 		commonName = 'test',
 		encryption = false,
 		keyAlgorithm = 'RSA',
-		keyLength = '2048',
-		keyPassword = 'test'
+		keyPassword = 'test',
+		keySize = '2048'
 	) {
 		const locator = await this.page.getByRole('group', {
 			exact: true,
@@ -143,9 +134,7 @@ export class SamlAdminPage {
 				.selectOption(keyAlgorithm);
 		}
 
-		await frameLocator
-			.getByLabel('Key Length (Bits)')
-			.selectOption(keyLength);
+		await frameLocator.getByLabel('Key Size (Bits)').selectOption(keySize);
 		await frameLocator.getByLabel('Key Password').fill(keyPassword);
 
 		await frameLocator.getByRole('button', {name: 'Save'}).click();

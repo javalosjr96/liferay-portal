@@ -26,7 +26,6 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.staging.StagingGroupHelper;
-import com.liferay.staging.StagingGroupHelperUtil;
 
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
@@ -62,18 +61,15 @@ public class EmptyModelManagerImplTest {
 		ReflectionTestUtil.setFieldValue(
 			_emptyModelManager, "_groupLocalService", _groupLocalService);
 		ReflectionTestUtil.setFieldValue(_emptyModelManager, "_log", _log);
-
-		_stagingGroupHelperUtilMockedStatic = Mockito.mockStatic(
-			StagingGroupHelperUtil.class);
+		ReflectionTestUtil.setFieldValue(
+			_emptyModelManager, "_stagingGroupHelper", _stagingGroupHelper);
 	}
 
 	@After
 	public void tearDown() {
 		Mockito.verifyNoMoreInteractions(
 			_classNameLocalService, _exportImportReportEntryLocalService,
-			_group, _groupLocalService, _log, _user);
-
-		_stagingGroupHelperUtilMockedStatic.close();
+			_group, _groupLocalService, _log, _stagingGroupHelper, _user);
 	}
 
 	@Test
@@ -320,21 +316,6 @@ public class EmptyModelManagerImplTest {
 	public void testGetOrAddEmptyModelGroupScopedWithEnabledLazyReferencingAndAddingEmptyItem()
 		throws Exception {
 
-		StagingGroupHelper stagingGroupHelper = Mockito.mock(
-			StagingGroupHelper.class);
-
-		Mockito.when(
-			stagingGroupHelper.isCompanyGroup(_group)
-		).thenReturn(
-			false
-		);
-
-		_stagingGroupHelperUtilMockedStatic.when(
-			StagingGroupHelperUtil::getStagingGroupHelper
-		).thenReturn(
-			stagingGroupHelper
-		);
-
 		try (MockedStatic<ExportImportThreadLocal>
 				exportImportThreadLocalMockedStatic = Mockito.mockStatic(
 					ExportImportThreadLocal.class);
@@ -357,26 +338,18 @@ public class EmptyModelManagerImplTest {
 				companyId
 			);
 
-			String groupExternalReferenceCode = RandomTestUtil.randomString();
-
-			Mockito.when(
-				_group.getExternalReferenceCode()
-			).thenReturn(
-				groupExternalReferenceCode
-			);
-
-			Mockito.when(
-				_group.isCompany()
-			).thenReturn(
-				false
-			);
-
 			long groupId = RandomTestUtil.randomLong();
 
 			Mockito.when(
 				_groupLocalService.fetchGroup(groupId)
 			).thenReturn(
 				_group
+			);
+
+			Mockito.when(
+				_stagingGroupHelper.isCompanyGroup(_group)
+			).thenReturn(
+				false
 			);
 
 			exportImportThreadLocalMockedStatic.when(
@@ -425,12 +398,83 @@ public class EmptyModelManagerImplTest {
 			);
 
 			Mockito.verify(
+				_stagingGroupHelper
+			).isCompanyGroup(
+				_group
+			);
+
+			Mockito.verify(
 				_exportImportReportEntryLocalService
 			).getOrAddExportImportReportEntry(
 				groupId, companyId, userExternalReferenceCode, classNameId, 0,
 				exportImportConfigurationId,
 				ExportImportReportEntryConstants.TYPE_EMPTY, null, null,
 				User.class.getName()
+			);
+		}
+	}
+
+	@Test
+	public void testGetOrAddEmptyModelGroupScopedWithEnabledLazyReferencingAndCompanyGroup()
+		throws Exception {
+
+		try (MockedStatic<ExportImportThreadLocal>
+				exportImportThreadLocalMockedStatic = Mockito.mockStatic(
+					ExportImportThreadLocal.class);
+			SafeCloseable safeCloseable =
+				LazyReferencingThreadLocal.setEnabledWithSafeCloseable(true)) {
+
+			long groupId = RandomTestUtil.randomLong();
+
+			Mockito.when(
+				_groupLocalService.fetchGroup(groupId)
+			).thenReturn(
+				_group
+			);
+
+			Mockito.when(
+				_stagingGroupHelper.isCompanyGroup(_group)
+			).thenReturn(
+				true
+			);
+
+			exportImportThreadLocalMockedStatic.when(
+				ExportImportThreadLocal::isImportInProcess
+			).thenReturn(
+				true
+			);
+
+			try {
+				_emptyModelManager.getOrAddEmptyModel(
+					User.class.getName(), RandomTestUtil.randomLong(),
+					() -> _user, RandomTestUtil.randomString(),
+					_toBiFunction(() -> null),
+					_toUnsafeBiFunction(
+						() -> {
+							Assert.fail();
+
+							return null;
+						}),
+					groupId, User.class.getName());
+
+				Assert.fail();
+			}
+			catch (IllegalArgumentException illegalArgumentException) {
+				Assert.assertEquals(
+					"Group " + groupId + " is the export/import company group",
+					illegalArgumentException.getMessage());
+			}
+
+			Mockito.verify(
+				_groupLocalService
+			).fetchGroup(
+				groupId
+			);
+
+			Mockito.verify(
+				_stagingGroupHelper
+			).isCompanyGroup(
+				_group
 			);
 		}
 	}
@@ -481,21 +525,6 @@ public class EmptyModelManagerImplTest {
 	@Test
 	public void testGetOrAddEmptyModelGroupScopedWithEnabledLazyReferencingOutsideAnImportProcess()
 		throws Exception {
-
-		StagingGroupHelper stagingGroupHelper = Mockito.mock(
-			StagingGroupHelper.class);
-
-		Mockito.when(
-			stagingGroupHelper.isCompanyGroup(_group)
-		).thenReturn(
-			false
-		);
-
-		_stagingGroupHelperUtilMockedStatic.when(
-			StagingGroupHelperUtil::getStagingGroupHelper
-		).thenReturn(
-			stagingGroupHelper
-		);
 
 		try (MockedStatic<ExportImportThreadLocal>
 				exportImportThreadLocalMockedStatic = Mockito.mockStatic(
@@ -642,6 +671,12 @@ public class EmptyModelManagerImplTest {
 				true
 			);
 
+			Mockito.when(
+				_stagingGroupHelper.isCompanyGroup(_group)
+			).thenReturn(
+				false
+			);
+
 			String externalReferenceCode = RandomTestUtil.randomString();
 
 			_emptyModelManager.reportMissingReference(
@@ -655,6 +690,12 @@ public class EmptyModelManagerImplTest {
 				_groupLocalService
 			).fetchGroup(
 				groupId
+			);
+
+			Mockito.verify(
+				_stagingGroupHelper
+			).isCompanyGroup(
+				_group
 			);
 
 			Mockito.verify(
@@ -675,6 +716,75 @@ public class EmptyModelManagerImplTest {
 	}
 
 	@Test
+	public void testReportMissingReferenceCompanyScoped() {
+		try (MockedStatic<ExportImportThreadLocal>
+				exportImportThreadLocalMockedStatic = Mockito.mockStatic(
+					ExportImportThreadLocal.class)) {
+
+			long classNameId = RandomTestUtil.randomLong();
+
+			Mockito.when(
+				_classNameLocalService.getClassNameId(User.class.getName())
+			).thenReturn(
+				classNameId
+			);
+
+			long exportImportConfigurationId = RandomTestUtil.randomLong();
+
+			exportImportThreadLocalMockedStatic.when(
+				ExportImportThreadLocal::getExportImportConfigurationId
+			).thenReturn(
+				exportImportConfigurationId
+			);
+
+			exportImportThreadLocalMockedStatic.when(
+				ExportImportThreadLocal::isImportInProcess
+			).thenReturn(
+				true
+			);
+
+			long companyId = RandomTestUtil.randomLong();
+			String externalReferenceCode = RandomTestUtil.randomString();
+
+			_emptyModelManager.reportMissingReference(
+				User.class.getName(), companyId, externalReferenceCode);
+
+			Mockito.verify(
+				_classNameLocalService
+			).getClassNameId(
+				User.class.getName()
+			);
+
+			Mockito.verify(
+				_exportImportReportEntryLocalService
+			).getOrAddExportImportReportEntry(
+				0, companyId, externalReferenceCode, classNameId, 0,
+				exportImportConfigurationId,
+				ExportImportReportEntryConstants.TYPE_MISSING_REFERENCE, null,
+				null, User.class.getName()
+			);
+		}
+	}
+
+	@Test
+	public void testReportMissingReferenceCompanyScopedOutsideImportProcess() {
+		try (MockedStatic<ExportImportThreadLocal>
+				exportImportThreadLocalMockedStatic = Mockito.mockStatic(
+					ExportImportThreadLocal.class)) {
+
+			exportImportThreadLocalMockedStatic.when(
+				ExportImportThreadLocal::isImportInProcess
+			).thenReturn(
+				false
+			);
+
+			_emptyModelManager.reportMissingReference(
+				User.class.getName(), RandomTestUtil.randomLong(),
+				RandomTestUtil.randomString());
+		}
+	}
+
+	@Test
 	public void testReportMissingReferenceOutsideImportProcess() {
 		try (MockedStatic<ExportImportThreadLocal>
 				exportImportThreadLocalMockedStatic = Mockito.mockStatic(
@@ -689,6 +799,59 @@ public class EmptyModelManagerImplTest {
 			_emptyModelManager.reportMissingReference(
 				User.class.getName(), RandomTestUtil.randomString(),
 				RandomTestUtil.randomLong());
+		}
+	}
+
+	@Test
+	public void testReportMissingReferenceWithCompanyGroup() {
+		try (MockedStatic<ExportImportThreadLocal>
+				exportImportThreadLocalMockedStatic = Mockito.mockStatic(
+					ExportImportThreadLocal.class)) {
+
+			exportImportThreadLocalMockedStatic.when(
+				ExportImportThreadLocal::isImportInProcess
+			).thenReturn(
+				true
+			);
+
+			long groupId = RandomTestUtil.randomLong();
+
+			Mockito.when(
+				_groupLocalService.fetchGroup(groupId)
+			).thenReturn(
+				_group
+			);
+
+			Mockito.when(
+				_stagingGroupHelper.isCompanyGroup(_group)
+			).thenReturn(
+				true
+			);
+
+			try {
+				_emptyModelManager.reportMissingReference(
+					User.class.getName(), RandomTestUtil.randomString(),
+					groupId);
+
+				Assert.fail();
+			}
+			catch (IllegalArgumentException illegalArgumentException) {
+				Assert.assertEquals(
+					"Group " + groupId + " is the export/import company group",
+					illegalArgumentException.getMessage());
+			}
+
+			Mockito.verify(
+				_groupLocalService
+			).fetchGroup(
+				groupId
+			);
+
+			Mockito.verify(
+				_stagingGroupHelper
+			).isCompanyGroup(
+				_group
+			);
 		}
 	}
 
@@ -719,6 +882,129 @@ public class EmptyModelManagerImplTest {
 				_groupLocalService
 			).fetchGroup(
 				groupId
+			);
+		}
+	}
+
+	@Test
+	public void testResolveMissingReference() throws Exception {
+		try (MockedStatic<ExportImportThreadLocal>
+				exportImportThreadLocalMockedStatic = Mockito.mockStatic(
+					ExportImportThreadLocal.class)) {
+
+			exportImportThreadLocalMockedStatic.when(
+				ExportImportThreadLocal::isImportInProcess
+			).thenReturn(
+				true
+			);
+
+			long classNameId = RandomTestUtil.randomLong();
+
+			Mockito.when(
+				_classNameLocalService.getClassNameId(User.class.getName())
+			).thenReturn(
+				classNameId
+			);
+
+			long companyId = RandomTestUtil.randomLong();
+			String externalReferenceCode = RandomTestUtil.randomString();
+			long groupId = RandomTestUtil.randomLong();
+
+			_emptyModelManager.resolveMissingReference(
+				User.class.getName(), companyId, externalReferenceCode,
+				groupId);
+
+			Mockito.verify(
+				_classNameLocalService
+			).getClassNameId(
+				User.class.getName()
+			);
+
+			Mockito.verify(
+				_exportImportReportEntryLocalService
+			).resolveMissingReferenceExportImportReportEntries(
+				groupId, companyId, externalReferenceCode, classNameId
+			);
+		}
+	}
+
+	@Test
+	public void testResolveMissingReferenceOutsideImportProcess() {
+		try (MockedStatic<ExportImportThreadLocal>
+				exportImportThreadLocalMockedStatic = Mockito.mockStatic(
+					ExportImportThreadLocal.class)) {
+
+			exportImportThreadLocalMockedStatic.when(
+				ExportImportThreadLocal::isImportInProcess
+			).thenReturn(
+				false
+			);
+
+			_emptyModelManager.resolveMissingReference(
+				User.class.getName(), RandomTestUtil.randomLong(),
+				RandomTestUtil.randomString(), RandomTestUtil.randomLong());
+		}
+	}
+
+	@Test
+	public void testResolveMissingReferenceWithException() throws Exception {
+		try (MockedStatic<ExportImportThreadLocal>
+				exportImportThreadLocalMockedStatic = Mockito.mockStatic(
+					ExportImportThreadLocal.class)) {
+
+			exportImportThreadLocalMockedStatic.when(
+				ExportImportThreadLocal::isImportInProcess
+			).thenReturn(
+				true
+			);
+
+			long classNameId = RandomTestUtil.randomLong();
+
+			Mockito.when(
+				_classNameLocalService.getClassNameId(User.class.getName())
+			).thenReturn(
+				classNameId
+			);
+
+			long companyId = RandomTestUtil.randomLong();
+			String externalReferenceCode = RandomTestUtil.randomString();
+			long groupId = RandomTestUtil.randomLong();
+			PortalException portalException = new PortalException(
+				RandomTestUtil.randomString());
+
+			Mockito.doThrow(
+				portalException
+			).when(
+				_exportImportReportEntryLocalService
+			).resolveMissingReferenceExportImportReportEntries(
+				groupId, companyId, externalReferenceCode, classNameId
+			);
+
+			_emptyModelManager.resolveMissingReference(
+				User.class.getName(), companyId, externalReferenceCode,
+				groupId);
+
+			Mockito.verify(
+				_classNameLocalService
+			).getClassNameId(
+				User.class.getName()
+			);
+
+			Mockito.verify(
+				_exportImportReportEntryLocalService
+			).resolveMissingReferenceExportImportReportEntries(
+				groupId, companyId, externalReferenceCode, classNameId
+			);
+
+			Mockito.verify(
+				_log
+			).error(
+				StringBundler.concat(
+					"Unable to resolve the export/import report entries for ",
+					"the class external reference code \"",
+					externalReferenceCode, "\" and class name \"",
+					User.class.getName(), "\""),
+				portalException
 			);
 		}
 	}
@@ -858,8 +1144,8 @@ public class EmptyModelManagerImplTest {
 	private final Group _group = Mockito.mock(Group.class);
 	private final GroupLocalService _groupLocalService = Mockito.mock(
 		GroupLocalService.class);
-	private MockedStatic<StagingGroupHelperUtil>
-		_stagingGroupHelperUtilMockedStatic;
+	private final StagingGroupHelper _stagingGroupHelper = Mockito.mock(
+		StagingGroupHelper.class);
 	private final User _user = Mockito.mock(User.class);
 
 }

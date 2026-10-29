@@ -108,7 +108,7 @@ public class DepotPermissionCheckerWrapper extends PermissionCheckerWrapper {
 	public boolean hasPermission(
 		long groupId, String name, long primKey, String actionId) {
 
-		if (_isDepotGroupOwner(_groupLocalService.fetchGroup(groupId))) {
+		if (_isDepotGroupOwner(groupId)) {
 			return true;
 		}
 
@@ -127,7 +127,7 @@ public class DepotPermissionCheckerWrapper extends PermissionCheckerWrapper {
 	public boolean hasPermission(
 		long groupId, String name, String primKey, String actionId) {
 
-		if (_isDepotGroupOwner(_groupLocalService.fetchGroup(groupId))) {
+		if (_isDepotGroupOwner(groupId)) {
 			return true;
 		}
 
@@ -361,7 +361,12 @@ public class DepotPermissionCheckerWrapper extends PermissionCheckerWrapper {
 				 StringUtil.equals(actionId, ActionKeys.VIEW)) {
 
 			try {
-				if (_isDepotGroupAdmin(groupId)) {
+				if (primKey == 0) {
+					if (_isDepotGroupAdmin(groupId)) {
+						return true;
+					}
+				}
+				else if (_isDepotGroupAdmin(groupId, primKey)) {
 					return true;
 				}
 			}
@@ -464,6 +469,17 @@ public class DepotPermissionCheckerWrapper extends PermissionCheckerWrapper {
 		return false;
 	}
 
+	private boolean _isDepotGroupAdmin(Group group, long userId)
+		throws PortalException {
+
+		if (!_isDepotGroupAdmin(group)) {
+			return false;
+		}
+
+		return _groupLocalService.hasUserGroup(
+			userId, StagingUtil.getLiveGroupId(group.getGroupId()));
+	}
+
 	private boolean _isDepotGroupAdmin(long groupId) throws PortalException {
 		if (groupId != 0) {
 			return _isDepotGroupAdmin(_groupLocalService.fetchGroup(groupId));
@@ -484,6 +500,29 @@ public class DepotPermissionCheckerWrapper extends PermissionCheckerWrapper {
 		return false;
 	}
 
+	private boolean _isDepotGroupAdmin(long groupId, long userId)
+		throws PortalException {
+
+		if (groupId != 0) {
+			return _isDepotGroupAdmin(
+				_groupLocalService.fetchGroup(groupId), userId);
+		}
+
+		List<UserGroupRole> userGroupRoles =
+			_userGroupRoleLocalService.getUserGroupRoles(getUserId());
+
+		for (UserGroupRole userGroupRole : userGroupRoles) {
+			if (_isDepotGroupAdmin(
+					_groupLocalService.fetchGroup(userGroupRole.getGroupId()),
+					userId)) {
+
+				return true;
+			}
+		}
+
+		return false;
+	}
+
 	private boolean _isDepotGroupOwner(Group group) {
 		if ((group != null) && group.isDepot() &&
 			isGroupOwner(group.getGroupId())) {
@@ -492,6 +531,14 @@ public class DepotPermissionCheckerWrapper extends PermissionCheckerWrapper {
 		}
 
 		return false;
+	}
+
+	private boolean _isDepotGroupOwner(long groupId) {
+		if (groupId <= 0) {
+			return false;
+		}
+
+		return _isDepotGroupOwner(_groupLocalService.fetchGroup(groupId));
 	}
 
 	private boolean _isGroupAdmin(Group group) throws PortalException {

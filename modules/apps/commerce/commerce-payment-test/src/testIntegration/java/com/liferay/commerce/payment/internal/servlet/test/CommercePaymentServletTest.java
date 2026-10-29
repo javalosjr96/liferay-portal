@@ -10,6 +10,7 @@ import com.liferay.account.model.AccountEntry;
 import com.liferay.account.service.AccountEntryLocalService;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.commerce.constants.CommerceOrderPaymentConstants;
+import com.liferay.commerce.constants.CommercePaymentEntryConstants;
 import com.liferay.commerce.currency.model.CommerceCurrency;
 import com.liferay.commerce.currency.test.util.CommerceCurrencyTestUtil;
 import com.liferay.commerce.inventory.model.CommerceInventoryWarehouse;
@@ -49,6 +50,7 @@ import com.liferay.portal.kernel.security.permission.PermissionThreadLocal;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.test.context.ContextUserReplace;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
@@ -346,6 +348,81 @@ public class CommercePaymentServletTest {
 
 			Assert.assertNotEquals(
 				nextStep, mockHttpServletResponse.getRedirectedUrl());
+		}
+	}
+
+	@Test
+	public void testCancelWithoutPermissionDoesNotCancelPaymentEntry()
+		throws Exception {
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.commerce.payment.internal.servlet." +
+					"CommercePaymentServlet",
+				LoggerTestUtil.OFF)) {
+
+			CommerceOrder commerceOrder = _addCommerceOrder();
+
+			CommercePaymentEntry commercePaymentEntry =
+				_commercePaymentEntryLocalService.addCommercePaymentEntry(
+					_user.getUserId(),
+					PortalUtil.getClassNameId(CommerceOrder.class),
+					commerceOrder.getCommerceOrderId(),
+					_commerceChannel.getCommerceChannelId(), BigDecimal.TEN,
+					null, null, _commerceCurrency.getCode(),
+					LocaleUtil.toLanguageId(LocaleUtil.US), null, null, _KEY,
+					CommercePaymentIntegrationConstants.TYPE_INTERNAL_OFFLINE,
+					null, RandomTestUtil.randomString(),
+					CommercePaymentEntryConstants.TYPE_PAYMENT,
+					_serviceContext);
+
+			commercePaymentEntry.setPaymentStatus(
+				CommercePaymentEntryConstants.STATUS_CREATED);
+
+			commercePaymentEntry =
+				_commercePaymentEntryLocalService.updateCommercePaymentEntry(
+					commercePaymentEntry);
+
+			User user = UserTestUtil.addUser();
+
+			try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+					user)) {
+
+				_service(
+					_getCancelMockHttpServletRequest(
+						commercePaymentEntry, user));
+			}
+
+			commercePaymentEntry =
+				_commercePaymentEntryLocalService.getCommercePaymentEntry(
+					commercePaymentEntry.getCommercePaymentEntryId());
+
+			Assert.assertEquals(
+				CommercePaymentEntryConstants.STATUS_CREATED,
+				commercePaymentEntry.getPaymentStatus());
+
+			int paymentStatus = commerceOrder.getPaymentStatus();
+
+			commerceOrder = _commerceOrderLocalService.getCommerceOrder(
+				commerceOrder.getCommerceOrderId());
+
+			Assert.assertEquals(
+				paymentStatus, commerceOrder.getPaymentStatus());
+
+			try (ContextUserReplace contextUserReplace = new ContextUserReplace(
+					_user)) {
+
+				_service(
+					_getCancelMockHttpServletRequest(
+						commercePaymentEntry, _user));
+			}
+
+			commercePaymentEntry =
+				_commercePaymentEntryLocalService.getCommercePaymentEntry(
+					commercePaymentEntry.getCommercePaymentEntryId());
+
+			Assert.assertEquals(
+				CommercePaymentEntryConstants.STATUS_CANCELLED,
+				commercePaymentEntry.getPaymentStatus());
 		}
 	}
 
@@ -721,6 +798,21 @@ public class CommercePaymentServletTest {
 				_user.getUserId(), _commerceChannel.getGroupId(),
 				accountEntry.getAccountEntryId(), _commerceCurrency.getCode(),
 				0));
+	}
+
+	private MockHttpServletRequest _getCancelMockHttpServletRequest(
+		CommercePaymentEntry commercePaymentEntry, User user) {
+
+		MockHttpServletRequest mockHttpServletRequest =
+			_getMockHttpServletRequest(user);
+
+		mockHttpServletRequest.addParameter("cancel", "true");
+		mockHttpServletRequest.addParameter(
+			"entryId",
+			String.valueOf(commercePaymentEntry.getCommercePaymentEntryId()));
+		mockHttpServletRequest.addParameter("redirect", "false");
+
+		return mockHttpServletRequest;
 	}
 
 	private CommercePaymentEntry _getCommercePaymentEntry(

@@ -1,6 +1,41 @@
 components:
     schemas:
+        DateFilter:
+            description:
+                Represents the dates that select the content of a process. The type determines the other properties.
+            discriminator:
+                mapping:
+                    DateRange: "#/components/schemas/DateRangeDateFilter"
+                    FromLastPublishDate: "#/components/schemas/FromLastPublishDateFilter"
+                    LastHours: "#/components/schemas/LastHoursDateFilter"
+                propertyName: type
+            properties:
+                type:
+                    enum: [DateRange, FromLastPublishDate, LastHours]
+                    type: string
+            required:
+                -   type
+            type: object
+        DateRangeDateFilter:
+            allOf:
+                -   $ref: "#/components/schemas/DateFilter"
+                -   properties:
+                        endDate:
+                            description:
+                                The end date. Defaults to the time of each run.
+                            format: date-time
+                            type: string
+                        startDate:
+                            description:
+                                The start date. Without it, the filter has no lower bound.
+                            format: date-time
+                            type: string
+            description:
+                Represents the content modified between a start and an end date. At least one of the dates is required.
+            type: object
         ExportPreview:
+            description:
+                Represents what an export can cover, with the counts for the requested date filter.
             properties:
                 additionCount:
                     format: int64
@@ -10,9 +45,9 @@ components:
                     format: int64
                     readOnly: true
                     type: integer
-                previewPortletDataHandlerSections:
+                portletDataHandlers:
                     items:
-                        $ref: "#/components/schemas/PreviewPortletDataHandlerSection"
+                        $ref: "#/components/schemas/PortletDataHandler"
                     readOnly: true
                     type: array
             type: object
@@ -56,7 +91,7 @@ components:
                 status:
                     $ref: "#/components/schemas/Status"
                     description:
-                        The export process's end status.
+                        The export process's status.
                     readOnly: true
             type: object
         ExportProcessRequest:
@@ -64,58 +99,50 @@ components:
                 comments:
                     default: false
                     type: boolean
-                dateRangeType:
+                dateFilter:
+                    $ref: "#/components/schemas/DateFilter"
                     description:
-                        The recipe used to resolve the export window at every run. ALL exports everything, DATE_RANGE exports the window between the start and end dates, resolving a missing end date as the run time, and LAST exports a window of whole hours ending at the run time, derived from the start date. When absent, the type is inferred from the given dates.
-                    enum: [ALL, DATE_RANGE, LAST]
-                    type: string
+                        The dates that select the content, resolved again on every run. Defaults to all the content.
                 deletions:
                     default: false
                     type: boolean
-                endDate:
-                    format: date-time
-                    type: string
-                logo:
-                    default: false
-                    type: boolean
                 name:
+                    description:
+                        The export process's name, also used as the file name.
                     type: string
                 permissions:
                     default: false
                     type: boolean
+                portletDataHandlers:
+                    description:
+                        The portlet data handlers to export, taken from the export preview.
+                    items:
+                        $ref: "#/components/schemas/PortletDataHandler"
+                    type: array
                 ratings:
-                    default: false
-                    type: boolean
-                requestPortletDataHandlers:
-                    items:
-                        $ref: "#/components/schemas/RequestPortletDataHandler"
-                    type: array
-                siteExternalReferenceCodes:
-                    items:
-                        type: string
-                    type: array
-                sitePagesSettings:
-                    default: false
-                    type: boolean
-                siteTemplateSettings:
-                    default: false
-                    type: boolean
-                startDate:
-                    format: date-time
-                    type: string
-                themeSettings:
                     default: false
                     type: boolean
             required:
                 -   name
             type: object
+        FromLastPublishDateFilter:
+            allOf:
+                -   $ref: "#/components/schemas/DateFilter"
+                -   properties: {}
+            description:
+                Represents the changes since each item's last publication. Applies only to publications.
+            type: object
         ImportPreview:
+            description:
+                Represents what an uploaded file can import, with its counts.
             properties:
                 additionCount:
                     format: int64
                     readOnly: true
                     type: integer
                 author:
+                    description:
+                        The name of the user who exported the file.
                     readOnly: true
                     type: string
                 deletionCount:
@@ -130,17 +157,21 @@ components:
                     readOnly: true
                     type: string
                 fileSize:
+                    description:
+                        The uploaded file's size in bytes.
                     format: int64
                     readOnly: true
                     type: integer
-                previewPortletDataHandlerSections:
+                portletDataHandlers:
                     items:
-                        $ref: "#/components/schemas/PreviewPortletDataHandlerSection"
+                        $ref: "#/components/schemas/PortletDataHandler"
                     readOnly: true
                     type: array
-                previewSites:
+                sites:
+                    description:
+                        The sites the file contains, when it was exported from an instance.
                     items:
-                        $ref: "#/components/schemas/PreviewSite"
+                        $ref: "#/components/schemas/Site"
                     readOnly: true
                     type: array
             type: object
@@ -184,7 +215,7 @@ components:
                 status:
                     $ref: "#/components/schemas/Status"
                     description:
-                        The import process's end status.
+                        The import process's status.
                     readOnly: true
             type: object
         ImportProcessRequest:
@@ -194,53 +225,94 @@ components:
                     type: boolean
                 dataStrategy:
                     default: MIRROR
+                    description:
+                        How imported items match existing ones. MIRROR updates existing items and adds the rest, MIRROR_OVERWRITE also overwrites their content, and COPY_AS_NEW adds every item as new.
                     enum: [MIRROR, MIRROR_OVERWRITE, COPY_AS_NEW]
                     type: string
                 deletions:
                     default: false
-                    type: boolean
-                logo:
-                    default: false
+                    description:
+                        A flag that indicates whether the file's deletions are applied.
                     type: boolean
                 name:
+                    description:
+                        The import process's name. Defaults to the name of the uploaded file.
                     type: string
                 permissions:
                     default: false
                     type: boolean
+                portletDataHandlers:
+                    description:
+                        The portlet data handlers to import, taken from the import preview.
+                    items:
+                        $ref: "#/components/schemas/PortletDataHandler"
+                    type: array
                 ratings:
-                    default: false
-                    type: boolean
-                requestPortletDataHandlers:
-                    items:
-                        $ref: "#/components/schemas/RequestPortletDataHandler"
-                    type: array
-                siteExternalReferenceCodes:
-                    items:
-                        type: string
-                    type: array
-                sitePagesSettings:
-                    default: false
-                    type: boolean
-                siteTemplateSettings:
-                    default: false
-                    type: boolean
-                themeSettings:
                     default: false
                     type: boolean
                 userIdStrategy:
                     default: CURRENT_USER_ID
+                    description:
+                        Who owns the imported items. CURRENT_USER_ID keeps the original owner when it exists, and ALWAYS_CURRENT_USER_ID assigns every item to the current user.
                     enum: [CURRENT_USER_ID, ALWAYS_CURRENT_USER_ID]
                     type: string
+            type: object
+        InstanceExportProcessRequest:
+            allOf:
+                -   $ref: "#/components/schemas/ExportProcessRequest"
+                -   properties:
+                        sites:
+                            description:
+                                The sites to export in full, from the export preview's sites.
+                            items:
+                                $ref: "#/components/schemas/Site"
+                            type: array
+            description:
+                Represents an export of the instance, which can include whole sites.
+            required:
+                -   name
+            type: object
+        InstanceImportProcessRequest:
+            allOf:
+                -   $ref: "#/components/schemas/ImportProcessRequest"
+                -   properties:
+                        sites:
+                            description:
+                                The sites to import in full, from the import preview's sites.
+                            items:
+                                $ref: "#/components/schemas/Site"
+                            type: array
+            description:
+                Represents an import into the instance, which can include whole sites.
+            type: object
+        LastHoursDateFilter:
+            allOf:
+                -   $ref: "#/components/schemas/DateFilter"
+                -   properties:
+                        hours:
+                            description:
+                                The number of hours before each run.
+                            format: int32
+                            minimum: 1
+                            type: integer
+                    required:
+                        -   hours
+            description:
+                Represents the content modified in the hours before each run.
             type: object
         Origin:
             properties:
                 code:
+                    description:
+                        The code of the process step that reported the entry.
                     format: int32
                     type: integer
                 label:
                     type: string
             type: object
-        PreviewPortletDataHandler:
+        PortletDataHandler:
+            description:
+                Represents a kind of content a process can cover, with the controls that refine it.
             properties:
                 additionCount:
                     format: int64
@@ -258,43 +330,66 @@ components:
                     type: string
                 name:
                     description:
-                        The handler's portlet ID.
+                        The handler's key (e.g., PORTLET_DATA_com_liferay_journal_web_portlet_JournalPortlet).
+                    type: string
+                portletDataHandlerControls:
+                    description:
+                        The handler's controls. Controls left out are not selected.
+                    items:
+                        $ref: "#/components/schemas/PortletDataHandlerControl"
+                    type: array
+                sectionKey:
+                    description:
+                        The key of the section that groups the handler (e.g., category.content).
                     readOnly: true
                     type: string
-                previewPortletDataHandlerControls:
-                    items:
-                        $ref: "#/components/schemas/PreviewPortletDataHandlerControl"
+                sectionLabel:
                     readOnly: true
-                    type: array
+                    type: string
+                selected:
+                    default: true
+                    description:
+                        A flag that indicates whether the handler's content is processed.
+                    type: boolean
                 tag:
                     readOnly: true
                     type: string
+            required:
+                -   name
             type: object
-        PreviewPortletDataHandlerBoolean:
+        PortletDataHandlerBoolean:
             allOf:
-                -   $ref: "#/components/schemas/PreviewPortletDataHandlerControl"
+                -   $ref: "#/components/schemas/PortletDataHandlerControl"
                 -   properties:
                         additionCount:
                             format: int64
                             readOnly: true
                             type: integer
-                        defaultState:
-                            readOnly: true
-                            type: boolean
                         deletionCount:
                             format: int64
                             readOnly: true
                             type: integer
-                        previewPortletDataHandlerControls:
+                        portletDataHandlerControls:
+                            description:
+                                The nested controls, which apply only when the control is selected.
                             items:
-                                $ref: "#/components/schemas/PreviewPortletDataHandlerControl"
-                            readOnly: true
+                                $ref: "#/components/schemas/PortletDataHandlerControl"
                             type: array
+                        selected:
+                            description:
+                                A flag that indicates whether the control is on. The preview returns the default.
+                            type: boolean
+            description:
+                Represents a control that switches items or a behavior on or off.
             type: object
-        PreviewPortletDataHandlerChoice:
+        PortletDataHandlerChoice:
             allOf:
-                -   $ref: "#/components/schemas/PreviewPortletDataHandlerControl"
+                -   $ref: "#/components/schemas/PortletDataHandlerControl"
                 -   properties:
+                        choice:
+                            description:
+                                The selected option's name. The preview returns the default.
+                            type: string
                         choices:
                             items:
                                 properties:
@@ -307,99 +402,98 @@ components:
                                         readOnly: true
                                         type: integer
                                     label:
+                                        description:
+                                            The option's localized label.
                                         readOnly: true
                                         type: string
                                     name:
+                                        description:
+                                            The option's key, used as the control's choice.
                                         readOnly: true
                                         type: string
                                 type: object
                             readOnly: true
                             type: array
-                        defaultChoice:
-                            readOnly: true
-                            type: string
+                        portletDataHandlerControls:
+                            description:
+                                The nested controls, which apply to the selected option.
+                            items:
+                                $ref: "#/components/schemas/PortletDataHandlerControl"
+                            type: array
+            description:
+                Represents a control that selects one of its options.
             type: object
-        PreviewPortletDataHandlerControl:
+        PortletDataHandlerControl:
+            description:
+                Represents a control that refines a portlet data handler. The type determines the other properties.
             discriminator:
                 mapping:
-                    Boolean: "#/components/schemas/PreviewPortletDataHandlerBoolean"
-                    Choice: "#/components/schemas/PreviewPortletDataHandlerChoice"
-                    Setting: "#/components/schemas/PreviewPortletDataHandlerSetting"
+                    Boolean: "#/components/schemas/PortletDataHandlerBoolean"
+                    Choice: "#/components/schemas/PortletDataHandlerChoice"
+                    TreeSelection: "#/components/schemas/PortletDataHandlerTreeSelection"
                 propertyName: type
             properties:
-                disabled:
-                    readOnly: true
-                    type: boolean
                 label:
                     readOnly: true
                     type: string
                 name:
-                    readOnly: true
+                    description:
+                        The control's key (e.g., _journal_web-content).
                     type: string
                 type:
-                    enum: [Boolean, Choice, Setting]
-                    readOnly: true
+                    enum: [Boolean, Choice, TreeSelection]
                     type: string
             required:
+                -   name
                 -   type
             type: object
-        PreviewPortletDataHandlerSection:
-            properties:
-                additionCount:
-                    format: int64
-                    readOnly: true
-                    type: integer
-                deletionCount:
-                    format: int64
-                    readOnly: true
-                    type: integer
-                label:
-                    readOnly: true
-                    type: string
-                name:
-                    readOnly: true
-                    type: string
-                previewPortletDataHandlers:
-                    items:
-                        $ref: "#/components/schemas/PreviewPortletDataHandler"
-                    readOnly: true
-                    type: array
-            type: object
-        PreviewPortletDataHandlerSetting:
+        PortletDataHandlerTreeSelection:
             allOf:
-                -   $ref: "#/components/schemas/PreviewPortletDataHandlerControl"
+                -   $ref: "#/components/schemas/PortletDataHandlerControl"
                 -   properties:
-                        defaultState:
+                        additionCount:
+                            format: int64
                             readOnly: true
-                            type: boolean
-                        previewPortletDataHandlerControls:
+                            type: integer
+                        deletionCount:
+                            format: int64
+                            readOnly: true
+                            type: integer
+                        excludedItemExternalReferenceCodes:
+                            description:
+                                The external reference codes of the items to exclude.
                             items:
-                                $ref: "#/components/schemas/PreviewPortletDataHandlerControl"
-                            readOnly: true
+                                type: string
                             type: array
-            type: object
-        PreviewSite:
-            properties:
-                childSitesCount:
-                    format: int32
-                    readOnly: true
-                    type: integer
-                descriptiveName:
-                    readOnly: true
-                    type: string
-                existsInInstance:
-                    description:
-                        Whether the instance being imported into already has a site of the same external reference code. Set only when previewing a file to import.
-                    readOnly: true
-                    type: boolean
-                externalReferenceCode:
-                    readOnly: true
-                    type: string
-                path:
-                    description:
-                        Site's path in the site hierarchy.
-                    readOnly: true
-                    type: string
+                        excludedSubtreeExternalReferenceCodes:
+                            description:
+                                The external reference codes of the items to exclude with their descendants.
+                            items:
+                                type: string
+                            type: array
+                        itemExternalReferenceCodes:
+                            description:
+                                The external reference codes of the items to include.
+                            items:
+                                type: string
+                            type: array
+                        selectAll:
+                            default: true
+                            description:
+                                A flag that indicates whether every item is selected before the lists apply.
+                            type: boolean
+                        selected:
+                            description:
+                                A flag that indicates whether the control's items are processed.
+                            type: boolean
+                        subtreeExternalReferenceCodes:
+                            description:
+                                The external reference codes of the items to include with their descendants.
+                            items:
+                                type: string
+                            type: array
+            description:
+                Represents a control that selects items of a tree by external reference code. The most specific rule wins, in the order of an item list, a subtree list, the closest ancestor's subtree list, and the selectAll flag. An included list wins over the excluded one at the same level. The pages control takes the external reference codes of the Headless Admin Site API's site pages.
             type: object
         ProcessProgress:
             properties:
@@ -411,6 +505,8 @@ components:
                     type: integer
             type: object
         PublishPreview:
+            description:
+                Represents what a Publish to Live process can cover, with the change counts for the requested date filter.
             properties:
                 additionCount:
                     format: int64
@@ -420,9 +516,9 @@ components:
                     format: int64
                     readOnly: true
                     type: integer
-                previewPortletDataHandlerSections:
+                portletDataHandlers:
                     items:
-                        $ref: "#/components/schemas/PreviewPortletDataHandlerSection"
+                        $ref: "#/components/schemas/PortletDataHandler"
                     readOnly: true
                     type: array
             type: object
@@ -466,11 +562,11 @@ components:
                 status:
                     $ref: "#/components/schemas/Status"
                     description:
-                        The publish process's end status.
+                        The publish process's status.
                     readOnly: true
                 type:
                     description:
-                        How the publish process was started, either manually or by a schedule.
+                        How the publish process started, manually or by a schedule.
                     enum: [MANUAL, SCHEDULED]
                     readOnly: true
                     type: string
@@ -480,22 +576,11 @@ components:
                 comments:
                     default: false
                     type: boolean
-                cronExpression:
+                dateFilter:
+                    $ref: "#/components/schemas/DateFilter"
                     description:
-                        A cron expression. When set, the publish is scheduled to recur instead of running immediately.
-                    type: string
-                dateRangeType:
-                    description:
-                        The recipe used to resolve the publish window at every run, relaunch, and scheduled occurrence. ALL publishes everything, DATE_RANGE publishes the window between the start and end dates, resolving a missing end date as the run time, LAST publishes a window of whole hours ending at the run time, derived from the start date, and FROM_LAST_PUBLISH_DATE publishes the changes recorded since each entity's own last publish. When absent, the type is inferred from the given dates.
-                    enum: [ALL, DATE_RANGE, FROM_LAST_PUBLISH_DATE, LAST]
-                    type: string
+                        The dates that select the content, resolved again on every run. Defaults to all the content.
                 deletions:
-                    default: false
-                    type: boolean
-                endDate:
-                    format: date-time
-                    type: string
-                logo:
                     default: false
                     type: boolean
                 name:
@@ -503,43 +588,21 @@ components:
                 permissions:
                     default: false
                     type: boolean
+                portletDataHandlers:
+                    description:
+                        The portlet data handlers to publish, taken from the publish preview.
+                    items:
+                        $ref: "#/components/schemas/PortletDataHandler"
+                    type: array
                 ratings:
                     default: false
                     type: boolean
-                requestPortletDataHandlers:
-                    items:
-                        $ref: "#/components/schemas/RequestPortletDataHandler"
-                    type: array
-                scheduleEndDate:
-                    description:
-                        When the scheduled publish stops recurring. Applies only when a cron expression is given.
-                    format: date-time
-                    type: string
-                scheduleStartDate:
-                    description:
-                        When the scheduled publish starts. Applies only when a cron expression is given. Defaults to now.
-                    format: date-time
-                    type: string
-                sitePagesSettings:
-                    default: false
-                    type: boolean
-                siteTemplateSettings:
-                    default: false
-                    type: boolean
-                startDate:
-                    format: date-time
-                    type: string
-                themeSettings:
-                    default: false
-                    type: boolean
-                timeZoneId:
-                    description:
-                        The time zone the cron expression is evaluated in. Defaults to the server time zone.
-                    type: string
             required:
                 -   name
             type: object
         ReportEntry:
+            description:
+                Represents an item reported by an import or publish process.
             properties:
                 classExternalReferenceCode:
                     description:
@@ -561,12 +624,14 @@ components:
                     type: integer
                 configurationId:
                     description:
-                        The report entry's configuration ID.
+                        The ID of the configuration of the process the entry belongs to.
                     format: int64
                     readOnly: true
                     type: integer
                 creator:
                     $ref: ../../headless/headless-delivery/headless-delivery-impl/rest-openapi.yaml#Creator
+                    description:
+                        The user who started the process the entry belongs to.
                     readOnly: true
                 dateCreated:
                     description:
@@ -576,13 +641,13 @@ components:
                     type: string
                 dateModified:
                     description:
-                        The report entry's latest modification date.
+                        The report entry's last modification date.
                     format: date-time
                     readOnly: true
                     type: string
                 errorMessage:
                     description:
-                        The error message.
+                        The report entry's error message.
                     readOnly: true
                     type: string
                 errorStacktrace:
@@ -622,40 +687,11 @@ components:
                         The report entry's type.
                     readOnly: true
             type: object
-        RequestPortletDataHandler:
-            properties:
-                name:
-                    description:
-                        The handler's portlet ID.
-                    type: string
-                requestPortletDataHandlerControls:
-                    items:
-                        $ref: "#/components/schemas/RequestPortletDataHandlerControl"
-                    type: array
-            type: object
-        RequestPortletDataHandlerControl:
-            properties:
-                name:
-                    type: string
-                requestPortletDataHandlerControls:
-                    items:
-                        $ref: "#/components/schemas/RequestPortletDataHandlerControl"
-                    type: array
-                values:
-                    items:
-                        type: string
-                    type: array
-            type: object
         ScheduledPublishProcess:
             properties:
                 creator:
                     $ref: ../../headless/headless-delivery/headless-delivery-impl/rest-openapi.yaml#Creator
                     readOnly: true
-                cronExpression:
-                    description:
-                        The cron expression that fires the scheduled publication.
-                    readOnly: true
-                    type: string
                 dateCreated:
                     description:
                         The scheduled publish process's creation date.
@@ -679,15 +715,6 @@ components:
                     format: date-time
                     readOnly: true
                     type: string
-                publishParameters:
-                    additionalProperties:
-                        items:
-                            type: string
-                        type: array
-                    description:
-                        The raw export import parameters the scheduled publication was created with.
-                    readOnly: true
-                    type: object
                 scheduleEndDate:
                     description:
                         The date the scheduled publication stops firing.
@@ -700,6 +727,65 @@ components:
                     format: date-time
                     readOnly: true
                     type: string
+                scheduledPublishProcessRequest:
+                    $ref: "#/components/schemas/ScheduledPublishProcessRequest"
+                    description:
+                        The request the scheduled publish process was created with.
+                    readOnly: true
+            type: object
+        ScheduledPublishProcessRequest:
+            properties:
+                cronExpression:
+                    description:
+                        The cron expression the publication fires on.
+                    type: string
+                publishProcessRequest:
+                    $ref: "#/components/schemas/PublishProcessRequest"
+                    description:
+                        The publish process request to run every time the schedule fires.
+                scheduleEndDate:
+                    format: date-time
+                    type: string
+                scheduleStartDate:
+                    description:
+                        The date the publication starts firing. Defaults to now.
+                    format: date-time
+                    type: string
+                timeZoneId:
+                    description:
+                        The time zone the cron expression is evaluated in. Defaults to the server time zone.
+                    type: string
+            required:
+                -   cronExpression
+                -   publishProcessRequest
+            type: object
+        Site:
+            description:
+                Represents a site an instance process can export or import in full.
+            properties:
+                childSitesCount:
+                    format: int32
+                    readOnly: true
+                    type: integer
+                descriptiveName:
+                    readOnly: true
+                    type: string
+                existsInInstance:
+                    description:
+                        A flag that indicates whether the instance already has the site, which only the import preview sets.
+                    readOnly: true
+                    type: boolean
+                externalReferenceCode:
+                    description:
+                        The site's external reference code, which is the only property the instance requests send.
+                    type: string
+                path:
+                    description:
+                        The site's path in the site hierarchy.
+                    readOnly: true
+                    type: string
+            required:
+                -   externalReferenceCode
             type: object
         Status:
             properties:
@@ -718,7 +804,7 @@ components:
             type: object
 info:
     description:
-        "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.exportimport.rest.client', and version '1.0.12'."
+        "Exports, imports, and publishes the content of the instance, a site, an asset library, or one of their portlets. Get the preview first, then send its portlet data handlers back in the process request with the controls you want. Only the handlers and controls in the request are processed. A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.exportimport.rest.client', and version '1.0.13'."
     license:
         name: Apache 2.0
         url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -728,6 +814,8 @@ openapi: 3.0.1
 paths:
     "/asset-libraries/{assetLibraryExternalReferenceCode}/export-preview":
         get:
+            description:
+                Retrieves the portlet data handlers and counts for an export of the specified asset library, or of one of its portlets.
             operationId: getAssetLibraryExportPreview
             parameters:
                 -   in: path
@@ -736,25 +824,36 @@ paths:
                     schema:
                         type: string
                 -   in: query
-                    name: dateRangeType
+                    description:
+                        The date filter's type. Without it, all the content is counted.
+                    name: dateFilterType
                     schema:
-                        enum: [ALL, DATE_RANGE, LAST]
+                        enum: [DateRange, LastHours]
                         type: string
                 -   in: query
+                    description:
+                        The end date of a DateRange filter.
                     name: endDate
                     schema:
                         format: date-time
                         type: string
                 -   in: query
-                    name: plid
+                    description:
+                        The number of hours of a LastHours filter.
+                    name: hours
                     schema:
-                        format: int64
+                        format: int32
+                        minimum: 1
                         type: integer
                 -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
                     schema:
                         type: string
                 -   in: query
+                    description:
+                        The start date of a DateRange filter.
                     name: startDate
                     schema:
                         format: date-time
@@ -772,7 +871,7 @@ paths:
     "/asset-libraries/{assetLibraryExternalReferenceCode}/export-processes":
         get:
             description:
-                Retrieves the layout export process entries of the specified asset library, or the export process entries of one of its portlets when a portlet ID is given.
+                Retrieves the export processes of the specified asset library, or of one of its portlets.
             operationId: getAssetLibraryExportProcessesPage
             parameters:
                 -   in: path
@@ -802,6 +901,8 @@ paths:
                     schema:
                         type: integer
                 -   in: query
+                    description:
+                        The ID of a portlet to list only its processes.
                     name: portletId
                     schema:
                         type: string
@@ -836,6 +937,8 @@ paths:
                                 type: array
             tags: ["ExportProcess"]
         post:
+            description:
+                Starts an export of the specified asset library, or of one of its portlets.
             operationId: postAssetLibraryExportProcess
             parameters:
                 -   in: path
@@ -844,11 +947,8 @@ paths:
                     schema:
                         type: string
                 -   in: query
-                    name: plid
-                    schema:
-                        format: int64
-                        type: integer
-                -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
                     schema:
                         type: string
@@ -872,6 +972,8 @@ paths:
             tags: ["ExportProcess"]
     "/asset-libraries/{assetLibraryExternalReferenceCode}/import-preview":
         post:
+            description:
+                Uploads a file to import into the specified asset library and retrieves its portlet data handlers and counts. The import process of the same scope imports the user's last uploaded file.
             operationId: postAssetLibraryImportPreview
             parameters:
                 -   in: path
@@ -880,11 +982,8 @@ paths:
                     schema:
                         type: string
                 -   in: query
-                    name: plid
-                    schema:
-                        format: int64
-                        type: integer
-                -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
                     schema:
                         type: string
@@ -910,7 +1009,7 @@ paths:
     "/asset-libraries/{assetLibraryExternalReferenceCode}/import-processes":
         get:
             description:
-                Retrieves the layout import process entries of the specified asset library, or the import process entries of one of its portlets when a portlet ID is given.
+                Retrieves the import processes of the specified asset library, or of one of its portlets.
             operationId: getAssetLibraryImportProcessesPage
             parameters:
                 -   in: path
@@ -940,6 +1039,8 @@ paths:
                     schema:
                         type: integer
                 -   in: query
+                    description:
+                        The ID of a portlet to list only its processes.
                     name: portletId
                     schema:
                         type: string
@@ -974,6 +1075,8 @@ paths:
                                 type: array
             tags: ["ImportProcess"]
         post:
+            description:
+                Imports the user's last uploaded file into the specified asset library, or into one of its portlets. Returns a 404 when there is no uploaded file.
             operationId: postAssetLibraryImportProcess
             parameters:
                 -   in: path
@@ -982,11 +1085,8 @@ paths:
                     schema:
                         type: string
                 -   in: query
-                    name: plid
-                    schema:
-                        format: int64
-                        type: integer
-                -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
                     schema:
                         type: string
@@ -1010,28 +1110,41 @@ paths:
             tags: ["ImportProcess"]
     "/export-preview":
         get:
+            description:
+                Retrieves the portlet data handlers and counts for an export of the instance, or of one of its portlets.
             operationId: getExportPreview
             parameters:
                 -   in: query
-                    name: dateRangeType
+                    description:
+                        The date filter's type. Without it, all the content is counted.
+                    name: dateFilterType
                     schema:
-                        enum: [ALL, DATE_RANGE, LAST]
+                        enum: [DateRange, LastHours]
                         type: string
                 -   in: query
+                    description:
+                        The end date of a DateRange filter.
                     name: endDate
                     schema:
                         format: date-time
                         type: string
                 -   in: query
-                    name: plid
+                    description:
+                        The number of hours of a LastHours filter.
+                    name: hours
                     schema:
-                        format: int64
+                        format: int32
+                        minimum: 1
                         type: integer
                 -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
                     schema:
                         type: string
                 -   in: query
+                    description:
+                        The start date of a DateRange filter.
                     name: startDate
                     schema:
                         format: date-time
@@ -1046,11 +1159,11 @@ paths:
                             schema:
                                 $ref: "#/components/schemas/ExportPreview"
             tags: ["ExportPreview"]
-    "/export-preview/preview-sites":
+    "/export-preview/sites":
         get:
             description:
-                Retrieves the sites that can be exported.
-            operationId: getExportPreviewPreviewSitesPage
+                Retrieves the sites the instance can export in full.
+            operationId: getExportPreviewSitesPage
             parameters:
                 -   in: query
                     name: page
@@ -1074,19 +1187,19 @@ paths:
                         application/json:
                             schema:
                                 items:
-                                    $ref: "#/components/schemas/PreviewSite"
+                                    $ref: "#/components/schemas/Site"
                                 type: array
                         application/xml:
                             schema:
                                 items:
-                                    $ref: "#/components/schemas/PreviewSite"
+                                    $ref: "#/components/schemas/Site"
                                 type: array
-            tags: ["PreviewSite"]
+            tags: ["Site"]
             x-feature-flag: LPD-85946
     "/export-processes":
         get:
             description:
-                Retrieves the layout export process entries of the instance, or the export process entries of one of its portlets when a portlet ID is given.
+                Retrieves the export processes of the instance, or of one of its portlets.
             operationId: getExportProcessesPage
             parameters:
                 -   in: query
@@ -1111,6 +1224,8 @@ paths:
                     schema:
                         type: integer
                 -   in: query
+                    description:
+                        The ID of a portlet to list only its processes.
                     name: portletId
                     schema:
                         type: string
@@ -1145,14 +1260,13 @@ paths:
                                 type: array
             tags: ["ExportProcess"]
         post:
+            description:
+                Starts an export of the instance, or of one of its portlets. The sites in the request are exported in full, unless a portlet ID is given.
             operationId: postExportProcess
             parameters:
                 -   in: query
-                    name: plid
-                    schema:
-                        format: int64
-                        type: integer
-                -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
                     schema:
                         type: string
@@ -1160,10 +1274,10 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: "#/components/schemas/ExportProcessRequest"
+                            $ref: "#/components/schemas/InstanceExportProcessRequest"
                     application/xml:
                         schema:
-                            $ref: "#/components/schemas/ExportProcessRequest"
+                            $ref: "#/components/schemas/InstanceExportProcessRequest"
             responses:
                 200:
                     content:
@@ -1270,7 +1384,7 @@ paths:
     "/export-processes/{exportProcessId}/relaunch":
         post:
             description:
-                Relaunches the export process with the specified ID. The process's date selection is resolved again when it runs.
+                Relaunches the export process with the specified ID.
             operationId: postExportProcessRelaunch
             parameters:
                 -   in: path
@@ -1291,14 +1405,13 @@ paths:
             tags: ["ExportProcess"]
     "/import-preview":
         post:
+            description:
+                Uploads a file to import into the instance and retrieves its portlet data handlers, counts, and sites. The import process of the same scope imports the user's last uploaded file.
             operationId: postImportPreview
             parameters:
                 -   in: query
-                    name: plid
-                    schema:
-                        format: int64
-                        type: integer
-                -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
                     schema:
                         type: string
@@ -1324,7 +1437,7 @@ paths:
     "/import-processes":
         get:
             description:
-                Retrieves the layout import process entries of the instance, or the import process entries of one of its portlets when a portlet ID is given.
+                Retrieves the import processes of the instance, or of one of its portlets.
             operationId: getImportProcessesPage
             parameters:
                 -   in: query
@@ -1349,6 +1462,8 @@ paths:
                     schema:
                         type: integer
                 -   in: query
+                    description:
+                        The ID of a portlet to list only its processes.
                     name: portletId
                     schema:
                         type: string
@@ -1383,14 +1498,13 @@ paths:
                                 type: array
             tags: ["ImportProcess"]
         post:
+            description:
+                Imports the user's last uploaded file into the instance, or into one of its portlets. The sites in the request are imported in full, unless a portlet ID is given. Returns a 404 when there is no uploaded file.
             operationId: postImportProcess
             parameters:
                 -   in: query
-                    name: plid
-                    schema:
-                        format: int64
-                        type: integer
-                -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
                     schema:
                         type: string
@@ -1398,10 +1512,10 @@ paths:
                 content:
                     application/json:
                         schema:
-                            $ref: "#/components/schemas/ImportProcessRequest"
+                            $ref: "#/components/schemas/InstanceImportProcessRequest"
                     application/xml:
                         schema:
-                            $ref: "#/components/schemas/ImportProcessRequest"
+                            $ref: "#/components/schemas/InstanceImportProcessRequest"
             responses:
                 200:
                     content:
@@ -1432,7 +1546,7 @@ paths:
             tags: ["ImportProcess"]
         get:
             description:
-                Retrieves the import process entry with the specified ID.
+                Retrieves the import process with the specified ID.
             operationId: getImportProcess
             parameters:
                 -   in: path
@@ -1488,7 +1602,7 @@ paths:
     "/import-processes/{importProcessId}/report-entries":
         get:
             description:
-                Retrieves the report entries associated with the specified import process ID.
+                Retrieves the report entries of the import process with the specified ID.
             operationId: getImportProcessReportEntriesPage
             parameters:
                 -   in: path
@@ -1619,7 +1733,7 @@ paths:
     "/publish-processes/{publishProcessId}/relaunch":
         post:
             description:
-                Relaunches the publish process with the specified ID. The process's date selection is resolved again when it runs.
+                Relaunches the publish process with the specified ID.
             operationId: postPublishProcessRelaunch
             parameters:
                 -   in: path
@@ -1641,7 +1755,7 @@ paths:
     "/publish-processes/{publishProcessId}/report-entries":
         get:
             description:
-                Retrieves the report entries associated with the specified publish process ID.
+                Retrieves the report entries of the publish process with the specified ID.
             operationId: getPublishProcessReportEntriesPage
             parameters:
                 -   in: path
@@ -1696,7 +1810,7 @@ paths:
                                     $ref: "#/components/schemas/ReportEntry"
                                 type: array
             tags: ["ReportEntry"]
-    "/report-entry/{reportEntryId}":
+    "/report-entries/{reportEntryId}":
         get:
             description:
                 Retrieves the report entry with the specified ID.
@@ -1732,6 +1846,8 @@ paths:
             tags: ["ReportEntry"]
     "/sites/{siteExternalReferenceCode}/export-preview":
         get:
+            description:
+                Retrieves the portlet data handlers and counts for an export of the specified site, or of one of its portlets.
             operationId: getSiteExportPreview
             parameters:
                 -   in: path
@@ -1740,25 +1856,42 @@ paths:
                     schema:
                         type: string
                 -   in: query
-                    name: dateRangeType
+                    description:
+                        The date filter's type. Without it, all the content is counted.
+                    name: dateFilterType
                     schema:
-                        enum: [ALL, DATE_RANGE, LAST]
+                        enum: [DateRange, LastHours]
                         type: string
                 -   in: query
+                    description:
+                        The end date of a DateRange filter.
                     name: endDate
                     schema:
                         format: date-time
                         type: string
                 -   in: query
-                    name: plid
+                    description:
+                        The number of hours of a LastHours filter.
+                    name: hours
                     schema:
-                        format: int64
+                        format: int32
+                        minimum: 1
                         type: integer
                 -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
                     schema:
                         type: string
                 -   in: query
+                    description:
+                        The external reference code of the site page that holds the portlet. Without it, the portlet is handled as an application rather than a widget on a page.
+                    name: sitePageExternalReferenceCode
+                    schema:
+                        type: string
+                -   in: query
+                    description:
+                        The start date of a DateRange filter.
                     name: startDate
                     schema:
                         format: date-time
@@ -1776,7 +1909,7 @@ paths:
     "/sites/{siteExternalReferenceCode}/export-processes":
         get:
             description:
-                Retrieves the layout export process entries of the specified site, or the export process entries of one of its portlets when a portlet ID is given.
+                Retrieves the export processes of the specified site, or of one of its portlets.
             operationId: getSiteExportProcessesPage
             parameters:
                 -   in: path
@@ -1806,6 +1939,8 @@ paths:
                     schema:
                         type: integer
                 -   in: query
+                    description:
+                        The ID of a portlet to list only its processes.
                     name: portletId
                     schema:
                         type: string
@@ -1815,6 +1950,12 @@ paths:
                         type: string
                 -   in: query
                     name: search
+                    schema:
+                        type: string
+                -   in: query
+                    description:
+                        The external reference code of the site page that holds the portlet, to list only the processes of that widget.
+                    name: sitePageExternalReferenceCode
                     schema:
                         type: string
                 -   in: query
@@ -1841,7 +1982,7 @@ paths:
             tags: ["ExportProcess"]
         post:
             description:
-                Starts an export process on the specified site. The date range type and dates select the content and are resolved every time the process runs, including relaunches. When no type is given, it is inferred from the dates - no dates cover all content, both dates cover that fixed date range, and a start date alone covers the window from the start date until each run.
+                Starts an export of the specified site, or of one of its portlets.
             operationId: postSiteExportProcess
             parameters:
                 -   in: path
@@ -1850,12 +1991,15 @@ paths:
                     schema:
                         type: string
                 -   in: query
-                    name: plid
-                    schema:
-                        format: int64
-                        type: integer
-                -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
+                    schema:
+                        type: string
+                -   in: query
+                    description:
+                        The external reference code of the site page that holds the portlet. Without it, the portlet is handled as an application rather than a widget on a page.
+                    name: sitePageExternalReferenceCode
                     schema:
                         type: string
             requestBody:
@@ -1878,6 +2022,8 @@ paths:
             tags: ["ExportProcess"]
     "/sites/{siteExternalReferenceCode}/import-preview":
         post:
+            description:
+                Uploads a file to import into the specified site and retrieves its portlet data handlers and counts. The import process of the same scope imports the user's last uploaded file.
             operationId: postSiteImportPreview
             parameters:
                 -   in: path
@@ -1886,12 +2032,15 @@ paths:
                     schema:
                         type: string
                 -   in: query
-                    name: plid
-                    schema:
-                        format: int64
-                        type: integer
-                -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
+                    schema:
+                        type: string
+                -   in: query
+                    description:
+                        The external reference code of the site page that holds the portlet. Without it, the portlet is handled as an application rather than a widget on a page.
+                    name: sitePageExternalReferenceCode
                     schema:
                         type: string
             requestBody:
@@ -1916,7 +2065,7 @@ paths:
     "/sites/{siteExternalReferenceCode}/import-processes":
         get:
             description:
-                Retrieves the layout import process entries of the specified site, or the import process entries of one of its portlets when a portlet ID is given.
+                Retrieves the import processes of the specified site, or of one of its portlets.
             operationId: getSiteImportProcessesPage
             parameters:
                 -   in: path
@@ -1946,6 +2095,8 @@ paths:
                     schema:
                         type: integer
                 -   in: query
+                    description:
+                        The ID of a portlet to list only its processes.
                     name: portletId
                     schema:
                         type: string
@@ -1955,6 +2106,12 @@ paths:
                         type: string
                 -   in: query
                     name: search
+                    schema:
+                        type: string
+                -   in: query
+                    description:
+                        The external reference code of the site page that holds the portlet, to list only the processes of that widget.
+                    name: sitePageExternalReferenceCode
                     schema:
                         type: string
                 -   in: query
@@ -1980,6 +2137,8 @@ paths:
                                 type: array
             tags: ["ImportProcess"]
         post:
+            description:
+                Imports the user's last uploaded file into the specified site, or into one of its portlets. Returns a 404 when there is no uploaded file.
             operationId: postSiteImportProcess
             parameters:
                 -   in: path
@@ -1988,12 +2147,15 @@ paths:
                     schema:
                         type: string
                 -   in: query
-                    name: plid
-                    schema:
-                        format: int64
-                        type: integer
-                -   in: query
+                    description:
+                        The ID of a portlet to narrow the process to (e.g., com_liferay_journal_web_portlet_JournalPortlet).
                     name: portletId
+                    schema:
+                        type: string
+                -   in: query
+                    description:
+                        The external reference code of the site page that holds the portlet. Without it, the portlet is handled as an application rather than a widget on a page.
+                    name: sitePageExternalReferenceCode
                     schema:
                         type: string
             requestBody:
@@ -2017,7 +2179,7 @@ paths:
     "/sites/{siteExternalReferenceCode}/publish-preview":
         get:
             description:
-                Retrieves the portlet data handlers and change counts a Publish to Live on the specified site would cover. The date range type selects the counting window like it does on the publish process, defaulting to the type inferred from the given dates.
+                Retrieves the portlet data handlers and change counts for a Publish to Live of the specified site.
             operationId: getSitePublishPreview
             parameters:
                 -   in: path
@@ -2026,16 +2188,30 @@ paths:
                     schema:
                         type: string
                 -   in: query
-                    name: dateRangeType
+                    description:
+                        The date filter's type. Without it, all the content is counted.
+                    name: dateFilterType
                     schema:
-                        enum: [ALL, DATE_RANGE, FROM_LAST_PUBLISH_DATE, LAST]
+                        enum: [DateRange, FromLastPublishDate, LastHours]
                         type: string
                 -   in: query
+                    description:
+                        The end date of a DateRange filter.
                     name: endDate
                     schema:
                         format: date-time
                         type: string
                 -   in: query
+                    description:
+                        The number of hours of a LastHours filter.
+                    name: hours
+                    schema:
+                        format: int32
+                        minimum: 1
+                        type: integer
+                -   in: query
+                    description:
+                        The start date of a DateRange filter.
                     name: startDate
                     schema:
                         format: date-time
@@ -2053,7 +2229,7 @@ paths:
     "/sites/{siteExternalReferenceCode}/publish-processes":
         get:
             description:
-                Retrieves the Publish to Live process entries for the specified site.
+                Retrieves the Publish to Live processes of the specified site.
             operationId: getSitePublishProcessesPage
             parameters:
                 -   in: path
@@ -2114,7 +2290,7 @@ paths:
             tags: ["PublishProcess"]
         post:
             description:
-                Starts a Publish to Live process on the specified site. The date range type and dates select the content and are resolved every time the process runs, including relaunches and scheduled occurrences. When no type is given, it is inferred from the dates - no dates cover all content, both dates cover that fixed date range, and a start date alone covers the window from the start date until each run. When a cron expression is given, the publish is scheduled to recur instead of running immediately.
+                Starts a Publish to Live of the specified site.
             operationId: postSitePublishProcess
             parameters:
                 -   in: path
@@ -2143,7 +2319,7 @@ paths:
     "/sites/{siteExternalReferenceCode}/scheduled-publish-processes":
         get:
             description:
-                Retrieves the scheduled Publish to Live process entries for the specified site.
+                Retrieves the scheduled Publish to Live processes of the specified site.
             operationId: getSiteScheduledPublishProcessesPage
             parameters:
                 -   in: path
@@ -2181,10 +2357,38 @@ paths:
                                     $ref: "#/components/schemas/ScheduledPublishProcess"
                                 type: array
             tags: ["ScheduledPublishProcess"]
+        post:
+            description:
+                Schedules a Publish to Live of the specified site. The publish process request runs every time the cron expression fires, between the start and end dates.
+            operationId: postSiteScheduledPublishProcess
+            parameters:
+                -   in: path
+                    name: siteExternalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: "#/components/schemas/ScheduledPublishProcessRequest"
+                    application/xml:
+                        schema:
+                            $ref: "#/components/schemas/ScheduledPublishProcessRequest"
+            responses:
+                200:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: "#/components/schemas/ScheduledPublishProcess"
+                        application/xml:
+                            schema:
+                                $ref: "#/components/schemas/ScheduledPublishProcess"
+            tags: ["ScheduledPublishProcess"]
     "/sites/{siteExternalReferenceCode}/scheduled-publish-processes/{scheduledPublishProcessId}":
         delete:
             description:
-                Unschedules the scheduled Publish to Live process with the given ID and deletes its draft configuration.
+                Unschedules the scheduled Publish to Live process with the specified ID.
             operationId: deleteSiteScheduledPublishProcess
             parameters:
                 -   in: path
@@ -2206,7 +2410,7 @@ paths:
             tags: ["ScheduledPublishProcess"]
         get:
             description:
-                Retrieves the scheduled Publish to Live process with the given ID.
+                Retrieves the scheduled Publish to Live process with the specified ID.
             operationId: getSiteScheduledPublishProcess
             parameters:
                 -   in: path

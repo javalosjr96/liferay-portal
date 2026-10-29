@@ -84,9 +84,7 @@ public class PortalInstancesUserNotificationHandler
 		String status = jsonObject.getString("status");
 
 		if (operationType.equals(
-				PortalInstancesNotificationConstants.OPERATION_TYPE_ADD) ||
-			operationType.equals(
-				PortalInstancesNotificationConstants.OPERATION_TYPE_COPY)) {
+				PortalInstancesNotificationConstants.OPERATION_TYPE_ADD)) {
 
 			if (status.equals(
 					PortalInstancesNotificationConstants.STATUS_SUCCESS)) {
@@ -94,6 +92,22 @@ public class PortalInstancesUserNotificationHandler
 				return serviceContext.translate(
 					"the-instance-x-is-ready-to-use",
 					jsonObject.getString("portalInstanceId"));
+			}
+
+			return _getErrorMessage(jsonObject, serviceContext);
+		}
+
+		if (operationType.equals(
+				PortalInstancesNotificationConstants.OPERATION_TYPE_COPY) ||
+			operationType.equals(
+				PortalInstancesNotificationConstants.OPERATION_TYPE_IMPORT)) {
+
+			if (status.equals(
+					PortalInstancesNotificationConstants.STATUS_SUCCESS)) {
+
+				return _getSuccessMessage(
+					jsonObject.getString("portalInstanceId"),
+					"the-instance-x-is-ready-to-use", serviceContext);
 			}
 
 			return _getErrorMessage(jsonObject, serviceContext);
@@ -119,27 +133,14 @@ public class PortalInstancesUserNotificationHandler
 			if (status.equals(
 					PortalInstancesNotificationConstants.STATUS_SUCCESS)) {
 
-				return serviceContext.translate(
+				return _getSuccessMessage(
+					jsonObject.getString("schemaName"),
 					"the-instance-was-exported-to-the-schema-x",
-					jsonObject.getString("schemaName"));
+					serviceContext);
 			}
 
 			return _getErrorMessage(
 				jsonObject, serviceContext, jsonObject.getString("schemaName"));
-		}
-
-		if (operationType.equals(
-				PortalInstancesNotificationConstants.OPERATION_TYPE_IMPORT)) {
-
-			if (status.equals(
-					PortalInstancesNotificationConstants.STATUS_SUCCESS)) {
-
-				return serviceContext.translate(
-					"the-instance-x-is-ready-to-use",
-					jsonObject.getString("portalInstanceId"));
-			}
-
-			return _getErrorMessage(jsonObject, serviceContext);
 		}
 
 		throw new IllegalArgumentException(
@@ -165,6 +166,16 @@ public class PortalInstancesUserNotificationHandler
 		}
 
 		return serviceContext.translate("an-unexpected-error-occurred");
+	}
+
+	private String _getSuccessMessage(
+		String argument, String key, ServiceContext serviceContext) {
+
+		return StringBundler.concat(
+			serviceContext.translate(key, argument), "<br />",
+			serviceContext.translate(
+				"document-library-files-are-not-included-and-must-be-" +
+					"transferred-separately"));
 	}
 
 	private String _getTitle(

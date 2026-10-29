@@ -76,7 +76,7 @@ public abstract class BaseReportEntryResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/export-import/v1.0/import-processes/{importProcessId}/report-entries'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Retrieves the report entries associated with the specified import process ID."
+		description = "Retrieves the report entries of the import process with the specified ID."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -149,7 +149,7 @@ public abstract class BaseReportEntryResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/export-import/v1.0/publish-processes/{publishProcessId}/report-entries'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Retrieves the report entries associated with the specified publish process ID."
+		description = "Retrieves the report entries of the publish process with the specified ID."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -219,7 +219,7 @@ public abstract class BaseReportEntryResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'GET' 'http://localhost:8080/o/export-import/v1.0/report-entry/{reportEntryId}'  -u 'test@liferay.com:test'
+	 * curl -X 'GET' 'http://localhost:8080/o/export-import/v1.0/report-entries/{reportEntryId}'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
 		description = "Retrieves the report entry with the specified ID."
@@ -248,7 +248,7 @@ public abstract class BaseReportEntryResourceImpl
 		value = {@io.swagger.v3.oas.annotations.tags.Tag(name = "ReportEntry")}
 	)
 	@jakarta.ws.rs.GET
-	@jakarta.ws.rs.Path("/report-entry/{reportEntryId}")
+	@jakarta.ws.rs.Path("/report-entries/{reportEntryId}")
 	@jakarta.ws.rs.Produces({"application/json", "application/xml"})
 	@Override
 	public ReportEntry getReportEntry(
@@ -1125,4 +1125,4 @@ public abstract class BaseReportEntryResourceImpl
 		LogFactoryUtil.getLog(BaseReportEntryResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:737374428
+// LIFERAY-REST-BUILDER-HASH:-1073639142

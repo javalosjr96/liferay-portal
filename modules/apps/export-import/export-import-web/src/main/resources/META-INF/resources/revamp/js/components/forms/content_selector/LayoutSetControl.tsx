@@ -6,6 +6,7 @@
 import ClayButton from '@clayui/button';
 import {ClayCheckbox, ClayRadio} from '@clayui/form';
 import ClayLayout from '@clayui/layout';
+import {PageTreePickerModal} from '@liferay/layout-js-components-web';
 import {sub} from 'frontend-js-web';
 import React, {useId, useState} from 'react';
 
@@ -14,7 +15,7 @@ import {
 	PortletDataHandlerSelection,
 	isAllLayoutsSelected,
 } from '../../../utils/contentSelection';
-import PageTreeModal, {PageTreeModalConfiguration} from '../../PageTreeModal';
+import {PageTreeModalConfiguration} from '../../PageTreeModal';
 import SectionTags from './SectionTags';
 
 interface Props {
@@ -100,26 +101,27 @@ export default function LayoutSetControl({
 	portletDataHandlerSelection,
 }: Props) {
 	const {
-		defaultPrivateLayout = false,
+		pageSize,
 		privateLayoutsAvailable,
-		...modalConfiguration
+		siteExternalReferenceCode,
+		title,
 	} = pageTreeModalConfiguration;
 
 	const checkboxId = useId();
 
 	const [showModal, setShowModal] = useState(false);
 
-	const {layoutIds = [], privateLayout = defaultPrivateLayout} = (
+	const layoutSetSelection = (
 		typeof portletDataHandlerSelection === 'object'
 			? portletDataHandlerSelection
 			: {}
 	) as LayoutSetSelection;
 
+	const {privateLayout = false} = layoutSetSelection;
+
 	const isAll = isAllLayoutsSelected(portletDataHandlerSelection);
 
 	const selected = typeof portletDataHandlerSelection === 'object';
-
-	const openModal = () => setShowModal(true);
 
 	return (
 		<div className="p-3">
@@ -128,9 +130,11 @@ export default function LayoutSetControl({
 					<ClayCheckbox
 						checked={isAll}
 						id={checkboxId}
-						indeterminate={!isAll && !!layoutIds.length}
+						indeterminate={selected && !isAll}
 						onChange={() =>
-							onChange(isAll ? undefined : {privateLayout})
+							onChange(
+								isAll ? undefined : {all: true, privateLayout}
+							)
 						}
 					/>
 				</ClayLayout.ContentCol>
@@ -152,7 +156,7 @@ export default function LayoutSetControl({
 						</div>
 
 						<SelectPagesButton
-							onClick={openModal}
+							onClick={() => setShowModal(true)}
 							privateLayout={privateLayout}
 						/>
 					</div>
@@ -163,26 +167,31 @@ export default function LayoutSetControl({
 				<LayoutVisibilitySelector
 					label={label}
 					onSetMode={(nextPrivateLayout) =>
-						onChange({privateLayout: nextPrivateLayout})
+						onChange({all: true, privateLayout: nextPrivateLayout})
 					}
 					privateLayout={privateLayout}
 				/>
 			)}
 
 			{showModal && (
-				<PageTreeModal
-					{...modalConfiguration}
-					initialAll={isAll}
-					initialSelectedIds={layoutIds.map(String)}
+				<PageTreePickerModal
+					initialSelection={
+						selected ? {...layoutSetSelection, privateLayout} : null
+					}
 					onClose={() => setShowModal(false)}
-					onSubmit={(selectedPortletDataHandlerSelection) => {
+					onSubmit={(sitePageTreeSelection) => {
 						setShowModal(false);
 
 						onChange(
-							selectedPortletDataHandlerSelection ?? undefined
+							(sitePageTreeSelection ?? undefined) as
+								| PortletDataHandlerSelection
+								| undefined
 						);
 					}}
+					pageSize={pageSize}
 					privateLayout={privateLayout}
+					siteExternalReferenceCode={siteExternalReferenceCode}
+					title={title}
 				/>
 			)}
 		</div>

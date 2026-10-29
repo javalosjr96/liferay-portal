@@ -18,7 +18,8 @@ autoscaling:
         maxReplicaCount: 100
         minReplicaCount: 1
         pollingInterval: 30
-        prometheusServerAddress: ""
+        prometheusTriggerMetadata:
+            serverAddress: ""
         triggerAuthentication:
             annotations: {}
             spec: {}
@@ -445,7 +446,7 @@ network:
     hostnames: []
     hsts:
         enabled: true
-        value: max-age=31536000; includeSubDomains; preload
+        value: max-age=31536000
     perHostnameRoutes: false
     securityPolicyAuthorizationSpec: {}
     sessionPersistence:

@@ -250,6 +250,7 @@ import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
+import com.liferay.portal.kernel.util.LocaleThreadLocal;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.Localization;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -1708,8 +1709,10 @@ public class ObjectEntryLocalServiceImpl
 				primaryKeyColumn.eq(primaryKey)
 			));
 
+		BaseModel<?> baseModel = null;
+
 		if (!baseModels.isEmpty()) {
-			BaseModel<?> baseModel = baseModels.get(0);
+			baseModel = baseModels.get(0);
 
 			baseModelAttributes = baseModel.getModelAttributes();
 		}
@@ -1735,6 +1738,9 @@ public class ObjectEntryLocalServiceImpl
 				GetterUtil.get(baseModelAttributes.get("uuid"), primaryKey)
 			).build();
 
+		User user = null;
+		Map<String, Object> values = null;
+
 		for (ObjectField objectField :
 				_objectFieldPersistence.findByObjectDefinitionId(
 					objectDefinition.getObjectDefinitionId())) {
@@ -1743,9 +1749,32 @@ public class ObjectEntryLocalServiceImpl
 				continue;
 			}
 
-			Object value = GetterUtil.getObject(
-				baseModelAttributes.get(objectField.getDBColumnName()),
-				primaryKey);
+			Object value = null;
+
+			if ((baseModel != null) &&
+				!baseModelAttributes.containsKey(
+					objectField.getDBColumnName())) {
+
+				if (values == null) {
+					user = _userLocalService.fetchUser(
+						PrincipalThreadLocal.getUserId());
+
+					values = ObjectEntryDTOConverterUtil.toValues(
+						baseModel, _dtoConverterRegistry,
+						objectDefinition.getName(),
+						_systemObjectDefinitionManagerRegistry, user);
+				}
+
+				value = ObjectEntryValuesUtil.getTitleFieldValue(
+					objectField.getBusinessType(), baseModelAttributes,
+					objectField, user, values);
+			}
+
+			if (value == null) {
+				value = GetterUtil.getObject(
+					baseModelAttributes.get(objectField.getDBColumnName()),
+					primaryKey);
+			}
 
 			if (value instanceof String) {
 				value = _localization.getLocalization(
@@ -1790,6 +1819,8 @@ public class ObjectEntryLocalServiceImpl
 
 		if (!objectDefinition.isUnmodifiableSystemObject()) {
 			ObjectEntry objectEntry = getObjectEntry(primaryKey);
+
+			objectEntry.setObjectDefinition(objectDefinition);
 
 			return objectEntry.getTitleValue();
 		}
@@ -5020,6 +5051,18 @@ public class ObjectEntryLocalServiceImpl
 		).eq(
 			ObjectEntryTable.INSTANCE.rootObjectEntryId
 		);
+	}
+
+	private Locale _getLocale(long userId) throws PortalException {
+		Locale locale = LocaleThreadLocal.getThemeDisplayLocale();
+
+		if (locale == null) {
+			User user = _userLocalService.getUser(userId);
+
+			locale = user.getLocale();
+		}
+
+		return locale;
 	}
 
 	private Set<Locale> _getLocales(
@@ -8681,13 +8724,12 @@ public class ObjectEntryLocalServiceImpl
 		}
 
 		if (invalidObjectStateTransition) {
-			User user = _userLocalService.getUser(userId);
+			Locale locale = _getLocale(userId);
 
 			_handle(
 				new ObjectEntryValuesException.InvalidObjectStateTransition(
-					originalListTypeEntry.getName(user.getLocale()),
-					sourceObjectState, listTypeEntry.getName(user.getLocale()),
-					targetObjectState),
+					originalListTypeEntry.getName(locale), sourceObjectState,
+					listTypeEntry.getName(locale), targetObjectState),
 				validationErrors);
 		}
 	}
@@ -8884,27 +8926,19 @@ public class ObjectEntryLocalServiceImpl
 	}
 
 	private void _validateTextMaxLength(
-			int defaultMaxLength, String objectEntryValue, long objectFieldId,
-			String objectFieldName, List<ValidationError> validationErrors)
+			int defaultMaxLength, String objectEntryValue,
+			ObjectField objectField, List<ValidationError> validationErrors)
 		throws PortalException {
 
-		int maxLength;
-
-		ObjectFieldSetting objectFieldSetting =
-			_objectFieldSettingPersistence.fetchByOFI_N(
-				objectFieldId, "maxLength");
-
-		if (objectFieldSetting != null) {
-			maxLength = GetterUtil.getInteger(objectFieldSetting.getValue());
-		}
-		else {
-			maxLength = defaultMaxLength;
-		}
+		int maxLength = GetterUtil.getInteger(
+			ObjectFieldSettingUtil.getValue(
+				ObjectFieldSettingConstants.NAME_MAX_LENGTH, objectField),
+			defaultMaxLength);
 
 		if (objectEntryValue.length() > maxLength) {
 			_handle(
 				new ObjectEntryValuesException.ExceedsTextMaxLength(
-					maxLength, objectFieldName),
+					maxLength, objectField.getName()),
 				validationErrors);
 		}
 	}
@@ -8914,9 +8948,7 @@ public class ObjectEntryLocalServiceImpl
 			String value)
 		throws PortalException {
 
-		_validateTextMaxLength(
-			280, value, objectField.getObjectFieldId(), objectField.getName(),
-			validationErrors);
+		_validateTextMaxLength(280, value, objectField, validationErrors);
 	}
 
 	private void _validateUniqueValues(
@@ -8963,13 +8995,12 @@ public class ObjectEntryLocalServiceImpl
 			return;
 		}
 
-		User user = _userLocalService.getUser(userId);
 		Table<?> finalTable = table;
 
 		_handle(
 			new ObjectEntryValuesException.UniqueValueConstraintViolation(
 				objectField.getDBColumnName(), (Serializable)value,
-				objectField.getLabel(user.getLocale()),
+				objectField.getLabel(_getLocale(userId)),
 				finalTable.getTableName(), null),
 			validationErrors);
 	}
@@ -9040,8 +9071,7 @@ public class ObjectEntryLocalServiceImpl
 					ObjectFieldConstants.BUSINESS_TYPE_LONG_TEXT)) {
 
 			_validateTextMaxLength(
-				65000, GetterUtil.getString(value),
-				objectField.getObjectFieldId(), objectField.getName(),
+				65000, GetterUtil.getString(value), objectField,
 				validationErrors);
 		}
 		else if (StringUtil.equals(
@@ -9159,8 +9189,7 @@ public class ObjectEntryLocalServiceImpl
 			_validateTextMaxLength(
 				DynamicObjectDefinitionTableUtil.getMaxLength(
 					objectField.getBusinessType()),
-				GetterUtil.getString(value), objectField.getObjectFieldId(),
-				objectField.getName(), validationErrors);
+				GetterUtil.getString(value), objectField, validationErrors);
 		}
 
 		if (objectField.getListTypeDefinitionId() != 0) {

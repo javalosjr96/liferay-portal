@@ -30,6 +30,10 @@ type TDocument = {
 	viewableBy?: string;
 };
 
+type TDocumentFile =
+	| fs.ReadStream
+	| {buffer: Buffer; mimeType: string; name: string};
+
 type TDocumentFolder = {
 	description?: string;
 	externalReferenceCode?: string;
@@ -203,7 +207,7 @@ export class HeadlessDeliveryApiHelper {
 
 	async postAssetLibraryDocument(
 		assetLibraryId: number | string,
-		file: fs.ReadStream,
+		file: TDocumentFile,
 		document?: TDocument
 	) {
 		return this._postDocument(
@@ -218,8 +222,10 @@ export class HeadlessDeliveryApiHelper {
 		blog?: {
 			articleBody?: string;
 			headline?: string;
+			image?: {imageId: number};
 			keywords?: string[];
 			taxonomyCategoryIds?: number[];
+			viewableBy?: string;
 		}
 	): Promise<any> {
 		blog = {
@@ -233,6 +239,26 @@ export class HeadlessDeliveryApiHelper {
 			{
 				data: blog,
 				failOnStatusCode: true,
+			}
+		);
+	}
+
+	async postSiteBlogPostingImage(
+		siteId: number | string,
+		file: TDocumentFile,
+		title = getRandomString()
+	): Promise<{contentUrl: string; id: number; title: string}> {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/blog-posting-images`,
+			{
+				failOnStatusCode: true,
+				headers: {
+					...(await this.apiHelpers.getCSRFTokenHeader()),
+				},
+				multipart: {
+					blogPostingImage: JSON.stringify({title}),
+					file,
+				},
 			}
 		);
 	}
@@ -262,12 +288,14 @@ export class HeadlessDeliveryApiHelper {
 
 	async postSiteKnowledgeBaseArticle({
 		articleBody,
+		keywords,
 		siteId,
 		taxonomyCategoryIds,
 		title,
 		viewableBy,
 	}: {
 		articleBody: string;
+		keywords?: string[];
 		siteId: string;
 		taxonomyCategoryIds?: number[];
 		title: string;
@@ -278,9 +306,28 @@ export class HeadlessDeliveryApiHelper {
 			{
 				data: {
 					articleBody,
+					keywords,
 					taxonomyCategoryIds,
 					title,
 					viewableBy,
+				},
+				failOnStatusCode: true,
+			}
+		);
+	}
+
+	async postSiteKnowledgeBaseFolder({
+		name,
+		siteId,
+	}: {
+		name: string;
+		siteId: string;
+	}): Promise<KnowledgeBaseFolder> {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteId}/knowledge-base-folders`,
+			{
+				data: {
+					name,
 				},
 				failOnStatusCode: true,
 			}
@@ -298,6 +345,46 @@ export class HeadlessDeliveryApiHelper {
 	}): Promise<KnowledgeBaseArticle> {
 		return this.apiHelpers.post(
 			`${this.apiHelpers.baseUrl}${this.basePath}/knowledge-base-articles/${parentKnowledgeBaseArticleId}/knowledge-base-articles`,
+			{
+				data: {
+					articleBody,
+					title,
+				},
+				failOnStatusCode: true,
+			}
+		);
+	}
+
+	async postKnowledgeBaseArticleKnowledgeBaseAttachment(
+		knowledgeBaseArticleId: string,
+		file: TDocumentFile
+	): Promise<{contentUrl: string; id: number; title: string}> {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/knowledge-base-articles/${knowledgeBaseArticleId}/knowledge-base-attachments`,
+			{
+				failOnStatusCode: true,
+				headers: {
+					...(await this.apiHelpers.getCSRFTokenHeader()),
+				},
+				multipart: {
+					file,
+					knowledgeBaseAttachment: JSON.stringify({}),
+				},
+			}
+		);
+	}
+
+	async postKnowledgeBaseFolderKnowledgeBaseArticle({
+		articleBody,
+		knowledgeBaseFolderId,
+		title,
+	}: {
+		articleBody: string;
+		knowledgeBaseFolderId: string;
+		title: string;
+	}): Promise<KnowledgeBaseArticle> {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/knowledge-base-folders/${knowledgeBaseFolderId}/knowledge-base-articles`,
 			{
 				data: {
 					articleBody,
@@ -568,7 +655,7 @@ export class HeadlessDeliveryApiHelper {
 
 	async postDocument(
 		siteId: number | string,
-		file: fs.ReadStream,
+		file: TDocumentFile,
 		document?: TDocument
 	) {
 		return this._postDocument(`sites/${siteId}`, file, document);
@@ -600,7 +687,7 @@ export class HeadlessDeliveryApiHelper {
 
 	async postDocumentFolderDocument(
 		documentFolderId: number | string,
-		file: fs.ReadStream,
+		file: TDocumentFile,
 		document?: TDocument
 	) {
 		return this._postDocument(
@@ -725,9 +812,31 @@ export class HeadlessDeliveryApiHelper {
 		);
 	}
 
+	async putKnowledgeBaseArticle({
+		articleBody,
+		knowledgeBaseArticleId,
+		title,
+	}: {
+		articleBody: string;
+		knowledgeBaseArticleId: string;
+		title: string;
+	}): Promise<KnowledgeBaseArticle> {
+		return this.apiHelpers.put(
+			`${this.apiHelpers.baseUrl}${this.basePath}/knowledge-base-articles/${knowledgeBaseArticleId}`,
+			{
+				data: {
+					articleBody,
+					datePublished: new Date().toISOString(),
+					title,
+				},
+				failOnStatusCode: true,
+			}
+		);
+	}
+
 	private async _postDocument(
 		scopePath: string,
-		file: fs.ReadStream,
+		file: TDocumentFile,
 		document?: TDocument
 	) {
 		document = {

@@ -17,16 +17,16 @@ import React from 'react';
 import '@testing-library/jest-dom';
 
 import {NewPublish} from '../../../../../src/main/resources/META-INF/resources/revamp/js/pages/publish/NewPublish';
-import {ScheduledPublishProcess} from '../../../../../src/main/resources/META-INF/resources/revamp/js/types/exportImportProcess';
+import {
+	PublishProcessRequest,
+	ScheduledPublishProcess,
+	ScheduledPublishProcessRequest,
+} from '../../../../../src/main/resources/META-INF/resources/revamp/js/types/exportImportProcess';
 import {
 	toDateTimeParts,
 	toWallClockDateTime,
 } from '../../../../../src/main/resources/META-INF/resources/revamp/js/utils/dateTime';
 import {mockPreview} from '../../mocks/mockPreview';
-
-jest.mock('staging-taglib', () => ({
-	PagesTree: require('../../mocks/MockPagesTree').MockPagesTree,
-}));
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -49,18 +49,29 @@ const FUTURE_DISPLAY_DATE = toDisplayDate(FUTURE_DATE);
 
 const FUTURE_DISPLAY_DATE_TIME = `${FUTURE_DISPLAY_DATE} 03:30 PM`;
 
-const SCHEDULED_PUBLISH_PROCESS: ScheduledPublishProcess = {
+const PUBLISH_PROCESS_REQUEST: PublishProcessRequest = {
+	dateFilter: {type: 'FromLastPublishDate'},
+	deletions: true,
+	name: 'Weekly Content Sync',
+	permissions: false,
+	portletDataHandlers: [
+		{
+			name: 'PORTLET_DATA_com_liferay_journal_web_portlet_JournalPortlet',
+		},
+	],
+};
+
+const SCHEDULED_PUBLISH_PROCESS_REQUEST: ScheduledPublishProcessRequest = {
 	cronExpression: '0 30 9 ? * MON/1 *',
+	publishProcessRequest: PUBLISH_PROCESS_REQUEST,
+	timeZoneId: 'UTC',
+};
+
+const SCHEDULED_PUBLISH_PROCESS: ScheduledPublishProcess = {
 	id: 1234,
 	name: 'Weekly Content Sync',
-	publishParameters: {
-		DELETIONS: ['true'],
-		PERMISSIONS: ['false'],
-		PORTLET_DATA_com_liferay_journal_web_portlet_JournalPortlet: ['true'],
-		range: ['fromLastPublishDate'],
-		timeZoneId: ['UTC'],
-	},
 	scheduleStartDate: FUTURE_DATE.toISOString(),
+	scheduledPublishProcessRequest: SCHEDULED_PUBLISH_PROCESS_REQUEST,
 };
 
 const DEFAULT_PROPS = {
@@ -69,6 +80,7 @@ const DEFAULT_PROPS = {
 		groupId: 20121,
 		pageSize: 20,
 		privateLayoutsAvailable: false,
+		siteExternalReferenceCode: 'site-erc',
 	},
 	processesBackURL: '/some/back/url?tab=processes',
 	publishPreviewAPIURL:
@@ -82,11 +94,15 @@ const DEFAULT_PROPS = {
 	timeZones: [{label: '(UTC) Coordinated Universal Time', value: 'UTC'}],
 };
 
-const getPublishProcessCall = () =>
+const getPostCall = (path: string) =>
 	fetch.mock.calls.find(
-		([url, init]) =>
-			String(url).endsWith('publish-processes') && init?.method === 'POST'
+		([url, init]) => String(url).endsWith(path) && init?.method === 'POST'
 	);
+
+const getPublishProcessCall = () => getPostCall('/publish-processes');
+
+const getScheduledPublishProcessCall = () =>
+	getPostCall('/scheduled-publish-processes');
 
 const getUnscheduleCall = () =>
 	fetch.mock.calls.find(([, init]) => init?.method === 'DELETE');
@@ -184,7 +200,7 @@ describe('NewPublish', () => {
 		expect(body.deletions).toBe(false);
 		expect(body.name).toBe('My Publication');
 		expect(body.permissions).toBe(false);
-		expect(body.requestPortletDataHandlers.length).toBeGreaterThan(0);
+		expect(body.portletDataHandlers.length).toBeGreaterThan(0);
 
 		expect(Liferay.Util.navigate).toHaveBeenCalledWith(
 			DEFAULT_PROPS.processesBackURL
@@ -505,10 +521,12 @@ describe('NewPublish', () => {
 		);
 
 		await waitFor(() => {
-			expect(getPublishProcessCall()).toBeDefined();
+			expect(getScheduledPublishProcessCall()).toBeDefined();
 		});
 
-		const body = JSON.parse(getPublishProcessCall()![1]!.body as string);
+		const body = JSON.parse(
+			getScheduledPublishProcessCall()![1]!.body as string
+		);
 
 		expect(body.scheduleStartDate).toBe(
 			new Date(`${FUTURE_DATE_TIME.replace(' ', 'T')}:00Z`).toISOString()
@@ -556,10 +574,12 @@ describe('NewPublish', () => {
 		);
 
 		await waitFor(() => {
-			expect(getPublishProcessCall()).toBeDefined();
+			expect(getScheduledPublishProcessCall()).toBeDefined();
 		});
 
-		const body = JSON.parse(getPublishProcessCall()![1]!.body as string);
+		const body = JSON.parse(
+			getScheduledPublishProcessCall()![1]!.body as string
+		);
 
 		expect(body.scheduleEndDate).toBeUndefined();
 	});
@@ -595,10 +615,12 @@ describe('NewPublish', () => {
 		);
 
 		await waitFor(() => {
-			expect(getPublishProcessCall()).toBeDefined();
+			expect(getScheduledPublishProcessCall()).toBeDefined();
 		});
 
-		const body = JSON.parse(getPublishProcessCall()![1]!.body as string);
+		const body = JSON.parse(
+			getScheduledPublishProcessCall()![1]!.body as string
+		);
 
 		expect(body.scheduleEndDate).toBeUndefined();
 	});
@@ -614,8 +636,11 @@ describe('NewPublish', () => {
 		mockAPIRoutes({
 			scheduledPublishProcess: {
 				...SCHEDULED_PUBLISH_PROCESS,
-				cronExpression: `0 ${minute} ${hour} ${day} ${month} ? ${year}`,
 				scheduleEndDate,
+				scheduledPublishProcessRequest: {
+					...SCHEDULED_PUBLISH_PROCESS_REQUEST,
+					cronExpression: `0 ${minute} ${hour} ${day} ${month} ? ${year}`,
+				},
 			},
 		});
 
@@ -635,10 +660,12 @@ describe('NewPublish', () => {
 		);
 
 		await waitFor(() => {
-			expect(getPublishProcessCall()).toBeDefined();
+			expect(getScheduledPublishProcessCall()).toBeDefined();
 		});
 
-		const body = JSON.parse(getPublishProcessCall()![1]!.body as string);
+		const body = JSON.parse(
+			getScheduledPublishProcessCall()![1]!.body as string
+		);
 
 		expect(body.scheduleEndDate).toBeUndefined();
 	});
@@ -672,21 +699,16 @@ describe('NewPublish', () => {
 		mockAPIRoutes({
 			scheduledPublishProcess: {
 				...SCHEDULED_PUBLISH_PROCESS,
-				publishParameters: {
-					...SCHEDULED_PUBLISH_PROCESS.publishParameters,
-					endDateAmPm: ['0'],
-					endDateDay: ['1'],
-					endDateHour: ['9'],
-					endDateMinute: ['30'],
-					endDateMonth: ['8'],
-					endDateYear: ['2026'],
-					range: ['dateRange'],
-					startDateAmPm: ['1'],
-					startDateDay: ['22'],
-					startDateHour: ['3'],
-					startDateMinute: ['5'],
-					startDateMonth: ['7'],
-					startDateYear: ['2026'],
+				scheduledPublishProcessRequest: {
+					...SCHEDULED_PUBLISH_PROCESS_REQUEST,
+					publishProcessRequest: {
+						...PUBLISH_PROCESS_REQUEST,
+						dateFilter: {
+							endDate: '2026-09-01T07:30:00Z',
+							startDate: '2026-08-22T13:05:00Z',
+							type: 'DateRange',
+						},
+					},
 				},
 			},
 		});
@@ -726,14 +748,18 @@ describe('NewPublish', () => {
 		);
 
 		await waitFor(() => {
-			expect(getPublishProcessCall()).toBeDefined();
+			expect(getScheduledPublishProcessCall()).toBeDefined();
 		});
 
-		const body = JSON.parse(getPublishProcessCall()![1]!.body as string);
+		const body = JSON.parse(
+			getScheduledPublishProcessCall()![1]!.body as string
+		);
 
-		expect(body.dateRangeType).toBe('DATE_RANGE');
-		expect(body.startDate).toBe('2026-08-22T13:05:00.000Z');
-		expect(body.endDate).toBe('2026-09-01T07:30:00.000Z');
+		expect(body.publishProcessRequest.dateFilter).toEqual({
+			endDate: '2026-09-01T07:30:00.000Z',
+			startDate: '2026-08-22T13:05:00.000Z',
+			type: 'DateRange',
+		});
 	});
 
 	it('reclassifies a custom cron whose time matches the start date, keeping the sync', async () => {
@@ -744,8 +770,11 @@ describe('NewPublish', () => {
 		mockAPIRoutes({
 			scheduledPublishProcess: {
 				...SCHEDULED_PUBLISH_PROCESS,
-				cronExpression: '0 0 0 ? * MON,FRI *',
 				scheduleStartDate: midnight.toISOString(),
+				scheduledPublishProcessRequest: {
+					...SCHEDULED_PUBLISH_PROCESS_REQUEST,
+					cronExpression: '0 0 0 ? * MON,FRI *',
+				},
 			},
 		});
 
@@ -778,8 +807,11 @@ describe('NewPublish', () => {
 		mockAPIRoutes({
 			scheduledPublishProcess: {
 				...SCHEDULED_PUBLISH_PROCESS,
-				cronExpression: '0 0 0 ? * MON,FRI *',
 				scheduleStartDate: FUTURE_DATE.toISOString(),
+				scheduledPublishProcessRequest: {
+					...SCHEDULED_PUBLISH_PROCESS_REQUEST,
+					cronExpression: '0 0 0 ? * MON,FRI *',
+				},
 			},
 		});
 
@@ -812,8 +844,11 @@ describe('NewPublish', () => {
 		mockAPIRoutes({
 			scheduledPublishProcess: {
 				...SCHEDULED_PUBLISH_PROCESS,
-				cronExpression: '0 0 0 ? * MON,FRI *',
 				scheduleStartDate: FUTURE_DATE.toISOString(),
+				scheduledPublishProcessRequest: {
+					...SCHEDULED_PUBLISH_PROCESS_REQUEST,
+					cronExpression: '0 0 0 ? * MON,FRI *',
+				},
 			},
 		});
 
@@ -837,8 +872,11 @@ describe('NewPublish', () => {
 		mockAPIRoutes({
 			scheduledPublishProcess: {
 				...SCHEDULED_PUBLISH_PROCESS,
-				cronExpression: '0 0 0 ? * MON,FRI *',
 				scheduleStartDate: FUTURE_DATE.toISOString(),
+				scheduledPublishProcessRequest: {
+					...SCHEDULED_PUBLISH_PROCESS_REQUEST,
+					cronExpression: '0 0 0 ? * MON,FRI *',
+				},
 			},
 		});
 
@@ -966,10 +1004,12 @@ describe('NewPublish', () => {
 		await user.click(submitButton);
 
 		await waitFor(() => {
-			expect(getPublishProcessCall()).toBeDefined();
+			expect(getScheduledPublishProcessCall()).toBeDefined();
 		});
 
-		const body = JSON.parse(getPublishProcessCall()![1]!.body as string);
+		const body = JSON.parse(
+			getScheduledPublishProcessCall()![1]!.body as string
+		);
 
 		expect(body.scheduleStartDate).toBe(
 			new Date(`${FUTURE_DATE_TIME.replace(' ', 'T')}:00Z`).toISOString()
@@ -991,7 +1031,7 @@ describe('NewPublish', () => {
 		);
 
 		await waitFor(() => {
-			expect(getPublishProcessCall()).toBeDefined();
+			expect(getScheduledPublishProcessCall()).toBeDefined();
 		});
 
 		expect(Liferay.Util.navigate).toHaveBeenCalledWith(
@@ -1047,7 +1087,7 @@ describe('NewPublish', () => {
 			expect(getUnscheduleCall()).toBeDefined();
 		});
 
-		expect(getPublishProcessCall()).toBeDefined();
+		expect(getScheduledPublishProcessCall()).toBeDefined();
 		expect(Liferay.Util.openToast).toHaveBeenCalledWith(
 			expect.objectContaining({type: 'danger'})
 		);

@@ -953,7 +953,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.document.library.repository.cmis.impl.jar!neethi.jar</file-name>
-				<version>3.2.3</version>
+				<version>3.2.4</version>
 				<project-name>Apache Neethi</project-name>
 				<project-url>https://www.apache.org/</project-url>
 				<licenses>
@@ -5680,7 +5680,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.shared.dependencies.apache.commons.jar!org.apache.commons.fileupload.jar</file-name>
-				<version>1.6.0.LIFERAY-PATCHED-1.JAKARTA-LIFERAY-PATCHED-1</version>
+				<version>1.6.0.LIFERAY-PATCHED-2.JAKARTA-LIFERAY-PATCHED-1</version>
 				<project-name>Apache Commons FileUpload Jakarta</project-name>
 				<project-url>https://commons.apache.org/proper/commons-fileupload/</project-url>
 				<licenses>
@@ -7301,7 +7301,7 @@
 			</library>
 			<library>
 				<file-name>com.liferay.sharepoint.soap.repository.jar!neethi.jar</file-name>
-				<version>3.2.3</version>
+				<version>3.2.4</version>
 				<project-name>Apache Neethi</project-name>
 				<project-url>https://www.apache.org/</project-url>
 				<licenses>
@@ -7990,7 +7990,7 @@
 			</library>
 			<library>
 				<file-name>lib/development/aspectj-rt.jar</file-name>
-				<version>1.9.22.1</version>
+				<version>1.9.26</version>
 				<project-name>AspectJ</project-name>
 				<project-url>http://www.eclipse.org/aspectj</project-url>
 				<licenses>
@@ -8002,7 +8002,7 @@
 			</library>
 			<library>
 				<file-name>lib/development/aspectj-weaver.jar</file-name>
-				<version>1.9.22.1</version>
+				<version>1.9.26</version>
 				<project-name>AspectJ</project-name>
 				<project-url>http://www.eclipse.org/aspectj</project-url>
 				<licenses>
