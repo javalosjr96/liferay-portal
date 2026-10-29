@@ -951,6 +951,30 @@ public class CompanyLocalServiceDBPartitionTest
 	}
 
 	@Test
+	public void testDeleteCompanyWhenCopyInProcess() throws Exception {
+		_company1 = CompanyTestUtil.addCompany();
+
+		try (SafeCloseable safeCloseable =
+				PortalInstances.setCopyInProcessCompanyIdWithSafeCloseable(
+					_company1.getCompanyId())) {
+
+			UnsupportedOperationException unsupportedOperationException =
+				Assert.assertThrows(
+					UnsupportedOperationException.class,
+					() -> companyLocalService.deleteCompany(_company1));
+
+			Assert.assertEquals(
+				"Copying an instance is already in progress",
+				unsupportedOperationException.getMessage());
+		}
+
+		Assert.assertTrue(
+			ArrayUtil.contains(
+				CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+				_company1.getCompanyId()));
+	}
+
+	@Test
 	public void testDeleteCompanyWhenDBPartitionUtilFails() throws Exception {
 		_company1 = CompanyTestUtil.addCompany();
 
