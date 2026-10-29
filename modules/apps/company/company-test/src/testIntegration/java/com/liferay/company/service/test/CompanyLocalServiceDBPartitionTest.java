@@ -952,6 +952,9 @@ public class CompanyLocalServiceDBPartitionTest
 
 	@Test
 	public void testDeleteCompanyWhenCopyInProcess() throws Exception {
+
+		// A company being copied is not deleted
+
 		_company1 = CompanyTestUtil.addCompany();
 
 		try (SafeCloseable safeCloseable =
@@ -968,7 +971,24 @@ public class CompanyLocalServiceDBPartitionTest
 				unsupportedOperationException.getMessage());
 		}
 
+		Assert.assertFalse(
+			PortalInstances.isCompanyInDeletionProcess(
+				_company1.getCompanyId()));
 		Assert.assertTrue(
+			ArrayUtil.contains(
+				CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
+				_company1.getCompanyId()));
+
+		// A company is deleted while another company is being copied
+
+		try (SafeCloseable safeCloseable =
+				PortalInstances.setCopyInProcessCompanyIdWithSafeCloseable(
+					RandomTestUtil.nextLong())) {
+
+			companyLocalService.deleteCompany(_company1);
+		}
+
+		Assert.assertFalse(
 			ArrayUtil.contains(
 				CompanyLocalServiceTestUtil.getCompanyIdsBySQL(),
 				_company1.getCompanyId()));
