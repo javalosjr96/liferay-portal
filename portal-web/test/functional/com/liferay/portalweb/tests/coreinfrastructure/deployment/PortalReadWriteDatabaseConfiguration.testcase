@@ -100,6 +100,8 @@ definition {
 		property test.liferay.virtual.instance = "false";
 		property test.run.type = "single";
 
+		PagesAdmin.enableWidgetPages();
+
 		Clustering.viewClusterStatusInConsole();
 
 		Page.assertNodePortPG(nodePort = 8080);
