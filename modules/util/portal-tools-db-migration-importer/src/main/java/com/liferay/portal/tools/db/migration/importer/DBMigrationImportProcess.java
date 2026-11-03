@@ -36,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -112,17 +113,74 @@ public class DBMigrationImportProcess {
 	}
 
 	public void run() throws Exception {
-		_validateSQLFiles();
+		try {
+			_validateSQLFiles();
 
-		_createTables();
+			_createTables();
 
-		_copyTables();
+			_copyTables();
 
-		_createIndexes();
+			_createIndexes();
 
-		_executorService.shutdownNow();
+			_addCustomIndexes();
+		}
+		finally {
+			try {
+				_executorService.shutdownNow();
 
-		_executorService.awaitTermination(10, TimeUnit.SECONDS);
+				_executorService.awaitTermination(10, TimeUnit.SECONDS);
+			}
+			finally {
+				_destroyDataSources();
+			}
+		}
+	}
+
+	private void _addCustomIndexes() {
+		try {
+			List<Future<?>> futures = new ArrayList<>();
+
+			futures.add(
+				_executorService.submit(
+					() -> _dataSourceInfos.addAll(
+						new DBAddCustomIndexesProcess(
+							_sourceDataSource, _targetDataSource
+						).run())));
+
+			for (String partitionName : _partitionNames) {
+				futures.add(
+					_executorService.submit(
+						() -> _dataSourceInfos.addAll(
+							new DBAddCustomIndexesProcess(
+								partitionName,
+								_sourceDataSources.get(partitionName),
+								_targetDataSources.get(partitionName)
+							).run())));
+			}
+
+			for (Future<?> future : futures) {
+				future.get();
+			}
+		}
+		catch (InterruptedException interruptedException) {
+			Thread currentThread = Thread.currentThread();
+
+			currentThread.interrupt();
+
+			_addMessage(
+				"Unable to add custom indexes: " +
+					interruptedException.getMessage());
+		}
+		catch (Exception exception) {
+			_addMessage(
+				"Unable to add custom indexes: " + exception.getMessage());
+		}
+	}
+
+	private void _addMessage(String message) {
+		_dataSourceInfos.add(message);
+
+		System.out.println(message);
 	}
 
 	private String _asymmetricDifference(Set<String> set1, Set<String> set2) {
@@ -167,10 +225,17 @@ public class DBMigrationImportProcess {
 								DataSourceFactoryUtil.initDataSource(
 									_sourceJDBCURL, _sourcePassword,
 									_sourceUser, partitionName);
+
+							_sourceDataSources.put(
+								partitionName, sourceDataSource);
+
 							DataSource targetDataSource =
 								DataSourceFactoryUtil.initDataSource(
 									_targetJDBCURL, _targetPassword,
 									_targetUser, partitionName);
+
+							_targetDataSources.put(
+								partitionName, targetDataSource);
 
 							new DBCopyTablesProcess(
 								partitionName, sourceDataSource,
@@ -212,6 +277,16 @@ public class DBMigrationImportProcess {
 			_targetDataSource, _readFile(new File(_path, "tables.sql")));
 
 		_executeFilesSQL("_tables.sql");
+	}
+
+	private void _destroyDataSources() {
+		for (DataSource dataSource : _sourceDataSources.values()) {
+			DataSourceFactoryUtil.destroyDataSource(dataSource);
+		}
+
+		for (DataSource dataSource : _targetDataSources.values()) {
+			DataSourceFactoryUtil.destroyDataSource(dataSource);
+		}
 	}
 
 	private void _executeFilesSQL(String suffix) throws Exception {
@@ -465,12 +540,16 @@ public class DBMigrationImportProcess {
 	private final List<String> _partitionNames = new ArrayList<>();
 	private final String _path;
 	private final DataSource _sourceDataSource;
+	private final Map<String, DataSource> _sourceDataSources =
+		new ConcurrentHashMap<>();
 	private final String _sourceJDBCURL;
 	private final String _sourcePassword;
 	private final String _sourceUser;
 	private final List<String> _syncFinalSQLs = new ArrayList<>();
 	private final List<String> _syncInitialSQLs = new ArrayList<>();
 	private final DataSource _targetDataSource;
+	private final Map<String, DataSource> _targetDataSources =
+		new ConcurrentHashMap<>();
 	private final String _targetJDBCURL;
 	private final String _targetPassword;
 	private final String _targetUser;
