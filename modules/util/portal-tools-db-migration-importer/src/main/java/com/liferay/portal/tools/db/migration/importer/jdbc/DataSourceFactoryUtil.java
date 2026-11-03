@@ -17,6 +17,14 @@ import javax.sql.DataSource;
  */
 public class DataSourceFactoryUtil {
 
+	public static void destroyDataSource(DataSource dataSource) {
+		if (dataSource instanceof HikariDataSource) {
+			HikariDataSource hikariDataSource = (HikariDataSource)dataSource;
+
+			hikariDataSource.close();
+		}
+	}
+
 	public static DataSource initDataSource(
 			String jdbcURL, String password, String userName)
 		throws Exception {
