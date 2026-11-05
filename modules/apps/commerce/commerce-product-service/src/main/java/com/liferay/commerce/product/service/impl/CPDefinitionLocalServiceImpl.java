@@ -538,6 +538,7 @@ public class CPDefinitionLocalServiceImpl
 
 		CProduct newCProduct = (CProduct)originalCProduct.clone();
 
+		newCProduct.setNew(true);
 		newCProduct.setUuid(PortalUUIDUtil.generate());
 
 		long cProductId = counterLocalService.increment();
@@ -1777,13 +1778,6 @@ public class CPDefinitionLocalServiceImpl
 
 	@Override
 	public List<CPDefinition> getCPDefinitions(
-		long groupId, boolean subscriptionEnabled) {
-
-		return cpDefinitionPersistence.findByG_SE(groupId, subscriptionEnabled);
-	}
-
-	@Override
-	public List<CPDefinition> getCPDefinitions(
 		long groupId, int status, int start, int end) {
 
 		if (status == WorkflowConstants.STATUS_ANY) {
@@ -1846,14 +1840,6 @@ public class CPDefinitionLocalServiceImpl
 			).limit(
 				start, end
 			));
-	}
-
-	@Override
-	public int getCPDefinitionsCount(
-		long groupId, boolean subscriptionEnabled) {
-
-		return cpDefinitionPersistence.countByG_SE(
-			groupId, subscriptionEnabled);
 	}
 
 	@Override

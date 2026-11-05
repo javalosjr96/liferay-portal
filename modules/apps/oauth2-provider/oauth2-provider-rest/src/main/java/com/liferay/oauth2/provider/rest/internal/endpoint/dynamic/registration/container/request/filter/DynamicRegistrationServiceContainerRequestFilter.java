@@ -200,7 +200,15 @@ public class DynamicRegistrationServiceContainerRequestFilter
 			UriInfo uriInfo)
 		throws Exception {
 
-		JwtToken jwtToken = _getJwtToken(httpServletRequest);
+		String authorization = httpServletRequest.getHeader("Authorization");
+
+		if (!StringUtil.startsWith(authorization, "Bearer ")) {
+			throw ExceptionUtils.toNotAuthorizedException(null, null);
+		}
+
+		String accessTokenContent = authorization.substring("Bearer ".length());
+
+		JwtToken jwtToken = _getJwtToken(accessTokenContent);
 
 		long currentTime = System.currentTimeMillis() / Time.SECOND;
 		long expirationTime = GetterUtil.getLong(jwtToken.getClaim("exp"));
@@ -263,9 +271,11 @@ public class DynamicRegistrationServiceContainerRequestFilter
 
 		clientId = _getClientId(uriInfo);
 
-		if (Validator.isNotNull(clientId) &&
-			!StringUtil.equalsIgnoreCase(
-				clientId, oAuth2Application.getClientId())) {
+		if ((Validator.isNotNull(clientId) &&
+			 !StringUtil.equalsIgnoreCase(
+				 clientId, oAuth2Application.getClientId())) ||
+			(!dynamicRegistrator &&
+			 !StringUtil.startsWith(accessTokenContent, "reg-"))) {
 
 			throw ExceptionUtils.toNotAuthorizedException(null, null);
 		}
@@ -407,17 +417,7 @@ public class DynamicRegistrationServiceContainerRequestFilter
 		return queryParameters.getFirst(OAuthConstants.CLIENT_ID);
 	}
 
-	private JwtToken _getJwtToken(HttpServletRequest httpServletRequest)
-		throws Exception {
-
-		String authorization = httpServletRequest.getHeader("Authorization");
-
-		if (!StringUtil.startsWith(authorization, "Bearer ")) {
-			throw ExceptionUtils.toNotAuthorizedException(null, null);
-		}
-
-		String accessTokenContent = authorization.substring("Bearer ".length());
-
+	private JwtToken _getJwtToken(String accessTokenContent) throws Exception {
 		OAuth2Authorization oAuth2Authorization =
 			_oAuth2AuthorizationLocalService.
 				getOAuth2AuthorizationByAccessTokenContent(accessTokenContent);

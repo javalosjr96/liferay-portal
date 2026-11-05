@@ -1,0 +1,28 @@
+# Bucket for logs
+
+resource "aws_s3_bucket" "logs" {
+	bucket="logs"
+}
+resource "aws_s3_bucket" "backups" {
+	bucket="backups"
+}
+
+// Buckets for assets
+
+resource "aws_s3_bucket" "assets" {
+	bucket="assets"
+}
+resource "aws_s3_bucket" "media" {
+	bucket="media"
+}
+resource "aws_s3_bucket" "config" {
+	bucket="config"
+}
+
+/*
+ * Bucket for archives
+ */
+
+resource "aws_s3_bucket" "archives" {
+	bucket="archives"
+}

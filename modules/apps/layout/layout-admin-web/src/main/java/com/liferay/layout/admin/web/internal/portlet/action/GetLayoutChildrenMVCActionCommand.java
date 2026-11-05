@@ -5,6 +5,8 @@
 
 package com.liferay.layout.admin.web.internal.portlet.action;
 
+import com.liferay.depot.group.provider.SiteConnectedGroupGroupProvider;
+import com.liferay.fragment.processor.PortletRegistry;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
 import com.liferay.layout.admin.web.internal.display.context.LayoutsAdminDisplayContext;
@@ -53,14 +55,16 @@ public class GetLayoutChildrenMVCActionCommand extends BaseMVCActionCommand {
 			WebKeys.THEME_DISPLAY);
 
 		LayoutActionsHelper layoutActionsHelper = new LayoutActionsHelper(
-			_layoutConverterRegistry, themeDisplay, _translationPermission);
+			_layoutConverterRegistry, _portletRegistry, themeDisplay,
+			_translationPermission);
 
 		LayoutsAdminDisplayContext layoutsAdminDisplayContext =
 			new LayoutsAdminDisplayContext(
 				_itemSelector, layoutActionsHelper, _layoutService,
 				_layoutSetPrototypeHelper, _layoutSetSEORobotsProvider,
 				_portal.getLiferayPortletRequest(actionRequest),
-				_portal.getLiferayPortletResponse(actionResponse));
+				_portal.getLiferayPortletResponse(actionResponse),
+				_siteConnectedGroupGroupProvider);
 
 		MillerColumnsDisplayContext millerColumnsDisplayContext =
 			new MillerColumnsDisplayContext(
@@ -104,6 +108,12 @@ public class GetLayoutChildrenMVCActionCommand extends BaseMVCActionCommand {
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private PortletRegistry _portletRegistry;
+
+	@Reference
+	private SiteConnectedGroupGroupProvider _siteConnectedGroupGroupProvider;
 
 	@Reference
 	private TranslationPermission _translationPermission;

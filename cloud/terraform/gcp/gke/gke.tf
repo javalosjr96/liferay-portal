@@ -17,7 +17,7 @@ resource "google_container_cluster" "primary" {
 		evaluation_mode="PROJECT_SINGLETON_POLICY_ENFORCE"
 	}
 	datapath_provider="ADVANCED_DATAPATH"
-	deletion_protection=var.deletion_protection
+	deletion_protection=false
 	depends_on=[google_compute_subnetwork.subnet]
 	dynamic "authenticator_groups_config" {
 		content {
@@ -33,6 +33,18 @@ resource "google_container_cluster" "primary" {
 		services_secondary_range_name="${var.deployment_name}-services"
 	}
 	location=var.regional_cluster ? var.region : local.first_zone
+	logging_config {
+		enable_components=var.control_plane_logging_config.enabled ? [
+			"APISERVER",
+			"CONTROLLER_MANAGER",
+			"SCHEDULER",
+			"SYSTEM_COMPONENTS",
+			"WORKLOADS",
+		] : [
+			"SYSTEM_COMPONENTS",
+			"WORKLOADS",
+		]
+	}
 	master_auth {
 		client_certificate_config {
 			issue_client_certificate=false
@@ -124,8 +136,8 @@ resource "google_container_node_pool" "general_purpose" {
 }
 resource "google_gke_hub_membership" "membership" {
 	authority {
-    	issuer = "https://container.googleapis.com/v1/${google_container_cluster.primary.id}"
-  	}
+		issuer="https://container.googleapis.com/v1/${google_container_cluster.primary.id}"
+	}
 	depends_on=[
 		google_container_cluster.primary,
 		google_container_node_pool.general_purpose,
@@ -146,4 +158,20 @@ resource "google_project_iam_member" "node_permissions" {
 resource "google_service_account" "node_sa" {
 	account_id="${var.deployment_name}-node-sa"
 	project=var.project_id
+}
+resource "null_resource" "wait_for_connect_gateway" {
+	depends_on=[
+		google_container_cluster.primary,
+		google_gke_hub_membership.membership,
+	]
+	provisioner "local-exec" {
+		command="${path.module}/scripts/wait-for-connect-gateway.sh"
+		environment={
+			GATEWAY_TOKEN="Bearer ${data.google_client_config.default.access_token}"
+			GATEWAY_URL="https://connectgateway.googleapis.com/v1/projects/${data.google_project.project.number}/locations/global/gkeMemberships/${var.deployment_name}-membership/api/v1/namespaces"
+		}
+	}
+	triggers={
+		membership_id=google_gke_hub_membership.membership.id
+	}
 }

@@ -9,6 +9,7 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.asset.kernel.model.AssetCategoryConstants;
 import com.liferay.asset.kernel.model.AssetVocabulary;
 import com.liferay.asset.kernel.service.AssetVocabularyLocalService;
+import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.service.CompanyLocalService;
@@ -16,6 +17,7 @@ import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -249,6 +251,26 @@ public class
 		}
 	}
 
+	@Test
+	public void testPortalInstanceRegisteredWithDLFileEntryVocabularies()
+		throws Exception {
+
+		Company company = _companyLocalService.getCompany(
+			TestPropsValues.getCompanyId());
+
+		_portalInstanceLifecycleListener.portalInstanceRegistered(company);
+
+		for (String name : new String[] {"audience", "stage"}) {
+			AssetVocabulary assetVocabulary =
+				_assetVocabularyLocalService.fetchGroupVocabulary(
+					company.getGroupId(), name);
+
+			Assert.assertTrue(
+				assetVocabulary.isAssociatedToClassNameId(
+					_portal.getClassNameId(DLFileEntry.class)));
+		}
+	}
+
 	private void _updateVocabulary(
 			AssetVocabulary assetVocabulary, long[] classNameIds)
 		throws Exception {
@@ -301,6 +323,9 @@ public class
 
 	@Inject
 	private CompanyLocalService _companyLocalService;
+
+	@Inject
+	private Portal _portal;
 
 	@Inject(
 		filter = "component.name=com.liferay.content.dashboard.web.internal.instance.lifecycle.AddDefaultAssetVocabulariesInitialRequestPortalInstanceLifecycleListener"

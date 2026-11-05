@@ -379,6 +379,14 @@ public abstract class BaseImportPreviewResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("assetLibraries", additionalAssertFieldName)) {
+				if (importPreview.getAssetLibraries() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("author", additionalAssertFieldName)) {
 				if (importPreview.getAuthor() == null) {
 					valid = false;
@@ -420,20 +428,17 @@ public abstract class BaseImportPreviewResourceTestCase {
 			}
 
 			if (Objects.equals(
-					"previewPortletDataHandlerSections",
-					additionalAssertFieldName)) {
+					"portletDataHandlers", additionalAssertFieldName)) {
 
-				if (importPreview.getPreviewPortletDataHandlerSections() ==
-						null) {
-
+				if (importPreview.getPortletDataHandlers() == null) {
 					valid = false;
 				}
 
 				continue;
 			}
 
-			if (Objects.equals("previewSites", additionalAssertFieldName)) {
-				if (importPreview.getPreviewSites() == null) {
+			if (Objects.equals("sites", additionalAssertFieldName)) {
+				if (importPreview.getSites() == null) {
 					valid = false;
 				}
 
@@ -578,6 +583,17 @@ public abstract class BaseImportPreviewResourceTestCase {
 				continue;
 			}
 
+			if (Objects.equals("assetLibraries", additionalAssertFieldName)) {
+				if (!Objects.deepEquals(
+						importPreview1.getAssetLibraries(),
+						importPreview2.getAssetLibraries())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
 			if (Objects.equals("author", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						importPreview1.getAuthor(),
@@ -634,13 +650,11 @@ public abstract class BaseImportPreviewResourceTestCase {
 			}
 
 			if (Objects.equals(
-					"previewPortletDataHandlerSections",
-					additionalAssertFieldName)) {
+					"portletDataHandlers", additionalAssertFieldName)) {
 
 				if (!Objects.deepEquals(
-						importPreview1.getPreviewPortletDataHandlerSections(),
-						importPreview2.
-							getPreviewPortletDataHandlerSections())) {
+						importPreview1.getPortletDataHandlers(),
+						importPreview2.getPortletDataHandlers())) {
 
 					return false;
 				}
@@ -648,10 +662,9 @@ public abstract class BaseImportPreviewResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals("previewSites", additionalAssertFieldName)) {
+			if (Objects.equals("sites", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
-						importPreview1.getPreviewSites(),
-						importPreview2.getPreviewSites())) {
+						importPreview1.getSites(), importPreview2.getSites())) {
 
 					return false;
 				}
@@ -767,6 +780,11 @@ public abstract class BaseImportPreviewResourceTestCase {
 		sb.append(" ");
 
 		if (entityFieldName.equals("additionCount")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
+		if (entityFieldName.equals("assetLibraries")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
@@ -902,12 +920,12 @@ public abstract class BaseImportPreviewResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("previewPortletDataHandlerSections")) {
+		if (entityFieldName.equals("portletDataHandlers")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("previewSites")) {
+		if (entityFieldName.equals("sites")) {
 			throw new IllegalArgumentException(
 				"Invalid entity field " + entityFieldName);
 		}
@@ -1199,4 +1217,4 @@ public abstract class BaseImportPreviewResourceTestCase {
 		_importPreviewResource;
 
 }
-// LIFERAY-REST-BUILDER-HASH:-977278757
+// LIFERAY-REST-BUILDER-HASH:73461298

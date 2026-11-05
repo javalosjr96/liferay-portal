@@ -52,8 +52,13 @@ public class ClientExtensionDynamicIncludeUtil {
 			clientExtensionEntryRels.add(layoutSetClientExtensionEntryRel);
 		}
 
-		Layout masterLayout = LayoutLocalServiceUtil.fetchLayout(
-			layout.getMasterLayoutPlid());
+		Layout masterLayout = null;
+
+		long masterLayoutPlid = layout.getMasterLayoutPlid();
+
+		if (masterLayoutPlid > 0) {
+			masterLayout = LayoutLocalServiceUtil.fetchLayout(masterLayoutPlid);
+		}
 
 		if (masterLayout != null) {
 			List<ClientExtensionEntryRel> masterLayoutClientExtensionEntryRels =

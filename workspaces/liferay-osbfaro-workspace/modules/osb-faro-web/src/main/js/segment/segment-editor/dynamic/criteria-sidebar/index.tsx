@@ -225,7 +225,7 @@ export default function CriteriaSidebar({
 
 	return (
 		<div className="criteria-sidebar-root">
-			<div className="sidebar-title">
+			<div className="font-weight-semi-bold pb-0 pt-3 px-4 sidebar-title">
 				{Liferay.Language.get('conditions-library')}
 			</div>
 
@@ -255,7 +255,7 @@ export default function CriteriaSidebar({
 				</div>
 			)}
 
-			<div className="sidebar-search">
+			<div className="px-4 py-3 sidebar-search">
 				<CriteriaSidebarSearchBar
 					onChange={setSearchValue}
 					searchValue={searchValue}
@@ -263,7 +263,7 @@ export default function CriteriaSidebar({
 			</div>
 
 			<div
-				className="sidebar-collapse"
+				className="position-relative sidebar-collapse"
 				onFocus={navigation.handleFocus}
 				onKeyDown={navigation.handleKeyDown}
 				ref={itemsRef}

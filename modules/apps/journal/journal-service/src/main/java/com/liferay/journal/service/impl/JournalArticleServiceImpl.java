@@ -10,18 +10,23 @@ import com.liferay.dynamic.data.mapping.service.DDMStructureService;
 import com.liferay.journal.constants.JournalArticleConstants;
 import com.liferay.journal.constants.JournalConstants;
 import com.liferay.journal.constants.JournalFolderConstants;
+import com.liferay.journal.internal.util.JournalArticleViewableStatusUtil;
 import com.liferay.journal.model.JournalArticle;
 import com.liferay.journal.model.JournalFolder;
 import com.liferay.journal.service.JournalFolderService;
 import com.liferay.journal.service.base.JournalArticleServiceBaseImpl;
+import com.liferay.journal.util.comparator.ArticleVersionComparator;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.kernel.dao.orm.QueryDefinition;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.WorkflowDefinitionLink;
 import com.liferay.portal.kernel.portlet.PortletRequestModel;
 import com.liferay.portal.kernel.security.auth.PrincipalException;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
+import com.liferay.portal.kernel.security.permission.PermissionChecker;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermission;
 import com.liferay.portal.kernel.security.permission.resource.ModelResourcePermissionUtil;
 import com.liferay.portal.kernel.security.permission.resource.PortletResourcePermission;
@@ -480,10 +485,9 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 			long groupId, String externalReferenceCode)
 		throws PortalException {
 
-		JournalArticle article =
-			journalArticleLocalService.
-				fetchLatestArticleByExternalReferenceCode(
-					groupId, externalReferenceCode);
+		JournalArticle article = journalArticlePersistence.fetchByG_ERC_First(
+			groupId, externalReferenceCode,
+			ArticleVersionComparator.getInstance(false));
 
 		if (article != null) {
 			_journalArticleModelResourcePermission.check(
@@ -707,12 +711,21 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 		OrderByComparator<JournalArticle> orderByComparator) {
 
 		if (status == WorkflowConstants.STATUS_ANY) {
-			return journalArticlePersistence.filterFindByG_A(
+			return getArticlesByArticleId(
 				groupId, articleId, start, end, orderByComparator);
 		}
 
-		return journalArticlePersistence.filterFindByG_A_ST(
-			groupId, articleId, status, start, end, orderByComparator);
+		if (_getViewerUserId(groupId) == 0) {
+			return journalArticlePersistence.filterFindByG_A_ST(
+				groupId, articleId, status, start, end, orderByComparator);
+		}
+
+		return JournalArticleViewableStatusUtil.getViewableArticles(
+			(viewableStart, viewableEnd) ->
+				journalArticlePersistence.filterFindByG_A_ST(
+					groupId, articleId, status, viewableStart, viewableEnd,
+					orderByComparator),
+			this::_isViewable, start, end);
 	}
 
 	/**
@@ -745,8 +758,17 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 		long groupId, String articleId, int start, int end,
 		OrderByComparator<JournalArticle> orderByComparator) {
 
-		return journalArticlePersistence.filterFindByG_A(
-			groupId, articleId, start, end, orderByComparator);
+		if (_getViewerUserId(groupId) == 0) {
+			return journalArticlePersistence.filterFindByG_A(
+				groupId, articleId, start, end, orderByComparator);
+		}
+
+		return JournalArticleViewableStatusUtil.getViewableArticles(
+			(viewableStart, viewableEnd) ->
+				journalArticlePersistence.filterFindByG_A(
+					groupId, articleId, viewableStart, viewableEnd,
+					orderByComparator),
+			this::_isViewable, start, end);
 	}
 
 	/**
@@ -761,7 +783,9 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 	public List<JournalArticle> getArticlesByLayoutUuid(
 		long groupId, String layoutUuid) {
 
-		return journalArticlePersistence.filterFindByG_L(groupId, layoutUuid);
+		return JournalArticleViewableStatusUtil.getViewableArticles(
+			journalArticlePersistence.filterFindByG_L(groupId, layoutUuid),
+			_getViewerUserId(groupId));
 	}
 
 	/**
@@ -791,8 +815,11 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 	public List<JournalArticle> getArticlesByLayoutUuid(
 		long groupId, String layoutUuid, int start, int end) {
 
-		return journalArticlePersistence.filterFindByG_L(
-			groupId, layoutUuid, start, end);
+		return JournalArticleViewableStatusUtil.getViewableArticles(
+			(viewableStart, viewableEnd) ->
+				journalArticlePersistence.filterFindByG_L(
+					groupId, layoutUuid, viewableStart, viewableEnd),
+			start, end, _getViewerUserId(groupId));
 	}
 
 	/**
@@ -806,7 +833,12 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 	 */
 	@Override
 	public int getArticlesByLayoutUuidCount(long groupId, String layoutUuid) {
-		return journalArticlePersistence.filterCountByG_L(groupId, layoutUuid);
+		return JournalArticleViewableStatusUtil.getViewableArticlesCount(
+			() -> journalArticlePersistence.filterCountByG_L(
+				groupId, layoutUuid),
+			() -> journalArticlePersistence.filterFindByG_L(
+				groupId, layoutUuid),
+			_getViewerUserId(groupId));
 	}
 
 	/**
@@ -1090,7 +1122,14 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 	 */
 	@Override
 	public int getArticlesCountByArticleId(long groupId, String articleId) {
-		return journalArticlePersistence.filterCountByG_A(groupId, articleId);
+		if (_getViewerUserId(groupId) == 0) {
+			return journalArticlePersistence.filterCountByG_A(
+				groupId, articleId);
+		}
+
+		return ListUtil.count(
+			journalArticlePersistence.filterFindByG_A(groupId, articleId),
+			this::_isViewable);
 	}
 
 	@Override
@@ -1098,12 +1137,18 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 		long groupId, String articleId, int status) {
 
 		if (status == WorkflowConstants.STATUS_ANY) {
-			return journalArticlePersistence.filterCountByG_A(
-				groupId, articleId);
+			return getArticlesCountByArticleId(groupId, articleId);
 		}
 
-		return journalArticlePersistence.filterCountByG_A_ST(
-			groupId, articleId, status);
+		if (_getViewerUserId(groupId) == 0) {
+			return journalArticlePersistence.filterCountByG_A_ST(
+				groupId, articleId, status);
+		}
+
+		return ListUtil.count(
+			journalArticlePersistence.filterFindByG_A_ST(
+				groupId, articleId, status),
+			this::_isViewable);
 	}
 
 	/**
@@ -1221,8 +1266,15 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 			return 0;
 		}
 
-		return journalArticlePersistence.filterCountByG_F(
-			groupId, ArrayUtil.toArray(folderIds.toArray(new Long[0])));
+		long[] folderIdsArray = ArrayUtil.toArray(
+			folderIds.toArray(new Long[0]));
+
+		return JournalArticleViewableStatusUtil.getViewableArticlesCount(
+			() -> journalArticlePersistence.filterCountByG_F(
+				groupId, folderIdsArray),
+			() -> journalArticlePersistence.filterFindByG_F(
+				groupId, folderIdsArray),
+			_getViewerUserId(groupId));
 	}
 
 	/**
@@ -1565,9 +1617,9 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 			long groupId, String externalReferenceCode)
 		throws PortalException {
 
-		JournalArticle article =
-			journalArticleLocalService.getLatestArticleByExternalReferenceCode(
-				groupId, externalReferenceCode);
+		JournalArticle article = journalArticlePersistence.findByG_ERC_First(
+			groupId, externalReferenceCode,
+			ArticleVersionComparator.getInstance(false));
 
 		_journalArticleModelResourcePermission.check(
 			getPermissionChecker(), article, ActionKeys.VIEW);
@@ -1591,8 +1643,11 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 
 	@Override
 	public int getLatestArticlesCount(long groupId, int status) {
+		QueryDefinition<JournalArticle> queryDefinition = new QueryDefinition<>(
+			status);
+
 		return journalArticleFinder.filterCountByG_ST(
-			groupId, status, new QueryDefinition<>(status));
+			groupId, status, queryDefinition);
 	}
 
 	/**
@@ -1606,8 +1661,10 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 	public List<JournalArticle> getLayoutArticles(
 		long groupId, long classNameId) {
 
-		return journalArticlePersistence.filterFindByG_C_NotL(
-			groupId, classNameId, new String[] {null, StringPool.BLANK});
+		return JournalArticleViewableStatusUtil.getViewableArticles(
+			journalArticlePersistence.filterFindByG_C_NotL(
+				groupId, classNameId, new String[] {null, StringPool.BLANK}),
+			_getViewerUserId(groupId));
 	}
 
 	/**
@@ -1635,9 +1692,12 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 	public List<JournalArticle> getLayoutArticles(
 		long groupId, long classNameId, int start, int end) {
 
-		return journalArticlePersistence.filterFindByG_C_NotL(
-			groupId, classNameId, new String[] {null, StringPool.BLANK}, start,
-			end);
+		return JournalArticleViewableStatusUtil.getViewableArticles(
+			(viewableStart, viewableEnd) ->
+				journalArticlePersistence.filterFindByG_C_NotL(
+					groupId, classNameId, new String[] {null, StringPool.BLANK},
+					viewableStart, viewableEnd),
+			start, end, _getViewerUserId(groupId));
 	}
 
 	/**
@@ -1649,8 +1709,12 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 	 */
 	@Override
 	public int getLayoutArticlesCount(long groupId, long classNameId) {
-		return journalArticlePersistence.filterCountByG_C_NotL(
-			groupId, classNameId, new String[] {null, StringPool.BLANK});
+		return JournalArticleViewableStatusUtil.getViewableArticlesCount(
+			() -> journalArticlePersistence.filterCountByG_C_NotL(
+				groupId, classNameId, new String[] {null, StringPool.BLANK}),
+			() -> journalArticlePersistence.filterFindByG_C_NotL(
+				groupId, classNameId, new String[] {null, StringPool.BLANK}),
+			_getViewerUserId(groupId));
 	}
 
 	/**
@@ -2344,6 +2408,43 @@ public class JournalArticleServiceImpl extends JournalArticleServiceBaseImpl {
 			throw new PrincipalException();
 		}
 	}
+
+	private long _getViewerUserId(long groupId) {
+		try {
+			return JournalArticleViewableStatusUtil.getViewerUserId(
+				groupId, getPermissionChecker());
+		}
+		catch (PrincipalException principalException) {
+			_log.error(principalException);
+		}
+
+		return 0;
+	}
+
+	private boolean _isViewable(JournalArticle journalArticle) {
+		if (!journalArticle.isDraft() && !journalArticle.isScheduled()) {
+			return true;
+		}
+
+		try {
+			PermissionChecker permissionChecker = getPermissionChecker();
+
+			if ((journalArticle.getUserId() == permissionChecker.getUserId()) ||
+				_journalArticleModelResourcePermission.contains(
+					permissionChecker, journalArticle, ActionKeys.UPDATE)) {
+
+				return true;
+			}
+		}
+		catch (PortalException portalException) {
+			_log.error(portalException);
+		}
+
+		return false;
+	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		JournalArticleServiceImpl.class);
 
 	@Reference(
 		target = "(model.class.name=com.liferay.dynamic.data.mapping.model.DDMStructure)"

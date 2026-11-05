@@ -95,6 +95,10 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 		return _appServerProperties;
 	}
 
+	public PortalWorkspaceGitRepository getBasePortalWorkspaceGitRepository() {
+		return _basePortalWorkspaceGitRepository;
+	}
+
 	public String getLiferayFacesAlloyURL() {
 		return _getLiferayFacesURL(
 			"liferay-faces-alloy", "liferay.faces.alloy.branch");
@@ -142,6 +146,12 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 		PortalWorkspaceGitRepository basePortalWorkspaceGitRepository) {
 
 		_basePortalWorkspaceGitRepository = basePortalWorkspaceGitRepository;
+	}
+
+	public void setPrimaryPortalBranchPrivate(
+		boolean primaryPortalBranchPrivate) {
+
+		_primaryPortalBranchPrivate = primaryPortalBranchPrivate;
 	}
 
 	public void setUpPortalProfile() {
@@ -386,6 +396,8 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 
 	@Override
 	protected void setUpAdditionalCaches() throws IOException {
+		_configureBasePortalWorkspaceGitRepository();
+
 		_setUpBasePortalCache();
 
 		if (isBinariesCacheEnabled()) {
@@ -613,6 +625,35 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 		catch (AntException antException) {
 			throw new RuntimeException(antException);
 		}
+	}
+
+	private void _configureBasePortalWorkspaceGitRepository() {
+		if ((_basePortalWorkspaceGitRepository == null) ||
+			!_primaryPortalBranchPrivate) {
+
+			return;
+		}
+
+		String gitCommit = getFileContent("git-commit/liferay-portal");
+
+		if (JenkinsResultsParserUtil.isNullOrEmpty(gitCommit)) {
+			return;
+		}
+
+		if (JenkinsResultsParserUtil.isSHA(gitCommit)) {
+			_basePortalWorkspaceGitRepository.setCommitFileIsSHA(true);
+			_basePortalWorkspaceGitRepository.setSenderBranchSHA(gitCommit);
+
+			return;
+		}
+
+		if (!GitUtil.isValidGitHubRefURL(gitCommit) &&
+			!PullRequest.isValidGitHubPullRequestURL(gitCommit)) {
+
+			return;
+		}
+
+		_basePortalWorkspaceGitRepository.setGitHubURL(gitCommit);
 	}
 
 	private void _downloadBasePortalCache() throws IOException {
@@ -917,6 +958,7 @@ public class PortalWorkspaceGitRepository extends BaseWorkspaceGitRepository {
 
 	private Properties _appServerProperties;
 	private PortalWorkspaceGitRepository _basePortalWorkspaceGitRepository;
+	private boolean _primaryPortalBranchPrivate;
 	private boolean _setUpBasePortalCache;
 	private boolean _setUpBinariesCache;
 	private boolean _setUpYarn;

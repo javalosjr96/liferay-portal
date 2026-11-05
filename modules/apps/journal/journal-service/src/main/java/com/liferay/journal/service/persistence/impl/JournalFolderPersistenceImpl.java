@@ -451,89 +451,6 @@ public class JournalFolderPersistenceImpl
 			finderCache, new Object[] {groupId}, groupId);
 	}
 
-	private CollectionPersistenceFinder<JournalFolder, NoSuchFolderException>
-		_collectionPersistenceFinderByCompanyId;
-
-	/**
-	 * Returns an ordered range of all the journal folders where companyId = &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalFolderModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param start the lower bound of the range of journal folders
-	 * @param end the upper bound of the range of journal folders (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching journal folders
-	 */
-	@Override
-	public List<JournalFolder> findByCompanyId(
-		long companyId, int start, int end,
-		OrderByComparator<JournalFolder> orderByComparator,
-		boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByCompanyId.find(
-			finderCache, new Object[] {companyId}, start, end,
-			orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first journal folder in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching journal folder
-	 * @throws NoSuchFolderException if a matching journal folder could not be found
-	 */
-	@Override
-	public JournalFolder findByCompanyId_First(
-			long companyId, OrderByComparator<JournalFolder> orderByComparator)
-		throws NoSuchFolderException {
-
-		return _collectionPersistenceFinderByCompanyId.findFirst(
-			finderCache, new Object[] {companyId}, orderByComparator);
-	}
-
-	/**
-	 * Returns the first journal folder in the ordered set where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching journal folder, or <code>null</code> if a matching journal folder could not be found
-	 */
-	@Override
-	public JournalFolder fetchByCompanyId_First(
-		long companyId, OrderByComparator<JournalFolder> orderByComparator) {
-
-		return _collectionPersistenceFinderByCompanyId.fetchFirst(
-			finderCache, new Object[] {companyId}, orderByComparator);
-	}
-
-	/**
-	 * Removes all the journal folders where companyId = &#63; from the database.
-	 *
-	 * @param companyId the company ID
-	 */
-	@Override
-	public void removeByCompanyId(long companyId) {
-		_collectionPersistenceFinderByCompanyId.remove(
-			finderCache, new Object[] {companyId});
-	}
-
-	/**
-	 * Returns the number of journal folders where companyId = &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @return the number of matching journal folders
-	 */
-	@Override
-	public int countByCompanyId(long companyId) {
-		return _collectionPersistenceFinderByCompanyId.count(
-			finderCache, new Object[] {companyId});
-	}
-
 	private FilterCollectionPersistenceFinder
 		<JournalFolder, NoSuchFolderException>
 			_collectionPersistenceFinderByG_P;
@@ -726,152 +643,6 @@ public class JournalFolderPersistenceImpl
 	public int countByG_N(long groupId, String name) {
 		return _uniquePersistenceFinderByG_N.count(
 			finderCache, new Object[] {groupId, name});
-	}
-
-	private CollectionPersistenceFinder<JournalFolder, NoSuchFolderException>
-		_collectionPersistenceFinderByC_NotS;
-
-	/**
-	 * Returns all the journal folders where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @return the matching journal folders
-	 */
-	@Override
-	public List<JournalFolder> findByC_NotS(long companyId, int status) {
-		return findByC_NotS(
-			companyId, status, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);
-	}
-
-	/**
-	 * Returns a range of all the journal folders where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalFolderModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param start the lower bound of the range of journal folders
-	 * @param end the upper bound of the range of journal folders (not inclusive)
-	 * @return the range of matching journal folders
-	 */
-	@Override
-	public List<JournalFolder> findByC_NotS(
-		long companyId, int status, int start, int end) {
-
-		return findByC_NotS(companyId, status, start, end, null);
-	}
-
-	/**
-	 * Returns an ordered range of all the journal folders where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalFolderModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param start the lower bound of the range of journal folders
-	 * @param end the upper bound of the range of journal folders (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @return the ordered range of matching journal folders
-	 */
-	@Override
-	public List<JournalFolder> findByC_NotS(
-		long companyId, int status, int start, int end,
-		OrderByComparator<JournalFolder> orderByComparator) {
-
-		return findByC_NotS(
-			companyId, status, start, end, orderByComparator, true);
-	}
-
-	/**
-	 * Returns an ordered range of all the journal folders where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * <p>
-	 * Useful when paginating results. Returns a maximum of <code>end - start</code> instances. <code>start</code> and <code>end</code> are not primary keys, they are indexes in the result set. Thus, <code>0</code> refers to the first result in the set. Setting both <code>start</code> and <code>end</code> to <code>QueryUtil#ALL_POS</code> will return the full result set. If <code>orderByComparator</code> is specified, then the query will include the given ORDER BY logic. If <code>orderByComparator</code> is absent, then the query will include the default ORDER BY logic from <code>JournalFolderModelImpl</code>.
-	 * </p>
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param start the lower bound of the range of journal folders
-	 * @param end the upper bound of the range of journal folders (not inclusive)
-	 * @param orderByComparator the comparator to order the results by (optionally <code>null</code>)
-	 * @param useFinderCache whether to use the finder cache
-	 * @return the ordered range of matching journal folders
-	 */
-	@Override
-	public List<JournalFolder> findByC_NotS(
-		long companyId, int status, int start, int end,
-		OrderByComparator<JournalFolder> orderByComparator,
-		boolean useFinderCache) {
-
-		return _collectionPersistenceFinderByC_NotS.find(
-			finderCache, new Object[] {companyId, status}, start, end,
-			orderByComparator, useFinderCache);
-	}
-
-	/**
-	 * Returns the first journal folder in the ordered set where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching journal folder
-	 * @throws NoSuchFolderException if a matching journal folder could not be found
-	 */
-	@Override
-	public JournalFolder findByC_NotS_First(
-			long companyId, int status,
-			OrderByComparator<JournalFolder> orderByComparator)
-		throws NoSuchFolderException {
-
-		return _collectionPersistenceFinderByC_NotS.findFirst(
-			finderCache, new Object[] {companyId, status}, orderByComparator);
-	}
-
-	/**
-	 * Returns the first journal folder in the ordered set where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @param orderByComparator the comparator to order the set by (optionally <code>null</code>)
-	 * @return the first matching journal folder, or <code>null</code> if a matching journal folder could not be found
-	 */
-	@Override
-	public JournalFolder fetchByC_NotS_First(
-		long companyId, int status,
-		OrderByComparator<JournalFolder> orderByComparator) {
-
-		return _collectionPersistenceFinderByC_NotS.fetchFirst(
-			finderCache, new Object[] {companyId, status}, orderByComparator);
-	}
-
-	/**
-	 * Removes all the journal folders where companyId = &#63; and status &ne; &#63; from the database.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 */
-	@Override
-	public void removeByC_NotS(long companyId, int status) {
-		_collectionPersistenceFinderByC_NotS.remove(
-			finderCache, new Object[] {companyId, status});
-	}
-
-	/**
-	 * Returns the number of journal folders where companyId = &#63; and status &ne; &#63;.
-	 *
-	 * @param companyId the company ID
-	 * @param status the status
-	 * @return the number of matching journal folders
-	 */
-	@Override
-	public int countByC_NotS(long companyId, int status) {
-		return _collectionPersistenceFinderByC_NotS.count(
-			finderCache, new Object[] {companyId, status});
 	}
 
 	private UniquePersistenceFinder<JournalFolder, NoSuchFolderException>
@@ -2049,32 +1820,6 @@ public class JournalFolderPersistenceImpl
 					"journalFolder.", "groupId", FinderColumn.Type.LONG, "=",
 					true, true, JournalFolder::getGroupId));
 
-		_collectionPersistenceFinderByCompanyId =
-			new CollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByCompanyId",
-					new String[] {
-						Long.class.getName(), Integer.class.getName(),
-						Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"findByCompanyId", new String[] {Long.class.getName()},
-					new String[] {"companyId"}, true),
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITHOUT_PAGINATION,
-					"countByCompanyId", new String[] {Long.class.getName()},
-					new String[] {"companyId"}, false),
-				_SQL_SELECT_JOURNALFOLDER_WHERE, _SQL_COUNT_JOURNALFOLDER_WHERE,
-				JournalFolderModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
-				new FinderColumn<>(
-					"journalFolder.", "companyId", FinderColumn.Type.LONG, "=",
-					true, true, JournalFolder::getCompanyId));
-
 		_collectionPersistenceFinderByG_P =
 			new FilterCollectionPersistenceFinder<>(
 				this, JournalFolder::getFolderId,
@@ -2120,34 +1865,6 @@ public class JournalFolderPersistenceImpl
 			new FinderColumn<>(
 				"journalFolder.", "name", FinderColumn.Type.STRING, "=", true,
 				true, JournalFolder::getName));
-
-		_collectionPersistenceFinderByC_NotS =
-			new CollectionPersistenceFinder<>(
-				this,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "findByC_NotS",
-					new String[] {
-						Long.class.getName(), Integer.class.getName(),
-						Integer.class.getName(), Integer.class.getName(),
-						OrderByComparator.class.getName()
-					},
-					new String[] {"companyId", "status"}, true),
-				null,
-				new FinderPath(
-					FINDER_CLASS_NAME_LIST_WITH_PAGINATION, "countByC_NotS",
-					new String[] {
-						Long.class.getName(), Integer.class.getName()
-					},
-					new String[] {"companyId", "status"}, false),
-				_SQL_SELECT_JOURNALFOLDER_WHERE, _SQL_COUNT_JOURNALFOLDER_WHERE,
-				JournalFolderModelImpl.ORDER_BY_JPQL, _ENTITY_ALIAS_PREFIX, "",
-				"", null,
-				new FinderColumn<>(
-					"journalFolder.", "companyId", FinderColumn.Type.LONG, "=",
-					true, true, JournalFolder::getCompanyId),
-				new FinderColumn<>(
-					"journalFolder.", "status", FinderColumn.Type.INTEGER, "!=",
-					true, true, JournalFolder::getStatus));
 
 		_uniquePersistenceFinderByG_P_N = new UniquePersistenceFinder<>(
 			this,
@@ -2372,4 +2089,4 @@ public class JournalFolderPersistenceImpl
 	}
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1218767143
+// LIFERAY-SERVICE-BUILDER-HASH:-1433753979

@@ -8,8 +8,9 @@ import {mockChannelContext} from 'test/mock-channel-context';
 import {Provider} from 'react-redux';
 import {Routes, toRoute} from 'shared/util/router';
 import {useCurrentUser} from 'shared/hooks/useCurrentUser';
-import {useDataSources} from 'shared/context/dataSources';
+import {useLifecycleAccountData} from 'lifecycle/hooks/useLifecycleAccountData';
 import {useRequest} from 'shared/hooks/useRequest';
+import {AccountDataStatus} from 'lifecycle/utils/types';
 
 jest.unmock('react-dom');
 
@@ -17,8 +18,8 @@ jest.mock('shared/hooks/useRequest', () => ({
 	useRequest: jest.fn(),
 }));
 
-jest.mock('shared/context/dataSources', () => ({
-	useDataSources: jest.fn(),
+jest.mock('lifecycle/hooks/useLifecycleAccountData', () => ({
+	useLifecycleAccountData: jest.fn(),
 }));
 
 jest.mock('shared/hooks/useCurrentUser', () => ({
@@ -31,11 +32,23 @@ jest.mock('react-router-dom', () => ({
 }));
 
 const mockedUseCurrentUser = useCurrentUser as jest.Mock;
-const mockedUseDataSources = useDataSources as jest.Mock;
+const mockedUseLifecycleAccountData = useLifecycleAccountData as jest.Mock;
+
+const mockRefetchAccountData = jest.fn();
+
+const mockAccountData = (status: AccountDataStatus) =>
+	mockedUseLifecycleAccountData.mockReturnValue({
+		refetch: mockRefetchAccountData,
+		status,
+	});
 const mockedUseRequest = useRequest as jest.Mock;
 
 const mockLifecycles = (
-	lifecycles: {defaultAccountLifecycle?: boolean; id: string}[],
+	lifecycles: {
+		defaultAccountLifecycle?: boolean;
+		externalReferenceCode: string;
+		id: string;
+	}[],
 	loading = false
 ) =>
 	mockedUseRequest.mockReturnValue({
@@ -73,23 +86,35 @@ describe('LifecycleRedirect', () => {
 		jest.clearAllMocks();
 
 		mockedUseCurrentUser.mockReturnValue({isAdmin: () => true});
-		mockedUseDataSources.mockReturnValue({empty: false, loading: false});
+		mockAccountData(AccountDataStatus.Ready);
 	});
 
 	afterEach(cleanup);
 
-	it('redirects to the default lifecycle of the channel', () => {
-		mockLifecycles([{defaultAccountLifecycle: true, id: '8'}]);
+	it('redirects to the default lifecycle of the channel by its external reference code', () => {
+		mockLifecycles([
+			{
+				defaultAccountLifecycle: true,
+				externalReferenceCode: 'erc-8',
+				id: '8',
+			},
+		]);
 
 		renderPage();
 
 		expect(screen.getByTestId('location')).toHaveTextContent(
-			dashboardURL('8')
+			dashboardURL('erc-8')
 		);
 	});
 
 	it('asks for the default lifecycle of the current channel', () => {
-		mockLifecycles([{defaultAccountLifecycle: true, id: '8'}]);
+		mockLifecycles([
+			{
+				defaultAccountLifecycle: true,
+				externalReferenceCode: 'erc-8',
+				id: '8',
+			},
+		]);
 
 		renderPage();
 
@@ -159,6 +184,15 @@ describe('LifecycleRedirect', () => {
 			).toBeInTheDocument();
 		});
 
+		it('shows the Lifecycles breadcrumb as the current page, not a link', () => {
+			const {container} = renderPage();
+
+			const crumb = container.querySelector('.breadcrumb-item.active');
+
+			expect(crumb).toHaveTextContent(/^lifecycles$/i);
+			expect(crumb!.querySelector('a')).toBeNull();
+		});
+
 		it('renders the "Configure a New Lifecycle" empty state', () => {
 			renderPage();
 
@@ -182,7 +216,7 @@ describe('LifecycleRedirect', () => {
 		});
 
 		it('asks for a data source when none is connected', () => {
-			mockedUseDataSources.mockReturnValue({empty: true, loading: false});
+			mockAccountData(AccountDataStatus.NoDataSources);
 
 			renderPage();
 
@@ -190,6 +224,70 @@ describe('LifecycleRedirect', () => {
 				screen.getByText(/no data sources connected/i)
 			).toBeInTheDocument();
 			expect(screen.queryByText(/configure a new lifecycle/i)).toBeNull();
+		});
+	});
+
+	describe('before redirecting to the default lifecycle', () => {
+		beforeEach(() =>
+			mockLifecycles([
+				{
+					defaultAccountLifecycle: true,
+					externalReferenceCode: 'erc-8',
+					id: '8',
+				},
+			])
+		);
+
+		it('waits for the account data', () => {
+			mockAccountData(AccountDataStatus.Loading);
+
+			renderPage();
+
+			expect(screen.getByTestId('location')).toHaveTextContent(
+				/^\/workspace\/23\/123\/lifecycle$/
+			);
+		});
+
+		it('shows no account data instead of the default lifecycle', () => {
+			mockAccountData(AccountDataStatus.NoAccountData);
+
+			renderPage();
+
+			expect(
+				screen.getByText(/no account data available/i)
+			).toBeInTheDocument();
+			expect(
+				screen.getByRole('heading', {name: /^lifecycles$/i})
+			).toBeInTheDocument();
+			expect(screen.getByTestId('location')).toHaveTextContent(
+				/^\/workspace\/23\/123\/lifecycle$/
+			);
+		});
+
+		it('shows no data sources before anything else', () => {
+			mockAccountData(AccountDataStatus.NoDataSources);
+
+			renderPage();
+
+			expect(
+				screen.getByText(/no data sources connected/i)
+			).toBeInTheDocument();
+			expect(screen.queryByText(/no account data available/i)).toBeNull();
+		});
+
+		it('shows an error with reload when the account metrics fail', () => {
+			mockAccountData(AccountDataStatus.Error);
+
+			renderPage();
+
+			expect(
+				screen.getByText(/an.unexpected.error.occurred/i)
+			).toBeInTheDocument();
+			expect(screen.queryByText(/no account data available/i)).toBeNull();
+
+			fireEvent.click(screen.getByRole('button', {name: /reload/i}));
+
+			expect(mockRefetchAccountData).toHaveBeenCalled();
 		});
 	});
 });

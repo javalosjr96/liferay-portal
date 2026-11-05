@@ -1,43 +1,60 @@
 import * as API from 'shared/api';
 import ErrorDisplay from 'shared/components/ErrorDisplay';
 import LifecycleSettingsForm from 'lifecycle/components/LifecycleSettingsForm';
+import LifecyclesPage from 'lifecycle/components/LifecyclesPage';
 import Loading from 'shared/components/Loading';
 import React from 'react';
-import RouteNotFound from 'shared/components/RouteNotFound';
+import {Routes, toRoute} from 'shared/util/router';
 import {buildCreateLifecyclePayload} from 'lifecycle/utils/lifecyclePayload';
-import {createDefaultStageConfigs} from 'lifecycle/utils/stageConfiguration';
+import {LifecycleAccountDataEmptyState} from 'lifecycle/components/LifecycleEmptyStates';
+import {useLifecycleAccountData} from 'lifecycle/hooks/useLifecycleAccountData';
 import {useLifecycleSettingsForm} from 'lifecycle/hooks/useLifecycleSettingsForm';
+import {useCurrentUser} from 'shared/hooks/useCurrentUser';
 import {useParams} from 'react-router-dom';
-import {useRequest} from 'shared/hooks/useRequest';
+import {sub} from 'shared/util/lang';
+import {AccountDataStatus} from 'lifecycle/utils/types';
 
 const CreateLifecycle = () => {
 	const {channelId, groupId} = useParams();
 
-	const {data: lifecycles, loading} = useRequest({
-		dataSourceFn: API.lifecycle.fetchLifecycles,
-		variables: {channelId, groupId: groupId!},
+	const currentUser = useCurrentUser();
+
+	const {refetch: refetchAccountData, status: accountDataStatus} =
+		useLifecycleAccountData();
+
+	const form = useLifecycleSettingsForm({
+		description: '',
+		name: '',
+		stageConfigs: () => [],
 	});
 
 	const {
-		canSubmit,
 		catalogError,
-		catalogFields,
 		catalogLoading,
+		lifecycleDescription,
 		lifecycleName,
-		lifecycleURL,
 		refetchCatalog,
-		setLifecycleName,
 		stageConfigs,
 		submit,
-		updateStage,
-	} = useLifecycleSettingsForm(createDefaultStageConfigs, '');
+	} = form;
 
-	if (loading || catalogLoading) {
-		return <Loading />;
+	if (accountDataStatus !== AccountDataStatus.Ready) {
+		return (
+			<LifecyclesPage
+				showTitle={accountDataStatus !== AccountDataStatus.Loading}
+			>
+				<LifecycleAccountDataEmptyState
+					authorized={currentUser.isAdmin()}
+					groupId={groupId!}
+					onReload={refetchAccountData}
+					status={accountDataStatus}
+				/>
+			</LifecyclesPage>
+		);
 	}
 
-	if (lifecycles?.length) {
-		return <RouteNotFound />;
+	if (catalogLoading) {
+		return <Loading />;
 	}
 
 	if (catalogError) {
@@ -49,30 +66,41 @@ const CreateLifecycle = () => {
 	}
 
 	const handleCreate = () =>
-		submit(
-			() =>
+		submit({
+			errorMessage: Liferay.Language.get(
+				'the-creation-process-failed-to-complete.-try-again-later'
+			),
+			redirect: ({externalReferenceCode}) => ({
+				replace: true,
+				url: toRoute(Routes.LIFECYCLE_DASHBOARD, {
+					channelId,
+					groupId,
+					lifecycleId: externalReferenceCode,
+				}),
+			}),
+			run: () =>
 				API.lifecycle.createLifecycle(
 					buildCreateLifecyclePayload({
 						channelId: channelId!,
+						description: lifecycleDescription,
 						groupId: groupId!,
 						name: lifecycleName,
 						stageConfigs,
 					})
 				),
-			Liferay.Language.get('the-lifecycle-was-created-successfully')
-		);
+			successMessage: ({name}) =>
+				sub(Liferay.Language.get('x-was-created'), [
+					name || lifecycleName.trim(),
+				]) as string,
+		});
 
 	return (
 		<LifecycleSettingsForm
-			backURL={lifecycleURL}
-			catalogFields={catalogFields?.items}
-			lifecycleName={lifecycleName}
-			onLifecycleNameChange={setLifecycleName}
-			onStageChange={updateStage}
+			authorName={currentUser.name}
+			form={form}
 			onSubmit={handleCreate}
-			stageConfigs={stageConfigs}
-			submitDisabled={!canSubmit}
-			submitLabel={Liferay.Language.get('create')}
+			submitLabel={Liferay.Language.get('create-lifecycle')}
+			title={Liferay.Language.get('new-lifecycle')}
 		/>
 	);
 };

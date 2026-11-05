@@ -135,9 +135,16 @@ public class DDMFormEvaluatorHelper {
 			ddmFormRules = _ddmForm.getDDMFormRules();
 		}
 
-		_evaluateDDMFormRules(ddmFormRules, false);
+		for (int i = 0; i < Math.min(ddmFormRules.size() + 1, 5); i++) {
+			Map<String, Object> fieldValues = _getFieldValues();
 
-		_evaluateDDMFormRules(ddmFormRules, true);
+			_evaluateDDMFormRules(ddmFormRules, false);
+			_evaluateDDMFormRules(ddmFormRules, true);
+
+			if (fieldValues.equals(_getFieldValues())) {
+				break;
+			}
+		}
 
 		_resetInvisibleFieldValue();
 
@@ -468,6 +475,33 @@ public class DDMFormEvaluatorHelper {
 				builder.build());
 
 		return getFieldPropertyResponse.getValue();
+	}
+
+	private Map<String, Object> _getFieldValues() {
+		Map<String, Object> fieldValues = new HashMap<>();
+
+		if (!_ddmFormEvaluatorEvaluateRequest.isViewMode()) {
+			return fieldValues;
+		}
+
+		for (Map.Entry<DDMFormEvaluatorFieldContextKey, Map<String, Object>>
+				entry : _ddmFormFieldsPropertyChanges.entrySet()) {
+
+			Map<String, Object> ddmFormFieldProperties = entry.getValue();
+
+			if (!ddmFormFieldProperties.containsKey("value")) {
+				continue;
+			}
+
+			DDMFormEvaluatorFieldContextKey ddmFormEvaluatorFieldContextKey =
+				entry.getKey();
+
+			fieldValues.put(
+				ddmFormEvaluatorFieldContextKey.getName(),
+				ddmFormFieldProperties.get("value"));
+		}
+
+		return fieldValues;
 	}
 
 	private Locale _getLocale() {

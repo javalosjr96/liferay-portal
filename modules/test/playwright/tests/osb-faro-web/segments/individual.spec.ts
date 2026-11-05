@@ -18,7 +18,6 @@ import getFragmentDefinition from '../../layout-content-page-editor-web/main/uti
 import getPageDefinition from '../../layout-content-page-editor-web/main/utils/getPageDefinition';
 import {
 	addBreakdownByAttribute,
-	goToDistributionTabAndSelectAttribute,
 	viewBreakdownRechartsData,
 } from '../main/utils/distribution';
 import {createIndividuals, generateIndividual} from '../main/utils/individuals';
@@ -152,96 +151,6 @@ test(
 
 		await test.step('Close breakdown tab', async () => {
 			await page.getByLabel('Close').click();
-		});
-	}
-);
-
-test(
-	'Distribution page can be filtered by a specific string',
-	{
-		tag: '@Legacy',
-	},
-	async ({
-		analyticsChannel: channel,
-		apiHelpers,
-		dxpSyncedAnalyticsChannel,
-		page,
-		project,
-	}) => {
-		const {dataSourceId} = dxpSyncedAnalyticsChannel;
-
-		const individualName = 'ac';
-		const individuals = [
-			{
-				...generateIndividual({
-					name: individualName,
-				}),
-				dataSourceId,
-			},
-		];
-
-		await test.step('Create new Individual', async () => {
-			await createIndividuals({
-				apiHelpers,
-				individuals,
-			});
-		});
-
-		const date = new Date();
-		await test.step('Create Individual Event', async () => {
-			const events = individuals.map((individual) => ({
-				applicationId: 'Page',
-				canonicalUrl: 'https://www.liferay.com',
-				channelId: channel.id,
-				dataSourceId,
-				eventDate: date.toISOString(),
-				eventId: 'pageViewed',
-				title: 'Liferay',
-				userId: individual.id,
-			}));
-
-			await apiHelpers.jsonWebServicesOSBAsah.createEvents(events);
-		});
-
-		await test.step('Create Individual Session', async () => {
-			const sessions = individuals.map((individual) => ({
-				channelId: channel.id,
-				id: individual.id,
-				sessionEnd: date.toISOString(),
-				sessionStart: date.toISOString(),
-				userId: individual.id,
-			}));
-
-			await apiHelpers.jsonWebServicesOSBAsah.createSessions(sessions);
-		});
-
-		await test.step('Go to Individuals Dashboard', async () => {
-			await navigateToACPageViaURL({
-				acPage: ACPage.individualPage,
-				channelID: channel.id,
-				page,
-				projectID: project.groupId,
-			});
-		});
-
-		await test.step('Go to Distribution tab', async () => {
-			await page.getByRole('link', {name: 'Distribution'}).click();
-
-			await expect(
-				page.getByText('Distribution by attribute')
-			).toBeVisible();
-		});
-
-		await test.step('Add a new breakdown', async () => {
-			await page.locator('.selected-item-container').click();
-
-			await page.getByRole('menuitem', {name: 'email'}).click();
-		});
-
-		await test.step('Check if the correct results appear (email and maximum count)', async () => {
-			await expect(
-				page.getByText(`${individualName}@liferay.com - 100.0%`)
-			).toBeVisible();
 		});
 	}
 );
@@ -773,101 +682,6 @@ test(
 	}
 );
 
-test(
-	'Distribution chart member count matches the details sidebar',
-	{
-		tag: '@LRAC-11825',
-	},
-	async ({
-		analyticsChannel: channel,
-		apiHelpers,
-		dxpSyncedAnalyticsChannel,
-		page,
-		project,
-	}) => {
-		const {dataSourceId} = dxpSyncedAnalyticsChannel;
-
-		const runId = getRandomString();
-
-		// Two individuals share the givenName "user1"; a third has a distinct one
-
-		const individuals = [
-			{
-				...generateIndividual({name: 'user1a' + runId}),
-				dataSourceId,
-				firstName: 'user1',
-			},
-			{
-				...generateIndividual({name: 'user1b' + runId}),
-				dataSourceId,
-				firstName: 'user1',
-			},
-			{
-				...generateIndividual({name: 'single' + runId}),
-				dataSourceId,
-				firstName: 'single',
-			},
-		];
-
-		await createIndividuals({apiHelpers, individuals});
-
-		const date = new Date();
-
-		await apiHelpers.jsonWebServicesOSBAsah.createEvents(
-			individuals.map((individual) => ({
-				applicationId: 'Page',
-				canonicalUrl: 'https://www.liferay.com',
-				channelId: channel.id,
-				dataSourceId,
-				eventDate: date.toISOString(),
-				eventId: 'pageViewed',
-				title: 'My Page',
-				userId: individual.id,
-			}))
-		);
-
-		await apiHelpers.jsonWebServicesOSBAsah.createSessions(
-			individuals.map((individual) => ({
-				channelId: channel.id,
-				id: individual.id,
-				sessionEnd: date.toISOString(),
-				sessionStart: date.toISOString(),
-				userId: individual.id,
-			}))
-		);
-
-		await navigateToACPageViaURL({
-			acPage: ACPage.individualPage,
-			channelID: channel.id,
-			page,
-			projectID: project.groupId,
-		});
-
-		await goToDistributionTabAndSelectAttribute({
-			attributeName: 'givenName',
-			page,
-		});
-
-		// The "user1" bar groups two individuals; clicking it lists both
-
-		await page.locator('.recharts-bar-rectangle').first().click();
-
-		await viewPaginationResults({
-			page,
-			paginationResults: 'Showing 1 to 2 of 2 entries.',
-		});
-
-		// The "single" bar groups a single individual
-
-		await page.locator('.recharts-bar-rectangle').nth(1).click();
-
-		await viewPaginationResults({
-			page,
-			paginationResults: 'Showing 1 to 1 of 1 entry.',
-		});
-	}
-);
-
 test('Active Individuals card is empty for a custom range with no activity', async ({
 	analyticsChannel: channel,
 	apiHelpers,
@@ -978,15 +792,23 @@ test(
 			projectID: project.groupId,
 		});
 
-		// The Overview tab lists the individual summary cards
+		// The Activities tab shows the Individual Events card
 
-		for (const cardTitle of [
-			'Individual Events',
-			'Current Interests',
-			'Associated Segments',
-		]) {
-			await expect(page.getByText(cardTitle).first()).toBeVisible();
-		}
+		await expect(page.getByText('Individual Events').first()).toBeVisible();
+
+		// The Interests tab shows the interests list
+
+		await page.getByRole('link', {exact: true, name: 'Interests'}).click();
+
+		await expect(page.getByText('No interests were found.')).toBeVisible();
+
+		// The Segments tab shows the Associated Segments card
+
+		await page.getByRole('link', {exact: true, name: 'Segments'}).click();
+
+		await expect(
+			page.getByText('Associated Segments').first()
+		).toBeVisible();
 	}
 );
 
@@ -1369,191 +1191,6 @@ test(
 );
 
 test(
-	'A new individuals attribute breakdown can be deleted',
-	{
-		tag: '@LRAC-8658',
-	},
-	async ({
-		analyticsChannel: channel,
-		apiHelpers,
-		dxpSyncedAnalyticsChannel,
-		page,
-		project,
-	}) => {
-		const {dataSourceId} = dxpSyncedAnalyticsChannel;
-
-		const individual = {
-			...generateIndividual({name: 'bd' + getRandomString()}),
-			dataSourceId,
-		};
-
-		const date = new Date();
-
-		await createIndividuals({apiHelpers, individuals: [individual]});
-
-		await apiHelpers.jsonWebServicesOSBAsah.createEvents([
-			{
-				applicationId: 'Page',
-				canonicalUrl: 'https://www.liferay.com',
-				channelId: channel.id,
-				dataSourceId,
-				eventDate: date.toISOString(),
-				eventId: 'pageViewed',
-				title: 'pageViewed',
-				userId: individual.id,
-			},
-		]);
-
-		await navigateToACPageViaURL({
-			acPage: ACPage.individualPage,
-			channelID: channel.id,
-			page,
-			projectID: project.groupId,
-		});
-
-		// Add a breakdown by email, then delete it
-
-		const attributeValue = getRandomString();
-
-		await addBreakdownByAttribute({
-			attributeName: 'email',
-			attributeValue,
-			page,
-		});
-
-		await page.getByText(attributeValue).hover();
-
-		await page.getByRole('button', {name: 'Close'}).click();
-
-		await expect(page.locator('.tab-item')).toHaveCount(0);
-	}
-);
-
-test(
-	'Individuals attribute breakdowns can be switched between tabs',
-	{
-		tag: '@LRAC-9000',
-	},
-	async ({
-		analyticsChannel: channel,
-		apiHelpers,
-		dxpSyncedAnalyticsChannel,
-		page,
-		project,
-	}) => {
-		const {dataSourceId} = dxpSyncedAnalyticsChannel;
-
-		const individual = {
-			...generateIndividual({name: 'det' + getRandomString()}),
-			dataSourceId,
-			jobTitle: 'lawyer',
-		};
-
-		const date = new Date();
-
-		await createIndividuals({apiHelpers, individuals: [individual]});
-
-		await apiHelpers.jsonWebServicesOSBAsah.createEvents([
-			{
-				applicationId: 'Page',
-				canonicalUrl: 'https://www.liferay.com',
-				channelId: channel.id,
-				dataSourceId,
-				emailAddressHashed: createHash('sha256')
-					.update(`${individual.name}@liferay.com`)
-					.digest('hex'),
-				eventDate: date.toISOString(),
-				eventId: 'pageViewed',
-				sessionId: individual.id,
-				title: 'pageViewed',
-				userId: individual.id,
-			},
-		]);
-
-		await apiHelpers.jsonWebServicesOSBAsah.createSessions([
-			{
-				channelId: channel.id,
-				id: individual.id,
-				sessionEnd: date.toISOString(),
-				sessionStart: date.toISOString(),
-				userId: individual.id,
-			},
-		]);
-
-		await apiHelpers.jsonWebServicesOSBAsah.createIdentityActivitiesSummary(
-			[
-				{
-					activitiesCount: 1,
-					channelId: channel.id,
-					dataSourceId,
-					eventId: 'pageViewed',
-					firstActivityDate: date.toISOString(),
-					identityId: individual.id,
-					individualId: individual.id,
-					lastActivityDate: date.toISOString(),
-				},
-			]
-		);
-
-		await runNanites({
-			apiHelpers,
-			naniteNames: [Nanites.UpdateMembershipsNanite],
-			page,
-		});
-
-		await navigateToACPageViaURL({
-			acPage: ACPage.individualPage,
-			channelID: channel.id,
-			page,
-			projectID: project.groupId,
-		});
-
-		await changeTimeFilter({page, timeFilterPeriod: 'Last 24 hours'});
-
-		// Add two breakdowns and switch between their tabs
-
-		const emailValue = getRandomString();
-		const familyNameValue = getRandomString();
-
-		try {
-			await addBreakdownByAttribute({
-				attributeName: 'email',
-				attributeValue: emailValue,
-				page,
-			});
-
-			await addBreakdownByAttribute({
-				attributeName: 'familyName',
-				attributeValue: familyNameValue,
-				page,
-			});
-
-			await page.getByText(emailValue).click();
-
-			await expect(
-				page
-					.locator('.recharts-cartesian-axis-tick')
-					.getByText(`${individual.name}@liferay.com`)
-			).toBeVisible();
-
-			await page.getByText(familyNameValue).click();
-
-			await expect(
-				page.locator('.recharts-cartesian-axis-tick').getByText('Smith')
-			).toBeVisible();
-		}
-		finally {
-			for (const breakdownName of [emailValue, familyNameValue]) {
-				await apiHelpers.jsonWebServicesOSBFaro.deleteDistributionTab(
-					breakdownName.toLowerCase(),
-					project.groupId
-				);
-			}
-		}
-	}
-);
-
-test(
 	'A selected individual activity point can clear its date selection',
 	{
 		tag: '@LRAC-8916',
@@ -1726,25 +1363,23 @@ test(
 
 		await waitForLoading(page);
 
-		await page.getByRole('link', {exact: true, name: 'Details'}).click();
+		await page.getByRole('link', {exact: true, name: 'Profile'}).click();
 
 		// The seeded attributes appear in the Details list
 
-		await expect(
-			page.getByRole('row').nth(1).getByRole('cell').nth(0)
-		).toContainText('birthDate');
-		await expect(
-			page.getByRole('row').nth(2).getByRole('cell').nth(0)
-		).toContainText('email');
-		await expect(
-			page.getByRole('row').nth(3).getByRole('cell').nth(0)
-		).toContainText('familyName');
-		await expect(
-			page.getByRole('row').nth(4).getByRole('cell').nth(0)
-		).toContainText('givenName');
-		await expect(
-			page.getByRole('row').nth(5).getByRole('cell').nth(0)
-		).toContainText('jobTitle');
+		for (const attributeName of [
+			'birthDate',
+			'email',
+			'familyName',
+			'givenName',
+			'jobTitle',
+		]) {
+			await expect(
+				page.getByRole('row').filter({
+					has: page.getByText(attributeName, {exact: true}),
+				})
+			).toBeVisible();
+		}
 	}
 );
 
@@ -1771,6 +1406,8 @@ test(
 
 		const date = new Date();
 
+		date.setDate(date.getDate() - 1);
+
 		await createIndividuals({apiHelpers, individuals});
 
 		await apiHelpers.jsonWebServicesOSBAsah.createEvents(
@@ -1786,6 +1423,19 @@ test(
 			}))
 		);
 
+		await apiHelpers.jsonWebServicesOSBAsah.createIdentityActivitiesSummary(
+			individuals.map((individual) => ({
+				activitiesCount: 1,
+				channelId: channel.id,
+				dataSourceId,
+				eventId: 'pageViewed',
+				firstActivityDate: date.toISOString(),
+				identityId: individual.id,
+				individualId: individual.id,
+				lastActivityDate: date.toISOString(),
+			}))
+		);
+
 		await navigateToACPageViaURL({
 			acPage: ACPage.individualPage,
 			channelID: channel.id,
@@ -1793,12 +1443,12 @@ test(
 			projectID: project.groupId,
 		});
 
-		await page.getByRole('link', {name: 'Known Individuals'}).click();
-
 		// Both synced contacts surface in the Known Individuals list
 
 		for (const individual of individuals) {
 			await expect(async () => {
+				await page.reload();
+
 				await page
 					.getByPlaceholder('Search')
 					.first()
@@ -1833,6 +1483,8 @@ test(
 
 		const date = new Date();
 
+		date.setDate(date.getDate() - 1);
+
 		await createIndividuals({apiHelpers, individuals: [individual]});
 
 		await apiHelpers.jsonWebServicesOSBAsah.createEvents([
@@ -1848,6 +1500,21 @@ test(
 			},
 		]);
 
+		await apiHelpers.jsonWebServicesOSBAsah.createIdentityActivitiesSummary(
+			[
+				{
+					activitiesCount: 1,
+					channelId: channel.id,
+					dataSourceId,
+					eventId: 'pageViewed',
+					firstActivityDate: date.toISOString(),
+					identityId: individual.id,
+					individualId: individual.id,
+					lastActivityDate: date.toISOString(),
+				},
+			]
+		);
+
 		await navigateToACPageViaURL({
 			acPage: ACPage.individualPage,
 			channelID: channel.id,
@@ -1855,9 +1522,9 @@ test(
 			projectID: project.groupId,
 		});
 
-		await page.getByRole('link', {name: 'Known Individuals'}).click();
-
 		await expect(async () => {
+			await page.reload();
+
 			await page.getByPlaceholder('Search').first().fill(individual.name);
 
 			await expect(
@@ -1888,6 +1555,8 @@ test(
 
 		const date = new Date();
 
+		date.setDate(date.getDate() - 1);
+
 		await createIndividuals({apiHelpers, individuals: [individual]});
 
 		await apiHelpers.jsonWebServicesOSBAsah.createEvents([
@@ -1903,6 +1572,21 @@ test(
 			},
 		]);
 
+		await apiHelpers.jsonWebServicesOSBAsah.createIdentityActivitiesSummary(
+			[
+				{
+					activitiesCount: 1,
+					channelId: channel.id,
+					dataSourceId,
+					eventId: 'pageViewed',
+					firstActivityDate: date.toISOString(),
+					identityId: individual.id,
+					individualId: individual.id,
+					lastActivityDate: date.toISOString(),
+				},
+			]
+		);
+
 		await navigateToACPageViaURL({
 			acPage: ACPage.individualPage,
 			channelID: channel.id,
@@ -1910,9 +1594,9 @@ test(
 			projectID: project.groupId,
 		});
 
-		await page.getByRole('link', {name: 'Known Individuals'}).click();
-
 		await expect(async () => {
+			await page.reload();
+
 			await page.getByPlaceholder('Search').first().fill(individual.name);
 
 			await expect(

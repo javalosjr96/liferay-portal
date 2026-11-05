@@ -77,6 +77,77 @@ describe('formatPayloadTables', () => {
 		]);
 	});
 
+	it('lays the campaign out in a table between the attributes and the utm parameters', () => {
+		expect(
+			formatPayloadTables({
+				acquisitionProperties: {utm_medium: 'email'},
+				campaign: {campaignName: 'Spring Compactor Promo 2026'},
+				eventId: 'pageViewed',
+			}).map(({title}) => title)
+		).toEqual(['Event Attributes', 'Campaign', 'UTM Parameters']);
+	});
+
+	it('omits the campaign table when the payload carries no campaign', () => {
+		expect(
+			formatPayloadTables({eventId: 'pageViewed'}).map(({title}) => title)
+		).toEqual(['Event Attributes']);
+	});
+
+	it('links the campaign name to the campaign url instead of listing the url', () => {
+		const [, {rows}] = formatPayloadTables({
+			campaign: {
+				campaignName: 'Spring Compactor Promo 2026',
+				campaignUrl: '/workspace/23/456/campaigns/7013a000002QwErtAAG',
+			},
+			eventId: 'pageViewed',
+		});
+
+		expect(rows).toEqual([
+			{
+				href: '/workspace/23/456/campaigns/7013a000002QwErtAAG',
+				property: 'campaignName',
+				value: 'Spring Compactor Promo 2026',
+			},
+		]);
+	});
+
+	it('leaves the campaign name unlinked when the campaign carries no url', () => {
+		const [, {rows}] = formatPayloadTables({
+			campaign: {campaignName: 'Spring Compactor Promo 2026'},
+			eventId: 'pageViewed',
+		});
+
+		expect(rows).toEqual([
+			{property: 'campaignName', value: 'Spring Compactor Promo 2026'},
+		]);
+	});
+
+	it('does not link a campaign that resolved to no name', () => {
+		const [, {rows}] = formatPayloadTables({
+			campaign: {
+				campaignName: null,
+				campaignUrl: '/workspace/23/456/campaigns/7013a000002XyZbAAK',
+			},
+			eventId: 'pageViewed',
+		});
+
+		expect(rows).toEqual([{property: 'campaignName', value: '–'}]);
+	});
+
+	it('lists a url outside the campaign table as an attribute', () => {
+		const [{rows}] = formatPayloadTables({
+			properties: {
+				campaignName: 'Spring Compactor Promo 2026',
+				campaignUrl: 'https://liferay.com',
+			},
+		});
+
+		expect(rows).toEqual([
+			{property: 'campaignName', value: 'Spring Compactor Promo 2026'},
+			{property: 'campaignUrl', value: 'https://liferay.com'},
+		]);
+	});
+
 	it('omits the utm table when the payload carries no utm properties', () => {
 		expect(formatPayloadTables({eventId: 'pageViewed'})).toHaveLength(1);
 	});
@@ -98,9 +169,9 @@ describe('formatPayloadTables', () => {
 		});
 
 		expect(rows).toEqual([
-			{property: 'eventDate', value: '-'},
-			{property: 'eventId', value: '-'},
-			{property: 'pageTitle', value: '-'},
+			{property: 'eventDate', value: '–'},
+			{property: 'eventId', value: '–'},
+			{property: 'pageTitle', value: '–'},
 		]);
 	});
 

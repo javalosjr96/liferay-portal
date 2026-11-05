@@ -6,15 +6,17 @@
 import {expect, mergeTests} from '@playwright/test';
 
 import {dataApiHelpersTest} from '../../../fixtures/dataApiHelpersTest';
+import {featureFlagsTest} from '../../../fixtures/featureFlagsTest';
 import {isolatedSiteTest} from '../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../fixtures/loginTest';
+import {waitForAlert} from '../../../utils/waitForAlert';
 import {journalPagesTest} from '../../journal-web/main/fixtures/journalPagesTest';
 import {aiCreatorPagesTest} from './fixtures/aiCreatorPagesTest';
 
 const LEARN_MORE_HREF =
 	'https://learn.liferay.com/w/dxp/content-authoring-and-management/web-content/web-content-articles/generating-text-content-using-ai';
 
-const test = mergeTests(
+const baseTest = mergeTests(
 	aiCreatorPagesTest,
 	dataApiHelpersTest,
 	isolatedSiteTest,
@@ -22,9 +24,19 @@ const test = mergeTests(
 	loginTest()
 );
 
+const aiCreatorDisabledTest = mergeTests(
+	baseTest,
+	featureFlagsTest({'LPD-93786': {enabled: false}})
+);
+
+const test = mergeTests(
+	baseTest,
+	featureFlagsTest({'LPD-93786': {enabled: true}})
+);
+
 test(
 	'Access the OpenAI configuration page from the Instance Settings and the Site Settings',
-	{tag: '@LPS-179484'},
+	{tag: ['@LPD-109984', '@LPS-179484']},
 	async ({aiCreatorInstanceSettingsPage, page, site, siteSettingsPage}) => {
 
 		// The OpenAI settings are reachable from the Instance Settings
@@ -32,9 +44,18 @@ test(
 		await aiCreatorInstanceSettingsPage.goto();
 
 		await expect(
+			aiCreatorInstanceSettingsPage.openAIImageGenerationCheckbox
+		).toBeChecked();
+		await expect(
 			page.getByLabel('Enable ChatGPT to Create Content')
 		).toBeChecked();
 		await expect(aiCreatorInstanceSettingsPage.apiKeyInput).toHaveValue('');
+		await expect(aiCreatorInstanceSettingsPage.imageModelInput).toHaveValue(
+			'gpt-image-2'
+		);
+		await expect(aiCreatorInstanceSettingsPage.imageSizesInput).toHaveValue(
+			'1024x1024,1536x1024,1024x1536'
+		);
 
 		// The OpenAI settings are reachable from the Site Settings
 
@@ -45,9 +66,18 @@ test(
 		);
 
 		await expect(
+			aiCreatorInstanceSettingsPage.openAIImageGenerationCheckbox
+		).toBeChecked();
+		await expect(
 			page.getByLabel('Enable ChatGPT to Create Content')
 		).toBeChecked();
 		await expect(aiCreatorInstanceSettingsPage.apiKeyInput).toHaveValue('');
+		await expect(aiCreatorInstanceSettingsPage.imageModelInput).toHaveValue(
+			''
+		);
+		await expect(aiCreatorInstanceSettingsPage.imageSizesInput).toHaveValue(
+			''
+		);
 
 		// The How do I get an API key link points to the OpenAI docs
 
@@ -330,5 +360,187 @@ test(
 		await expect(aiCreatorInstanceSettingsPage.apiKeyInput).toHaveValue(
 			apiKey
 		);
+	}
+);
+
+aiCreatorDisabledTest(
+	'The AI Creator button is not available in the Web Content editor while the feature flag is disabled',
+	{tag: '@LPD-108694'},
+	async ({journalPage, page, site}) => {
+		await journalPage.goto(site.friendlyUrlPath);
+		await journalPage.goToCreateArticle('Basic Web Content');
+
+		await journalPage.articleContentTextBox.click();
+
+		await expect(
+			page.getByRole('button', {name: 'Bold'}).first()
+		).toBeVisible();
+		await expect(
+			page.getByRole('button', {name: 'Create AI Content'})
+		).toHaveCount(0);
+	}
+);
+
+aiCreatorDisabledTest(
+	'The ChatGPT option is not available in the OpenAI configuration while the feature flag is disabled',
+	{tag: '@LPD-108694'},
+	async ({aiCreatorInstanceSettingsPage, page, site, siteSettingsPage}) => {
+		await aiCreatorInstanceSettingsPage.goto();
+
+		await expect(
+			aiCreatorInstanceSettingsPage.openAIImageGenerationCheckbox
+		).toBeChecked();
+		await expect(aiCreatorInstanceSettingsPage.chatGPTCheckbox).toHaveCount(
+			0
+		);
+
+		await siteSettingsPage.goToSiteSetting(
+			'AI Creator',
+			'OpenAI',
+			site.friendlyUrlPath
+		);
+
+		await expect(
+			aiCreatorInstanceSettingsPage.openAIImageGenerationCheckbox
+		).toBeChecked();
+		await expect(aiCreatorInstanceSettingsPage.chatGPTCheckbox).toHaveCount(
+			0
+		);
+		await expect(
+			page.getByText(
+				'To enable ChatGPT for this site, first enable it for your instance.'
+			)
+		).toHaveCount(0);
+	}
+);
+
+test(
+	'Blank Instance image model and sizes use the default values',
+	{tag: '@LPD-109984'},
+	async ({aiCreatorInstanceSettingsPage, page}) => {
+		try {
+
+			// Clear the image model and sizes
+
+			await aiCreatorInstanceSettingsPage.goto();
+
+			await aiCreatorInstanceSettingsPage.imageModelInput.fill('');
+			await aiCreatorInstanceSettingsPage.imageSizesInput.fill('');
+			await aiCreatorInstanceSettingsPage.saveButton.click();
+
+			await waitForAlert(page);
+
+			// The default image model and sizes are used
+
+			await aiCreatorInstanceSettingsPage.goto();
+
+			await expect(
+				aiCreatorInstanceSettingsPage.imageModelInput
+			).toHaveValue('gpt-image-2');
+			await expect(
+				aiCreatorInstanceSettingsPage.imageSizesInput
+			).toHaveValue('1024x1024,1536x1024,1024x1536');
+		}
+		finally {
+			await aiCreatorInstanceSettingsPage.goto();
+
+			await aiCreatorInstanceSettingsPage.imageModelInput.fill(
+				'gpt-image-2'
+			);
+			await aiCreatorInstanceSettingsPage.imageSizesInput.fill(
+				'1024x1024,1536x1024,1024x1536'
+			);
+			await aiCreatorInstanceSettingsPage.saveButton.click();
+
+			await waitForAlert(page);
+		}
+	}
+);
+
+test(
+	'Image sizes that are not a width and height in pixels are not saved',
+	{tag: '@LPD-109984'},
+	async ({aiCreatorInstanceSettingsPage, page}) => {
+
+		// Save image sizes in the wrong format
+
+		await aiCreatorInstanceSettingsPage.goto();
+
+		await aiCreatorInstanceSettingsPage.imageSizesInput.fill(
+			'1024x1024, 1536*1024'
+		);
+		await aiCreatorInstanceSettingsPage.saveButton.click();
+
+		await expect(
+			page.getByText(
+				'Each image size must be a width and height in pixels, separated by x (e.g. 1536x1024).'
+			)
+		).toBeVisible();
+		await expect(aiCreatorInstanceSettingsPage.imageSizesInput).toHaveValue(
+			'1024x1024, 1536*1024'
+		);
+
+		// The image sizes are kept
+
+		await aiCreatorInstanceSettingsPage.goto();
+
+		await expect(aiCreatorInstanceSettingsPage.imageSizesInput).toHaveValue(
+			'1024x1024,1536x1024,1024x1536'
+		);
+	}
+);
+
+test(
+	'Site image model is validated with the API key inherited from the Instance',
+	{tag: '@LPD-109984'},
+	async ({
+		aiCreatorInstanceSettingsPage,
+		enableMockAICreatorOpenAIClient,
+		page,
+		site,
+		siteSettingsPage,
+	}) => {
+		await enableMockAICreatorOpenAIClient();
+
+		try {
+			await aiCreatorInstanceSettingsPage.addApiKey();
+
+			// A wrong Site image model is reported
+
+			await siteSettingsPage.goToSiteSetting(
+				'AI Creator',
+				'OpenAI',
+				site.friendlyUrlPath
+			);
+
+			await aiCreatorInstanceSettingsPage.imageModelInput.fill(
+				'OPENAI_API_INVALID_MODEL_ERROR_MESSAGE'
+			);
+			await aiCreatorInstanceSettingsPage.saveButton.click();
+
+			await expect(page.getByText('INVALID_MODEL')).toBeVisible();
+
+			// A valid Site image model is saved
+
+			await siteSettingsPage.goToSiteSetting(
+				'AI Creator',
+				'OpenAI',
+				site.friendlyUrlPath
+			);
+
+			await aiCreatorInstanceSettingsPage.imageModelInput.fill(
+				'gpt-image-2'
+			);
+			await aiCreatorInstanceSettingsPage.saveButton.click();
+
+			await waitForAlert(page);
+
+			await expect(
+				aiCreatorInstanceSettingsPage.imageModelInput
+			).toHaveValue('gpt-image-2');
+		}
+		finally {
+			await aiCreatorInstanceSettingsPage.removeApiKey();
+		}
 	}
 );

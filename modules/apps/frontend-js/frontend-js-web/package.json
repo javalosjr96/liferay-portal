@@ -1,6 +1,6 @@
 {
 	"dependencies": {
-		"@liferay/js-api": "0.9.1",
+		"@liferay/js-api": "0.10.0",
 		"react": "18.2.0",
 		"react-dom": "18.2.0"
 	},
@@ -20,5 +20,5 @@
 		"format": "node-scripts format",
 		"test": "node-scripts test"
 	},
-	"version": "5.0.154"
+	"version": "5.0.155"
 }

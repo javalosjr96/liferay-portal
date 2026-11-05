@@ -16,8 +16,10 @@ import java.net.URL;
 
 import java.util.UUID;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
@@ -81,7 +83,17 @@ public class LiferayOAuth2ResourceServerEnableWebSecurityTest {
 		);
 
 		_clientAndServer = ClientAndServer.startClientAndServer(63636);
+	}
 
+	@AfterClass
+	public static void tearDownClass() {
+		_clientAndServer.stop();
+
+		_mockedStatic.close();
+	}
+
+	@Before
+	public void setUp() {
 		new MockServerClient(
 			"localhost", 63636
 		).when(
@@ -104,11 +116,9 @@ public class LiferayOAuth2ResourceServerEnableWebSecurityTest {
 		);
 	}
 
-	@AfterClass
-	public static void tearDownClass() {
-		_clientAndServer.stop();
-
-		_mockedStatic.close();
+	@After
+	public void tearDown() {
+		_clientAndServer.reset();
 	}
 
 	@Test
@@ -147,33 +157,58 @@ public class LiferayOAuth2ResourceServerEnableWebSecurityTest {
 
 	@Test
 	public void testGetJWTWithClientIdFromERC() throws Exception {
-		try (CloseableMockServerClient closeableMockServerClient =
-				new CloseableMockServerClient("localhost", 63636)) {
+		String clientId = String.valueOf(UUID.randomUUID());
 
-			closeableMockServerClient.when(
-				HttpRequest.request(
-				).withMethod(
-					"GET"
-				).withPath(
-					"/o/oauth2/application"
-				).withQueryStringParameter(
-					"externalReferenceCode", "foo-baker"
-				),
-				Times.unlimited()
-			).respond(
-				HttpResponse.response(
-				).withBody(
-					"{\"client_id\": \"987654321\"}"
-				).withHeader(
-					new Header("Content-Type", "application/json")
-				).withStatusCode(
-					200
-				)
-			);
+		new MockServerClient(
+			"localhost", 63636
+		).when(
+			HttpRequest.request(
+			).withMethod(
+				"GET"
+			).withPath(
+				"/o/oauth2/application"
+			).withQueryStringParameter(
+				"externalReferenceCode", "foo-baker"
+			),
+			Times.unlimited()
+		).respond(
+			HttpResponse.response(
+			).withBody(
+				"{\"client_id\": \"" + clientId + "\"}"
+			).withHeader(
+				new Header("Content-Type", "application/json")
+			).withStatusCode(
+				200
+			)
+		);
 
-			_jwtDecoder.decode(
-				JWTAssertionUtil.getJWTWithClientId("987654321"));
-		}
+		_jwtDecoder.decode(JWTAssertionUtil.getJWTWithClientId(clientId));
+	}
+
+	@Test
+	public void testGetJWTWithClientIdFromHeadlessServerProperty()
+		throws Exception {
+
+		new MockServerClient(
+			"localhost", 63636
+		).when(
+			HttpRequest.request(
+			).withMethod(
+				"GET"
+			).withPath(
+				"/o/oauth2/application"
+			).withQueryStringParameter(
+				"externalReferenceCode", "foo-charlie-headless-server"
+			),
+			Times.unlimited()
+		).respond(
+			HttpResponse.response(
+			).withStatusCode(
+				400
+			)
+		);
+
+		_jwtDecoder.decode(JWTAssertionUtil.getJWTWithClientId("246813579"));
 	}
 
 	@Test
@@ -191,6 +226,41 @@ public class LiferayOAuth2ResourceServerEnableWebSecurityTest {
 		_jwtDecoder.decode(JWTAssertionUtil.getJWTWithClientId("987654321"));
 	}
 
+	@Test
+	public void testGetJWTWithExternalReferenceCode() throws Exception {
+		_jwtDecoder.decode(
+			JWTAssertionUtil.getJWTWithExternalReferenceCode(
+				"foo-baker", "localhost"));
+	}
+
+	@Test
+	public void testGetJWTWithExternalReferenceCodeFromAnotherIssuer()
+		throws Exception {
+
+		expectedException.expect(JwtValidationException.class);
+		expectedException.expectMessage(
+			"An error occurred while attempting to decode the Jwt: The " +
+				"client_id does not match");
+
+		_jwtDecoder.decode(
+			JWTAssertionUtil.getJWTWithExternalReferenceCode(
+				"foo-baker", "another.example.com"));
+	}
+
+	@Test
+	public void testGetJWTWithExternalReferenceCodeNotInProperties()
+		throws Exception {
+
+		expectedException.expect(JwtValidationException.class);
+		expectedException.expectMessage(
+			"An error occurred while attempting to decode the Jwt: The " +
+				"client_id does not match");
+
+		_jwtDecoder.decode(
+			JWTAssertionUtil.getJWTWithExternalReferenceCode(
+				"foo-dog", "localhost"));
+	}
+
 	@Rule
 	public ExpectedException expectedException = ExpectedException.none();
 
@@ -199,19 +269,5 @@ public class LiferayOAuth2ResourceServerEnableWebSecurityTest {
 
 	@Autowired
 	private JwtDecoder _jwtDecoder;
-
-	private static class CloseableMockServerClient
-		extends MockServerClient implements AutoCloseable {
-
-		public CloseableMockServerClient(String remoteHost, int remotePort) {
-			super(remoteHost, remotePort);
-		}
-
-		@Override
-		public void close() {
-			stop();
-		}
-
-	}
 
 }

@@ -41,6 +41,16 @@ public abstract class BasePermissionChecker implements PermissionChecker {
 
 	@Override
 	public long getOwnerRoleId() {
+		if (ownerRole == null) {
+			try {
+				ownerRole = RoleLocalServiceUtil.getRole(
+					user.getCompanyId(), RoleConstants.OWNER);
+			}
+			catch (Exception exception) {
+				_log.error(exception);
+			}
+		}
+
 		return ownerRole.getRoleId();
 	}
 
@@ -85,16 +95,14 @@ public abstract class BasePermissionChecker implements PermissionChecker {
 		long groupId, String name, long primKey, String actionId) {
 
 		return hasPermission(
-			GroupLocalServiceUtil.fetchGroup(groupId), name,
-			String.valueOf(primKey), actionId);
+			_fetchGroup(groupId), name, String.valueOf(primKey), actionId);
 	}
 
 	@Override
 	public boolean hasPermission(
 		long groupId, String name, String primKey, String actionId) {
 
-		return hasPermission(
-			GroupLocalServiceUtil.fetchGroup(groupId), name, primKey, actionId);
+		return hasPermission(_fetchGroup(groupId), name, primKey, actionId);
 	}
 
 	@Override
@@ -117,13 +125,7 @@ public abstract class BasePermissionChecker implements PermissionChecker {
 			signedIn = true;
 		}
 
-		try {
-			ownerRole = RoleLocalServiceUtil.getRole(
-				user.getCompanyId(), RoleConstants.OWNER);
-		}
-		catch (Exception exception) {
-			_log.error(exception);
-		}
+		ownerRole = null;
 	}
 
 	@Override
@@ -151,6 +153,14 @@ public abstract class BasePermissionChecker implements PermissionChecker {
 	protected Role ownerRole;
 	protected boolean signedIn;
 	protected User user;
+
+	private Group _fetchGroup(long groupId) {
+		if (groupId <= 0) {
+			return null;
+		}
+
+		return GroupLocalServiceUtil.fetchGroup(groupId);
+	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
 		BasePermissionChecker.class);

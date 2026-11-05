@@ -11,6 +11,7 @@ import com.liferay.commerce.pricing.model.CommercePricingClass;
 import com.liferay.commerce.pricing.model.CommercePricingClassCPDefinitionRel;
 import com.liferay.commerce.pricing.service.CommercePricingClassCPDefinitionRelLocalService;
 import com.liferay.commerce.pricing.service.base.CommercePricingClassLocalServiceBaseImpl;
+import com.liferay.commerce.pricing.service.persistence.CommercePricingClassCPDefinitionRelPersistence;
 import com.liferay.expando.kernel.service.ExpandoRowLocalService;
 import com.liferay.exportimport.kernel.empty.model.EmptyModelManager;
 import com.liferay.petra.function.transform.TransformUtil;
@@ -231,17 +232,9 @@ public class CommercePricingClassLocalServiceImpl
 	@Override
 	public long[] getCommercePricingClassByCPDefinition(long cpDefinitionId) {
 		return TransformUtil.transformToLongArray(
-			_commercePricingClassCPDefinitionRelLocalService.
-				getCommercePricingClassByCPDefinitionId(cpDefinitionId),
+			_commercePricingClassCPDefinitionRelPersistence.
+				findByCPDefinitionId(cpDefinitionId),
 			CommercePricingClassCPDefinitionRel::getCommercePricingClassId);
-	}
-
-	@Override
-	public int getCommercePricingClassCountByCPDefinitionId(
-		long cpDefinitionId, String title) {
-
-		return commercePricingClassFinder.countByCPDefinitionId(
-			cpDefinitionId, title);
 	}
 
 	@Override
@@ -256,14 +249,6 @@ public class CommercePricingClassLocalServiceImpl
 	@Override
 	public int getCommercePricingClassesCount(long companyId) {
 		return commercePricingClassPersistence.countByCompanyId(companyId);
-	}
-
-	@Override
-	public int getCommercePricingClassesCount(
-		long cpDefinitionId, String title) {
-
-		return commercePricingClassFinder.countByCPDefinitionId(
-			cpDefinitionId, title);
 	}
 
 	@Override
@@ -287,14 +272,6 @@ public class CommercePricingClassLocalServiceImpl
 			this::fetchCommercePricingClassByExternalReferenceCode,
 			this::getCommercePricingClassByExternalReferenceCode,
 			CommercePricingClass.class.getName());
-	}
-
-	@Override
-	public List<CommercePricingClass> searchByCPDefinitionId(
-		long cpDefinitionId, String title, int start, int end) {
-
-		return commercePricingClassFinder.findByCPDefinitionId(
-			cpDefinitionId, title, start, end);
 	}
 
 	@Override
@@ -481,6 +458,10 @@ public class CommercePricingClassLocalServiceImpl
 	@Reference
 	private CommercePricingClassCPDefinitionRelLocalService
 		_commercePricingClassCPDefinitionRelLocalService;
+
+	@Reference
+	private CommercePricingClassCPDefinitionRelPersistence
+		_commercePricingClassCPDefinitionRelPersistence;
 
 	@Reference
 	private EmptyModelManager _emptyModelManager;

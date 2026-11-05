@@ -10,9 +10,7 @@ import com.liferay.batch.engine.pagination.Pagination;
 import com.liferay.osb.faro.constants.FaroNotificationConstants;
 import com.liferay.osb.faro.constants.FaroProjectConstants;
 import com.liferay.osb.faro.constants.FaroUserConstants;
-import com.liferay.osb.faro.contacts.model.constants.JSONConstants;
-import com.liferay.osb.faro.contacts.service.ContactsCardTemplateLocalService;
-import com.liferay.osb.faro.contacts.service.ContactsLayoutTemplateLocalService;
+import com.liferay.osb.faro.constants.JSONConstants;
 import com.liferay.osb.faro.engine.client.model.ProjectUsageMetric;
 import com.liferay.osb.faro.engine.client.model.Results;
 import com.liferay.osb.faro.engine.client.model.Workspace;
@@ -474,10 +472,6 @@ public class ProjectFaroController extends BaseFaroController {
 			_faroProjectLocalService.fetchFaroProjectByGroupId(groupId);
 
 		_validateLastSeenDate(faroProject);
-
-		_contactsCardTemplateLocalService.deleteContactsCardTemplates(groupId);
-		_contactsLayoutTemplateLocalService.deleteContactsLayoutTemplates(
-			groupId);
 
 		contactsEngineClient.deleteProject(faroProject, deleteData);
 
@@ -1090,12 +1084,14 @@ public class ProjectFaroController extends BaseFaroController {
 
 				if (trial) {
 					osbOfferingEntry.setProductEntryId(
-						ProductConstants.
-							PRODUCT_ENTRY_ID_DATA_PLATFORM_PRIVATE_BETA);
+						ProductConstants.getProductEntryId(
+							ProductConstants.
+								PRODUCT_ENTRY_NAME_DATA_PLATFORM_PRIVATE_BETA));
 				}
 				else {
 					osbOfferingEntry.setProductEntryId(
-						ProductConstants.PRODUCT_ENTRY_ID_ENTERPRISE);
+						ProductConstants.getProductEntryId(
+							ProductConstants.PRODUCT_ENTRY_NAME_ENTERPRISE));
 				}
 
 				osbOfferingEntry.setQuantity(1);
@@ -1120,8 +1116,9 @@ public class ProjectFaroController extends BaseFaroController {
 					OSBOfferingEntry osbOfferingEntry = new OSBOfferingEntry();
 
 					osbOfferingEntry.setProductEntryId(
-						ProductConstants.
-							PRODUCT_ENTRY_ID_DATA_PLATFORM_PRIVATE_BETA);
+						ProductConstants.getProductEntryId(
+							ProductConstants.
+								PRODUCT_ENTRY_NAME_DATA_PLATFORM_PRIVATE_BETA));
 					osbOfferingEntry.setQuantity(1);
 					osbOfferingEntry.setStartDate(
 						new Date(faroProject.getCreateTime()));
@@ -1878,7 +1875,8 @@ public class ProjectFaroController extends BaseFaroController {
 
 		List<OSBAccountEntry> osbAccountEntries =
 			_provisioningClient.getOSBAccountEntries(
-				user.getUserUuid(), ProductConstants.getProductEntryIds());
+				user.getUserUuid(),
+				ProductConstants.getKoroneikiProductEntryIds());
 
 		for (OSBAccountEntry osbAccountEntry : osbAccountEntries) {
 			if (StringUtil.equals(
@@ -1987,13 +1985,6 @@ public class ProjectFaroController extends BaseFaroController {
 
 	private static final CopyOnWriteArraySet<Long> _initializingGroupIds =
 		new CopyOnWriteArraySet<>();
-
-	@Reference
-	private ContactsCardTemplateLocalService _contactsCardTemplateLocalService;
-
-	@Reference
-	private ContactsLayoutTemplateLocalService
-		_contactsLayoutTemplateLocalService;
 
 	@Reference
 	private DataSourceFaroController _dataSourceFaroController;

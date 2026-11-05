@@ -46,6 +46,14 @@ public interface CommercePaymentIntegration {
 		return null;
 	}
 
+	public default boolean isValid(
+			HttpServletRequest httpServletRequest,
+			CommercePaymentEntry commercePaymentEntry)
+		throws PortalException {
+
+		return true;
+	}
+
 	public CommercePaymentEntry refund(
 			HttpServletRequest httpServletRequest,
 			CommercePaymentEntry commercePaymentEntry)

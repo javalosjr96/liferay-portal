@@ -44,6 +44,7 @@ import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.portlet.bridges.mvc.MVCResourceCommand;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.service.ServiceContext;
+import com.liferay.portal.kernel.service.UserLocalService;
 import com.liferay.portal.kernel.servlet.PortletServlet;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletRenderResponse;
 import com.liferay.portal.kernel.test.portlet.MockLiferayPortletURL;
@@ -55,6 +56,7 @@ import com.liferay.portal.kernel.test.util.GroupTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
+import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.CalendarFactoryUtil;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -74,6 +76,8 @@ import jakarta.portlet.MutableResourceParameters;
 import jakarta.portlet.PortletParameters;
 import jakarta.portlet.ResourceURL;
 
+import java.awt.image.BufferedImage;
+
 import java.io.ByteArrayOutputStream;
 
 import java.util.Arrays;
@@ -82,6 +86,8 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
+
+import javax.imageio.ImageIO;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -259,6 +265,35 @@ public class GetContentDashboardItemInfoMVCResourceCommandTest {
 
 		_assertContentDashboardItemLatestVersions(
 			contentDashboardItem, jsonObject);
+	}
+
+	@Test
+	public void testServeResourceWithDeletedUser() throws Exception {
+		User user = UserTestUtil.addUser();
+
+		JournalArticle journalArticle = JournalTestUtil.addArticle(
+			user.getUserId(), _group.getGroupId(),
+			JournalFolderConstants.DEFAULT_PARENT_FOLDER_ID);
+
+		ByteArrayOutputStream byteArrayOutputStream =
+			new ByteArrayOutputStream();
+
+		ImageIO.write(
+			new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB), "png",
+			byteArrayOutputStream);
+
+		user = _userLocalService.updatePortrait(
+			user.getUserId(), byteArrayOutputStream.toByteArray());
+
+		_userLocalService.deleteUser(user);
+
+		JSONObject jsonObject = _serveResource(
+			_contentDashboardJournalItemFactory.create(
+				journalArticle.getResourcePrimKey()));
+
+		JSONObject userJSONObject = jsonObject.getJSONObject("user");
+
+		Assert.assertEquals(StringPool.BLANK, userJSONObject.getString("url"));
 	}
 
 	@Test
@@ -555,6 +590,9 @@ public class GetContentDashboardItemInfoMVCResourceCommandTest {
 	private MVCResourceCommand _mvcResourceCommand;
 
 	private ServiceContext _serviceContext;
+
+	@Inject
+	private UserLocalService _userLocalService;
 
 	private static class TestLiferayPortletURL extends MockLiferayPortletURL {
 

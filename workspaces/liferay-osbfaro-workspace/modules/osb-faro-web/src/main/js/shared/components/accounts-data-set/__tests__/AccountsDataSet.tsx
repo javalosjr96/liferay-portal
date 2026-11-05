@@ -8,7 +8,14 @@ import {RangeKeyTimeRanges} from 'shared/util/constants';
 import {useRequest} from 'shared/hooks/useRequest';
 import {warmFrontendDataSet} from 'test/warm-frontend-data-set';
 
-const DEFAULT_STAGE_ITEMS = [
+interface IStageItem {
+	externalReferenceCode: string;
+	id: string;
+	stageName?: string;
+	stageType?: LifecycleStages;
+}
+
+const DEFAULT_STAGE_ITEMS: IStageItem[] = [
 	{
 		externalReferenceCode: 'erc-stage-9990',
 		id: '9990',
@@ -106,7 +113,7 @@ jest.mock('shared/hooks/useRequest', () => ({
 
 const mockedUseRequest = useRequest as jest.Mock;
 
-const mockStages = (items: typeof DEFAULT_STAGE_ITEMS | undefined) => {
+const mockStages = (items: IStageItem[] | undefined) => {
 	mockedUseRequest.mockReturnValue({
 		data: items ? {items} : undefined,
 		loading: false,
@@ -132,8 +139,14 @@ type FakeCustomDataRenderers = {
 		itemData: {id: string | number};
 		value: string;
 	}) => React.ReactElement;
+	accountLifecycleStageRenderer: (props: {
+		value?: LifecycleStages | '';
+	}) => React.ReactElement;
 	activitiesCountRenderer: (props: {value?: number}) => React.ReactElement;
 	annualRevenueRenderer: (props: {value?: number}) => React.ReactElement;
+	textRenderer: (props: {
+		value?: boolean | number | string;
+	}) => React.ReactElement;
 };
 
 type FakeView = {
@@ -360,14 +373,14 @@ describe('AccountsDataSet', () => {
 		]);
 	});
 
-	it('should preload the lifecycleStatus filter with the stage external reference code and localized label when lifecycleStageFilter prop is provided', async () => {
+	it('should preload the lifecycleStatus filter with the external reference code and label of the stage whose id is in lifecycleStageFilter', async () => {
 		await renderAccountsDataSet(
 			<AccountsDataSet
 				accountLifecycleId="al-1"
 				apiURL="fake-url"
 				channelId="123"
 				groupId="23"
-				lifecycleStageFilter={LifecycleStages.AT_RISK}
+				lifecycleStageFilter="9993"
 			/>
 		);
 
@@ -390,7 +403,7 @@ describe('AccountsDataSet', () => {
 				apiURL="fake-url"
 				channelId="123"
 				groupId="23"
-				lifecycleStageFilter={LifecycleStages.AT_RISK}
+				lifecycleStageFilter="9993"
 			/>
 		);
 
@@ -419,7 +432,7 @@ describe('AccountsDataSet', () => {
 		);
 	});
 
-	it('should render 0 recent activities when the account has no events', async () => {
+	it('should render the no data value when the account has no recent activities count', async () => {
 		await renderAccountsDataSet(
 			<AccountsDataSet apiURL="fake-url" channelId="123" groupId="23" />
 		);
@@ -430,7 +443,7 @@ describe('AccountsDataSet', () => {
 			})
 		);
 
-		expect(container).toHaveTextContent('0');
+		expect(container).toHaveTextContent('–');
 	});
 
 	it('should render the recent activities count when the account has events', async () => {
@@ -445,7 +458,109 @@ describe('AccountsDataSet', () => {
 		expect(container).toHaveTextContent('42');
 	});
 
-	it('should render an empty annual revenue when the account annual revenue is 0', async () => {
+	it('should render the lifecycle stage label when the account has a lifecycle stage', async () => {
+		await renderAccountsDataSet(
+			<AccountsDataSet apiURL="fake-url" channelId="123" groupId="23" />
+		);
+
+		const {container} = render(
+			lastCustomDataRenderers!.accountLifecycleStageRenderer({
+				value: LifecycleStages.ENGAGED,
+			})
+		);
+
+		expect(container).toHaveTextContent('Engaged');
+	});
+
+	it.each([
+		['missing', undefined],
+		['empty', ''],
+	] as const)(
+		'should render the no data value when the account lifecycle stage is %s',
+		async (_, value) => {
+			await renderAccountsDataSet(
+				<AccountsDataSet
+					apiURL="fake-url"
+					channelId="123"
+					groupId="23"
+				/>
+			);
+
+			render(
+				lastCustomDataRenderers!.accountLifecycleStageRenderer({value})
+			);
+
+			expect(screen.getByText('–')).toHaveClass('text-secondary');
+		}
+	);
+
+	it.each([
+		['missing', undefined],
+		['empty', ''],
+	] as const)(
+		'should render the no data value when an account attribute is %s',
+		async (_, value) => {
+			await renderAccountsDataSet(
+				<AccountsDataSet
+					apiURL="fake-url"
+					channelId="123"
+					groupId="23"
+				/>
+			);
+
+			render(lastCustomDataRenderers!.textRenderer({value}));
+
+			expect(screen.getByText('–')).toHaveClass('text-secondary');
+		}
+	);
+
+	it('should render a zero account attribute as zero', async () => {
+		await renderAccountsDataSet(
+			<AccountsDataSet apiURL="fake-url" channelId="123" groupId="23" />
+		);
+
+		const {container} = render(
+			lastCustomDataRenderers!.textRenderer({value: '0'})
+		);
+
+		expect(container.textContent).toBe('0');
+	});
+
+	it.each([
+		['true', true],
+		['false', false],
+	] as const)(
+		'should render a boolean account attribute as %s',
+		async (expected, value) => {
+			await renderAccountsDataSet(
+				<AccountsDataSet
+					apiURL="fake-url"
+					channelId="123"
+					groupId="23"
+				/>
+			);
+
+			const {container} = render(
+				lastCustomDataRenderers!.textRenderer({value})
+			);
+
+			expect(container.textContent).toBe(expected);
+		}
+	);
+
+	it('should render the account attribute value when the account has one', async () => {
+		await renderAccountsDataSet(
+			<AccountsDataSet apiURL="fake-url" channelId="123" groupId="23" />
+		);
+
+		const {container} = render(
+			lastCustomDataRenderers!.textRenderer({value: 'Software'})
+		);
+
+		expect(container.textContent).toBe('Software');
+	});
+
+	it('should render a zero annual revenue', async () => {
 		await renderAccountsDataSet(
 			<AccountsDataSet apiURL="fake-url" channelId="123" groupId="23" />
 		);
@@ -454,19 +569,19 @@ describe('AccountsDataSet', () => {
 			lastCustomDataRenderers!.annualRevenueRenderer({value: 0})
 		);
 
-		expect(container.textContent).toBe('');
+		expect(container.textContent).toBe('0');
 	});
 
-	it('should render an empty annual revenue when the account annual revenue is unknown', async () => {
+	it('should render the no data value when the account annual revenue is unknown', async () => {
 		await renderAccountsDataSet(
 			<AccountsDataSet apiURL="fake-url" channelId="123" groupId="23" />
 		);
 
-		const {container} = render(
+		const {getByText} = render(
 			lastCustomDataRenderers!.annualRevenueRenderer({value: undefined})
 		);
 
-		expect(container.textContent).toBe('');
+		expect(getByText('–')).toHaveClass('text-secondary');
 	});
 
 	it('should render the annual revenue in thousands when the account has annual revenue', async () => {
@@ -573,7 +688,7 @@ describe('AccountsDataSet', () => {
 				apiURL="fake-url"
 				channelId="123"
 				groupId="23"
-				lifecycleStageFilter={LifecycleStages.AWARE}
+				lifecycleStageFilter="9990"
 				stageSelectionNonce={0}
 			/>
 		);
@@ -586,7 +701,7 @@ describe('AccountsDataSet', () => {
 				apiURL="fake-url"
 				channelId="123"
 				groupId="23"
-				lifecycleStageFilter={LifecycleStages.AWARE}
+				lifecycleStageFilter="9990"
 				stageSelectionNonce={1}
 			/>
 		);
@@ -728,7 +843,7 @@ describe('AccountsDataSet', () => {
 
 			expect(field?.label).toBe('Closed-Won Opportunities');
 			expect(field?.sortable).toBe(false);
-			expect(field?.contentRenderer).toBeUndefined();
+			expect(field?.contentRenderer).toBe('textRenderer');
 		});
 
 		it('should build the Default View with the 8 fixed fields in order, with the correct renderers', async () => {
@@ -753,10 +868,10 @@ describe('AccountsDataSet', () => {
 				defaultView!.schema.fields.map((f) => f.contentRenderer)
 			).toEqual([
 				'accountNameRenderer',
-				undefined,
+				'textRenderer',
 				'accountLifecycleStageRenderer',
 				'annualRevenueRenderer',
-				undefined,
+				'textRenderer',
 				'dateRenderer',
 				'dateRenderer',
 				'activitiesCountRenderer',
@@ -798,14 +913,18 @@ describe('AccountsDataSet', () => {
 			expect(byFieldName('accountName')?.contentRenderer).toBe(
 				'accountNameRenderer'
 			);
-			expect(byFieldName('description')?.contentRenderer).toBeUndefined();
-			expect(
-				byFieldName('employeeCount')?.contentRenderer
-			).toBeUndefined();
+			expect(byFieldName('description')?.contentRenderer).toBe(
+				'textRenderer'
+			);
+			expect(byFieldName('employeeCount')?.contentRenderer).toBe(
+				'textRenderer'
+			);
 			expect(byFieldName('signupDate')?.contentRenderer).toBe(
 				'dateRenderer'
 			);
-			expect(byFieldName('isPartner')?.contentRenderer).toBeUndefined();
+			expect(byFieldName('isPartner')?.contentRenderer).toBe(
+				'textRenderer'
+			);
 		});
 
 		it('should order the All Attributes View with the default columns first, then the remaining catalog fields in catalog order', async () => {

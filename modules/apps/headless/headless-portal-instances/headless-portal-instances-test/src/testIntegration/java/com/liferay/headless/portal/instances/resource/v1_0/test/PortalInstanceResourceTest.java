@@ -16,14 +16,18 @@ import com.liferay.headless.portal.instances.client.problem.Problem;
 import com.liferay.headless.portal.instances.client.resource.v1_0.PortalInstanceResource;
 import com.liferay.petra.function.UnsafeRunnable;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.portal.instance.lifecycle.BasePortalInstanceLifecycleListener;
+import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.instances.constants.PortalInstancesNotificationConstants;
 import com.liferay.portal.instances.constants.PortalInstancesPortletKeys;
+import com.liferay.portal.kernel.exception.NoSuchCompanyException;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.UserNotificationEvent;
 import com.liferay.portal.kernel.model.VirtualHost;
@@ -36,6 +40,7 @@ import com.liferay.portal.kernel.service.UserNotificationEventLocalService;
 import com.liferay.portal.kernel.service.VirtualHostLocalService;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.PrefsPropsTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -53,6 +58,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.AfterClass;
 import org.junit.Assert;
@@ -60,6 +66,11 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceRegistration;
 
 /**
  * @author István András Dézsi
@@ -163,6 +174,7 @@ public class PortalInstanceResourceTest
 	@Override
 	@Test
 	public void testPostPortalInstance() throws Exception {
+		_testPostPortalInstanceBatchSendsUserNotificationEventAfterRegistration();
 		_testPostPortalInstanceBatchWithSeveralPortalInstances();
 		_testPostPortalInstanceBatchWithSiteInitializerKeyNonexistent();
 		_testPostPortalInstanceWithSiteInitializerKeyNonexistent();
@@ -170,7 +182,12 @@ public class PortalInstanceResourceTest
 		_testPostPortalInstanceWithAdmin();
 		_testPostPortalInstanceWithAdminAndCompanyStrangers();
 		_testPostPortalInstanceWithAdminCredentials();
+		_testPostPortalInstanceWithAdminWithInvalidPassword();
+		_testPostPortalInstanceWithAdminWithInvalidScreenName();
 		_testPostPortalInstanceWithAdminWithoutRequiredFields();
+		_testPostPortalInstanceWithExistingCompanyId();
+		_testPostPortalInstanceWithInvalidMaxUsers();
+		_testPostPortalInstanceWithVirtualHostTooLong();
 		_testPostPortalInstanceWithoutOmniadminPermission();
 	}
 
@@ -344,8 +361,15 @@ public class PortalInstanceResourceTest
 
 		randomPortalInstance.setAdmin(Admin.toDTO(adminJSONObject.toString()));
 
+		_assertPostPortalInstanceProblemTitle(randomPortalInstance, title);
+	}
+
+	private void _assertPostPortalInstanceProblemTitle(
+			PortalInstance portalInstance, String title)
+		throws Exception {
+
 		try {
-			portalInstanceResource.postPortalInstance(randomPortalInstance);
+			portalInstanceResource.postPortalInstance(portalInstance);
 
 			Assert.fail();
 		}
@@ -355,6 +379,11 @@ public class PortalInstanceResourceTest
 			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
 			Assert.assertEquals(title, problem.getTitle());
 		}
+
+		Assert.assertThrows(
+			NoSuchCompanyException.class,
+			() -> _companyLocalService.getCompanyByWebId(
+				portalInstance.getPortalInstanceId()));
 	}
 
 	private void _assertProblemExceptionProblemStatus(
@@ -408,6 +437,16 @@ public class PortalInstanceResourceTest
 		}
 
 		return copyPortalInstance;
+	}
+
+	private JSONObject _createAdminJSONObject() {
+		return JSONUtil.put(
+			"emailAddress", RandomTestUtil.randomString() + "@liferay.com"
+		).put(
+			"familyName", RandomTestUtil.randomString()
+		).put(
+			"givenName", RandomTestUtil.randomString()
+		);
 	}
 
 	private PortalInstanceResource _createUserPortalInstanceResource()
@@ -642,6 +681,74 @@ public class PortalInstanceResourceTest
 			"FORBIDDEN",
 			() -> userPortalInstanceResource.patchPortalInstance(
 				_portalInstance.getPortalInstanceId(), randomPortalInstance()));
+	}
+
+	private void _testPostPortalInstanceBatchSendsUserNotificationEventAfterRegistration()
+		throws Exception {
+
+		PortalInstance randomPortalInstance = randomPortalInstance();
+
+		AtomicLong registeredTimeAtomicLong = new AtomicLong();
+
+		Bundle bundle = FrameworkUtil.getBundle(
+			PortalInstanceResourceTest.class);
+
+		BundleContext bundleContext = bundle.getBundleContext();
+
+		ServiceRegistration<PortalInstanceLifecycleListener>
+			serviceRegistration = bundleContext.registerService(
+				PortalInstanceLifecycleListener.class,
+				new BasePortalInstanceLifecycleListener() {
+
+					@Override
+					public void portalInstanceRegistered(Company company) {
+						if (Objects.equals(
+								company.getWebId(),
+								randomPortalInstance.getPortalInstanceId())) {
+
+							registeredTimeAtomicLong.set(
+								System.currentTimeMillis());
+						}
+					}
+
+				},
+				null);
+
+		try {
+			HttpResponse httpResponse =
+				portalInstanceResource.postPortalInstanceBatchHttpResponse(
+					null,
+					JSONUtil.put(
+						JSONFactoryUtil.createJSONObject(
+							randomPortalInstance.toString())));
+
+			Assert.assertEquals(202, httpResponse.getStatusCode());
+
+			waitForFinish(
+				"COMPLETED",
+				JSONFactoryUtil.createJSONObject(httpResponse.getContent()));
+		}
+		finally {
+			serviceRegistration.unregister();
+		}
+
+		UserNotificationEvent userNotificationEvent =
+			_fetchUserNotificationEvent(
+				randomPortalInstance.getPortalInstanceId(),
+				PortalInstancesNotificationConstants.STATUS_SUCCESS);
+
+		Assert.assertNotNull(userNotificationEvent);
+
+		long registeredTime = registeredTimeAtomicLong.get();
+
+		Assert.assertNotEquals(0, registeredTime);
+		Assert.assertTrue(
+			userNotificationEvent.getTimestamp() >= registeredTime);
+
+		_deletePortalInstance(
+			_toPortalInstance(
+				_companyLocalService.getCompanyByWebId(
+					randomPortalInstance.getPortalInstanceId())));
 	}
 
 	private void _testPostPortalInstanceBatchWithSeveralPortalInstances()
@@ -881,6 +988,35 @@ public class PortalInstanceResourceTest
 		}
 	}
 
+	private void _testPostPortalInstanceWithAdminWithInvalidPassword()
+		throws Exception {
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"PASSWORDS_DEFAULT_POLICY_CHECK_SYNTAX", true)) {
+
+			JSONObject adminJSONObject = _createAdminJSONObject();
+
+			_assertPostPortalInstanceProblemTitle(
+				adminJSONObject.put(
+					"password",
+					RandomTestUtil.randomString(
+						PropsValues.PASSWORDS_DEFAULT_POLICY_MIN_LENGTH - 1)),
+				"Please enter a valid password.");
+		}
+	}
+
+	private void _testPostPortalInstanceWithAdminWithInvalidScreenName()
+		throws Exception {
+
+		JSONObject adminJSONObject = _createAdminJSONObject();
+
+		_assertPostPortalInstanceProblemTitle(
+			adminJSONObject.put(
+				"screenName", RandomTestUtil.randomString() + "!"),
+			"Please enter a valid screen name.");
+	}
+
 	private void _testPostPortalInstanceWithAdminWithoutRequiredFields()
 		throws Exception {
 
@@ -905,6 +1041,47 @@ public class PortalInstanceResourceTest
 				"givenName", RandomTestUtil.randomString()
 			),
 			"Email address must not be null");
+	}
+
+	private void _testPostPortalInstanceWithExistingCompanyId()
+		throws Exception {
+
+		PortalInstance postPortalInstance =
+			testPostPortalInstance_addPortalInstance(randomPortalInstance());
+
+		try {
+			PortalInstance randomPortalInstance = randomPortalInstance();
+
+			randomPortalInstance.setCompanyId(
+				postPortalInstance.getCompanyId());
+
+			try {
+				portalInstanceResource.postPortalInstance(randomPortalInstance);
+
+				Assert.fail();
+			}
+			catch (Problem.ProblemException problemException) {
+				Problem problem = problemException.getProblem();
+
+				Assert.assertEquals("BAD_REQUEST", problem.getStatus());
+				Assert.assertEquals(
+					"Company ID " + postPortalInstance.getCompanyId() +
+						" already exists",
+					problem.getTitle());
+			}
+		}
+		finally {
+			_deletePortalInstance(postPortalInstance);
+		}
+	}
+
+	private void _testPostPortalInstanceWithInvalidMaxUsers() throws Exception {
+		PortalInstance randomPortalInstance = randomPortalInstance();
+
+		randomPortalInstance.setMaxUsers(-1);
+
+		_assertPostPortalInstanceProblemTitle(
+			randomPortalInstance, "Max users must be greater or equal to 0.");
 	}
 
 	private void _testPostPortalInstanceWithSiteInitializerKeyNonexistent()
@@ -933,6 +1110,22 @@ public class PortalInstanceResourceTest
 		Assert.assertNull(
 			_virtualHostLocalService.fetchVirtualHost(
 				randomPortalInstance.getVirtualHost()));
+	}
+
+	private void _testPostPortalInstanceWithVirtualHostTooLong()
+		throws Exception {
+
+		PortalInstance randomPortalInstance = randomPortalInstance();
+
+		int maxLength = ModelHintsUtil.getMaxLength(
+			VirtualHost.class.getName(), "hostname");
+
+		randomPortalInstance.setVirtualHost(
+			StringUtil.toLowerCase(RandomTestUtil.randomString(maxLength + 1)));
+
+		_assertPostPortalInstanceProblemTitle(
+			randomPortalInstance,
+			"Virtual hostname must not exceed " + maxLength + " characters");
 	}
 
 	private void _testPostPortalInstanceWithoutAdmin() throws Exception {

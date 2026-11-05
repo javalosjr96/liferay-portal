@@ -8,12 +8,14 @@ package com.liferay.layout.internal.servlet;
 import com.liferay.portal.kernel.servlet.PersistentHttpServletRequestWrapper;
 import com.liferay.portal.kernel.servlet.RequestDispatcherAttributeNames;
 
+import jakarta.servlet.ServletRequest;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Set;
 
@@ -31,7 +33,14 @@ public class IsolatedAttributesHttpServletRequest
 
 	@Override
 	public Object getAttribute(String name) {
-		Object value = _attributes.get(name);
+		Map<String, Object> attributes = _attributes;
+
+		if (RequestDispatcherAttributeNames.contains(name)) {
+			attributes = _requestDispatcherAttributes.getOrDefault(
+				getRequest(), Collections.emptyMap());
+		}
+
+		Object value = attributes.get(name);
 
 		if (value == _nullValue) {
 			return null;
@@ -47,8 +56,11 @@ public class IsolatedAttributesHttpServletRequest
 	@Override
 	public Enumeration<String> getAttributeNames() {
 		Enumeration<String> enumeration = super.getAttributeNames();
+		Map<String, Object> requestDispatcherAttributes =
+			_requestDispatcherAttributes.getOrDefault(
+				getRequest(), Collections.emptyMap());
 
-		if (_attributes.isEmpty()) {
+		if (_attributes.isEmpty() && requestDispatcherAttributes.isEmpty()) {
 			return enumeration;
 		}
 
@@ -58,17 +70,8 @@ public class IsolatedAttributesHttpServletRequest
 			names.add(enumeration.nextElement());
 		}
 
-		for (Map.Entry<String, Object> entry : _attributes.entrySet()) {
-			String key = entry.getKey();
-			Object value = entry.getValue();
-
-			if (value == _nullValue) {
-				names.remove(key);
-			}
-			else {
-				names.add(key);
-			}
-		}
+		_updateAttributeNames(_attributes, names);
+		_updateAttributeNames(requestDispatcherAttributes, names);
 
 		return Collections.enumeration(names);
 	}
@@ -79,7 +82,9 @@ public class IsolatedAttributesHttpServletRequest
 			super.removeAttribute(name);
 		}
 
-		_attributes.put(name, _nullValue);
+		Map<String, Object> attributes = _getAttributes(name);
+
+		attributes.put(name, _nullValue);
 	}
 
 	@Override
@@ -92,11 +97,40 @@ public class IsolatedAttributesHttpServletRequest
 			value = _nullValue;
 		}
 
-		_attributes.put(name, value);
+		Map<String, Object> attributes = _getAttributes(name);
+
+		attributes.put(name, value);
+	}
+
+	private Map<String, Object> _getAttributes(String name) {
+		if (!RequestDispatcherAttributeNames.contains(name)) {
+			return _attributes;
+		}
+
+		return _requestDispatcherAttributes.computeIfAbsent(
+			getRequest(), servletRequest -> new HashMap<>());
+	}
+
+	private void _updateAttributeNames(
+		Map<String, Object> attributes, Set<String> names) {
+
+		for (Map.Entry<String, Object> entry : attributes.entrySet()) {
+			String key = entry.getKey();
+			Object value = entry.getValue();
+
+			if (value == _nullValue) {
+				names.remove(key);
+			}
+			else {
+				names.add(key);
+			}
+		}
 	}
 
 	private static final Object _nullValue = new Object();
 
 	private final Map<String, Object> _attributes = new HashMap<>();
+	private final Map<ServletRequest, Map<String, Object>>
+		_requestDispatcherAttributes = new IdentityHashMap<>();
 
 }

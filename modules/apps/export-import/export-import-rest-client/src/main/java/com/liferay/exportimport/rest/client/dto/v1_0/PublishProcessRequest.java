@@ -12,7 +12,6 @@ import jakarta.annotation.Generated;
 
 import java.io.Serializable;
 
-import java.util.Date;
 import java.util.Objects;
 
 /**
@@ -47,55 +46,26 @@ public class PublishProcessRequest implements Cloneable, Serializable {
 
 	protected Boolean comments;
 
-	public String getCronExpression() {
-		return cronExpression;
+	public DateFilter getDateFilter() {
+		return dateFilter;
 	}
 
-	public void setCronExpression(String cronExpression) {
-		this.cronExpression = cronExpression;
+	public void setDateFilter(DateFilter dateFilter) {
+		this.dateFilter = dateFilter;
 	}
 
-	public void setCronExpression(
-		UnsafeSupplier<String, Exception> cronExpressionUnsafeSupplier) {
+	public void setDateFilter(
+		UnsafeSupplier<DateFilter, Exception> dateFilterUnsafeSupplier) {
 
 		try {
-			cronExpression = cronExpressionUnsafeSupplier.get();
+			dateFilter = dateFilterUnsafeSupplier.get();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected String cronExpression;
-
-	public DateRangeType getDateRangeType() {
-		return dateRangeType;
-	}
-
-	public String getDateRangeTypeAsString() {
-		if (dateRangeType == null) {
-			return null;
-		}
-
-		return dateRangeType.toString();
-	}
-
-	public void setDateRangeType(DateRangeType dateRangeType) {
-		this.dateRangeType = dateRangeType;
-	}
-
-	public void setDateRangeType(
-		UnsafeSupplier<DateRangeType, Exception> dateRangeTypeUnsafeSupplier) {
-
-		try {
-			dateRangeType = dateRangeTypeUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected DateRangeType dateRangeType;
+	protected DateFilter dateFilter;
 
 	public Boolean getDeletions() {
 		return deletions;
@@ -117,46 +87,6 @@ public class PublishProcessRequest implements Cloneable, Serializable {
 	}
 
 	protected Boolean deletions;
-
-	public Date getEndDate() {
-		return endDate;
-	}
-
-	public void setEndDate(Date endDate) {
-		this.endDate = endDate;
-	}
-
-	public void setEndDate(
-		UnsafeSupplier<Date, Exception> endDateUnsafeSupplier) {
-
-		try {
-			endDate = endDateUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Date endDate;
-
-	public Boolean getLogo() {
-		return logo;
-	}
-
-	public void setLogo(Boolean logo) {
-		this.logo = logo;
-	}
-
-	public void setLogo(UnsafeSupplier<Boolean, Exception> logoUnsafeSupplier) {
-		try {
-			logo = logoUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Boolean logo;
 
 	public String getName() {
 		return name;
@@ -198,6 +128,30 @@ public class PublishProcessRequest implements Cloneable, Serializable {
 
 	protected Boolean permissions;
 
+	public PortletDataHandler[] getPortletDataHandlers() {
+		return portletDataHandlers;
+	}
+
+	public void setPortletDataHandlers(
+		PortletDataHandler[] portletDataHandlers) {
+
+		this.portletDataHandlers = portletDataHandlers;
+	}
+
+	public void setPortletDataHandlers(
+		UnsafeSupplier<PortletDataHandler[], Exception>
+			portletDataHandlersUnsafeSupplier) {
+
+		try {
+			portletDataHandlers = portletDataHandlersUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected PortletDataHandler[] portletDataHandlers;
+
 	public Boolean getRatings() {
 		return ratings;
 	}
@@ -218,178 +172,6 @@ public class PublishProcessRequest implements Cloneable, Serializable {
 	}
 
 	protected Boolean ratings;
-
-	public RequestPortletDataHandler[] getRequestPortletDataHandlers() {
-		return requestPortletDataHandlers;
-	}
-
-	public void setRequestPortletDataHandlers(
-		RequestPortletDataHandler[] requestPortletDataHandlers) {
-
-		this.requestPortletDataHandlers = requestPortletDataHandlers;
-	}
-
-	public void setRequestPortletDataHandlers(
-		UnsafeSupplier<RequestPortletDataHandler[], Exception>
-			requestPortletDataHandlersUnsafeSupplier) {
-
-		try {
-			requestPortletDataHandlers =
-				requestPortletDataHandlersUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected RequestPortletDataHandler[] requestPortletDataHandlers;
-
-	public Date getScheduleEndDate() {
-		return scheduleEndDate;
-	}
-
-	public void setScheduleEndDate(Date scheduleEndDate) {
-		this.scheduleEndDate = scheduleEndDate;
-	}
-
-	public void setScheduleEndDate(
-		UnsafeSupplier<Date, Exception> scheduleEndDateUnsafeSupplier) {
-
-		try {
-			scheduleEndDate = scheduleEndDateUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Date scheduleEndDate;
-
-	public Date getScheduleStartDate() {
-		return scheduleStartDate;
-	}
-
-	public void setScheduleStartDate(Date scheduleStartDate) {
-		this.scheduleStartDate = scheduleStartDate;
-	}
-
-	public void setScheduleStartDate(
-		UnsafeSupplier<Date, Exception> scheduleStartDateUnsafeSupplier) {
-
-		try {
-			scheduleStartDate = scheduleStartDateUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Date scheduleStartDate;
-
-	public Boolean getSitePagesSettings() {
-		return sitePagesSettings;
-	}
-
-	public void setSitePagesSettings(Boolean sitePagesSettings) {
-		this.sitePagesSettings = sitePagesSettings;
-	}
-
-	public void setSitePagesSettings(
-		UnsafeSupplier<Boolean, Exception> sitePagesSettingsUnsafeSupplier) {
-
-		try {
-			sitePagesSettings = sitePagesSettingsUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Boolean sitePagesSettings;
-
-	public Boolean getSiteTemplateSettings() {
-		return siteTemplateSettings;
-	}
-
-	public void setSiteTemplateSettings(Boolean siteTemplateSettings) {
-		this.siteTemplateSettings = siteTemplateSettings;
-	}
-
-	public void setSiteTemplateSettings(
-		UnsafeSupplier<Boolean, Exception> siteTemplateSettingsUnsafeSupplier) {
-
-		try {
-			siteTemplateSettings = siteTemplateSettingsUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Boolean siteTemplateSettings;
-
-	public Date getStartDate() {
-		return startDate;
-	}
-
-	public void setStartDate(Date startDate) {
-		this.startDate = startDate;
-	}
-
-	public void setStartDate(
-		UnsafeSupplier<Date, Exception> startDateUnsafeSupplier) {
-
-		try {
-			startDate = startDateUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Date startDate;
-
-	public Boolean getThemeSettings() {
-		return themeSettings;
-	}
-
-	public void setThemeSettings(Boolean themeSettings) {
-		this.themeSettings = themeSettings;
-	}
-
-	public void setThemeSettings(
-		UnsafeSupplier<Boolean, Exception> themeSettingsUnsafeSupplier) {
-
-		try {
-			themeSettings = themeSettingsUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Boolean themeSettings;
-
-	public String getTimeZoneId() {
-		return timeZoneId;
-	}
-
-	public void setTimeZoneId(String timeZoneId) {
-		this.timeZoneId = timeZoneId;
-	}
-
-	public void setTimeZoneId(
-		UnsafeSupplier<String, Exception> timeZoneIdUnsafeSupplier) {
-
-		try {
-			timeZoneId = timeZoneIdUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected String timeZoneId;
 
 	@Override
 	public PublishProcessRequest clone() throws CloneNotSupportedException {
@@ -423,39 +205,5 @@ public class PublishProcessRequest implements Cloneable, Serializable {
 		return PublishProcessRequestSerDes.toJSON(this);
 	}
 
-	public static enum DateRangeType {
-
-		ALL("ALL"), DATE_RANGE("DATE_RANGE"),
-		FROM_LAST_PUBLISH_DATE("FROM_LAST_PUBLISH_DATE"), LAST("LAST");
-
-		public static DateRangeType create(String value) {
-			for (DateRangeType dateRangeType : values()) {
-				if (Objects.equals(dateRangeType.getValue(), value) ||
-					Objects.equals(dateRangeType.name(), value)) {
-
-					return dateRangeType;
-				}
-			}
-
-			return null;
-		}
-
-		public String getValue() {
-			return _value;
-		}
-
-		@Override
-		public String toString() {
-			return _value;
-		}
-
-		private DateRangeType(String value) {
-			_value = value;
-		}
-
-		private final String _value;
-
-	}
-
 }
-// LIFERAY-REST-BUILDER-HASH:814828940
+// LIFERAY-REST-BUILDER-HASH:-1764469181

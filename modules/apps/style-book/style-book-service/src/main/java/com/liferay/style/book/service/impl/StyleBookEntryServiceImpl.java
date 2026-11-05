@@ -109,11 +109,12 @@ public class StyleBookEntryServiceImpl extends StyleBookEntryServiceBaseImpl {
 			String externalReferenceCode, long groupId)
 		throws PortalException {
 
-		StyleBookEntry styleBookEntry =
-			styleBookEntryPersistence.fetchByERC_G_Head(
-				externalReferenceCode, groupId, true);
+		_portletResourcePermission.check(
+			getPermissionChecker(), groupId,
+			StyleBookActionKeys.MANAGE_STYLE_BOOK_ENTRIES);
 
-		return deleteStyleBookEntry(styleBookEntry);
+		return styleBookEntryLocalService.deleteStyleBookEntry(
+			externalReferenceCode, groupId);
 	}
 
 	@Override
@@ -150,22 +151,8 @@ public class StyleBookEntryServiceImpl extends StyleBookEntryServiceBaseImpl {
 			getPermissionChecker(), groupId,
 			StyleBookActionKeys.MANAGE_STYLE_BOOK_ENTRIES);
 
-		return styleBookEntryLocalService.
-			fetchStyleBookEntryByExternalReferenceCode(
-				externalReferenceCode, groupId);
-	}
-
-	@Override
-	public StyleBookEntry getOrAddEmptyStyleBookEntry(
-			String externalReferenceCode, long groupId, String themeId)
-		throws Exception {
-
-		_portletResourcePermission.check(
-			getPermissionChecker(), groupId,
-			StyleBookActionKeys.MANAGE_STYLE_BOOK_ENTRIES);
-
-		return styleBookEntryLocalService.getOrAddEmptyStyleBookEntry(
-			externalReferenceCode, getUserId(), groupId, themeId);
+		return styleBookEntryPersistence.fetchByERC_G_Head(
+			externalReferenceCode, groupId, true);
 	}
 
 	@Override
@@ -242,9 +229,8 @@ public class StyleBookEntryServiceImpl extends StyleBookEntryServiceBaseImpl {
 			getPermissionChecker(), groupId,
 			StyleBookActionKeys.MANAGE_STYLE_BOOK_ENTRIES);
 
-		return styleBookEntryLocalService.
-			getStyleBookEntryByExternalReferenceCode(
-				externalReferenceCode, groupId);
+		return styleBookEntryPersistence.findByERC_G_Head(
+			externalReferenceCode, groupId, true);
 	}
 
 	@Override
@@ -386,25 +372,6 @@ public class StyleBookEntryServiceImpl extends StyleBookEntryServiceBaseImpl {
 			getUserId(), styleBookEntryId, defaultStyleBookEntry,
 			frontendTokenDefinition, frontendTokensValues, name,
 			styleBookEntryKey, previewFileEntryId, themeId, serviceContext);
-	}
-
-	@Override
-	public StyleBookEntry updateStyleBookEntry(
-			long styleBookEntryId, String frontendTokenDefinition,
-			String frontendTokensValues, String name,
-			ServiceContext serviceContext)
-		throws PortalException {
-
-		StyleBookEntry styleBookEntry =
-			styleBookEntryPersistence.findByPrimaryKey(styleBookEntryId);
-
-		_portletResourcePermission.check(
-			getPermissionChecker(), styleBookEntry.getGroupId(),
-			StyleBookActionKeys.MANAGE_STYLE_BOOK_ENTRIES);
-
-		return styleBookEntryLocalService.updateStyleBookEntry(
-			styleBookEntryId, frontendTokenDefinition, frontendTokensValues,
-			name, serviceContext);
 	}
 
 	@Reference(

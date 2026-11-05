@@ -586,6 +586,7 @@
 		<column name="faviconFileEntryERC" type="String" />
 		<column name="faviconFileEntryScopeERC" type="String" />
 		<column db-name="masterLPTEERC" name="masterLayoutPageTemplateEntryERC" type="String" />
+		<column db-name="masterLPTESERC" name="masterLayoutPageTemplateEntryScopeERC" type="String" />
 		<column db-name="portletLPTEERC" name="portletLayoutPageTemplateEntryERC" type="String" />
 		<column db-name="portletLPTESERC" name="portletLayoutPageTemplateEntryScopeERC" type="String" />
 		<column db-name="portletLPTELE" name="portletLayoutPageTemplateEntryLinkEnabled" type="boolean" />
@@ -960,9 +961,6 @@
 
 		<!-- Finder methods -->
 
-		<finder name="GroupId" return-type="Collection">
-			<finder-column name="groupId" />
-		</finder>
 		<finder name="LayoutSetPrototypeUuid" return-type="Collection">
 			<finder-column name="layoutSetPrototypeUuid" />
 		</finder>

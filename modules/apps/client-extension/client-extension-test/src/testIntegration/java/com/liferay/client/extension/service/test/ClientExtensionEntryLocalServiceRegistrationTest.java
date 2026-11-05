@@ -8,15 +8,13 @@ package com.liferay.client.extension.service.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.client.extension.model.ClientExtensionEntry;
 import com.liferay.client.extension.service.ClientExtensionEntryLocalService;
-import com.liferay.client.extension.service.persistence.ClientExtensionEntryPersistence;
 import com.liferay.counter.kernel.service.CounterLocalService;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.User;
+import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
-import com.liferay.portal.kernel.transaction.TransactionConfig;
-import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.log.LogCapture;
@@ -26,18 +24,14 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 
 import java.util.Collections;
 import java.util.Date;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
 import org.osgi.framework.FrameworkUtil;
 
 /**
@@ -51,43 +45,18 @@ public class ClientExtensionEntryLocalServiceRegistrationTest {
 	public static final AggregateTestRule aggregateTestRule =
 		new LiferayIntegrationTestRule();
 
-	@Before
-	public void setUp() {
-		Bundle bundle = FrameworkUtil.getBundle(
-			ClientExtensionEntryLocalServiceRegistrationTest.class);
-
-		_bundleContext = bundle.getBundleContext();
-
-		for (Bundle curBundle : _bundleContext.getBundles()) {
-			if (Objects.equals(
-					curBundle.getSymbolicName(),
-					"com.liferay.client.extension.service")) {
-
-				_bundle = curBundle;
-
-				break;
-			}
-		}
-
-		Assert.assertNotNull(_bundle);
-	}
-
 	@Test
-	public void testSetAopProxyNotInterrupted() throws Throwable {
-		TransactionConfig.Builder builder = new TransactionConfig.Builder();
+	public void testSetAopProxyNotInterrupted() throws Exception {
 		ClientExtensionEntry clientExtensionEntry = null;
-
-		TransactionConfig transactionConfig = builder.build();
 
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				"com.liferay.client.extension.service.impl." +
 					"ClientExtensionEntryLocalServiceImpl",
 				LoggerTestUtil.ERROR)) {
 
-			_assertLocalServiceRegistered();
-
-			clientExtensionEntry = _clientExtensionEntryPersistence.create(
-				_counterLocalService.increment());
+			clientExtensionEntry =
+				_clientExtensionEntryLocalService.createClientExtensionEntry(
+					_counterLocalService.increment());
 
 			User user = TestPropsValues.getUser();
 
@@ -107,16 +76,10 @@ public class ClientExtensionEntryLocalServiceRegistrationTest {
 			clientExtensionEntry.setStatus(WorkflowConstants.STATUS_APPROVED);
 			clientExtensionEntry.setStatusByUserId(user.getUserId());
 			clientExtensionEntry.setStatusDate(new Date());
-			clientExtensionEntry.setNew(true);
 
-			AtomicReference<ClientExtensionEntry>
-				clientExtensionEntryAtomicReference = new AtomicReference<>(
+			clientExtensionEntry =
+				_clientExtensionEntryLocalService.addClientExtensionEntry(
 					clientExtensionEntry);
-
-			clientExtensionEntry = TransactionInvokerUtil.invoke(
-				transactionConfig,
-				() -> _clientExtensionEntryPersistence.update(
-					clientExtensionEntryAtomicReference.get()));
 
 			_restartBundle();
 
@@ -124,13 +87,8 @@ public class ClientExtensionEntryLocalServiceRegistrationTest {
 		}
 		finally {
 			if (clientExtensionEntry != null) {
-				long clientExtensionEntryId =
-					clientExtensionEntry.getClientExtensionEntryId();
-
-				TransactionInvokerUtil.invoke(
-					transactionConfig,
-					() -> _clientExtensionEntryPersistence.remove(
-						clientExtensionEntryId));
+				_clientExtensionEntryLocalService.deleteClientExtensionEntry(
+					clientExtensionEntry.getClientExtensionEntryId());
 			}
 
 			_restartBundle();
@@ -140,22 +98,29 @@ public class ClientExtensionEntryLocalServiceRegistrationTest {
 	}
 
 	private void _assertLocalServiceRegistered() {
-		Assert.assertNotNull(
-			_bundleContext.getServiceReference(
-				ClientExtensionEntryLocalService.class));
+		SystemBundleUtil.callService(
+			ClientExtensionEntryLocalService.class,
+			clientExtensionEntryLocalService -> {
+				Assert.assertNotNull(clientExtensionEntryLocalService);
+				Assert.assertNotSame(
+					_clientExtensionEntryLocalService,
+					clientExtensionEntryLocalService);
+
+				return null;
+			});
 	}
 
 	private void _restartBundle() throws Exception {
-		_bundle.stop();
+		Bundle bundle = FrameworkUtil.getBundle(
+			_clientExtensionEntryLocalService.getClass());
 
-		_bundle.start();
+		bundle.stop();
+
+		bundle.start();
 	}
 
-	private Bundle _bundle;
-	private BundleContext _bundleContext;
-
 	@Inject
-	private ClientExtensionEntryPersistence _clientExtensionEntryPersistence;
+	private ClientExtensionEntryLocalService _clientExtensionEntryLocalService;
 
 	@Inject
 	private CounterLocalService _counterLocalService;

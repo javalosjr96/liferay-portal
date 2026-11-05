@@ -5,7 +5,6 @@ import ClayLink from '@clayui/link';
 import React, {useEffect, useState} from 'react';
 import URLConstants from 'shared/util/url-constants';
 import {addAlert} from 'shared/actions/alerts';
-import {close, open} from 'shared/actions/modals';
 import {connect, ConnectedProps} from 'react-redux';
 import {Heading, Text} from '@clayui/core';
 import {Routes, toRoute} from 'shared/util/router';
@@ -61,7 +60,7 @@ interface IWizardStepsProps extends PropsFromRedux {
 	steps: Step[];
 }
 
-const WizardSteps = ({addAlert, close, open, steps}: IWizardStepsProps) => {
+const WizardSteps = ({addAlert, steps}: IWizardStepsProps) => {
 	const {groupId = ''} = useParams<{groupId: string}>();
 	const history = useHistoryAdapter();
 	const params = useQueryParams();
@@ -127,7 +126,6 @@ const WizardSteps = ({addAlert, close, open, steps}: IWizardStepsProps) => {
 				{!loadingContext && (
 					<currentStep.content
 						addAlert={addAlert}
-						close={close}
 						groupId={groupId}
 						onNext={() => {
 							if (stepIndex < steps.length - 1) {
@@ -139,7 +137,6 @@ const WizardSteps = ({addAlert, close, open, steps}: IWizardStepsProps) => {
 								handleSetStep(stepIndex - 1);
 							}
 						}}
-						open={open}
 					/>
 				)}
 			</div>
@@ -149,8 +146,6 @@ const WizardSteps = ({addAlert, close, open, steps}: IWizardStepsProps) => {
 
 const connector = connect(null, {
 	addAlert,
-	close,
-	open,
 });
 
 const WizardPage = ({children}: {children: React.ReactNode}) => {
@@ -184,12 +179,12 @@ const WizardPage = ({children}: {children: React.ReactNode}) => {
 				<ClayLayout.Container fluid>
 					<ClayLayout.Row>
 						<ClayLayout.Col md={6} sm={12}>
-							<div className="wizard-page__content-col">
+							<div className="d-flex h-100 m-auto w-100 wizard-page__content-col">
 								{children}
 							</div>
 						</ClayLayout.Col>
 						<ClayLayout.Col size={6}>
-							<div className="wizard-page__onboarding-col">
+							<div className="p-0 wizard-page__onboarding-col">
 								<div className="wizard-page__onboarding-image" />
 							</div>
 						</ClayLayout.Col>

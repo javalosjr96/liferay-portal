@@ -32,6 +32,7 @@ import getFragmentDefinition from '../../../layout-content-page-editor-web/main/
 import getPageDefinition from '../../../layout-content-page-editor-web/main/utils/getPageDefinition';
 import getWidgetDefinition from '../../../layout-content-page-editor-web/main/utils/getWidgetDefinition';
 import {
+	activateChannelPaymentMethod,
 	createAccountWithBuyerUser,
 	miniumSetUp,
 	selectCurrentAccount,
@@ -1226,19 +1227,7 @@ test(
 				commerceAdminChannelDetailsTypePage.selectSiteButton
 			).toBeVisible({visible: true});
 
-			await commerceAdminChannelDetailsTypePage.selectSiteButton.click();
-
-			await expect(
-				await commerceAdminChannelDetailsTypePage.typeTableRowAction(
-					site.name
-				)
-			).toBeVisible();
-
-			await (
-				await commerceAdminChannelDetailsTypePage.typeTableRowAction(
-					site.name
-				)
-			).click();
+			await commerceAdminChannelDetailsTypePage.selectSite(site.name);
 
 			await expect(
 				page.getByRole('cell', {exact: true, name: `${site.name}`})
@@ -1717,6 +1706,12 @@ test(
 				{
 					siteGroupId: site.id,
 				}
+			);
+
+			await activateChannelPaymentMethod(
+				apiHelpers,
+				channel.id,
+				'paypal'
 			);
 
 			const warehouse =

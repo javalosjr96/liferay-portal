@@ -265,24 +265,55 @@ public class Account {
 
 	public static class LifecycleStage {
 
+		public String getLifecycleExternalReferenceCode() {
+			return _lifecycleExternalReferenceCode;
+		}
+
+		public String getLifecycleId() {
+			return _lifecycleId;
+		}
+
 		public String getLifecycleName() {
 			return _lifecycleName;
 		}
 
-		public String getStageType() {
-			return _stageType;
+		public String getName() {
+			return _name;
+		}
+
+		public String getStageExternalReferenceCode() {
+			return _stageExternalReferenceCode;
+		}
+
+		public void setLifecycleExternalReferenceCode(
+			String lifecycleExternalReferenceCode) {
+
+			_lifecycleExternalReferenceCode = lifecycleExternalReferenceCode;
+		}
+
+		public void setLifecycleId(String lifecycleId) {
+			_lifecycleId = lifecycleId;
 		}
 
 		public void setLifecycleName(String lifecycleName) {
 			_lifecycleName = lifecycleName;
 		}
 
-		public void setStageType(String stageType) {
-			_stageType = stageType;
+		public void setName(String name) {
+			_name = name;
 		}
 
+		public void setStageExternalReferenceCode(
+			String stageExternalReferenceCode) {
+
+			_stageExternalReferenceCode = stageExternalReferenceCode;
+		}
+
+		private String _lifecycleExternalReferenceCode;
+		private String _lifecycleId;
 		private String _lifecycleName;
-		private String _stageType;
+		private String _name;
+		private String _stageExternalReferenceCode;
 
 	}
 

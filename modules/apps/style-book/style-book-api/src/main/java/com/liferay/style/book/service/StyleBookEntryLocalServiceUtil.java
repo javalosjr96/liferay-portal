@@ -365,15 +365,6 @@ public class StyleBookEntryLocalServiceUtil {
 		return getService().getIndexableActionableDynamicQuery();
 	}
 
-	public static StyleBookEntry getOrAddEmptyStyleBookEntry(
-			String externalReferenceCode, long userId, long groupId,
-			String themeId)
-		throws Exception {
-
-		return getService().getOrAddEmptyStyleBookEntry(
-			externalReferenceCode, userId, groupId, themeId);
-	}
-
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -639,17 +630,6 @@ public class StyleBookEntryLocalServiceUtil {
 			styleBookEntryKey, previewFileEntryId, themeId, serviceContext);
 	}
 
-	public static StyleBookEntry updateStyleBookEntry(
-			long styleBookEntryId, String frontendTokenDefinition,
-			String frontendTokensValues, String name,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws PortalException {
-
-		return getService().updateStyleBookEntry(
-			styleBookEntryId, frontendTokenDefinition, frontendTokensValues,
-			name, serviceContext);
-	}
-
 	/**
 	 * Updates the style book entry in the database or adds it if it does not yet exist. Also notifies the appropriate model listeners.
 	 *
@@ -677,4 +657,4 @@ public class StyleBookEntryLocalServiceUtil {
 			StyleBookEntryLocalService.class);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:432643770
+// LIFERAY-SERVICE-BUILDER-HASH:-132945505

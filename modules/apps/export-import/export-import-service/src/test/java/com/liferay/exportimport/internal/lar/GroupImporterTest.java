@@ -36,6 +36,8 @@ import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 import com.liferay.portal.xml.SAXReaderImpl;
+import com.liferay.staging.StagingGroupHelper;
+import com.liferay.staging.StagingGroupHelperUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -71,13 +73,11 @@ public class GroupImporterTest {
 
 	@Before
 	public void setUp() throws Exception {
-		_exportImportReportEntryLocalService = Mockito.mock(
-			ExportImportReportEntryLocalService.class);
-		_exportImportHelper = Mockito.mock(ExportImportHelper.class);
-		_groupLocalService = Mockito.mock(GroupLocalService.class);
-		_groupService = Mockito.mock(GroupService.class);
-		_portletDataContextFactory = Mockito.mock(
-			PortletDataContextFactory.class);
+		Mockito.when(
+			_exportImportHelper.isGroupSupported(Mockito.any())
+		).thenReturn(
+			true
+		);
 
 		_groupImporter = new GroupImporter(
 			Mockito.mock(ClassNameLocalService.class), _exportImportHelper,
@@ -90,8 +90,6 @@ public class GroupImporterTest {
 			_SOURCE_COMPANY_GROUP_ID, _SOURCE_COMPANY_ID,
 			_SOURCE_USER_PERSONAL_SITE_GROUP_ID);
 
-		_portletDataContext = Mockito.mock(PortletDataContext.class);
-
 		Mockito.when(
 			_portletDataContext.getCompanyId()
 		).thenReturn(
@@ -99,9 +97,15 @@ public class GroupImporterTest {
 		);
 
 		Mockito.when(
-			_exportImportHelper.isGroupSupported(Mockito.any())
+			_exportImportHelper.isGroupMatching(Mockito.any(), Mockito.any())
 		).thenReturn(
 			true
+		);
+
+		Mockito.when(
+			_portletDataContext.getGroupId()
+		).thenReturn(
+			_GROUP_ID
 		);
 
 		Mockito.when(
@@ -111,6 +115,12 @@ public class GroupImporterTest {
 		).thenAnswer(
 			invocation -> _mockGroupPortletDataContext(
 				invocation.getArgument(2))
+		);
+
+		Mockito.when(
+			_stagingGroupHelper.isCompanyGroup(_COMPANY_ID, _GROUP_ID)
+		).thenReturn(
+			true
 		);
 	}
 
@@ -191,7 +201,16 @@ public class GroupImporterTest {
 				featureFlagManagerUtilMockedStatic = Mockito.mockStatic(
 					FeatureFlagManagerUtil.class);
 			MockedStatic<GroupPermissionUtil> groupPermissionUtilMockedStatic =
-				Mockito.mockStatic(GroupPermissionUtil.class)) {
+				Mockito.mockStatic(GroupPermissionUtil.class);
+			MockedStatic<StagingGroupHelperUtil>
+				stagingGroupHelperUtilMockedStatic = Mockito.mockStatic(
+					StagingGroupHelperUtil.class)) {
+
+			stagingGroupHelperUtilMockedStatic.when(
+				StagingGroupHelperUtil::getStagingGroupHelper
+			).thenReturn(
+				_stagingGroupHelper
+			);
 
 			featureFlagManagerUtilMockedStatic.when(
 				() -> FeatureFlagManagerUtil.isEnabled(
@@ -239,6 +258,34 @@ public class GroupImporterTest {
 	}
 
 	@Test
+	public void testImportGroupsWhenGroupIsNotMatching() throws Exception {
+		_setUpExportImportGroups(_createExportImportGroup("group", null));
+
+		Group group = _setUpGroup("group");
+
+		Mockito.when(
+			_exportImportHelper.isGroupMatching(
+				Mockito.any(), Mockito.eq(group))
+		).thenReturn(
+			false
+		);
+
+		Mockito.when(
+			group.getExternalReferenceCode()
+		).thenReturn(
+			"group"
+		);
+
+		List<String> groupExternalReferenceCodes = _importGroups("group");
+
+		Assert.assertTrue(groupExternalReferenceCodes.isEmpty());
+
+		_verifyReportEntry(
+			"group", ExportImportReportEntryConstants.TYPE_ERROR,
+			"is of a different type");
+	}
+
+	@Test
 	public void testImportGroupsWhenGroupIsNotSelected() throws Exception {
 		_setUpExportImportGroups(
 			_createExportImportGroup("selected", null),
@@ -276,6 +323,23 @@ public class GroupImporterTest {
 		_verifyReportEntry(
 			"group", ExportImportReportEntryConstants.TYPE_ERROR,
 			"is not supported");
+	}
+
+	@Test
+	public void testImportGroupsWhenGroupIsNotTheInstanceGroup()
+		throws Exception {
+
+		_setUpExportImportGroups(_createExportImportGroup("group", null));
+
+		Mockito.when(
+			_stagingGroupHelper.isCompanyGroup(_COMPANY_ID, _GROUP_ID)
+		).thenReturn(
+			false
+		);
+
+		Assert.assertTrue(ListUtil.isEmpty(_importGroups("group")));
+
+		Mockito.verifyNoInteractions(_exportImportHelper);
 	}
 
 	@Test
@@ -578,7 +642,7 @@ public class GroupImporterTest {
 		String externalReferenceCode, String parentExternalReferenceCode) {
 
 		return new ExportImportGroup(
-			0, RandomTestUtil.randomString(), externalReferenceCode,
+			0, false, 0, RandomTestUtil.randomString(), externalReferenceCode,
 			_SOURCE_GROUP_ID, parentExternalReferenceCode,
 			RandomTestUtil.randomString());
 	}
@@ -601,13 +665,22 @@ public class GroupImporterTest {
 				featureFlagManagerUtilMockedStatic = Mockito.mockStatic(
 					FeatureFlagManagerUtil.class);
 			MockedStatic<GroupPermissionUtil> groupPermissionUtilMockedStatic =
-				Mockito.mockStatic(GroupPermissionUtil.class)) {
+				Mockito.mockStatic(GroupPermissionUtil.class);
+			MockedStatic<StagingGroupHelperUtil>
+				stagingGroupHelperUtilMockedStatic = Mockito.mockStatic(
+					StagingGroupHelperUtil.class)) {
 
 			featureFlagManagerUtilMockedStatic.when(
 				() -> FeatureFlagManagerUtil.isEnabled(
 					Mockito.anyLong(), Mockito.eq("LPD-85946"))
 			).thenReturn(
 				groupExportImportEnabled
+			);
+
+			stagingGroupHelperUtilMockedStatic.when(
+				StagingGroupHelperUtil::getStagingGroupHelper
+			).thenReturn(
+				_stagingGroupHelper
 			);
 
 			_groupImporter.importGroups(
@@ -808,16 +881,23 @@ public class GroupImporterTest {
 
 	private static final long _USER_ID = RandomTestUtil.randomLong();
 
-	private ExportImportHelper _exportImportHelper;
-	private ExportImportReportEntryLocalService
-		_exportImportReportEntryLocalService;
+	private final ExportImportHelper _exportImportHelper = Mockito.mock(
+		ExportImportHelper.class);
+	private final ExportImportReportEntryLocalService
+		_exportImportReportEntryLocalService = Mockito.mock(
+			ExportImportReportEntryLocalService.class);
 	private GroupImporter _groupImporter;
-	private GroupLocalService _groupLocalService;
+	private final GroupLocalService _groupLocalService = Mockito.mock(
+		GroupLocalService.class);
 	private final List<PortletDataContext> _groupPortletDataContexts =
 		new ArrayList<>();
-	private GroupService _groupService;
+	private final GroupService _groupService = Mockito.mock(GroupService.class);
 	private String _manifestXml;
-	private PortletDataContext _portletDataContext;
-	private PortletDataContextFactory _portletDataContextFactory;
+	private final PortletDataContext _portletDataContext = Mockito.mock(
+		PortletDataContext.class);
+	private final PortletDataContextFactory _portletDataContextFactory =
+		Mockito.mock(PortletDataContextFactory.class);
+	private final StagingGroupHelper _stagingGroupHelper = Mockito.mock(
+		StagingGroupHelper.class);
 
 }

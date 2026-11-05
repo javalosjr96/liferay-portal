@@ -182,7 +182,6 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 		ScheduledPublishProcess scheduledPublishProcess =
 			randomScheduledPublishProcess();
 
-		scheduledPublishProcess.setCronExpression(regex);
 		scheduledPublishProcess.setName(regex);
 
 		String json = ScheduledPublishProcessSerDes.toJSON(
@@ -192,7 +191,6 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 
 		scheduledPublishProcess = ScheduledPublishProcessSerDes.toDTO(json);
 
-		Assert.assertEquals(regex, scheduledPublishProcess.getCronExpression());
 		Assert.assertEquals(regex, scheduledPublishProcess.getName());
 	}
 
@@ -339,6 +337,18 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 		throws Exception {
 
 		Map<String, Map<String, String>> expectedActions = new HashMap<>();
+
+		Map createBatchAction = new HashMap<>();
+		createBatchAction.put("method", "POST");
+		createBatchAction.put(
+			"href",
+			("http://localhost:" + PortalUtil.getPortalServerPort(false) +
+				"/o/export-import/v1.0/sites/{siteExternalReferenceCode}/scheduled-publish-processes/batch").
+					replace(
+						"{siteExternalReferenceCode}",
+						String.valueOf(siteExternalReferenceCode)));
+
+		expectedActions.put("createBatch", createBatchAction);
 
 		return expectedActions;
 	}
@@ -653,6 +663,29 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 	}
 
 	@Test
+	public void testPostSiteScheduledPublishProcess() throws Exception {
+		ScheduledPublishProcess randomScheduledPublishProcess =
+			randomScheduledPublishProcess();
+
+		ScheduledPublishProcess postScheduledPublishProcess =
+			testPostSiteScheduledPublishProcess_addScheduledPublishProcess(
+				randomScheduledPublishProcess);
+
+		assertEquals(
+			randomScheduledPublishProcess, postScheduledPublishProcess);
+		assertValid(postScheduledPublishProcess);
+	}
+
+	protected ScheduledPublishProcess
+			testPostSiteScheduledPublishProcess_addScheduledPublishProcess(
+				ScheduledPublishProcess scheduledPublishProcess)
+		throws Exception {
+
+		throw new UnsupportedOperationException(
+			"This method needs to be implemented");
+	}
+
+	@Test
 	public void testBatchEngineDeleteImportTask() throws Exception {
 		Assert.assertTrue(true);
 	}
@@ -769,14 +802,6 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals("cronExpression", additionalAssertFieldName)) {
-				if (scheduledPublishProcess.getCronExpression() == null) {
-					valid = false;
-				}
-
-				continue;
-			}
-
 			if (Objects.equals("name", additionalAssertFieldName)) {
 				if (scheduledPublishProcess.getName() == null) {
 					valid = false;
@@ -787,16 +812,6 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 
 			if (Objects.equals("nextFireDate", additionalAssertFieldName)) {
 				if (scheduledPublishProcess.getNextFireDate() == null) {
-					valid = false;
-				}
-
-				continue;
-			}
-
-			if (Objects.equals(
-					"publishParameters", additionalAssertFieldName)) {
-
-				if (scheduledPublishProcess.getPublishParameters() == null) {
 					valid = false;
 				}
 
@@ -815,6 +830,19 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 					"scheduleStartDate", additionalAssertFieldName)) {
 
 				if (scheduledPublishProcess.getScheduleStartDate() == null) {
+					valid = false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"scheduledPublishProcessRequest",
+					additionalAssertFieldName)) {
+
+				if (scheduledPublishProcess.
+						getScheduledPublishProcessRequest() == null) {
+
 					valid = false;
 				}
 
@@ -955,17 +983,6 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals("cronExpression", additionalAssertFieldName)) {
-				if (!Objects.deepEquals(
-						scheduledPublishProcess1.getCronExpression(),
-						scheduledPublishProcess2.getCronExpression())) {
-
-					return false;
-				}
-
-				continue;
-			}
-
 			if (Objects.equals("dateCreated", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						scheduledPublishProcess1.getDateCreated(),
@@ -1010,19 +1027,6 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 				continue;
 			}
 
-			if (Objects.equals(
-					"publishParameters", additionalAssertFieldName)) {
-
-				if (!Objects.deepEquals(
-						scheduledPublishProcess1.getPublishParameters(),
-						scheduledPublishProcess2.getPublishParameters())) {
-
-					return false;
-				}
-
-				continue;
-			}
-
 			if (Objects.equals("scheduleEndDate", additionalAssertFieldName)) {
 				if (!Objects.deepEquals(
 						scheduledPublishProcess1.getScheduleEndDate(),
@@ -1040,6 +1044,22 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 				if (!Objects.deepEquals(
 						scheduledPublishProcess1.getScheduleStartDate(),
 						scheduledPublishProcess2.getScheduleStartDate())) {
+
+					return false;
+				}
+
+				continue;
+			}
+
+			if (Objects.equals(
+					"scheduledPublishProcessRequest",
+					additionalAssertFieldName)) {
+
+				if (!Objects.deepEquals(
+						scheduledPublishProcess1.
+							getScheduledPublishProcessRequest(),
+						scheduledPublishProcess2.
+							getScheduledPublishProcessRequest())) {
 
 					return false;
 				}
@@ -1162,52 +1182,6 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 				"Invalid entity field " + entityFieldName);
 		}
 
-		if (entityFieldName.equals("cronExpression")) {
-			Object object = scheduledPublishProcess.getCronExpression();
-
-			String value = String.valueOf(object);
-
-			if (operator.equals("contains")) {
-				sb = new StringBundler();
-
-				sb.append("contains(");
-				sb.append(entityFieldName);
-				sb.append(",'");
-
-				if ((object != null) && (value.length() > 2)) {
-					sb.append(value.substring(1, value.length() - 1));
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append("')");
-			}
-			else if (operator.equals("startswith")) {
-				sb = new StringBundler();
-
-				sb.append("startswith(");
-				sb.append(entityFieldName);
-				sb.append(",'");
-
-				if ((object != null) && (value.length() > 1)) {
-					sb.append(value.substring(0, value.length() - 1));
-				}
-				else {
-					sb.append(value);
-				}
-
-				sb.append("')");
-			}
-			else {
-				sb.append("'");
-				sb.append(value);
-				sb.append("'");
-			}
-
-			return sb.toString();
-		}
-
 		if (entityFieldName.equals("dateCreated")) {
 			if (operator.equals("between")) {
 				Date date = scheduledPublishProcess.getDateCreated();
@@ -1319,11 +1293,6 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 			return sb.toString();
 		}
 
-		if (entityFieldName.equals("publishParameters")) {
-			throw new IllegalArgumentException(
-				"Invalid entity field " + entityFieldName);
-		}
-
 		if (entityFieldName.equals("scheduleEndDate")) {
 			if (operator.equals("between")) {
 				Date date = scheduledPublishProcess.getScheduleEndDate();
@@ -1386,6 +1355,11 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 			return sb.toString();
 		}
 
+		if (entityFieldName.equals("scheduledPublishProcessRequest")) {
+			throw new IllegalArgumentException(
+				"Invalid entity field " + entityFieldName);
+		}
+
 		throw new IllegalArgumentException(
 			"Invalid entity field " + entityFieldName);
 	}
@@ -1435,8 +1409,6 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 
 		return new ScheduledPublishProcess() {
 			{
-				cronExpression = StringUtil.toLowerCase(
-					RandomTestUtil.randomString());
 				dateCreated = RandomTestUtil.nextDate();
 				id = RandomTestUtil.randomLong();
 				name = StringUtil.toLowerCase(RandomTestUtil.randomString());
@@ -1674,4 +1646,4 @@ public abstract class BaseScheduledPublishProcessResourceTestCase {
 			ScheduledPublishProcessResource _scheduledPublishProcessResource;
 
 }
-// LIFERAY-REST-BUILDER-HASH:286661717
+// LIFERAY-REST-BUILDER-HASH:-238724286

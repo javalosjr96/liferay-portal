@@ -1,7 +1,6 @@
 import LifecycleStatus from '../LifecycleStatus';
 import React from 'react';
 import {cleanup, render, screen, within} from '@testing-library/react';
-import {LifecycleStages} from 'contacts/pages/account/utils/constants';
 import {useRequest} from 'shared/hooks/useRequest';
 
 jest.unmock('react-dom');
@@ -29,37 +28,37 @@ const mockedUseRequest = useRequest as jest.Mock;
 const DEFAULT_STATUS = {
 	accountLifecycleStageStatuses: [
 		{
-			displayOrder: 0,
 			endDate: '2026-01-16T00:00:00.000Z',
 			id: 'als-aware',
-			stageType: LifecycleStages.AWARE,
+			name: 'Aware',
+			position: 0,
 			startDate: '2026-01-04T00:00:00.000Z',
 		},
 		{
-			displayOrder: 1,
 			id: 'als-engaged',
-			stageType: LifecycleStages.ENGAGED,
+			name: 'Engaged',
+			position: 1,
 			startDate: '2026-01-16T00:00:00.000Z',
 		},
 		{
-			displayOrder: 2,
 			id: 'als-pipeline',
-			stageType: LifecycleStages.PIPELINE,
+			name: 'Pipeline',
+			position: 2,
 		},
 		{
-			displayOrder: 3,
 			id: 'als-onboarding',
-			stageType: LifecycleStages.ONBOARDING,
+			name: 'Onboarding',
+			position: 3,
 		},
 		{
-			displayOrder: 4,
 			id: 'als-established',
-			stageType: LifecycleStages.ESTABLISHED,
+			name: 'Established',
+			position: 4,
 		},
 		{
-			displayOrder: 5,
 			id: 'als-at-risk',
-			stageType: LifecycleStages.AT_RISK,
+			name: 'At Risk',
+			position: 5,
 		},
 	],
 	id: 'al-1',
@@ -171,6 +170,42 @@ describe('LifecycleStatus', () => {
 			).toBeInTheDocument();
 		});
 
+		it('should render the custom stage names in their position order', () => {
+			mockedUseRequest.mockImplementation(
+				useRequestImpl({
+					lifecyclesData: [{accountId: 'acc-1', id: 'al-1'}],
+					statusData: {
+						accountLifecycleStageStatuses: [
+							{
+								id: 'als-customer',
+								name: 'Customer',
+								position: 1,
+							},
+							{
+								id: 'als-prospect',
+								name: 'Prospect',
+								position: 0,
+							},
+						],
+						id: 'al-1',
+						name: 'Default Lifecycle',
+					},
+				})
+			);
+
+			const {container} = render(<LifecycleStatus />);
+
+			const multistep = container.querySelector(
+				'.lifecycle-status-multistep'
+			) as HTMLElement;
+
+			expect(
+				within(multistep)
+					.getAllByText(/^(Customer|Prospect)$/)
+					.map((title) => title.textContent)
+			).toEqual(['Prospect', 'Customer']);
+		});
+
 		it('should render numeric indicators 1 through 5 in the multistep view', () => {
 			const {container} = render(<LifecycleStatus />);
 
@@ -270,14 +305,14 @@ describe('LifecycleStatus', () => {
 					statusData: {
 						accountLifecycleStageStatuses: [
 							{
-								displayOrder: 0,
 								id: 'als-aware',
-								stageType: LifecycleStages.AWARE,
+								name: 'Aware',
+								position: 0,
 							},
 							{
-								displayOrder: 1,
 								id: 'als-at-risk',
-								stageType: LifecycleStages.AT_RISK,
+								name: 'At Risk',
+								position: 1,
 								startDate: '2026-02-01T00:00:00.000Z',
 							},
 						],
@@ -306,9 +341,9 @@ describe('LifecycleStatus', () => {
 					statusData: {
 						accountLifecycleStageStatuses: [
 							{
-								displayOrder: 0,
 								id: 'als-aware',
-								stageType: LifecycleStages.AWARE,
+								name: 'Aware',
+								position: 0,
 							},
 						],
 						id: 'al-1',
@@ -345,37 +380,37 @@ describe('LifecycleStatus', () => {
 					statusData: {
 						accountLifecycleStageStatuses: [
 							{
-								displayOrder: 0,
 								endDate: '2026-03-01T00:00:00.000Z',
 								id: 'als-aware',
-								stageType: LifecycleStages.AWARE,
+								name: 'Aware',
+								position: 0,
 								startDate: '2026-02-01T00:00:00.000Z',
 							},
 							{
-								displayOrder: 1,
 								id: 'als-engaged',
-								stageType: LifecycleStages.ENGAGED,
+								name: 'Engaged',
+								position: 1,
 								startDate: '2026-03-01T00:00:00.000Z',
 							},
 							{
-								displayOrder: 2,
 								id: 'als-pipeline',
-								stageType: LifecycleStages.PIPELINE,
+								name: 'Pipeline',
+								position: 2,
 							},
 							{
-								displayOrder: 3,
 								id: 'als-onboarding',
-								stageType: LifecycleStages.ONBOARDING,
+								name: 'Onboarding',
+								position: 3,
 							},
 							{
-								displayOrder: 4,
 								id: 'als-established',
-								stageType: LifecycleStages.ESTABLISHED,
+								name: 'Established',
+								position: 4,
 							},
 							{
-								displayOrder: 5,
 								id: 'als-at-risk',
-								stageType: LifecycleStages.AT_RISK,
+								name: 'At Risk',
+								position: 5,
 							},
 						],
 						id: 'al-1',

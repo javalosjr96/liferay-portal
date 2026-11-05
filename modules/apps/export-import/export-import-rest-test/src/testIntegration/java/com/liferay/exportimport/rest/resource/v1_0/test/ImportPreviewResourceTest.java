@@ -6,16 +6,20 @@
 package com.liferay.exportimport.rest.resource.v1_0.test;
 
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
+import com.liferay.depot.constants.DepotConstants;
+import com.liferay.depot.model.DepotEntry;
+import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.exportimport.kernel.configuration.ExportImportConfigurationSettingsMapFactoryUtil;
 import com.liferay.exportimport.kernel.configuration.constants.ExportImportConfigurationConstants;
 import com.liferay.exportimport.kernel.lar.PortletDataHandlerKeys;
 import com.liferay.exportimport.kernel.model.ExportImportConfiguration;
 import com.liferay.exportimport.kernel.service.ExportImportConfigurationLocalServiceUtil;
 import com.liferay.exportimport.kernel.service.ExportImportLocalServiceUtil;
+import com.liferay.exportimport.rest.client.dto.v1_0.AssetLibrary;
 import com.liferay.exportimport.rest.client.dto.v1_0.ImportPreview;
-import com.liferay.exportimport.rest.client.dto.v1_0.PreviewPortletDataHandler;
-import com.liferay.exportimport.rest.client.dto.v1_0.PreviewPortletDataHandlerSection;
-import com.liferay.exportimport.rest.client.dto.v1_0.PreviewSite;
+import com.liferay.exportimport.rest.client.dto.v1_0.PortletDataHandler;
+import com.liferay.exportimport.rest.client.dto.v1_0.PortletDataHandlerControl;
+import com.liferay.exportimport.rest.client.dto.v1_0.Site;
 import com.liferay.exportimport.rest.client.http.HttpInvoker;
 import com.liferay.exportimport.rest.client.resource.v1_0.ImportPreviewResource;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
@@ -64,7 +68,6 @@ import com.liferay.staging.StagingGroupHelper;
 import java.io.File;
 import java.io.Serializable;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
@@ -128,7 +131,7 @@ public class ImportPreviewResourceTest
 		assertHttpResponseStatusCode(
 			403,
 			_importPreviewResource.postAssetLibraryImportPreviewHttpResponse(
-				externalReferenceCode, 0L, null, null,
+				externalReferenceCode, null, null,
 				HashMapBuilder.put(
 					"file",
 					_exportLayoutAsFile(testDepotEntryGroup.getGroupId())
@@ -137,7 +140,7 @@ public class ImportPreviewResourceTest
 		_testPostImportPreviewWithInvalidFile(
 			file ->
 				importPreviewResource.postAssetLibraryImportPreviewHttpResponse(
-					externalReferenceCode, 0L, null, null,
+					externalReferenceCode, null, null,
 					HashMapBuilder.put(
 						"file", file
 					).build()));
@@ -149,19 +152,21 @@ public class ImportPreviewResourceTest
 		try {
 			String portletId = objectDefinition.getPortletId();
 
-			long plid = _addLayoutWithPortlet(testDepotEntryGroup, portletId);
+			Layout layout = _addLayoutWithPortlet(
+				testDepotEntryGroup, portletId);
 
 			_testPostImportPreviewWithObjectEntries(
 				testDepotEntryGroup.getGroupId(), objectDefinition,
 				file -> importPreviewResource.postAssetLibraryImportPreview(
-					externalReferenceCode, 0L, null, null,
+					externalReferenceCode, null, null,
 					HashMapBuilder.put(
 						"file", file
 					).build()));
 			_testPostPortletImportPreviewWithObjectEntries(
-				testDepotEntryGroup.getGroupId(), objectDefinition, plid,
+				testDepotEntryGroup.getGroupId(), objectDefinition,
+				layout.getPlid(),
 				file -> importPreviewResource.postAssetLibraryImportPreview(
-					externalReferenceCode, plid, portletId, null,
+					externalReferenceCode, portletId, null,
 					HashMapBuilder.put(
 						"file", file
 					).build()));
@@ -174,7 +179,8 @@ public class ImportPreviewResourceTest
 
 	@FeatureFlags(
 		featureFlags = {
-			@FeatureFlag(value = "LPD-57655"), @FeatureFlag("LPD-85946")
+			@FeatureFlag(value = "LPD-41307"), @FeatureFlag("LPD-57655"),
+			@FeatureFlag("LPD-85946")
 		}
 	)
 	@Override
@@ -186,14 +192,14 @@ public class ImportPreviewResourceTest
 		assertHttpResponseStatusCode(
 			403,
 			_importPreviewResource.postImportPreviewHttpResponse(
-				0L, null, null,
+				null, null,
 				HashMapBuilder.put(
 					"file", _exportLayoutAsFile(group.getGroupId())
 				).build()));
 
 		_testPostImportPreviewWithInvalidFile(
 			file -> importPreviewResource.postImportPreviewHttpResponse(
-				0L, null, null,
+				null, null,
 				HashMapBuilder.put(
 					"file", file
 				).build()));
@@ -205,19 +211,19 @@ public class ImportPreviewResourceTest
 		try {
 			String portletId = objectDefinition.getPortletId();
 
-			long plid = _addLayoutWithPortlet(testGroup, portletId);
+			Layout layout = _addLayoutWithPortlet(testGroup, portletId);
 
 			_testPostImportPreviewWithObjectEntries(
 				group.getGroupId(), objectDefinition,
 				file -> importPreviewResource.postImportPreview(
-					0L, null, null,
+					null, null,
 					HashMapBuilder.put(
 						"file", file
 					).build()));
 			_testPostPortletImportPreviewWithObjectEntries(
-				group.getGroupId(), objectDefinition, plid,
+				group.getGroupId(), objectDefinition, layout.getPlid(),
 				file -> importPreviewResource.postImportPreview(
-					plid, portletId, null,
+					portletId, null,
 					HashMapBuilder.put(
 						"file", file
 					).build()));
@@ -227,6 +233,7 @@ public class ImportPreviewResourceTest
 				objectDefinition);
 		}
 
+		_testPostImportPreviewWithAssetLibraries();
 		_testPostImportPreviewWithoutSites();
 		_testPostImportPreviewWithSiteMissingFromInstance();
 		_testPostImportPreviewWithSites();
@@ -240,14 +247,14 @@ public class ImportPreviewResourceTest
 		assertHttpResponseStatusCode(
 			403,
 			_importPreviewResource.postSiteImportPreviewHttpResponse(
-				externalReferenceCode, 0L, null, null,
+				externalReferenceCode, null, null, null,
 				HashMapBuilder.put(
 					"file", _exportLayoutAsFile(testGroup.getGroupId())
 				).build()));
 
 		_testPostImportPreviewWithInvalidFile(
 			file -> importPreviewResource.postSiteImportPreviewHttpResponse(
-				externalReferenceCode, 0L, null, null,
+				externalReferenceCode, null, null, null,
 				HashMapBuilder.put(
 					"file", file
 				).build()));
@@ -258,19 +265,27 @@ public class ImportPreviewResourceTest
 		try {
 			String portletId = objectDefinition.getPortletId();
 
-			long plid = _addLayoutWithPortlet(testGroup, portletId);
+			Layout layout = _addLayoutWithPortlet(testGroup, portletId);
 
 			_testPostImportPreviewWithObjectEntries(
 				testGroup.getGroupId(), objectDefinition,
 				file -> importPreviewResource.postSiteImportPreview(
-					externalReferenceCode, 0L, null, null,
+					externalReferenceCode, null, null, null,
 					HashMapBuilder.put(
 						"file", file
 					).build()));
 			_testPostPortletImportPreviewWithObjectEntries(
-				testGroup.getGroupId(), objectDefinition, plid,
+				testGroup.getGroupId(), objectDefinition, layout.getPlid(),
 				file -> importPreviewResource.postSiteImportPreview(
-					externalReferenceCode, plid, portletId, null,
+					externalReferenceCode, portletId,
+					layout.getExternalReferenceCode(), null,
+					HashMapBuilder.put(
+						"file", file
+					).build()));
+			_testPostPortletImportPreviewWithObjectEntries(
+				testGroup.getGroupId(), objectDefinition, layout.getPlid(),
+				file -> importPreviewResource.postSiteImportPreview(
+					externalReferenceCode, portletId, null, null,
 					HashMapBuilder.put(
 						"file", file
 					).build()));
@@ -284,14 +299,14 @@ public class ImportPreviewResourceTest
 		_testPostSiteImportPreviewWithLayoutSetPrototypeGroup();
 	}
 
-	private long _addLayoutWithPortlet(Group group, String portletId)
+	private Layout _addLayoutWithPortlet(Group group, String portletId)
 		throws Exception {
 
 		Layout layout = LayoutTestUtil.addTypePortletLayout(group);
 
 		LayoutTestUtil.addPortletToLayout(layout, portletId);
 
-		return layout.getPlid();
+		return layout;
 	}
 
 	private void _addObjectEntry(
@@ -370,29 +385,34 @@ public class ImportPreviewResourceTest
 	private long _getAdditionCount(
 		ImportPreview importPreview, String portletId) {
 
-		PreviewPortletDataHandlerSection[] previewPortletDataHandlerSections =
-			importPreview.getPreviewPortletDataHandlerSections();
+		PortletDataHandler portletDataHandler = _getPortletDataHandler(
+			importPreview, portletId);
 
-		if (previewPortletDataHandlerSections == null) {
+		if (portletDataHandler == null) {
 			return 0L;
 		}
 
-		String handlerName = "PORTLET_DATA_" + portletId;
+		return portletDataHandler.getAdditionCount();
+	}
 
-		for (PreviewPortletDataHandlerSection previewPortletDataHandlerSection :
-				previewPortletDataHandlerSections) {
+	private AssetLibrary _getAssetLibrary(
+		ImportPreview importPreview, String externalReferenceCode) {
 
-			for (PreviewPortletDataHandler previewPortletDataHandler :
-					previewPortletDataHandlerSection.
-						getPreviewPortletDataHandlers()) {
+		AssetLibrary[] assetLibraries = importPreview.getAssetLibraries();
 
-				if (handlerName.equals(previewPortletDataHandler.getName())) {
-					return previewPortletDataHandler.getAdditionCount();
-				}
+		if (assetLibraries == null) {
+			return null;
+		}
+
+		for (AssetLibrary assetLibrary : assetLibraries) {
+			if (externalReferenceCode.equals(
+					assetLibrary.getExternalReferenceCode())) {
+
+				return assetLibrary;
 			}
 		}
 
-		return 0;
+		return null;
 	}
 
 	private Map<String, String[]> _getExportLayoutParameterMap(
@@ -424,20 +444,35 @@ public class ImportPreviewResourceTest
 		return parameterMap;
 	}
 
-	private PreviewSite _getPreviewSite(
+	private PortletDataHandler _getPortletDataHandler(
+		ImportPreview importPreview, String portletId) {
+
+		for (PortletDataHandler portletDataHandler :
+				importPreview.getPortletDataHandlers()) {
+
+			if (Objects.equals(
+					"PORTLET_DATA_" + portletId,
+					portletDataHandler.getName())) {
+
+				return portletDataHandler;
+			}
+		}
+
+		return null;
+	}
+
+	private Site _getSite(
 		ImportPreview importPreview, String externalReferenceCode) {
 
-		PreviewSite[] previewSites = importPreview.getPreviewSites();
+		Site[] sites = importPreview.getSites();
 
-		if (previewSites == null) {
+		if (sites == null) {
 			return null;
 		}
 
-		for (PreviewSite previewSite : previewSites) {
-			if (externalReferenceCode.equals(
-					previewSite.getExternalReferenceCode())) {
-
-				return previewSite;
+		for (Site site : sites) {
+			if (externalReferenceCode.equals(site.getExternalReferenceCode())) {
+				return site;
 			}
 		}
 
@@ -446,7 +481,7 @@ public class ImportPreviewResourceTest
 
 	private ImportPreview _postImportPreview(File file) throws Exception {
 		return importPreviewResource.postImportPreview(
-			0L, null, null,
+			null, null,
 			HashMapBuilder.put(
 				"file", file
 			).build());
@@ -477,6 +512,62 @@ public class ImportPreviewResourceTest
 		_addObjectEntry(groupId, objectDefinition);
 
 		return objectDefinition;
+	}
+
+	private void _testPostImportPreviewWithAssetLibraries() throws Exception {
+		DepotEntry depotEntry = _depotEntryLocalService.addDepotEntry(
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()
+			).build(),
+			HashMapBuilder.put(
+				LocaleUtil.getDefault(), RandomTestUtil.randomString()
+			).build(),
+			DepotConstants.TYPE_SPACE,
+			ServiceContextTestUtil.getServiceContext());
+
+		_depotGroup = depotEntry.getGroup();
+
+		Group companyGroup = _stagingGroupHelper.fetchCompanyGroup(
+			testCompany.getCompanyId());
+		Group group = GroupTestUtil.addGroup();
+
+		File file = _exportLayoutAsFile(
+			companyGroup.getGroupId(), _depotGroup, group);
+
+		ImportPreview importPreview = _postImportPreview(file);
+
+		AssetLibrary assetLibrary = _getAssetLibrary(
+			importPreview, _depotGroup.getExternalReferenceCode());
+
+		Assert.assertEquals(
+			_depotGroup.getDescriptiveName(),
+			assetLibrary.getDescriptiveName());
+		Assert.assertTrue(assetLibrary.getExistsInInstance());
+		Assert.assertEquals(AssetLibrary.Type.SPACE, assetLibrary.getType());
+
+		Assert.assertNull(
+			_getAssetLibrary(importPreview, group.getExternalReferenceCode()));
+		Assert.assertNull(
+			_getSite(importPreview, _depotGroup.getExternalReferenceCode()));
+		Assert.assertNotNull(
+			_getSite(importPreview, group.getExternalReferenceCode()));
+
+		String externalReferenceCode = _depotGroup.getExternalReferenceCode();
+
+		_depotGroup.setExternalReferenceCode(RandomTestUtil.randomString());
+
+		_depotGroup = _groupLocalService.updateGroup(_depotGroup);
+
+		group.setExternalReferenceCode(externalReferenceCode);
+
+		group = _groupLocalService.updateGroup(group);
+
+		assetLibrary = _getAssetLibrary(
+			_postImportPreview(file), externalReferenceCode);
+
+		Assert.assertFalse(assetLibrary.getExistsInInstance());
+
+		_groupLocalService.deleteGroup(group);
 	}
 
 	private void _testPostImportPreviewWithInvalidFile(
@@ -526,10 +617,10 @@ public class ImportPreviewResourceTest
 
 		_groupLocalService.deleteGroup(group);
 
-		PreviewSite previewSite = _getPreviewSite(
+		Site site = _getSite(
 			_postImportPreview(file), group.getExternalReferenceCode());
 
-		Assert.assertFalse(previewSite.getExistsInInstance());
+		Assert.assertFalse(site.getExistsInInstance());
 	}
 
 	private void _testPostImportPreviewWithSites() throws Exception {
@@ -543,21 +634,19 @@ public class ImportPreviewResourceTest
 		ImportPreview importPreview = _postImportPreview(
 			_exportLayoutAsFile(companyGroup.getGroupId(), group, childGroup));
 
-		PreviewSite previewSite = _getPreviewSite(
-			importPreview, group.getExternalReferenceCode());
+		Site site = _getSite(importPreview, group.getExternalReferenceCode());
 
+		Assert.assertEquals(Integer.valueOf(1), site.getChildSitesCount());
 		Assert.assertEquals(
-			Integer.valueOf(1), previewSite.getChildSitesCount());
-		Assert.assertEquals(
-			group.getDescriptiveName(), previewSite.getDescriptiveName());
-		Assert.assertTrue(previewSite.getExistsInInstance());
+			group.getDescriptiveName(), site.getDescriptiveName());
+		Assert.assertTrue(site.getExistsInInstance());
 
-		PreviewSite childPreviewSite = _getPreviewSite(
+		Site childSite = _getSite(
 			importPreview, childGroup.getExternalReferenceCode());
 
 		Assert.assertEquals(
-			previewSite.getPath() + " / " + childGroup.getDescriptiveName(),
-			childPreviewSite.getPath());
+			site.getPath() + " / " + childGroup.getDescriptiveName(),
+			childSite.getPath());
 	}
 
 	private void _testPostImportPreviewWithoutSites() throws Exception {
@@ -567,9 +656,8 @@ public class ImportPreviewResourceTest
 		ImportPreview importPreview = _postImportPreview(
 			_exportLayoutAsFile(companyGroup.getGroupId()));
 
-		Assert.assertTrue(
-			Arrays.toString(importPreview.getPreviewSites()),
-			ArrayUtil.isEmpty(importPreview.getPreviewSites()));
+		Assert.assertTrue(ArrayUtil.isEmpty(importPreview.getAssetLibraries()));
+		Assert.assertTrue(ArrayUtil.isEmpty(importPreview.getSites()));
 	}
 
 	private void _testPostPortletImportPreviewWithObjectEntries(
@@ -592,7 +680,7 @@ public class ImportPreviewResourceTest
 
 		ImportPreview importPreview =
 			importPreviewResource.postSiteImportPreview(
-				testGroup.getExternalReferenceCode(), 0L, null, null,
+				testGroup.getExternalReferenceCode(), null, null, null,
 				HashMapBuilder.put(
 					"file",
 					_exportLayoutAsFile(
@@ -604,6 +692,18 @@ public class ImportPreviewResourceTest
 			importPreview, LayoutAdminPortletKeys.LAYOUT_SET_LAYOUTS);
 
 		Assert.assertTrue(additionCount > 0);
+
+		PortletDataHandler portletDataHandler = _getPortletDataHandler(
+			importPreview, LayoutAdminPortletKeys.LAYOUT_SET_LAYOUTS);
+
+		PortletDataHandlerControl[] portletDataHandlerControls =
+			portletDataHandler.getPortletDataHandlerControls();
+
+		Assert.assertEquals(
+			"_layout_set_pages", portletDataHandlerControls[0].getName());
+		Assert.assertEquals(
+			PortletDataHandlerControl.Type.TREE_SELECTION,
+			portletDataHandlerControls[0].getType());
 	}
 
 	private void _testPostSiteImportPreviewWithLayoutSetPrototypeGroup()
@@ -620,13 +720,19 @@ public class ImportPreviewResourceTest
 		_testPostImportPreviewWithObjectEntries(
 			group.getGroupId(), objectDefinition,
 			file -> importPreviewResource.postSiteImportPreview(
-				group.getExternalReferenceCode(), 0L, null, null,
+				group.getExternalReferenceCode(), null, null, null,
 				HashMapBuilder.put(
 					"file", file
 				).build()));
 
 		_objectDefinitionLocalService.deleteObjectDefinition(objectDefinition);
 	}
+
+	@Inject
+	private DepotEntryLocalService _depotEntryLocalService;
+
+	@DeleteAfterTestRun
+	private Group _depotGroup;
 
 	@Inject
 	private GroupLocalService _groupLocalService;

@@ -48,9 +48,11 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.CompanyInfo;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.GroupConstants;
 import com.liferay.portal.kernel.model.LayoutSetPrototype;
+import com.liferay.portal.kernel.model.ModelHintsUtil;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.OrganizationConstants;
@@ -720,6 +722,38 @@ public class CompanyLocalServiceTest {
 	}
 
 	@Test
+	public void testAddCompanyWhenCompanyIdExists() throws Exception {
+		Assume.assumeFalse(PropsValues.DATABASE_PARTITION_ENABLED);
+
+		Company company = _addCompany();
+
+		try {
+			String webId = RandomTestUtil.randomString() + "test.com";
+
+			try {
+				_companyLocalService.addCompany(
+					company.getCompanyId(), webId, webId, "test.com", 0, true,
+					true, null, null, null, null, null, null);
+
+				Assert.fail();
+			}
+			catch (IllegalArgumentException illegalArgumentException) {
+				Assert.assertEquals(
+					"Company ID " + company.getCompanyId() + " already exists",
+					illegalArgumentException.getMessage());
+			}
+
+			Company currentCompany = _companyLocalService.fetchCompany(
+				company.getCompanyId());
+
+			Assert.assertEquals(company.getWebId(), currentCompany.getWebId());
+		}
+		finally {
+			_companyLocalService.deleteCompany(company.getCompanyId());
+		}
+	}
+
+	@Test
 	public void testDeleteCompanyDeletesGroups() throws Exception {
 		Assert.assertEquals(
 			0,
@@ -1079,14 +1113,24 @@ public class CompanyLocalServiceTest {
 		_testUpdateCompanyMx(StringPool.BLANK, false, true);
 		_testUpdateCompanyNames(false);
 		_testUpdateCompanyNames(true);
+
+		int maxLength = ModelHintsUtil.getMaxLength(
+			VirtualHost.class.getName(), "hostname");
+
 		_testUpdateCompanyVirtualHostnames(
 			new String[] {
 				"abc.com", "255.0.0.0", "0:0:0:0:0:0:0:1", "::1",
-				"0000:0000:0000:0000:0000:0000:0000:0001"
+				"0000:0000:0000:0000:0000:0000:0000:0001",
+				StringUtil.toLowerCase(RandomTestUtil.randomString(maxLength))
 			},
 			false);
 		_testUpdateCompanyVirtualHostnames(
-			new String[] {StringPool.BLANK, "localhost", ".abc"}, true);
+			new String[] {
+				StringPool.BLANK, "localhost", ".abc",
+				StringUtil.toLowerCase(
+					RandomTestUtil.randomString(maxLength + 1))
+			},
+			true);
 	}
 
 	@Test
@@ -1606,6 +1650,9 @@ public class CompanyLocalServiceTest {
 			Group group = null;
 
 			try {
+				int maxLength = ModelHintsUtil.getMaxLength(
+					CompanyInfo.class.getName(), "name");
+
 				String[] names = null;
 
 				if (expectFailure) {
@@ -1616,11 +1663,15 @@ public class CompanyLocalServiceTest {
 						GroupConstants.DEFAULT_PARENT_GROUP_ID);
 
 					names = new String[] {
-						StringPool.BLANK, group.getDescriptiveName()
+						StringPool.BLANK, group.getDescriptiveName(),
+						RandomTestUtil.randomString(maxLength + 1)
 					};
 				}
 				else {
-					names = new String[] {RandomTestUtil.randomString()};
+					names = new String[] {
+						RandomTestUtil.randomString(),
+						RandomTestUtil.randomString(maxLength)
+					};
 				}
 
 				_testUpdateCompanyNames(_company, names, expectFailure);

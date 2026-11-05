@@ -240,7 +240,7 @@ public abstract class BasePublishProcessResourceImpl
 	 * curl -X 'GET' 'http://localhost:8080/o/export-import/v1.0/sites/{siteExternalReferenceCode}/publish-processes'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Retrieves the Publish to Live process entries for the specified site."
+		description = "Retrieves the Publish to Live processes of the specified site."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -323,7 +323,7 @@ public abstract class BasePublishProcessResourceImpl
 	 * curl -X 'POST' 'http://localhost:8080/o/export-import/v1.0/publish-processes/{publishProcessId}/relaunch'  -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Relaunches the publish process with the specified ID. The process's date selection is resolved again when it runs."
+		description = "Relaunches the publish process with the specified ID."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -355,10 +355,10 @@ public abstract class BasePublishProcessResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/export-import/v1.0/sites/{siteExternalReferenceCode}/publish-processes' -d $'{"comments": ___, "cronExpression": ___, "dateRangeType": ___, "deletions": ___, "endDate": ___, "logo": ___, "name": ___, "permissions": ___, "ratings": ___, "requestPortletDataHandlers": ___, "scheduleEndDate": ___, "scheduleStartDate": ___, "sitePagesSettings": ___, "siteTemplateSettings": ___, "startDate": ___, "themeSettings": ___, "timeZoneId": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/export-import/v1.0/sites/{siteExternalReferenceCode}/publish-processes' -d $'{"comments": ___, "dateFilter": ___, "deletions": ___, "name": ___, "permissions": ___, "portletDataHandlers": ___, "ratings": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Operation(
-		description = "Starts a Publish to Live process on the specified site. The date range type and dates select the content and are resolved every time the process runs, including relaunches and scheduled occurrences. When no type is given, it is inferred from the dates - no dates cover all content, both dates cover that fixed date range, and a start date alone covers the window from the start date until each run. When a cron expression is given, the publish is scheduled to recur instead of running immediately."
+		description = "Starts a Publish to Live of the specified site."
 	)
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -392,7 +392,7 @@ public abstract class BasePublishProcessResourceImpl
 	/**
 	 * Invoke this method with the command line:
 	 *
-	 * curl -X 'POST' 'http://localhost:8080/o/export-import/v1.0/sites/{siteExternalReferenceCode}/publish-processes/batch' -d $'{"comments": ___, "cronExpression": ___, "dateRangeType": ___, "deletions": ___, "endDate": ___, "logo": ___, "name": ___, "permissions": ___, "ratings": ___, "requestPortletDataHandlers": ___, "scheduleEndDate": ___, "scheduleStartDate": ___, "sitePagesSettings": ___, "siteTemplateSettings": ___, "startDate": ___, "themeSettings": ___, "timeZoneId": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
+	 * curl -X 'POST' 'http://localhost:8080/o/export-import/v1.0/sites/{siteExternalReferenceCode}/publish-processes/batch' -d $'{"comments": ___, "dateFilter": ___, "deletions": ___, "name": ___, "permissions": ___, "portletDataHandlers": ___, "ratings": ___}' --header 'Content-Type: application/json' -u 'test@liferay.com:test'
 	 */
 	@io.swagger.v3.oas.annotations.Parameters(
 		value = {
@@ -1291,4 +1291,4 @@ public abstract class BasePublishProcessResourceImpl
 		LogFactoryUtil.getLog(BasePublishProcessResourceImpl.class);
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1243345217
+// LIFERAY-REST-BUILDER-HASH:641184730

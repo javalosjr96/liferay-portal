@@ -53,10 +53,20 @@ public class PIMConnectorTableFDSViewTest {
 	@Test
 	public void testGetFDSTableSchema() {
 		Assert.assertEquals(
-			Arrays.asList("name", "key", "dateModified", "active"),
+			Arrays.asList(
+				"name", "key", "dateModified", "active", "mappingStatus",
+				"lastExecutionStatus", "lastExecutionDate"),
 			new ArrayList<>(_fdsTableSchemaFieldsMap.keySet()));
 
 		_testGetFDSTableSchema("dateTime", "dateModified", "modified", true);
+		_testGetFDSTableSchema(
+			"dateTime", "lastExecutionDate", "last-execution-date", false);
+		_testGetFDSTableSchema(
+			"lastExecutionStatusTableCellRenderer", "lastExecutionStatus",
+			"last-execution-status", false);
+		_testGetFDSTableSchema(
+			"mappingStatusTableCellRenderer", "mappingStatus", "mapping-status",
+			false);
 		_testGetFDSTableSchema("nameTableCellRenderer", "name", "name", false);
 		_testGetFDSTableSchema(
 			"statusTableCellRenderer", "active", "status", false);

@@ -70,7 +70,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -88,7 +89,7 @@ public class InfoRequestFieldValuesProviderHelper {
 	}
 
 	public Map<String, InfoFieldValue<Object>> getInfoFieldValues(
-			HttpServletRequest httpServletRequest)
+			HttpServletRequest httpServletRequest, InfoForm infoForm)
 		throws InfoFormFileUploadException {
 
 		Map<String, InfoFieldValue<Object>> infoFieldValues = new HashMap<>();
@@ -102,10 +103,6 @@ public class InfoRequestFieldValuesProviderHelper {
 
 		String[] checkboxNames = ParamUtil.getStringValues(
 			uploadServletRequest, "checkboxNames");
-		String className = PortalUtil.getClassName(
-			ParamUtil.getLong(uploadServletRequest, "classNameId"));
-		String classTypeId = ParamUtil.getString(
-			uploadServletRequest, "classTypeId");
 		String[] deletedItemIdentifiers = ParamUtil.getStringValues(
 			uploadServletRequest, "deletedItemIdentifiers");
 		long groupId = ParamUtil.getLong(uploadServletRequest, "groupId");
@@ -121,9 +118,7 @@ public class InfoRequestFieldValuesProviderHelper {
 			LocaleUtil.toLanguageIds(availableLocales), multipartParameterMap,
 			regularParameterMap);
 
-		for (InfoField<?> infoField :
-				_getInfoFields(className, classTypeId, groupId)) {
-
+		for (InfoField<?> infoField : _getInfoFields(infoForm)) {
 			if (!infoField.isEditable() &&
 				!ArrayUtil.contains(
 					_ALLOWED_NONEDITABLE_FIELDS, infoField.getName())) {
@@ -239,6 +234,17 @@ public class InfoRequestFieldValuesProviderHelper {
 		return infoFieldValues;
 	}
 
+	public InfoForm getInfoForm(HttpServletRequest httpServletRequest) {
+		UploadServletRequest uploadServletRequest =
+			PortalUtil.getUploadServletRequest(httpServletRequest);
+
+		return _getInfoForm(
+			PortalUtil.getClassName(
+				ParamUtil.getLong(uploadServletRequest, "classNameId")),
+			ParamUtil.getString(uploadServletRequest, "classTypeId"),
+			ParamUtil.getLong(uploadServletRequest, "groupId"));
+	}
+
 	private InfoFieldValue<Object> _getInfoFieldValue(
 		boolean includeNullValues, InfoField<?> infoField, Locale locale,
 		Object value) {
@@ -261,7 +267,15 @@ public class InfoRequestFieldValuesProviderHelper {
 		return new InfoFieldValue<>(infoField, value);
 	}
 
-	private <T> List<InfoField<?>> _getInfoFields(
+	private List<InfoField<?>> _getInfoFields(InfoForm infoForm) {
+		if (infoForm == null) {
+			return new ArrayList<>();
+		}
+
+		return infoForm.getAllInfoFields();
+	}
+
+	private <T> InfoForm _getInfoForm(
 		String className, String formVariationKey, long groupId) {
 
 		InfoItemFormProvider<T> infoItemFormProvider =
@@ -269,21 +283,18 @@ public class InfoRequestFieldValuesProviderHelper {
 				InfoItemFormProvider.class, className);
 
 		if (infoItemFormProvider == null) {
-			return new ArrayList<>();
+			return null;
 		}
 
 		try {
-			InfoForm infoForm = infoItemFormProvider.getInfoForm(
-				formVariationKey, groupId);
-
-			return infoForm.getAllInfoFields();
+			return infoItemFormProvider.getInfoForm(formVariationKey, groupId);
 		}
 		catch (NoSuchFormVariationException noSuchFormVariationException) {
 			if (_log.isDebugEnabled()) {
 				_log.debug(noSuchFormVariationException);
 			}
 
-			return new ArrayList<>();
+			return null;
 		}
 	}
 
@@ -311,7 +322,7 @@ public class InfoRequestFieldValuesProviderHelper {
 	private Collection<InputName> _getInputNames(
 		InfoField<?> infoField, Map<String, List<InputName>> inputNamesMap) {
 
-		Map<String, InputName> inputNames = new HashMap<>();
+		Map<String, InputName> inputNames = new LinkedHashMap<>();
 
 		for (InputName inputName :
 				inputNamesMap.getOrDefault(
@@ -333,7 +344,7 @@ public class InfoRequestFieldValuesProviderHelper {
 
 		Map<String, List<InputName>> inputNamesMap = new HashMap<>();
 
-		Set<String> parameterNames = new HashSet<>(
+		Set<String> parameterNames = new LinkedHashSet<>(
 			multipartParameterMap.keySet());
 
 		parameterNames.addAll(regularParameterMap.keySet());
@@ -541,7 +552,7 @@ public class InfoRequestFieldValuesProviderHelper {
 
 		if (infoFieldValue == null) {
 			infoFieldValue = new InfoFieldValue<>(
-				infoField, new RelatedInfoFieldValue<>(new HashMap<>()));
+				infoField, new RelatedInfoFieldValue<>(new LinkedHashMap<>()));
 		}
 
 		RelatedInfoFieldValue relatedInfoFieldValue =

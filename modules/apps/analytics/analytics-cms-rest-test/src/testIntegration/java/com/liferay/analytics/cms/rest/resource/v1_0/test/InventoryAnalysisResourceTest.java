@@ -7,6 +7,7 @@ package com.liferay.analytics.cms.rest.resource.v1_0.test;
 
 import com.liferay.analytics.cms.rest.client.dto.v1_0.InventoryAnalysis;
 import com.liferay.analytics.cms.rest.client.dto.v1_0.InventoryAnalysisItem;
+import com.liferay.analytics.cms.rest.client.problem.Problem;
 import com.liferay.analytics.cms.rest.resource.v1_0.InventoryAnalysisResource;
 import com.liferay.analytics.cms.rest.resource.v1_0.test.util.DepotEntryTestUtil;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
@@ -76,6 +77,8 @@ public class InventoryAnalysisResourceTest
 	@Test
 	public void testGetInventoryAnalysis() throws Exception {
 		_setUpCMSContext();
+
+		_testGetInventoryAnalysisWithLongTitle();
 
 		InventoryAnalysis inventoryAnalysis =
 			inventoryAnalysisResource.getInventoryAnalysis(
@@ -147,11 +150,20 @@ public class InventoryAnalysisResourceTest
 
 		Assert.assertEquals("Category", inventoryAnalysisItem.getTitle());
 
-		_assertInventoryAnalysis(
+		try {
 			inventoryAnalysisResource.getInventoryAnalysis(
 				null, _depotEntry.getDepotEntryId(), null, null, null, -1, null,
-				null, null, null, null),
-			0, 0L, null);
+				null, null, null, null);
+
+			Assert.fail();
+		}
+		catch (Problem.ProblemException problemException) {
+			Problem problem = problemException.getProblem();
+
+			Assert.assertEquals("BAD_REQUEST", problem.getStatus());
+			Assert.assertEquals("Invalid range key: -1", problem.getTitle());
+		}
+
 		_assertInventoryAnalysis(
 			inventoryAnalysisResource.getInventoryAnalysis(
 				null, _depotEntry.getDepotEntryId(), null, null, null, 7, null,
@@ -328,6 +340,34 @@ public class InventoryAnalysisResourceTest
 
 					return inventoryAnalysis.getTotalCount();
 				}));
+	}
+
+	private void _testGetInventoryAnalysisWithLongTitle() throws Exception {
+		String label = _webContentDefinition.getLabel();
+
+		String title = RandomTestUtil.randomString(4100);
+
+		_webContentDefinition.setLabel(title, LocaleUtil.getDefault());
+
+		_webContentDefinition =
+			_objectDefinitionLocalService.updateObjectDefinition(
+				_webContentDefinition);
+
+		try {
+			_assertInventoryAnalysis(
+				inventoryAnalysisResource.getInventoryAnalysis(
+					null, _depotEntry.getDepotEntryId(), null, null, null, null,
+					null, _webContentDefinition.getObjectDefinitionId(), null,
+					null, null),
+				1, 3, title);
+		}
+		finally {
+			_webContentDefinition.setLabel(label);
+
+			_webContentDefinition =
+				_objectDefinitionLocalService.updateObjectDefinition(
+					_webContentDefinition);
+		}
 	}
 
 	@DeleteAfterTestRun

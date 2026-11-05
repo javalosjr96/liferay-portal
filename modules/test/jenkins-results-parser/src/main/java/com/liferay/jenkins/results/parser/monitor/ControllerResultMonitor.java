@@ -17,6 +17,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.http.client.utils.URIBuilder;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -123,7 +125,7 @@ public class ControllerResultMonitor extends BaseMonitor {
 					JenkinsResultsParserUtil.getNounForm(
 						buildsJSONArray.length(), "builds", "build")));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.WARN);
 		}
 
 		return _newMonitorResult(
@@ -155,7 +157,7 @@ public class ControllerResultMonitor extends BaseMonitor {
 					"Unable to determine the downstream build of job ",
 					_getRemoteBuildURL(number)));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.WARN);
 
 			return;
 		}
@@ -163,10 +165,14 @@ public class ControllerResultMonitor extends BaseMonitor {
 		JSONObject buildJSONObject = null;
 
 		try {
+			URIBuilder uriBuilder = JenkinsResultsParserUtil.newURIBuilder(
+				JenkinsResultsParserUtil.getLocalURL(buildURL + "/api/json"));
+
+			uriBuilder.addParameter("tree", "building,result,timestamp");
+
 			buildJSONObject = JenkinsResultsParserUtil.toJSONObject(
-				JenkinsResultsParserUtil.getLocalURL(
-					buildURL + "/api/json?tree=building,result,timestamp"),
-				false, _RETRIES_SIZE_MAX, null, null, _SECONDS_RETRY_PERIOD,
+				uriBuilder.toString(), false, _RETRIES_SIZE_MAX, null, null,
+				_SECONDS_RETRY_PERIOD,
 				getAttemptTimeoutMillis(_RETRIES_SIZE_MAX), null);
 		}
 		catch (Exception exception) {
@@ -179,7 +185,7 @@ public class ControllerResultMonitor extends BaseMonitor {
 					"Job ", _getRemoteBuildURL(number), " invoked ", buildURL,
 					", which could not be read"));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.CRITICAL);
 
 			return;
 		}
@@ -311,7 +317,7 @@ public class ControllerResultMonitor extends BaseMonitor {
 					"Unable to determine the last build timestamp for job ",
 					_jobName));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.WARN);
 
 			return;
 		}
@@ -327,13 +333,24 @@ public class ControllerResultMonitor extends BaseMonitor {
 		try {
 			cronSchedule = getCronSchedule(_jobName, _jenkinsMaster.getName());
 		}
+		catch (IllegalArgumentException illegalArgumentException) {
+			messages.add(
+				JenkinsResultsParserUtil.combine(
+					"Job ", _jobName, " has an invalid schedule: ",
+					JenkinsResultsParserUtil.getMessage(
+						illegalArgumentException)));
+
+			statuses.add(MonitorResult.Status.WARN);
+
+			return;
+		}
 		catch (Exception exception) {
 			messages.add(
 				JenkinsResultsParserUtil.combine(
 					"Unable to read the schedule for job ", _jobName, ": ",
 					JenkinsResultsParserUtil.getMessage(exception)));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.CRITICAL);
 
 			return;
 		}
@@ -344,7 +361,7 @@ public class ControllerResultMonitor extends BaseMonitor {
 					"Job ", _jobName, " has no schedule, so it is not ",
 					"checked for being on time"));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.WARN);
 
 			return;
 		}
@@ -361,7 +378,7 @@ public class ControllerResultMonitor extends BaseMonitor {
 					"Job ", _jobName, " has an invalid schedule: ",
 					cronSchedule.getSpec()));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.WARN);
 
 			return;
 		}
@@ -392,13 +409,19 @@ public class ControllerResultMonitor extends BaseMonitor {
 	}
 
 	private JSONArray _getBuildsJSONArray() throws IOException {
-		JSONObject jobJSONObject = JenkinsResultsParserUtil.toJSONObject(
+		URIBuilder uriBuilder = JenkinsResultsParserUtil.newURIBuilder(
+			_jobURL + "/api/json");
+
+		uriBuilder.addParameter(
+			"tree",
 			JenkinsResultsParserUtil.combine(
-				_jobURL, "/api/json?tree=",
 				"builds[description,number,result,timestamp]{0,",
-				String.valueOf(_buildsMaximum), "}"),
-			false, _RETRIES_SIZE_MAX, null, null, _SECONDS_RETRY_PERIOD,
-			getAttemptTimeoutMillis(_RETRIES_SIZE_MAX), null);
+				String.valueOf(_buildsMaximum), "}"));
+
+		JSONObject jobJSONObject = JenkinsResultsParserUtil.toJSONObject(
+			uriBuilder.toString(), false, _RETRIES_SIZE_MAX, null, null,
+			_SECONDS_RETRY_PERIOD, getAttemptTimeoutMillis(_RETRIES_SIZE_MAX),
+			null);
 
 		if (jobJSONObject == null) {
 			return null;

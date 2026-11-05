@@ -42,10 +42,6 @@ export const fetchFieldValues = jest.fn(() =>
 	])
 );
 
-export const fetchLiferaySyncCounts = jest.fn(() =>
-	Promise.resolve(data.mockLiferaySyncCounts())
-);
-
 export const fetchMappings = jest.fn(() =>
 	Promise.resolve([data.mockMapping()])
 );
@@ -71,23 +67,6 @@ export const fetchProgress = jest.fn(() =>
 	Promise.resolve(data.mockProgress())
 );
 
-export const fetchUserGroups = jest.fn(() =>
-	Promise.resolve([
-		{
-			id: 0,
-			name: 'Test User Group',
-		},
-	])
-);
-
-export const fetchUserGroupsById = jest.fn(() => Promise.resolve([]));
-
-export const fetchOrganizations = jest.fn(() =>
-	Promise.resolve([data.mockOrganization()])
-);
-
-export const fetchOrganizationsById = jest.fn(() => Promise.resolve([]));
-
 export const fetchOAuthUrl = jest.fn(() =>
 	Promise.resolve({
 		oAuthAuthorizationURL: 'https://foobar.biz',
@@ -110,12 +89,6 @@ export const updateCSV = jest.fn(() =>
 export const updateLiferay = jest.fn(() =>
 	Promise.resolve(data.mockLiferayDataSource())
 );
-
-export const fetchSites = jest.fn(() =>
-	Promise.resolve(data.mockSearch(data.mockSite))
-);
-
-export const fetchSitesById = jest.fn(() => Promise.resolve([]));
 
 export const fetchCompanies = jest.fn(() =>
 	Promise.resolve([data.mockCompany()])

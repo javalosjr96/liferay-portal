@@ -638,12 +638,21 @@ public class WorkflowTaskDisplayContext {
 		AssetEntry assetEntry = AssetEntryLocalServiceUtil.fetchEntry(
 			className, classPK);
 
-		if (assetEntry == null) {
-			assetEntry = AssetEntryLocalServiceUtil.fetchEntry(
+		if (assetEntry != null) {
+			return assetEntry;
+		}
+
+		AssetRendererFactory<?> assetRendererFactory =
+			AssetRendererFactoryRegistryUtil.getAssetRendererFactoryByClassName(
+				className);
+
+		if (assetRendererFactory != null) {
+			return assetRendererFactory.getAssetEntry(
 				className, fallbackClassPK);
 		}
 
-		return assetEntry;
+		return AssetEntryLocalServiceUtil.fetchEntry(
+			className, fallbackClassPK);
 	}
 
 	public long getWorkflowContextEntryClassPK(
@@ -744,14 +753,6 @@ public class WorkflowTaskDisplayContext {
 	public String getWorkflowTaskUnassignedUserName() {
 		return LanguageUtil.get(
 			_workflowTaskRequestHelper.getRequest(), "nobody");
-	}
-
-	public List<WorkflowTransition> getWorkflowTaskWorkflowTransitions(
-			WorkflowTask workflowTask)
-		throws PortalException {
-
-		return WorkflowTaskManagerUtil.getWorkflowTaskWorkflowTransitions(
-			workflowTask.getWorkflowTaskId());
 	}
 
 	public boolean hasAssignableUsers(WorkflowTask workflowTask)
@@ -985,7 +986,8 @@ public class WorkflowTaskDisplayContext {
 		}
 
 		for (WorkflowTransition workflowTransition :
-				getWorkflowTaskWorkflowTransitions(workflowTask)) {
+				WorkflowTaskManagerUtil.liberalGetNextWorkflowTransitions(
+					workflowTask.getWorkflowTaskId())) {
 
 			String label = workflowTransition.getLabel(getTaskContentLocale());
 

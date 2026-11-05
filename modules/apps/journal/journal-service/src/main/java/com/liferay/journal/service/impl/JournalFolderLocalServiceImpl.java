@@ -316,18 +316,6 @@ public class JournalFolderLocalServiceImpl
 	}
 
 	@Override
-	public List<JournalFolder> getCompanyFolders(
-		long companyId, int start, int end) {
-
-		return journalFolderPersistence.findByCompanyId(companyId, start, end);
-	}
-
-	@Override
-	public int getCompanyFoldersCount(long companyId) {
-		return journalFolderPersistence.countByCompanyId(companyId);
-	}
-
-	@Override
 	public List<DDMStructure> getDDMStructures(
 			long[] groupIds, long folderId, int restrictionType)
 		throws PortalException {
@@ -437,16 +425,6 @@ public class JournalFolderLocalServiceImpl
 	}
 
 	@Override
-	public List<Object> getFoldersAndArticles(
-		long groupId, long folderId, int start, int end,
-		OrderByComparator<?> orderByComparator) {
-
-		return getFoldersAndArticles(
-			groupId, folderId, WorkflowConstants.STATUS_ANY, start, end,
-			orderByComparator);
-	}
-
-	@Override
 	public int getFoldersAndArticlesCount(
 		long groupId, List<Long> folderIds, int status) {
 
@@ -471,15 +449,6 @@ public class JournalFolderLocalServiceImpl
 		articlesCount += getFoldersAndArticlesCount(groupId, folderIds, status);
 
 		return articlesCount;
-	}
-
-	@Override
-	public int getFoldersAndArticlesCount(long groupId, long folderId) {
-		QueryDefinition<?> queryDefinition = new QueryDefinition<>(
-			WorkflowConstants.STATUS_ANY);
-
-		return journalFolderFinder.countF_A_ByG_F_DDMSI(
-			groupId, folderId, 0, queryDefinition);
 	}
 
 	@Override
@@ -523,11 +492,6 @@ public class JournalFolderLocalServiceImpl
 		}
 
 		return folderId;
-	}
-
-	@Override
-	public List<JournalFolder> getNoAssetFolders() {
-		return journalFolderFinder.findF_ByNoAssets();
 	}
 
 	@Override

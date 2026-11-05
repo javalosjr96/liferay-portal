@@ -402,6 +402,21 @@ public class CommercePaymentServlet extends HttpServlet {
 						httpServletRequest, commercePaymentEntry));
 		}
 		else {
+			if (!commercePaymentIntegration.isValid(
+					httpServletRequest, commercePaymentEntry)) {
+
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Invalid request for payment entry " +
+							commercePaymentEntry.getCommercePaymentEntryId());
+				}
+
+				httpServletResponse.sendRedirect(
+					_portal.getPortalURL(httpServletRequest));
+
+				return;
+			}
+
 			boolean cancel = ParamUtil.getBoolean(httpServletRequest, "cancel");
 
 			if (cancel) {
@@ -435,12 +450,6 @@ public class CommercePaymentServlet extends HttpServlet {
 
 				_commercePaymentGateway.cancel(
 					httpServletRequest, commercePaymentEntry);
-			}
-
-			String token = ParamUtil.getString(httpServletRequest, "token");
-
-			if (!Validator.isBlank(token)) {
-				commercePaymentEntry.setTransactionCode(token);
 			}
 
 			if (commercePaymentEntry.getPaymentStatus() ==

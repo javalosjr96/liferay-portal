@@ -18,6 +18,8 @@ import com.liferay.object.exception.DuplicateObjectRelationshipExternalReference
 import com.liferay.object.exception.NoSuchObjectRelationshipException;
 import com.liferay.object.exception.ObjectDefinitionScopeException;
 import com.liferay.object.exception.ObjectEntryGroupIdException;
+import com.liferay.object.exception.ObjectFieldDBColumnNameException;
+import com.liferay.object.exception.ObjectFieldNameException;
 import com.liferay.object.exception.ObjectRelationshipDeletionTypeException;
 import com.liferay.object.exception.ObjectRelationshipEdgeException;
 import com.liferay.object.exception.ObjectRelationshipNameException;
@@ -65,6 +67,7 @@ import com.liferay.petra.sql.dsl.Column;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.petra.sql.dsl.query.DSLQuery;
+import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
@@ -1223,6 +1226,11 @@ public class ObjectRelationshipLocalServiceImpl
 				ObjectRelationshipUtil.getObjectRelationshipFieldName(
 					objectDefinition1, name);
 		}
+		else {
+			_validateObjectFieldDBColumnName(dbColumnName);
+			_validateObjectFieldName(
+				objectDefinition1, objectDefinition2, dbColumnName, name);
+		}
 
 		_validateRelationshipName(dbColumnName, name);
 
@@ -1270,15 +1278,6 @@ public class ObjectRelationshipLocalServiceImpl
 			DynamicObjectDefinitionTableUtil.getAlterTableAddColumnSQL(
 				dbTableName, objectField.getBusinessType(),
 				objectField.getDBColumnName(), "Long"));
-
-		if (!objectDefinition2.isUnmodifiableSystemObject()) {
-			runSQL(
-				DynamicObjectDefinitionTableUtil.
-					getInsertMissingExtensionTableRowsSQL(
-						dbTableName,
-						objectDefinition2.getPKObjectFieldDBColumnName(),
-						objectDefinition2.getDBTableName()));
-		}
 
 		_objectEntryPersistence.clearCache();
 
@@ -2118,6 +2117,51 @@ public class ObjectRelationshipLocalServiceImpl
 		else {
 			_objectEntryPersistence.findByPrimaryKey(primaryKey);
 		}
+	}
+
+	private void _validateObjectFieldDBColumnName(
+			String objectFieldDBColumnName)
+		throws PortalException {
+
+		for (char c : objectFieldDBColumnName.toCharArray()) {
+			if (!Validator.isChar(c) && !Validator.isDigit(c) &&
+				(c != CharPool.UNDERLINE)) {
+
+				throw new ObjectFieldDBColumnNameException(
+					"DB column name must only contain letters, digits, and " +
+						"underscores");
+			}
+		}
+	}
+
+	private void _validateObjectFieldName(
+			ObjectDefinition objectDefinition1,
+			ObjectDefinition objectDefinition2, String objectFieldName,
+			String objectRelationshipName)
+		throws PortalException {
+
+		if (objectFieldName.equals(objectRelationshipName)) {
+			throw new ObjectFieldNameException.
+				MustNotBeEqualToObjectRelationshipName(
+					objectDefinition1.getShortName());
+		}
+
+		ObjectRelationship objectRelationship =
+			objectRelationshipLocalService.
+				fetchObjectRelationshipByObjectDefinitionId(
+					objectDefinition2.getObjectDefinitionId(), objectFieldName);
+
+		if (objectRelationship == null) {
+			return;
+		}
+
+		ObjectDefinition objectDefinition3 =
+			_objectDefinitionPersistence.findByPrimaryKey(
+				objectRelationship.getObjectDefinitionId1());
+
+		throw new ObjectFieldNameException.
+			MustNotBeEqualToObjectRelationshipName(
+				objectDefinition3.getShortName());
 	}
 
 	private void _validateParameterObjectFieldId(

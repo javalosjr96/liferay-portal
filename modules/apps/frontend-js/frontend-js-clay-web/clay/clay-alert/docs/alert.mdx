@@ -9,6 +9,8 @@ packageTypes:
         'clay-alert/src/Alert.tsx',
         'clay-alert/src/Footer.tsx',
         'clay-alert/src/ToastContainer.tsx',
+        'clay-alert/src/Toaster.tsx',
+        'clay-alert/src/createToastStore.ts',
         'clay-alert/src/usePrefersPersistentAlerts.ts',
     ]
 ---
@@ -204,6 +206,8 @@ export default function App() {
 
 You can use alerts with a `ToastContainer` to render the alerts in a container with `position: fixed`.
 
+When many toasts are open, they stack. See [Stacking](#stacking).
+
 ```jsx preview
 import {Provider, Button} from '@clayui/core';
 import Alert from '@clayui/alert';
@@ -249,11 +253,13 @@ export default function App() {
 }
 ```
 
-### Disable Auto Close
+### Auto Close
 
-When a `Provider` sets `persistentAlerts`, it overrides `autoClose` (`true` or a duration in ms) and alerts stay until they are dismissed. Use it to give users who need more time to read a way to keep alerts open, which helps meet WCAG 2.2.1 (Timing Adjustable). An alert shows a close button only when it has `onClose` and does not set `hideCloseIcon`. If an alert has no close button, such as one with `hideCloseIcon` or one without `onClose`, give users another way to dismiss it when `persistentAlerts` is on.
+Set `autoClose` to make an alert call `onClose` on its own. Pass `true` to close it after 10 seconds, or a number to set the duration in milliseconds.
 
-Alerts also stay open while `document.body` has the `c-prefers-persistent-alerts` class, even when a `Provider` sets `persistentAlerts={false}`. The class can be added or removed at any time, so a page can opt in without wiring a `Provider`.
+The countdown waits while the pointer is over the alert or focus is inside it, so users have time to read the alert and use its controls, such as the close button or an action link. Once both the pointer and focus have left, the countdown continues with the remaining time. Moving focus between controls inside the alert, or switching to another window, keeps it waiting.
+
+Alerts stay until they are dismissed when a `Provider` sets `persistentAlerts` or `document.body` has the `c-prefers-persistent-alerts` class. Either one overrides `autoClose`. The class applies even when a `Provider` sets `persistentAlerts={false}`, and it can be added or removed at any time, so a page can opt in without wiring a `Provider`. Use them to give users who need more time to read a way to keep alerts open, which helps meet WCAG 2.2.1 (Timing Adjustable). If an alert has no close button (it has no `onClose`, or it sets `hideCloseIcon`), give users another way to dismiss it while alerts stay open.
 
 ```jsx
 <Provider persistentAlerts spritemap="/public/icons.svg">
@@ -266,3 +272,65 @@ Alerts also stay open while `document.body` has the `c-prefers-persistent-alerts
 ### Persistent Alerts in Custom Components
 
 A custom component that closes on its own can follow the same setting with `usePrefersPersistentAlerts`. It returns `true` when a `Provider` sets `persistentAlerts` or `document.body` has the `c-prefers-persistent-alerts` class, and it updates when either one changes. While it returns `true`, do not start the auto close timer.
+
+### Autofocus
+
+Set `autoFocus` to move focus to an alert when it is shown. The alert focuses itself, so callers do not need to look it up after rendering it.
+
+```jsx
+<Alert autoFocus onClose={() => {}} title="Hola:">
+	This alert receives focus when it is shown.
+</Alert>
+```
+
+## Using with Toaster
+
+`ClayToaster` shows the toasts of a store inside a `ToastContainer`. It takes the same props as `ToastContainer`, plus `store`. Create the store with `createToastStore` outside of your components, so any code can add toasts, even code outside of React.
+
+```jsx preview
+import {Provider, Button} from '@clayui/core';
+import {ClayToaster, createToastStore} from '@clayui/alert';
+import React from 'react';
+
+import '@clayui/css/lib/css/atlas.css';
+
+const store = createToastStore();
+
+export default function App() {
+	return (
+		<Provider spritemap="/public/icons.svg">
+			<div className="p-4">
+				<Button
+					onClick={() =>
+						store.add({
+							autoClose: 5000,
+							children: 'Data is saved',
+							displayType: 'success',
+							onClose: () => {},
+							title: 'Success',
+						})
+					}
+				>
+					Add Toast
+				</Button>
+
+				<ClayToaster store={store} />
+			</div>
+		</Provider>
+	);
+}
+```
+
+-   `store.add(props)` opens a toast with the given `Alert` props and returns its key.
+-   `store.close(key)` calls the `onClose` of the toast, then removes it.
+-   `store.remove(key)` removes the toast without calling `onClose`.
+
+### Stacking
+
+When many toasts are open, the toast container stacks them to save space. The newest toast is always at the bottom and fully visible. Stacking is pure CSS, so it also works with a plain `ToastContainer` or plain markup:
+
+-   More than 6: the older toasts get narrower, like a pyramid, and sit closer together.
+-   More than 12: the older toasts overlap, and only a thin strip of each one shows.
+-   More than 20: they overlap more (a thinner strip), and the content of the older toasts is hidden.
+
+Hover or focus a toast to see it in full.

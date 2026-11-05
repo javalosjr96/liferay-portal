@@ -90,11 +90,6 @@ public interface StyleBookEntryService extends BaseService {
 			String externalReferenceCode, long groupId)
 		throws PortalException;
 
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public StyleBookEntry getOrAddEmptyStyleBookEntry(
-			String externalReferenceCode, long groupId, String themeId)
-		throws Exception;
-
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -171,11 +166,5 @@ public interface StyleBookEntryService extends BaseService {
 			String themeId, ServiceContext serviceContext)
 		throws PortalException;
 
-	public StyleBookEntry updateStyleBookEntry(
-			long styleBookEntryId, String frontendTokenDefinition,
-			String frontendTokensValues, String name,
-			ServiceContext serviceContext)
-		throws PortalException;
-
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1718381761
+// LIFERAY-SERVICE-BUILDER-HASH:-836468479

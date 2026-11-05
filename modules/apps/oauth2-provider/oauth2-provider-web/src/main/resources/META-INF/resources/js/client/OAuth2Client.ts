@@ -329,7 +329,7 @@ export async function FromUserAgentApplication(
 		clientId: userAgentApplication.clientId,
 		debug,
 		homePageURL: userAgentApplication.homePageURL,
-		redirectURIs: userAgentApplication.redirectURIs,
+		redirectURIs: [getBuiltInRedirectURL()],
 		tokenURL: getTokenURL(),
 	});
 }
@@ -339,7 +339,11 @@ export function getAuthorizeURL() {
 }
 
 export function getBuiltInRedirectURL() {
-	return Liferay.ThemeDisplay.getPathContext() + '/o/oauth2/redirect';
+	return (
+		window.location.origin +
+		Liferay.ThemeDisplay.getPathContext() +
+		'/o/oauth2/redirect'
+	);
 }
 
 export function getIntrospectURL() {
@@ -354,14 +358,23 @@ export async function getUserAgentApplication(externalReferenceCode: string) {
 
 	// eslint-disable-next-line @liferay/portal/no-global-fetch
 	const res = await fetch(
-		`${Liferay.ThemeDisplay.getPathContext()}/o/oauth2/application?externalReferenceCode=${externalReferenceCode}`
+		`${Liferay.ThemeDisplay.getPathContext()}/o/oauth2/application?externalReferenceCode=${encodeURIComponent(externalReferenceCode)}`
 	);
+
+	if (res.status === 400) {
+		return null;
+	}
+
+	if (!res.ok) {
+		throw new Error(
+			`Unable to get the application ${externalReferenceCode} because the request failed with status ${res.status}`
+		);
+	}
 
 	const data = await res.json();
 
 	return {
 		clientId: data.client_id as string,
 		homePageURL: data.homePageURL as string,
-		redirectURIs: data.redirectURIs as Array<string>,
 	};
 }

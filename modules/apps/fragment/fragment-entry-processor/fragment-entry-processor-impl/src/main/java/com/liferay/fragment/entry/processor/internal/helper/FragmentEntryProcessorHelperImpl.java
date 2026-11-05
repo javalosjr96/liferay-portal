@@ -56,6 +56,7 @@ import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.trash.TrashHandlerRegistryUtil;
 import com.liferay.portal.kernel.util.DateFormatFactoryUtil;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.HttpComponentsUtil;
 import com.liferay.portal.kernel.util.KeyValuePair;
@@ -141,17 +142,10 @@ public class FragmentEntryProcessorHelperImpl
 			ClassPKInfoItemIdentifier classPKInfoItemIdentifier =
 				(ClassPKInfoItemIdentifier)infoItemIdentifier;
 
-			try {
-				if (trashHandler.isInTrash(
-						classPKInfoItemIdentifier.getClassPK())) {
+			if (trashHandler.isInTrash(
+					classPKInfoItemIdentifier.getClassPK())) {
 
-					return null;
-				}
-			}
-			catch (PortalException portalException) {
-				if (_log.isDebugEnabled()) {
-					_log.debug(portalException);
-				}
+				return null;
 			}
 		}
 
@@ -596,6 +590,17 @@ public class FragmentEntryProcessorHelperImpl
 
 		if (value instanceof Date) {
 			Date date = (Date)value;
+
+			if (GetterUtil.getBoolean(
+					infoField.getAttribute(
+						DateInfoFieldType.TIME_ZONE_INDEPENDENT))) {
+
+				return _getDateValue(
+					editableValueJSONObject, date,
+					_getDefaultPattern(
+						fragmentEntryProcessorContext.getLocale()),
+					fragmentEntryProcessorContext.getLocale(), null);
+			}
 
 			HttpServletRequest httpServletRequest =
 				fragmentEntryProcessorContext.getHttpServletRequest();

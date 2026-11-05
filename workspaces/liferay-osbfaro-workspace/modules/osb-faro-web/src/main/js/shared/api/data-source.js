@@ -118,48 +118,6 @@ export function fetchProgress({groupId, id}) {
 	});
 }
 
-export function fetchOrganizations({cur, delta, groupId, id, name}) {
-	return sendRequest({
-		data: {
-			cur,
-			delta,
-			name,
-		},
-		method: 'GET',
-		path: `contacts/${groupId}/data_source/${
-			id ? `${id}/` : ''
-		}organizations`,
-	});
-}
-
-export function fetchOrganizationsById({groupId, id, organizationIds}) {
-	return sendRequest({
-		data: {organizationIds},
-		method: 'POST',
-		path: `contacts/${groupId}/data_source/${id}/organizations_by_ids`,
-	});
-}
-
-export function fetchSites({cur, delta, groupId, id, name}) {
-	return sendRequest({
-		data: {
-			cur,
-			delta,
-			name,
-		},
-		method: 'GET',
-		path: `contacts/${groupId}/data_source/${id ? `${id}/` : ''}groups`,
-	});
-}
-
-export function fetchSitesById({groupId, id, siteIds}) {
-	return sendRequest({
-		data: {groupIds: siteIds},
-		method: 'POST',
-		path: `contacts/${groupId}/data_source/${id}/groups_by_ids`,
-	});
-}
-
 export const fetchToken = (groupId, dataSourceId) =>
 	sendRequest({
 		contentType: 'text/plain',
@@ -168,34 +126,6 @@ export const fetchToken = (groupId, dataSourceId) =>
 			dataSourceId ? `${dataSourceId}/` : ''
 		}token`,
 	});
-
-export function fetchUserGroups({cur, delta, groupId, id, name}) {
-	return sendRequest({
-		data: {
-			cur,
-			delta,
-			name,
-		},
-		method: 'GET',
-		path: `contacts/${groupId}/data_source/${id ? `${id}/` : ''}user_groups`,
-	});
-}
-
-export function fetchUserGroupsById({groupId, id, userGroupIds}) {
-	return sendRequest({
-		data: {userGroupIds},
-		method: 'POST',
-		path: `contacts/${groupId}/data_source/${id}/user_groups_by_ids`,
-	});
-}
-
-export function fetchLiferaySyncCounts({contactsConfiguration, groupId, id}) {
-	return sendRequest({
-		data: {contactsConfiguration},
-		method: 'POST',
-		path: `contacts/${groupId}/data_source/${id}/liferay/sync_counts`,
-	});
-}
 
 export function createCSV({fieldMappingMaps, fileVersionId, groupId, name}) {
 	const data = pickBy(

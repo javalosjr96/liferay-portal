@@ -15,6 +15,7 @@ import co.elastic.clients.elasticsearch._types.aggregations.AggregationBuilders;
 import co.elastic.clients.elasticsearch._types.aggregations.AggregationRange;
 import co.elastic.clients.elasticsearch._types.aggregations.AverageAggregation;
 import co.elastic.clients.elasticsearch._types.aggregations.Buckets;
+import co.elastic.clients.elasticsearch._types.aggregations.CalendarInterval;
 import co.elastic.clients.elasticsearch._types.aggregations.ChiSquareHeuristic;
 import co.elastic.clients.elasticsearch._types.aggregations.DateRangeExpression;
 import co.elastic.clients.elasticsearch._types.aggregations.ExtendedBounds;
@@ -40,6 +41,7 @@ import co.elastic.clients.util.NamedValue;
 
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.util.GetterUtil;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.search.aggregation.Aggregation;
@@ -208,15 +210,22 @@ public class ElasticsearchAggregationVisitor
 			DateHistogramAggregation.Builder dateHistogramAggregationBuilder =
 				AggregationBuilders.dateHistogram();
 
-		if (dateHistogramAggregation.getDateHistogramInterval() != null) {
-			dateHistogramAggregationBuilder.fixedInterval(
-				Time.of(
-					time -> time.time(
-						dateHistogramAggregation.getDateHistogramInterval())));
-		}
+		String dateHistogramInterval =
+			dateHistogramAggregation.getDateHistogramInterval();
 
-		dateHistogramAggregationBuilder.field(
-			dateHistogramAggregation.getField());
+		if (dateHistogramInterval != null) {
+			CalendarInterval calendarInterval = _calendarIntervals.get(
+				dateHistogramInterval);
+
+			if (calendarInterval != null) {
+				dateHistogramAggregationBuilder.calendarInterval(
+					calendarInterval);
+			}
+			else {
+				dateHistogramAggregationBuilder.fixedInterval(
+					Time.of(time -> time.time(dateHistogramInterval)));
+			}
+		}
 
 		if ((dateHistogramAggregation.getMaxBound() != null) &&
 			(dateHistogramAggregation.getMinBound() != null)) {
@@ -236,6 +245,9 @@ public class ElasticsearchAggregationVisitor
 									dateHistogramAggregation.getMinBound()))
 						)));
 		}
+
+		dateHistogramAggregationBuilder.field(
+			dateHistogramAggregation.getField());
 
 		if (dateHistogramAggregation.getMinDocCount() != null) {
 			dateHistogramAggregationBuilder.minDocCount(
@@ -1764,6 +1776,17 @@ public class ElasticsearchAggregationVisitor
 				scriptTranslator.translate(
 					scriptSignificanceHeuristic.getScript())));
 	}
+
+	private static final Map<String, CalendarInterval> _calendarIntervals =
+		HashMapBuilder.put(
+			"1M", CalendarInterval.Month
+		).put(
+			"1q", CalendarInterval.Quarter
+		).put(
+			"1w", CalendarInterval.Week
+		).put(
+			"1y", CalendarInterval.Year
+		).build();
 
 	private final GeoTranslator _geoTranslator = new GeoTranslator();
 	private final HighlightTranslator _highlightTranslator =

@@ -14,15 +14,18 @@ import com.liferay.change.tracking.rest.client.http.HttpInvoker;
 import com.liferay.change.tracking.rest.client.pagination.Page;
 import com.liferay.change.tracking.rest.client.pagination.Pagination;
 import com.liferay.change.tracking.rest.client.resource.v1_0.CTCollectionResource;
+import com.liferay.change.tracking.scheduler.PublishScheduler;
 import com.liferay.change.tracking.service.CTCollectionLocalService;
 import com.liferay.change.tracking.service.CTPreferencesLocalService;
 import com.liferay.change.tracking.service.persistence.CTCollectionPersistence;
 import com.liferay.dynamic.data.mapping.test.util.DDMStructureTestUtil;
 import com.liferay.journal.model.JournalArticle;
+import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
+import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.model.ResourceConstants;
@@ -31,7 +34,6 @@ import com.liferay.portal.kernel.service.ClassNameLocalService;
 import com.liferay.portal.kernel.service.LayoutLocalService;
 import com.liferay.portal.kernel.service.ResourceLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
-import com.liferay.portal.kernel.test.rule.DataGuard;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
@@ -40,6 +42,7 @@ import com.liferay.portal.kernel.transaction.TransactionConfig;
 import com.liferay.portal.kernel.transaction.TransactionInvokerUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Time;
 import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
@@ -51,6 +54,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -62,7 +66,6 @@ import org.junit.runner.RunWith;
 /**
  * @author David Truong
  */
-@DataGuard(scope = DataGuard.Scope.METHOD)
 @RunWith(Arquillian.class)
 public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 
@@ -78,6 +81,11 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 	public void setUp() throws Exception {
 		super.setUp();
 
+		_ctCollectionIds = TransformUtil.transform(
+			_ctCollectionLocalService.getCTCollections(
+				QueryUtil.ALL_POS, QueryUtil.ALL_POS),
+			com.liferay.change.tracking.model.CTCollection::getCtCollectionId);
+
 		String password = RandomTestUtil.randomString();
 
 		User user = UserTestUtil.addUser(testCompany, password);
@@ -91,6 +99,31 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 		).locale(
 			LocaleUtil.getDefault()
 		).build();
+	}
+
+	@After
+	@Override
+	public void tearDown() throws Exception {
+		CTPreferences ctPreferences =
+			_ctPreferencesLocalService.fetchCTPreferences(
+				TestPropsValues.getCompanyId(), TestPropsValues.getUserId());
+
+		if (ctPreferences != null) {
+			_ctPreferencesLocalService.deleteCTPreferences(ctPreferences);
+		}
+
+		for (com.liferay.change.tracking.model.CTCollection ctCollection :
+				_ctCollectionLocalService.getCTCollections(
+					QueryUtil.ALL_POS, QueryUtil.ALL_POS)) {
+
+			if (_ctCollectionIds.contains(ctCollection.getCtCollectionId())) {
+				continue;
+			}
+
+			_ctCollectionLocalService.deleteCTCollection(ctCollection);
+		}
+
+		super.tearDown();
 	}
 
 	@Ignore
@@ -381,6 +414,8 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 
 		Assert.assertEquals(
 			WorkflowConstants.STATUS_SCHEDULED, (int)status.getCode());
+
+		_testPostCTCollectionSchedulePublishReschedule();
 	}
 
 	@Override
@@ -620,8 +655,45 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 		}
 	}
 
+	private void _testPostCTCollectionSchedulePublishReschedule()
+		throws Exception {
+
+		CTCollection ctCollection =
+			testPostCTCollectionSchedulePublish_addCTCollection();
+
+		try {
+			long time =
+				(System.currentTimeMillis() / Time.SECOND) * Time.SECOND;
+
+			ctCollectionResource.postCTCollectionSchedulePublish(
+				ctCollection.getId(), new Date(time + Time.DAY));
+
+			Date publishDate = new Date(time + (2 * Time.DAY));
+
+			ctCollectionResource.postCTCollectionSchedulePublish(
+				ctCollection.getId(), publishDate);
+
+			ctCollection = ctCollectionResource.getCTCollection(
+				ctCollection.getId());
+
+			Status status = ctCollection.getStatus();
+
+			Assert.assertEquals(
+				WorkflowConstants.STATUS_SCHEDULED, (int)status.getCode());
+
+			Assert.assertEquals(publishDate, ctCollection.getDateScheduled());
+		}
+		finally {
+			_publishScheduler.unschedulePublish(ctCollection.getId());
+
+			ctCollectionResource.deleteCTCollection(ctCollection.getId());
+		}
+	}
+
 	@Inject
 	private ClassNameLocalService _classNameLocalService;
+
+	private List<Long> _ctCollectionIds;
 
 	@Inject
 	private CTCollectionLocalService _ctCollectionLocalService;
@@ -637,6 +709,9 @@ public class CTCollectionResourceTest extends BaseCTCollectionResourceTestCase {
 
 	@Inject
 	private LayoutLocalService _layoutLocalService;
+
+	@Inject
+	private PublishScheduler _publishScheduler;
 
 	@Inject
 	private ResourceLocalService _resourceLocalService;

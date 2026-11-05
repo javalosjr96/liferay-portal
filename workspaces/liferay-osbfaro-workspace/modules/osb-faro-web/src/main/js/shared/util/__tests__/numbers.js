@@ -19,6 +19,21 @@ describe('toLocale', () => {
 		expect(toLocale(0.123456)).toEqual('0.123456');
 		expect(toLocale(123456.123456789)).toEqual('123,456.123457');
 	});
+
+	it.each`
+		value
+		${null}
+		${undefined}
+		${''}
+		${NaN}
+		${Infinity}
+	`('should return the no data value for $value', ({value}) => {
+		expect(toLocale(value)).toEqual('–');
+	});
+
+	it('should return 0 for a real zero', () => {
+		expect(toLocale(0)).toEqual('0');
+	});
 });
 
 describe('toThousands', () => {
@@ -61,6 +76,21 @@ describe('toThousands', () => {
 		expect(toThousands(1000000000000)).toEqual('1T');
 	});
 
+	it('should not truncate a value with a single decimal', () => {
+		for (const [suffix, threshold] of [
+			['K', 1e3],
+			['M', 1e6],
+			['B', 1e9],
+			['T', 1e12],
+		]) {
+			for (let tenths = 10; tenths < 1000; tenths++) {
+				expect(toThousands(tenths * (threshold / 10))).toEqual(
+					`${tenths / 10}${suffix}`
+				);
+			}
+		}
+	});
+
 	it('should return an empty string if parameter it is not a number', () => {
 		expect(toThousands('test')).toEqual('');
 		expect(toThousands([])).toEqual('');
@@ -70,15 +100,15 @@ describe('toThousands', () => {
 
 describe('toThousandsBase', () => {
 	it('should truncate the mantissa rather than round it', () => {
-		const setFactor = (factor) => 2453 * factor;
+		const getMantissa = (threshold) => 2453 / threshold;
 
-		expect(toThousandsBase(2453, setFactor, 'en-US')).toEqual('2.4K');
+		expect(toThousandsBase(2453, getMantissa, 'en-US')).toEqual('2.4K');
 	});
 
 	it('should let the caller customize the mantissa, e.g. for toThousandsABTesting', () => {
-		const setFactor = (factor) => Math.trunc(2453 * factor);
+		const getMantissa = (threshold) => Math.trunc(2453 / threshold);
 
-		expect(toThousandsBase(2453, setFactor, 'en-US')).toEqual('2K');
+		expect(toThousandsBase(2453, getMantissa, 'en-US')).toEqual('2K');
 	});
 });
 
@@ -104,6 +134,21 @@ describe('toFixedPoint', () => {
 });
 
 describe('toRounded', () => {
+	it.each`
+		value
+		${null}
+		${undefined}
+		${''}
+		${NaN}
+		${Infinity}
+	`('should return the no data value for $value', ({value}) => {
+		expect(toRounded(value)).toEqual('–');
+	});
+
+	it('should return 0 for a real zero', () => {
+		expect(toRounded(0)).toEqual('0');
+	});
+
 	it('should return the rounded without decimal', () => {
 		expect(toRounded(20.567, 0)).toEqual('21');
 		expect(toRounded(1.123, 0)).toEqual('1');
@@ -176,6 +221,21 @@ describe('formatPercentFromRatio', () => {
 		expect(formatPercentFromRatio(0.073)).toEqual('7.3%');
 		expect(formatPercentFromRatio(1)).toEqual('100%');
 	});
+
+	it.each`
+		value
+		${null}
+		${undefined}
+		${''}
+		${NaN}
+		${Infinity}
+	`('should return the no data value for $value', ({value}) => {
+		expect(formatPercentFromRatio(value)).toEqual('–');
+	});
+
+	it('should return 0% for a real zero', () => {
+		expect(formatPercentFromRatio(0)).toEqual('0%');
+	});
 });
 
 describe('formatPercent', () => {
@@ -183,6 +243,21 @@ describe('formatPercent', () => {
 		expect(formatPercent(10)).toEqual('10%');
 		expect(formatPercent(7.3)).toEqual('7.3%');
 		expect(formatPercent(100)).toEqual('100%');
+	});
+
+	it.each`
+		value
+		${null}
+		${undefined}
+		${''}
+		${NaN}
+		${Infinity}
+	`('should return the no data value for $value', ({value}) => {
+		expect(formatPercent(value)).toEqual('–');
+	});
+
+	it('should return 0% for a real zero', () => {
+		expect(formatPercent(0)).toEqual('0%');
 	});
 });
 

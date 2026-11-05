@@ -9,6 +9,8 @@ import {fetch} from 'frontend-js-web';
 import FieldMappingChannelFieldRenderer from './cell_renderers/FieldMappingChannelFieldRenderer';
 import FieldMappingSourceAttributesRenderer from './cell_renderers/FieldMappingSourceAttributesRenderer';
 
+export const EVENT_FIELD_MAPPINGS_CHANGE = 'pimConnectorFieldMappings:change';
+
 export default function propsTransformer(props: {[key: string]: any}) {
 	return {
 		...props,
@@ -35,7 +37,8 @@ export default function propsTransformer(props: {[key: string]: any}) {
 			clearFieldMappings(
 				action.data.apiURL,
 				itemData.fieldMappingIds,
-				loadData
+				loadData,
+				itemData.required
 			);
 		},
 	};
@@ -44,7 +47,8 @@ export default function propsTransformer(props: {[key: string]: any}) {
 function clearFieldMappings(
 	apiURL: string,
 	fieldMappingIds: number[],
-	loadData: Function
+	loadData: Function,
+	required: boolean
 ) {
 	if (!fieldMappingIds?.length) {
 		return;
@@ -61,6 +65,12 @@ function clearFieldMappings(
 			}
 
 			loadData();
+
+			if (required) {
+				Liferay.fire(EVENT_FIELD_MAPPINGS_CHANGE, {
+					mappingStatus: 'incomplete',
+				});
+			}
 
 			openToast({
 				message: Liferay.Language.get(

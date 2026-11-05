@@ -727,25 +727,6 @@ public class DDMTemplateLocalServiceWrapper
 	}
 
 	/**
-	 * Returns the template matching the group and template key.
-	 *
-	 * @param groupId the primary key of the group
-	 * @param classNameId the primary key of the class name for the template's
-	 related model
-	 * @param templateKey the unique string identifying the template
-	 * @return the matching template
-	 * @throws PortalException if a portal exception occurred
-	 */
-	@Override
-	public DDMTemplate getTemplate(
-			long groupId, long classNameId, String templateKey)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _ddmTemplateLocalService.getTemplate(
-			groupId, classNameId, templateKey);
-	}
-
-	/**
 	 * Returns the template matching the group and template key, optionally
 	 * searching ancestor sites (that have sharing enabled) and global scoped
 	 * sites.
@@ -775,13 +756,6 @@ public class DDMTemplateLocalServiceWrapper
 
 		return _ddmTemplateLocalService.getTemplate(
 			groupId, classNameId, templateKey, includeAncestorTemplates);
-	}
-
-	@Override
-	public DDMTemplate getTemplateBySmallImageId(long smallImageId)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _ddmTemplateLocalService.getTemplateBySmallImageId(smallImageId);
 	}
 
 	/**
@@ -980,26 +954,6 @@ public class DDMTemplateLocalServiceWrapper
 	}
 
 	/**
-	 * Returns the number of templates matching the group, structure class name
-	 * ID, and status, including Generic Templates.
-	 *
-	 * @param groupId the primary key of the group
-	 * @param structureClassNameId the primary key of the class name for the
-	 template's related structure
-	 * @param status the template's workflow status. For more information see
-	 {@link WorkflowConstants} for constants starting with the
-	 "STATUS_" prefix.
-	 * @return the number of matching templates
-	 */
-	@Override
-	public int getTemplatesByStructureClassNameIdCount(
-		long groupId, long structureClassNameId, int status) {
-
-		return _ddmTemplateLocalService.getTemplatesByStructureClassNameIdCount(
-			groupId, structureClassNameId, status);
-	}
-
-	/**
 	 * Returns the number of templates belonging to the group.
 	 *
 	 * @param groupId the primary key of the group
@@ -1037,15 +991,6 @@ public class DDMTemplateLocalServiceWrapper
 	public int getTemplatesCount(long groupId, long classNameId, long classPK) {
 		return _ddmTemplateLocalService.getTemplatesCount(
 			groupId, classNameId, classPK);
-	}
-
-	@Override
-	public int getTemplatesCount(
-		long companyId, long[] groupIds, long[] classNameIds, long[] classPKs,
-		long resourceClassNameId) {
-
-		return _ddmTemplateLocalService.getTemplatesCount(
-			companyId, groupIds, classNameIds, classPKs, resourceClassNameId);
 	}
 
 	/**
@@ -1590,4 +1535,4 @@ public class DDMTemplateLocalServiceWrapper
 	private DDMTemplateLocalService _ddmTemplateLocalService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:576089960
+// LIFERAY-SERVICE-BUILDER-HASH:987141564

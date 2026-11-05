@@ -5,9 +5,13 @@
 
 package com.liferay.jenkins.results.parser;
 
+import java.io.File;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.json.JSONObject;
 
 import org.junit.Test;
 
@@ -18,6 +22,16 @@ import org.mockito.Mockito;
  * @author Calum Ragan
  */
 public class JobFactoryTest extends com.liferay.jenkins.results.parser.Test {
+
+	@Test
+	public void testGetKey() {
+		for (String jobName : _JOB_NAMES) {
+			Job job = _newJob(jobName);
+
+			testEquals(
+				JobFactory.getKey(job), JobFactory.getKey(_getJSONObject(job)));
+		}
+	}
 
 	@Test
 	public void testNewJob() {
@@ -64,13 +78,24 @@ public class JobFactoryTest extends com.liferay.jenkins.results.parser.Test {
 		UpstreamPortalTopLevelBuild upstreamPortalTopLevelBuild = Mockito.mock(
 			UpstreamPortalTopLevelBuild.class);
 
+		String branchName = RandomTestUtil.randomString() + "-private";
+
 		Mockito.doReturn(
-			portalUpstreamBranchName
+			branchName
 		).when(
 			upstreamPortalTopLevelBuild
-		).getPortalUpstreamBranchName();
+		).getBranchName();
 
-		_testNewJob(job, portalUpstreamBranchName, upstreamPortalTopLevelBuild);
+		_testNewJob(job, branchName, upstreamPortalTopLevelBuild);
+	}
+
+	@Test
+	public void testNewJobJSONObject() {
+		for (String jobName : _JOB_NAMES) {
+			Job job = _newJob(jobName);
+
+			testSame(job, JobFactory.newJob(_getJSONObject(job)));
+		}
 	}
 
 	@Test
@@ -126,6 +151,53 @@ public class JobFactoryTest extends com.liferay.jenkins.results.parser.Test {
 		}
 	}
 
+	private JSONObject _getJSONObject(Job job) {
+		Job spyJob = Mockito.spy(job);
+
+		Mockito.doReturn(
+			Collections.emptyList()
+		).when(
+			spyJob
+		).getBatchTestClassGroups();
+
+		Mockito.doReturn(
+			Collections.emptyList()
+		).when(
+			spyJob
+		).getDependentBatchTestClassGroups();
+
+		return spyJob.getJSONObject();
+	}
+
+	private Job _newJob(String jobName) {
+		BuildDatabase buildDatabase = Mockito.mock(BuildDatabase.class);
+
+		Mockito.doReturn(
+			false
+		).when(
+			buildDatabase
+		).hasJob(
+			Mockito.anyString()
+		);
+
+		BuildDatabaseUtil.setBuildDatabase(buildDatabase);
+
+		String repositoryName = "liferay-portal";
+		String upstreamBranchName = "master";
+
+		PortalGitWorkingDirectory portalGitWorkingDirectory =
+			(PortalGitWorkingDirectory)
+				GitWorkingDirectoryFactory.newGitWorkingDirectory(
+					upstreamBranchName,
+					JenkinsResultsParserUtil.getGitWorkingDir(new File(".")),
+					repositoryName);
+
+		return JobFactory.newJob(
+			Job.BuildProfile.DXP, jobName, null, portalGitWorkingDirectory,
+			upstreamBranchName, null, repositoryName,
+			RandomTestUtil.randomString(), upstreamBranchName);
+	}
+
 	private void _testNewJob(
 		Job job, String portalUpstreamBranchName, TopLevelBuild topLevelBuild) {
 
@@ -146,5 +218,12 @@ public class JobFactoryTest extends com.liferay.jenkins.results.parser.Test {
 					portalUpstreamBranchName));
 		}
 	}
+
+	private static final String[] _JOB_NAMES = {
+		"test-portal-acceptance-pullrequest(master)",
+		"test-portal-acceptance-upstream-dxp(master)",
+		"test-portal-testsuite-upstream(master)", "test-portal-upstream",
+		"test-unmatched-job"
+	};
 
 }

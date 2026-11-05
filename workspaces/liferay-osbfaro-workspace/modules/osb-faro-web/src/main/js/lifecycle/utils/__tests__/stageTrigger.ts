@@ -12,11 +12,11 @@ const buildStage = (
 		filterString: '',
 	},
 	description: '',
-	displayOrder: 1,
 	externalReferenceCode: '1',
 	id: '1',
 	maxDuration: null,
-	stageType: 'AWARE',
+	name: 'Aware',
+	position: 1,
 });
 
 describe('getStageTrigger', () => {

@@ -1,0 +1,4 @@
+apiVersion: liferay.com/v1alpha1
+kind: LiferayInfrastructure
+status:
+    managedServiceDetailsReady: {{ and $isDatabaseReady $isDoclibReady }}

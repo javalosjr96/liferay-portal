@@ -10,9 +10,13 @@ import {commercePagesTest} from '../../../../fixtures/commercePagesTest';
 import {dataApiHelpersTest} from '../../../../fixtures/dataApiHelpersTest';
 import {isolatedSiteTest} from '../../../../fixtures/isolatedSiteTest';
 import {loginTest} from '../../../../fixtures/loginTest';
+import {serverAdministrationPageTest} from '../../../../fixtures/serverAdministrationPageTest';
 import {userPersonalBarPagesTest} from '../../../../fixtures/userPersonalBarPagesTest';
+import {EActions} from '../../../../helpers/ServerAdministrationHelper';
+import {getRandomInt} from '../../../../utils/getRandomInt';
 import getRandomString from '../../../../utils/getRandomString';
 import {userData} from '../../../../utils/performLogin';
+import {waitForAlert} from '../../../../utils/waitForAlert';
 
 export const test = mergeTests(
 	apiHelpersTest,
@@ -20,6 +24,7 @@ export const test = mergeTests(
 	dataApiHelpersTest,
 	isolatedSiteTest,
 	loginTest(),
+	serverAdministrationPageTest,
 	userPersonalBarPagesTest
 );
 
@@ -284,6 +289,96 @@ test(
 );
 
 test(
+	'Add price entries from several price lists to a SKU',
+	{tag: ['@COMMERCE-11084', '@LPD-110416']},
+	async ({
+		apiHelpers,
+		commerceAdminProductDetailsPage,
+		commerceAdminProductDetailsSkusPage,
+		commerceAdminProductPage,
+	}) => {
+		const catalog =
+			await apiHelpers.headlessCommerceAdminCatalog.postCatalog();
+
+		const product =
+			await apiHelpers.headlessCommerceAdminCatalog.postProduct({
+				catalogId: catalog.id,
+			});
+
+		const productDetails =
+			await apiHelpers.headlessCommerceAdminCatalog.getProduct(
+				product.productId
+			);
+
+		const priceList1 =
+			await apiHelpers.headlessCommerceAdminPricing.postPriceList({
+				catalogId: catalog.id,
+				currencyCode: 'USD',
+				name: getRandomString(),
+				type: 'price-list',
+			});
+		const priceList2 =
+			await apiHelpers.headlessCommerceAdminPricing.postPriceList({
+				catalogId: catalog.id,
+				currencyCode: 'USD',
+				name: getRandomString(),
+				type: 'price-list',
+			});
+
+		await test.step('Open the add price dialog', async () => {
+			await commerceAdminProductPage.gotoProduct(product.name['en_US']);
+
+			await commerceAdminProductDetailsPage.goToProductSkus();
+
+			await commerceAdminProductDetailsSkusPage
+				.skusTableRowLink(productDetails.skus[0].sku)
+				.click();
+			await commerceAdminProductDetailsSkusPage.goToSkuTab('Price');
+			await commerceAdminProductDetailsSkusPage.skuPriceAddButton.click();
+		});
+
+		await test.step('Add a price entry for each price list', async () => {
+			await commerceAdminProductDetailsSkusPage.skuPriceListSelect
+				.nth(0)
+				.selectOption(priceList1.name);
+			await commerceAdminProductDetailsSkusPage.skuPriceAddModalUnitPriceInput
+				.nth(0)
+				.fill('10');
+
+			await commerceAdminProductDetailsSkusPage.skuPriceAddModal
+				.getByRole('button', {exact: true, name: 'Add Entry'})
+				.click();
+
+			await commerceAdminProductDetailsSkusPage.skuPriceListSelect
+				.nth(1)
+				.selectOption(priceList2.name);
+			await commerceAdminProductDetailsSkusPage.skuPriceAddModalUnitPriceInput
+				.nth(1)
+				.fill('20');
+
+			await commerceAdminProductDetailsSkusPage.skuPriceAddModalAddButton.click();
+		});
+
+		await test.step('Check the dialog closes and the list refreshes', async () => {
+			await expect(
+				commerceAdminProductDetailsSkusPage.skuPriceAddModalUnitPriceInput.first()
+			).toBeHidden();
+
+			await expect(
+				commerceAdminProductDetailsSkusPage.sidePanelFrame
+					.getByRole('row')
+					.filter({hasText: priceList1.name})
+			).toContainText('$ 10.00');
+			await expect(
+				commerceAdminProductDetailsSkusPage.sidePanelFrame
+					.getByRole('row')
+					.filter({hasText: priceList2.name})
+			).toContainText('$ 20.00');
+		});
+	}
+);
+
+test(
 	'Product name should be created for both user language and instance language',
 	{tag: '@LPD-64086'},
 	async ({apiHelpers, commerceAdminProductPage, page}) => {
@@ -482,5 +577,249 @@ test(
 		await expect(
 			commerceAdminProductDetailsPage.nameInputLocaleSelector
 		).toHaveText('es-ES');
+	}
+);
+
+test(
+	'Cannot publish a product with empty or zero order quantities',
+	{tag: ['@COMMERCE-10173', '@LPD-107429']},
+	async ({
+		apiHelpers,
+		commerceAdminProductDetailsConfigurationPage,
+		commerceAdminProductDetailsPage,
+		commerceAdminProductPage,
+		page,
+	}) => {
+		const defaultOrderQuantities = {
+			'Maximum Order Quantity': '10000.0',
+			'Minimum Order Quantity': '1.0',
+			'Multiple Order Quantity': '1.0',
+		};
+
+		await test.step('Open the configuration of a new product', async () => {
+			const catalog =
+				await apiHelpers.headlessCommerceAdminCatalog.postCatalog();
+
+			const product =
+				await apiHelpers.headlessCommerceAdminCatalog.postProduct({
+					catalogId: catalog.id,
+				});
+
+			await commerceAdminProductPage.gotoProduct(product.name['en_US']);
+
+			await commerceAdminProductDetailsPage.goToProductConfiguration();
+
+			for (const [
+				orderQuantityLabel,
+				orderQuantityValue,
+			] of Object.entries(defaultOrderQuantities)) {
+				await expect(
+					commerceAdminProductDetailsConfigurationPage.orderQuantityInput(
+						orderQuantityLabel
+					)
+				).toHaveValue(orderQuantityValue);
+			}
+		});
+
+		await test.step('Publishing empty order quantities shows the required errors', async () => {
+			for (const orderQuantityLabel of Object.keys(
+				defaultOrderQuantities
+			)) {
+				await commerceAdminProductDetailsConfigurationPage
+					.orderQuantityInput(orderQuantityLabel)
+					.clear();
+			}
+
+			await commerceAdminProductDetailsConfigurationPage.publishLink.click();
+
+			await expect(
+				commerceAdminProductDetailsConfigurationPage.orderQuantityInput(
+					'Minimum Order Quantity'
+				)
+			).toBeFocused();
+
+			for (const orderQuantityLabel of Object.keys(
+				defaultOrderQuantities
+			)) {
+				await expect(
+					commerceAdminProductDetailsConfigurationPage.orderQuantityErrorMessage(
+						orderQuantityLabel
+					)
+				).toHaveText(`The ${orderQuantityLabel} field is required.`);
+			}
+		});
+
+		await test.step('Publishing zero order quantities shows the minimum value errors', async () => {
+			for (const orderQuantityLabel of Object.keys(
+				defaultOrderQuantities
+			)) {
+				await commerceAdminProductDetailsConfigurationPage
+					.orderQuantityInput(orderQuantityLabel)
+					.fill('0');
+			}
+
+			await commerceAdminProductDetailsConfigurationPage.publishLink.click();
+
+			await expect(
+				commerceAdminProductDetailsConfigurationPage.orderQuantityInput(
+					'Minimum Order Quantity'
+				)
+			).toBeFocused();
+
+			for (const orderQuantityLabel of Object.keys(
+				defaultOrderQuantities
+			)) {
+				await expect(
+					commerceAdminProductDetailsConfigurationPage.orderQuantityErrorMessage(
+						orderQuantityLabel
+					)
+				).toHaveText(
+					'Please enter a value greater than or equal to 0.000001.'
+				);
+			}
+		});
+
+		await test.step('The order quantities are not saved', async () => {
+			await page.reload();
+
+			for (const [
+				orderQuantityLabel,
+				orderQuantityValue,
+			] of Object.entries(defaultOrderQuantities)) {
+				await expect(
+					commerceAdminProductDetailsConfigurationPage.orderQuantityInput(
+						orderQuantityLabel
+					)
+				).toHaveValue(orderQuantityValue);
+			}
+		});
+	}
+);
+
+test(
+	'Update the inventory of a SKU with a zero reserved quantity',
+	{tag: '@LPD-113063'},
+	async ({
+		apiHelpers,
+		commerceAdminProductDetailsPage,
+		commerceAdminProductDetailsSkusPage,
+		commerceAdminProductPage,
+		serverAdministrationPage,
+	}) => {
+		const catalog =
+			await apiHelpers.headlessCommerceAdminCatalog.postCatalog();
+
+		const sku1 = getRandomString();
+		const sku2 = getRandomString();
+
+		const product =
+			await apiHelpers.headlessCommerceAdminCatalog.postProduct({
+				catalogId: catalog.id,
+				skus: [
+					{
+						cost: 0,
+						price: 0,
+						published: true,
+						purchasable: true,
+						sku: sku1,
+					},
+					{
+						cost: 0,
+						price: 0,
+						published: true,
+						purchasable: true,
+						sku: sku2,
+					},
+				],
+			});
+
+		const skuUnitOfMeasure =
+			await apiHelpers.headlessCommerceAdminCatalog.postSkuUnitOfMeasure(
+				product.skus.find((sku) => sku.sku === sku2).id,
+				{
+					precision: 7,
+					primary: true,
+				}
+			);
+
+		const warehouse =
+			await apiHelpers.headlessCommerceAdminInventoryApiHelper.postWarehouses(
+				{
+					active: true,
+					latitude: getRandomInt(),
+					longitude: getRandomInt(),
+					warehouseItems: [
+						{
+							quantity: 5,
+							sku: sku1,
+						},
+						{
+							quantity: 5,
+							sku: sku2,
+							unitOfMeasureKey: skuUnitOfMeasure.key,
+						},
+					],
+				}
+			);
+
+		await test.step('Update the inventory of a SKU after its reserved quantity is reloaded from the database', async () => {
+			await serverAdministrationPage.goto();
+
+			await serverAdministrationPage.executeAction(
+				EActions.CLEAR_DATABASE_CACHE
+			);
+
+			await commerceAdminProductPage.gotoProduct(product.name['en_US']);
+
+			await commerceAdminProductDetailsPage.goToProductSkus();
+
+			await commerceAdminProductDetailsSkusPage
+				.skusTableRowLink(sku1)
+				.click();
+
+			await commerceAdminProductDetailsSkusPage.goToSkuTab('Inventory');
+
+			await commerceAdminProductDetailsSkusPage.addWarehouseQuantity(
+				'10',
+				warehouse.name['en_US']
+			);
+
+			await waitForAlert(
+				commerceAdminProductDetailsSkusPage.sidePanelFrame
+			);
+
+			await expect(
+				await commerceAdminProductDetailsSkusPage.inventoryTableRowAction(
+					warehouse.name['en_US']
+				)
+			).toHaveValue('10');
+		});
+
+		await test.step('Update the inventory of a SKU whose unit of measure has a precision greater than six', async () => {
+			await commerceAdminProductPage.gotoProduct(product.name['en_US']);
+
+			await commerceAdminProductDetailsPage.goToProductSkus();
+
+			await commerceAdminProductDetailsSkusPage
+				.skusTableRowLink(sku2)
+				.click();
+
+			await commerceAdminProductDetailsSkusPage.goToSkuTab('Inventory');
+
+			await commerceAdminProductDetailsSkusPage.addWarehouseQuantity(
+				'10',
+				warehouse.name['en_US']
+			);
+
+			await waitForAlert(
+				commerceAdminProductDetailsSkusPage.sidePanelFrame
+			);
+
+			await expect(
+				await commerceAdminProductDetailsSkusPage.inventoryTableRowAction(
+					warehouse.name['en_US']
+				)
+			).toHaveValue('10.0000000');
+		});
 	}
 );

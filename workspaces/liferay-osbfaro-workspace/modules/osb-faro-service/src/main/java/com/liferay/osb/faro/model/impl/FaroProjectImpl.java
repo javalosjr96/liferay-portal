@@ -5,6 +5,7 @@
 
 package com.liferay.osb.faro.model.impl;
 
+import com.liferay.osb.faro.constants.FaroProjectConstants;
 import com.liferay.osb.faro.provisioning.client.constants.ProductConstants;
 import com.liferay.petra.string.CharPool;
 import com.liferay.portal.kernel.json.JSONArray;
@@ -25,13 +26,62 @@ import java.util.Date;
 public class FaroProjectImpl extends FaroProjectBaseImpl {
 
 	@Override
-	public Date getLastAnniversaryDate() throws Exception {
-		if (_subscriptionJSONObject == null) {
-			_subscriptionJSONObject = JSONFactoryUtil.createJSONObject(
-				getSubscription());
-		}
+	public Date getCreateDate() {
+		return new Date(getCreateTime());
+	}
 
-		return new Date(_subscriptionJSONObject.getLong("lastAnniversaryDate"));
+	@Override
+	public long getIndividualsCountSinceLastAnniversary() throws Exception {
+		JSONObject subscriptionJSONObject = _getSubscriptionJSONObject();
+
+		return subscriptionJSONObject.getLong(
+			"individualsCountSinceLastAnniversary");
+	}
+
+	@Override
+	public long getIndividualsLimit() throws Exception {
+		JSONObject subscriptionJSONObject = _getSubscriptionJSONObject();
+
+		return subscriptionJSONObject.getLong("individualsLimit");
+	}
+
+	@Override
+	public double getIndividualsUsage() throws Exception {
+		return _getUsage(
+			getIndividualsCountSinceLastAnniversary(), getIndividualsLimit());
+	}
+
+	@Override
+	public Date getLastAccessDate() {
+		return new Date(getLastAccessTime());
+	}
+
+	@Override
+	public Date getLastAnniversaryDate() throws Exception {
+		JSONObject subscriptionJSONObject = _getSubscriptionJSONObject();
+
+		return new Date(subscriptionJSONObject.getLong("lastAnniversaryDate"));
+	}
+
+	@Override
+	public long getPageViewsCountSinceLastAnniversary() throws Exception {
+		JSONObject subscriptionJSONObject = _getSubscriptionJSONObject();
+
+		return subscriptionJSONObject.getLong(
+			"pageViewsCountSinceLastAnniversary");
+	}
+
+	@Override
+	public long getPageViewsLimit() throws Exception {
+		JSONObject subscriptionJSONObject = _getSubscriptionJSONObject();
+
+		return subscriptionJSONObject.getLong("pageViewsLimit");
+	}
+
+	@Override
+	public double getPageViewsUsage() throws Exception {
+		return _getUsage(
+			getPageViewsCountSinceLastAnniversary(), getPageViewsLimit());
 	}
 
 	@Override
@@ -40,24 +90,24 @@ public class FaroProjectImpl extends FaroProjectBaseImpl {
 	}
 
 	@Override
+	public String getShortSubscriptionName() throws Exception {
+		return StringUtil.removeSubstring(
+			getSubscriptionName(), "Liferay Analytics Cloud ");
+	}
+
+	@Override
 	public Date getStartDate() throws Exception {
-		if (_subscriptionJSONObject == null) {
-			_subscriptionJSONObject = JSONFactoryUtil.createJSONObject(
-				getSubscription());
-		}
+		JSONObject subscriptionJSONObject = _getSubscriptionJSONObject();
 
 		return new Date(
-			_subscriptionJSONObject.getLong("startDate", getCreateTime()));
+			subscriptionJSONObject.getLong("startDate", getCreateTime()));
 	}
 
 	@Override
 	public String getSubscriptionName() throws Exception {
-		if (_subscriptionJSONObject == null) {
-			_subscriptionJSONObject = JSONFactoryUtil.createJSONObject(
-				getSubscription());
-		}
+		JSONObject subscriptionJSONObject = _getSubscriptionJSONObject();
 
-		return _subscriptionJSONObject.getString("name");
+		return subscriptionJSONObject.getString("name");
 	}
 
 	@Override
@@ -88,21 +138,19 @@ public class FaroProjectImpl extends FaroProjectBaseImpl {
 	@Override
 	public boolean isDataPlatform() {
 		try {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-				getSubscription());
-
-			String name = jsonObject.getString("name");
+			String subscriptionName = getSubscriptionName();
 
 			if (StringUtil.equals(
-					name,
+					subscriptionName,
 					ProductConstants.
 						PRODUCT_ENTRY_NAME_DATA_PLATFORM_ENTERPRISE) ||
 				StringUtil.equals(
-					name,
+					subscriptionName,
 					ProductConstants.
 						PRODUCT_ENTRY_NAME_DATA_PLATFORM_PRIVATE_BETA) ||
 				StringUtil.equals(
-					name, ProductConstants.PRODUCT_ENTRY_NAME_DATA_PLATFORM)) {
+					subscriptionName,
+					ProductConstants.PRODUCT_ENTRY_NAME_DATA_PLATFORM)) {
 
 				return true;
 			}
@@ -117,13 +165,15 @@ public class FaroProjectImpl extends FaroProjectBaseImpl {
 	}
 
 	@Override
+	public boolean isOffline() {
+		return !StringUtil.equals(getState(), FaroProjectConstants.STATE_READY);
+	}
+
+	@Override
 	public boolean isTrial() {
 		try {
-			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
-				getSubscription());
-
 			return StringUtil.equals(
-				jsonObject.getString("name"),
+				getSubscriptionName(),
 				ProductConstants.PRODUCT_ENTRY_NAME_BASIC);
 		}
 		catch (Exception exception) {
@@ -131,6 +181,32 @@ public class FaroProjectImpl extends FaroProjectBaseImpl {
 
 			return true;
 		}
+	}
+
+	@Override
+	public void setSubscription(String subscription) {
+		super.setSubscription(subscription);
+
+		_subscriptionJSONObject = null;
+	}
+
+	private JSONObject _getSubscriptionJSONObject() throws Exception {
+		if (_subscriptionJSONObject == null) {
+			_subscriptionJSONObject = JSONFactoryUtil.createJSONObject(
+				getSubscription());
+		}
+
+		return _subscriptionJSONObject;
+	}
+
+	private double _getUsage(long count, long limit) {
+		if ((count == 0) || (limit == 0)) {
+			return 0.0;
+		}
+
+		double usage = 100.0 * count / limit;
+
+		return Math.round(usage * 100) / 100.0;
 	}
 
 	private boolean _matches(String ipAddress1, String ipAddress2)

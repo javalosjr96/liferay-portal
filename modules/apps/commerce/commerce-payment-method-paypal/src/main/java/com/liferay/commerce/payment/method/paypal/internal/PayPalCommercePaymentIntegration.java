@@ -36,6 +36,7 @@ import com.liferay.portal.kernel.model.Region;
 import com.liferay.portal.kernel.settings.GroupServiceSettingsLocator;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
+import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.Portal;
 import com.liferay.portal.kernel.util.ResourceBundleUtil;
 import com.liferay.portal.kernel.util.URLCodec;
@@ -80,6 +81,10 @@ import java.io.IOException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+
+import java.nio.charset.StandardCharsets;
+
+import java.security.MessageDigest;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -262,6 +267,32 @@ public class PayPalCommercePaymentIntegration
 	public int getPaymentIntegrationType() {
 		return CommercePaymentIntegrationConstants.
 			TYPE_INTERNAL_ONLINE_REDIRECT;
+	}
+
+	@Override
+	public boolean isValid(
+			HttpServletRequest httpServletRequest,
+			CommercePaymentEntry commercePaymentEntry)
+		throws PortalException {
+
+		if (commercePaymentEntry.getPaymentStatus() !=
+				CommercePaymentEntryConstants.STATUS_CREATED) {
+
+			return true;
+		}
+
+		String token = ParamUtil.getString(httpServletRequest, "token");
+		String transactionCode = commercePaymentEntry.getTransactionCode();
+
+		if (Validator.isBlank(token) || Validator.isBlank(transactionCode) ||
+			!MessageDigest.isEqual(
+				token.getBytes(StandardCharsets.UTF_8),
+				transactionCode.getBytes(StandardCharsets.UTF_8))) {
+
+			return false;
+		}
+
+		return true;
 	}
 
 	@Override

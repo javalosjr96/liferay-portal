@@ -64,6 +64,7 @@ export class CommerceThemeMiniumCatalogPage {
 	) => Locator;
 	readonly productCardAddToCartButton: (productName: string) => Locator;
 	readonly productCardAddToWishListButton: (productName: string) => Locator;
+	readonly productCardCompareCheckbox: (productName: string) => Locator;
 	readonly productCardViewAllVariantsButton: (productName: string) => Locator;
 	readonly productCardFragment: Locator;
 	readonly productCardFragmentAddToCartButton: (
@@ -111,6 +112,7 @@ export class CommerceThemeMiniumCatalogPage {
 	) => Locator;
 	readonly productCards: Locator;
 	readonly productLink: (productName: string) => Locator;
+	readonly userNavName: Locator;
 
 	constructor(page: Page) {
 		this.accountSelectorAccount = (accountName: string) =>
@@ -211,7 +213,7 @@ export class CommerceThemeMiniumCatalogPage {
 			.first();
 		this.globalSearchBarInput = page
 			.locator('#search-bar')
-			.getByPlaceholder('Search');
+			.getByRole('textbox');
 		this.globalSearchBarCommerceItemLink = (text) =>
 			page.getByRole('link', {name: text});
 		this.globalSearchBarCommerceOrderLink = (
@@ -253,6 +255,11 @@ export class CommerceThemeMiniumCatalogPage {
 			this.productCard(productName).getByRole('button', {
 				exact: true,
 				name: 'Add to List',
+			});
+		this.productCardCompareCheckbox = (productName: string) =>
+			this.productCard(productName).getByRole('checkbox', {
+				exact: true,
+				name: 'Compare',
 			});
 		this.productCardViewAllVariantsButton = (productName: string) =>
 			this.productCard(productName).getByRole('button', {
@@ -323,6 +330,7 @@ export class CommerceThemeMiniumCatalogPage {
 				exact: true,
 				name: productName,
 			});
+		this.userNavName = page.locator('.minium-user-nav__name');
 	}
 
 	getProductMinQuantity(

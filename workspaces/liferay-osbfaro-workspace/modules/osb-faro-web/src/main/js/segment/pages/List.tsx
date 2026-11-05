@@ -7,10 +7,13 @@ import ClayDropDown, {Align} from '@clayui/drop-down';
 import ClayIcon from 'shared/components/Icon';
 import ClayLink from '@clayui/link';
 import CrossPageSelect from 'shared/hoc/CrossPageSelect';
+import DataValue from 'shared/components/DataValue';
 import LinkCell from 'shared/components/table/cell-components/LinkCell';
 import getCN from 'classnames';
 import Nav from 'shared/components/Nav';
 import NoResultsDisplay from 'shared/components/NoResultsDisplay';
+import ManageSegmentNotificationsModal from 'shared/components/modals/ManageSegmentNotificationsModal';
+import UnassignedSegmentsModal from 'shared/components/modals/unassigned-segments-modal';
 import React, {useContext, useEffect, useRef, useState} from 'react';
 import RowActions from 'shared/components/RowActions';
 import SearchableEntityTable from 'shared/components/SearchableEntityTable';
@@ -27,10 +30,6 @@ import {
 	withSelectionProvider,
 } from 'shared/context/selection';
 import {ALERT_CONFIG_MAP, AlertTypes} from 'shared/components/Alert';
-import {close, modalTypes, open} from 'shared/actions/modals';
-import {FilterByType} from 'shared/types';
-import {compose} from 'shared/hoc';
-import {connect, ConnectedProps} from 'react-redux';
 import {createOrderIOMap} from 'shared/util/pagination';
 import {
 	DATE_MODIFIED,
@@ -69,22 +68,13 @@ import {
 import {setUriQueryValues} from 'shared/util/router';
 import {sub} from 'shared/util/lang';
 import {toThousands} from 'shared/util/numbers';
+import {useModal} from '@clayui/modal';
 import {useChannelContext} from 'shared/context/channel';
 import {useCurrentUser} from 'shared/hooks/useCurrentUser';
 import {useDeleteSegments} from 'segment/hooks/useDeleteSegments';
 import {useLDPEnabled} from 'shared/hooks/useLDPEnabled';
 import {useQueryPagination} from 'shared/hooks/useQueryPagination';
 import {useRequest} from 'shared/hooks/useRequest';
-
-export interface FetchSegmentsParams {
-	channelId: string;
-	delta?: number;
-	filterBy: FilterByType;
-	groupId: string;
-	orderIOMap: OrderedMap<string, OrderParams>;
-	page: number;
-	query: string;
-}
 
 function fetchDisabledSegments(
 	channelId: string,
@@ -100,11 +90,7 @@ function fetchDisabledSegments(
 	});
 }
 
-const connector = connect(null, {close, open});
-
-type PropsFromRedux = ConnectedProps<typeof connector>;
-
-interface IListProps extends PropsFromRedux {
+interface IListProps {
 	channelId: string;
 	groupId: string;
 	history: any;
@@ -130,16 +116,25 @@ const SEGMENT_TYPES_LABEL_MAP = {
 const isMembershipProcessing = (lastMembershipUpdateDate: number | null) =>
 	isNil(lastMembershipUpdateDate);
 
-const getMembershipLabel = (count: number, accountSegment: boolean) => {
-	if (!count) {
-		return '-';
-	}
-
+const getMembershipLabel = (
+	count: number,
+	accountSegment: boolean,
+	processing: boolean
+) => {
 	const membershipLabel = accountSegment
 		? Liferay.Language.get('x-accounts')
 		: Liferay.Language.get('x-individuals');
 
-	return sub(membershipLabel.toLowerCase(), [toThousands(count)]);
+	return (
+		<DataValue
+			format={(value) =>
+				sub(membershipLabel.toLowerCase(), [toThousands(value)])
+			}
+			processing={processing}
+			type="count"
+			value={count}
+		/>
+	);
 };
 
 const FILTER_BY_OPTIONS = [
@@ -206,17 +201,15 @@ const ORDER_BY_OPTIONS = [
 	},
 ];
 
-export const List: React.FC<IListProps> = ({
-	channelId,
-	close,
-	groupId,
-	history,
-	open,
-}) => {
+export const List: React.FC<IListProps> = ({channelId, groupId, history}) => {
 	const currentUser = useCurrentUser();
 	const LDPEnabled = useLDPEnabled({groupId});
 	const {selectedChannel} = useChannelContext();
-	const deleteSegments = useDeleteSegments(groupId);
+	const {deleteSegments, deleteSegmentsModal} = useDeleteSegments(groupId);
+	const notificationsModal = useModal();
+	const unassignedModal = useModal();
+
+	const [notificationsSegmentId, setNotificationsSegmentId] = useState('');
 	const _tableRef = useRef<HTMLDivElement & SearchableEntityTable>();
 
 	const {selectedItems, selectionDispatch} = useSelectionContext();
@@ -318,16 +311,7 @@ export const List: React.FC<IListProps> = ({
 	];
 
 	const handleUnassignedSegmentsAlert = () => {
-		const openModal = () => {
-			open(
-				modalTypes.UNASSIGNED_SEGMENTS_MODAL,
-				{
-					groupId,
-					onClose: close,
-				},
-				{closeOnBlur: false}
-			);
-		};
+		const openModal = () => unassignedModal.onOpenChange(true);
 
 		return {
 			message: sub(
@@ -417,12 +401,11 @@ export const List: React.FC<IListProps> = ({
 			{
 				iconSymbol: 'bell-on',
 				label: Liferay.Language.get('manage-notifications'),
-				onClick: () =>
-					open(modalTypes.MANAGE_SEGMENT_NOTIFICATIONS_MODAL, {
-						groupId,
-						onClose: close,
-						segmentId: id,
-					}),
+				onClick: () => {
+					setNotificationsSegmentId(id);
+
+					notificationsModal.onOpenChange(true);
+				},
 			},
 			{
 				className: 'text-danger',
@@ -720,18 +703,15 @@ export const List: React.FC<IListProps> = ({
 										return (
 											<td className="table-cell-expand">
 												<div className="text-truncate text-right">
-													{isMembershipProcessing(
-														lastMembershipUpdateDate
-													)
-														? Liferay.Language.get(
-																'processing'
-															)
-														: getMembershipLabel(
-																accountSegment
-																	? accountsCount
-																	: individualCount,
-																accountSegment
-															)}
+													{getMembershipLabel(
+														accountSegment
+															? accountsCount
+															: individualCount,
+														accountSegment,
+														isMembershipProcessing(
+															lastMembershipUpdateDate
+														)
+													)}
 												</div>
 											</td>
 										);
@@ -747,19 +727,10 @@ export const List: React.FC<IListProps> = ({
 												| number
 												| null;
 										};
-									}) =>
-										isMembershipProcessing(
-											item.data.lastMembershipUpdateDate
-										) ? (
-											<td className={item.className}>
-												{Liferay.Language.get(
-													'processing'
-												)}
-											</td>
-										) : (
-											<DateCell
-												{...item}
-												dateFormatter={(
+									}) => (
+										<td className={item.className}>
+											<DataValue
+												format={(
 													date: string | number
 												) =>
 													formatDateToTimeZone(
@@ -767,9 +738,17 @@ export const List: React.FC<IListProps> = ({
 														getCustomDateTimeFormat()
 													)
 												}
-												datePath="lastMembershipUpdateDate"
+												processing={isMembershipProcessing(
+													item.data
+														.lastMembershipUpdateDate
+												)}
+												value={
+													item.data
+														.lastMembershipUpdateDate
+												}
 											/>
-										),
+										</td>
+									),
 									className: 'table-column-text-start',
 									label: Liferay.Language.get(
 										'last-membership-update'
@@ -854,7 +833,26 @@ export const List: React.FC<IListProps> = ({
 					</Card.Body>
 				</Card>
 			</BasePage.Body>
+
+			{deleteSegmentsModal}
+
+			{unassignedModal.open && (
+				<UnassignedSegmentsModal
+					groupId={groupId}
+					observer={unassignedModal.observer}
+					onClose={() => unassignedModal.onOpenChange(false)}
+				/>
+			)}
+
+			{notificationsModal.open && (
+				<ManageSegmentNotificationsModal
+					groupId={groupId}
+					observer={notificationsModal.observer}
+					onClose={() => notificationsModal.onOpenChange(false)}
+					segmentId={notificationsSegmentId}
+				/>
+			)}
 		</BasePage>
 	);
 };
-export default compose(connector, withSelectionProvider)(List);
+export default withSelectionProvider(List);

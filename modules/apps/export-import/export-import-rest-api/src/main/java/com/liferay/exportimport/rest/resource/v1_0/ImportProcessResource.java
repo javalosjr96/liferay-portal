@@ -7,6 +7,7 @@ package com.liferay.exportimport.rest.resource.v1_0;
 
 import com.liferay.exportimport.rest.dto.v1_0.ImportProcess;
 import com.liferay.exportimport.rest.dto.v1_0.ImportProcessRequest;
+import com.liferay.exportimport.rest.dto.v1_0.InstanceImportProcessRequest;
 import com.liferay.exportimport.rest.dto.v1_0.ProcessProgress;
 import com.liferay.portal.kernel.service.GroupLocalService;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
@@ -74,19 +75,20 @@ public interface ImportProcessResource {
 
 	public Page<ImportProcess> getSiteImportProcessesPage(
 			String siteExternalReferenceCode, Long creatorId, String portletId,
-			String search, Integer status, Pagination pagination,
+			String search, String sitePageExternalReferenceCode, Integer status,
+			Pagination pagination,
 			com.liferay.portal.kernel.search.Sort[] sorts)
 		throws Exception;
 
 	public ImportProcess postAssetLibraryImportProcess(
-			String assetLibraryExternalReferenceCode, Long plid,
-			String portletId, ImportProcessRequest importProcessRequest)
+			String assetLibraryExternalReferenceCode, String portletId,
+			ImportProcessRequest importProcessRequest)
 		throws Exception;
 
 	public Response postAssetLibraryImportProcessBatch(
-			String assetLibraryExternalReferenceCode, Long plid,
-			String portletId, ImportProcessRequest importProcessRequest,
-			String callbackURL, Object object)
+			String assetLibraryExternalReferenceCode, String portletId,
+			ImportProcessRequest importProcessRequest, String callbackURL,
+			Object object)
 		throws Exception;
 
 	public Response postAssetLibraryImportProcessesPageExportBatch(
@@ -97,14 +99,14 @@ public interface ImportProcessResource {
 		throws Exception;
 
 	public ImportProcess postImportProcess(
-			Long plid, String portletId,
-			ImportProcessRequest importProcessRequest)
+			String portletId,
+			InstanceImportProcessRequest instanceImportProcessRequest)
 		throws Exception;
 
 	public Response postImportProcessBatch(
-			Long plid, String portletId,
-			ImportProcessRequest importProcessRequest, String callbackURL,
-			Object object)
+			String portletId,
+			InstanceImportProcessRequest instanceImportProcessRequest,
+			String callbackURL, Object object)
 		throws Exception;
 
 	public Response postImportProcessesPageExportBatch(
@@ -114,19 +116,21 @@ public interface ImportProcessResource {
 		throws Exception;
 
 	public ImportProcess postSiteImportProcess(
-			String siteExternalReferenceCode, Long plid, String portletId,
+			String siteExternalReferenceCode, String portletId,
+			String sitePageExternalReferenceCode,
 			ImportProcessRequest importProcessRequest)
 		throws Exception;
 
 	public Response postSiteImportProcessBatch(
-			String siteExternalReferenceCode, Long plid, String portletId,
+			String siteExternalReferenceCode, String portletId,
+			String sitePageExternalReferenceCode,
 			ImportProcessRequest importProcessRequest, String callbackURL,
 			Object object)
 		throws Exception;
 
 	public Response postSiteImportProcessesPageExportBatch(
 			String siteExternalReferenceCode, Long creatorId, String portletId,
-			String search, Integer status,
+			String search, String sitePageExternalReferenceCode, Integer status,
 			com.liferay.portal.kernel.search.Sort[] sorts, String callbackURL,
 			String contentType, String fieldNames)
 		throws Exception;
@@ -227,4 +231,4 @@ public interface ImportProcessResource {
 	}
 
 }
-// LIFERAY-REST-BUILDER-HASH:-1390392627
+// LIFERAY-REST-BUILDER-HASH:209619033

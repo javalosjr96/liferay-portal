@@ -6,6 +6,7 @@
 package com.liferay.osb.faro.rest.internal.resource.v1_0;
 
 import com.liferay.osb.faro.engine.client.ContactsEngineClient;
+import com.liferay.osb.faro.engine.client.exception.NoSuchEntryException;
 import com.liferay.osb.faro.engine.client.model.AccountLifecycle;
 import com.liferay.osb.faro.engine.client.model.AccountLifecycleStage;
 import com.liferay.osb.faro.engine.client.model.Results;
@@ -24,8 +25,9 @@ import com.liferay.portal.vulcan.dto.converter.DTOConverter;
 import com.liferay.portal.vulcan.pagination.Page;
 import com.liferay.portal.vulcan.pagination.Pagination;
 
+import jakarta.ws.rs.BadRequestException;
+
 import java.util.List;
-import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -44,13 +46,20 @@ public class AccountResourceImpl extends BaseAccountResourceImpl {
 	public Account getWorkspaceGroupAccount(Long groupId, String accountId)
 		throws Exception {
 
+		com.liferay.osb.faro.engine.client.model.Account account =
+			_contactsEngineClient.getAccount(
+				_faroProjectLocalService.getFaroProjectByGroupId(groupId),
+				accountId, null);
+
+		if ((account == null) || Validator.isNull(account.getId())) {
+			throw new NoSuchEntryException();
+		}
+
 		return _accountDTOConverter.toDTO(
 			new FaroDTOConverterContext(
 				contextAcceptLanguage.isAcceptAllLanguages(), accountId,
 				contextAcceptLanguage.getPreferredLocale()),
-			_contactsEngineClient.getAccount(
-				_faroProjectLocalService.getFaroProjectByGroupId(groupId),
-				accountId, null));
+			account);
 	}
 
 	@Override
@@ -97,12 +106,12 @@ public class AccountResourceImpl extends BaseAccountResourceImpl {
 		Results<AccountLifecycle> results =
 			_contactsEngineClient.getAccountLifecycles(
 				faroProject, GetterUtil.getLong(channelId), Boolean.TRUE, null,
-				1, 1, null);
+				null, 1, 1, null);
 
 		List<AccountLifecycle> accountLifecycles = results.getItems();
 
 		if (ListUtil.isEmpty(accountLifecycles)) {
-			throw new IllegalArgumentException(
+			throw new BadRequestException(
 				"No default account lifecycle is configured for the channel");
 		}
 
@@ -120,29 +129,20 @@ public class AccountResourceImpl extends BaseAccountResourceImpl {
 		AccountLifecycle accountLifecycle = _getAccountLifecycle(
 			accountLifecycleId, channelId, faroProject);
 
-		List<AccountLifecycleStage> accountLifecycleStages =
-			accountLifecycle.getStages();
+		AccountLifecycleStage accountLifecycleStage =
+			accountLifecycle.getAccountLifecycleStage(lifecycleStage);
 
-		if (ListUtil.isNotEmpty(accountLifecycleStages)) {
-			for (AccountLifecycleStage accountLifecycleStage :
-					accountLifecycleStages) {
-
-				if (Objects.equals(
-						accountLifecycleStage.getStageType(), lifecycleStage)) {
-
-					return StringBundler.concat(
-						"(lifecycleStatus@",
-						accountLifecycle.getExternalReferenceCode(), " in ('",
-						accountLifecycleStage.getExternalReferenceCode(),
-						"'))");
-				}
-			}
+		if (accountLifecycleStage != null) {
+			return StringBundler.concat(
+				"(lifecycleStatus@",
+				accountLifecycle.getExternalReferenceCode(), " in ('",
+				accountLifecycleStage.getExternalReferenceCode(), "'))");
 		}
 
-		throw new IllegalArgumentException(
+		throw new BadRequestException(
 			StringBundler.concat(
-				"No lifecycle stage was found with the name \"", lifecycleStage,
-				"\""));
+				"No account lifecycle stage was found with the name \"",
+				lifecycleStage, "\""));
 	}
 
 	@Reference(

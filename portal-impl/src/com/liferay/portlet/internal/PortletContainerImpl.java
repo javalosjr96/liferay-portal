@@ -386,14 +386,16 @@ public class PortletContainerImpl implements PortletContainer {
 		}
 		finally {
 			if (themeDisplay != null) {
-				if (GroupLocalServiceUtil.fetchGroup(previousScopeGroupId) !=
-						null) {
+				if ((themeDisplay.getScopeGroupId() != previousScopeGroupId) &&
+					(GroupLocalServiceUtil.fetchGroup(previousScopeGroupId) !=
+						null)) {
 
 					themeDisplay.setScopeGroupId(previousScopeGroupId);
 				}
 
-				if (GroupLocalServiceUtil.fetchGroup(previousSiteGroupId) !=
-						null) {
+				if ((themeDisplay.getSiteGroupId() != previousSiteGroupId) &&
+					(GroupLocalServiceUtil.fetchGroup(previousSiteGroupId) !=
+						null)) {
 
 					themeDisplay.setSiteGroupId(previousSiteGroupId);
 				}
@@ -689,11 +691,19 @@ public class PortletContainerImpl implements PortletContainer {
 		long scopeGroupId = PortalUtil.getScopeGroupId(
 			httpServletRequest, portlet.getPortletId());
 
-		themeDisplay.setScopeGroupId(scopeGroupId);
-
-		long siteGroupId = 0;
+		if (scopeGroupId != themeDisplay.getScopeGroupId()) {
+			themeDisplay.setScopeGroupId(scopeGroupId);
+		}
 
 		Layout layout = (Layout)httpServletRequest.getAttribute(WebKeys.LAYOUT);
+
+		if (!layout.isTypeControlPanel() &&
+			(layout.getGroupId() == themeDisplay.getSiteGroupId())) {
+
+			return;
+		}
+
+		long siteGroupId = 0;
 
 		if (layout.isTypeControlPanel()) {
 			siteGroupId = PortalUtil.getSiteGroupId(scopeGroupId);
@@ -702,7 +712,9 @@ public class PortletContainerImpl implements PortletContainer {
 			siteGroupId = PortalUtil.getSiteGroupId(layout.getGroupId());
 		}
 
-		themeDisplay.setSiteGroupId(siteGroupId);
+		if (siteGroupId != themeDisplay.getSiteGroupId()) {
+			themeDisplay.setSiteGroupId(siteGroupId);
+		}
 	}
 
 	private void _processPublicRenderParameters(

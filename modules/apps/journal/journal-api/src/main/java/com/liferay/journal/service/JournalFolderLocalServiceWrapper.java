@@ -322,19 +322,6 @@ public class JournalFolderLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<JournalFolder> getCompanyFolders(
-		long companyId, int start, int end) {
-
-		return _journalFolderLocalService.getCompanyFolders(
-			companyId, start, end);
-	}
-
-	@Override
-	public int getCompanyFoldersCount(long companyId) {
-		return _journalFolderLocalService.getCompanyFoldersCount(companyId);
-	}
-
-	@Override
 	public java.util.List<com.liferay.dynamic.data.mapping.model.DDMStructure>
 			getDDMStructures(
 				long[] groupIds, long folderId, int restrictionType)
@@ -436,26 +423,11 @@ public class JournalFolderLocalServiceWrapper
 	}
 
 	@Override
-	public java.util.List<Object> getFoldersAndArticles(
-		long groupId, long folderId, int start, int end,
-		com.liferay.portal.kernel.util.OrderByComparator<?> orderByComparator) {
-
-		return _journalFolderLocalService.getFoldersAndArticles(
-			groupId, folderId, start, end, orderByComparator);
-	}
-
-	@Override
 	public int getFoldersAndArticlesCount(
 		long groupId, java.util.List<Long> folderIds, int status) {
 
 		return _journalFolderLocalService.getFoldersAndArticlesCount(
 			groupId, folderIds, status);
-	}
-
-	@Override
-	public int getFoldersAndArticlesCount(long groupId, long folderId) {
-		return _journalFolderLocalService.getFoldersAndArticlesCount(
-			groupId, folderId);
 	}
 
 	@Override
@@ -593,11 +565,6 @@ public class JournalFolderLocalServiceWrapper
 	@Override
 	public int getJournalFoldersCount() {
 		return _journalFolderLocalService.getJournalFoldersCount();
-	}
-
-	@Override
-	public java.util.List<JournalFolder> getNoAssetFolders() {
-		return _journalFolderLocalService.getNoAssetFolders();
 	}
 
 	/**
@@ -843,4 +810,4 @@ public class JournalFolderLocalServiceWrapper
 	private JournalFolderLocalService _journalFolderLocalService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:747465235
+// LIFERAY-SERVICE-BUILDER-HASH:-1791476286

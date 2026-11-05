@@ -121,6 +121,16 @@ describe('VerticalTimeline', () => {
 			expect(screen.queryByText('ind-1')).toBeNull();
 		});
 
+		it('shows no data for a known individual without name or id', () => {
+			const {container} = renderTimeline({
+				items: [{...INDIVIDUAL_ITEM, individualName: ''}]
+			});
+
+			expect(
+				container.querySelector('.individual-title .text-secondary')
+			).toHaveTextContent('–');
+		});
+
 		it('is not expandable', () => {
 			const {container} = renderTimeline({items: [INDIVIDUAL_ITEM]});
 
@@ -171,6 +181,44 @@ describe('VerticalTimeline', () => {
 				expect.stringContaining('event-count-pill')
 			]);
 			expect(details[2]).toHaveTextContent('2');
+		});
+
+		it('shows 0 in the event count of a session without events', () => {
+			const {container} = renderTimeline({
+				items: [{...SESSION_ITEM, totalEvents: 0}]
+			});
+
+			expect(
+				container.querySelector('.session-row .event-count-pill')
+			).toHaveTextContent('0');
+		});
+
+		it('shows missing payload values as no data and zero values as 0', () => {
+			const {container} = renderTimeline({
+				items: [
+					{
+						...SESSION_ITEM,
+						attributes: {
+							...SESSION_ITEM.attributes,
+							languageId: null,
+							screenWidth: 0
+						}
+					}
+				]
+			});
+
+			fireEvent.click(
+				container.querySelector('.session-row .payload-button')
+			);
+
+			const languageIdRow = screen.getByText('languageId').closest('tr');
+			const screenWidthRow = screen.getByText('screenWidth').closest('tr');
+
+			expect(
+				languageIdRow.querySelector('.text-secondary')
+			).toHaveTextContent('–');
+			expect(screenWidthRow).toHaveTextContent('0');
+			expect(screenWidthRow.querySelector('.text-secondary')).toBeNull();
 		});
 
 		it('shows "in progress" when the session has no end time', () => {
@@ -554,6 +602,82 @@ describe('VerticalTimeline', () => {
 			expect(
 				screen.getByText('utm_medium').closest('tr')
 			).toHaveTextContent('email');
+		});
+
+		describe('campaign', () => {
+			const CAMPAIGN_URL =
+				'/workspace/23/456/campaigns/7013a000002QwErtAAG';
+
+			const expandCampaignEvent = () => {
+				const {container} = renderTimeline({
+					items: [
+						{
+							...EVENT_ITEM,
+							attributes: {
+								...EVENT_ITEM.attributes,
+								acquisitionProperties: {utm_medium: 'email'},
+								campaign: {
+									campaignName: 'Spring Compactor Promo 2026',
+									campaignUrl: CAMPAIGN_URL
+								}
+							}
+						}
+					]
+				});
+
+				fireEvent.click(
+					container.querySelector('.event-row .payload-button')
+				);
+
+				return container;
+			};
+
+			it('shows the campaign in a table between the attributes and the utm parameters', () => {
+				const container = expandCampaignEvent();
+
+				expect(
+					Array.from(
+						container.querySelectorAll('.payload-table-title'),
+						(title) => title.textContent
+					)
+				).toEqual(['Event Attributes', 'Campaign', 'UTM Parameters']);
+			});
+
+			it('links the campaign name to the campaign page', () => {
+				expandCampaignEvent();
+
+				expect(
+					screen.getByRole('link', {
+						name: 'Spring Compactor Promo 2026'
+					})
+				).toHaveAttribute('href', CAMPAIGN_URL);
+			});
+
+			it('shows no campaign table for an event without a campaign', () => {
+				const container = expandFirstEvent();
+
+				expect(
+					Array.from(
+						container.querySelectorAll('.payload-table-title'),
+						(title) => title.textContent
+					)
+				).toEqual(['Event Attributes']);
+			});
+
+			it('shows the campaign as its own key in the code view', () => {
+				const container = expandCampaignEvent();
+
+				fireEvent.click(screen.getByText('Code'));
+
+				expect(
+					JSON.parse(
+						container.querySelector('.payload-code').textContent
+					).campaign
+				).toEqual({
+					campaignName: 'Spring Compactor Promo 2026',
+					campaignUrl: CAMPAIGN_URL
+				});
+			});
 		});
 
 		const expandFirstEvent = () => {

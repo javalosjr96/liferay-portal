@@ -258,7 +258,9 @@ public class BatchEnginePortletDataHandlerUtil {
 			exportImportDescriptor,
 		List<String> filterStrings, PortletDataContext portletDataContext) {
 
-		if (Objects.equals(
+		if (ExportImportDateUtil.isRangeFromLastPublishDate(
+				portletDataContext) &&
+			Objects.equals(
 				exportImportDescriptor.getModelClassName(),
 				Layout.class.getName())) {
 

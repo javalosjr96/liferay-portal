@@ -12,6 +12,8 @@ import com.liferay.commerce.product.constants.CPActionKeys;
 import com.liferay.commerce.product.constants.CPAttachmentFileEntryConstants;
 import com.liferay.commerce.product.constants.CPConstants;
 import com.liferay.commerce.product.model.CPDefinition;
+import com.liferay.commerce.product.model.CPDefinitionOptionRel;
+import com.liferay.commerce.product.model.CPDefinitionOptionValueRel;
 import com.liferay.commerce.product.model.CProduct;
 import com.liferay.commerce.product.model.CommerceCatalog;
 import com.liferay.commerce.product.service.CPAttachmentFileEntryLocalService;
@@ -33,6 +35,7 @@ import com.liferay.petra.string.StringPool;
 import com.liferay.portal.configuration.test.util.CompanyConfigurationTemporarySwapper;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.json.JSONUtil;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.RoleConstants;
@@ -74,6 +77,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -172,6 +176,7 @@ public class AttachmentResourceTest extends BaseAttachmentResourceTestCase {
 		assertValid(postAttachment);
 
 		_testPostProductByExternalReferenceCodeImageWithFileEntryExternalReferenceCode();
+		_testPostProductByExternalReferenceCodeImageWithOptions();
 	}
 
 	@Override
@@ -819,6 +824,41 @@ public class AttachmentResourceTest extends BaseAttachmentResourceTestCase {
 		Assert.assertEquals(
 			fileEntry.getFileEntryId(),
 			GetterUtil.getLong(postAttachment.getFileEntryId()));
+	}
+
+	private void _testPostProductByExternalReferenceCodeImageWithOptions()
+		throws Exception {
+
+		CPDefinitionOptionRel cpDefinitionOptionRel =
+			CPTestUtil.addCPDefinitionOptionRel(
+				testGroup.getGroupId(), _cpDefinition.getCPDefinitionId(), true,
+				1);
+
+		List<CPDefinitionOptionValueRel> cpDefinitionOptionValueRels =
+			cpDefinitionOptionRel.getCPDefinitionOptionValueRels();
+
+		CPDefinitionOptionValueRel cpDefinitionOptionValueRel =
+			cpDefinitionOptionValueRels.get(0);
+
+		Attachment randomAttachment = _randomImageAttachment();
+
+		randomAttachment.setOptions(
+			HashMapBuilder.put(
+				cpDefinitionOptionRel.getKey(),
+				cpDefinitionOptionValueRel.getKey()
+			).build());
+
+		Attachment postAttachment =
+			attachmentResource.postProductByExternalReferenceCodeImage(
+				_cProduct.getExternalReferenceCode(), randomAttachment);
+
+		Map<String, String> options = postAttachment.getOptions();
+
+		Assert.assertEquals(
+			JSONUtil.put(
+				cpDefinitionOptionValueRel.getKey()
+			).toString(),
+			options.get(cpDefinitionOptionRel.getKey()));
 	}
 
 	private void _testPostProductIdAttachmentByUrlWithLocalNetworkURL()

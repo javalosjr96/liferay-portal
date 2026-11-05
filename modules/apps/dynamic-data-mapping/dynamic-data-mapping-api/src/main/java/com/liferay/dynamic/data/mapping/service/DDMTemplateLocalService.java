@@ -576,21 +576,6 @@ public interface DDMTemplateLocalService
 	public DDMTemplate getTemplate(long templateId) throws PortalException;
 
 	/**
-	 * Returns the template matching the group and template key.
-	 *
-	 * @param groupId the primary key of the group
-	 * @param classNameId the primary key of the class name for the template's
-	 related model
-	 * @param templateKey the unique string identifying the template
-	 * @return the matching template
-	 * @throws PortalException if a portal exception occurred
-	 */
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public DDMTemplate getTemplate(
-			long groupId, long classNameId, String templateKey)
-		throws PortalException;
-
-	/**
 	 * Returns the template matching the group and template key, optionally
 	 * searching ancestor sites (that have sharing enabled) and global scoped
 	 * sites.
@@ -616,10 +601,6 @@ public interface DDMTemplateLocalService
 	public DDMTemplate getTemplate(
 			long groupId, long classNameId, String templateKey,
 			boolean includeAncestorTemplates)
-		throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public DDMTemplate getTemplateBySmallImageId(long smallImageId)
 		throws PortalException;
 
 	/**
@@ -762,22 +743,6 @@ public interface DDMTemplateLocalService
 		OrderByComparator<DDMTemplate> orderByComparator);
 
 	/**
-	 * Returns the number of templates matching the group, structure class name
-	 * ID, and status, including Generic Templates.
-	 *
-	 * @param groupId the primary key of the group
-	 * @param structureClassNameId the primary key of the class name for the
-	 template's related structure
-	 * @param status the template's workflow status. For more information see
-	 {@link WorkflowConstants} for constants starting with the
-	 "STATUS_" prefix.
-	 * @return the number of matching templates
-	 */
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int getTemplatesByStructureClassNameIdCount(
-		long groupId, long structureClassNameId, int status);
-
-	/**
 	 * Returns the number of templates belonging to the group.
 	 *
 	 * @param groupId the primary key of the group
@@ -809,11 +774,6 @@ public interface DDMTemplateLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getTemplatesCount(long groupId, long classNameId, long classPK);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int getTemplatesCount(
-		long companyId, long[] groupIds, long[] classNameIds, long[] classPKs,
-		long resourceClassNameId);
 
 	/**
 	 * Returns the number of templates matching the group IDs, class name ID,
@@ -1259,4 +1219,4 @@ public interface DDMTemplateLocalService
 		throws E;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1140471031
+// LIFERAY-SERVICE-BUILDER-HASH:-1250771378

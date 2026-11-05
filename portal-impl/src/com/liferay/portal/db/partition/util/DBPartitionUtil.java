@@ -64,6 +64,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.sql.DataSource;
 
@@ -347,6 +349,47 @@ public class DBPartitionUtil {
 		return DATABASE_EXPORTED_PARTITION_SCHEMA_NAME_PREFIX + companyId;
 	}
 
+	public static String getExportedVirtualHostname(long companyId)
+		throws PortalException {
+
+		DataSource dataSource = InfrastructureUtil.getDataSource();
+
+		_initializeDBPartitionDB(dataSource);
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					_defaultCompanyId);
+
+			Connection connection = dataSource.getConnection()) {
+
+			_checkImportDBPartition(connection, companyId);
+
+			try (PreparedStatement preparedStatement =
+					connection.prepareStatement(
+						StringBundler.concat(
+							"select hostname from ",
+							getExportedPartitionName(companyId),
+							".VirtualHost where companyId = ? and layoutSetId ",
+							"= 0 and ctCollectionId = 0 and ",
+							"defaultVirtualHost = ?"))) {
+
+				preparedStatement.setLong(1, companyId);
+				preparedStatement.setBoolean(2, true);
+
+				try (ResultSet resultSet = preparedStatement.executeQuery()) {
+					if (resultSet.next()) {
+						return resultSet.getString("hostname");
+					}
+
+					return null;
+				}
+			}
+		}
+		catch (SQLException sqlException) {
+			throw new PortalException(sqlException);
+		}
+	}
+
 	public static String getPartitionKey(Object key) {
 		if (!PropsValues.DATABASE_PARTITION_ENABLED) {
 			return key.toString();
@@ -550,9 +593,15 @@ public class DBPartitionUtil {
 	}
 
 	private static void _addDBPartition(Connection connection, long companyId)
-		throws PortalException {
+		throws PortalException, SQLException {
 
 		String partitionName = getPartitionName(companyId);
+
+		if (_dbPartitionDB.existsPartition(connection, partitionName)) {
+			throw new IllegalArgumentException(
+				StringBundler.concat(
+					"Database partition ", partitionName, " already exists"));
+		}
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				_dbPartitionDB.getCreatePartitionSQL(
@@ -689,6 +738,28 @@ public class DBPartitionUtil {
 		}
 		catch (SQLException sqlException) {
 			throw new PortalException(sqlException);
+		}
+	}
+
+	private static void _checkImportDBPartition(
+			Connection connection, long companyId)
+		throws SQLException {
+
+		String targetPartitionName = getPartitionName(companyId);
+
+		if (_dbPartitionDB.existsPartition(connection, targetPartitionName)) {
+			throw new IllegalArgumentException(
+				StringBundler.concat(
+					"Database partition ", targetPartitionName,
+					" already exists"));
+		}
+
+		String sourcePartitionName = getExportedPartitionName(companyId);
+
+		if (!_dbPartitionDB.existsPartition(connection, sourcePartitionName)) {
+			throw new IllegalArgumentException(
+				"Unable to insert the database partition " +
+					sourcePartitionName + " because it does not exist");
 		}
 	}
 
@@ -1493,22 +1564,7 @@ public class DBPartitionUtil {
 		String targetPartitionName = getPartitionName(companyId);
 
 		try {
-			if (_dbPartitionDB.existsPartition(
-					connection, targetPartitionName)) {
-
-				throw new IllegalArgumentException(
-					StringBundler.concat(
-						"Database partition ", targetPartitionName,
-						" already exists"));
-			}
-
-			if (!_dbPartitionDB.existsPartition(
-					connection, sourcePartitionName)) {
-
-				throw new IllegalArgumentException(
-					"Unable to insert the database partition " +
-						sourcePartitionName + " because it does not exist");
-			}
+			_checkImportDBPartition(connection, companyId);
 
 			if (Validator.isNull(webId)) {
 				_validateWebId(connection, companyId, sourcePartitionName);
@@ -1676,6 +1732,13 @@ public class DBPartitionUtil {
 			_defaultPartitionName = _dbPartitionDB.getDefaultPartitionName(
 				connection);
 		}
+
+		_defaultPartitionNamePattern = Pattern.compile(
+			StringBundler.concat(
+				"(?<![\\w$])[`\"]?",
+				Pattern.quote(StringUtil.toLowerCase(_defaultPartitionName)),
+				"[`\"]?", _REGEX_SQL_WHITESPACE, "\\."),
+			Pattern.DOTALL);
 	}
 
 	private static boolean _isCopyableQuartzTable(String tableName) {
@@ -1849,26 +1912,23 @@ public class DBPartitionUtil {
 		throws CompanyVirtualHostException, SQLException {
 
 		String sql = StringBundler.concat(
-			"select VirtualHost1.hostname from ", partitionName,
-			".VirtualHost VirtualHost1 inner join ", _defaultPartitionName,
-			".VirtualHost VirtualHost2 on VirtualHost1.hostname = ",
-			"VirtualHost2.hostname where VirtualHost1.companyId = ? and ",
-			"VirtualHost1.ctCollectionId = 0 and VirtualHost2.ctCollectionId ",
-			"= 0");
+			"select hostname from ", partitionName,
+			".VirtualHost where companyId = ? and ctCollectionId = 0 and ",
+			"(hostname = ? or hostname in (select hostname from ",
+			_defaultPartitionName, ".VirtualHost where ctCollectionId = 0))");
 
 		if (Validator.isNotNull(virtualHostname)) {
-			sql = StringBundler.concat(
-				sql, " and not (VirtualHost1.layoutSetId = 0 and ",
-				"VirtualHost1.defaultVirtualHost = ?)");
+			sql += " and not (layoutSetId = 0 and defaultVirtualHost = ?)";
 		}
 
 		try (PreparedStatement preparedStatement = connection.prepareStatement(
 				sql)) {
 
 			preparedStatement.setLong(1, companyId);
+			preparedStatement.setString(2, virtualHostname);
 
 			if (Validator.isNotNull(virtualHostname)) {
-				preparedStatement.setBoolean(2, true);
+				preparedStatement.setBoolean(3, true);
 			}
 
 			try (ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -1933,6 +1993,23 @@ public class DBPartitionUtil {
 					}
 
 					if (count > 0) {
+						throw new UnsupportedOperationException(
+							"Unsupported SQL: " + sql);
+					}
+
+					Matcher quotedStringMatcher = _quotedStringPattern.matcher(
+						lowerCaseSQL);
+
+					String unquotedSQL = quotedStringMatcher.replaceAll("''");
+
+					Matcher defaultPartitionNameMatcher =
+						_defaultPartitionNamePattern.matcher(unquotedSQL);
+					Matcher setPartitionMatcher = _setPartitionPattern.matcher(
+						unquotedSQL);
+
+					if (defaultPartitionNameMatcher.find() ||
+						setPartitionMatcher.lookingAt()) {
+
 						throw new UnsupportedOperationException(
 							"Unsupported SQL: " + sql);
 					}
@@ -2018,6 +2095,9 @@ public class DBPartitionUtil {
 	private static final String _CLASS_NAME_PREFIX_CUSTOM_OBJECT_DEFINITION =
 		"com.liferay.object.model.ObjectDefinition#";
 
+	private static final String _REGEX_SQL_WHITESPACE =
+		"(?:\\s++|/\\*.*?\\*/|--[^\\n]*+|#[^\\n]*+)*+";
+
 	private static final String _TABLE_NAME_PREFIX_QUARTZ = GetterUtil.get(
 		PropsUtil.get("persisted.scheduler.org.quartz.jobStore.tablePrefix"),
 		"QUARTZ_");
@@ -2028,5 +2108,14 @@ public class DBPartitionUtil {
 	private static DBPartitionDB _dbPartitionDB;
 	private static volatile long _defaultCompanyId;
 	private static String _defaultPartitionName;
+	private static Pattern _defaultPartitionNamePattern;
+	private static final Pattern _quotedStringPattern = Pattern.compile(
+		"'(?:[^'\\\\]++|\\\\.|'')*+'");
+	private static final Pattern _setPartitionPattern = Pattern.compile(
+		StringBundler.concat(
+			_REGEX_SQL_WHITESPACE, "(?:use\\b|set\\b", _REGEX_SQL_WHITESPACE,
+			"(?:(?:local|session)\\b", _REGEX_SQL_WHITESPACE,
+			")?(?:schema|search_path)\\b)"),
+		Pattern.DOTALL);
 
 }

@@ -1,10 +1,6 @@
 $c: '.analytics-metrics';
 $tc: '.analytics-tooltip-chart';
 
-#{$c}-card .card-content-center {
-	padding-top: 0;
-}
-
 #{$c} {
 	width: 100%;
 
@@ -70,27 +66,5 @@ $tc: '.analytics-tooltip-chart';
 		&.font-weight-semibold {
 			color: $main;
 		}
-	}
-
-	.bb-axis-x {
-		transform: translateY(271px);
-	}
-
-	.bb-line-data-previous {
-		stroke-width: 2px;
-	}
-
-	.chart-root svg .bb-circles .bb-circle._expanded_ {
-		fill: $chartBlue !important;
-	}
-}
-
-// Min height to Custom Assets Metric Card
-
-.analytics-custom-metrics-card #{$c}-chart {
-	min-height: 436px;
-
-	.bb-axis-x {
-		transform: translateY(365px);
 	}
 }

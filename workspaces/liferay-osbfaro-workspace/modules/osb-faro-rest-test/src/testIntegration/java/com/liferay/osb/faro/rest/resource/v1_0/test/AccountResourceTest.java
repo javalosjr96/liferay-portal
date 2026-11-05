@@ -17,6 +17,8 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.ProxyUtil;
 import com.liferay.portal.vulcan.pagination.Pagination;
 
+import jakarta.ws.rs.BadRequestException;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -125,9 +127,9 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 		accountLifecycleStage.setExternalReferenceCode(
 			"stage-" + accountLifecycleId);
 		accountLifecycleStage.setId(accountLifecycleId + "_AT_RISK");
-		accountLifecycleStage.setStageType("AT_RISK");
+		accountLifecycleStage.setName("At Risk");
 
-		accountLifecycle.setStages(
+		accountLifecycle.setAccountLifecycleStages(
 			Collections.singletonList(accountLifecycleStage));
 
 		accountLifecycles.put(accountLifecycleId, accountLifecycle);
@@ -229,10 +231,11 @@ public class AccountResourceTest extends BaseAccountResourceTestCase {
 
 			Assert.fail();
 		}
-		catch (IllegalArgumentException illegalArgumentException) {
+		catch (BadRequestException badRequestException) {
 			Assert.assertEquals(
-				"No lifecycle stage was found with the name \"PIPELINE\"",
-				illegalArgumentException.getMessage());
+				"No account lifecycle stage was found with the name " +
+					"\"PIPELINE\"",
+				badRequestException.getMessage());
 		}
 	}
 

@@ -11,119 +11,69 @@ import {toDateFilterValues} from '../../../../src/main/resources/META-INF/resour
 
 describe('toDateFilterValues', () => {
 	it('defaults to the all range', () => {
-		expect(toDateFilterValues({})).toEqual({range: Range.All});
-
-		expect(toDateFilterValues({range: ['all']})).toEqual({
+		expect(toDateFilterValues(undefined, 'UTC')).toEqual({
 			range: Range.All,
 		});
 	});
 
 	it('maps the from last publish date range', () => {
-		expect(toDateFilterValues({range: ['fromLastPublishDate']})).toEqual({
-			range: Range.FromLastPublishDate,
-		});
+		expect(
+			toDateFilterValues({type: 'FromLastPublishDate'}, 'UTC')
+		).toEqual({range: Range.FromLastPublishDate});
 	});
 
 	it('maps the last hours to the matching option', () => {
-		expect(toDateFilterValues({last: ['24'], range: ['last']})).toEqual({
-			last: LastRange.H24,
-			range: Range.Last,
-		});
+		expect(
+			toDateFilterValues({hours: 24, type: 'LastHours'}, 'UTC')
+		).toEqual({last: LastRange.H24, range: Range.Last});
 
-		expect(toDateFilterValues({last: ['168'], range: ['last']})).toEqual({
-			last: LastRange.D7,
-			range: Range.Last,
-		});
+		expect(
+			toDateFilterValues({hours: 168, type: 'LastHours'}, 'UTC')
+		).toEqual({last: LastRange.D7, range: Range.Last});
 	});
 
 	it('maps unmapped last hours to the closest option', () => {
-		expect(toDateFilterValues({last: ['11'], range: ['last']})).toEqual({
-			last: LastRange.H12,
-			range: Range.Last,
-		});
+		expect(
+			toDateFilterValues({hours: 11, type: 'LastHours'}, 'UTC')
+		).toEqual({last: LastRange.H12, range: Range.Last});
 
-		expect(toDateFilterValues({last: ['31'], range: ['last']})).toEqual({
-			last: LastRange.H24,
-			range: Range.Last,
-		});
-
-		expect(toDateFilterValues({last: ['300'], range: ['last']})).toEqual({
-			last: LastRange.D7,
-			range: Range.Last,
-		});
+		expect(
+			toDateFilterValues({hours: 300, type: 'LastHours'}, 'UTC')
+		).toEqual({last: LastRange.D7, range: Range.Last});
 	});
 
 	it('falls back to the all range for unusable last hours', () => {
-		expect(toDateFilterValues({range: ['last']})).toEqual({
-			range: Range.All,
-		});
-
-		expect(toDateFilterValues({last: ['0'], range: ['last']})).toEqual({
-			range: Range.All,
-		});
+		expect(
+			toDateFilterValues({hours: 0, type: 'LastHours'}, 'UTC')
+		).toEqual({range: Range.All});
 	});
 
-	it('rebuilds the date range from the stored calendar fields', () => {
+	it('rebuilds the date range in the given time zone', () => {
 		expect(
-			toDateFilterValues({
-				endDateAmPm: ['0'],
-				endDateDay: ['20'],
-				endDateHour: ['9'],
-				endDateMinute: ['30'],
-				endDateMonth: ['9'],
-				endDateYear: ['2026'],
-				range: ['dateRange'],
-				startDateAmPm: ['1'],
-				startDateDay: ['22'],
-				startDateHour: ['3'],
-				startDateMinute: ['5'],
-				startDateMonth: ['7'],
-				startDateYear: ['2026'],
-			})
+			toDateFilterValues(
+				{
+					endDate: '2026-10-20T09:30:00Z',
+					startDate: '2026-08-22T13:05:00Z',
+					type: 'DateRange',
+				},
+				'Europe/Madrid'
+			)
 		).toEqual({
-			endDate: '2026-10-20 09:30',
+			endDate: '2026-10-20 11:30',
 			range: Range.DateRange,
 			startDate: '2026-08-22 15:05',
 		});
 	});
 
-	it('leaves the start bound empty when the server stored the epoch for an open start', () => {
-		const endDateParameters = {
-			endDateAmPm: ['0'],
-			endDateDay: ['20'],
-			endDateHour: ['9'],
-			endDateMinute: ['30'],
-			endDateMonth: ['9'],
-			endDateYear: ['2026'],
-			range: ['dateRange'],
-		};
-
+	it('leaves a missing bound of the date range empty', () => {
 		expect(
-			toDateFilterValues({
-				...endDateParameters,
-				startDateAmPm: ['0'],
-				startDateDay: ['1'],
-				startDateHour: ['0'],
-				startDateMinute: ['0'],
-				startDateMonth: ['0'],
-				startDateYear: ['1970'],
-			})
-		).toEqual({
-			endDate: '2026-10-20 09:30',
-			range: Range.DateRange,
-			startDate: '',
-		});
-
-		expect(
-			toDateFilterValues({
-				...endDateParameters,
-				startDateAmPm: ['1'],
-				startDateDay: ['31'],
-				startDateHour: ['7'],
-				startDateMinute: ['0'],
-				startDateMonth: ['11'],
-				startDateYear: ['1969'],
-			})
+			toDateFilterValues(
+				{
+					endDate: '2026-10-20T09:30:00Z',
+					type: 'DateRange',
+				},
+				'UTC'
+			)
 		).toEqual({
 			endDate: '2026-10-20 09:30',
 			range: Range.DateRange,
@@ -131,17 +81,15 @@ describe('toDateFilterValues', () => {
 		});
 	});
 
-	it('ignores an unreadable year rather than building a broken date', () => {
+	it('ignores an unreadable date rather than building a broken date', () => {
 		expect(
-			toDateFilterValues({
-				range: ['dateRange'],
-				startDateAmPm: ['1'],
-				startDateDay: ['22'],
-				startDateHour: ['3'],
-				startDateMinute: ['5'],
-				startDateMonth: ['7'],
-				startDateYear: ['not-a-year'],
-			})
+			toDateFilterValues(
+				{
+					startDate: 'not-a-date',
+					type: 'DateRange',
+				},
+				'UTC'
+			)
 		).toEqual({
 			endDate: '',
 			range: Range.DateRange,

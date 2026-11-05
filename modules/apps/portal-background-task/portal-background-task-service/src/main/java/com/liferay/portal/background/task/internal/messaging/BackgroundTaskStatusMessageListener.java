@@ -11,6 +11,8 @@ import com.liferay.portal.background.task.internal.BackgroundTaskImpl;
 import com.liferay.portal.background.task.internal.lock.helper.BackgroundTaskLockHelper;
 import com.liferay.portal.background.task.model.BackgroundTask;
 import com.liferay.portal.background.task.service.BackgroundTaskLocalService;
+import com.liferay.portal.kernel.backgroundtask.BackgroundTaskExecutor;
+import com.liferay.portal.kernel.backgroundtask.BackgroundTaskExecutorRegistryUtil;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskStatus;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskStatusMessageTranslator;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskStatusRegistry;
@@ -37,6 +39,7 @@ import com.liferay.portal.kernel.util.Validator;
 import java.io.Serializable;
 
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * @author Michael C. Han
@@ -66,7 +69,9 @@ public class BackgroundTaskStatusMessageListener extends BaseMessageListener {
 
 		int status = message.getInteger("status");
 
-		if (status == BackgroundTaskConstants.STATUS_CANCELLED) {
+		if ((status == BackgroundTaskConstants.STATUS_CANCELLED) ||
+			(status == BackgroundTaskConstants.STATUS_COMPLETED_WITH_ERRORS)) {
+
 			_executeBackgroundTasks(message);
 		}
 		else if (status == BackgroundTaskConstants.STATUS_FAILED) {
@@ -83,7 +88,8 @@ public class BackgroundTaskStatusMessageListener extends BaseMessageListener {
 						_backgroundTaskLocalService.fetchBackgroundTask(
 							backgroundTaskId)))) {
 
-				_executeBackgroundTasks(message);
+				_backgroundTaskLocalService.resumeBackgroundTask(
+					backgroundTaskId);
 			}
 		}
 		else if (status == BackgroundTaskConstants.STATUS_SUCCESSFUL) {
@@ -142,22 +148,55 @@ public class BackgroundTaskStatusMessageListener extends BaseMessageListener {
 					taskExecutorClassName);
 		}
 
-		BackgroundTask backgroundTask =
-			_backgroundTaskLocalService.fetchFirstBackgroundTask(
-				taskExecutorClassName, BackgroundTaskConstants.STATUS_QUEUED);
+		String lockKey = _getLockKey(message);
 
-		if (backgroundTask == null) {
-			if (_log.isDebugEnabled()) {
-				_log.debug(
-					"No additional queued background tasks for " +
-						taskExecutorClassName);
+		for (BackgroundTask backgroundTask :
+				_backgroundTaskLocalService.getBackgroundTasks(
+					taskExecutorClassName,
+					BackgroundTaskConstants.STATUS_QUEUED)) {
+
+			if ((lockKey != null) &&
+				!Objects.equals(
+					lockKey,
+					_backgroundTaskLockHelper.getLockKey(
+						new BackgroundTaskImpl(backgroundTask)))) {
+
+				continue;
 			}
+
+			_backgroundTaskLocalService.resumeBackgroundTask(
+				backgroundTask.getBackgroundTaskId());
 
 			return;
 		}
 
-		_backgroundTaskLocalService.resumeBackgroundTask(
-			backgroundTask.getBackgroundTaskId());
+		if (_log.isDebugEnabled()) {
+			_log.debug(
+				"There are no additional queued background tasks for " +
+					taskExecutorClassName);
+		}
+	}
+
+	private String _getLockKey(Message message) {
+		BackgroundTask backgroundTask =
+			_backgroundTaskLocalService.fetchBackgroundTask(
+				message.getLong(
+					BackgroundTaskConstants.MESSAGE_KEY_BACKGROUND_TASK_ID));
+
+		if (backgroundTask == null) {
+			return null;
+		}
+
+		BackgroundTaskExecutor backgroundTaskExecutor =
+			BackgroundTaskExecutorRegistryUtil.getBackgroundTaskExecutor(
+				backgroundTask.getTaskExecutorClassName());
+
+		if (backgroundTaskExecutor == null) {
+			return null;
+		}
+
+		return _backgroundTaskLockHelper.getLockKey(
+			new BackgroundTaskImpl(backgroundTask));
 	}
 
 	private void _sendUserNotificationEvents(Message message) throws Exception {

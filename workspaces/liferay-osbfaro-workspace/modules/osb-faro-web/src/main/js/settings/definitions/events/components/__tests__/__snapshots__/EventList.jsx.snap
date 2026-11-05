@@ -12,7 +12,7 @@ exports[`EventList should render 1`] = `
         class="container-fluid"
       >
         <ul
-          class="nav-root front-nav navbar-nav"
+          class="nav-root front-nav mr-auto navbar-nav"
           role="tablist"
         >
           <li
@@ -213,7 +213,13 @@ exports[`EventList should render 1`] = `
             </td>
             <td
               class="table-cell-expand text-truncate"
-            />
+            >
+              <span
+                class="text-secondary"
+              >
+                –
+              </span>
+            </td>
             <td
               class="text-right"
             />

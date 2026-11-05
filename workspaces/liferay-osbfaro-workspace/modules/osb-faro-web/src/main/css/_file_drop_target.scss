@@ -25,16 +25,6 @@
 		}
 	}
 
-	.choose-file {
-		display: flex;
-		margin-bottom: 8px;
-
-		.button-root {
-			margin-left: 4px;
-			padding: 0;
-		}
-	}
-
 	.uploaded-file {
 		width: 100%;
 
@@ -49,14 +39,6 @@
 			&.completed {
 				color: $main;
 			}
-		}
-
-		.file-size {
-			margin-right: 8px;
-		}
-
-		.status-wrapper {
-			margin-left: 8px;
 		}
 	}
 }

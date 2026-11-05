@@ -47,8 +47,10 @@ public class AccountDisplay {
 		if (ListUtil.isNotEmpty(lifecycleStages)) {
 			Account.LifecycleStage lifecycleStage = lifecycleStages.get(0);
 
-			_lifecycleStage = lifecycleStage.getStageType();
+			_lifecycleStage = lifecycleStage.getName();
 		}
+
+		_lifecycleStages = lifecycleStages;
 
 		_modifiedDate = account.getModifiedDate();
 		_numberOfEmployees = account.getNumberOfEmployees();
@@ -124,6 +126,7 @@ public class AccountDisplay {
 	private Date _lastActivityDate;
 
 	private String _lifecycleStage;
+	private List<Account.LifecycleStage> _lifecycleStages;
 
 	@JsonProperty("lastEnriched")
 	private Date _modifiedDate;

@@ -19,6 +19,8 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.apache.http.client.utils.URIBuilder;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -73,7 +75,7 @@ public class UpstreamJobHealthMonitor extends BaseMonitor {
 			return new MonitorResult(
 				JenkinsResultsParserUtil.combine(
 					"Unable to read ", _remoteControllerJobURL, ": ",
-					exception.getMessage()),
+					JenkinsResultsParserUtil.getMessage(exception)),
 				null, MonitorResult.Status.CRITICAL, currentTimeMillis);
 		}
 
@@ -122,7 +124,7 @@ public class UpstreamJobHealthMonitor extends BaseMonitor {
 					"Unable to determine the last upstream testsuite run for ",
 					"branch ", _branch));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.WARN);
 		}
 		else {
 			_checkInvocation(
@@ -149,7 +151,7 @@ public class UpstreamJobHealthMonitor extends BaseMonitor {
 					"Unable to determine the last build timestamp for ",
 					"controller job ", _controllerJobName));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.WARN);
 
 			return;
 		}
@@ -193,7 +195,7 @@ public class UpstreamJobHealthMonitor extends BaseMonitor {
 					"Unable to determine the commit the upstream testsuite ",
 					"for branch ", _branch, " last ran against"));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.WARN);
 
 			return;
 		}
@@ -215,7 +217,7 @@ public class UpstreamJobHealthMonitor extends BaseMonitor {
 					"Unable to read the head of branch ", _branch, " from ",
 					_portalUsername, "/", _portalRepositoryName));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.CRITICAL);
 
 			return;
 		}
@@ -237,7 +239,7 @@ public class UpstreamJobHealthMonitor extends BaseMonitor {
 					"Unable to determine when branch ", _branch,
 					" was last merged"));
 
-			statuses.add(MonitorResult.Status.UNKNOWN);
+			statuses.add(MonitorResult.Status.WARN);
 
 			return;
 		}
@@ -263,13 +265,19 @@ public class UpstreamJobHealthMonitor extends BaseMonitor {
 	}
 
 	private JSONArray _getBuildsJSONArray() throws IOException {
-		JSONObject jobJSONObject = JenkinsResultsParserUtil.toJSONObject(
+		URIBuilder uriBuilder = JenkinsResultsParserUtil.newURIBuilder(
+			_controllerJobURL + "/api/json");
+
+		uriBuilder.addParameter(
+			"tree",
 			JenkinsResultsParserUtil.combine(
-				_controllerJobURL, "/api/json?tree=",
 				"builds[description,timestamp]{0,",
-				String.valueOf(_buildsMaximum), "}"),
-			false, _RETRIES_SIZE_MAX, null, null, _SECONDS_RETRY_PERIOD,
-			getAttemptTimeoutMillis(_RETRIES_SIZE_MAX), null);
+				String.valueOf(_buildsMaximum), "}"));
+
+		JSONObject jobJSONObject = JenkinsResultsParserUtil.toJSONObject(
+			uriBuilder.toString(), false, _RETRIES_SIZE_MAX, null, null,
+			_SECONDS_RETRY_PERIOD, getAttemptTimeoutMillis(_RETRIES_SIZE_MAX),
+			null);
 
 		if (jobJSONObject == null) {
 			return null;

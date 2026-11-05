@@ -8,6 +8,7 @@ package com.liferay.object.info.field.converter;
 import com.liferay.dynamic.data.mapping.expression.DDMExpressionFactory;
 import com.liferay.info.constants.InfoDisplayWebKeys;
 import com.liferay.info.field.InfoField;
+import com.liferay.info.field.type.DateInfoFieldType;
 import com.liferay.info.field.type.EmailInfoFieldType;
 import com.liferay.info.field.type.FileInfoFieldType;
 import com.liferay.info.field.type.LongTextInfoFieldType;
@@ -63,6 +64,7 @@ import com.liferay.portal.kernel.security.auth.PrincipalThreadLocal;
 import com.liferay.portal.kernel.service.ServiceContext;
 import com.liferay.portal.kernel.service.ServiceContextThreadLocal;
 import com.liferay.portal.kernel.service.UserLocalService;
+import com.liferay.portal.kernel.theme.ThemeDisplay;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
@@ -75,6 +77,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.math.BigDecimal;
 
+import java.util.AbstractList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -146,26 +149,16 @@ public class ObjectFieldInfoFieldConverter {
 		boolean editable, String namespace, ObjectField objectField) {
 
 		return _addAttributes(
-			InfoField.builder(
-			).infoFieldType(
-				ObjectFieldInfoFieldTypeUtil.getInfoFieldType(objectField)
-			).namespace(
-				namespace
-			).name(
-				objectField.getName()
-			).editable(
-				editable
-			).labelInfoLocalizedValue(
-				new LazyInfoLocalizedValue(
-					() -> _getLabelInfoLocalizedValue(objectField))
-			).localizable(
-				objectField.isLocalized()
-			).readOnly(
-				_isReadOnly(objectField)
-			).required(
-				objectField.isRequired()
-			),
-			objectField);
+			_getFinalStep(editable, namespace, objectField), objectField);
+	}
+
+	public InfoField<?> getInfoField(
+		boolean editable, String namespace, ObjectField objectField,
+		ObjectRelationship objectRelationship) {
+
+		return addRelationshipInfoFieldAttributes(
+			_getFinalStep(editable, namespace, objectField),
+			objectRelationship);
 	}
 
 	private InfoField<?> _addAttributes(
@@ -184,6 +177,12 @@ public class ObjectFieldInfoFieldConverter {
 				FileInfoFieldType.MAX_FILE_SIZE,
 				_getMaximumFileSize(objectField)
 			);
+		}
+		else if (Objects.equals(
+					objectField.getBusinessType(),
+					ObjectFieldConstants.BUSINESS_TYPE_DATE)) {
+
+			finalStep.attribute(DateInfoFieldType.TIME_ZONE_INDEPENDENT, true);
 		}
 		else if (Objects.equals(
 					objectField.getBusinessType(),
@@ -278,9 +277,13 @@ public class ObjectFieldInfoFieldConverter {
 					objectField.getBusinessType(),
 					ObjectFieldConstants.BUSINESS_TYPE_PICKLIST)) {
 
+			ObjectEntry objectEntry = _getObjectEntry(
+				ServiceContextThreadLocal.getServiceContext());
+
 			finalStep.attribute(
 				SelectInfoFieldType.OPTIONS,
-				_getOptionInfoFieldTypes(objectField));
+				new LazyList(
+					() -> _getOptionInfoFieldTypes(objectEntry, objectField)));
 		}
 		else if (Objects.equals(
 					objectField.getBusinessType(),
@@ -339,6 +342,24 @@ public class ObjectFieldInfoFieldConverter {
 			objectRelationship.getObjectDefinitionId1());
 	}
 
+	private User _fetchUser(ServiceContext serviceContext) {
+		ThemeDisplay themeDisplay = serviceContext.getThemeDisplay();
+
+		if (themeDisplay == null) {
+			return _userLocalService.fetchUser(serviceContext.getUserId());
+		}
+
+		User user = themeDisplay.getUser();
+
+		if ((user != null) &&
+			(user.getUserId() == serviceContext.getUserId())) {
+
+			return user;
+		}
+
+		return _userLocalService.fetchUser(serviceContext.getUserId());
+	}
+
 	private String _getAcceptedFileExtensions(ObjectField objectField) {
 		String acceptedFileExtensions = ObjectFieldSettingUtil.getValue(
 			ObjectFieldSettingConstants.NAME_ACCEPTED_FILE_EXTENSIONS,
@@ -378,6 +399,30 @@ public class ObjectFieldInfoFieldConverter {
 		}
 
 		return null;
+	}
+
+	private InfoField.FinalStep _getFinalStep(
+		boolean editable, String namespace, ObjectField objectField) {
+
+		return InfoField.builder(
+		).infoFieldType(
+			ObjectFieldInfoFieldTypeUtil.getInfoFieldType(objectField)
+		).namespace(
+			namespace
+		).name(
+			objectField.getName()
+		).editable(
+			editable
+		).labelInfoLocalizedValue(
+			new LazyInfoLocalizedValue(
+				() -> _getLabelInfoLocalizedValue(objectField))
+		).localizable(
+			objectField.isLocalized()
+		).readOnly(
+			_isReadOnly(objectField)
+		).required(
+			objectField.isRequired()
+		);
 	}
 
 	private Group _getGroup(ServiceContext serviceContext) {
@@ -457,10 +502,7 @@ public class ObjectFieldInfoFieldConverter {
 		return maximumFileSize;
 	}
 
-	private ObjectEntry _getObjectEntry() {
-		ServiceContext serviceContext =
-			ServiceContextThreadLocal.getServiceContext();
-
+	private ObjectEntry _getObjectEntry(ServiceContext serviceContext) {
 		if (serviceContext == null) {
 			return null;
 		}
@@ -505,7 +547,7 @@ public class ObjectFieldInfoFieldConverter {
 	}
 
 	private List<OptionInfoFieldType> _getOptionInfoFieldTypes(
-		ObjectField objectField) {
+		ObjectEntry objectEntry, ObjectField objectField) {
 
 		String defaultValue = String.valueOf(
 			ObjectFieldSettingUtil.getDefaultValue(null, objectField, null));
@@ -518,8 +560,6 @@ public class ObjectFieldInfoFieldConverter {
 		}
 
 		String listTypeEntryKey = defaultValue;
-
-		ObjectEntry objectEntry = _getObjectEntry();
 
 		if (objectEntry != null) {
 			listTypeEntryKey = MapUtil.getString(
@@ -683,7 +723,7 @@ public class ObjectFieldInfoFieldConverter {
 			return true;
 		}
 
-		User user = _userLocalService.fetchUser(serviceContext.getUserId());
+		User user = _fetchUser(serviceContext);
 
 		if ((user == null) || user.isGuestUser()) {
 			return true;
@@ -693,8 +733,11 @@ public class ObjectFieldInfoFieldConverter {
 	}
 
 	private boolean _isReadOnly(ObjectField objectField) {
-		ObjectEntry objectEntry = _getObjectEntry();
-		User user = ObjectEntryInfoItemUtil.getUser();
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
+
+		ObjectEntry objectEntry = _getObjectEntry(serviceContext);
+		User user = ObjectEntryInfoItemUtil.getUser(serviceContext);
 
 		try {
 			if (ObjectFieldUtil.isReadOnly(
@@ -815,6 +858,36 @@ public class ObjectFieldInfoFieldConverter {
 
 		private final UnsafeSupplierValue
 			<InfoLocalizedValue<String>, RuntimeException> _unsafeSupplierValue;
+
+	}
+
+	private static class LazyList extends AbstractList<OptionInfoFieldType> {
+
+		@Override
+		public OptionInfoFieldType get(int index) {
+			List<OptionInfoFieldType> optionInfoFieldTypes =
+				_unsafeSupplierValue.getValue();
+
+			return optionInfoFieldTypes.get(index);
+		}
+
+		@Override
+		public int size() {
+			List<OptionInfoFieldType> optionInfoFieldTypes =
+				_unsafeSupplierValue.getValue();
+
+			return optionInfoFieldTypes.size();
+		}
+
+		private LazyList(
+			UnsafeSupplier<List<OptionInfoFieldType>, RuntimeException>
+				unsafeSupplier) {
+
+			_unsafeSupplierValue = new UnsafeSupplierValue<>(unsafeSupplier);
+		}
+
+		private final UnsafeSupplierValue
+			<List<OptionInfoFieldType>, RuntimeException> _unsafeSupplierValue;
 
 	}
 

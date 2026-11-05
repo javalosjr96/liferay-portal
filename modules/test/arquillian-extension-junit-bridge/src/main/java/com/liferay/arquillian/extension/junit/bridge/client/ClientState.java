@@ -57,6 +57,19 @@ public class ClientState {
 			Map<String, List<String>> filteredMethodNamesMap)
 		throws Throwable {
 
+		if (Boolean.valueOf(
+				System.getProperty("liferay.arquillian.dump.only"))) {
+
+			if (!_dumped) {
+				BndBundleUtil.createBundle(
+					true, filteredMethodNamesMap, "127.0.0.1", 0, 0);
+
+				_dumped = true;
+			}
+
+			return _dummyConnection;
+		}
+
 		if (_bundleId == 0) {
 			ServerSocket serverSocket = _socketState.getServerSocket();
 
@@ -232,6 +245,7 @@ public class ClientState {
 		throws Throwable {
 
 		byte[] bytes = BndBundleUtil.createBundle(
+			Boolean.valueOf(System.getProperty("liferay.arquillian.copy.jar")),
 			filteredMethodNamesMap, inetAddress.getHostAddress(), port,
 			passCode);
 
@@ -240,6 +254,21 @@ public class ClientState {
 	}
 
 	private static long _bundleId;
+
+	private static final Connection _dummyConnection = new Connection() {
+
+		@Override
+		public void close() {
+		}
+
+		@Override
+		public void execute(
+			String testClassName, Consumer<RunNotifierCommand> consumer) {
+		}
+
+	};
+
+	private static boolean _dumped;
 	private static final FrameworkState _frameworkState = new FrameworkState();
 	private static final SocketState _socketState = new SocketState();
 	private static Set<Class<?>> _testClasses;

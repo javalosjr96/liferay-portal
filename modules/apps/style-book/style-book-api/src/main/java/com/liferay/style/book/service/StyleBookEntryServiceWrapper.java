@@ -120,15 +120,6 @@ public class StyleBookEntryServiceWrapper
 				externalReferenceCode, groupId);
 	}
 
-	@Override
-	public StyleBookEntry getOrAddEmptyStyleBookEntry(
-			String externalReferenceCode, long groupId, String themeId)
-		throws Exception {
-
-		return _styleBookEntryService.getOrAddEmptyStyleBookEntry(
-			externalReferenceCode, groupId, themeId);
-	}
-
 	/**
 	 * Returns the OSGi service identifier.
 	 *
@@ -279,18 +270,6 @@ public class StyleBookEntryServiceWrapper
 	}
 
 	@Override
-	public StyleBookEntry updateStyleBookEntry(
-			long styleBookEntryId, String frontendTokenDefinition,
-			String frontendTokensValues, String name,
-			com.liferay.portal.kernel.service.ServiceContext serviceContext)
-		throws com.liferay.portal.kernel.exception.PortalException {
-
-		return _styleBookEntryService.updateStyleBookEntry(
-			styleBookEntryId, frontendTokenDefinition, frontendTokensValues,
-			name, serviceContext);
-	}
-
-	@Override
 	public StyleBookEntryService getWrappedService() {
 		return _styleBookEntryService;
 	}
@@ -303,4 +282,4 @@ public class StyleBookEntryServiceWrapper
 	private StyleBookEntryService _styleBookEntryService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-1391106080
+// LIFERAY-SERVICE-BUILDER-HASH:-2022071901

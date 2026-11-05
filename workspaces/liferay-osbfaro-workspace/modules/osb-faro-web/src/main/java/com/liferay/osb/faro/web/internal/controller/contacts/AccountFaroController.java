@@ -15,7 +15,7 @@ import com.liferay.osb.faro.engine.client.model.AccountName;
 import com.liferay.osb.faro.engine.client.model.Individual;
 import com.liferay.osb.faro.engine.client.model.Metric;
 import com.liferay.osb.faro.engine.client.model.Results;
-import com.liferay.osb.faro.engine.client.util.OrderByField;
+import com.liferay.osb.faro.model.FaroProject;
 import com.liferay.osb.faro.web.internal.constants.FaroConstants;
 import com.liferay.osb.faro.web.internal.controller.BaseFaroController;
 import com.liferay.osb.faro.web.internal.controller.FaroController;
@@ -23,11 +23,11 @@ import com.liferay.osb.faro.web.internal.model.display.FaroFDSResultsDisplay;
 import com.liferay.osb.faro.web.internal.model.display.FaroResultsDisplay;
 import com.liferay.osb.faro.web.internal.model.display.contacts.AccountDisplay;
 import com.liferay.osb.faro.web.internal.model.display.contacts.IndividualDisplay;
-import com.liferay.osb.faro.web.internal.param.FaroParam;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.model.RoleConstants;
 import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.Validator;
 
 import jakarta.annotation.security.RolesAllowed;
 
@@ -39,6 +39,7 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -100,29 +101,6 @@ public class AccountFaroController extends BaseFaroController {
 			contactsEngineClient.getAccount(
 				faroProjectLocalService.getFaroProjectByGroupId(groupId), id,
 				channelId));
-	}
-
-	@GET
-	@Path("/distribution")
-	@RolesAllowed(RoleConstants.SITE_MEMBER)
-	public FaroResultsDisplay getAccountDistributionFaroResultsDisplay(
-			@PathParam("groupId") long groupId,
-			@QueryParam("channelId") String channelId,
-			@QueryParam("fieldMappingFieldName") String fieldMappingFieldName,
-			@QueryParam("filter") String filterString,
-			@QueryParam("individualSegmentId") String individualSegmentId,
-			@QueryParam("count") int count,
-			@QueryParam("numberOfBins") int numberOfBins,
-			@DefaultValue(StringPool.BLANK) @QueryParam("orderByFields")
-				FaroParam<List<OrderByField>> orderByFieldsFaroParam)
-		throws Exception {
-
-		return new FaroResultsDisplay(
-			contactsEngineClient.getAccountsDistribution(
-				faroProjectLocalService.getFaroProjectByGroupId(groupId),
-				channelId, fieldMappingFieldName, filterString,
-				individualSegmentId, count, numberOfBins,
-				orderByFieldsFaroParam.getValue()));
 	}
 
 	@GET
@@ -225,6 +203,7 @@ public class AccountFaroController extends BaseFaroController {
 	@RolesAllowed(RoleConstants.SITE_MEMBER)
 	public FaroFDSResultsDisplay<Account> search(
 			@PathParam("groupId") long groupId,
+			@QueryParam("accountLifecycleId") String accountLifecycleId,
 			@QueryParam("channelId") String channelId,
 			@QueryParam("filter") String filterString,
 			@QueryParam("includeAnonymousUsers") boolean includeAnonymousUsers,
@@ -240,10 +219,10 @@ public class AccountFaroController extends BaseFaroController {
 
 		return new FaroFDSResultsDisplay<>(
 			contactsEngineClient.getAccounts(
-				faroProjectLocalService.getFaroProjectByGroupId(groupId), null,
-				channelId, filterString, includeAnonymousUsers, search,
-				rangeEnd, rangeKey, rangeStart, segmentId, page, pageSize,
-				sortString),
+				faroProjectLocalService.getFaroProjectByGroupId(groupId),
+				accountLifecycleId, channelId, filterString,
+				includeAnonymousUsers, search, rangeEnd, rangeKey, rangeStart,
+				segmentId, page, pageSize, sortString),
 			AccountDisplay::new, page, pageSize);
 	}
 
@@ -261,20 +240,45 @@ public class AccountFaroController extends BaseFaroController {
 		throws Exception {
 
 		if (Objects.equals(fieldMappingFieldName, "lifecycleStatus")) {
-			AccountLifecycle accountLifecycle =
-				contactsEngineClient.getAccountLifecycle(
-					faroProjectLocalService.getFaroProjectByGroupId(groupId),
-					accountLifecycleId);
+			List<Map<String, String>> items = new ArrayList<>();
+		
+			List<AccountLifecycle> accountLifecycles = null;
 
-			List<Map<String, String>> items = TransformUtil.transform(
-				accountLifecycle.getStages(),
-				stage -> HashMapBuilder.put(
-					"externalReferenceCode", stage.getExternalReferenceCode()
-				).put(
-					"id", stage.getId()
-				).put(
-					"stageType", stage.getStageType()
-				).build());
+			FaroProject faroProject =
+				faroProjectLocalService.getFaroProjectByGroupId(groupId);
+
+			if (Validator.isNull(accountLifecycleId)) {
+				Results<AccountLifecycle> accountLifecycleResults =
+					contactsEngineClient.getAccountLifecycles(
+						faroProject, channelId, null, null, null, 1, 10000,
+						null);
+
+				accountLifecycles = accountLifecycleResults.getItems();
+			}
+			else {
+				accountLifecycles = Collections.singletonList(
+					contactsEngineClient.getAccountLifecycle(
+						faroProject, accountLifecycleId));
+			}
+
+			for (AccountLifecycle accountLifecycle : accountLifecycles) {
+				items.addAll(
+					TransformUtil.transform(
+						accountLifecycle.getAccountLifecycleStages(),
+						accountLifecycleStage -> HashMapBuilder.put(
+							"externalReferenceCode",
+							accountLifecycleStage.getExternalReferenceCode()
+						).put(
+							"id", accountLifecycleStage.getId()
+						).put(
+							"lifecycleExternalReferenceCode",
+							accountLifecycle.getExternalReferenceCode()
+						).put(
+							"lifecycleName", accountLifecycle.getName()
+						).put(
+							"name", accountLifecycleStage.getName()
+						).build()));
+			}
 
 			return new FaroFDSResultsDisplay<>(
 				new Results<>(items, items.size()), page, pageSize);

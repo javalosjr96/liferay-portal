@@ -265,13 +265,6 @@ public interface JournalFolderLocalService
 	public ActionableDynamicQuery getActionableDynamicQuery();
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<JournalFolder> getCompanyFolders(
-		long companyId, int start, int end);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int getCompanyFoldersCount(long companyId);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<DDMStructure> getDDMStructures(
 			long[] groupIds, long folderId, int restrictionType)
 		throws PortalException;
@@ -320,16 +313,8 @@ public interface JournalFolderLocalService
 		OrderByComparator<?> orderByComparator);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<Object> getFoldersAndArticles(
-		long groupId, long folderId, int start, int end,
-		OrderByComparator<?> orderByComparator);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getFoldersAndArticlesCount(
 		long groupId, List<Long> folderIds, int status);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int getFoldersAndArticlesCount(long groupId, long folderId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getFoldersAndArticlesCount(
@@ -423,9 +408,6 @@ public interface JournalFolderLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getJournalFoldersCount();
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<JournalFolder> getNoAssetFolders();
 
 	/**
 	 * Returns the OSGi service identifier.
@@ -551,4 +533,4 @@ public interface JournalFolderLocalService
 		throws E;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:394792946
+// LIFERAY-SERVICE-BUILDER-HASH:91856135

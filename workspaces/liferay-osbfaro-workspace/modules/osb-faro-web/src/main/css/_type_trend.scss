@@ -20,15 +20,6 @@
 		.chart-root {
 			margin-right: 1rem;
 			width: 30%;
-
-			.bb-xgrid-line line,
-			.bb-ygrids line {
-				stroke: none;
-			}
-
-			.bb-zoom-rect {
-				stroke: none;
-			}
 		}
 
 		&:not(:first-child) {
@@ -46,10 +37,6 @@
 			line-height: $fontSizeExtraLarge;
 			margin-left: 1rem;
 			word-break: break-word;
-		}
-
-		.trend-item-title {
-			margin-bottom: 1rem;
 		}
 	}
 }

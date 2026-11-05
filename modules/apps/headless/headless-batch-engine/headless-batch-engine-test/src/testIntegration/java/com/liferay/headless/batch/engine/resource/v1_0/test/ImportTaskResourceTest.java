@@ -19,6 +19,8 @@ import com.liferay.headless.delivery.client.dto.v1_0.Document;
 import com.liferay.headless.delivery.client.resource.v1_0.DocumentResource;
 import com.liferay.headless.delivery.client.serdes.v1_0.DocumentSerDes;
 import com.liferay.petra.function.UnsafeTriConsumer;
+import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.json.JSONArray;
 import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
@@ -32,12 +34,15 @@ import com.liferay.portal.kernel.search.filter.Filter;
 import com.liferay.portal.kernel.security.pwd.PasswordEncryptorUtil;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.service.UserLocalServiceUtil;
+import com.liferay.portal.kernel.servlet.HttpHeaders;
 import com.liferay.portal.kernel.test.randomizerbumpers.UniqueStringRandomizerBumper;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
+import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
+import com.liferay.portal.kernel.util.Base64;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.HashMapDictionaryBuilder;
@@ -52,12 +57,16 @@ import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 
 import java.io.Serializable;
 
+import java.security.Key;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.zip.ZipInputStream;
+
+import javax.crypto.KeyGenerator;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -166,6 +175,31 @@ public class ImportTaskResourceTest {
 	}
 
 	@Test
+	public void testPostImportTaskWithContentTypeParameters() throws Exception {
+		_testPostImportTaskWithContentTypeParameters(
+			JSONUtil.putAll(
+				JSONUtil.put(
+					"intValue", RandomTestUtil.randomInt()
+				).put(
+					"textValue", RandomTestUtil.randomString()
+				)
+			).toString(),
+			"application/json; charset=utf-8");
+		_testPostImportTaskWithContentTypeParameters(
+			JSONUtil.put(
+				"intValue", RandomTestUtil.randomInt()
+			).put(
+				"textValue", RandomTestUtil.randomString()
+			).toString(),
+			"application/x-ndjson; charset=utf-8");
+		_testPostImportTaskWithContentTypeParameters(
+			StringBundler.concat(
+				"intValue,textValue\n", RandomTestUtil.randomInt(), ",",
+				RandomTestUtil.randomString(), "\n"),
+			"text/csv; charset=utf-8");
+	}
+
+	@Test
 	public void testPostImportTaskWithExternalReferenceCodes()
 		throws Exception {
 
@@ -206,53 +240,18 @@ public class ImportTaskResourceTest {
 
 	@Test
 	public void testPostImportTaskWithPasswordFields() throws Exception {
-		String emailAddress = RandomTestUtil.randomString() + "@liferay.com";
-		String password = RandomTestUtil.randomString();
+		_testPostImportTaskWithPasswordFields();
 
-		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
-				"com.liferay.batch.engine.internal." +
-					"BatchEngineImportTaskExecutorImpl",
-				LoggerTestUtil.ERROR)) {
+		KeyGenerator keyGenerator = KeyGenerator.getInstance("AES");
 
-			ImportTask importTask = ExportImportTaskUtil.postImportTask(
-				JSONUtil.putAll(
-					_createUserAccountJSONObject(emailAddress, password),
-					_createUserAccountJSONObject(
-						_user.getEmailAddress(), password)
-				).toString(),
-				"com.liferay.headless.admin.user.dto.v1_0.UserAccount",
-				"COMPLETED",
-				HashMapBuilder.put(
-					"importStrategy", "ON_ERROR_CONTINUE"
-				).build());
+		Key key = keyGenerator.generateKey();
 
-			User user = UserLocalServiceUtil.getUserByEmailAddress(
-				_user.getCompanyId(), emailAddress);
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"BATCH_ENGINE_ENCRYPTION_KEY",
+					Base64.encode(key.getEncoded()))) {
 
-			_users.add(user);
-
-			Assert.assertEquals(
-				PasswordEncryptorUtil.encrypt(password, user.getPassword()),
-				user.getPassword());
-
-			FailedItem[] failedItems = importTask.getFailedItems();
-
-			Assert.assertEquals(
-				Arrays.toString(failedItems), 1, failedItems.length);
-
-			FailedItem failedItem = failedItems[0];
-
-			String item = failedItem.getItem();
-
-			Assert.assertTrue(item, item.contains(_user.getEmailAddress()));
-			Assert.assertFalse(item, item.contains(password));
-
-			String content = _getContent(importTask.getId());
-
-			Assert.assertTrue(content, content.contains(emailAddress));
-			Assert.assertTrue(
-				content, content.contains(_user.getEmailAddress()));
-			Assert.assertFalse(content, content.contains(password));
+			_testPostImportTaskWithPasswordFields();
 		}
 	}
 
@@ -326,6 +325,32 @@ public class ImportTaskResourceTest {
 		}
 	}
 
+	private void _testPostImportTaskWithContentTypeParameters(
+			String body, String contentType)
+		throws Exception {
+
+		try (BatchEngineTaskItemDelegateAutoCloseable
+				batchEngineTaskItemDelegateAutoCloseable =
+					new BatchEngineTaskItemDelegateAutoCloseable()) {
+
+			ImportTask importTask = ExportImportTaskUtil.postImportTask(
+				body, TestEntity.class.getName(), "COMPLETED",
+				HashMapBuilder.put(
+					HttpHeaders.CONTENT_TYPE, contentType
+				).build(),
+				HashMapBuilder.put(
+					"createStrategy", "INSERT"
+				).put(
+					"taskItemDelegateName",
+					batchEngineTaskItemDelegateAutoCloseable.
+						getTaskItemDelegateName()
+				).build());
+
+			Assert.assertEquals(1, (int)importTask.getProcessedItemsCount());
+			Assert.assertEquals(1, (int)importTask.getTotalItemsCount());
+		}
+	}
+
 	private void _testPostImportTaskWithExternalReferenceCodes(
 			String batchExternalReferenceCode, String externalReferenceCode,
 			UnsafeTriConsumer<String, String, ImportTask, Exception>
@@ -368,6 +393,57 @@ public class ImportTaskResourceTest {
 
 		unsafeTriConsumer.accept(
 			batchExternalReferenceCode, externalReferenceCode, importTask);
+	}
+
+	private void _testPostImportTaskWithPasswordFields() throws Exception {
+		String emailAddress = RandomTestUtil.randomString() + "@liferay.com";
+		String password = RandomTestUtil.randomString();
+
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.batch.engine.internal." +
+					"BatchEngineImportTaskExecutorImpl",
+				LoggerTestUtil.ERROR)) {
+
+			ImportTask importTask = ExportImportTaskUtil.postImportTask(
+				JSONUtil.putAll(
+					_createUserAccountJSONObject(emailAddress, password),
+					_createUserAccountJSONObject(
+						_user.getEmailAddress(), password)
+				).toString(),
+				"com.liferay.headless.admin.user.dto.v1_0.UserAccount",
+				"COMPLETED",
+				HashMapBuilder.put(
+					"importStrategy", "ON_ERROR_CONTINUE"
+				).build());
+
+			User user = UserLocalServiceUtil.getUserByEmailAddress(
+				_user.getCompanyId(), emailAddress);
+
+			_users.add(user);
+
+			Assert.assertEquals(
+				PasswordEncryptorUtil.encrypt(password, user.getPassword()),
+				user.getPassword());
+
+			FailedItem[] failedItems = importTask.getFailedItems();
+
+			Assert.assertEquals(
+				Arrays.toString(failedItems), 1, failedItems.length);
+
+			FailedItem failedItem = failedItems[0];
+
+			String item = failedItem.getItem();
+
+			Assert.assertTrue(item, item.contains(_user.getEmailAddress()));
+			Assert.assertFalse(item, item.contains(password));
+
+			String content = _getContent(importTask.getId());
+
+			Assert.assertTrue(content, content.contains(emailAddress));
+			Assert.assertTrue(
+				content, content.contains(_user.getEmailAddress()));
+			Assert.assertFalse(content, content.contains(password));
+		}
 	}
 
 	private String _externalReferenceCode;

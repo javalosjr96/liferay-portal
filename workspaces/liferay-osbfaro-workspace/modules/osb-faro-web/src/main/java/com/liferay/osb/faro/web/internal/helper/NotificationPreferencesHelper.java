@@ -23,6 +23,36 @@ import org.osgi.service.component.annotations.Reference;
 @Component(service = NotificationPreferencesHelper.class)
 public class NotificationPreferencesHelper {
 
+	public void removeAccountLifecycleNotificationPreferences(
+		long groupId, Collection<String> keys) {
+
+		for (FaroPreferences faroPreferences :
+				_faroPreferencesLocalService.getFaroPreferencesByGroupId(
+					groupId)) {
+
+			try {
+				WorkspacePreferences workspacePreferences = JSONUtil.readValue(
+					faroPreferences.getPreferences(),
+					WorkspacePreferences.class);
+
+				if (workspacePreferences.
+						removeAccountLifecycleNotificationPreferences(keys)) {
+
+					_faroPreferencesLocalService.savePreferences(
+						faroPreferences.getUserId(), groupId,
+						faroPreferences.getOwnerId(),
+						JSONUtil.writeValueAsString(workspacePreferences));
+				}
+			}
+			catch (Exception exception) {
+				_log.error(
+					"Unable to remove account lifecycle notification " +
+						"preferences of group " + groupId,
+					exception);
+			}
+		}
+	}
+
 	public void removeSegmentNotificationPreferences(
 		long groupId, Collection<String> segmentIds) {
 

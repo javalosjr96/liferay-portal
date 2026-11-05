@@ -5,6 +5,7 @@
 
 package com.liferay.osb.faro.web.internal.controller.main;
 
+import com.liferay.osb.faro.engine.client.model.AccountLifecycle;
 import com.liferay.osb.faro.model.FaroPreferences;
 import com.liferay.osb.faro.service.FaroPreferencesLocalService;
 import com.liferay.osb.faro.web.internal.constants.FaroPreferencesConstants;
@@ -12,17 +13,21 @@ import com.liferay.osb.faro.web.internal.controller.BaseFaroController;
 import com.liferay.osb.faro.web.internal.controller.FaroController;
 import com.liferay.osb.faro.web.internal.helper.EmailReportHelper;
 import com.liferay.osb.faro.web.internal.model.display.contacts.FaroPreferencesDisplay;
+import com.liferay.osb.faro.web.internal.model.preferences.AccountLifecycleNotificationPreferences;
 import com.liferay.osb.faro.web.internal.model.preferences.DistributionCardTabPreferences;
 import com.liferay.osb.faro.web.internal.model.preferences.DistributionCardTabsPreferences;
 import com.liferay.osb.faro.web.internal.model.preferences.EmailReportPreferences;
 import com.liferay.osb.faro.web.internal.model.preferences.IndividualDashboardPreferences;
 import com.liferay.osb.faro.web.internal.model.preferences.IndividualSegmentPreferences;
-import com.liferay.osb.faro.web.internal.model.preferences.LifecycleNotificationPreferences;
 import com.liferay.osb.faro.web.internal.model.preferences.SegmentNotificationPreferences;
 import com.liferay.osb.faro.web.internal.model.preferences.WorkspacePreferences;
 import com.liferay.osb.faro.web.internal.param.FaroParam;
 import com.liferay.osb.faro.web.internal.util.JSONUtil;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.RoleConstants;
+import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
 
@@ -42,6 +47,7 @@ import jakarta.ws.rs.core.MediaType;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
@@ -53,6 +59,51 @@ import org.osgi.service.component.annotations.Reference;
 @Path("/{groupId}/preferences")
 @Produces(MediaType.APPLICATION_JSON)
 public class PreferencesFaroController extends BaseFaroController {
+
+	@Path("/lifecycle_notification")
+	@POST
+	@RolesAllowed(RoleConstants.SITE_MEMBER)
+	public AccountLifecycleNotificationPreferences
+			addAccountLifecycleNotificationPreference(
+				@PathParam("groupId") long groupId,
+				@FormParam("lifecycleId") String accountLifecycleId,
+				@FormParam("accountStageChanges") Boolean accountStageChanges,
+				@FormParam("emailFrequency") String emailFrequency,
+				@FormParam("netNewPipelineAccounts") Boolean
+					netNewPipelineAccounts,
+				@FormParam("newAccounts") Boolean newAccounts,
+				@FormParam("newAtRiskAccounts") Boolean newAtRiskAccounts,
+				@FormParam("newStalledAccounts") Boolean newStalledAccounts)
+		throws Exception {
+
+		String externalReferenceCode =
+			_getAccountLifecycleExternalReferenceCode(
+				accountLifecycleId, groupId);
+
+		long ownerId = _getOwnerId(
+			groupId, FaroPreferencesConstants.SCOPE_USER);
+
+		WorkspacePreferences workspacePreferences = _getWorkspacePreferences(
+			groupId, ownerId);
+
+		Map<String, AccountLifecycleNotificationPreferences>
+			accountLifecycleNotificationPreferences =
+				workspacePreferences.addAccountLifecycleNotificationPreference(
+					externalReferenceCode, accountStageChanges, emailFrequency,
+					netNewPipelineAccounts, newAccounts, newAtRiskAccounts,
+					newStalledAccounts);
+
+		workspacePreferences.removeAccountLifecycleNotificationPreferences(
+			_getAccountLifecycleIds(
+				externalReferenceCode, groupId, workspacePreferences));
+
+		_faroPreferencesLocalService.savePreferences(
+			getUserId(), groupId, ownerId,
+			JSONUtil.writeValueAsString(workspacePreferences));
+
+		return accountLifecycleNotificationPreferences.get(
+			externalReferenceCode);
+	}
 
 	@Path("/distribution_tabs")
 	@POST
@@ -116,40 +167,6 @@ public class PreferencesFaroController extends BaseFaroController {
 		return emailReportPreferences.get(channelId);
 	}
 
-	@Path("/lifecycle_notification")
-	@POST
-	@RolesAllowed(RoleConstants.SITE_MEMBER)
-	public LifecycleNotificationPreferences addLifecycleNotificationPreference(
-			@PathParam("groupId") long groupId,
-			@FormParam("accountStageChanges") Boolean accountStageChanges,
-			@FormParam("emailFrequency") String emailFrequency,
-			@FormParam("lifecycleId") String lifecycleId,
-			@FormParam("netNewPipelineAccounts") Boolean netNewPipelineAccounts,
-			@FormParam("newAccounts") Boolean newAccounts,
-			@FormParam("newAtRiskAccounts") Boolean newAtRiskAccounts,
-			@FormParam("newStalledAccounts") Boolean newStalledAccounts)
-		throws Exception {
-
-		long ownerId = _getOwnerId(
-			groupId, FaroPreferencesConstants.SCOPE_USER);
-
-		WorkspacePreferences workspacePreferences = _getWorkspacePreferences(
-			groupId, ownerId);
-
-		Map<String, LifecycleNotificationPreferences>
-			lifecycleNotificationPreferences =
-				workspacePreferences.addLifecycleNotificationPreference(
-					accountStageChanges, emailFrequency, lifecycleId,
-					netNewPipelineAccounts, newAccounts, newAtRiskAccounts,
-					newStalledAccounts);
-
-		_faroPreferencesLocalService.savePreferences(
-			getUserId(), groupId, ownerId,
-			JSONUtil.writeValueAsString(workspacePreferences));
-
-		return lifecycleNotificationPreferences.get(lifecycleId);
-	}
-
 	@Path("/segment_notification")
 	@POST
 	@RolesAllowed(RoleConstants.SITE_MEMBER)
@@ -176,6 +193,70 @@ public class PreferencesFaroController extends BaseFaroController {
 			JSONUtil.writeValueAsString(workspacePreferences));
 
 		return segmentNotificationPreferences.get(segmentId);
+	}
+
+	@GET
+	@Path("/lifecycle_notification")
+	@RolesAllowed(RoleConstants.SITE_MEMBER)
+	public Map<String, AccountLifecycleNotificationPreferences>
+			getAccountLifecycleNotificationPreferences(
+				@PathParam("groupId") long groupId,
+				@QueryParam("lifecycleId") String accountLifecycleId)
+		throws Exception {
+
+		WorkspacePreferences workspacePreferences = _getWorkspacePreferences(
+			groupId, _getOwnerId(groupId, FaroPreferencesConstants.SCOPE_USER));
+
+		if (Validator.isNull(accountLifecycleId)) {
+			return workspacePreferences.
+				getAccountLifecycleNotificationPreferences(null);
+		}
+
+		String externalReferenceCode =
+			_getAccountLifecycleExternalReferenceCode(
+				accountLifecycleId, groupId);
+
+		Map<String, AccountLifecycleNotificationPreferences>
+			accountLifecycleNotificationPreferencesMap =
+				workspacePreferences.getAccountLifecycleNotificationPreferences(
+					null);
+
+		AccountLifecycleNotificationPreferences
+			accountLifecycleNotificationPreferences =
+				accountLifecycleNotificationPreferencesMap.get(
+					externalReferenceCode);
+
+		if (accountLifecycleNotificationPreferences == null) {
+			accountLifecycleNotificationPreferences =
+				accountLifecycleNotificationPreferencesMap.get(
+					accountLifecycleId);
+		}
+
+		if ((accountLifecycleNotificationPreferences == null) &&
+			!Objects.equals(externalReferenceCode, accountLifecycleId)) {
+
+			List<String> accountLifecycleIds = _getAccountLifecycleIds(
+				externalReferenceCode, groupId, workspacePreferences);
+
+			if (ListUtil.isNotEmpty(accountLifecycleIds)) {
+				accountLifecycleNotificationPreferences =
+					accountLifecycleNotificationPreferencesMap.get(
+						accountLifecycleIds.get(0));
+			}
+		}
+
+		if (accountLifecycleNotificationPreferences == null) {
+			accountLifecycleNotificationPreferencesMap =
+				workspacePreferences.getAccountLifecycleNotificationPreferences(
+					externalReferenceCode);
+
+			accountLifecycleNotificationPreferences =
+				accountLifecycleNotificationPreferencesMap.get(
+					externalReferenceCode);
+		}
+
+		return Collections.singletonMap(
+			accountLifecycleId, accountLifecycleNotificationPreferences);
 	}
 
 	@GET
@@ -264,22 +345,6 @@ public class PreferencesFaroController extends BaseFaroController {
 		}
 
 		return new FaroPreferencesDisplay(faroPreferences);
-	}
-
-	@GET
-	@Path("/lifecycle_notification")
-	@RolesAllowed(RoleConstants.SITE_MEMBER)
-	public Map<String, LifecycleNotificationPreferences>
-			getLifecycleNotificationPreferences(
-				@PathParam("groupId") long groupId,
-				@QueryParam("lifecycleId") String lifecycleId)
-		throws Exception {
-
-		WorkspacePreferences workspacePreferences = _getWorkspacePreferences(
-			groupId, _getOwnerId(groupId, FaroPreferencesConstants.SCOPE_USER));
-
-		return workspacePreferences.getLifecycleNotificationPreferences(
-			lifecycleId);
 	}
 
 	@GET
@@ -441,6 +506,58 @@ public class PreferencesFaroController extends BaseFaroController {
 		return true;
 	}
 
+	private String _getAccountLifecycleExternalReferenceCode(
+		String accountLifecycleId, long groupId) {
+
+		AccountLifecycle accountLifecycle = null;
+
+		try {
+			accountLifecycle = contactsEngineClient.getAccountLifecycle(
+				faroProjectLocalService.getFaroProjectByGroupId(groupId),
+				accountLifecycleId);
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Unable to get account lifecycle " + accountLifecycleId,
+					exception);
+			}
+		}
+
+		if ((accountLifecycle == null) ||
+			Validator.isNull(accountLifecycle.getExternalReferenceCode())) {
+
+			return accountLifecycleId;
+		}
+
+		return accountLifecycle.getExternalReferenceCode();
+	}
+
+	private List<String> _getAccountLifecycleIds(
+		String externalReferenceCode, long groupId,
+		WorkspacePreferences workspacePreferences) {
+
+		Map<String, AccountLifecycleNotificationPreferences>
+			accountLifecycleNotificationPreferences =
+				workspacePreferences.getAccountLifecycleNotificationPreferences(
+					null);
+
+		return TransformUtil.transform(
+			accountLifecycleNotificationPreferences.keySet(),
+			key -> {
+				if (Objects.equals(key, externalReferenceCode) ||
+					!Validator.isNumber(key) ||
+					!Objects.equals(
+						_getAccountLifecycleExternalReferenceCode(key, groupId),
+						externalReferenceCode)) {
+
+					return null;
+				}
+
+				return key;
+			});
+	}
+
 	private long _getOwnerId(long groupId, String scope) throws Exception {
 		if (StringUtil.equals(scope, FaroPreferencesConstants.SCOPE_GROUP)) {
 			return groupId;
@@ -468,6 +585,9 @@ public class PreferencesFaroController extends BaseFaroController {
 		return JSONUtil.readValue(
 			faroPreferences.getPreferences(), WorkspacePreferences.class);
 	}
+
+	private static final Log _log = LogFactoryUtil.getLog(
+		PreferencesFaroController.class);
 
 	@Reference
 	private EmailReportHelper _emailReportHelper;

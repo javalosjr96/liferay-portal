@@ -9,10 +9,8 @@ import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.depot.constants.DepotConstants;
 import com.liferay.depot.model.DepotEntry;
 import com.liferay.depot.service.DepotEntryLocalService;
-import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
-import com.liferay.portal.kernel.lazy.referencing.LazyReferencingThreadLocal;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
@@ -27,11 +25,11 @@ import com.liferay.portal.kernel.test.util.TestPropsValues;
 import com.liferay.portal.kernel.test.util.UserTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.LocaleUtil;
-import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
 import com.liferay.style.book.constants.StyleBookActionKeys;
+import com.liferay.style.book.exception.NoSuchEntryException;
 import com.liferay.style.book.model.StyleBookEntry;
 import com.liferay.style.book.service.StyleBookEntryLocalService;
 import com.liferay.style.book.service.StyleBookEntryService;
@@ -161,17 +159,14 @@ public class StyleBookEntryServiceTest {
 				RandomTestUtil.randomString(), null,
 				RandomTestUtil.randomString(), _serviceContext);
 
+		UserTestUtil.setUser(
+			UserTestUtil.addGroupUser(_group, RoleConstants.SITE_MEMBER));
+
 		try {
-			UserTestUtil.setUser(
-				UserTestUtil.addGroupUser(_group, RoleConstants.SITE_MEMBER));
-
-			_styleBookEntryService.deleteStyleBookEntry(
-				styleBookEntry.getExternalReferenceCode(),
-				styleBookEntry.getGroupId());
-
-			Assert.fail();
-		}
-		catch (PrincipalException principalException) {
+			_assertDeleteStyleBookEntryWithoutPermission(
+				RandomTestUtil.randomString());
+			_assertDeleteStyleBookEntryWithoutPermission(
+				styleBookEntry.getExternalReferenceCode());
 		}
 		finally {
 			UserTestUtil.setUser(TestPropsValues.getUser());
@@ -184,33 +179,16 @@ public class StyleBookEntryServiceTest {
 		Assert.assertNull(
 			_styleBookEntryLocalService.fetchStyleBookEntry(
 				styleBookEntry.getStyleBookEntryId()));
-	}
-
-	@Test
-	public void testGetOrAddEmptyStyleBookEntry() throws Exception {
-		String externalReferenceCode = RandomTestUtil.randomString();
 
 		try {
-			UserTestUtil.setUser(
-				UserTestUtil.addGroupUser(_group, RoleConstants.SITE_MEMBER));
-
-			_getOrAddEmptyStyleBookEntry(externalReferenceCode);
+			_styleBookEntryService.deleteStyleBookEntry(
+				styleBookEntry.getExternalReferenceCode(),
+				styleBookEntry.getGroupId());
 
 			Assert.fail();
 		}
-		catch (PrincipalException principalException) {
+		catch (NoSuchEntryException noSuchEntryException) {
 		}
-		finally {
-			UserTestUtil.setUser(TestPropsValues.getUser());
-		}
-
-		StyleBookEntry styleBookEntry = _getOrAddEmptyStyleBookEntry(
-			externalReferenceCode);
-
-		Assert.assertEquals(
-			externalReferenceCode, styleBookEntry.getExternalReferenceCode());
-		Assert.assertEquals(
-			WorkflowConstants.STATUS_EMPTY, styleBookEntry.getStatus());
 	}
 
 	@Test
@@ -323,16 +301,17 @@ public class StyleBookEntryServiceTest {
 			styleBookEntry.getFrontendTokenDefinition());
 	}
 
-	private StyleBookEntry _getOrAddEmptyStyleBookEntry(
+	private void _assertDeleteStyleBookEntryWithoutPermission(
 			String externalReferenceCode)
 		throws Exception {
 
-		try (SafeCloseable safeCloseable =
-				LazyReferencingThreadLocal.setEnabledWithSafeCloseable(true)) {
+		try {
+			_styleBookEntryService.deleteStyleBookEntry(
+				externalReferenceCode, _group.getGroupId());
 
-			return _styleBookEntryService.getOrAddEmptyStyleBookEntry(
-				externalReferenceCode, _group.getGroupId(),
-				RandomTestUtil.randomString());
+			Assert.fail();
+		}
+		catch (PrincipalException principalException) {
 		}
 	}
 

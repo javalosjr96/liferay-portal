@@ -5,6 +5,8 @@
 
 package com.liferay.layout.admin.web.internal.portlet.action;
 
+import com.liferay.depot.group.provider.SiteConnectedGroupGroupProvider;
+import com.liferay.fragment.processor.PortletRegistry;
 import com.liferay.item.selector.ItemSelector;
 import com.liferay.layout.admin.constants.LayoutAdminPortletKeys;
 import com.liferay.layout.admin.web.internal.display.context.LayoutsAdminDisplayContext;
@@ -86,7 +88,8 @@ public class MoveLayoutMVCActionCommand extends BaseAddLayoutMVCActionCommand {
 			}
 
 			LayoutActionsHelper layoutActionsHelper = new LayoutActionsHelper(
-				_layoutConverterRegistry, themeDisplay, _translationPermission);
+				_layoutConverterRegistry, _portletRegistry, themeDisplay,
+				_translationPermission);
 
 			LiferayPortletRequest liferayPortletRequest =
 				_portal.getLiferayPortletRequest(actionRequest);
@@ -97,7 +100,8 @@ public class MoveLayoutMVCActionCommand extends BaseAddLayoutMVCActionCommand {
 				new LayoutsAdminDisplayContext(
 					_itemSelector, layoutActionsHelper, _layoutService,
 					_layoutSetPrototypeHelper, _layoutSetSEORobotsProvider,
-					liferayPortletRequest, liferayPortletResponse);
+					liferayPortletRequest, liferayPortletResponse,
+					_siteConnectedGroupGroupProvider);
 
 			JSONPortletResponseUtil.writeJSON(
 				liferayPortletRequest, liferayPortletResponse,
@@ -146,6 +150,12 @@ public class MoveLayoutMVCActionCommand extends BaseAddLayoutMVCActionCommand {
 
 	@Reference
 	private Portal _portal;
+
+	@Reference
+	private PortletRegistry _portletRegistry;
+
+	@Reference
+	private SiteConnectedGroupGroupProvider _siteConnectedGroupGroupProvider;
 
 	@Reference
 	private TranslationPermission _translationPermission;

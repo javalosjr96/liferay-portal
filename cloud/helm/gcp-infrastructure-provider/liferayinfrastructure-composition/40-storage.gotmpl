@@ -1,0 +1,79 @@
+{{- $isDoclibReady := false }}
+{{- range $condition := dig (printf "liferay-gcs-bucket-%s" $activeDataPlane) "resource" "status" "conditions" list $observedResources }}
+    {{- if and (eq $condition.type "Ready") (eq $condition.status "True") }}
+        {{- $isDoclibReady = true }}
+    {{- end }}
+{{- end }}
+{{- range $dataPlane := $dataPlanes }}
+{{- $doclibBucketName := printf "%s-dl-%s" $baseName $dataPlane }}
+{{- if $isCMKKeyReady }}
+---
+apiVersion: storage.gcp.m.upbound.io/v1beta1
+kind: Bucket
+metadata:
+    annotations:
+        gotemplating.fn.crossplane.io/composition-resource-name: liferay-gcs-bucket-{{ $dataPlane }}
+    labels:
+        app: liferay
+        component: document-library
+        dataPlane: {{ $dataPlane }}
+    name: {{ $doclibBucketName }}
+spec:
+    forProvider:
+        {{- if $cmkEnabled }}
+        encryption:
+            defaultKmsKeyName: {{ $cmkKeyId }}
+        {{- end }}
+        forceDestroy: {{ or $forceDestroy (ne $dataPlane $activeDataPlane) }}
+        labels:
+            {{- merge (dict "active" (eq $dataPlane $activeDataPlane | toString)) $backupTargetLabels $xr.spec.storage.tags | toYaml | nindent 12 }}
+        location: {{ $region }}
+        storageClass: STANDARD
+        uniformBucketLevelAccess: true
+        versioning:
+            enabled: true
+    managementPolicies: {{ $managementPolicies }}
+{{- end }}
+{{- if $gsaMember }}
+---
+apiVersion: storage.gcp.m.upbound.io/v1beta1
+kind: BucketIAMMember
+metadata:
+    annotations:
+        gotemplating.fn.crossplane.io/composition-resource-name: liferay-gcs-iam-{{ $dataPlane }}
+    labels:
+        dataPlane: {{ $dataPlane }}
+spec:
+    forProvider:
+        bucketSelector:
+            matchLabels:
+                app: liferay
+                component: document-library
+                dataPlane: {{ $dataPlane }}
+        member: {{ $gsaMember }}
+        role: roles/storage.admin
+    managementPolicies: {{ $managementPolicies }}
+{{- end }}
+{{- if and (eq $dataPlane $activeDataPlane) $isDoclibReady }}
+---
+apiVersion: kubernetes.m.crossplane.io/v1alpha1
+kind: Object
+metadata:
+    annotations:
+        crossplane.io/external-name: {{ $baseName }}-document-library-connection-details-secret
+        gotemplating.fn.crossplane.io/composition-resource-name: document-library-connection-details-secret
+    name: {{ $baseName }}-document-library-connection-details-secret
+spec:
+    forProvider:
+        manifest:
+            apiVersion: v1
+            data:
+                LIFERAY_GCS_BUCKET_NAME: {{ $doclibBucketName | b64enc | quote }}
+            kind: Secret
+            metadata:
+                name: document-library-connection-details
+                namespace: {{ $namespace }}
+            type: Opaque
+    managementPolicies: {{ $managementPolicies }}
+{{- end }}
+{{- end }}

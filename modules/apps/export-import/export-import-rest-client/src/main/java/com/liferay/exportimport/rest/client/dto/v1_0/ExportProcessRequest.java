@@ -12,7 +12,6 @@ import jakarta.annotation.Generated;
 
 import java.io.Serializable;
 
-import java.util.Date;
 import java.util.Objects;
 
 /**
@@ -47,34 +46,26 @@ public class ExportProcessRequest implements Cloneable, Serializable {
 
 	protected Boolean comments;
 
-	public DateRangeType getDateRangeType() {
-		return dateRangeType;
+	public DateFilter getDateFilter() {
+		return dateFilter;
 	}
 
-	public String getDateRangeTypeAsString() {
-		if (dateRangeType == null) {
-			return null;
-		}
-
-		return dateRangeType.toString();
+	public void setDateFilter(DateFilter dateFilter) {
+		this.dateFilter = dateFilter;
 	}
 
-	public void setDateRangeType(DateRangeType dateRangeType) {
-		this.dateRangeType = dateRangeType;
-	}
-
-	public void setDateRangeType(
-		UnsafeSupplier<DateRangeType, Exception> dateRangeTypeUnsafeSupplier) {
+	public void setDateFilter(
+		UnsafeSupplier<DateFilter, Exception> dateFilterUnsafeSupplier) {
 
 		try {
-			dateRangeType = dateRangeTypeUnsafeSupplier.get();
+			dateFilter = dateFilterUnsafeSupplier.get();
 		}
 		catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
-	protected DateRangeType dateRangeType;
+	protected DateFilter dateFilter;
 
 	public Boolean getDeletions() {
 		return deletions;
@@ -96,46 +87,6 @@ public class ExportProcessRequest implements Cloneable, Serializable {
 	}
 
 	protected Boolean deletions;
-
-	public Date getEndDate() {
-		return endDate;
-	}
-
-	public void setEndDate(Date endDate) {
-		this.endDate = endDate;
-	}
-
-	public void setEndDate(
-		UnsafeSupplier<Date, Exception> endDateUnsafeSupplier) {
-
-		try {
-			endDate = endDateUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Date endDate;
-
-	public Boolean getLogo() {
-		return logo;
-	}
-
-	public void setLogo(Boolean logo) {
-		this.logo = logo;
-	}
-
-	public void setLogo(UnsafeSupplier<Boolean, Exception> logoUnsafeSupplier) {
-		try {
-			logo = logoUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Boolean logo;
 
 	public String getName() {
 		return name;
@@ -177,6 +128,30 @@ public class ExportProcessRequest implements Cloneable, Serializable {
 
 	protected Boolean permissions;
 
+	public PortletDataHandler[] getPortletDataHandlers() {
+		return portletDataHandlers;
+	}
+
+	public void setPortletDataHandlers(
+		PortletDataHandler[] portletDataHandlers) {
+
+		this.portletDataHandlers = portletDataHandlers;
+	}
+
+	public void setPortletDataHandlers(
+		UnsafeSupplier<PortletDataHandler[], Exception>
+			portletDataHandlersUnsafeSupplier) {
+
+		try {
+			portletDataHandlers = portletDataHandlersUnsafeSupplier.get();
+		}
+		catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	protected PortletDataHandler[] portletDataHandlers;
+
 	public Boolean getRatings() {
 		return ratings;
 	}
@@ -197,140 +172,6 @@ public class ExportProcessRequest implements Cloneable, Serializable {
 	}
 
 	protected Boolean ratings;
-
-	public RequestPortletDataHandler[] getRequestPortletDataHandlers() {
-		return requestPortletDataHandlers;
-	}
-
-	public void setRequestPortletDataHandlers(
-		RequestPortletDataHandler[] requestPortletDataHandlers) {
-
-		this.requestPortletDataHandlers = requestPortletDataHandlers;
-	}
-
-	public void setRequestPortletDataHandlers(
-		UnsafeSupplier<RequestPortletDataHandler[], Exception>
-			requestPortletDataHandlersUnsafeSupplier) {
-
-		try {
-			requestPortletDataHandlers =
-				requestPortletDataHandlersUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected RequestPortletDataHandler[] requestPortletDataHandlers;
-
-	public String[] getSiteExternalReferenceCodes() {
-		return siteExternalReferenceCodes;
-	}
-
-	public void setSiteExternalReferenceCodes(
-		String[] siteExternalReferenceCodes) {
-
-		this.siteExternalReferenceCodes = siteExternalReferenceCodes;
-	}
-
-	public void setSiteExternalReferenceCodes(
-		UnsafeSupplier<String[], Exception>
-			siteExternalReferenceCodesUnsafeSupplier) {
-
-		try {
-			siteExternalReferenceCodes =
-				siteExternalReferenceCodesUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected String[] siteExternalReferenceCodes;
-
-	public Boolean getSitePagesSettings() {
-		return sitePagesSettings;
-	}
-
-	public void setSitePagesSettings(Boolean sitePagesSettings) {
-		this.sitePagesSettings = sitePagesSettings;
-	}
-
-	public void setSitePagesSettings(
-		UnsafeSupplier<Boolean, Exception> sitePagesSettingsUnsafeSupplier) {
-
-		try {
-			sitePagesSettings = sitePagesSettingsUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Boolean sitePagesSettings;
-
-	public Boolean getSiteTemplateSettings() {
-		return siteTemplateSettings;
-	}
-
-	public void setSiteTemplateSettings(Boolean siteTemplateSettings) {
-		this.siteTemplateSettings = siteTemplateSettings;
-	}
-
-	public void setSiteTemplateSettings(
-		UnsafeSupplier<Boolean, Exception> siteTemplateSettingsUnsafeSupplier) {
-
-		try {
-			siteTemplateSettings = siteTemplateSettingsUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Boolean siteTemplateSettings;
-
-	public Date getStartDate() {
-		return startDate;
-	}
-
-	public void setStartDate(Date startDate) {
-		this.startDate = startDate;
-	}
-
-	public void setStartDate(
-		UnsafeSupplier<Date, Exception> startDateUnsafeSupplier) {
-
-		try {
-			startDate = startDateUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Date startDate;
-
-	public Boolean getThemeSettings() {
-		return themeSettings;
-	}
-
-	public void setThemeSettings(Boolean themeSettings) {
-		this.themeSettings = themeSettings;
-	}
-
-	public void setThemeSettings(
-		UnsafeSupplier<Boolean, Exception> themeSettingsUnsafeSupplier) {
-
-		try {
-			themeSettings = themeSettingsUnsafeSupplier.get();
-		}
-		catch (Exception e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	protected Boolean themeSettings;
 
 	@Override
 	public ExportProcessRequest clone() throws CloneNotSupportedException {
@@ -364,38 +205,5 @@ public class ExportProcessRequest implements Cloneable, Serializable {
 		return ExportProcessRequestSerDes.toJSON(this);
 	}
 
-	public static enum DateRangeType {
-
-		ALL("ALL"), DATE_RANGE("DATE_RANGE"), LAST("LAST");
-
-		public static DateRangeType create(String value) {
-			for (DateRangeType dateRangeType : values()) {
-				if (Objects.equals(dateRangeType.getValue(), value) ||
-					Objects.equals(dateRangeType.name(), value)) {
-
-					return dateRangeType;
-				}
-			}
-
-			return null;
-		}
-
-		public String getValue() {
-			return _value;
-		}
-
-		@Override
-		public String toString() {
-			return _value;
-		}
-
-		private DateRangeType(String value) {
-			_value = value;
-		}
-
-		private final String _value;
-
-	}
-
 }
-// LIFERAY-REST-BUILDER-HASH:-831202142
+// LIFERAY-REST-BUILDER-HASH:-1170817952

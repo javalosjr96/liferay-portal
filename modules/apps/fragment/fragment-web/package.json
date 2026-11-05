@@ -10,6 +10,7 @@
 		"@clayui/modal": "^3.166.0",
 		"@clayui/table": "^3.166.0",
 		"@clayui/tabs": "^3.166.0",
+		"@liferay/ai-hub-cell-js-components-web": "*",
 		"@liferay/frontend-js-codemirror-web": "*",
 		"@liferay/frontend-js-react-web": "*",
 		"@liferay/layout-js-components-web": "*",
@@ -29,5 +30,5 @@
 		"format": "node-scripts format",
 		"test": "node-scripts test"
 	},
-	"version": "4.0.152"
+	"version": "4.0.153"
 }

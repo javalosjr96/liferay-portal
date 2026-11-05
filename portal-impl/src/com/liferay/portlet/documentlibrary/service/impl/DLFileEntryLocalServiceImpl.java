@@ -1248,14 +1248,6 @@ public class DLFileEntryLocalServiceImpl
 
 	@Override
 	public List<DLFileEntry> getDDMStructureFileEntries(
-		long groupId, long[] ddmStructureIds) {
-
-		return dlFileEntryFinder.findByDDMStructureIds(
-			groupId, ddmStructureIds, QueryUtil.ALL_POS, QueryUtil.ALL_POS);
-	}
-
-	@Override
-	public List<DLFileEntry> getDDMStructureFileEntries(
 		long[] ddmStructureIds) {
 
 		return dlFileEntryFinder.findByDDMStructureIds(
@@ -1401,15 +1393,6 @@ public class DLFileEntryLocalServiceImpl
 	}
 
 	@Override
-	public int getFileEntriesCount(
-		long groupId, long userId, List<Long> folderIds, String[] mimeTypes,
-		QueryDefinition<DLFileEntry> queryDefinition) {
-
-		return dlFileEntryFinder.countByG_U_F_M(
-			groupId, userId, folderIds, mimeTypes, queryDefinition);
-	}
-
-	@Override
 	public DLFileEntry getFileEntry(long fileEntryId) throws PortalException {
 		return dlFileEntryPersistence.findByPrimaryKey(fileEntryId);
 	}
@@ -1524,15 +1507,6 @@ public class DLFileEntryLocalServiceImpl
 		}
 
 		return fileEntryTypeIds;
-	}
-
-	@Override
-	public List<DLFileEntry> getGroupFileEntries(
-		long groupId, long userId, long rootFolderId, int start, int end,
-		OrderByComparator<DLFileEntry> orderByComparator) {
-
-		return getGroupFileEntries(
-			groupId, userId, 0, rootFolderId, start, end, orderByComparator);
 	}
 
 	@Override
@@ -1981,8 +1955,6 @@ public class DLFileEntryLocalServiceImpl
 			ServiceContext serviceContext)
 		throws PortalException {
 
-		User user = _userPersistence.findByPrimaryKey(userId);
-
 		DLFileEntry dlFileEntry = dlFileEntryPersistence.findByPrimaryKey(
 			fileEntryId);
 
@@ -1994,8 +1966,13 @@ public class DLFileEntryLocalServiceImpl
 			_dlFileVersionLocalService.getLatestFileVersion(
 				fileEntryId, !dlFileEntry.isCheckedOut());
 
-		dlFileVersion.setUserId(user.getUserId());
-		dlFileVersion.setUserName(user.getFullName());
+		if (!dlFileEntry.isCheckedOut()) {
+			User user = _userPersistence.findByPrimaryKey(userId);
+
+			dlFileVersion.setUserId(user.getUserId());
+			dlFileVersion.setUserName(user.getFullName());
+		}
+
 		dlFileVersion.setFileEntryTypeId(fileEntryTypeId);
 
 		_dlFileVersionLocalService.updateDLFileVersion(dlFileVersion);

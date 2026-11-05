@@ -117,6 +117,8 @@ public class ViewPIMConnectorsDisplayContext {
 			).setVisibilityFilters(
 				HashMapBuilder.<String, Object>put(
 					"active", Boolean.TRUE
+				).put(
+					"mappingStatus", "complete"
 				).build()
 			).build(
 				"execute"

@@ -18,6 +18,7 @@ import getBasicWebContentStructureId from '../../../utils/structured-content/get
 import {BlogsEditBlogEntryPage} from '../../blogs-web/main/pages/BlogsEditBlogEntryPage';
 import {depotsPagesTest} from './fixtures/depotsPagesTest';
 import addEditableDepot from './utils/addEditableDepot';
+import gotoDepotInItemSelector from './utils/gotoDepotInItemSelector';
 
 const test = mergeTests(
 	dataApiHelpersTest,
@@ -155,13 +156,7 @@ test(
 			.getByRole('link', {name: 'Documents and Media'})
 			.click();
 
-		await itemSelector
-			.getByRole('link', {exact: true, name: 'Sites and Libraries'})
-			.click();
-
-		await itemSelector.getByText('Asset Library', {exact: true}).click();
-
-		await itemSelector.getByText(depot.name, {exact: true}).click();
+		await gotoDepotInItemSelector(itemSelector, depot.name);
 
 		await expect(
 			itemSelector.getByText(
@@ -194,5 +189,74 @@ test(
 
 			await expect(getApplicationCard(page, 'Web Content')).toBeVisible();
 		}
+	}
+);
+
+test(
+	'A manual collection offers no selection when the depot disables every application with selectable assets',
+	{tag: '@LPD-108144'},
+	async ({apiHelpers, depotAdminPage, page}) => {
+		const depot = await addEditableDepot(apiHelpers);
+
+		const collectionTitle = getRandomString();
+
+		await apiHelpers.jsonWebServicesAssetListEntry.addManualAssetListEntry({
+			groupId: String(depot.groupId),
+			title: collectionTitle,
+		});
+
+		const selectItemsButton = page.getByRole('button', {
+			name: 'Select Items',
+		});
+
+		const openCollection = async () => {
+			await page.goto(
+				`/group/asset-library-${depot.depotEntryId}/~/control_panel/manage?p_p_id=com_liferay_asset_list_web_portlet_AssetListPortlet`
+			);
+
+			await page
+				.getByRole('link', {exact: true, name: collectionTitle})
+				.click();
+
+			await expect(
+				page.locator('.heading-text', {hasText: 'Collection Items'})
+			).toBeVisible();
+		};
+
+		await page.goto(
+			`/group/asset-library-${depot.depotEntryId}/~/control_panel/manage?p_p_id=com_liferay_asset_list_web_portlet_AssetListPortlet`
+		);
+
+		await page
+			.getByRole('link', {exact: true, name: collectionTitle})
+			.click();
+
+		await page.getByLabel('Item Type').selectOption({label: 'All Types'});
+
+		await page.getByRole('button', {exact: true, name: 'Save'}).click();
+
+		await expect(
+			page.locator('.heading-text', {hasText: 'Collection Items'})
+		).toBeVisible();
+
+		await depotAdminPage.setApplications(
+			depot.depotEntryId,
+			['Documents and Media', 'Web Content'],
+			false
+		);
+
+		await openCollection();
+
+		await expect(selectItemsButton).toHaveCount(0);
+
+		await depotAdminPage.setApplications(
+			depot.depotEntryId,
+			['Web Content'],
+			true
+		);
+
+		await openCollection();
+
+		await expect(selectItemsButton).toBeVisible();
 	}
 );

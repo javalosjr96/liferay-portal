@@ -22,10 +22,10 @@ import com.liferay.object.model.ObjectEntryFolder;
 import com.liferay.object.model.ObjectField;
 import com.liferay.object.model.ObjectRelationship;
 import com.liferay.object.service.ObjectEntryFolderService;
-import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.object.service.base.ObjectEntryServiceBaseImpl;
 import com.liferay.object.service.persistence.ObjectDefinitionPersistence;
 import com.liferay.object.service.persistence.ObjectFieldPersistence;
+import com.liferay.object.service.persistence.ObjectRelationshipPersistence;
 import com.liferay.petra.function.transform.TransformUtil;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.sql.dsl.expression.Predicate;
@@ -486,8 +486,11 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 			ObjectEntry objectEntry, String actionId)
 		throws PortalException {
 
+		ObjectDefinition objectDefinition = objectEntry.getObjectDefinition();
+
 		ModelResourcePermission<ObjectEntry> modelResourcePermission =
-			getModelResourcePermission(objectEntry.getObjectDefinitionId());
+			ModelResourcePermissionRegistryUtil.getModelResourcePermission(
+				objectDefinition.getClassName());
 
 		return modelResourcePermission.contains(
 			getPermissionChecker(), objectEntry, actionId);
@@ -828,9 +831,8 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 		long parentObjectEntryId = 0;
 
 		List<ObjectRelationship> objectRelationships =
-			_objectRelationshipLocalService.
-				getObjectRelationshipsByObjectDefinitionId2(
-					objectDefinition.getObjectDefinitionId(), true);
+			_objectRelationshipPersistence.findByODI2_E(
+				objectDefinition.getObjectDefinitionId(), true);
 
 		for (ObjectRelationship objectRelationship : objectRelationships) {
 			ObjectField objectField2 = _objectFieldPersistence.findByPrimaryKey(
@@ -1038,7 +1040,7 @@ public class ObjectEntryServiceImpl extends ObjectEntryServiceBaseImpl {
 	private ObjectFieldPersistence _objectFieldPersistence;
 
 	@Reference
-	private ObjectRelationshipLocalService _objectRelationshipLocalService;
+	private ObjectRelationshipPersistence _objectRelationshipPersistence;
 
 	@Reference
 	private PermissionCheckerFactory _permissionCheckerFactory;

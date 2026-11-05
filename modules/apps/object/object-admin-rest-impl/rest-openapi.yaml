@@ -733,7 +733,7 @@ components:
             type: object
 info:
     description:
-        "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.object.admin.rest.client', and version '1.0.92'."
+        "A Java client JAR is available for use with the group ID 'com.liferay', artifact ID 'com.liferay.object.admin.rest.client', and version '1.0.93'."
     license:
         name: Apache 2.0
         url: http://www.apache.org/licenses/LICENSE-2.0.html
@@ -899,6 +899,20 @@ paths:
                                 $ref: "#/components/schemas/ObjectDefinition"
             tags: ["ObjectDefinition"]
     "/object-definitions/by-external-reference-code/{externalReferenceCode}":
+        delete:
+            operationId: deleteObjectDefinitionByExternalReferenceCode
+            parameters:
+                -   in: path
+                    name: externalReferenceCode
+                    required: true
+                    schema:
+                        type: string
+            responses:
+                204:
+                    content:
+                        application/json: {}
+                        application/xml: {}
+            tags: ["ObjectDefinition"]
         get:
             operationId: getObjectDefinitionByExternalReferenceCode
             parameters:

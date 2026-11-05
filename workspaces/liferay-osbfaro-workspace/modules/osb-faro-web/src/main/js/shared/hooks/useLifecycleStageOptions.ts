@@ -1,10 +1,7 @@
 import * as API from 'shared/api';
 import {ILifecycleStage} from 'shared/api/lifecycle';
-import {
-	LifecycleStages,
-	lifecycleStagesLabelMap,
-} from 'contacts/pages/account/utils/constants';
 import {useRequest} from 'shared/hooks/useRequest';
+import {sortBy} from 'lodash';
 
 export const useLifecycleStageOptions = ({
 	channelId,
@@ -28,19 +25,17 @@ export const useLifecycleStageOptions = ({
 		}
 	);
 
-	const stages: ILifecycleStage[] = lifecycleDetail?.stages ?? [];
+	const stages: ILifecycleStage[] =
+		lifecycleDetail?.accountLifecycleStages ?? [];
 
 	return {
 		loading:
 			lifecyclesLoading || (Boolean(lifecycle) && lifecycleDetailLoading),
-		options: stages
-			.slice()
-			.sort((a, b) => a.displayOrder - b.displayOrder)
-			.map(({externalReferenceCode, stageType}) => ({
-				label:
-					lifecycleStagesLabelMap[stageType as LifecycleStages]
-						?.label ?? stageType,
+		options: sortBy(stages, 'position').map(
+			({externalReferenceCode, name}) => ({
+				label: name,
 				value: externalReferenceCode,
-			})),
+			})
+		),
 	};
 };

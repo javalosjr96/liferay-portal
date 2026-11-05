@@ -107,6 +107,12 @@ public class LiferayOAuth2ResourceServerEnableWebSecurity {
 				}
 			}
 
+			if (clientId == null) {
+				clientId = _environment.getProperty(
+					externalReferenceCode +
+						".oauth2.headless.server.client.id");
+			}
+
 			clientIds.put(externalReferenceCode, clientId);
 		}
 
@@ -189,6 +195,10 @@ public class LiferayOAuth2ResourceServerEnableWebSecurity {
 
 		@Override
 		public OAuth2TokenValidatorResult validate(Jwt jwt) {
+			if (_isIssuedToListedApplication(jwt)) {
+				return OAuth2TokenValidatorResult.success();
+			}
+
 			String jwtClientId = jwt.getClaimAsString("client_id");
 
 			if (_clientIds.containsValue(jwtClientId)) {
@@ -210,6 +220,22 @@ public class LiferayOAuth2ResourceServerEnableWebSecurity {
 
 		private LiferayOAuth2TokenValidator(Map<String, String> clientIds) {
 			_clientIds = clientIds;
+		}
+
+		private boolean _isIssuedToListedApplication(Jwt jwt) {
+			if (!_clientIds.containsKey(
+					jwt.getClaimAsString("external_reference_code"))) {
+
+				return false;
+			}
+
+			for (String lxcDXPDomain : _lxcDXPDomains.split("\\s*[,\n]\\s*")) {
+				if (lxcDXPDomain.equals(jwt.getClaimAsString("iss"))) {
+					return true;
+				}
+			}
+
+			return false;
 		}
 
 		private final Map<String, String> _clientIds;

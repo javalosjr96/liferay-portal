@@ -18,7 +18,8 @@ autoscaling:
         maxReplicaCount: 100
         minReplicaCount: 1
         pollingInterval: 30
-        prometheusServerAddress: ""
+        prometheusTriggerMetadata:
+            serverAddress: ""
         triggerAuthentication:
             annotations: {}
             spec: {}
@@ -444,8 +445,8 @@ network:
     gatewayName: ""
     hostnames: []
     hsts:
-        enabled: true
-        value: max-age=31536000; includeSubDomains; preload
+        enabled: false
+        value: max-age=31536000
     perHostnameRoutes: false
     securityPolicyAuthorizationSpec: {}
     sessionPersistence:
@@ -456,6 +457,7 @@ network:
     timeouts: {}
 networkPolicy:
     allowGatewayIngress: true
+    allowMetricsIngress: true
     annotations: {}
     cluster:
         kubernetesEndpointCidrs: ""
@@ -464,6 +466,8 @@ networkPolicy:
     extraIngress: []
     gatewayNamespace: envoy-gateway-system
     gatewayPodLabel: envoy
+    metricsNamespace: observability
+    metricsPort: 12345
 nodeSelector: {}
 overlay:
     copy: []

@@ -3,15 +3,15 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {RequestPortletDataHandler} from './portletDataHandler';
+import {Site} from './exportImportPreview';
+import {PortletDataHandler} from './portletDataHandler';
 
 export type ExportImportProcess = 'export' | 'import' | 'publish';
 
-export type DateRangeType =
-	| 'ALL'
-	| 'DATE_RANGE'
-	| 'FROM_LAST_PUBLISH_DATE'
-	| 'LAST';
+export type DateFilter =
+	| {endDate?: string; startDate?: string; type: 'DateRange'}
+	| {type: 'FromLastPublishDate'}
+	| {hours: number; type: 'LastHours'};
 
 export interface ExportProcess {
 	dateCreated?: string;
@@ -23,19 +23,16 @@ export interface ExportProcess {
 
 export interface ExportProcessRequest {
 	comments?: boolean;
-	dateRangeType?: DateRangeType;
+	dateFilter?: DateFilter;
 	deletions?: boolean;
-	endDate?: string;
-	logo?: boolean;
 	name: string;
 	permissions?: boolean;
+	portletDataHandlers?: PortletDataHandler[];
 	ratings?: boolean;
-	requestPortletDataHandlers?: RequestPortletDataHandler[];
-	siteExternalReferenceCodes?: string[];
-	sitePagesSettings?: boolean;
-	siteTemplateSettings?: boolean;
-	startDate?: string;
-	themeSettings?: boolean;
+}
+
+export interface InstanceExportProcessRequest extends ExportProcessRequest {
+	sites?: Site[];
 }
 
 export const DATA_STRATEGIES = {
@@ -66,16 +63,15 @@ export interface ImportProcessRequest {
 	comments?: boolean;
 	dataStrategy?: DataStrategy;
 	deletions?: boolean;
-	logo?: boolean;
 	name?: string;
 	permissions?: boolean;
+	portletDataHandlers?: PortletDataHandler[];
 	ratings?: boolean;
-	requestPortletDataHandlers?: RequestPortletDataHandler[];
-	siteExternalReferenceCodes?: string[];
-	sitePagesSettings?: boolean;
-	siteTemplateSettings?: boolean;
-	themeSettings?: boolean;
 	userIdStrategy?: UserIdStrategy;
+}
+
+export interface InstanceImportProcessRequest extends ImportProcessRequest {
+	sites?: Site[];
 }
 
 export interface PublishProcess {
@@ -88,31 +84,28 @@ export interface PublishProcess {
 
 export interface PublishProcessRequest {
 	comments?: boolean;
-	cronExpression?: string;
-	dateRangeType?: DateRangeType;
+	dateFilter?: DateFilter;
 	deletions?: boolean;
-	endDate?: string;
-	logo?: boolean;
 	name: string;
 	permissions?: boolean;
+	portletDataHandlers?: PortletDataHandler[];
 	ratings?: boolean;
-	requestPortletDataHandlers?: RequestPortletDataHandler[];
-	scheduleEndDate?: string;
-	scheduleStartDate?: string;
-	sitePagesSettings?: boolean;
-	siteTemplateSettings?: boolean;
-	startDate?: string;
-	themeSettings?: boolean;
-	timeZoneId?: string;
 }
 
 export interface ScheduledPublishProcess {
-	cronExpression?: string;
 	dateCreated?: string;
 	id?: number;
 	name?: string;
 	nextFireDate?: string;
-	publishParameters?: Record<string, string[]>;
 	scheduleEndDate?: string;
 	scheduleStartDate?: string;
+	scheduledPublishProcessRequest?: ScheduledPublishProcessRequest;
+}
+
+export interface ScheduledPublishProcessRequest {
+	cronExpression: string;
+	publishProcessRequest: PublishProcessRequest;
+	scheduleEndDate?: string;
+	scheduleStartDate?: string;
+	timeZoneId?: string;
 }

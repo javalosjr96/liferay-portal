@@ -5,19 +5,23 @@
 
 package com.liferay.headless.cms.internal.resource.v1_0;
 
+import com.liferay.asset.link.service.AssetLinkLocalService;
 import com.liferay.depot.service.DepotEntryLocalService;
 import com.liferay.depot.service.DepotEntryService;
 import com.liferay.headless.cms.dto.v1_0.AssetStatistics;
 import com.liferay.headless.cms.internal.field.MissingRequiredFieldsAssetSearcher;
 import com.liferay.headless.cms.internal.link.BrokenLinkAssetSearcher;
 import com.liferay.headless.cms.internal.link.BrokenLinkTarget;
+import com.liferay.headless.cms.internal.usage.UnlinkedAssetSearcher;
 import com.liferay.headless.cms.internal.util.CMSGroupUtil;
 import com.liferay.headless.cms.resource.v1_0.AssetStatisticsResource;
 import com.liferay.object.constants.ObjectFolderConstants;
 import com.liferay.object.model.ObjectDefinition;
 import com.liferay.object.model.ObjectEntryTable;
+import com.liferay.object.service.ObjectDefinitionLocalService;
 import com.liferay.object.service.ObjectDefinitionService;
 import com.liferay.object.service.ObjectEntryLocalService;
+import com.liferay.object.service.ObjectRelationshipLocalService;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.sql.dsl.expression.Predicate;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -46,6 +50,7 @@ import com.liferay.portal.workflow.kaleo.model.KaleoTaskInstanceTokenTable;
 import com.liferay.portal.workflow.kaleo.service.KaleoTaskInstanceTokenLocalService;
 import com.liferay.portal.workflow.metrics.sla.processor.WorkflowMetricsSLAStatus;
 import com.liferay.site.cms.site.initializer.constants.CMSWorkflowConstants;
+import com.liferay.site.navigation.service.SiteNavigationMenuItemLocalService;
 
 import java.util.Date;
 import java.util.List;
@@ -71,13 +76,12 @@ public class AssetStatisticsResourceImpl
 
 		LicenseManagerUtil.checkFreeTier();
 
-		Long[] spaceGroupIds = CMSGroupUtil.getSpaceGroupIds(
-			contextCompany.getCompanyId(), _depotEntryService,
-			contextUser.getUserId());
-
 		Long[] selectedSpaceGroupIds = CMSGroupUtil.getSelectedSpaceGroupIds(
 			assetLibraryId, contextCompany.getCompanyId(),
-			_depotEntryLocalService, groupLocalService, spaceGroupIds);
+			_depotEntryLocalService, groupLocalService,
+			CMSGroupUtil.getAdministeredSpaceGroupIds(
+				contextCompany.getCompanyId(), _depotEntryService,
+				contextUser.getUserId()));
 
 		if (ArrayUtil.isEmpty(selectedSpaceGroupIds)) {
 			return _toAssetStatistics();
@@ -103,6 +107,9 @@ public class AssetStatisticsResourceImpl
 		String[] classNames = transformToArray(
 			objectDefinitions, ObjectDefinition::getClassName, String.class);
 		Date date = new Date();
+		Long[] spaceGroupIds = CMSGroupUtil.getSpaceGroupIds(
+			contextCompany.getCompanyId(), _depotEntryService,
+			contextUser.getUserId());
 
 		return new AssetStatistics() {
 			{
@@ -186,6 +193,8 @@ public class AssetStatisticsResourceImpl
 						selectedSpaceGroupIds, objectDefinitionIds,
 						ObjectEntryTable.INSTANCE.status.in(
 							CMSWorkflowConstants.STATUSES)));
+				setUnlinkedCount(
+					() -> _getUnlinkedCount(selectedSpaceGroupIds));
 				setUpcomingReviewCount(
 					() -> _getCount(
 						selectedSpaceGroupIds, objectDefinitionIds,
@@ -362,6 +371,34 @@ public class AssetStatisticsResourceImpl
 		return cardinalityAggregationResult.getValue();
 	}
 
+	private long _getUnlinkedCount(Long[] groupIds) {
+		if (!FeatureFlagManagerUtil.isEnabled(
+				contextCompany.getCompanyId(), "LPD-82226")) {
+
+			return 0;
+		}
+
+		try {
+			UnlinkedAssetSearcher unlinkedAssetSearcher =
+				new UnlinkedAssetSearcher(
+					_aggregations, _assetLinkLocalService,
+					_objectDefinitionLocalService, _objectEntryLocalService,
+					_objectRelationshipLocalService, _searcher,
+					_searchRequestBuilderFactory,
+					_siteNavigationMenuItemLocalService);
+
+			return unlinkedAssetSearcher.getCount(
+				contextCompany.getCompanyId(), groupIds);
+		}
+		catch (Exception exception) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to get the unlinked count", exception);
+			}
+
+			return 0;
+		}
+	}
+
 	private long _getWorkflowTasksCount(
 		String[] classNames, Long[] groupIds, Predicate predicate) {
 
@@ -404,6 +441,7 @@ public class AssetStatisticsResourceImpl
 				setScheduledCount(() -> 0L);
 				setSlaBreachedWorkflowTasksCount(() -> 0L);
 				setTotalCount(() -> 0L);
+				setUnlinkedCount(() -> 0L);
 				setUpcomingReviewCount(() -> 0L);
 				setWorkflowTasksCount(() -> 0L);
 			}
@@ -423,6 +461,9 @@ public class AssetStatisticsResourceImpl
 	private Aggregations _aggregations;
 
 	@Reference
+	private AssetLinkLocalService _assetLinkLocalService;
+
+	@Reference
 	private DepotEntryLocalService _depotEntryLocalService;
 
 	@Reference
@@ -436,10 +477,16 @@ public class AssetStatisticsResourceImpl
 		_kaleoTaskInstanceTokenLocalService;
 
 	@Reference
+	private ObjectDefinitionLocalService _objectDefinitionLocalService;
+
+	@Reference
 	private ObjectDefinitionService _objectDefinitionService;
 
 	@Reference
 	private ObjectEntryLocalService _objectEntryLocalService;
+
+	@Reference
+	private ObjectRelationshipLocalService _objectRelationshipLocalService;
 
 	@Reference
 	private SearchEngineAdapter _searchEngineAdapter;
@@ -449,5 +496,9 @@ public class AssetStatisticsResourceImpl
 
 	@Reference
 	private Searcher _searcher;
+
+	@Reference
+	private SiteNavigationMenuItemLocalService
+		_siteNavigationMenuItemLocalService;
 
 }

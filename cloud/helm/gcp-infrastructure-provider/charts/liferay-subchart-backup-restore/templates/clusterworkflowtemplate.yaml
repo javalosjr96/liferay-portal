@@ -30,7 +30,7 @@ spec:
             resource:
                 action: patch
                 manifest: |-
-                    apiVersion: gcp.liferay.com/v1alpha1
+                    apiVersion: liferay.com/v1alpha1
                     kind: LiferayInfrastructure
                     metadata:
                         name: {{ "{{" }}inputs.parameters.liferay-infrastructure-name}}
@@ -83,9 +83,6 @@ spec:
                     -   name: liferay-workload-name
                         valueFrom:
                             path: /tmp/liferay-workload-name.txt
-                    -   name: root-password-secret-name
-                        valueFrom:
-                            path: /tmp/root-password-secret-name.txt
                     -   name: vault-bucket
                         valueFrom:
                             path: /tmp/vault-bucket.txt
@@ -185,8 +182,6 @@ spec:
                                     value: "{{ "{{" }}tasks.get-current-infrastructure-state.outputs.parameters.data-inactive}}"
                                 -   name: liferay-infrastructure-name
                                     value: "{{ "{{" }}tasks.get-current-infrastructure-state.outputs.parameters.liferay-infrastructure-name}}"
-                                -   name: root-password-secret-name
-                                    value: "{{ "{{" }}tasks.get-current-infrastructure-state.outputs.parameters.root-password-secret-name}}"
                                 -   name: vault-bucket
                                     value: "{{ "{{" }}tasks.get-current-infrastructure-state.outputs.parameters.vault-bucket}}"
                                 -   name: vault-path
@@ -278,10 +273,10 @@ spec:
                         template: apply-wait-infrastructure
                     -   arguments:
                             parameters:
+                                -   name: data-inactive
+                                    value: "{{ "{{" }}inputs.parameters.data-inactive}}"
                                 -   name: restore-instance
                                     value: "{{ "{{" }}tasks.get-inactive-cloudsql-instance.outputs.result}}"
-                                -   name: root-password-secret-name
-                                    value: "{{ "{{" }}inputs.parameters.root-password-secret-name}}"
                         depends: restore-cloudsql-backup
                         name: reset-postgres-password
                         template: reset-postgres-password
@@ -317,7 +312,6 @@ spec:
                     -   name: database-snapshot-uuid
                     -   name: data-inactive
                     -   name: liferay-infrastructure-name
-                    -   name: root-password-secret-name
                     -   name: vault-bucket
                     -   name: vault-path
             name: prepare-target-data-plane
@@ -329,7 +323,6 @@ spec:
                     -   postgres
                     -   --instance={{ "{{" }}inputs.parameters.restore-instance}}
                     -   --password=$(PGPASSWORD)
-                    -   --project={{ .Values.global.gcp.projectId }}
                     -   --quiet
                 command: [gcloud]
                 env:
@@ -339,14 +332,14 @@ spec:
                         valueFrom:
                             secretKeyRef:
                                 key: password
-                                name: "{{ "{{" }}inputs.parameters.root-password-secret-name}}"
+                                name: liferay-database-{{ "{{" }}inputs.parameters.data-inactive}}-root-password
                 image: "{{ .Values.images.gcloud.repository }}:{{ .Values.images.gcloud.tag }}"
                 resources:
                     {{- .Values.resources.default | toYaml | nindent 20 }}
             inputs:
                 parameters:
+                    -   name: data-inactive
                     -   name: restore-instance
-                    -   name: root-password-secret-name
             name: reset-postgres-password
         -   name: reset-restore-phase
             script:
@@ -379,7 +372,6 @@ spec:
                     -   backups
                     -   restore
                     -   "{{ "{{" }}inputs.parameters.database-snapshot-uuid}}"
-                    -   --project={{ .Values.global.gcp.projectId }}
                     -   --quiet
                     -   --restore-instance
                     -   "{{ "{{" }}inputs.parameters.restore-instance}}"
@@ -458,7 +450,7 @@ spec:
                 -   args:
                         -   "{{ "{{" }}inputs.parameters.restore-instance-connection-name}}"
                         -   --auto-iam-authn
-                        -   --port=$(DATABASE_PORT)
+                        -   --port=5432
                         -   --private-ip
                         -   --structured-logs
                     env:
@@ -468,9 +460,6 @@ spec:
                             value: 0.0.0.0
                         -   name: CSQL_PROXY_HTTP_PORT
                             value: "9801"
-                    envFrom:
-                        -   secretRef:
-                                name: managed-service-details
                     image: "{{ .Values.images.cloudSQLProxy.repository }}:{{ .Values.images.cloudSQLProxy.tag }}"
                     name: cloud-sql-proxy
                     resources:
@@ -494,8 +483,8 @@ spec:
             script:
                 command: [sh]
                 envFrom:
-                    -   secretRef:
-                            name: managed-service-details
+                    -   configMapRef:
+                            name: database-server-details
                 image: "{{ .Values.images.postgres.repository }}:{{ .Values.images.postgres.tag }}"
                 resources:
                     {{- .Values.resources.default | toYaml | nindent 20 }}

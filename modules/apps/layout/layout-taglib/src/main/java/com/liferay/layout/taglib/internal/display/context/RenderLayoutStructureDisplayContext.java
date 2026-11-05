@@ -81,6 +81,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -282,9 +283,12 @@ public class RenderLayoutStructureDisplayContext {
 				_getSegmentsEntryIds());
 		}
 
-		if (LayoutStructureItemUtil.hasAncestor(
-				itemId, LayoutDataItemTypeConstants.TYPE_COLLECTION_ITEM,
-				_layoutStructure)) {
+		if (_hasAncestors.computeIfAbsent(
+				itemId,
+				layoutStructureItemId -> LayoutStructureItemUtil.hasAncestor(
+					layoutStructureItemId,
+					LayoutDataItemTypeConstants.TYPE_COLLECTION_ITEM,
+					_layoutStructure))) {
 
 			defaultFragmentRendererContext.setUseCachedContent(false);
 		}
@@ -411,15 +415,8 @@ public class RenderLayoutStructureDisplayContext {
 	}
 
 	public InfoForm getInfoForm(
+		String className,
 		FormStyledLayoutStructureItem formStyledLayoutStructureItem) {
-
-		long classNameId = formStyledLayoutStructureItem.getClassNameId();
-
-		if (classNameId <= 0) {
-			return null;
-		}
-
-		String className = formStyledLayoutStructureItem.getClassName();
 
 		if (Validator.isNull(className)) {
 			return null;
@@ -474,8 +471,14 @@ public class RenderLayoutStructureDisplayContext {
 	}
 
 	public String getLayoutMode() {
-		return ParamUtil.getString(
+		if (_layoutMode != null) {
+			return _layoutMode;
+		}
+
+		_layoutMode = ParamUtil.getString(
 			_httpServletRequest, "p_l_mode", Constants.VIEW);
+
+		return _layoutMode;
 	}
 
 	public LayoutStructure getLayoutStructure() {
@@ -1228,7 +1231,9 @@ public class RenderLayoutStructureDisplayContext {
 	private static final Log _log = LogFactoryUtil.getLog(
 		RenderLayoutStructureDisplayContext.class);
 
+	private final Map<String, Boolean> _hasAncestors = new HashMap<>();
 	private final HttpServletRequest _httpServletRequest;
+	private String _layoutMode;
 	private final LayoutStructure _layoutStructure;
 	private LayoutStructureRulesHelper.LayoutStructureRulesResult
 		_layoutStructureRulesResult;

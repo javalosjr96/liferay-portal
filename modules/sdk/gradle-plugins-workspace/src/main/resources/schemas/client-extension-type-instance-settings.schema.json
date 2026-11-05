@@ -161,10 +161,22 @@
 					"title": "Enable ChatGPT to Create Content",
 					"type": "boolean"
 				},
-				"enableDALLEToCreateImages": {
+				"enableOpenAIImageGeneration": {
 					"default": true,
-					"title": "Enable DALL-E to Create Images",
+					"title": "Enable OpenAI Image Generation",
 					"type": "boolean"
+				},
+				"imageModel": {
+					"default": "gpt-image-2",
+					"description": "Enter the ID of the OpenAI model used to create images. Refer to OpenAI's documentation for the available models.",
+					"title": "Image Model",
+					"type": "string"
+				},
+				"imageSizes": {
+					"default": "1024x1024,1536x1024,1024x1536",
+					"description": "Enter the image sizes users can choose from, separated by commas. The first size is selected by default.",
+					"title": "Image Sizes",
+					"type": "string"
 				},
 				"pid": {
 					"const": "com.liferay.ai.creator.openai.configuration.AICreatorOpenAICompanyConfiguration",
@@ -863,7 +875,7 @@
 					"title": "Publications View Changes"
 				},
 				"productionOnlyApplication": {
-					"default": "com_liferay_dispatch_web_internal_portlet_DispatchPortlet, com_liferay_my_account_web_portlet_MyAccountPortlet, com_liferay_notification_web_internal_portlet_NotificationTemplatesPortlet, com_liferay_oauth_client_admin_web_internal_portlet_OAuthClientAdminPortlet, com_liferay_oauth2_provider_web_internal_portlet_OAuth2AdminPortlet, com_liferay_object_web_internal_object_definitions_portlet_ObjectDefinitionsPortlet, com_liferay_object_web_internal_list_type_portlet_portlet_ListTypeDefinitionsPortlet, com_liferay_password_policies_admin_web_portlet_PasswordPoliciesAdminPortlet, com_liferay_portal_language_override_web_internal_portlet_PLOPortlet, com_liferay_portal_search_tuning_rankings_web_internal_portlet_ResultRankingsPortlet, com_liferay_portal_search_tuning_synonyms_web_internal_portlet_SynonymsPortlet, com_liferay_search_experiences_web_internal_blueprint_admin_portlet_SXPBlueprintAdminPortlet, com_liferay_users_admin_web_portlet_UsersAdminPortlet",
+					"default": "com_liferay_dispatch_web_internal_portlet_DispatchPortlet, com_liferay_my_account_web_portlet_MyAccountPortlet, com_liferay_notification_web_internal_portlet_NotificationTemplatesPortlet, com_liferay_oauth2_provider_web_internal_portlet_OAuth2AdminPortlet, com_liferay_oauth_client_admin_web_internal_portlet_OAuthClientAdminPortlet, com_liferay_object_web_internal_list_type_portlet_portlet_ListTypeDefinitionsPortlet, com_liferay_object_web_internal_object_definitions_portlet_ObjectDefinitionsPortlet, com_liferay_password_policies_admin_web_portlet_PasswordPoliciesAdminPortlet, com_liferay_portal_language_override_web_internal_portlet_PLOPortlet, com_liferay_portal_search_tuning_rankings_web_internal_portlet_ResultRankingsPortlet, com_liferay_portal_search_tuning_synonyms_web_internal_portlet_SynonymsPortlet, com_liferay_roles_admin_web_portlet_RolesAdminPortlet, com_liferay_search_experiences_web_internal_blueprint_admin_portlet_SXPBlueprintAdminPortlet, com_liferay_user_groups_admin_web_portlet_UserGroupsAdminPortlet, com_liferay_users_admin_web_portlet_UsersAdminPortlet",
 					"description": "These applications do not participate in a publication. Any data saved will be saved directly into production.",
 					"items": {
 						"type": "string"
@@ -4472,6 +4484,12 @@
 		},
 		{
 			"properties": {
+				"graphQLBatchOperationLimit": {
+					"default": 1,
+					"description": "Set the maximum number of operations that can be sent in a single batched GraphQL request. Enter a negative number or zero for an unlimited number of operations.",
+					"title": "GraphQL Batch Operation Limit",
+					"type": "number"
+				},
 				"pageSizeLimit": {
 					"default": 500,
 					"description": "Set the page size limit of elements that can be recovered through REST. Enter a negative number or zero for unlimited page size.",
@@ -4679,6 +4697,12 @@
 					"title": "LDAP Import Enabled",
 					"type": "boolean"
 				},
+				"maximumMessageSize": {
+					"default": 200000,
+					"description": "Set the maximum length, in characters, of an encoded SAML request or response. Larger messages are rejected before they are parsed. Set to 0 if there is no limit.",
+					"title": "Maximum SAML Message Size",
+					"type": "number"
+				},
 				"pid": {
 					"const": "com.liferay.saml.runtime.configuration.SamlProviderConfiguration",
 					"title": "SAML Provider Configuration"
@@ -4800,12 +4824,6 @@
 					"default": 86400,
 					"description": "Define the time (in seconds) before clearing the Anonymous Segment cache.",
 					"title": "Anonymous User Segments Cache Expiration Time",
-					"type": "number"
-				},
-				"interestTermsCacheExpirationTime": {
-					"default": 86400,
-					"description": "Define the time (in seconds) before clearing the Interest Terms cache.",
-					"title": "Interest Terms Cache Expiration Time",
 					"type": "number"
 				},
 				"pid": {

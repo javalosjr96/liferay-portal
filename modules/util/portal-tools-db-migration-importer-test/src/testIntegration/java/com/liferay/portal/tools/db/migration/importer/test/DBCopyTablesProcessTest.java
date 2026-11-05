@@ -25,10 +25,21 @@ import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.tools.db.migration.importer.DBCopyTablesProcess;
 import com.liferay.portal.tools.db.migration.importer.jdbc.AutoBatchPreparedStatementUtil;
 
+import java.sql.BatchUpdateException;
 import java.sql.Connection;
+import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.Time;
+import java.sql.Timestamp;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+
+import java.util.Arrays;
 import java.util.ServiceLoader;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -146,17 +157,34 @@ public class DBCopyTablesProcessTest {
 	}
 
 	@Test
+	@TestInfo("LPD-110960")
+	public void testCopyTableWithTargetCheckConstraint() throws Exception {
+		_createTable(
+			"create table TestTable (id INTEGER, testColumn VARCHAR(75))",
+			StringBundler.concat(
+				"create table TestTable (id INTEGER, testColumn VARCHAR(75), ",
+				"check (id <> ", RandomTestUtil.randomInt(1, _TABLE_SIZE),
+				"))"));
+
+		_insertValues(RandomTestUtil.randomStrings(_TABLE_SIZE));
+
+		try {
+			_copyTable();
+
+			Assert.fail();
+		}
+		catch (Exception exception) {
+			Assert.assertTrue(exception instanceof BatchUpdateException);
+		}
+	}
+
+	@Test
 	@TestInfo("LPD-110096")
 	public void testCopyTableWithTargetOnlyColumn() throws Exception {
-		_sourceDB.runSQL(
-			"create table TestTable (id INTEGER, testColumn VARCHAR(75))");
-
-		try (Connection connection = _targetDataSource.getConnection()) {
-			_targetDB.runSQL(
-				connection,
-				"create table TestTable (id INTEGER, aColumn VARCHAR(75), " +
-					"testColumn VARCHAR(75))");
-		}
+		_createTable(
+			"create table TestTable (id INTEGER, testColumn VARCHAR(75))",
+			"create table TestTable (id INTEGER, aColumn VARCHAR(75), " +
+				"testColumn VARCHAR(75))");
 
 		String[] values = RandomTestUtil.randomStrings(_TABLE_SIZE);
 
@@ -208,6 +236,187 @@ public class DBCopyTablesProcessTest {
 	}
 
 	@Test
+	@TestInfo({"LPD-110097", "LPD-110098"})
+	public void testRunWithCustomColumns() throws Exception {
+		DBType dbType = _sourceDB.getDBType();
+
+		if (dbType == DBType.DB2) {
+			_testRunWithCustomColumns(
+				"bytea", value -> Arrays.toString((byte[])value),
+				value -> Arrays.toString((byte[])value), "varbinary(16)",
+				RandomTestUtil::randomBytes);
+			_testRunWithCustomColumns(
+				"double precision",
+				value -> GetterUtil.getDouble(String.valueOf(value)),
+				Function.identity(), "real",
+				() -> RandomTestUtil.randomInt(0, 99999) / 100F);
+			_testRunWithCustomColumns(
+				"text", Function.identity(), Function.identity(), "dbclob",
+				() -> StringBundler.concat(
+					RandomTestUtil.randomString(), StringPool.NEW_LINE,
+					RandomTestUtil.randomString()));
+			_testRunWithCustomColumns(
+				"time without time zone", Function.identity(),
+				Function.identity(), "time",
+				() -> Time.valueOf(
+					LocalTime.ofSecondOfDay(
+						RandomTestUtil.randomInt(0, 86399))));
+			_testRunWithCustomColumns(
+				"timestamp without time zone", Function.identity(),
+				Function.identity(), "date",
+				() -> Date.valueOf(
+					LocalDate.ofEpochDay(RandomTestUtil.randomInt(0, 36524))));
+		}
+		else if ((dbType == DBType.MARIADB) || (dbType == DBType.MYSQL)) {
+			_testRunWithCustomColumns(
+				"bytea", value -> Arrays.toString((byte[])value),
+				value -> Arrays.toString((byte[])value), "varbinary(16)",
+				RandomTestUtil::randomBytes);
+			_testRunWithCustomColumns(
+				"double precision",
+				value -> GetterUtil.getDouble(String.valueOf(value)),
+				Function.identity(), "float",
+				() -> RandomTestUtil.randomInt(0, 99999) / 100F);
+			_testRunWithCustomColumns(
+				"time without time zone", Function.identity(),
+				Function.identity(), "time",
+				() -> Time.valueOf(
+					LocalTime.ofSecondOfDay(
+						RandomTestUtil.randomInt(0, 86399))));
+			_testRunWithCustomColumns(
+				"timestamp without time zone", Function.identity(),
+				Function.identity(), "date",
+				() -> Date.valueOf(
+					LocalDate.ofEpochDay(RandomTestUtil.randomInt(0, 36524))));
+		}
+		else if (dbType == DBType.ORACLE) {
+			_testRunWithCustomColumns(
+				"bytea", value -> Arrays.toString((byte[])value),
+				value -> Arrays.toString((byte[])value), "raw(16)",
+				RandomTestUtil::randomBytes);
+			_testRunWithCustomColumns(
+				"character varying(10)", Function.identity(),
+				Function.identity(), "nchar(10)",
+				() -> RandomTestUtil.randomString(10));
+			_testRunWithCustomColumns(
+				"double precision",
+				value -> GetterUtil.getDouble(String.valueOf(value)),
+				Function.identity(), "binary_float",
+				() -> RandomTestUtil.randomInt(0, 99999) / 100F);
+			_testRunWithCustomColumns(
+				"text", Function.identity(), Function.identity(), "nclob",
+				() -> StringBundler.concat(
+					RandomTestUtil.randomString(), StringPool.RETURN_NEW_LINE,
+					RandomTestUtil.randomString()));
+			_testRunWithCustomColumns(
+				"timestamp with time zone",
+				value -> Timestamp.from(Instant.from((OffsetDateTime)value)),
+				Function.identity(), "timestamp with local time zone",
+				() -> OffsetDateTime.ofInstant(
+					Instant.ofEpochSecond(RandomTestUtil.randomInt()),
+					ZoneOffset.ofHours(RandomTestUtil.randomInt(-12, 14))));
+			_testRunWithCustomColumns(
+				"timestamp with time zone",
+				value -> Timestamp.from(Instant.from((OffsetDateTime)value)),
+				Function.identity(), "timestamp with time zone",
+				() -> OffsetDateTime.ofInstant(
+					Instant.ofEpochSecond(RandomTestUtil.randomInt()),
+					ZoneOffset.ofHours(RandomTestUtil.randomInt(-12, 14))));
+			_testRunWithCustomColumns(
+				"timestamp without time zone", Function.identity(),
+				Function.identity(), "date",
+				() -> Date.valueOf(
+					LocalDate.ofEpochDay(RandomTestUtil.randomInt(0, 36524))));
+		}
+		else if (dbType == DBType.SQLSERVER) {
+			_testRunWithCustomColumns(
+				"bytea", value -> Arrays.toString((byte[])value),
+				value -> Arrays.toString((byte[])value), "varbinary(16)",
+				RandomTestUtil::randomBytes);
+			_testRunWithCustomColumns(
+				"character varying(10)", Function.identity(),
+				Function.identity(), "nchar(10)",
+				() -> RandomTestUtil.randomString(10));
+			_testRunWithCustomColumns(
+				"double precision",
+				value -> GetterUtil.getDouble(String.valueOf(value)),
+				Function.identity(), "real",
+				() -> RandomTestUtil.randomInt(0, 99999) / 100F);
+			_testRunWithCustomColumns(
+				"text", Function.identity(), Function.identity(), "ntext",
+				() -> StringBundler.concat(
+					RandomTestUtil.randomString(), StringPool.RETURN_NEW_LINE,
+					RandomTestUtil.randomString()));
+			_testRunWithCustomColumns(
+				"time without time zone", Function.identity(),
+				Function.identity(), "time",
+				() -> Time.valueOf(
+					LocalTime.ofSecondOfDay(
+						RandomTestUtil.randomInt(0, 86399))));
+			_testRunWithCustomColumns(
+				"timestamp with time zone",
+				value -> Timestamp.from(Instant.from((OffsetDateTime)value)),
+				Function.identity(), "datetimeoffset",
+				() -> OffsetDateTime.ofInstant(
+					Instant.ofEpochSecond(RandomTestUtil.randomInt()),
+					ZoneOffset.ofHours(RandomTestUtil.randomInt(-12, 14))));
+			_testRunWithCustomColumns(
+				"timestamp without time zone", Function.identity(),
+				Function.identity(), "date",
+				() -> Date.valueOf(
+					LocalDate.ofEpochDay(RandomTestUtil.randomInt(0, 36524))));
+		}
+
+		_testRunWithCustomColumns(
+			"character varying(10)",
+			value -> {
+				if ((dbType == DBType.MARIADB) || (dbType == DBType.MYSQL)) {
+					return value;
+				}
+
+				return value + "     ";
+			},
+			Function.identity(), "char(10)",
+			() -> RandomTestUtil.randomString(5));
+
+		_testRunWithCustomColumns();
+	}
+
+	@Test
+	@TestInfo("LPD-110097")
+	public void testRunWithCustomColumnsInPartition() throws Exception {
+		String partitionName = "test" + RandomTestUtil.randomInt();
+
+		try (Connection connection = _targetDataSource.getConnection()) {
+			_targetDB.runSQL(connection, "create schema " + partitionName);
+		}
+
+		DataSource targetDataSource = _targetDataSource;
+
+		_targetDataSource = DataSourceFactoryUtil.initDataSource(
+			System.getProperty("database.postgresql.driver"),
+			System.getProperty("database.postgresql.url") + "?currentSchema=" +
+				partitionName,
+			System.getProperty("database.postgresql.username"),
+			System.getProperty("database.postgresql.password"),
+			StringPool.BLANK);
+
+		try {
+			_testRunWithCustomColumns();
+		}
+		finally {
+			DataSourceFactoryUtil.destroyDataSource(_targetDataSource);
+
+			_targetDataSource = targetDataSource;
+
+			try (Connection connection = _targetDataSource.getConnection()) {
+				_targetDB.runSQL(
+					connection, "drop schema " + partitionName + " cascade");
+			}
+		}
+	}
+
+	@Test
 	public void testSblobColumn() throws Exception {
 		_createTable("SBLOB");
 
@@ -249,10 +458,15 @@ public class DBCopyTablesProcessTest {
 	}
 
 	@Test
+	@TestInfo("LPD-110961")
 	public void testTextColumn() throws Exception {
 		_testColumnTypeOf(
 			Function.identity(), Function.identity(), "TEXT",
-			RandomTestUtil::randomString);
+			() -> StringBundler.concat(
+				StringPool.NEW_LINE, StringPool.NEW_LINE,
+				RandomTestUtil.randomString(), StringPool.RETURN_NEW_LINE,
+				RandomTestUtil.randomString(), StringPool.RETURN,
+				RandomTestUtil.randomString(), StringPool.NEW_LINE));
 	}
 
 	@Test
@@ -260,6 +474,27 @@ public class DBCopyTablesProcessTest {
 		_testColumnTypeOf(
 			Function.identity(), Function.identity(), "VARCHAR(10)",
 			() -> RandomTestUtil.randomString(10));
+	}
+
+	private void _assertColumnType(String columnName, String expectedColumnType)
+		throws Exception {
+
+		try (Connection connection = _targetDataSource.getConnection();
+
+			PreparedStatement preparedStatement = connection.prepareStatement(
+				"select format_type(atttypid, atttypmod) as columnType from " +
+					"pg_attribute where attrelid = ?::regclass and attname = " +
+						"?")) {
+
+			preparedStatement.setString(1, _targetTableName);
+			preparedStatement.setString(2, StringUtil.toLowerCase(columnName));
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				Assert.assertTrue(resultSet.next());
+				Assert.assertEquals(
+					expectedColumnType, resultSet.getString("columnType"));
+			}
+		}
 	}
 
 	private void _assertValues(
@@ -306,10 +541,17 @@ public class DBCopyTablesProcessTest {
 			"create table TestTable (id INTEGER, testColumn " + columnType +
 				")";
 
-		_sourceDB.runSQL(createTableSQL);
+		_createTable(createTableSQL, createTableSQL);
+	}
+
+	private void _createTable(
+			String sourceCreateTableSQL, String targetCreateTableSQL)
+		throws Exception {
+
+		_sourceDB.runSQL(sourceCreateTableSQL);
 
 		try (Connection connection = _targetDataSource.getConnection()) {
-			_targetDB.runSQL(connection, createTableSQL);
+			_targetDB.runSQL(connection, targetCreateTableSQL);
 		}
 	}
 
@@ -375,6 +617,73 @@ public class DBCopyTablesProcessTest {
 		_copyTable();
 
 		_assertValues("testColumn", expectedFunction, values, getFunction);
+	}
+
+	private void _testRunWithCustomColumns() throws Exception {
+		_createTable(
+			"create table TestTable (id INTEGER, charColumn CHAR(10), " +
+				"longColumn LONG, testColumn VARCHAR(75))",
+			"create table TestTable (id INTEGER, testColumn VARCHAR(75))");
+
+		_insertValues(RandomTestUtil.randomStrings(_TABLE_SIZE));
+
+		String charColumnValue = RandomTestUtil.randomString(10);
+		long longColumnValue = RandomTestUtil.randomLong();
+
+		_sourceDB.runSQL(
+			StringBundler.concat(
+				"update TestTable set charColumn = '", charColumnValue,
+				"', longColumn = ", longColumnValue));
+
+		new DBCopyTablesProcess(
+			InfrastructureUtil.getDataSource(), _targetDataSource
+		).run();
+
+		_assertColumnType("charColumn", "character varying(10)");
+
+		if (_sourceDB.getDBType() == DBType.ORACLE) {
+			_assertColumnType("longColumn", "numeric(30,0)");
+		}
+		else {
+			_assertColumnType("longColumn", "bigint");
+		}
+
+		_assertValues(
+			"charColumn", value -> charColumnValue, new Object[_TABLE_SIZE],
+			Function.identity());
+		_assertValues(
+			"longColumn", value -> longColumnValue, new Object[_TABLE_SIZE],
+			GetterUtil::getLong);
+	}
+
+	private void _testRunWithCustomColumns(
+			String expectedColumnType,
+			Function<Object, Object> expectedFunction,
+			Function<Object, Object> getFunction, String type,
+			Supplier<Object> valueSupplier)
+		throws Exception {
+
+		_createTable(
+			"create table TestTable (id INTEGER, testColumn " + type + ")",
+			"create table TestTable (id INTEGER)");
+
+		Object[] values = new Object[_TABLE_SIZE];
+
+		for (int i = 0; i < _TABLE_SIZE; i++) {
+			values[i] = valueSupplier.get();
+		}
+
+		_insertValues(values);
+
+		new DBCopyTablesProcess(
+			InfrastructureUtil.getDataSource(), _targetDataSource
+		).run();
+
+		_assertColumnType("testColumn", expectedColumnType);
+
+		_assertValues("testColumn", expectedFunction, values, getFunction);
+
+		tearDown();
 	}
 
 	private static final int _TABLE_SIZE = 5000;

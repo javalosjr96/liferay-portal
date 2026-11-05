@@ -266,17 +266,6 @@ export function mockAsset(seed = 0, data = {}) {
 	};
 }
 
-export function mockCardTemplate(seed = 0, data = {}) {
-	return {
-		id: String(seed),
-		layoutId: String(seed),
-		name: '',
-		size: 2,
-		type: null,
-		...data,
-	};
-}
-
 export function mockCompany(seed = 0, data = {}) {
 	return {
 		companyId: 20155,
@@ -610,36 +599,6 @@ export function mockInterestObject(seed = 0, data = {}) {
 	};
 }
 
-export function mockLayout(seed = 0, faroEntity = mockSegment()) {
-	return {
-		activitiesCount: 1000,
-		contactsCardData: {1: {id: 'cardData1'}, 2: {id: 'cardData2'}},
-		contactsLayoutTemplate: {
-			contactsCardTemplatesList: [
-				[mockCardTemplate('cardTemplate1')],
-				[mockCardTemplate('cardTemplate2')],
-			],
-			headerContactsCardTemplates: [
-				mockCardTemplate('headerCardTemplate1'),
-			],
-			id: seed,
-			name: 'layoutTemplate',
-		},
-		faroEntity,
-	};
-}
-
-export function mockLiferaySyncCounts(data = {}) {
-	return {
-		allUsersCount: 1000,
-		currentUsersCount: 248,
-		organizationsUsersCount: 140,
-		totalUsersCount: 448,
-		userGroupsUsersCount: 260,
-		...data,
-	};
-}
-
 export function mockMembershipChange(seed = 0, data = {}) {
 	return {
 		dateChanged: getTimestamp(),
@@ -683,15 +642,6 @@ export function mockGraphqlOrganization(seed = 0, data = {}) {
 		name: `Test Organization ${seed}`,
 		parentName: 'Foo Parent Organization',
 		type: 'organization',
-		...data,
-	};
-}
-
-export function mockOrganization(seed = 0, data = {}) {
-	return {
-		id: String(seed),
-		name: `Test Organization ${seed}`,
-		usersCount: seed,
 		...data,
 	};
 }
@@ -1022,16 +972,6 @@ export function mockRecommendationJob(seed = 0, data = {}) {
 		runFrequency: JobRunFrequencies.Every30Days,
 		status: JobStatuses.Ready,
 		type: JobTypes.ItemSimilarity,
-		...data,
-	};
-}
-
-export function mockSite(seed = 0, data = {}) {
-	return {
-		friendlyURL: `/guest/${seed}`,
-		id: String(seed),
-		name: `Test - ${seed}`,
-		parentGroupId: '23',
 		...data,
 	};
 }

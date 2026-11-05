@@ -724,40 +724,10 @@ public class BlogsEntryLocalServiceWrapper
 	}
 
 	@Override
-	public int getGroupUserEntriesCount(
-		long groupId, long userId, java.util.Date displayDate,
-		com.liferay.portal.kernel.dao.orm.QueryDefinition<BlogsEntry>
-			queryDefinition) {
-
-		return _blogsEntryLocalService.getGroupUserEntriesCount(
-			groupId, userId, displayDate, queryDefinition);
-	}
-
-	@Override
 	public com.liferay.portal.kernel.dao.orm.IndexableActionableDynamicQuery
 		getIndexableActionableDynamicQuery() {
 
 		return _blogsEntryLocalService.getIndexableActionableDynamicQuery();
-	}
-
-	@Override
-	public java.util.List<BlogsEntry> getOrganizationEntries(
-		long organizationId, java.util.Date displayDate,
-		com.liferay.portal.kernel.dao.orm.QueryDefinition<BlogsEntry>
-			queryDefinition) {
-
-		return _blogsEntryLocalService.getOrganizationEntries(
-			organizationId, displayDate, queryDefinition);
-	}
-
-	@Override
-	public int getOrganizationEntriesCount(
-		long organizationId, java.util.Date displayDate,
-		com.liferay.portal.kernel.dao.orm.QueryDefinition<BlogsEntry>
-			queryDefinition) {
-
-		return _blogsEntryLocalService.getOrganizationEntriesCount(
-			organizationId, displayDate, queryDefinition);
 	}
 
 	/**
@@ -1044,4 +1014,4 @@ public class BlogsEntryLocalServiceWrapper
 	private BlogsEntryLocalService _blogsEntryLocalService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1939155087
+// LIFERAY-SERVICE-BUILDER-HASH:-447961015

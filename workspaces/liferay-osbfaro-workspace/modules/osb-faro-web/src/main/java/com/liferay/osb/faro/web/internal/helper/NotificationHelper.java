@@ -12,8 +12,9 @@ import com.liferay.osb.faro.engine.client.ContactsEngineClient;
 import com.liferay.osb.faro.engine.client.exception.FaroEngineClientException;
 import com.liferay.osb.faro.engine.client.exception.NoSuchEntryException;
 import com.liferay.osb.faro.engine.client.model.AccountLifecycle;
+import com.liferay.osb.faro.engine.client.model.AccountLifecycleStage;
 import com.liferay.osb.faro.engine.client.model.AccountLifecycleStageTransition;
-import com.liferay.osb.faro.engine.client.model.LifecycleTriggerResult;
+import com.liferay.osb.faro.engine.client.model.AccountLifecycleTriggerResult;
 import com.liferay.osb.faro.engine.client.model.Results;
 import com.liferay.osb.faro.model.FaroProject;
 import com.liferay.osb.faro.model.FaroUser;
@@ -21,6 +22,7 @@ import com.liferay.osb.faro.service.FaroProjectLocalService;
 import com.liferay.osb.faro.service.FaroUserLocalService;
 import com.liferay.osb.faro.util.EmailUtil;
 import com.liferay.osb.faro.web.internal.constants.FaroNotificationTemplateConstants;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.json.JSONFactory;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.language.LanguageUtil;
@@ -35,6 +37,7 @@ import com.liferay.portal.kernel.util.HtmlUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.SubscriptionSender;
+import com.liferay.portal.kernel.util.Validator;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -67,16 +70,34 @@ public class NotificationHelper {
 		return new NotificationContext(faroProject, group);
 	}
 
-	public void sendLifecycleNotifications(
-			String frequency, String lifecycleId,
-			Map<Long, List<LifecycleTriggerType>> lifecycleTriggerTypesByUserId,
-			NotificationContext notificationContext)
+	public void sendAccountLifecycleNotifications(
+			String accountLifecycleKey,
+			Map<Long, List<AccountLifecycleTriggerType>>
+				accountLifecycleTriggerTypesByUserId,
+			String frequency, NotificationContext notificationContext)
 		throws Exception {
 
 		Group group = notificationContext.getGroup();
 
+		String accountLifecycleId = _getAccountLifecycleId(
+			accountLifecycleKey, notificationContext.getFaroProject());
+
+		if (accountLifecycleId == null) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Unable to find account lifecycle " + accountLifecycleKey);
+			}
+
+			_notificationPreferencesHelper.
+				removeAccountLifecycleNotificationPreferences(
+					group.getGroupId(),
+					Collections.singleton(accountLifecycleKey));
+
+			return;
+		}
+
 		Map<Long, User> users = _resolveUsers(
-			group.getGroupId(), lifecycleTriggerTypesByUserId.keySet());
+			group.getGroupId(), accountLifecycleTriggerTypesByUserId.keySet());
 
 		if (users.isEmpty()) {
 			return;
@@ -84,40 +105,38 @@ public class NotificationHelper {
 
 		FaroProject faroProject = notificationContext.getFaroProject();
 
-		Set<LifecycleTriggerType> lifecycleTriggerTypes = new LinkedHashSet<>();
+		Set<AccountLifecycleTriggerType> accountLifecycleTriggerTypes =
+			new LinkedHashSet<>();
 
 		for (Long userId : users.keySet()) {
-			lifecycleTriggerTypes.addAll(
-				lifecycleTriggerTypesByUserId.get(userId));
+			accountLifecycleTriggerTypes.addAll(
+				accountLifecycleTriggerTypesByUserId.get(userId));
 		}
 
-		AccountLifecycle accountLifecycle = null;
-		NotificationTemplate notificationTemplate =
-			notificationContext.getLifecycleNotificationTemplate();
+		AccountLifecycle accountLifecycle =
+			_contactsEngineClient.getAccountLifecycle(
+				faroProject, accountLifecycleId);
 
-		for (LifecycleTriggerType lifecycleTriggerType :
-				lifecycleTriggerTypes) {
+		if (accountLifecycle == null) {
+			return;
+		}
+
+		NotificationTemplate notificationTemplate =
+			notificationContext.getAccountLifecycleNotificationTemplate();
+
+		for (AccountLifecycleTriggerType accountLifecycleTriggerType :
+				accountLifecycleTriggerTypes) {
 
 			try {
-				LifecycleTriggerResult lifecycleTriggerResult =
-					_getLifecycleTriggerResult(
-						faroProject, lifecycleId, lifecycleTriggerType,
-						_emailReportHelper.getRangeKey(frequency));
+				AccountLifecycleTriggerResult accountLifecycleTriggerResult =
+					_getAccountLifecycleTriggerResult(
+						accountLifecycle, accountLifecycleTriggerType,
+						faroProject, _emailReportHelper.getRangeKey(frequency));
 
-				long count = lifecycleTriggerResult.getCount();
+				long count = accountLifecycleTriggerResult.getCount();
 
 				if (count == 0) {
 					continue;
-				}
-
-				if (accountLifecycle == null) {
-					accountLifecycle =
-						_contactsEngineClient.getAccountLifecycle(
-							faroProject, lifecycleId);
-
-					if (accountLifecycle == null) {
-						return;
-					}
 				}
 
 				if (notificationTemplate == null) {
@@ -126,26 +145,26 @@ public class NotificationHelper {
 						FaroNotificationTemplateConstants.
 							EXTERNAL_REFERENCE_CODE_LIFECYCLE_NOTIFICATION);
 
-					notificationContext.setLifecycleNotificationTemplate(
+					notificationContext.setAccountLifecycleNotificationTemplate(
 						notificationTemplate);
 				}
 
-				String lifecycleResultsText = null;
+				String accountLifecycleResultsText = null;
 
 				if ((count == 1) &&
-					(lifecycleTriggerResult.getAccountName() != null)) {
+					(accountLifecycleTriggerResult.getAccountName() != null)) {
 
-					lifecycleResultsText =
-						lifecycleTriggerResult.getAccountName();
+					accountLifecycleResultsText =
+						accountLifecycleTriggerResult.getAccountName();
 				}
 				else {
-					lifecycleResultsText = count + " accounts";
+					accountLifecycleResultsText = count + " accounts";
 				}
 
 				Map<String, String> tokensMap = HashMapBuilder.put(
 					"[%LIFECYCLE_NAME%]", accountLifecycle.getName()
 				).put(
-					"[%LIFECYCLE_RESULT_TEXT%]", lifecycleResultsText
+					"[%LIFECYCLE_RESULT_TEXT%]", accountLifecycleResultsText
 				).put(
 					"[%LIFECYCLE_URL%]",
 					EmailUtil.getWorkspaceURL(group) + "/lifecycle"
@@ -154,18 +173,20 @@ public class NotificationHelper {
 				).build();
 
 				Map<Locale, String> bodyMap = _replaceTokens(
-					true, lifecycleTriggerType,
+					accountLifecycleTriggerType, true,
 					notificationTemplate.getBodyMap(), tokensMap);
 				Map<Locale, String> subjectMap = _replaceTokens(
-					false, lifecycleTriggerType,
+					accountLifecycleTriggerType, false,
 					notificationTemplate.getSubjectMap(), tokensMap);
 
 				for (Map.Entry<Long, User> entry : users.entrySet()) {
-					List<LifecycleTriggerType> userLifecycleTriggerTypes =
-						lifecycleTriggerTypesByUserId.get(entry.getKey());
+					List<AccountLifecycleTriggerType>
+						userAccountLifecycleTriggerTypes =
+							accountLifecycleTriggerTypesByUserId.get(
+								entry.getKey());
 
-					if (!userLifecycleTriggerTypes.contains(
-							lifecycleTriggerType)) {
+					if (!userAccountLifecycleTriggerTypes.contains(
+							accountLifecycleTriggerType)) {
 
 						continue;
 					}
@@ -177,8 +198,10 @@ public class NotificationHelper {
 			}
 			catch (Exception exception) {
 				_log.error(
-					"Unable to send " + lifecycleTriggerType.getKey() +
-						" notifications for lifecycle " + lifecycleId,
+					StringBundler.concat(
+						"Unable to send ", accountLifecycleTriggerType.getKey(),
+						" notifications for account lifecycle ",
+						accountLifecycleId),
 					exception);
 			}
 		}
@@ -269,6 +292,10 @@ public class NotificationHelper {
 
 	public static class NotificationContext {
 
+		public NotificationTemplate getAccountLifecycleNotificationTemplate() {
+			return _accountLifecycleNotificationTemplate;
+		}
+
 		public FaroProject getFaroProject() {
 			return _faroProject;
 		}
@@ -277,18 +304,15 @@ public class NotificationHelper {
 			return _group;
 		}
 
-		public NotificationTemplate getLifecycleNotificationTemplate() {
-			return _lifecycleNotificationTemplate;
-		}
-
 		public NotificationTemplate getSegmentNotificationTemplate() {
 			return _segmentNotificationTemplate;
 		}
 
-		public void setLifecycleNotificationTemplate(
-			NotificationTemplate lifecycleNotificationTemplate) {
+		public void setAccountLifecycleNotificationTemplate(
+			NotificationTemplate accountLifecycleNotificationTemplate) {
 
-			_lifecycleNotificationTemplate = lifecycleNotificationTemplate;
+			_accountLifecycleNotificationTemplate =
+				accountLifecycleNotificationTemplate;
 		}
 
 		public void setSegmentNotificationTemplate(
@@ -302,9 +326,9 @@ public class NotificationHelper {
 			_group = group;
 		}
 
+		private NotificationTemplate _accountLifecycleNotificationTemplate;
 		private final FaroProject _faroProject;
 		private final Group _group;
-		private NotificationTemplate _lifecycleNotificationTemplate;
 		private NotificationTemplate _segmentNotificationTemplate;
 
 	}
@@ -371,35 +395,101 @@ public class NotificationHelper {
 		subscriptionSender.flushNotifications();
 	}
 
-	private LifecycleTriggerResult _getLifecycleTriggerResult(
-			FaroProject faroProject, String lifecycleId,
-			LifecycleTriggerType lifecycleTriggerType, int rangeKey)
+	private String _getAccountLifecycleId(
+			String accountLifecycleKey, FaroProject faroProject)
 		throws Exception {
 
-		LifecycleTriggerResult lifecycleTriggerResult = null;
+		String externalReferenceCode = accountLifecycleKey;
 
-		if (lifecycleTriggerType == LifecycleTriggerType.NEW_ACCOUNTS) {
-			lifecycleTriggerResult =
-				_contactsEngineClient.getNewAccountsLifecycleTriggerResult(
-					faroProject, lifecycleId, rangeKey);
+		if (Validator.isNumber(accountLifecycleKey)) {
+			AccountLifecycle accountLifecycle = null;
+
+			try {
+				accountLifecycle = _contactsEngineClient.getAccountLifecycle(
+					faroProject, accountLifecycleKey);
+			}
+			catch (NoSuchEntryException noSuchEntryException) {
+				if (_log.isDebugEnabled()) {
+					_log.debug(noSuchEntryException);
+				}
+
+				return null;
+			}
+
+			externalReferenceCode = accountLifecycle.getExternalReferenceCode();
+
+			if (Validator.isNull(externalReferenceCode)) {
+				return accountLifecycle.getId();
+			}
 		}
-		else if (lifecycleTriggerType ==
-					LifecycleTriggerType.NEW_STALLED_ACCOUNTS) {
 
-			lifecycleTriggerResult =
-				_contactsEngineClient.getStalledAccountsLifecycleTriggerResult(
-					faroProject, lifecycleId, rangeKey);
+		Results<AccountLifecycle> results =
+			_contactsEngineClient.getAccountLifecycles(
+				faroProject, null, null, externalReferenceCode, null, 1, 1,
+				null);
+
+		List<AccountLifecycle> accountLifecycles = results.getItems();
+
+		if (ListUtil.isEmpty(accountLifecycles)) {
+			return null;
+		}
+
+		AccountLifecycle accountLifecycle = accountLifecycles.get(0);
+
+		return accountLifecycle.getId();
+	}
+
+	private AccountLifecycleTriggerResult _getAccountLifecycleTriggerResult(
+			AccountLifecycle accountLifecycle,
+			AccountLifecycleTriggerType accountLifecycleTriggerType,
+			FaroProject faroProject, int rangeKey)
+		throws Exception {
+
+		AccountLifecycleTriggerResult accountLifecycleTriggerResult = null;
+
+		if (accountLifecycleTriggerType ==
+				AccountLifecycleTriggerType.NEW_ACCOUNTS) {
+
+			accountLifecycleTriggerResult =
+				_contactsEngineClient.
+					getNewAccountsAccountLifecycleTriggerResult(
+						faroProject, accountLifecycle.getId(), rangeKey);
+		}
+		else if (accountLifecycleTriggerType ==
+					AccountLifecycleTriggerType.NEW_STALLED_ACCOUNTS) {
+
+			accountLifecycleTriggerResult =
+				_contactsEngineClient.
+					getStalledAccountsAccountLifecycleTriggerResult(
+						faroProject, accountLifecycle.getId(), rangeKey);
 		}
 		else {
+			String toAccountLifecycleStageId = null;
+
+			if (accountLifecycleTriggerType.getToAccountLifecycleStageName() !=
+					null) {
+
+				AccountLifecycleStage accountLifecycleStage =
+					accountLifecycle.getAccountLifecycleStage(
+						accountLifecycleTriggerType.
+							getToAccountLifecycleStageName());
+
+				if (accountLifecycleStage == null) {
+					return new AccountLifecycleTriggerResult();
+				}
+
+				toAccountLifecycleStageId = accountLifecycleStage.getId();
+			}
+
 			Results<AccountLifecycleStageTransition> results =
 				_contactsEngineClient.getAccountLifecycleStageTransitions(
-					faroProject, null, null, lifecycleId, null, null, rangeKey,
-					null, null, lifecycleTriggerType.getToLifecycleStage(), 0,
-					2, null);
+					faroProject, null, null, accountLifecycle.getId(), null,
+					null, rangeKey, null, null, toAccountLifecycleStageId, 0, 2,
+					null);
 
-			lifecycleTriggerResult = new LifecycleTriggerResult();
+			accountLifecycleTriggerResult = new AccountLifecycleTriggerResult();
 
-			lifecycleTriggerResult.setCount(results.getTotal());
+			accountLifecycleTriggerResult.setCount(results.getTotal());
 
 			List<AccountLifecycleStageTransition>
 				accountLifecycleStageTransitions = results.getItems();
@@ -411,16 +501,16 @@ public class NotificationHelper {
 					accountLifecycleStageTransition =
 						accountLifecycleStageTransitions.get(0);
 
-				lifecycleTriggerResult.setAccountName(
+				accountLifecycleTriggerResult.setAccountName(
 					accountLifecycleStageTransition.getAccountName());
 			}
 		}
 
-		if (lifecycleTriggerResult == null) {
-			return new LifecycleTriggerResult();
+		if (accountLifecycleTriggerResult == null) {
+			return new AccountLifecycleTriggerResult();
 		}
 
-		return lifecycleTriggerResult;
+		return accountLifecycleTriggerResult;
 	}
 
 	private boolean _isNoSuchSegmentError(
@@ -472,7 +562,7 @@ public class NotificationHelper {
 	}
 
 	private Map<Locale, String> _replaceTokens(
-		boolean escape, LifecycleTriggerType lifecycleTriggerType,
+		AccountLifecycleTriggerType accountLifecycleTriggerType, boolean escape,
 		Map<Locale, String> templateMap, Map<String, String> tokensMap) {
 
 		Map<Locale, String> replacedTemplateMap = new HashMap<>();
@@ -482,11 +572,11 @@ public class NotificationHelper {
 
 			Map<String, String> localeTokensMap = new HashMap<>(tokensMap);
 
-			if (lifecycleTriggerType != null) {
+			if (accountLifecycleTriggerType != null) {
 				localeTokensMap.put(
 					"[%LIFECYCLE_TRIGGER_LABEL%]",
 					LanguageUtil.get(
-						locale, lifecycleTriggerType.getLanguageKey()));
+						locale, accountLifecycleTriggerType.getLanguageKey()));
 			}
 
 			String value = entry.getValue();
@@ -514,7 +604,7 @@ public class NotificationHelper {
 		boolean escape, Map<Locale, String> templateMap,
 		Map<String, String> tokensMap) {
 
-		return _replaceTokens(escape, null, templateMap, tokensMap);
+		return _replaceTokens(null, escape, templateMap, tokensMap);
 	}
 
 	private Map<Long, User> _resolveUsers(

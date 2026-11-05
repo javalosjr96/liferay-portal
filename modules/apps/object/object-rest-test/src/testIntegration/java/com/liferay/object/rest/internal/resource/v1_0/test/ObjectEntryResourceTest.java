@@ -9485,6 +9485,142 @@ public class ObjectEntryResourceTest {
 	}
 
 	@Test
+	public void testPatchCustomObjectEntryWithAttachmentObjectFieldScope()
+		throws Exception {
+
+		Role role = RoleTestUtil.addRole(RoleConstants.TYPE_REGULAR);
+
+		_addResourcePermission(
+			ObjectActionKeys.ADD_OBJECT_ENTRY,
+			_objectDefinition1.getResourceName(), role);
+
+		String password = RandomTestUtil.randomString();
+		String userName = RandomTestUtil.randomString();
+
+		User user = _addUser(userName, password);
+
+		_roleLocalService.addUserRole(user.getUserId(), role.getRoleId());
+
+		HTTPTestUtil.customize(
+		).withCredentials(
+			userName + "@liferay.com", password
+		).apply(
+			() -> {
+
+				// Default scope
+
+				JSONObject objectEntryJSONObject =
+					HTTPTestUtil.invokeToJSONObject(
+						JSONUtil.put(
+							_OBJECT_FIELD_NAME_1, RandomTestUtil.randomString()
+						).toString(),
+						_objectDefinition1.getRESTContextPath(),
+						Http.Method.POST);
+
+				String endpoint = StringBundler.concat(
+					_objectDefinition1.getRESTContextPath(), StringPool.SLASH,
+					objectEntryJSONObject.get("id"));
+
+				com.liferay.object.rest.dto.v1_0.FileEntry fileEntry1 =
+					_toFileEntry(
+						Base64::encode, DLTestUtil.randomTextFileBytes(),
+						RandomTestUtil.randomString() + ".txt", null, null,
+						ContentTypes.TEXT_PLAIN);
+
+				fileEntry1.setExternalReferenceCode(
+					RandomTestUtil.randomString());
+
+				HTTPTestUtil.invokeToJSONObject(
+					JSONUtil.put(
+						_OBJECT_FIELD_NAME_ATTACHMENT_USER_COMPUTER_TO_DOCS_AND_MEDIA_SOURCE_1,
+						_jsonFactory.createJSONObject(fileEntry1.toString())
+					).toString(),
+					endpoint, Http.Method.PATCH);
+
+				Company company = _companyLocalService.getCompany(
+					_objectDefinition1.getCompanyId());
+
+				DLFileEntry dlFileEntry =
+					_dlFileEntryLocalService.
+						fetchDLFileEntryByExternalReferenceCode(
+							fileEntry1.getExternalReferenceCode(),
+							company.getGroupId());
+
+				Assert.assertEquals(user.getUserId(), dlFileEntry.getUserId());
+
+				// Site member
+
+				_userLocalService.addGroupUser(
+					_group.getGroupId(), user.getUserId());
+
+				Scope scope = Scope.of(_group, LocaleUtil.getDefault());
+
+				com.liferay.object.rest.dto.v1_0.FileEntry fileEntry2 =
+					_toFileEntry(
+						Base64::encode, DLTestUtil.randomTextFileBytes(),
+						RandomTestUtil.randomString() + ".txt", null, null,
+						ContentTypes.TEXT_PLAIN);
+
+				fileEntry2.setExternalReferenceCode(
+					RandomTestUtil.randomString());
+				fileEntry2.setScope(scope);
+
+				JSONObject jsonObject = HTTPTestUtil.invokeToJSONObject(
+					JSONUtil.put(
+						_OBJECT_FIELD_NAME_ATTACHMENT_USER_COMPUTER_TO_DOCS_AND_MEDIA_SOURCE_1,
+						_jsonFactory.createJSONObject(fileEntry2.toString())
+					).toString(),
+					endpoint, Http.Method.PATCH);
+
+				dlFileEntry =
+					_dlFileEntryLocalService.
+						fetchDLFileEntryByExternalReferenceCode(
+							fileEntry2.getExternalReferenceCode(),
+							_group.getGroupId());
+
+				Assert.assertEquals(user.getUserId(), dlFileEntry.getUserId());
+
+				_assertAttachmentJSONObject(
+					dlFileEntry, null,
+					jsonObject.getJSONObject(
+						_OBJECT_FIELD_NAME_ATTACHMENT_USER_COMPUTER_TO_DOCS_AND_MEDIA_SOURCE_1),
+					_jsonFactory.createJSONObject(scope.toString()));
+
+				_userLocalService.deleteGroupUser(
+					_group.getGroupId(), user.getUserId());
+
+				// User who cannot add documents to the site
+
+				com.liferay.object.rest.dto.v1_0.FileEntry fileEntry3 =
+					_toFileEntry(
+						Base64::encode, DLTestUtil.randomTextFileBytes(),
+						RandomTestUtil.randomString() + ".txt", null, null,
+						ContentTypes.TEXT_PLAIN);
+
+				fileEntry3.setExternalReferenceCode(
+					RandomTestUtil.randomString());
+				fileEntry3.setScope(scope);
+
+				jsonObject = HTTPTestUtil.invokeToJSONObject(
+					JSONUtil.put(
+						_OBJECT_FIELD_NAME_ATTACHMENT_USER_COMPUTER_TO_DOCS_AND_MEDIA_SOURCE_1,
+						_jsonFactory.createJSONObject(fileEntry3.toString())
+					).toString(),
+					endpoint, Http.Method.PATCH);
+
+				Assert.assertEquals(
+					"FORBIDDEN", jsonObject.getString("status"));
+
+				Assert.assertNull(
+					_dlFileEntryLocalService.
+						fetchDLFileEntryByExternalReferenceCode(
+							fileEntry3.getExternalReferenceCode(),
+							_group.getGroupId()));
+			}
+		);
+	}
+
+	@Test
 	public void testPatchObjectEntryWithAttachmentObjectFieldId()
 		throws Exception {
 
@@ -9741,6 +9877,7 @@ public class ObjectEntryResourceTest {
 	}
 
 	@Test
+	@TestInfo("LPD-110103")
 	public void testPatchPostPutCustomObjectEntryWithPermissions()
 		throws Exception {
 
@@ -9799,6 +9936,69 @@ public class ObjectEntryResourceTest {
 			JSONUtil.putAll(_getOwnerPermissionsJSONObject(_objectDefinition1)),
 			_patchPutCustomObjectEntryWithPermissions(
 				Http.Method.PUT, true, objectEntryJSONObject, null));
+
+		// Permissions with another object entry ID
+
+		JSONObject otherObjectEntryJSONObject =
+			_postCustomObjectEntryWithPermissions(true, null);
+
+		String objectEntryJSON = JSONUtil.put(
+			_OBJECT_FIELD_NAME_1, RandomTestUtil.randomString()
+		).put(
+			"id", otherObjectEntryJSONObject.getLong("id")
+		).put(
+			"permissions",
+			JSONUtil.putAll(
+				_getPermissionsJSONObject(new String[0], RoleConstants.OWNER))
+		).toString();
+
+		_assertCustomObjectEntryWithPermissions(
+			_jsonFactory.createJSONArray(),
+			HTTPTestUtil.invokeToJSONObject(
+				objectEntryJSON,
+				_objectDefinition1.getRESTContextPath() +
+					"?nestedFields=permissions",
+				Http.Method.POST));
+
+		String byExternalReferenceCodeEndpoint = StringBundler.concat(
+			_objectDefinition1.getRESTContextPath(),
+			"/by-external-reference-code/",
+			objectEntryJSONObject.getString("externalReferenceCode"),
+			"?nestedFields=permissions");
+
+		_assertCustomObjectEntryWithPermissions(
+			_jsonFactory.createJSONArray(),
+			HTTPTestUtil.invokeToJSONObject(
+				objectEntryJSON, byExternalReferenceCodeEndpoint,
+				Http.Method.PATCH));
+		_assertCustomObjectEntryWithPermissions(
+			_jsonFactory.createJSONArray(),
+			HTTPTestUtil.invokeToJSONObject(
+				objectEntryJSON, byExternalReferenceCodeEndpoint,
+				Http.Method.PUT));
+
+		String endpoint = StringBundler.concat(
+			_objectDefinition1.getRESTContextPath(), StringPool.SLASH,
+			objectEntryJSONObject.getLong("id"), "?nestedFields=permissions");
+
+		_assertCustomObjectEntryWithPermissions(
+			_jsonFactory.createJSONArray(),
+			HTTPTestUtil.invokeToJSONObject(
+				objectEntryJSON, endpoint, Http.Method.PATCH));
+		_assertCustomObjectEntryWithPermissions(
+			_jsonFactory.createJSONArray(),
+			HTTPTestUtil.invokeToJSONObject(
+				objectEntryJSON, endpoint, Http.Method.PUT));
+
+		_assertCustomObjectEntryWithPermissions(
+			JSONUtil.putAll(_getOwnerPermissionsJSONObject(_objectDefinition1)),
+			HTTPTestUtil.invokeToJSONObject(
+				null,
+				StringBundler.concat(
+					_objectDefinition1.getRESTContextPath(), StringPool.SLASH,
+					otherObjectEntryJSONObject.getLong("id"),
+					"?nestedFields=permissions"),
+				Http.Method.GET));
 
 		// Permissions with different roles
 

@@ -26,6 +26,46 @@ test.afterEach(async ({apiHelpers}) => {
 });
 
 test.describe('Transition', () => {
+	test(
+		'can be selected',
+		{tag: '@LPD-106108'},
+		async ({
+			apiHelpers,
+			diagramViewPage,
+			processBuilderPage,
+			transitionInfoPage,
+		}) => {
+			await test.step('Post same-source-transitions workflow definition and navigate to it', async () => {
+				const workflowDefinitionName =
+					'Workflow Definition' + getRandomInt();
+
+				const workflowDefinition =
+					await apiHelpers.headlessAdminWorkflow.postWorkflowDefinitionSave(
+						workflowDefinitionName,
+						getWorkflowDefinition('same-source-transitions')
+					);
+
+				workflowDefinitionIds.push(workflowDefinition.id);
+
+				await processBuilderPage.goto();
+
+				await processBuilderPage.clickWorkflowDefinitionName(
+					workflowDefinitionName
+				);
+			});
+
+			await test.step('Assert that the transition can be selected', async () => {
+				await diagramViewPage.clickTransition(
+					'Transition From Parent Task to Child Task 1'
+				);
+
+				await expect(
+					transitionInfoPage.transitionNameField
+				).toHaveValue('Different Name 1');
+			});
+		}
+	);
+
 	test('name cannot be changed if another transition with the same name and source node already exists', async ({
 		apiHelpers,
 		diagramViewPage,
@@ -54,13 +94,13 @@ test.describe('Transition', () => {
 
 		await test.step('Assert that transitions with different source nodes can have the same name', async () => {
 			await diagramViewPage.clickTransition(
-				'TRANSITION FROM CHILD TASK 1 TO END'
+				'Transition From Child Task 1 to End'
 			);
 
 			await transitionInfoPage.transitionNameField.fill('Same Name');
 
 			await diagramViewPage.clickTransition(
-				'TRANSITION FROM CHILD TASK 2 TO END'
+				'Transition From Child Task 2 to End'
 			);
 
 			await transitionInfoPage.transitionNameField.fill('Same Name');
@@ -74,7 +114,7 @@ test.describe('Transition', () => {
 
 		await test.step('Assert that transitions with the same source node cannot have the same name', async () => {
 			await diagramViewPage.clickTransition(
-				'TRANSITION FROM PARENT TASK TO CHILD TASK 2'
+				'Transition From Parent Task to Child Task 2'
 			);
 
 			await transitionInfoPage.transitionNameField.fill(
@@ -90,11 +130,11 @@ test.describe('Transition', () => {
 
 		await test.step('Assert that a repeated name is reverted to a previously valid name after navigating back', async () => {
 			await diagramViewPage.clickTransition(
-				'TRANSITION FROM PARENT TASK TO CHILD TASK 1'
+				'Transition From Parent Task to Child Task 1'
 			);
 
 			await diagramViewPage.clickTransition(
-				'TRANSITION FROM PARENT TASK TO CHILD TASK 2'
+				'Transition From Parent Task to Child Task 2'
 			);
 
 			expect(page.getByLabel('Transition Name*')).toHaveValue(

@@ -5,8 +5,17 @@
 
 package com.liferay.exportimport.rest.internal.util;
 
+import com.liferay.exportimport.rest.dto.v1_0.AssetLibrary;
+import com.liferay.exportimport.rest.dto.v1_0.Site;
+import com.liferay.petra.function.transform.TransformUtil;
+import com.liferay.portal.kernel.exception.PortalException;
+import com.liferay.portal.kernel.feature.flag.FeatureFlagManagerUtil;
 import com.liferay.portal.kernel.model.Group;
+import com.liferay.portal.kernel.model.Layout;
 import com.liferay.portal.kernel.service.GroupLocalServiceUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.PortalUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.staging.StagingGroupHelper;
 import com.liferay.staging.StagingGroupHelperUtil;
 
@@ -44,6 +53,31 @@ public class GroupUtil {
 		return group;
 	}
 
+	public static String[] getGroupExternalReferenceCodes(
+		long companyId, AssetLibrary[] assetLibraries, Site[] sites) {
+
+		if (ArrayUtil.isNotEmpty(assetLibraries) &&
+			!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-41307")) {
+
+			throw new BadRequestException(
+				"Asset libraries require the feature flag \"LPD-41307\"");
+		}
+
+		if (ArrayUtil.isNotEmpty(sites) &&
+			!FeatureFlagManagerUtil.isEnabled(companyId, "LPD-85946")) {
+
+			throw new BadRequestException(
+				"Sites require the feature flag \"LPD-85946\"");
+		}
+
+		return ArrayUtil.append(
+			TransformUtil.transform(
+				assetLibraries, AssetLibrary::getExternalReferenceCode,
+				String.class),
+			TransformUtil.transform(
+				sites, Site::getExternalReferenceCode, String.class));
+	}
+
 	public static Group getLiveGroup(Group stagingGroup) {
 		StagingGroupHelper stagingGroupHelper =
 			StagingGroupHelperUtil.getStagingGroupHelper();
@@ -57,15 +91,34 @@ public class GroupUtil {
 		return liveGroup;
 	}
 
+	public static Group getScopeGroup(
+			Group group, Layout layout, String portletId)
+		throws PortalException {
+
+		if ((layout == null) || layout.isTypeControlPanel()) {
+			return group;
+		}
+
+		return GroupLocalServiceUtil.getGroup(
+			PortalUtil.getScopeGroupId(layout, portletId));
+	}
+
 	public static Group getSiteGroup(
 		long companyId, String externalReferenceCode) {
+
+		return getSiteGroup(companyId, externalReferenceCode, null);
+	}
+
+	public static Group getSiteGroup(
+		long companyId, String externalReferenceCode, String portletId) {
 
 		Group group = GroupLocalServiceUtil.fetchGroupByExternalReferenceCode(
 			externalReferenceCode, companyId);
 
 		if ((group == null) ||
 			(!group.isCMS() && !group.isLayoutSetPrototype() &&
-			 !group.isSite())) {
+			 !group.isSite() &&
+			 (!group.isLayout() || Validator.isBlank(portletId)))) {
 
 			throw new NotFoundException();
 		}

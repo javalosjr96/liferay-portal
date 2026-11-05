@@ -7,6 +7,7 @@ package com.liferay.adaptive.media.image.internal.exportimport.content.processor
 
 import com.liferay.adaptive.media.image.html.AMImageHTMLTagFactory;
 import com.liferay.document.library.kernel.exception.NoSuchFileEntryException;
+import com.liferay.document.library.kernel.model.DLFileEntry;
 import com.liferay.document.library.kernel.service.DLAppLocalService;
 import com.liferay.exportimport.kernel.lar.ExportImportPathUtil;
 import com.liferay.exportimport.kernel.lar.PortletDataContext;
@@ -16,11 +17,13 @@ import com.liferay.portal.kernel.model.StagedModel;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LogEntry;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.After;
@@ -46,9 +49,6 @@ public class AMImageHTMLExportImportContentProcessorTest {
 	@Before
 	public void setUp() throws Exception {
 		ReflectionTestUtil.setFieldValue(
-			_amImageHTMLExportImportContentProcessor,
-			"_amEmbeddedReferenceSetFactory", _amEmbeddedReferenceSetFactory);
-		ReflectionTestUtil.setFieldValue(
 			_amImageHTMLExportImportContentProcessor, "_amImageHTMLTagFactory",
 			_amImageHTMLTagFactory);
 		ReflectionTestUtil.setFieldValue(
@@ -56,12 +56,11 @@ public class AMImageHTMLExportImportContentProcessorTest {
 			_dlAppLocalService);
 
 		Mockito.doReturn(
-			_amEmbeddedReferenceSet
+			_referenceElements
 		).when(
-			_amEmbeddedReferenceSetFactory
-		).create(
-			Mockito.any(PortletDataContext.class),
-			Mockito.any(StagedModel.class)
+			_portletDataContext
+		).getReferenceElements(
+			_stagedModel, DLFileEntry.class
 		);
 
 		Mockito.doAnswer(
@@ -153,18 +152,12 @@ public class AMImageHTMLExportImportContentProcessorTest {
 		String urlFileEntry1 = RandomTestUtil.randomString();
 		String urlFileEntry2 = RandomTestUtil.randomString();
 
-		Assert.assertEquals(
-			StringBundler.concat(
-				prefix, "<img src=\"", urlFileEntry1, "\" data-fileentryid=\"",
-				_FILE_ENTRY_ID_1, "\" />", infix, "<img src=\"", urlFileEntry2,
-				"\" data-fileentryid=\"", _FILE_ENTRY_ID_2, "\" />", suffix),
-			_import(
-				_export(
-					StringBundler.concat(
-						prefix, "<img data-fileentryid=\"", _FILE_ENTRY_ID_1,
-						"\" src=\"", urlFileEntry1, "\" />", infix,
-						"<img data-fileentryid=\"", _FILE_ENTRY_ID_2,
-						"\" src=\"", urlFileEntry2, "\" />", suffix))));
+		String content = StringBundler.concat(
+			prefix, "<img data-fileentryid=\"", _FILE_ENTRY_ID_1, "\" src=\"",
+			urlFileEntry1, "\" />", infix, "<img data-fileentryid=\"",
+			_FILE_ENTRY_ID_2, "\" src=\"", urlFileEntry2, "\" />", suffix);
+
+		Assert.assertEquals(content, _import(_export(content)));
 	}
 
 	@Test
@@ -181,10 +174,10 @@ public class AMImageHTMLExportImportContentProcessorTest {
 		Assert.assertEquals(
 			StringBundler.concat(
 				prefix, "<picture data-fileentryid=\"", _FILE_ENTRY_ID_1,
-				"\"><source /><img src=\"", urlFileEntry1,
+				"\"><source/><img src=\"", urlFileEntry1,
 				"\" data-fileentryid=\"", _FILE_ENTRY_ID_1, "\" /></picture>",
 				infix, "<picture data-fileentryid=\"", _FILE_ENTRY_ID_2,
-				"\"><source /><img src=\"", urlFileEntry2,
+				"\"><source/><img src=\"", urlFileEntry2,
 				"\" data-fileentryid=\"", _FILE_ENTRY_ID_2, "\" /></picture>",
 				suffix),
 			_import(
@@ -214,25 +207,11 @@ public class AMImageHTMLExportImportContentProcessorTest {
 		String prefix = RandomTestUtil.randomString();
 		String suffix = RandomTestUtil.randomString();
 
-		StringBundler expectedSB = new StringBundler(7);
+		String content = StringBundler.concat(
+			prefix, "<img data-fileentryid=\"", _FILE_ENTRY_ID_1, "\" src=\"",
+			RandomTestUtil.randomString(), "\" />", suffix);
 
-		String urlFileEntry1 = RandomTestUtil.randomString();
-
-		expectedSB.append(prefix);
-		expectedSB.append("<img src=\"");
-		expectedSB.append(urlFileEntry1);
-		expectedSB.append("\" data-fileentryid=\"");
-		expectedSB.append(_FILE_ENTRY_ID_1);
-		expectedSB.append("\" />");
-		expectedSB.append(suffix);
-
-		Assert.assertEquals(
-			expectedSB.toString(),
-			_import(
-				_export(
-					StringBundler.concat(
-						prefix, "<img data-fileentryid=\"", _FILE_ENTRY_ID_1,
-						"\" src=\"", urlFileEntry1, "\" />", suffix))));
+		Assert.assertEquals(content, _import(_export(content)));
 	}
 
 	@Test
@@ -242,19 +221,12 @@ public class AMImageHTMLExportImportContentProcessorTest {
 		String prefix = RandomTestUtil.randomString();
 		String suffix = RandomTestUtil.randomString();
 
-		String urlFileEntry1 = RandomTestUtil.randomString();
+		String content = StringBundler.concat(
+			prefix, "<img attr1=\"1\" data-fileentryid=\"", _FILE_ENTRY_ID_1,
+			"\" attr2=\"2\" src=\"", RandomTestUtil.randomString(),
+			"\" attr3=\"3\"/>", suffix);
 
-		Assert.assertEquals(
-			StringBundler.concat(
-				prefix, "<img attr1=\"1\" attr2=\"2\" src=\"", urlFileEntry1,
-				"\" attr3=\"3\" data-fileentryid=\"", _FILE_ENTRY_ID_1, "\" />",
-				suffix),
-			_import(
-				_export(
-					StringBundler.concat(
-						prefix, "<img attr1=\"1\" data-fileentryid=\"",
-						_FILE_ENTRY_ID_1, "\" attr2=\"2\" src=\"",
-						urlFileEntry1, "\" attr3=\"3\"/>", suffix))));
+		Assert.assertEquals(content, _import(_export(content)));
 	}
 
 	@Test
@@ -267,7 +239,7 @@ public class AMImageHTMLExportImportContentProcessorTest {
 		Assert.assertEquals(
 			StringBundler.concat(
 				prefix, "<picture data-fileentryid=\"", _FILE_ENTRY_ID_1,
-				"\"><source /><img src=\"", urlFileEntry1,
+				"\"><source/><img src=\"", urlFileEntry1,
 				"\" data-fileentryid=\"", _FILE_ENTRY_ID_1, "\" /></picture>",
 				suffix),
 			_import(
@@ -288,7 +260,7 @@ public class AMImageHTMLExportImportContentProcessorTest {
 		Assert.assertEquals(
 			StringBundler.concat(
 				"<picture data-fileentryid=\"", _FILE_ENTRY_ID_1,
-				"\"><source /><img src=\"", urlFileEntry1,
+				"\"><source/><img src=\"", urlFileEntry1,
 				"\" class=\"pretty\" data-fileentryid=\"", _FILE_ENTRY_ID_1,
 				"\" /></picture>"),
 			_import(
@@ -354,6 +326,16 @@ public class AMImageHTMLExportImportContentProcessorTest {
 		_testReplaceExportContentReferencesWithReferenceInText();
 		_testReplaceExportContentReferencesWithValidReferences();
 		_testReplaceExportContentReferencesWithZeroFileEntryId();
+	}
+
+	@Test
+	public void testReplaceImportContentReferences() throws Exception {
+		_testReplaceImportContentReferencesWithImageInPlaceOfPicture();
+		_testReplaceImportContentReferencesWithNoReferences();
+		_testReplaceImportContentReferencesWithPictureReference();
+		_testReplaceImportContentReferencesWithReferenceBeforeOtherAttributes();
+		_testReplaceImportContentReferencesWithReferenceInText();
+		_testReplaceImportContentReferencesWithValidReferences();
 	}
 
 	@Test(expected = NoSuchFileEntryException.class)
@@ -448,20 +430,34 @@ public class AMImageHTMLExportImportContentProcessorTest {
 	private void _setUpFileEntryToImport(long fileEntryId, FileEntry fileEntry)
 		throws Exception {
 
+		Element referenceElement = Mockito.mock(Element.class);
+
 		Mockito.doReturn(
-			true
+			String.valueOf(fileEntryId)
 		).when(
-			_amEmbeddedReferenceSet
-		).containsReference(
+			referenceElement
+		).attributeValue(
+			"class-pk"
+		);
+
+		_referenceElements.add(referenceElement);
+
+		Element referenceDataElement = Mockito.mock(Element.class);
+
+		Mockito.doReturn(
 			"PATH_" + fileEntryId
+		).when(
+			referenceDataElement
+		).attributeValue(
+			"path"
 		);
 
 		Mockito.doReturn(
-			fileEntryId
+			referenceDataElement
 		).when(
-			_amEmbeddedReferenceSet
-		).importReference(
-			"PATH_" + fileEntryId
+			_portletDataContext
+		).getReferenceDataElement(
+			_stagedModel, DLFileEntry.class, fileEntryId
 		);
 
 		Mockito.doReturn(
@@ -472,6 +468,12 @@ public class AMImageHTMLExportImportContentProcessorTest {
 			fileEntryId
 		);
 
+		Mockito.doReturn(
+			fileEntryId
+		).when(
+			fileEntry
+		).getFileEntryId();
+
 		Mockito.when(
 			_amImageHTMLTagFactory.create(
 				Mockito.anyString(), Mockito.eq(fileEntry))
@@ -479,7 +481,9 @@ public class AMImageHTMLExportImportContentProcessorTest {
 			invocation -> {
 				String imgTag = invocation.getArgument(0, String.class);
 
-				return "<picture><source/>" + imgTag + "</picture>";
+				return StringBundler.concat(
+					"<picture data-fileentryid=\"", fileEntryId, "\"><source/>",
+					imgTag, "</picture>");
 			}
 		);
 	}
@@ -558,7 +562,6 @@ public class AMImageHTMLExportImportContentProcessorTest {
 		String prefix = RandomTestUtil.randomString();
 		String infix = RandomTestUtil.randomString();
 		String suffix = RandomTestUtil.randomString();
-
 		String urlFileEntry1 = RandomTestUtil.randomString();
 		String urlFileEntry2 = RandomTestUtil.randomString();
 
@@ -594,6 +597,128 @@ public class AMImageHTMLExportImportContentProcessorTest {
 		).getFileEntry(
 			0
 		);
+	}
+
+	private void _testReplaceImportContentReferencesWithImageInPlaceOfPicture()
+		throws Exception {
+
+		FileEntry fileEntry = Mockito.mock(FileEntry.class);
+		long fileEntryId = RandomTestUtil.randomLong();
+
+		_setUpFileEntryToImport(fileEntryId, fileEntry);
+
+		Mockito.when(
+			_amImageHTMLTagFactory.create(
+				Mockito.anyString(), Mockito.eq(fileEntry))
+		).thenAnswer(
+			invocation -> invocation.getArgument(0, String.class)
+		);
+
+		String prefix = RandomTestUtil.randomString();
+		String suffix = RandomTestUtil.randomString();
+		String urlFileEntry = RandomTestUtil.randomString();
+
+		Assert.assertEquals(
+			StringBundler.concat(
+				prefix, "<img src=\"", urlFileEntry, "\" data-fileentryid=\"",
+				fileEntryId, "\" />", suffix),
+			_import(
+				StringBundler.concat(
+					prefix, "<picture export-import-path=\"PATH_", fileEntryId,
+					"\"><source /><img src=\"", urlFileEntry,
+					"\" export-import-path=\"PATH_", fileEntryId,
+					"\" /></picture>", suffix)));
+	}
+
+	private void _testReplaceImportContentReferencesWithNoReferences()
+		throws Exception {
+
+		String content = StringBundler.concat(
+			RandomTestUtil.randomString(), " & ", RandomTestUtil.randomString(),
+			"<br>", RandomTestUtil.randomString());
+
+		Assert.assertEquals(content, _import(content));
+	}
+
+	private void _testReplaceImportContentReferencesWithPictureReference()
+		throws Exception {
+
+		String prefix = RandomTestUtil.randomString();
+		String suffix = RandomTestUtil.randomString();
+
+		String urlFileEntry1 = RandomTestUtil.randomString();
+
+		Assert.assertEquals(
+			StringBundler.concat(
+				prefix, "<picture data-fileentryid=\"", _FILE_ENTRY_ID_1,
+				"\"><source/><img alt=\"\" data-fileentryid=\"",
+				_FILE_ENTRY_ID_1, "\" src=\"", urlFileEntry1, "\"></picture>",
+				suffix),
+			_import(
+				StringBundler.concat(
+					prefix, "<picture export-import-path=\"PATH_",
+					_FILE_ENTRY_ID_1, "\"><source media=\"",
+					RandomTestUtil.randomString(), "\" srcset=\"",
+					RandomTestUtil.randomString(),
+					"\" /><img alt=\"\" export-import-path=\"PATH_",
+					_FILE_ENTRY_ID_1, "\" src=\"", urlFileEntry1,
+					"\"></picture>", suffix)));
+	}
+
+	private void _testReplaceImportContentReferencesWithReferenceBeforeOtherAttributes()
+		throws Exception {
+
+		String urlFileEntry1 = RandomTestUtil.randomString();
+
+		Assert.assertEquals(
+			StringBundler.concat(
+				"<img data-fileentryid=\"", _FILE_ENTRY_ID_1, "\" src=\"",
+				urlFileEntry1, "\">"),
+			_import(
+				StringBundler.concat(
+					"<img export-import-path=\"PATH_", _FILE_ENTRY_ID_1,
+					"\" src=\"", urlFileEntry1, "\">")));
+	}
+
+	private void _testReplaceImportContentReferencesWithReferenceInText()
+		throws Exception {
+
+		String content = StringBundler.concat(
+			"<p>&lt;img export-import-path=\"PATH_", _FILE_ENTRY_ID_1,
+			"\"&gt;</p>");
+
+		Assert.assertEquals(content, _import(content));
+	}
+
+	private void _testReplaceImportContentReferencesWithValidReferences()
+		throws Exception {
+
+		String infix = RandomTestUtil.randomString();
+		String prefix = RandomTestUtil.randomString();
+		String suffix = RandomTestUtil.randomString();
+		String urlFileEntry1 = RandomTestUtil.randomString();
+		String urlFileEntry2 = RandomTestUtil.randomString();
+
+		Assert.assertEquals(
+			StringBundler.concat(
+				prefix, "<p><img data-fileentryid=\"", _FILE_ENTRY_ID_1,
+				"\" src=\"", urlFileEntry1, "\"><br>", infix,
+				" & </p><picture data-fileentryid=\"", _FILE_ENTRY_ID_2,
+				"\"><source/><img data-fileentryid=\"", _FILE_ENTRY_ID_2,
+				"\" src=\"", urlFileEntry2,
+				"\"></picture><img data-fileentryid=\"", _FILE_ENTRY_ID_1,
+				"\" src=\"", urlFileEntry1, "\">", suffix),
+			_import(
+				StringBundler.concat(
+					prefix, "<p><img export-import-path=\"PATH_",
+					_FILE_ENTRY_ID_1, "\" src=\"", urlFileEntry1, "\"><br>",
+					infix, " & </p><picture export-import-path=\"PATH_",
+					_FILE_ENTRY_ID_2,
+					"\"><source /><img export-import-path=\"PATH_",
+					_FILE_ENTRY_ID_2, "\" src=\"", urlFileEntry2,
+					"\"></picture><img export-import-path=\"PATH_",
+					_FILE_ENTRY_ID_1, "\" src=\"", urlFileEntry1, "\">",
+					suffix)));
 	}
 
 	private void _testValidateContentReferencesWithInvalidReferenceAfterValidReference()
@@ -636,10 +761,6 @@ public class AMImageHTMLExportImportContentProcessorTest {
 
 	private static final long _FILE_ENTRY_ID_2 = RandomTestUtil.randomLong();
 
-	private final AMEmbeddedReferenceSet _amEmbeddedReferenceSet = Mockito.mock(
-		AMEmbeddedReferenceSet.class);
-	private final AMEmbeddedReferenceSetFactory _amEmbeddedReferenceSetFactory =
-		Mockito.mock(AMEmbeddedReferenceSetFactory.class);
 	private final AMImageHTMLExportImportContentProcessor
 		_amImageHTMLExportImportContentProcessor =
 			new AMImageHTMLExportImportContentProcessor();
@@ -654,6 +775,7 @@ public class AMImageHTMLExportImportContentProcessorTest {
 	private final FileEntry _fileEntry2 = Mockito.mock(FileEntry.class);
 	private final PortletDataContext _portletDataContext = Mockito.mock(
 		PortletDataContext.class);
+	private final List<Element> _referenceElements = new ArrayList<>();
 	private final StagedModel _stagedModel = Mockito.mock(StagedModel.class);
 
 }

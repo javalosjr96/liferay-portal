@@ -115,73 +115,26 @@ public class SegmentsEntryStagedModelDataHandlerTest
 	}
 
 	@Test
+	@TestInfo("LPD-112773")
 	public void testExportImportSegmentsEntryWithEntityFieldCustomField()
 		throws Exception {
 
-		initExport();
-
-		ExpandoColumn expandoColumn = _addExpandoColumn(
-			_expandoTable, RandomTestUtil.randomString(),
-			ExpandoColumnConstants.STRING,
-			ExpandoColumnConstants.INDEX_TYPE_KEYWORD);
-
-		StagedExpandoColumn stagedExpandoColumn = ModelAdapterUtil.adapt(
-			expandoColumn, ExpandoColumn.class, StagedExpandoColumn.class);
-
-		StagedModelDataHandlerUtil.exportStagedModel(
-			portletDataContext, stagedExpandoColumn);
-
-		String columnValue = RandomTestUtil.randomString();
-
-		String filterString = String.format(
-			"(customField/%s eq '%s')", _encodeName(expandoColumn),
-			columnValue);
-
-		_segmentsEntry = SegmentsTestUtil.addSegmentsEntry(
-			stagingGroup.getGroupId(), _getCriteria(filterString));
-
-		StagedModelDataHandlerUtil.exportStagedModel(
-			portletDataContext, _segmentsEntry);
-
-		_expandoColumnLocalService.deleteColumn(expandoColumn.getColumnId());
-
-		try (SafeCloseable safeCloseable = initImportWithSafeCloseable()) {
-			StagedExpandoColumn exportedStagedExpandoColumn =
-				(StagedExpandoColumn)readExportedStagedModel(
-					stagedExpandoColumn);
-
-			StagedModelDataHandlerUtil.importStagedModel(
-				portletDataContext, exportedStagedExpandoColumn);
-
-			List<StagedExpandoColumn> stagedExpandoColumns =
-				_stagedModelRepository.fetchStagedModelsByUuidAndCompanyId(
-					stagedExpandoColumn.getUuid(), liveGroup.getCompanyId());
-
-			if (ListUtil.isEmpty(stagedExpandoColumns)) {
-				return;
-			}
-
-			StagedExpandoColumn importedStagedExpandoColumn =
-				stagedExpandoColumns.get(0);
-
-			SegmentsEntry exportedSegmentsEntry =
-				(SegmentsEntry)readExportedStagedModel(_segmentsEntry);
-
-			StagedModelDataHandlerUtil.importStagedModel(
-				portletDataContext, exportedSegmentsEntry);
-
-			_importedSegmentsEntry = (SegmentsEntry)getStagedModel(
-				_segmentsEntry.getUuid(), liveGroup);
-
-			String importedFilterString = _getFilterString(
-				_importedSegmentsEntry.getCriteriaObj());
-
-			Assert.assertEquals(
-				String.format(
-					"(customField/%s eq '%s')",
-					_encodeName(importedStagedExpandoColumn), columnValue),
-				importedFilterString);
-		}
+		_testExportImportSegmentsEntryWithEntityFieldCustomField(
+			"(customField/%s eq '%s')");
+		_testExportImportSegmentsEntryWithEntityFieldCustomField(
+			"(customField/%s ge '%s')");
+		_testExportImportSegmentsEntryWithEntityFieldCustomField(
+			"(customField/%s gt '%s')");
+		_testExportImportSegmentsEntryWithEntityFieldCustomField(
+			"(customField/%s le '%s')");
+		_testExportImportSegmentsEntryWithEntityFieldCustomField(
+			"(customField/%s lt '%s')");
+		_testExportImportSegmentsEntryWithEntityFieldCustomField(
+			"(not (contains(customField/%s, '%s')))");
+		_testExportImportSegmentsEntryWithEntityFieldCustomField(
+			"(not (customField/%s eq '%s'))");
+		_testExportImportSegmentsEntryWithEntityFieldCustomField(
+			"contains(customField/%s, '%s')");
 	}
 
 	@Test
@@ -323,6 +276,75 @@ public class SegmentsEntryStagedModelDataHandlerTest
 			_userSegmentsCriteriaContributor.getCriterion(criteria);
 
 		return criterion.getFilterString();
+	}
+
+	private void _testExportImportSegmentsEntryWithEntityFieldCustomField(
+			String filterStringFormat)
+		throws Exception {
+
+		initExport();
+
+		ExpandoColumn expandoColumn = _addExpandoColumn(
+			_expandoTable, RandomTestUtil.randomString(),
+			ExpandoColumnConstants.STRING,
+			ExpandoColumnConstants.INDEX_TYPE_KEYWORD);
+
+		StagedExpandoColumn stagedExpandoColumn = ModelAdapterUtil.adapt(
+			expandoColumn, ExpandoColumn.class, StagedExpandoColumn.class);
+
+		StagedModelDataHandlerUtil.exportStagedModel(
+			portletDataContext, stagedExpandoColumn);
+
+		String columnValue = RandomTestUtil.randomString();
+
+		String filterString = String.format(
+			filterStringFormat, _encodeName(expandoColumn), columnValue);
+
+		_segmentsEntry = SegmentsTestUtil.addSegmentsEntry(
+			stagingGroup.getGroupId(), _getCriteria(filterString));
+
+		StagedModelDataHandlerUtil.exportStagedModel(
+			portletDataContext, _segmentsEntry);
+
+		_expandoColumnLocalService.deleteColumn(expandoColumn.getColumnId());
+
+		try (SafeCloseable safeCloseable = initImportWithSafeCloseable()) {
+			StagedExpandoColumn exportedStagedExpandoColumn =
+				(StagedExpandoColumn)readExportedStagedModel(
+					stagedExpandoColumn);
+
+			StagedModelDataHandlerUtil.importStagedModel(
+				portletDataContext, exportedStagedExpandoColumn);
+
+			List<StagedExpandoColumn> stagedExpandoColumns =
+				_stagedModelRepository.fetchStagedModelsByUuidAndCompanyId(
+					stagedExpandoColumn.getUuid(), liveGroup.getCompanyId());
+
+			if (ListUtil.isEmpty(stagedExpandoColumns)) {
+				return;
+			}
+
+			StagedExpandoColumn importedStagedExpandoColumn =
+				stagedExpandoColumns.get(0);
+
+			SegmentsEntry exportedSegmentsEntry =
+				(SegmentsEntry)readExportedStagedModel(_segmentsEntry);
+
+			StagedModelDataHandlerUtil.importStagedModel(
+				portletDataContext, exportedSegmentsEntry);
+
+			_importedSegmentsEntry = (SegmentsEntry)getStagedModel(
+				_segmentsEntry.getUuid(), liveGroup);
+
+			String importedFilterString = _getFilterString(
+				_importedSegmentsEntry.getCriteriaObj());
+
+			Assert.assertEquals(
+				String.format(
+					filterStringFormat,
+					_encodeName(importedStagedExpandoColumn), columnValue),
+				importedFilterString);
+		}
 	}
 
 	@Inject

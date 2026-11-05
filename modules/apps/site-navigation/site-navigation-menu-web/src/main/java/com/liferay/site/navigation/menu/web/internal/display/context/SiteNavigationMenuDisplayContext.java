@@ -228,21 +228,15 @@ public class SiteNavigationMenuDisplayContext {
 		}
 		else {
 			Layout rootLayout =
-				LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(
+				LayoutLocalServiceUtil.fetchLayoutByExternalReferenceCode(
 					rootMenuItemExternalReferenceCode,
-					_themeDisplay.getScopeGroupId(), false);
-
-			if (rootLayout == null) {
-				rootLayout = LayoutLocalServiceUtil.fetchLayoutByUuidAndGroupId(
-					rootMenuItemExternalReferenceCode,
-					_themeDisplay.getScopeGroupId(), true);
-			}
+					_themeDisplay.getScopeGroupId());
 
 			if (rootLayout == null) {
 				return StringPool.BLANK;
 			}
 
-			_rootMenuItemId = rootMenuItemExternalReferenceCode;
+			_rootMenuItemId = rootLayout.getUuid();
 		}
 
 		return _rootMenuItemId;
@@ -525,7 +519,7 @@ public class SiteNavigationMenuDisplayContext {
 		return false;
 	}
 
-	private int _getDefaultSelectSiteNavigationMenuType() {
+	private int _calculateDefaultSelectSiteNavigationMenuType() {
 		Layout layout = _themeDisplay.getLayout();
 		Group scopeGroup = _themeDisplay.getScopeGroup();
 
@@ -549,6 +543,15 @@ public class SiteNavigationMenuDisplayContext {
 		}
 
 		return SiteNavigationConstants.TYPE_PRIMARY;
+	}
+
+	private int _getDefaultSelectSiteNavigationMenuType() {
+		if (_defaultSelectSiteNavigationMenuType == null) {
+			_defaultSelectSiteNavigationMenuType =
+				_calculateDefaultSelectSiteNavigationMenuType();
+		}
+
+		return _defaultSelectSiteNavigationMenuType;
 	}
 
 	private long _getDisplayStyleGroupId() {
@@ -660,6 +663,7 @@ public class SiteNavigationMenuDisplayContext {
 
 	private String _alertKey;
 	private String _ddmTemplateKey;
+	private Integer _defaultSelectSiteNavigationMenuType;
 	private int _displayDepth = -1;
 	private String _displayStyle;
 	private long _displayStyleGroupId;

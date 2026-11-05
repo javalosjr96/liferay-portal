@@ -7,6 +7,8 @@ package com.liferay.jenkins.results.parser.testray;
 
 import com.liferay.jenkins.results.parser.Dom4JUtil;
 import com.liferay.jenkins.results.parser.JenkinsMaster;
+import com.liferay.jenkins.results.parser.JenkinsResultsParserUtil;
+import com.liferay.jenkins.results.parser.Job;
 import com.liferay.jenkins.results.parser.PortalGitWorkingDirectory;
 import com.liferay.jenkins.results.parser.RandomTestUtil;
 import com.liferay.jenkins.results.parser.ReflectionTestUtil;
@@ -19,6 +21,8 @@ import com.liferay.jenkins.results.parser.test.clazz.group.JSUnitModulesBatchTes
 import com.liferay.jenkins.results.parser.test.clazz.group.PlaywrightAxisTestClassGroup;
 
 import java.io.File;
+
+import java.net.URL;
 
 import java.util.Collections;
 import java.util.Objects;
@@ -43,6 +47,59 @@ import org.mockito.Mockito;
  */
 public class TestrayImporterTest
 	extends com.liferay.jenkins.results.parser.Test {
+
+	@Test
+	public void testGetTestcaseElementAttachment() throws Exception {
+		TestrayCaseResult testrayCaseResult = Mockito.mock(
+			TestrayCaseResult.class);
+
+		TestrayAttachment testrayAttachment = Mockito.mock(
+			TestrayAttachment.class);
+
+		String key = RandomTestUtil.randomString();
+
+		Mockito.doReturn(
+			key
+		).when(
+			testrayAttachment
+		).getKey();
+
+		String url = JenkinsResultsParserUtil.combine(
+			"https://", RandomTestUtil.randomString(), "/", key);
+
+		Mockito.doReturn(
+			new URL(url)
+		).when(
+			testrayAttachment
+		).getURL();
+
+		Mockito.doReturn(
+			RandomTestUtil.randomString()
+		).when(
+			testrayCaseResult
+		).getName();
+
+		Mockito.doReturn(
+			TestrayCaseResult.Status.PASSED
+		).when(
+			testrayCaseResult
+		).getStatus();
+
+		Mockito.doReturn(
+			Collections.singletonList(testrayAttachment)
+		).when(
+			testrayCaseResult
+		).getTestrayAttachments();
+
+		Element testcaseElement = _getTestcaseElement(testrayCaseResult);
+
+		Element attachmentsElement = testcaseElement.element("attachments");
+
+		Element fileElement = attachmentsElement.element("file");
+
+		testEquals(url + "?authuser=0", fileElement.attributeValue("url"));
+		testEquals(key, fileElement.attributeValue("value"));
+	}
 
 	@Test
 	public void testGetTestcaseElementName() throws Exception {
@@ -83,6 +140,49 @@ public class TestrayImporterTest
 			"modules/apps/a/b/test/js/c.js");
 
 		Assert.assertFalse(_isTestClassFileReported(jsUnitJUnitTestClass));
+	}
+
+	@Test
+	public void testRecordAxisTestClassGroupNoTestrayRun() throws Exception {
+		String axisName = RandomTestUtil.randomString();
+		TestrayContext testrayContext = Mockito.mock(TestrayContext.class);
+
+		Job job = Mockito.mock(Job.class);
+
+		String message = _recordAxisTestClassGroupNoTestrayRun(
+			axisName, job, testrayContext);
+
+		Assert.assertTrue(message.contains(axisName));
+
+		Mockito.verify(
+			job
+		).setTestrayContext(
+			testrayContext
+		);
+
+		Job testrayContextJob = Mockito.mock(Job.class);
+
+		Mockito.doReturn(
+			Mockito.mock(TestrayContext.class)
+		).when(
+			testrayContextJob
+		).getTestrayContext();
+
+		message = _recordAxisTestClassGroupNoTestrayRun(
+			axisName, testrayContextJob, testrayContext);
+
+		Assert.assertTrue(message.contains(axisName));
+
+		Mockito.verify(
+			testrayContextJob, Mockito.never()
+		).setTestrayContext(
+			Mockito.any()
+		);
+
+		message = _recordAxisTestClassGroupNoTestrayRun(
+			axisName, null, testrayContext);
+
+		Assert.assertTrue(message.contains(axisName));
 	}
 
 	@Test
@@ -167,6 +267,17 @@ public class TestrayImporterTest
 			_getBatchTestClassGroup(), jsonObject);
 	}
 
+	private Element _getTestcaseElement(TestrayCaseResult testrayCaseResult)
+		throws Exception {
+
+		return ReflectionTestUtil.invoke(
+			Mockito.mock(TestrayImporter.class), "_getTestcaseElement",
+			new Class<?>[] {
+				TestrayCaseResult.class, String.class, String[].class
+			},
+			testrayCaseResult, RandomTestUtil.randomString(), null);
+	}
+
 	private String _getTestcaseName(String name) throws Exception {
 		TestrayCaseResult testrayCaseResult = Mockito.mock(
 			TestrayCaseResult.class);
@@ -183,12 +294,7 @@ public class TestrayImporterTest
 			testrayCaseResult
 		).getStatus();
 
-		Element testcaseElement = ReflectionTestUtil.invoke(
-			Mockito.mock(TestrayImporter.class), "_getTestcaseElement",
-			new Class<?>[] {
-				TestrayCaseResult.class, String.class, String[].class
-			},
-			testrayCaseResult, RandomTestUtil.randomString(), null);
+		Element testcaseElement = _getTestcaseElement(testrayCaseResult);
 
 		Element propertiesElement = testcaseElement.element("properties");
 
@@ -376,6 +482,48 @@ public class TestrayImporterTest
 		);
 
 		return argumentCaptor.getValue();
+	}
+
+	private String _recordAxisTestClassGroupNoTestrayRun(
+		String axisName, Job job, TestrayContext testrayContext) {
+
+		AxisTestClassGroup axisTestClassGroup = Mockito.mock(
+			AxisTestClassGroup.class);
+
+		Mockito.doReturn(
+			axisName
+		).when(
+			axisTestClassGroup
+		).getAxisName();
+
+		Mockito.doReturn(
+			job
+		).when(
+			axisTestClassGroup
+		).getJob();
+
+		TestrayImporter testrayImporter = Mockito.mock(TestrayImporter.class);
+
+		ReflectionTestUtil.setFieldValue(
+			testrayImporter, "_testrayContext", testrayContext);
+
+		try {
+			ReflectionTestUtil.invoke(
+				testrayImporter, "_recordAxisTestClassGroup",
+				new Class<?>[] {
+					AxisTestClassGroup.class, TestrayCaseResult.class
+				},
+				axisTestClassGroup, Mockito.mock(TestrayCaseResult.class));
+		}
+		catch (RuntimeException runtimeException) {
+			Throwable invocationThrowable = runtimeException.getCause();
+
+			Throwable throwable = invocationThrowable.getCause();
+
+			return throwable.getMessage();
+		}
+
+		throw new AssertionError();
 	}
 
 	private void _testGetTestcaseElementName(int nameLength, int expectedLength)

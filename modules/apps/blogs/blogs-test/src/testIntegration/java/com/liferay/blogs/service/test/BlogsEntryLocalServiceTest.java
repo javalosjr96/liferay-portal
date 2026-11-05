@@ -42,7 +42,6 @@ import com.liferay.portal.kernel.dao.orm.QueryUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.model.Group;
 import com.liferay.portal.kernel.model.ModelHintsUtil;
-import com.liferay.portal.kernel.model.Organization;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.module.util.BundleUtil;
 import com.liferay.portal.kernel.portletfilerepository.PortletFileRepositoryUtil;
@@ -56,7 +55,6 @@ import com.liferay.portal.kernel.test.constants.TestDataConstants;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.rule.DeleteAfterTestRun;
 import com.liferay.portal.kernel.test.util.GroupTestUtil;
-import com.liferay.portal.kernel.test.util.OrganizationTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.test.util.ServiceContextTestUtil;
 import com.liferay.portal.kernel.test.util.TestPropsValues;
@@ -1085,16 +1083,6 @@ public class BlogsEntryLocalServiceTest {
 	}
 
 	@Test
-	public void testGetGroupUserEntriesCountInTrash() throws Exception {
-		testGetGroupUserEntriesCount(true);
-	}
-
-	@Test
-	public void testGetGroupUserEntriesCountNotInTrash() throws Exception {
-		testGetGroupUserEntriesCount(false);
-	}
-
-	@Test
 	public void testGetGroupUserEntriesInTrash() throws Exception {
 		testGetGroupUserEntries(true);
 	}
@@ -1137,26 +1125,6 @@ public class BlogsEntryLocalServiceTest {
 					" but should belong to company ", _user.getCompanyId()),
 				_user.getCompanyId(), actualBlogsEntry.getCompanyId());
 		}
-	}
-
-	@Test
-	public void testGetOrganizationEntriesCountInTrash() throws Exception {
-		testGetOrganizationEntriesCount(true);
-	}
-
-	@Test
-	public void testGetOrganizationEntriesCountNotInTrash() throws Exception {
-		testGetOrganizationEntriesCount(false);
-	}
-
-	@Test
-	public void testGetOrganizationEntriesInTrash() throws Exception {
-		testGetOrganizationEntries(true);
-	}
-
-	@Test
-	public void testGetOrganizationEntriesNotInTrash() throws Exception {
-		testGetOrganizationEntries(false);
 	}
 
 	@Test(expected = EntryTitleException.class)
@@ -1679,92 +1647,6 @@ public class BlogsEntryLocalServiceTest {
 		assertBlogsEntriesStatus(actualBlogsEntries, statusInTrash);
 	}
 
-	protected void testGetGroupUserEntriesCount(boolean statusInTrash)
-		throws Exception {
-
-		QueryDefinition<BlogsEntry> queryDefinition =
-			_statusInTrashQueryDefinition;
-
-		if (!statusInTrash) {
-			queryDefinition = _statusAnyQueryDefinition;
-		}
-
-		int initialCount = _blogsEntryLocalService.getGroupUserEntriesCount(
-			_group.getGroupId(), _user.getUserId(), new Date(),
-			queryDefinition);
-
-		addEntry(false);
-		addEntry(true);
-
-		int actualCount = _blogsEntryLocalService.getGroupUserEntriesCount(
-			_group.getGroupId(), _user.getUserId(), new Date(),
-			queryDefinition);
-
-		Assert.assertEquals(initialCount + 1, actualCount);
-	}
-
-	protected void testGetOrganizationEntries(boolean statusInTrash)
-		throws Exception {
-
-		QueryDefinition<BlogsEntry> queryDefinition =
-			_statusInTrashQueryDefinition;
-
-		if (!statusInTrash) {
-			queryDefinition = _statusAnyQueryDefinition;
-		}
-
-		_organization = OrganizationTestUtil.addOrganization();
-
-		_organizationUser = UserTestUtil.addOrganizationOwnerUser(
-			_organization);
-
-		List<BlogsEntry> initialBlogsEntries =
-			_blogsEntryLocalService.getOrganizationEntries(
-				_organization.getOrganizationId(), new Date(), queryDefinition);
-
-		int initialCount = initialBlogsEntries.size();
-
-		addEntry(_organizationUser.getUserId(), false);
-		addEntry(_organizationUser.getUserId(), true);
-
-		List<BlogsEntry> actualBlogsEntries =
-			_blogsEntryLocalService.getOrganizationEntries(
-				_organization.getOrganizationId(), new Date(), queryDefinition);
-
-		Assert.assertEquals(
-			actualBlogsEntries.toString(), initialCount + 1,
-			actualBlogsEntries.size());
-
-		assertBlogsEntriesStatus(actualBlogsEntries, statusInTrash);
-	}
-
-	protected void testGetOrganizationEntriesCount(boolean statusInTrash)
-		throws Exception {
-
-		QueryDefinition<BlogsEntry> queryDefinition =
-			_statusInTrashQueryDefinition;
-
-		if (!statusInTrash) {
-			queryDefinition = _statusAnyQueryDefinition;
-		}
-
-		_organization = OrganizationTestUtil.addOrganization();
-
-		_organizationUser = UserTestUtil.addOrganizationOwnerUser(
-			_organization);
-
-		int initialCount = _blogsEntryLocalService.getOrganizationEntriesCount(
-			_organization.getOrganizationId(), new Date(), queryDefinition);
-
-		addEntry(_organizationUser.getUserId(), false);
-		addEntry(_organizationUser.getUserId(), true);
-
-		int actualCount = _blogsEntryLocalService.getOrganizationEntriesCount(
-			_organization.getOrganizationId(), new Date(), queryDefinition);
-
-		Assert.assertEquals(initialCount + 1, actualCount);
-	}
-
 	private FileEntry _addAttachmentFileEntry(
 			String externalReferenceCode, String fileName)
 		throws Exception {
@@ -1861,12 +1743,6 @@ public class BlogsEntryLocalServiceTest {
 
 	@DeleteAfterTestRun
 	private Group _group;
-
-	@DeleteAfterTestRun
-	private Organization _organization;
-
-	@DeleteAfterTestRun
-	private User _organizationUser;
 
 	private final QueryDefinition<BlogsEntry> _statusAnyQueryDefinition =
 		new QueryDefinition<>(

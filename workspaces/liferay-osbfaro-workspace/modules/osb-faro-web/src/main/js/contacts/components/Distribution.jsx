@@ -62,10 +62,6 @@ export const CONTEXT_OPTIONS = [
 	{
 		label: Liferay.Language.get('individuals'),
 		value: FieldContexts.Demographics
-	},
-	{
-		label: Liferay.Language.get('accounts'),
-		value: FieldContexts.Organization
 	}
 ];
 
@@ -121,7 +117,6 @@ export function getChartSizeConfig(dataLength, histogram) {
 export class Distribution extends React.Component {
 	static defaultProps = {
 		...paginationDefaults,
-		contextOptions: CONTEXT_OPTIONS,
 		delta: 10,
 		id: '',
 		numberOfBins: DEFAULT_NUMBER_OF_BINS,
@@ -132,9 +127,6 @@ export class Distribution extends React.Component {
 
 	static propTypes = {
 		...paginationConfig,
-		contextOptions: PropTypes.arrayOf(
-			PropTypes.shape({label: PropTypes.string, value: PropTypes.string})
-		),
 		distributionsKey: PropTypes.string.isRequired,
 		error: PropTypes.bool,
 		fetchDistribution: PropTypes.func.isRequired,
@@ -248,23 +240,15 @@ export class Distribution extends React.Component {
 	@autoCancel
 	handleFetchDistributionData() {
 		const {
-			props: {
-				channelId,
-				fetchDistribution,
-				fieldMappingFieldName,
-				groupId,
-				id,
-				numberOfBins
-			},
-			state: {selectedContext}
+			props: {channelId, fetchDistribution, groupId, id, numberOfBins},
+			state: {fieldMappingSelected}
 		} = this;
 
 		return fetchDistribution(
 			pickBy({
 				channelId,
-				context: selectedContext,
 				count: MAX_ROWS,
-				fieldMappingFieldName,
+				fieldMappingFieldName: fieldMappingSelected.id,
 				groupId,
 				id,
 				individualSegmentId: id,
@@ -439,19 +423,6 @@ export class Distribution extends React.Component {
 		});
 
 		onPointSelect({index: alreadySelected ? null : index});
-	}
-
-	@autobind
-	handleContextSelect(event) {
-		const {value} = event.target;
-
-		this.setState({selectedContext: value}, () => {
-			const {setTouched, validateField} = this._formRef.current;
-
-			setTouched({breakdown: false});
-
-			validateField('breakdown');
-		});
 	}
 
 	@autobind

@@ -38,6 +38,7 @@ import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -70,7 +71,8 @@ public class GroupImporter {
 
 		if (ExportImportThreadLocal.isStagingInProcess() ||
 			!GroupExportImportParameterUtil.isGroupExportImportEnabled(
-				portletDataContext.getCompanyId()) ||
+				portletDataContext.getCompanyId(),
+				portletDataContext.getGroupId()) ||
 			GroupExportImportParameterUtil.isGroupScoped(portletDataContext)) {
 
 			return;
@@ -189,6 +191,26 @@ public class GroupImporter {
 			GetterUtil.getLong(
 				headerElement.attributeValue("user-personal-site-group-id")));
 
+		String sourceCompanyGroupExternalReferenceCode =
+			headerElement.attributeValue(
+				"company-group-external-reference-code");
+
+		if (Validator.isNotNull(sourceCompanyGroupExternalReferenceCode)) {
+			Group companyGroup = _groupLocalService.fetchCompanyGroup(
+				groupPortletDataContext.getCompanyId());
+
+			if (companyGroup != null) {
+				Map<String, String> groupExternalReferenceCodes =
+					(Map<String, String>)
+						groupPortletDataContext.getNewPrimaryKeysMap(
+							Group.class + ".externalReferenceCode");
+
+				groupExternalReferenceCodes.put(
+					sourceCompanyGroupExternalReferenceCode,
+					companyGroup.getExternalReferenceCode());
+			}
+		}
+
 		return groupPortletDataContext;
 	}
 
@@ -219,6 +241,22 @@ public class GroupImporter {
 			GroupPermissionUtil.check(
 				PermissionThreadLocal.getPermissionChecker(),
 				group.getGroupId(), ActionKeys.EXPORT_IMPORT_LAYOUTS);
+
+			if (!_exportImportHelper.isGroupMatching(
+					exportImportGroup, group)) {
+
+				String externalReferenceCode = group.getExternalReferenceCode();
+
+				_addReportEntry(
+					portletDataContext, externalReferenceCode,
+					StringBundler.concat(
+						"The group ", externalReferenceCode,
+						" in the target instance is of a different type than ",
+						"the group in the file"),
+					ExportImportReportEntryConstants.TYPE_ERROR);
+
+				return null;
+			}
 
 			if (!_exportImportHelper.isGroupSupported(group)) {
 				String externalReferenceCode = group.getExternalReferenceCode();

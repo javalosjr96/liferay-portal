@@ -34,24 +34,18 @@ const mockedUseCurrentUser = useCurrentUser as jest.Mock;
 const mockedUseRequest = useRequest as jest.Mock;
 
 const LIFECYCLE: ILifecycleDetail = {
-	authorName: 'Anneta Smith',
-	defaultAccountLifecycle: true,
-	description: 'Unifies acquisition and expansion.',
-	id: '1',
-	modifiedDate: Date.UTC(2025, 1, 25, 9, 0),
-	name: 'Account Lifecycle',
-	stages: [
+	accountLifecycleStages: [
 		{
 			accountLifecycleStageRule: {
 				filterMetadata: null,
 				filterString: '',
 			},
 			description: 'The buying committee is researching us.',
-			displayOrder: 2,
 			externalReferenceCode: 'engaged',
 			id: 'engaged',
 			maxDuration: null,
-			stageType: 'ENGAGED',
+			name: 'Engaged',
+			position: 2,
 		},
 		{
 			accountLifecycleStageRule: {
@@ -77,14 +71,20 @@ const LIFECYCLE: ILifecycleDetail = {
 				filterString: '',
 			},
 			description: 'Account identified via Demandbase.',
-			displayOrder: 1,
 			externalReferenceCode: 'aware',
 			id: 'aware',
 			maxDuration: 90,
 			name: 'Aware',
-			stageType: 'AWARE',
+			position: 1,
 		},
 	],
+	authorName: 'Anneta Smith',
+	defaultAccountLifecycle: true,
+	description: 'Unifies acquisition and expansion.',
+	externalReferenceCode: 'erc-1',
+	id: '1',
+	modifiedDate: Date.UTC(2025, 1, 25, 9, 0),
+	name: 'Account Lifecycle',
 };
 
 const mockLifecycle = (lifecycle: ILifecycleDetail | null, error = false) =>
@@ -170,7 +170,9 @@ describe('LifecycleDetailsPanel', () => {
 	it('reads a single stage and day in the singular', () => {
 		mockLifecycle({
 			...LIFECYCLE,
-			stages: [{...LIFECYCLE.stages![1], maxDuration: 1}],
+			accountLifecycleStages: [
+				{...LIFECYCLE.accountLifecycleStages![1], maxDuration: 1},
+			],
 		});
 
 		renderPanel();

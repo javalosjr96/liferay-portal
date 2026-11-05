@@ -279,13 +279,6 @@ public class JournalFolderPersistenceTest {
 	}
 
 	@Test
-	public void testCountByCompanyId() throws Exception {
-		_persistence.countByCompanyId(RandomTestUtil.nextLong());
-
-		_persistence.countByCompanyId(0L);
-	}
-
-	@Test
 	public void testCountByG_P() throws Exception {
 		_persistence.countByG_P(
 			RandomTestUtil.nextLong(), RandomTestUtil.nextLong());
@@ -300,14 +293,6 @@ public class JournalFolderPersistenceTest {
 		_persistence.countByG_N(0L, "null");
 
 		_persistence.countByG_N(0L, (String)null);
-	}
-
-	@Test
-	public void testCountByC_NotS() throws Exception {
-		_persistence.countByC_NotS(
-			RandomTestUtil.nextLong(), RandomTestUtil.nextInt());
-
-		_persistence.countByC_NotS(0L, 0);
 	}
 
 	@Test
@@ -779,4 +764,4 @@ public class JournalFolderPersistenceTest {
 	private ClassLoader _dynamicQueryClassLoader;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1676016443
+// LIFERAY-SERVICE-BUILDER-HASH:899219659

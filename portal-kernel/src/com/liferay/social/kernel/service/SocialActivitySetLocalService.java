@@ -217,16 +217,6 @@ public interface SocialActivitySetLocalService
 	public ActionableDynamicQuery getActionableDynamicQuery();
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public SocialActivitySet getClassActivitySet(
-			long classNameId, long classPK, int type)
-		throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public SocialActivitySet getClassActivitySet(
-			long userId, long classNameId, long classPK, int type)
-		throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<SocialActivitySet> getGroupActivitySets(
 		long groupId, int start, int end);
 
@@ -260,14 +250,7 @@ public interface SocialActivitySetLocalService
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<SocialActivitySet> getRelationActivitySets(
-		long userId, int start, int end);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public List<SocialActivitySet> getRelationActivitySets(
 		long userId, int type, int start, int end);
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public int getRelationActivitySetsCount(long userId);
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getRelationActivitySetsCount(long userId, int type);
@@ -304,16 +287,6 @@ public interface SocialActivitySetLocalService
 	 */
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public int getSocialActivitySetsCount();
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public SocialActivitySet getUserActivitySet(
-			long groupId, long userId, int type)
-		throws PortalException;
-
-	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
-	public SocialActivitySet getUserActivitySet(
-			long groupId, long userId, long classNameId, int type)
-		throws PortalException;
 
 	@Transactional(propagation = Propagation.SUPPORTS, readOnly = true)
 	public List<SocialActivitySet> getUserActivitySets(
@@ -369,4 +342,4 @@ public interface SocialActivitySetLocalService
 		throws E;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:-950438591
+// LIFERAY-SERVICE-BUILDER-HASH:672757832

@@ -59,6 +59,9 @@ public class PublishProcessDisplayContext {
 			"privateLayoutsAvailable",
 			_publishSourceGroup.isPrivateLayoutsEnabled() &&
 			_publishSourceGroup.hasPrivateLayouts()
+		).put(
+			"siteExternalReferenceCode",
+			_publishSourceGroup.getExternalReferenceCode()
 		).build();
 	}
 
@@ -132,10 +135,6 @@ public class PublishProcessDisplayContext {
 
 	public boolean isCommentsAndRatingsEnabled() {
 		return ScopeUtil.isCommentsAndRatingsEnabled(_liveGroup);
-	}
-
-	public boolean isLookAndFeelEnabled() {
-		return ScopeUtil.isLookAndFeelEnabled(_liveGroup);
 	}
 
 	private String _getTimeZoneLabel(TimeZone timeZone) {

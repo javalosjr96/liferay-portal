@@ -1,41 +1,46 @@
 import * as API from 'shared/api';
 import ErrorDisplay from 'shared/components/ErrorDisplay';
+import LifecycleNotFound from 'lifecycle/components/LifecycleNotFound';
 import LifecycleSettingsForm from 'lifecycle/components/LifecycleSettingsForm';
+import LifecyclesPage from 'lifecycle/components/LifecyclesPage';
 import Loading from 'shared/components/Loading';
 import React from 'react';
-import RouteNotFound from 'shared/components/RouteNotFound';
 import {ILifecycleDetail} from 'shared/api/lifecycle';
+import {LifecycleAccountDataEmptyState} from 'lifecycle/components/LifecycleEmptyStates';
 import {
 	buildUpdateLifecyclePayload,
 	stageConfigsFromLifecycle,
 } from 'lifecycle/utils/lifecyclePayload';
+import {useCurrentUser} from 'shared/hooks/useCurrentUser';
+import {useLifecycleAccountData} from 'lifecycle/hooks/useLifecycleAccountData';
 import {useLifecycleSettingsForm} from 'lifecycle/hooks/useLifecycleSettingsForm';
 import {useParams} from 'react-router-dom';
 import {useRequest} from 'shared/hooks/useRequest';
+import {AccountDataStatus} from 'lifecycle/utils/types';
 
 interface IEditLifecycleFormProps {
 	lifecycle: ILifecycleDetail;
 }
 
 const EditLifecycleForm: React.FC<IEditLifecycleFormProps> = ({lifecycle}) => {
-	const {groupId, lifecycleId} = useParams();
+	const {groupId} = useParams();
+
+	const form = useLifecycleSettingsForm({
+		description: lifecycle.description ?? '',
+		name: lifecycle.name ?? '',
+		stageConfigs: () =>
+			stageConfigsFromLifecycle(lifecycle.accountLifecycleStages),
+	});
 
 	const {
-		canSubmit,
 		catalogError,
-		catalogFields,
 		catalogLoading,
+		lifecycleDescription,
 		lifecycleName,
-		lifecycleURL,
 		refetchCatalog,
-		setLifecycleName,
 		stageConfigs,
 		submit,
-		updateStage,
-	} = useLifecycleSettingsForm(
-		() => stageConfigsFromLifecycle(lifecycle.stages),
-		lifecycle.name ?? ''
-	);
+	} = form;
 
 	if (catalogLoading) {
 		return <Loading />;
@@ -50,36 +55,41 @@ const EditLifecycleForm: React.FC<IEditLifecycleFormProps> = ({lifecycle}) => {
 	}
 
 	const handleSave = () =>
-		submit(
-			() =>
+		submit({
+			errorMessage: Liferay.Language.get('an-unexpected-error-occurred'),
+			run: () =>
 				API.lifecycle.updateLifecycle(
 					buildUpdateLifecyclePayload({
+						description: lifecycleDescription,
 						groupId: groupId!,
-						lifecycleId: lifecycleId!,
+						lifecycleId: lifecycle.id,
 						name: lifecycleName,
 						stageConfigs,
 					})
 				),
-			Liferay.Language.get('the-lifecycle-was-updated-successfully')
-		);
+			successMessage: () =>
+				Liferay.Language.get('the-lifecycle-was-updated-successfully'),
+		});
 
 	return (
 		<LifecycleSettingsForm
-			backURL={lifecycleURL}
-			catalogFields={catalogFields?.items}
-			lifecycleName={lifecycleName}
-			onLifecycleNameChange={setLifecycleName}
-			onStageChange={updateStage}
+			authorName={lifecycle.authorName ?? ''}
+			form={form}
+			modifiedDate={lifecycle.modifiedDate}
 			onSubmit={handleSave}
-			stageConfigs={stageConfigs}
-			submitDisabled={!canSubmit}
-			submitLabel={Liferay.Language.get('save')}
+			submitLabel={Liferay.Language.get('save-lifecycle')}
+			title={Liferay.Language.get('edit-lifecycle')}
 		/>
 	);
 };
 
 const EditLifecycle = () => {
 	const {groupId, lifecycleId} = useParams();
+
+	const currentUser = useCurrentUser();
+
+	const {refetch: refetchAccountData, status: accountDataStatus} =
+		useLifecycleAccountData();
 
 	const {
 		data: lifecycle,
@@ -90,12 +100,29 @@ const EditLifecycle = () => {
 		variables: {groupId: groupId!, lifecycleId: lifecycleId!},
 	});
 
-	if (lifecycleLoading) {
-		return <Loading />;
+	if (accountDataStatus === AccountDataStatus.Loading || lifecycleLoading) {
+		return (
+			<LifecyclesPage showTitle={false}>
+				<Loading />
+			</LifecyclesPage>
+		);
+	}
+
+	if (accountDataStatus !== AccountDataStatus.Ready) {
+		return (
+			<LifecyclesPage>
+				<LifecycleAccountDataEmptyState
+					authorized={currentUser.isAdmin()}
+					groupId={groupId!}
+					onReload={refetchAccountData}
+					status={accountDataStatus}
+				/>
+			</LifecyclesPage>
+		);
 	}
 
 	if (lifecycleError || !lifecycle) {
-		return <RouteNotFound />;
+		return <LifecycleNotFound />;
 	}
 
 	return <EditLifecycleForm lifecycle={lifecycle} />;

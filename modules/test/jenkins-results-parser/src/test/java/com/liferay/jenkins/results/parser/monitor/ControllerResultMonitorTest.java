@@ -75,7 +75,7 @@ public class ControllerResultMonitorTest
 		_testExecute(
 			"Unable to find a result for job " + _JOB_NAME +
 				" in its last 2 builds",
-			MonitorResult.Status.UNKNOWN,
+			MonitorResult.Status.WARN,
 			_newBuildJSONObject(0, "", RandomTestUtil.randomInt(), null),
 			_newBuildJSONObject(
 				86400, _newAlreadyRanDescription(), RandomTestUtil.randomInt(),
@@ -83,26 +83,26 @@ public class ControllerResultMonitorTest
 		_testExecute(
 			"Unable to find a result for job " + _JOB_NAME +
 				" in its last 1 build",
-			MonitorResult.Status.UNKNOWN,
+			MonitorResult.Status.WARN,
 			_newBuildJSONObject(
 				600, _newAlreadyRanDescription(), RandomTestUtil.randomInt(),
 				"SUCCESS"));
 		_testExecute(
 			"Unable to find a result for job " + _JOB_NAME +
 				" in its last 1 build",
-			MonitorResult.Status.UNKNOWN,
+			MonitorResult.Status.WARN,
 			_newBuildJSONObject(0, "", RandomTestUtil.randomInt(), null));
 		_testExecute(
 			"Unable to find a result for job " + _JOB_NAME +
 				" in its last 1 build",
-			MonitorResult.Status.UNKNOWN,
+			MonitorResult.Status.WARN,
 			_newBuildJSONObject(
 				600, "<strong>SKIPPED</strong> - Job is already running",
 				RandomTestUtil.randomInt(), "SUCCESS"));
 		_testExecute(
 			"Unable to find a result for job " + _JOB_NAME +
 				" in its last 1 build",
-			MonitorResult.Status.UNKNOWN,
+			MonitorResult.Status.WARN,
 			_newBuildJSONObject(
 				600, _newExpireDescription(), RandomTestUtil.randomInt(),
 				"SUCCESS"));
@@ -191,14 +191,14 @@ public class ControllerResultMonitorTest
 			JenkinsResultsParserUtil.combine(
 				"Job ", _JOB_URL, "/1005 invoked ", _getBuildURL(2005),
 				", which could not be read"),
-			MonitorResult.Status.UNKNOWN,
+			MonitorResult.Status.CRITICAL,
 			_newBuildJSONObject(
 				600, _newInProgressDescription(2005), 1005, "SUCCESS"));
 		_testExecute(
 			JenkinsResultsParserUtil.combine(
 				"Unable to determine the downstream build of job ", _JOB_URL,
 				"/1006"),
-			MonitorResult.Status.UNKNOWN,
+			MonitorResult.Status.WARN,
 			_newBuildJSONObject(
 				600, "<strong>IN PROGRESS</strong>", 1006, "SUCCESS"));
 	}
@@ -287,6 +287,21 @@ public class ControllerResultMonitorTest
 	@Test
 	public void testExecuteMissingTimestamp() throws Exception {
 		_testExecute(
+			"Unable to determine the last build timestamp for job " + _JOB_NAME,
+			MonitorResult.Status.WARN,
+			new JSONObject(
+			).put(
+				"description",
+				_newResultDescription(
+					"green", RandomTestUtil.randomInt(), "SUCCESS")
+			).put(
+				"number", RandomTestUtil.randomInt()
+			).put(
+				"result", "SUCCESS"
+			).put(
+				"timestamp", 0
+			));
+		_testExecute(
 			JenkinsResultsParserUtil.combine(
 				"Unable to determine the last build timestamp for job ",
 				_JOB_NAME, ". Job ", _JOB_URL, "/1001 reported FAILURE ",
@@ -348,8 +363,8 @@ public class ControllerResultMonitorTest
 						1001, "SUCCESS")
 				)
 			).toString(),
-			_JOB_API_URL + "?tree=builds%5Bdescription%2Cnumber%2Cresult%2C" +
-				"timestamp%5D%7B0%2C30%7D");
+			_JOB_API_URL + "?tree=builds%5Bdescription%2Cnumber%2Cresult" +
+				"%2Ctimestamp%5D%7B0%2C30%7D");
 
 		MonitorResult monitorResult = _execute(_newMonitorProperties());
 
@@ -446,12 +461,25 @@ public class ControllerResultMonitorTest
 				259200, _newResultDescription("", 2002, "FAILURE"), 1002,
 				"SUCCESS"));
 
+		setURLReaderOutput(_newConfigXML("@daily"), _JOB_CONFIG_URL);
+
+		_testExecute(
+			JenkinsResultsParserUtil.combine(
+				"Job ", _JOB_NAME,
+				" has an invalid schedule: Invalid cron spec: @daily"),
+			MonitorResult.Status.WARN,
+			_newBuildJSONObject(
+				600,
+				_newResultDescription(
+					"green", RandomTestUtil.randomInt(), "SUCCESS"),
+				RandomTestUtil.randomInt(), "SUCCESS"));
+
 		setURLReaderOutput(_newConfigXML("0 0 31 2 *"), _JOB_CONFIG_URL);
 
 		_testExecute(
 			JenkinsResultsParserUtil.combine(
 				"Job ", _JOB_NAME, " has an invalid schedule: 0 0 31 2 *"),
-			MonitorResult.Status.UNKNOWN,
+			MonitorResult.Status.WARN,
 			_newBuildJSONObject(
 				600,
 				_newResultDescription(
@@ -464,7 +492,7 @@ public class ControllerResultMonitorTest
 			JenkinsResultsParserUtil.combine(
 				"Job ", _JOB_NAME, " has no schedule, so it is not checked ",
 				"for being on time"),
-			MonitorResult.Status.UNKNOWN,
+			MonitorResult.Status.WARN,
 			_newBuildJSONObject(
 				600,
 				_newResultDescription(
@@ -483,7 +511,7 @@ public class ControllerResultMonitorTest
 					"green", RandomTestUtil.randomInt(), "SUCCESS"),
 				RandomTestUtil.randomInt(), "SUCCESS"));
 
-		testEquals(MonitorResult.Status.UNKNOWN, monitorResult.getStatus());
+		testEquals(MonitorResult.Status.CRITICAL, monitorResult.getStatus());
 
 		String message = monitorResult.getMessage();
 
@@ -512,7 +540,7 @@ public class ControllerResultMonitorTest
 		_testExecuteSkipped(
 			"Unable to find a result for job " + _JOB_NAME +
 				" in its last 6 builds",
-			MonitorResult.Status.UNKNOWN, null);
+			MonitorResult.Status.WARN, null);
 
 		_testExecute(
 			"Job " + _JOB_NAME + " is OK", MonitorResult.Status.OK,

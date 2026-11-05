@@ -1,9 +1,11 @@
+import {NO_DATA_VALUE} from 'shared/util/constants';
+
 /**
  * The value a row shows when the payload carried the property but no value for
  * it. Rendering the property with a dash keeps a parameter the tenant did send
  * — empty — tellable apart from one it never sent at all, which produces no row.
  */
-const EMPTY_VALUE = '-';
+const EMPTY_VALUE = NO_DATA_VALUE;
 
 /**
  * The payload key a caller uses to title the table instead of leaving the
@@ -19,10 +21,24 @@ const HEADER_KEY = 'header';
  */
 const NESTED_KEYS = {
 	acquisitionProperties: 'utm',
+	campaign: 'campaign',
 	properties: 'attributes',
 } as const;
 
+/**
+ * The campaign group's property that names the campaign, which the table links
+ * to the campaign's own page.
+ */
+const CAMPAIGN_NAME_KEY = 'campaignName';
+
+/**
+ * The campaign group's property that holds the campaign's page. It is where the
+ * name links to rather than an attribute, so it never becomes a row of its own.
+ */
+const CAMPAIGN_URL_KEY = 'campaignUrl';
+
 export type PayloadTableRow = {
+	href?: string;
 	property: string;
 	value: string;
 };
@@ -42,23 +58,39 @@ const isNestedGroup = (value: unknown): value is Record<string, unknown> =>
 
 /**
  * Splits an event or session payload into the tables the activity timeline
- * renders when a row is expanded: the payload's own attributes, and the
- * acquisition parameters that came with the touch. A table with no rows is
- * left out entirely, so a payload carrying no UTM parameter renders one table
- * and an empty payload renders none.
+ * renders when a row is expanded: the payload's own attributes, the campaign
+ * the touch carried, and the acquisition parameters that came with it. A table
+ * with no rows is left out entirely, so a payload carrying no UTM parameter
+ * renders no UTM table and an empty payload renders none. A campaign that did
+ * not resolve to a name has nothing to link, so only a named one is a link.
  */
 export const formatPayloadTables = (
 	payload: Record<string, unknown>
 ): PayloadTable[] => {
 	const rowsByGroup: Record<string, PayloadTableRow[]> = {
 		attributes: [],
+		campaign: [],
 		utm: [],
 	};
 
 	let title = Liferay.Language.get('event-attributes');
 
-	const addRow = (group: string, property: string, value: unknown) =>
-		rowsByGroup[group].push({property, value: formatValue(value)});
+	const addRow = (
+		group: string,
+		property: string,
+		value: unknown,
+		href?: unknown
+	) => {
+		const formattedValue = formatValue(value);
+
+		rowsByGroup[group].push({
+			...(typeof href === 'string' &&
+				href &&
+				formattedValue !== EMPTY_VALUE && {href}),
+			property,
+			value: formattedValue,
+		});
+	};
 
 	Object.entries(payload).forEach(([key, value]) => {
 		if (key === HEADER_KEY) {
@@ -68,9 +100,22 @@ export const formatPayloadTables = (
 			const group = NESTED_KEYS[key as keyof typeof NESTED_KEYS];
 
 			if (isNestedGroup(value)) {
-				Object.entries(value).forEach(([nestedKey, nestedValue]) =>
-					addRow(group, nestedKey, nestedValue)
-				);
+				const isCampaign = group === 'campaign';
+
+				Object.entries(value).forEach(([nestedKey, nestedValue]) => {
+					if (isCampaign && nestedKey === CAMPAIGN_URL_KEY) {
+						return;
+					}
+
+					addRow(
+						group,
+						nestedKey,
+						nestedValue,
+						isCampaign && nestedKey === CAMPAIGN_NAME_KEY
+							? value[CAMPAIGN_URL_KEY]
+							: undefined
+					);
+				});
 			}
 		}
 		else {
@@ -82,6 +127,13 @@ export const formatPayloadTables = (
 
 	if (rowsByGroup.attributes.length) {
 		tables.push({rows: rowsByGroup.attributes, title});
+	}
+
+	if (rowsByGroup.campaign.length) {
+		tables.push({
+			rows: rowsByGroup.campaign,
+			title: Liferay.Language.get('campaign'),
+		});
 	}
 
 	if (rowsByGroup.utm.length) {

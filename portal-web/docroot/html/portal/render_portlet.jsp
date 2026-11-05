@@ -53,7 +53,7 @@ if (layout instanceof VirtualLayout) {
 	privateLayout = sourceLayout.isPrivateLayout();
 }
 else {
-	group = layout.getGroup();
+	group = themeDisplay.getLayoutGroup(layout);
 	privateLayout = layout.isPrivateLayout();
 }
 
@@ -290,11 +290,17 @@ if (layoutTypeController.isFullPageDisplayable()) {
 	showCloseIcon = false;
 }
 
+long portletScopeGroupId = 0;
+
 if (Validator.isNotNull(portletResource)) {
-	themeDisplay.setScopeGroupId(PortalUtil.getScopeGroupId(request, portletResourcePortlet.getPortletId()));
+	portletScopeGroupId = PortalUtil.getScopeGroupId(request, portletResourcePortlet.getPortletId());
 }
 else {
-	themeDisplay.setScopeGroupId(PortalUtil.getScopeGroupId(request, portletId));
+	portletScopeGroupId = PortalUtil.getScopeGroupId(request, portletId);
+}
+
+if (portletScopeGroupId != themeDisplay.getScopeGroupId()) {
+	themeDisplay.setScopeGroupId(portletScopeGroupId);
 }
 
 Group siteGroup = themeDisplay.getSiteGroup();
@@ -565,7 +571,9 @@ portletDisplay.setURLEditGuest(urlEditGuest.toString());
 
 // URL export / import
 
-LiferayPortletURL urlExportImport = PortletURLFactoryUtil.create(request, PortletKeys.EXPORT_IMPORT, PortletRequest.RENDER_PHASE);
+Portlet exportImportPortlet = PortletLocalServiceUtil.getPortletById(company.getCompanyId(), PortletKeys.EXPORT_IMPORT);
+
+LiferayPortletURL urlExportImport = PortletURLFactoryUtil.create(request, exportImportPortlet, PortletRequest.RENDER_PHASE);
 
 urlExportImport.setWindowState(LiferayWindowState.POP_UP);
 
@@ -739,7 +747,7 @@ portletDisplay.setURLRefresh(urlRefresh);
 
 // URL staging
 
-LiferayPortletURL urlStaging = PortletURLFactoryUtil.create(request, PortletKeys.EXPORT_IMPORT, PortletRequest.RENDER_PHASE);
+LiferayPortletURL urlStaging = PortletURLFactoryUtil.create(request, exportImportPortlet, PortletRequest.RENDER_PHASE);
 
 urlStaging.setWindowState(LiferayWindowState.POP_UP);
 

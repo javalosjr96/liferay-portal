@@ -14,6 +14,8 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
+import com.liferay.staging.StagingGroupHelper;
+import com.liferay.staging.StagingGroupHelperUtil;
 
 import java.util.Collections;
 import java.util.Map;
@@ -231,6 +233,19 @@ public class GroupExportImportParameterUtilTest {
 	}
 
 	@Test
+	@TestInfo("LPD-111134")
+	public void testGetPhasesCountWhenGroupIsNotTheInstanceGroup() {
+		Assert.assertEquals(
+			1,
+			_getPhasesCount(
+				false, true,
+				HashMapBuilder.put(
+					PortletDataHandlerKeys.GROUP_EXTERNAL_REFERENCE_CODES,
+					new String[] {RandomTestUtil.randomString()}
+				).build()));
+	}
+
+	@Test
 	@TestInfo("LPD-109895")
 	public void testGetPhasesCountWhenGroupScoped() {
 		Assert.assertEquals(
@@ -298,6 +313,15 @@ public class GroupExportImportParameterUtilTest {
 	}
 
 	@Test
+	public void testIsGroupExportImportEnabled() {
+		Assert.assertFalse(
+			_isGroupExportImportEnabled(false, "LPD-41307", "LPD-85946"));
+		Assert.assertFalse(_isGroupExportImportEnabled(true));
+		Assert.assertTrue(_isGroupExportImportEnabled(true, "LPD-41307"));
+		Assert.assertTrue(_isGroupExportImportEnabled(true, "LPD-85946"));
+	}
+
+	@Test
 	public void testIsGroupScopedWithCurrentGroupExternalReferenceCode() {
 		PortletDataContext portletDataContext = Mockito.mock(
 			PortletDataContext.class);
@@ -324,13 +348,26 @@ public class GroupExportImportParameterUtilTest {
 	}
 
 	private int _getPhasesCount(
-		boolean groupExportImportEnabled, Map<String, String[]> parameterMap) {
+		boolean companyGroup, boolean groupExportImportEnabled,
+		Map<String, String[]> parameterMap) {
 
 		long companyId = RandomTestUtil.randomLong();
+		long groupId = RandomTestUtil.randomLong();
+		StagingGroupHelper stagingGroupHelper = Mockito.mock(
+			StagingGroupHelper.class);
+
+		Mockito.when(
+			stagingGroupHelper.isCompanyGroup(companyId, groupId)
+		).thenReturn(
+			companyGroup
+		);
 
 		try (MockedStatic<FeatureFlagManagerUtil>
 				featureFlagManagerUtilMockedStatic = Mockito.mockStatic(
-					FeatureFlagManagerUtil.class)) {
+					FeatureFlagManagerUtil.class);
+			MockedStatic<StagingGroupHelperUtil>
+				stagingGroupHelperUtilMockedStatic = Mockito.mockStatic(
+					StagingGroupHelperUtil.class)) {
 
 			featureFlagManagerUtilMockedStatic.when(
 				() -> FeatureFlagManagerUtil.isEnabled(companyId, "LPD-85946")
@@ -338,8 +375,61 @@ public class GroupExportImportParameterUtilTest {
 				groupExportImportEnabled
 			);
 
+			stagingGroupHelperUtilMockedStatic.when(
+				StagingGroupHelperUtil::getStagingGroupHelper
+			).thenReturn(
+				stagingGroupHelper
+			);
+
 			return GroupExportImportParameterUtil.getPhasesCount(
-				companyId, parameterMap);
+				companyId, groupId, parameterMap);
+		}
+	}
+
+	private int _getPhasesCount(
+		boolean groupExportImportEnabled, Map<String, String[]> parameterMap) {
+
+		return _getPhasesCount(true, groupExportImportEnabled, parameterMap);
+	}
+
+	private boolean _isGroupExportImportEnabled(
+		boolean companyGroup, String... featureFlagKeys) {
+
+		long companyId = RandomTestUtil.randomLong();
+		long groupId = RandomTestUtil.randomLong();
+		StagingGroupHelper stagingGroupHelper = Mockito.mock(
+			StagingGroupHelper.class);
+
+		Mockito.when(
+			stagingGroupHelper.isCompanyGroup(companyId, groupId)
+		).thenReturn(
+			companyGroup
+		);
+
+		try (MockedStatic<FeatureFlagManagerUtil>
+				featureFlagManagerUtilMockedStatic = Mockito.mockStatic(
+					FeatureFlagManagerUtil.class);
+			MockedStatic<StagingGroupHelperUtil>
+				stagingGroupHelperUtilMockedStatic = Mockito.mockStatic(
+					StagingGroupHelperUtil.class)) {
+
+			for (String featureFlagKey : featureFlagKeys) {
+				featureFlagManagerUtilMockedStatic.when(
+					() -> FeatureFlagManagerUtil.isEnabled(
+						companyId, featureFlagKey)
+				).thenReturn(
+					true
+				);
+			}
+
+			stagingGroupHelperUtilMockedStatic.when(
+				StagingGroupHelperUtil::getStagingGroupHelper
+			).thenReturn(
+				stagingGroupHelper
+			);
+
+			return GroupExportImportParameterUtil.isGroupExportImportEnabled(
+				companyId, groupId);
 		}
 	}
 

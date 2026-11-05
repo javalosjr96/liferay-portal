@@ -1,6 +1,16 @@
+export const createLifecycle = jest.fn(() =>
+	Promise.resolve({accountLifecycleStages: []})
+);
+
+export const deleteLifecycle = jest.fn(() => Promise.resolve({}));
+
 export const fetchAccountLifecycles = jest.fn(() => Promise.resolve([]));
 
-export const fetchLifecycle = jest.fn(() => Promise.resolve({stages: []}));
+export const fetchChannelLifecycles = jest.fn(() => Promise.resolve([]));
+
+export const fetchLifecycle = jest.fn(() =>
+	Promise.resolve({accountLifecycleStages: []})
+);
 
 export const fetchLifecycles = jest.fn(() => Promise.resolve([]));
 
@@ -15,3 +25,7 @@ export const fetchLifecyclesPage = jest.fn(() =>
 );
 
 export const setDefaultLifecycle = jest.fn(() => Promise.resolve());
+
+export const updateLifecycle = jest.fn(() =>
+	Promise.resolve({accountLifecycleStages: []})
+);

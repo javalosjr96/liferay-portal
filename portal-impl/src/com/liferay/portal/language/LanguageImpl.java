@@ -1037,9 +1037,9 @@ public class LanguageImpl implements Language, Serializable {
 		}
 
 		try {
-			if (isInheritLocales(groupId)) {
-				Group group = GroupLocalServiceUtil.getGroup(groupId);
+			Group group = GroupLocalServiceUtil.getGroup(groupId);
 
+			if (isInheritLocales(group)) {
 				CompanyLocalesBag companyLocalesBag = _getCompanyLocalesBag(
 					group.getCompanyId());
 
@@ -1558,9 +1558,9 @@ public class LanguageImpl implements Language, Serializable {
 		}
 
 		try {
-			if (isInheritLocales(groupId)) {
-				Group group = GroupLocalServiceUtil.getGroup(groupId);
+			Group group = GroupLocalServiceUtil.getGroup(groupId);
 
+			if (isInheritLocales(group)) {
 				CompanyLocalesBag companyLocalesBag = _getCompanyLocalesBag(
 					group.getCompanyId());
 
@@ -1617,9 +1617,7 @@ public class LanguageImpl implements Language, Serializable {
 	}
 
 	@Override
-	public boolean isInheritLocales(long groupId) throws PortalException {
-		Group group = GroupLocalServiceUtil.getGroup(groupId);
-
+	public boolean isInheritLocales(Group group) {
 		if (group.isStagingGroup()) {
 			group = group.getLiveGroup();
 		}
@@ -1632,6 +1630,11 @@ public class LanguageImpl implements Language, Serializable {
 			group.getTypeSettingsProperty(
 				GroupConstants.TYPE_SETTINGS_KEY_INHERIT_LOCALES),
 			true);
+	}
+
+	@Override
+	public boolean isInheritLocales(long groupId) throws PortalException {
+		return isInheritLocales(GroupLocalServiceUtil.getGroup(groupId));
 	}
 
 	@Override

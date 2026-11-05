@@ -5,7 +5,7 @@
 
 package com.liferay.osb.faro.web.internal.controller.contacts;
 
-import com.liferay.osb.faro.contacts.model.constants.JSONConstants;
+import com.liferay.osb.faro.constants.JSONConstants;
 import com.liferay.osb.faro.engine.client.model.IndividualSegment;
 import com.liferay.osb.faro.engine.client.model.IndividualSegmentMembership;
 import com.liferay.osb.faro.engine.client.model.IndividualSegmentMembershipChange;
@@ -431,12 +431,6 @@ public class IndividualSegmentFaroController extends BaseFaroController {
 				List.of("authorName", "name"), null, segmentCategories,
 				segmentTypes, state, IndividualSegment.Status.ACTIVE.name(),
 				cur, delta, orderByFields);
-		}
-		else if (contactsEntityType == FaroConstants.TYPE_ACCOUNT) {
-			results = contactsEngineClient.getAccountIndividualSegments(
-				faroProject, contactsEntityId, channelId, query,
-				IndividualSegment.Status.ACTIVE.name(), cur, delta,
-				orderByFields);
 		}
 		else if (contactsEntityType == FaroConstants.TYPE_INDIVIDUAL) {
 			results = contactsEngineClient.getIndividualIndividualSegments(

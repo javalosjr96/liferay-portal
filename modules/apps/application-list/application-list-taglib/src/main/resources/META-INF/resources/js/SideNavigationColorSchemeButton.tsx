@@ -4,18 +4,22 @@
  */
 
 import {ClayButtonWithIcon} from '@clayui/button';
+import classNames from 'classnames';
 import React, {useEffect, useRef, useState} from 'react';
+
+const COLOR_SCHEME_SESSION_KEY =
+	'com_liferay_application_list_taglib_SideNavigationColorScheme';
 
 const REDUCED_MOTION_CLASS_NAME = 'c-prefers-reduced-motion';
 
 function SideNavigationColorSchemeButton({
 	className,
-	colorScheme: initialColorScheme,
-	colorSchemeSessionKey,
+	colorScheme: initialColorScheme = 'light',
+	colorSchemeSessionKey = COLOR_SCHEME_SESSION_KEY,
 }: {
 	className?: string;
-	colorScheme: 'dark' | 'light';
-	colorSchemeSessionKey: string;
+	colorScheme?: 'dark' | 'light';
+	colorSchemeSessionKey?: string;
 }) {
 	const [colorScheme, setColorScheme] = useState<'dark' | 'light'>(() => {
 		const current = document.documentElement.dataset.colorScheme;
@@ -95,13 +99,13 @@ function SideNavigationColorSchemeButton({
 			aria-label={label}
 			aria-pressed={colorScheme === 'dark'}
 			borderless
-			className={className}
+			className={classNames('lfr-portal-tooltip', className)}
+			data-title={label}
 			displayType="secondary"
 			monospaced
 			onClick={toggle}
 			size="sm"
 			symbol={colorScheme === 'dark' ? 'sun' : 'moon'}
-			title={label}
 		/>
 	);
 }
