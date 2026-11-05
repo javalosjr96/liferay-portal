@@ -50,7 +50,7 @@ public final class UpgradeQueryMonitor {
 			return;
 		}
 
-		_scheduledExecutorService.shutdownNow();
+		_scheduledExecutorService.shutdown();
 
 		try {
 			if (!_scheduledExecutorService.awaitTermination(

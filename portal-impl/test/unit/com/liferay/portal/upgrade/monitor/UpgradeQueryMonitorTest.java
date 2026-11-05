@@ -8,6 +8,7 @@ package com.liferay.portal.upgrade.monitor;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.db.DB;
+import com.liferay.portal.kernel.dao.db.DBManager;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.util.PropsValuesTestUtil;
@@ -20,11 +21,16 @@ import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.sql.SQLRecoverableException;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.sql.DataSource;
 
@@ -197,6 +203,81 @@ public class UpgradeQueryMonitorTest {
 			Assert.assertNull(
 				ReflectionTestUtil.getFieldValue(
 					UpgradeQueryMonitor.class, _SCHEDULED_EXECUTOR_SERVICE));
+		}
+	}
+
+	@Test
+	public void testStopWithPollInProgress() throws Exception {
+		DB db = Mockito.mock(DB.class);
+		Connection connection = Mockito.mock(Connection.class);
+
+		CountDownLatch countDownLatch = new CountDownLatch(1);
+		AtomicBoolean completed = new AtomicBoolean();
+
+		Mockito.when(
+			db.getLockedQueryInfos(connection)
+		).thenAnswer(
+			invocation -> {
+				countDownLatch.countDown();
+
+				try {
+					Thread.sleep(1000);
+				}
+				catch (InterruptedException interruptedException) {
+					throw new SQLRecoverableException(
+						RandomTestUtil.randomString());
+				}
+
+				completed.set(true);
+
+				return Collections.emptyList();
+			}
+		);
+
+		DBManager dbManager = Mockito.mock(DBManager.class);
+
+		Mockito.when(
+			dbManager.getDB()
+		).thenReturn(
+			db
+		);
+
+		DataSource dataSource = Mockito.mock(DataSource.class);
+
+		Mockito.when(
+			dataSource.getConnection()
+		).thenReturn(
+			connection
+		);
+
+		DBManager originalDBManager = ReflectionTestUtil.getFieldValue(
+			DBManagerUtil.class, "_dbManager");
+		DataSource originalDataSource = InfrastructureUtil.getDataSource();
+
+		DBManagerUtil.setDBManager(dbManager);
+		InfrastructureUtil.setDataSource(dataSource);
+
+		try {
+			ScheduledExecutorService scheduledExecutorService =
+				Executors.newSingleThreadScheduledExecutor();
+
+			ReflectionTestUtil.setFieldValue(
+				UpgradeQueryMonitor.class, _SCHEDULED_EXECUTOR_SERVICE,
+				scheduledExecutorService);
+
+			scheduledExecutorService.submit(
+				() -> ReflectionTestUtil.invoke(
+					UpgradeQueryMonitor.class, "_poll", new Class<?>[0]));
+
+			Assert.assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+
+			UpgradeQueryMonitor.stop();
+
+			Assert.assertTrue(completed.get());
+		}
+		finally {
+			DBManagerUtil.setDBManager(originalDBManager);
+			InfrastructureUtil.setDataSource(originalDataSource);
 		}
 	}
 
