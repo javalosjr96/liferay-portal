@@ -430,8 +430,7 @@ public class PortalInstanceImportResourceTest
 
 				Problem problem = futureTask.get(10, TimeUnit.MINUTES);
 
-				Assert.assertEquals(
-					"INTERNAL_SERVER_ERROR", problem.getStatus());
+				Assert.assertEquals("BAD_REQUEST", problem.getStatus());
 			}
 			catch (TimeoutException timeoutException) {
 				futureTask.cancel(true);
