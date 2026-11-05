@@ -1650,6 +1650,9 @@ public class CompanyLocalServiceTest {
 			Group group = null;
 
 			try {
+				int maxLength = ModelHintsUtil.getMaxLength(
+					CompanyInfo.class.getName(), "name");
+
 				String[] names = null;
 
 				if (expectFailure) {
@@ -1659,9 +1662,6 @@ public class CompanyLocalServiceTest {
 							_company.getCompanyId()),
 						GroupConstants.DEFAULT_PARENT_GROUP_ID);
 
-					int maxLength = ModelHintsUtil.getMaxLength(
-						CompanyInfo.class.getName(), "name");
-
 					names = new String[] {
 						StringPool.BLANK, group.getDescriptiveName(),
 						RandomTestUtil.randomString(maxLength + 1)
@@ -1670,9 +1670,7 @@ public class CompanyLocalServiceTest {
 				else {
 					names = new String[] {
 						RandomTestUtil.randomString(),
-						RandomTestUtil.randomString(
-							ModelHintsUtil.getMaxLength(
-								CompanyInfo.class.getName(), "name"))
+						RandomTestUtil.randomString(maxLength)
 					};
 				}
 
