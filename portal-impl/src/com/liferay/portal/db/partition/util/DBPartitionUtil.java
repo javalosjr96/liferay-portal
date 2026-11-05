@@ -1000,7 +1000,8 @@ public class DBPartitionUtil {
 							targetPartitionName, fromTableName, fromTableName));
 
 					if (StringUtil.equalsIgnoreCase(
-							fromTableName, "Configuration_")) {
+							fromTableName, "Configuration_") ||
+						StringUtil.equalsIgnoreCase(fromTableName, "Counter")) {
 
 						continue;
 					}
@@ -1013,6 +1014,13 @@ public class DBPartitionUtil {
 								connection, sourcePartitionName, fromTableName),
 							StringPool.BLANK));
 				}
+
+				statement.executeUpdate(
+					_getCopyDataSQL(
+						sourcePartitionName, targetPartitionName, "Counter",
+						_getColumnNames(
+							connection, sourcePartitionName, "Counter"),
+						StringPool.BLANK));
 			}
 
 			try (Statement statement = connection.createStatement()) {
