@@ -2022,8 +2022,9 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					"Virtual hostname must not exceed " + maxLength +
 						" characters");
 			}
-			else if (virtualHostname.equals(_DEFAULT_VIRTUAL_HOST) &&
-					 !webId.equals(PropsValues.COMPANY_DEFAULT_WEB_ID)) {
+
+			if (virtualHostname.equals(_DEFAULT_VIRTUAL_HOST) &&
+				!webId.equals(PropsValues.COMPANY_DEFAULT_WEB_ID)) {
 
 				throw new CompanyVirtualHostException(
 					"localhost can only be used with the default web ID " +
