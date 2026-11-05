@@ -1113,23 +1113,22 @@ public class CompanyLocalServiceTest {
 		_testUpdateCompanyMx(StringPool.BLANK, false, true);
 		_testUpdateCompanyNames(false);
 		_testUpdateCompanyNames(true);
+
+		int maxLength = ModelHintsUtil.getMaxLength(
+			VirtualHost.class.getName(), "hostname");
+
 		_testUpdateCompanyVirtualHostnames(
 			new String[] {
 				"abc.com", "255.0.0.0", "0:0:0:0:0:0:0:1", "::1",
 				"0000:0000:0000:0000:0000:0000:0000:0001",
-				StringUtil.toLowerCase(
-					RandomTestUtil.randomString(
-						ModelHintsUtil.getMaxLength(
-							VirtualHost.class.getName(), "hostname")))
+				StringUtil.toLowerCase(RandomTestUtil.randomString(maxLength))
 			},
 			false);
 		_testUpdateCompanyVirtualHostnames(
 			new String[] {
 				StringPool.BLANK, "localhost", ".abc",
 				StringUtil.toLowerCase(
-					RandomTestUtil.randomString(
-						ModelHintsUtil.getMaxLength(
-							VirtualHost.class.getName(), "hostname") + 1))
+					RandomTestUtil.randomString(maxLength + 1))
 			},
 			true);
 	}
@@ -1660,11 +1659,12 @@ public class CompanyLocalServiceTest {
 							_company.getCompanyId()),
 						GroupConstants.DEFAULT_PARENT_GROUP_ID);
 
+					int maxLength = ModelHintsUtil.getMaxLength(
+						CompanyInfo.class.getName(), "name");
+
 					names = new String[] {
 						StringPool.BLANK, group.getDescriptiveName(),
-						RandomTestUtil.randomString(
-							ModelHintsUtil.getMaxLength(
-								CompanyInfo.class.getName(), "name") + 1)
+						RandomTestUtil.randomString(maxLength + 1)
 					};
 				}
 				else {

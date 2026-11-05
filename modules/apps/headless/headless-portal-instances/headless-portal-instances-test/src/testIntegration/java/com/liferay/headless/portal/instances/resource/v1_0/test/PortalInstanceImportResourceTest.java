@@ -582,9 +582,7 @@ public class PortalInstanceImportResourceTest
 		}
 	}
 
-	private void _testPostPortalInstanceImportValuesTooLong()
-		throws Exception {
-
+	private void _testPostPortalInstanceImportValuesTooLong() throws Exception {
 		long companyId = _exportCompany();
 
 		try {
@@ -593,10 +591,12 @@ public class PortalInstanceImportResourceTest
 
 			portalInstanceImport.setSchemaName(
 				DBPartitionUtil.getExportedPartitionName(companyId));
+
+			int nameMaxLength = ModelHintsUtil.getMaxLength(
+				CompanyInfo.class.getName(), "name");
+
 			portalInstanceImport.setName(
-				RandomTestUtil.randomString(
-					ModelHintsUtil.getMaxLength(
-						CompanyInfo.class.getName(), "name") + 1));
+				RandomTestUtil.randomString(nameMaxLength + 1));
 
 			_assertPostPortalInstanceImportProblemTitle(
 				portalInstanceImport, "Please enter a valid name.");
