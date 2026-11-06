@@ -3680,7 +3680,7 @@ jdbc.read.password=password</echo>
 
 						<local name="database.read.url" />
 
-						<condition else="jdbc:mysql://${database.host}/lportal?useUnicode=true&amp;amp;characterEncoding=UTF-8&amp;amp;useFastDateParsing=false&amp;amp;serverTimezone=GMT&amp;amp;dontTrackOpenResources=true&amp;amp;holdResultsOpenOverStatementClose=true" property="database.read.url" value="jdbc:postgresql://${database.host}:5432/lportal">
+						<condition else="jdbc:mysql://${database.host}/lportal?useUnicode=true&amp;amp;characterEncoding=UTF-8&amp;amp;useFastDateParsing=false&amp;amp;serverTimezone=GMT&amp;amp;dontTrackOpenResources=true&amp;amp;holdResultsOpenOverStatementClose=true" property="database.read.url" value="${database.url}">
 							<equals arg1="${database.type}" arg2="postgresql" />
 						</condition>
 
