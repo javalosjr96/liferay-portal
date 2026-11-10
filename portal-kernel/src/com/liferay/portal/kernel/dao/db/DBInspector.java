@@ -61,7 +61,13 @@ public class DBInspector {
 	}
 
 	public ResultSet getColumnsResultSet(String tableName) throws SQLException {
-		return _getColumnsResultSet(tableName, null);
+		DatabaseMetaData databaseMetaData = _connection.getMetaData();
+
+		return databaseMetaData.getColumns(
+			getCatalog(), getSchema(),
+			_escapeWildcards(
+				normalizeName(tableName, databaseMetaData), databaseMetaData),
+			null);
 	}
 
 	public List<String> getControlTableNames(Collection<String> tableNames)
@@ -142,7 +148,7 @@ public class DBInspector {
 		try (ResultSet resultSet = _getColumnsResultSet(
 				tableName, columnName)) {
 
-			return resultSet.next();
+			return _moveToColumn(resultSet, tableName, columnName);
 		}
 		catch (Exception exception) {
 			_log.error(exception);
@@ -238,7 +244,7 @@ public class DBInspector {
 		try (ResultSet resultSet = _getColumnsResultSet(
 				tableName, columnName)) {
 
-			if (!resultSet.next()) {
+			if (!_moveToColumn(resultSet, tableName, columnName)) {
 				return false;
 			}
 
@@ -346,7 +352,7 @@ public class DBInspector {
 		try (ResultSet resultSet = _getColumnsResultSet(
 				tableName, columnName)) {
 
-			if (!resultSet.next()) {
+			if (!_moveToColumn(resultSet, tableName, columnName)) {
 				throw new SQLException(
 					StringBundler.concat(
 						"Column ", tableName, StringPool.PERIOD, columnName,
@@ -377,7 +383,7 @@ public class DBInspector {
 		try (ResultSet resultSet = _getColumnsResultSet(
 				tableName, columnName)) {
 
-			if (!resultSet.next()) {
+			if (!_moveToColumn(resultSet, tableName, columnName)) {
 				return false;
 			}
 
@@ -445,6 +451,24 @@ public class DBInspector {
 		}
 
 		return name;
+	}
+
+	private String _escapeWildcards(
+			String name, DatabaseMetaData databaseMetaData)
+		throws SQLException {
+
+		String searchStringEscape = databaseMetaData.getSearchStringEscape();
+
+		if (Validator.isNull(searchStringEscape)) {
+			return name;
+		}
+
+		return StringUtil.replace(
+			name, new String[] {StringPool.PERCENT, StringPool.UNDERLINE},
+			new String[] {
+				searchStringEscape + StringPool.PERCENT,
+				searchStringEscape + StringPool.UNDERLINE
+			});
 	}
 
 	private Integer _getByColumnType(
@@ -534,7 +558,9 @@ public class DBInspector {
 		try (ResultSet resultSet = _getColumnsResultSet(
 				normalizedTableName, normalizedColumnName)) {
 
-			if (resultSet.next()) {
+			if (_moveToColumn(
+					resultSet, normalizedTableName, normalizedColumnName)) {
+
 				columnType = resultSet.getInt("DATA_TYPE");
 			}
 		}
@@ -597,8 +623,12 @@ public class DBInspector {
 				getCatalog(), getSchema(), elementName,
 				new String[] {elementType})) {
 
-			if (resultSet.next()) {
-				return true;
+			while (resultSet.next()) {
+				if (StringUtil.equalsIgnoreCase(
+						elementName, resultSet.getString("TABLE_NAME"))) {
+
+					return true;
+				}
 			}
 		}
 
@@ -657,6 +687,23 @@ public class DBInspector {
 			(columnType == Types.TINYINT)) {
 
 			return true;
+		}
+
+		return false;
+	}
+
+	private boolean _moveToColumn(
+			ResultSet resultSet, String tableName, String columnName)
+		throws SQLException {
+
+		while (resultSet.next()) {
+			if (StringUtil.equalsIgnoreCase(
+					tableName, resultSet.getString("TABLE_NAME")) &&
+				StringUtil.equalsIgnoreCase(
+					columnName, resultSet.getString("COLUMN_NAME"))) {
+
+				return true;
+			}
 		}
 
 		return false;

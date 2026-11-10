@@ -449,6 +449,18 @@ public class DBInspectorUnitTest {
 		);
 
 		Mockito.when(
+			_resultSet.getString("COLUMN_NAME")
+		).thenReturn(
+			columnName
+		);
+
+		Mockito.when(
+			_resultSet.getString("TABLE_NAME")
+		).thenReturn(
+			tableName
+		);
+
+		Mockito.when(
 			_resultSet.next()
 		).thenReturn(
 			hasColumn
