@@ -17,6 +17,7 @@ import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.RetryAcceptor;
 import com.liferay.portal.kernel.service.SQLStateAcceptor;
+import com.liferay.portal.kernel.upgrade.recorder.UpgradeSQLRecorder;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 
@@ -230,6 +231,7 @@ public class OrphanReferencesDataCleanupUtil {
 		throws Exception {
 
 		int retryCount = 0;
+		List<SQLException> sqlExceptions = new ArrayList<>();
 
 		while (true) {
 			try (PreparedStatement preparedStatement =
@@ -237,7 +239,7 @@ public class OrphanReferencesDataCleanupUtil {
 
 				preparedStatement.executeUpdate();
 
-				return;
+				break;
 			}
 			catch (SQLException sqlException) {
 				if ((retryCount >= _DELETE_DEADLOCK_MAX_RETRIES) ||
@@ -251,6 +253,8 @@ public class OrphanReferencesDataCleanupUtil {
 				}
 
 				retryCount++;
+
+				sqlExceptions.add(sqlException);
 
 				if (_log.isDebugEnabled()) {
 					_log.debug(
@@ -275,6 +279,10 @@ public class OrphanReferencesDataCleanupUtil {
 					throw interruptedException;
 				}
 			}
+		}
+
+		for (SQLException sqlException : sqlExceptions) {
+			UpgradeSQLRecorder.removeFailedSQL(sqlException);
 		}
 	}
 
