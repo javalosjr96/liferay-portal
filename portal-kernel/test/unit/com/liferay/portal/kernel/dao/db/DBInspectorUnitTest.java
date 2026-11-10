@@ -6,12 +6,14 @@
 package com.liferay.portal.kernel.dao.db;
 
 import com.liferay.portal.kernel.instance.PortalInstancePool;
+import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Types;
 
 import java.util.List;
@@ -118,6 +120,20 @@ public class DBInspectorUnitTest {
 		Assert.assertTrue(
 			dbInspector.hasColumn(
 				_TABLE_NAME, StringUtil.toUpperCase(_COLUMN_NAME)));
+	}
+
+	@Test
+	public void testHasColumnReturnsFalseWithOtherRow() throws Exception {
+		Mockito.when(
+			_connection.getMetaData()
+		).thenReturn(
+			_databaseMetaData
+		);
+
+		_testHasColumnReturnsFalseWithOtherRow(
+			_TABLE_NAME, _COLUMN_NAME + RandomTestUtil.randomString());
+		_testHasColumnReturnsFalseWithOtherRow(
+			_TABLE_NAME + RandomTestUtil.randomString(), _COLUMN_NAME);
 	}
 
 	@Test
@@ -326,6 +342,41 @@ public class DBInspectorUnitTest {
 	}
 
 	@Test
+	public void testHasTableReturnsFalseWithOtherTableRow() throws Exception {
+		Mockito.when(
+			_connection.getMetaData()
+		).thenReturn(
+			_databaseMetaData
+		);
+
+		ResultSet resultSet = Mockito.mock(ResultSet.class);
+
+		Mockito.when(
+			resultSet.getString("TABLE_NAME")
+		).thenReturn(
+			_TABLE_NAME + RandomTestUtil.randomString()
+		);
+
+		Mockito.when(
+			resultSet.next()
+		).thenReturn(
+			true, false
+		);
+
+		Mockito.when(
+			_databaseMetaData.getTables(
+				Mockito.nullable(String.class), Mockito.nullable(String.class),
+				Mockito.eq(_TABLE_NAME), Mockito.any(String[].class))
+		).thenReturn(
+			resultSet
+		);
+
+		DBInspector dbInspector = new DBInspector(_connection);
+
+		Assert.assertFalse(dbInspector.hasTable(_TABLE_NAME));
+	}
+
+	@Test
 	public void testIsObjectTable() {
 		try (MockedStatic<PortalInstancePool> portalInstancePoolMockedStatic =
 				Mockito.mockStatic(PortalInstancePool.class)) {
@@ -411,6 +462,38 @@ public class DBInspectorUnitTest {
 		}
 	}
 
+	private ResultSet _mockResultSet(String tableName, String columnName)
+		throws Exception {
+
+		ResultSet resultSet = Mockito.mock(ResultSet.class);
+
+		Mockito.when(
+			resultSet.getInt("DATA_TYPE")
+		).thenReturn(
+			Types.BIGINT
+		);
+
+		Mockito.when(
+			resultSet.getString("COLUMN_NAME")
+		).thenReturn(
+			columnName
+		);
+
+		Mockito.when(
+			resultSet.getString("TABLE_NAME")
+		).thenReturn(
+			tableName
+		);
+
+		Mockito.when(
+			resultSet.next()
+		).thenReturn(
+			true, false
+		);
+
+		return resultSet;
+	}
+
 	private void _mockTable(
 			String tableName, String columnName, boolean hasColumn)
 		throws Exception {
@@ -449,10 +532,57 @@ public class DBInspectorUnitTest {
 		);
 
 		Mockito.when(
+			_resultSet.getString("COLUMN_NAME")
+		).thenReturn(
+			columnName
+		);
+
+		Mockito.when(
+			_resultSet.getString("TABLE_NAME")
+		).thenReturn(
+			tableName
+		);
+
+		Mockito.when(
 			_resultSet.next()
 		).thenReturn(
 			hasColumn
 		);
+	}
+
+	private void _testHasColumnReturnsFalseWithOtherRow(
+			String rowTableName, String rowColumnName)
+		throws Exception {
+
+		Mockito.when(
+			_databaseMetaData.getColumns(
+				Mockito.nullable(String.class), Mockito.nullable(String.class),
+				Mockito.eq(_TABLE_NAME), Mockito.eq(_COLUMN_NAME))
+		).thenAnswer(
+			invocation -> _mockResultSet(rowTableName, rowColumnName)
+		);
+
+		DBInspector dbInspector = new DBInspector(_connection);
+
+		Assert.assertFalse(dbInspector.hasColumn(_TABLE_NAME, _COLUMN_NAME));
+		Assert.assertFalse(
+			dbInspector.hasColumnType(_TABLE_NAME, _COLUMN_NAME, "LONG null"));
+		Assert.assertThrows(
+			SQLException.class,
+			() -> dbInspector.isNullable(_TABLE_NAME, _COLUMN_NAME));
+		Assert.assertFalse(dbInspector.isNumeric(_TABLE_NAME, _COLUMN_NAME));
+
+		DBInspector.enableCache();
+
+		try {
+			Assert.assertFalse(
+				dbInspector.hasColumn(_TABLE_NAME, _COLUMN_NAME));
+			Assert.assertFalse(
+				dbInspector.isNumeric(_TABLE_NAME, _COLUMN_NAME));
+		}
+		finally {
+			DBInspector.disableCache();
+		}
 	}
 
 	private void _testHasColumnType(
