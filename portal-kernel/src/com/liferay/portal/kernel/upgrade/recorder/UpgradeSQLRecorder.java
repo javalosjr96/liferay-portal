@@ -173,6 +173,11 @@ public class UpgradeSQLRecorder {
 		return _runningSQLs;
 	}
 
+	public static void removeFailedSQL(SQLException sqlException) {
+		_failedSQLs.removeIf(
+			failedSQL -> failedSQL._sqlException == sqlException);
+	}
+
 	public static void start() {
 		_enabled = true;
 
@@ -192,8 +197,7 @@ public class UpgradeSQLRecorder {
 		}
 
 		public FailedSQL(String message, String sql) {
-			_message = message;
-			_sql = sql;
+			this(message, sql, null);
 		}
 
 		public String getMessage() {
@@ -210,8 +214,17 @@ public class UpgradeSQLRecorder {
 				"SQL: ", _sql, "\nError: ", _message, "\n");
 		}
 
+		private FailedSQL(
+			String message, String sql, SQLException sqlException) {
+
+			_message = message;
+			_sql = sql;
+			_sqlException = sqlException;
+		}
+
 		private final String _message;
 		private final String _sql;
+		private final SQLException _sqlException;
 
 	}
 
@@ -316,11 +329,10 @@ public class UpgradeSQLRecorder {
 				String message = sqlException.getMessage();
 
 				if (Validator.isBlank(message)) {
-					_failedSQLs.add(new FailedSQL(sql));
+					message = StringPool.BLANK;
 				}
-				else {
-					_failedSQLs.add(new FailedSQL(message, sql));
-				}
+
+				_failedSQLs.add(new FailedSQL(message, sql, sqlException));
 			}
 
 			throw sqlException;

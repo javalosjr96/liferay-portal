@@ -15,12 +15,14 @@ import com.liferay.portal.dao.orm.common.SQLTransformer;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.upgrade.data.cleanup.util.OrphanReferencesDataCleanupUtil;
+import com.liferay.portal.kernel.upgrade.recorder.UpgradeSQLRecorder;
 import com.liferay.portal.kernel.util.PortletKeys;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.ProxyUtil;
@@ -38,8 +40,12 @@ import java.sql.SQLException;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.Assume;
@@ -71,6 +77,11 @@ public class OrphanReferencesDataCleanupUtilTest {
 	@AfterClass
 	public static void tearDownClass() {
 		DataAccess.cleanUp(_connection);
+	}
+
+	@After
+	public void tearDown() {
+		UpgradeSQLRecorder.stop();
 	}
 
 	@Test
@@ -131,6 +142,9 @@ public class OrphanReferencesDataCleanupUtilTest {
 		long companyId = RandomTestUtil.nextLong();
 		AtomicReference<String> deleteSQLAtomicReference =
 			new AtomicReference<>();
+		AtomicInteger failedSQLsSizeAtomicInteger = new AtomicInteger();
+
+		UpgradeSQLRecorder.start();
 
 		_testCleanUpTable(
 			logCapture -> {
@@ -157,59 +171,61 @@ public class OrphanReferencesDataCleanupUtilTest {
 						"Company", companyId),
 					logEntry.getMessage());
 
-				try (PreparedStatement preparedStatement =
-						_connection.prepareStatement(
-							"select count(*) as portletsCount from Portlet " +
-								"where companyId = ?")) {
+				_assertPortletsCount(companyId);
 
-					preparedStatement.setLong(1, companyId);
+				Assert.assertEquals(1, failedSQLsSizeAtomicInteger.get());
 
-					try (ResultSet resultSet =
-							preparedStatement.executeQuery()) {
+				List<UpgradeSQLRecorder.FailedSQL> failedSQLs =
+					UpgradeSQLRecorder.getFailedSQLs();
 
-						resultSet.next();
-
-						Assert.assertEquals(
-							0, resultSet.getLong("portletsCount"));
-					}
-				}
+				Assert.assertEquals(
+					failedSQLs.toString(), 0, failedSQLs.size());
 			},
 			() -> _db.runSQL(
 				_connection,
 				"delete from Portlet where companyId = " + companyId),
-			(Connection)ProxyUtil.newProxyInstance(
-				OrphanReferencesDataCleanupUtilTest.class.getClassLoader(),
-				new Class<?>[] {Connection.class},
-				(proxy, method, args) -> {
-					if (Objects.equals(method.getName(), "prepareStatement")) {
+			UpgradeSQLRecorder.getConnectionWrapper(
+				(Connection)ProxyUtil.newProxyInstance(
+					OrphanReferencesDataCleanupUtilTest.class.getClassLoader(),
+					new Class<?>[] {Connection.class},
+					(proxy, method, args) -> {
+						Object object;
+
+						try {
+							object = method.invoke(_connection, args);
+						}
+						catch (InvocationTargetException
+									invocationTargetException) {
+
+							throw invocationTargetException.getCause();
+						}
+
+						if (!Objects.equals(
+								method.getName(), "prepareStatement")) {
+
+							return object;
+						}
+
 						String sql = (String)args[0];
 
-						if (sql.startsWith("delete") &&
-							deleteSQLAtomicReference.compareAndSet(null, sql)) {
-
-							throw new SQLException(
-								RandomTestUtil.randomString(), "40001");
+						if (!sql.startsWith("delete")) {
+							return object;
 						}
-					}
 
-					try {
-						return method.invoke(_connection, args);
-					}
-					catch (InvocationTargetException
-								invocationTargetException) {
+						if (deleteSQLAtomicReference.compareAndSet(null, sql)) {
+							return _getDeadlockPreparedStatement(
+								(PreparedStatement)object, sql);
+						}
 
-						throw invocationTargetException.getCause();
-					}
-				}),
-			null,
-			() -> _db.runSQL(
-				_connection,
-				StringBundler.concat(
-					"insert into Portlet (mvccVersion, id_, companyId, ",
-					"portletId, active_) values (0, ",
-					RandomTestUtil.nextLong(), ", ", companyId, ", '",
-					RandomTestUtil.randomString(), "', [$FALSE$])")),
-			false, null, "companyId", "Portlet", "companyId", "Company");
+						List<UpgradeSQLRecorder.FailedSQL> failedSQLs =
+							UpgradeSQLRecorder.getFailedSQLs();
+
+						failedSQLsSizeAtomicInteger.set(failedSQLs.size());
+
+						return object;
+					})),
+			null, () -> _insertPortlet(companyId), false, null, "companyId",
+			"Portlet", "companyId", "Company");
 	}
 
 	@Test
@@ -281,6 +297,90 @@ public class OrphanReferencesDataCleanupUtilTest {
 			},
 			false, "ownerType = 99", "portletId", "PortletPreferences",
 			"portletId", "Portlet");
+	}
+
+	@Test
+	public void testCleanUpTableWithLockWaitTimeout() throws Exception {
+		Assume.assumeTrue(_db.getDBType() == DBType.MYSQL);
+
+		long companyId = RandomTestUtil.nextLong();
+
+		try (Connection connection = DataAccess.getConnection();
+			Connection lockConnection = DataAccess.getConnection()) {
+
+			lockConnection.setAutoCommit(false);
+
+			FutureTask<Integer> futureTask = new FutureTask<>(
+				() -> {
+					List<UpgradeSQLRecorder.FailedSQL> failedSQLs =
+						UpgradeSQLRecorder.getFailedSQLs();
+
+					long endTime = System.currentTimeMillis() + 60000;
+
+					while (failedSQLs.isEmpty() &&
+						   (System.currentTimeMillis() < endTime)) {
+
+						Thread.sleep(50);
+					}
+
+					int size = failedSQLs.size();
+
+					lockConnection.rollback();
+
+					return size;
+				});
+
+			UpgradeSQLRecorder.start();
+
+			try {
+				_db.runSQL(
+					connection, "set session innodb_lock_wait_timeout = 1");
+
+				_testCleanUpTable(
+					logCapture -> {
+						Assert.assertEquals(
+							1, (int)futureTask.get(90, TimeUnit.SECONDS));
+
+						_assertPortletsCount(companyId);
+
+						List<UpgradeSQLRecorder.FailedSQL> failedSQLs =
+							UpgradeSQLRecorder.getFailedSQLs();
+
+						Assert.assertEquals(
+							failedSQLs.toString(), 0, failedSQLs.size());
+					},
+					() -> _db.runSQL(
+						_connection,
+						"delete from Portlet where companyId = " + companyId),
+					UpgradeSQLRecorder.getConnectionWrapper(connection), null,
+					() -> {
+						_insertPortlet(companyId);
+
+						try (PreparedStatement preparedStatement =
+								lockConnection.prepareStatement(
+									"select id_ from Portlet where companyId " +
+										"= ? for update")) {
+
+							preparedStatement.setLong(1, companyId);
+
+							try (ResultSet resultSet =
+									preparedStatement.executeQuery()) {
+
+								Assert.assertTrue(resultSet.next());
+							}
+						}
+
+						Thread thread = new Thread(futureTask);
+
+						thread.start();
+					},
+					false, null, "companyId", "Portlet", "companyId",
+					"Company");
+			}
+			finally {
+				lockConnection.rollback();
+			}
+		}
 	}
 
 	@Test
@@ -473,6 +573,21 @@ public class OrphanReferencesDataCleanupUtilTest {
 			false, null, "companyId", "DLFileEntry", "companyId", "Company");
 	}
 
+	private void _assertPortletsCount(long companyId) throws Exception {
+		try (PreparedStatement preparedStatement = _connection.prepareStatement(
+				"select count(*) as portletsCount from Portlet where " +
+					"companyId = ?")) {
+
+			preparedStatement.setLong(1, companyId);
+
+			try (ResultSet resultSet = preparedStatement.executeQuery()) {
+				resultSet.next();
+
+				Assert.assertEquals(0, resultSet.getLong("portletsCount"));
+			}
+		}
+	}
+
 	private String _getCleanUpTableExpectedMessage(
 			long count, boolean readOnly, String sourceColumnName,
 			String sourceTableName, String targetColumnName,
@@ -486,6 +601,46 @@ public class OrphanReferencesDataCleanupUtilTest {
 			StringPool.SPACE, targetValue, " was not found in column ",
 			_dbInspector.normalizeName(targetColumnName), " from table ",
 			_dbInspector.normalizeName(targetTableName));
+	}
+
+	private PreparedStatement _getDeadlockPreparedStatement(
+		PreparedStatement preparedStatement, String sql) {
+
+		return (PreparedStatement)ProxyUtil.newProxyInstance(
+			OrphanReferencesDataCleanupUtilTest.class.getClassLoader(),
+			new Class<?>[] {PreparedStatement.class},
+			(proxy, method, args) -> {
+				String methodName = method.getName();
+
+				if (Objects.equals(methodName, "executeUpdate")) {
+					throw new SQLException(
+						RandomTestUtil.randomString(), "40001");
+				}
+
+				if (Objects.equals(methodName, "toString")) {
+					return StringBundler.concat(
+						OrphanReferencesDataCleanupUtilTest.class.
+							getSimpleName(),
+						": ", sql);
+				}
+
+				try {
+					return method.invoke(preparedStatement, args);
+				}
+				catch (InvocationTargetException invocationTargetException) {
+					throw invocationTargetException.getCause();
+				}
+			});
+	}
+
+	private void _insertPortlet(long companyId) throws Exception {
+		_db.runSQL(
+			_connection,
+			StringBundler.concat(
+				"insert into Portlet (mvccVersion, id_, companyId, portletId, ",
+				"active_) values (0, ", RandomTestUtil.nextLong(), ", ",
+				companyId, ", '", RandomTestUtil.randomString(),
+				"', [$FALSE$])"));
 	}
 
 	private String _normalizeTableName(String tableName) throws Exception {
