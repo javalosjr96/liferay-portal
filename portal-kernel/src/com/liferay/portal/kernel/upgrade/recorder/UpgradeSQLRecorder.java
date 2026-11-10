@@ -329,12 +329,10 @@ public class UpgradeSQLRecorder {
 				String message = sqlException.getMessage();
 
 				if (Validator.isBlank(message)) {
-					_failedSQLs.add(
-						new FailedSQL(StringPool.BLANK, sql, sqlException));
+					message = StringPool.BLANK;
 				}
-				else {
-					_failedSQLs.add(new FailedSQL(message, sql, sqlException));
-				}
+
+				_failedSQLs.add(new FailedSQL(message, sql, sqlException));
 			}
 
 			throw sqlException;
