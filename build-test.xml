@@ -15489,6 +15489,7 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 		</if>
 
 		<local name="create.bare.mysql.sql.file" />
+		<local name="import.database.stdin.enabled" />
 
 		<if>
 			<or>
@@ -15662,7 +15663,7 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 								<![CDATA[
 									#!/bin/bash
 
-									mysql --password=${database.password} --user=${database.username} < /tmp/${database.type}.sql
+									mysql --password=${database.password} --user=${database.username}
 
 									if [[ ${mysql.upgrade} == "true" ]]
 									then
@@ -15671,8 +15672,8 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 								]]>
 							</echo>
 
-							<property name="docker.database.dest.path" value="/tmp/${database.type}.sql" />
 							<property name="import.database.src.path" value="${liferay.home}/${database.type}.sql" />
+							<property name="import.database.stdin.enabled" value="true" />
 						</then>
 					</elseif>
 					<elseif>
@@ -15803,11 +15804,32 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 				<execute>
 					<![CDATA[
 						docker cp ${import.database.sh.file.path} ${database.host}:/tmp/import-database.sh
-						docker cp ${import.database.src.path} ${database.host}:${docker.database.dest.path}
-
-						docker exec ${database.host} /bin/bash /tmp/import-database.sh
 					]]>
 				</execute>
+
+				<if>
+					<isset property="import.database.stdin.enabled" />
+					<then>
+						<exec executable="docker" failonerror="true" input="${import.database.src.path}">
+							<arg value="exec" />
+							<arg value="--interactive" />
+							<arg value="${database.host}" />
+							<arg value="/bin/bash" />
+							<arg value="/tmp/import-database.sh" />
+						</exec>
+
+						<delete file="${import.database.src.path}" />
+					</then>
+					<else>
+						<execute>
+							<![CDATA[
+								docker cp ${import.database.src.path} ${database.host}:${docker.database.dest.path}
+
+								docker exec ${database.host} /bin/bash /tmp/import-database.sh
+							]]>
+						</execute>
+					</else>
+				</if>
 			</then>
 			<else>
 				<if>
