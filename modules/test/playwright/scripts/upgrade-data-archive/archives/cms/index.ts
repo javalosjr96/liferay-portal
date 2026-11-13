@@ -125,7 +125,8 @@ async function verifyContentPages(
 			'contentPage'
 		)) {
 			const siteExternalReferenceCode =
-				contentPage.siteExternalReferenceCode as string;
+				(contentPage.siteExternalReferenceCode as string) ||
+				SITE_EXTERNAL_REFERENCE_CODE;
 
 			const page = await apiHelpers.headlessAdminSite.getPage(
 				siteExternalReferenceCode,

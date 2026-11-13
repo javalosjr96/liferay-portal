@@ -4,7 +4,7 @@
  */
 
 import {expect, mergeTests} from '@playwright/test';
-import {readFileSync} from 'fs';
+import {existsSync, readFileSync} from 'fs';
 import * as path from 'path';
 
 import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
@@ -36,19 +36,17 @@ test(
 		const tableRows = getUpgradeReportTableRows(liferayHome);
 
 		if (!tableRows) {
-			const upgradeLog = readFileSync(
-				path.join(
-					liferayHome,
-					'tools',
-					'portal-tools-db-upgrade-client',
-					'logs',
-					'upgrade.log'
-				),
-				'utf8'
+			const upgradeLogFile = path.join(
+				liferayHome,
+				'tools',
+				'portal-tools-db-upgrade-client',
+				'logs',
+				'upgrade.log'
 			);
 
 			test.skip(
-				upgradeLog.includes(
+				existsSync(upgradeLogFile) &&
+					readFileSync(upgradeLogFile, 'utf8').includes(
 					'Upgrade report was not generated because no upgrade processes were executed'
 				),
 				'The archive needed no upgrade processes, so there is no report to compare'

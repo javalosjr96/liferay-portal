@@ -62,7 +62,7 @@ tests/portal-db-infrastructure/upgrade-data-archive-cms/env/set_up.sh
 yarn test --project=portal-db-infrastructure.upgrade-data-archive-cms
 ```
 
-`set_up.sh` fails on any `ERROR` or `FATAL` line in the upgrade log. The spec then fails when a table has fewer rows after the upgrade than before, as the upgrade report records them, unless the table is in `ROW_LOSS_ALLOWED_TABLE_NAMES`, and it runs the archive's `verify`.
+`set_up.sh` fails on any `ERROR` or `FATAL` line in the upgrade log. The spec then fails when a table has fewer rows after the upgrade than before, as the upgrade report records them, unless the table is in `ROW_LOSS_ALLOWED_TABLE_NAMES`, and it runs the archive's `verify`. A table that an upgrade step drops counts as a loss too, so a table that is dropped on purpose belongs in that list. When the archive is already at the current schema, the upgrade runs no upgrade processes and writes no report, and the row check is skipped.
 
 ## Manifest Compatibility
 
@@ -84,7 +84,7 @@ An archive is generated once, on the release it represents, and verified by ever
 
 1. **Every field added after the first version is optional in `verify`.** An archive generated before the field existed does not have it.
 
-1. **`verify` ignores what it does not know**: unknown entity kinds and unknown fields.
+1. **`verify` ignores what it does not know**: unknown entity kinds and unknown fields. An unknown archive `type` is different: it fails the test, because an archive whose `verify` was removed would otherwise pass while checking nothing.
 
 1. **`externalReferenceCode` is required on every entity**, since it is how `verify` finds the entity after the upgrade. `manifest.add` refuses an entity without one.
 
