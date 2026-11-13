@@ -91,6 +91,15 @@ export class HeadlessAdminSiteApiHelper {
 		);
 	}
 
+	async getPageSpecification(
+		siteExternalReferenceCode: string,
+		pageSpecificationExternalReferenceCode: string
+	): Promise<any> {
+		return this.apiHelpers.get(
+			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteExternalReferenceCode}/page-specifications/${pageSpecificationExternalReferenceCode}`
+		);
+	}
+
 	async getPages(
 		siteExternalReferenceCode: string,
 		queryString: string

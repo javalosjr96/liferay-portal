@@ -597,9 +597,17 @@ function rebuild_legacy_database {
 
 	cd "${_PORTAL_PROJECT_DIR}"
 
+	local legacy_database_file_arg
+
+	if [[ -n ${LEGACY_DATABASE_FILE} ]]
+	then
+		legacy_database_file_arg="-Dlegacy.database.file=${LEGACY_DATABASE_FILE}"
+	fi
+
 	ant -f build-test.xml \
 		-Ddata.archive.type="${data_archive_type}" \
 		-Dkeep.cached.app.server.data=true \
+		${legacy_database_file_arg} \
 		-Dportal.version="${portal_version}" \
 		-Dskip.get.testcase.database.properties=true \
 		rebuild-legacy-database
