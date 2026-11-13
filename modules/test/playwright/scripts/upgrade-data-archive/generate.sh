@@ -23,6 +23,8 @@ function main {
 		exit 1
 	fi
 
+	LIFERAY_HOME=${liferay_home}
+
 	local args=()
 
 	while [[ ${#} -gt 0 ]]
