@@ -29,6 +29,8 @@ scripts/upgrade-data-archive
 
 1. Add an upgrade project, `tests/portal-db-infrastructure/upgrade-data-archive-<name>`, with a `config.ts` whose `testDir` is `tests/portal-db-infrastructure/upgrade-data-archive` and an `env/set_up.sh` that sets `DATA_ARCHIVE_TYPE="data-archive-<name>"`. Register it in `playwright.config.ts`. The shared spec needs no change: it finds the archive through the manifest the archive carries.
 
+	When the archive also needs its own spec, such as a check that its pages render in a browser, put the spec in the project folder and set `testDir` to `tests/portal-db-infrastructure` with a `testMatch` that names both folders, as `upgrade-data-archive-content-pages/config.ts` does.
+
 `archives/cms` is the reference: it creates a CMS space and a content page with a draft and an approved page specification.
 
 ## Generate an Archive
