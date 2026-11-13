@@ -4,6 +4,8 @@
  */
 
 import {expect, mergeTests} from '@playwright/test';
+import {readFileSync} from 'fs';
+import * as path from 'path';
 
 import {apiHelpersTest} from '../../../fixtures/apiHelpersTest';
 import {loginTest} from '../../../fixtures/loginTest';
@@ -29,7 +31,31 @@ test(
 	'Every table keeps its rows through the upgrade',
 	{tag: '@LPD-107280'},
 	async () => {
-		const tableRows = getUpgradeReportTableRows(getLiferayHome());
+		const liferayHome = getLiferayHome();
+
+		const tableRows = getUpgradeReportTableRows(liferayHome);
+
+		if (!tableRows) {
+			const upgradeLog = readFileSync(
+				path.join(
+					liferayHome,
+					'tools',
+					'portal-tools-db-upgrade-client',
+					'logs',
+					'upgrade.log'
+				),
+				'utf8'
+			);
+
+			test.skip(
+				upgradeLog.includes(
+					'Upgrade report was not generated because no upgrade processes were executed'
+				),
+				'The archive needed no upgrade processes, so there is no report to compare'
+			);
+
+			throw new Error('Unable to find the upgrade report');
+		}
 
 		expect(tableRows.length).toBeGreaterThan(0);
 
