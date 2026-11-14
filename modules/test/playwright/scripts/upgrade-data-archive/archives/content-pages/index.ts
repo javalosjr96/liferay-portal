@@ -32,6 +32,17 @@ type Widget = {
 	widgetName: string;
 };
 
+async function createPrivatePage(
+	apiHelpers: ApiHelpers,
+	siteExternalReferenceCode: string,
+	page: object
+) {
+	return apiHelpers.post(
+		`${apiHelpers.baseUrl}${apiHelpers.headlessAdminSite.basePath}/sites/${siteExternalReferenceCode}/site-pages?privateLayout=true`,
+		{data: page, failOnStatusCode: true}
+	);
+}
+
 function getContentPage(
 	customMetaTags: CustomMetaTag[],
 	externalReferenceCode: string,
@@ -194,10 +205,7 @@ async function populateContentPage(
 	);
 
 	if (privateLayout) {
-		await apiHelpers.headlessAdminSite.createPrivatePage(
-			SITE_EXTERNAL_REFERENCE_CODE,
-			page
-		);
+		await createPrivatePage(apiHelpers, SITE_EXTERNAL_REFERENCE_CODE, page);
 	}
 	else {
 		await apiHelpers.headlessAdminSite.createPage(
