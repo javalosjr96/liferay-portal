@@ -243,7 +243,7 @@ async function populateSite(apiHelpers: ApiHelpers, manifest: Manifest) {
 
 async function populateWidgetPage(apiHelpers: ApiHelpers, manifest: Manifest) {
 	const externalReferenceCode = `${SITE_EXTERNAL_REFERENCE_CODE}_WIDGET_PAGE`;
-	const friendlyURLPath = '/widget-page';
+	const friendlyURLPath = '/breadcrumb-page';
 	const name = 'Widget Page';
 	const widget: Widget = {
 		widgetConfig: {showCurrentGroup: 'false'},
