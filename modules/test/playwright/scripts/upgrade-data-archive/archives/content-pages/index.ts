@@ -16,49 +16,49 @@ import {UpgradeDataArchive} from '../../runner/upgradeDataArchive';
 
 const SITE_EXTERNAL_REFERENCE_CODE = 'UPGRADE_DATA_ARCHIVE_CONTENT_PAGES';
 
+type CustomMetaTag = {
+	key: string;
+	value: string;
+};
+
 type PageSpecification = {
 	externalReferenceCode: string;
+	heading?: string;
 	status: string;
 };
 
-async function createPrivatePage(
-	apiHelpers: ApiHelpers,
-	siteExternalReferenceCode: string,
-	page: object
-) {
-	return apiHelpers.post(
-		`${apiHelpers.baseUrl}headless-admin-site/v1.0/sites/${siteExternalReferenceCode}/site-pages?privateLayout=true`,
-		{data: page, failOnStatusCode: true}
-	);
-}
+type Widget = {
+	widgetConfig: Record<string, string>;
+	widgetName: string;
+};
 
 function getContentPage(
+	customMetaTags: CustomMetaTag[],
 	externalReferenceCode: string,
 	friendlyURLPath: string,
-	heading: string,
-	name: string
+	name: string,
+	pageSpecifications: PageSpecification[]
 ) {
-	const draftExternalReferenceCode = `${externalReferenceCode}_DRAFT`;
+	const [draftPageSpecification, approvedPageSpecification] =
+		pageSpecifications;
 
 	return {
 		externalReferenceCode,
 		friendlyUrlPath_i18n: {'en-US': friendlyURLPath},
 		name_i18n: {'en-US': name},
 		pageSettings: {
+			customMetaTags: customMetaTags.map(({key, value}) => ({
+				key,
+				value_i18n: {'en-US': value},
+			})),
 			hiddenFromNavigation: false,
 			type: 'ContentPageSettings',
 		},
 		pageSpecifications: [
+			getContentPageSpecification(draftPageSpecification),
 			getContentPageSpecification(
-				draftExternalReferenceCode,
-				heading,
-				'Draft'
-			),
-			getContentPageSpecification(
-				externalReferenceCode,
-				heading,
-				'Approved',
-				draftExternalReferenceCode
+				approvedPageSpecification,
+				draftPageSpecification.externalReferenceCode
 			),
 		],
 		type: 'ContentPage',
@@ -66,11 +66,11 @@ function getContentPage(
 }
 
 function getContentPageSpecification(
-	externalReferenceCode: string,
-	heading: string,
-	status: string,
+	pageSpecification: PageSpecification,
 	draftExternalReferenceCode?: string
 ) {
+	const {externalReferenceCode, heading, status} = pageSpecification;
+
 	const containerExternalReferenceCode = `${externalReferenceCode}_CONTAINER`;
 
 	return {
@@ -136,28 +136,54 @@ function getContentPageSpecification(
 	};
 }
 
-function getPageSpecifications(page: {
-	pageSpecifications: PageSpecification[];
-}) {
-	return page.pageSpecifications.map(({externalReferenceCode, status}) => ({
-		externalReferenceCode,
-		status,
-	}));
+function getContentPageSpecifications(
+	externalReferenceCode: string,
+	heading: string
+): PageSpecification[] {
+	return [
+		{
+			externalReferenceCode: `${externalReferenceCode}_DRAFT`,
+			heading: `${heading} Draft`,
+			status: 'Draft',
+		},
+		{externalReferenceCode, heading, status: 'Approved'},
+	];
+}
+
+function getHeadings(pageSpecification: any) {
+	return pageSpecification.pageExperiences.flatMap((pageExperience: any) =>
+		pageExperience.pageElements.flatMap(
+			(pageElement: any) =>
+				pageElement.pageElementDefinition?.fragmentInstance?.fragmentEditableElements?.map(
+					(fragmentEditableElement: any) =>
+						fragmentEditableElement.fragmentEditableElementValue
+							?.fragmentLinkTextValue?.textFragmentValue
+							?.fragmentInlineValue?.value_i18n?.['en-US']
+				) || []
+		)
+	);
 }
 
 async function populateContentPage(
 	apiHelpers: ApiHelpers,
 	manifest: Manifest
 ) {
+	const customMetaTags = [
+		{key: 'upgrade-data-archive', value: 'Archived Content Meta Tag'},
+	];
 	const externalReferenceCode = `${SITE_EXTERNAL_REFERENCE_CODE}_CONTENT_PAGE`;
 	const friendlyURLPath = '/content-page';
-	const heading = 'Archived Content Heading';
+	const pageSpecifications = getContentPageSpecifications(
+		externalReferenceCode,
+		'Archived Content Heading'
+	);
 
 	const page = getContentPage(
+		customMetaTags,
 		externalReferenceCode,
 		friendlyURLPath,
-		heading,
-		'Content Page'
+		'Content Page',
+		pageSpecifications
 	);
 
 	await apiHelpers.headlessAdminSite.createPage(
@@ -166,10 +192,10 @@ async function populateContentPage(
 	);
 
 	manifest.add('contentPage', {
+		customMetaTags,
 		externalReferenceCode,
 		friendlyURLPath,
-		heading,
-		pageSpecifications: getPageSpecifications(page),
+		pageSpecifications,
 		siteExternalReferenceCode: SITE_EXTERNAL_REFERENCE_CODE,
 		type: page.type,
 	});
@@ -179,24 +205,34 @@ async function populatePrivatePage(
 	apiHelpers: ApiHelpers,
 	manifest: Manifest
 ) {
+	const customMetaTags = [
+		{key: 'upgrade-data-archive', value: 'Archived Private Meta Tag'},
+	];
 	const externalReferenceCode = `${SITE_EXTERNAL_REFERENCE_CODE}_PRIVATE_PAGE`;
 	const friendlyURLPath = '/private-page';
-	const heading = 'Archived Private Heading';
-
-	const page = getContentPage(
+	const pageSpecifications = getContentPageSpecifications(
 		externalReferenceCode,
-		friendlyURLPath,
-		heading,
-		'Private Page'
+		'Archived Private Heading'
 	);
 
-	await createPrivatePage(apiHelpers, SITE_EXTERNAL_REFERENCE_CODE, page);
-
-	manifest.add('privatePage', {
+	const page = getContentPage(
+		customMetaTags,
 		externalReferenceCode,
 		friendlyURLPath,
-		heading,
-		pageSpecifications: getPageSpecifications(page),
+		'Private Page',
+		pageSpecifications
+	);
+
+	await apiHelpers.headlessAdminSite.createPrivatePage(
+		SITE_EXTERNAL_REFERENCE_CODE,
+		page
+	);
+
+	manifest.add('privatePage', {
+		customMetaTags,
+		externalReferenceCode,
+		friendlyURLPath,
+		pageSpecifications,
 		siteExternalReferenceCode: SITE_EXTERNAL_REFERENCE_CODE,
 		type: page.type,
 	});
@@ -223,6 +259,11 @@ async function populateWidgetPage(apiHelpers: ApiHelpers, manifest: Manifest) {
 	const externalReferenceCode = `${SITE_EXTERNAL_REFERENCE_CODE}_WIDGET_PAGE`;
 	const friendlyURLPath = '/widget-page';
 	const name = 'Widget Page';
+	const widget: Widget = {
+		widgetConfig: {showCurrentGroup: 'false'},
+		widgetName:
+			'com_liferay_site_navigation_breadcrumb_web_portlet_SiteNavigationBreadcrumbPortlet',
+	};
 
 	const page = {
 		externalReferenceCode,
@@ -244,15 +285,11 @@ async function populateWidgetPage(apiHelpers: ApiHelpers, manifest: Manifest) {
 						id: 'column-1',
 						widgetPageWidgetInstances: [
 							{
+								...widget,
 								externalReferenceCode: `${externalReferenceCode}_BREADCRUMB`,
 								parentSectionId: 'column-1',
 								position: 0,
 								type: 'BasicWidgetPageWidgetInstance',
-								widgetConfig: {
-									showCurrentGroup: 'false',
-								},
-								widgetName:
-									'com_liferay_site_navigation_breadcrumb_web_portlet_SiteNavigationBreadcrumbPortlet',
 							},
 						],
 					},
@@ -271,48 +308,47 @@ async function populateWidgetPage(apiHelpers: ApiHelpers, manifest: Manifest) {
 		breadcrumb: name,
 		externalReferenceCode,
 		friendlyURLPath,
-		pageSpecifications: getPageSpecifications(page),
+		pageSpecifications: [{externalReferenceCode, status: 'Approved'}],
 		siteExternalReferenceCode: SITE_EXTERNAL_REFERENCE_CODE,
 		type: page.type,
+		widget,
 	});
 }
 
-async function verifyPages(
+async function verifyContentPages(
 	apiHelpers: ApiHelpers,
 	manifestData: ManifestData,
 	kind: string
 ) {
 	for (const recordedPage of getManifestEntities(manifestData, kind)) {
-		const siteExternalReferenceCode =
-			recordedPage.siteExternalReferenceCode as string;
+		const {page} = await verifyPage(apiHelpers, recordedPage);
 
-		const page = await apiHelpers.headlessAdminSite.getPage(
-			siteExternalReferenceCode,
-			recordedPage.externalReferenceCode
-		);
-
-		expect(page.externalReferenceCode).toBe(
-			recordedPage.externalReferenceCode
-		);
-		expect(page.type).toBe(recordedPage.type);
-
-		await verifyPageSpecifications(
-			apiHelpers,
-			recordedPage,
-			siteExternalReferenceCode
-		);
+		for (const {key, value} of recordedPage.customMetaTags as CustomMetaTag[]) {
+			expect(page.pageSettings.customMetaTags).toContainEqual(
+				expect.objectContaining({
+					key,
+					value_i18n: expect.objectContaining({'en-US': value}),
+				})
+			);
+		}
 	}
 }
 
-async function verifyPageSpecifications(
-	apiHelpers: ApiHelpers,
-	recordedPage: ManifestEntity,
-	siteExternalReferenceCode: string
-) {
-	const pageSpecifications = (recordedPage.pageSpecifications ||
-		[]) as PageSpecification[];
+async function verifyPage(apiHelpers: ApiHelpers, recordedPage: ManifestEntity) {
+	const siteExternalReferenceCode =
+		recordedPage.siteExternalReferenceCode as string;
 
-	for (const pageSpecification of pageSpecifications) {
+	const page = await apiHelpers.headlessAdminSite.getPage(
+		siteExternalReferenceCode,
+		recordedPage.externalReferenceCode
+	);
+
+	expect(page.externalReferenceCode).toBe(recordedPage.externalReferenceCode);
+	expect(page.type).toBe(recordedPage.type);
+
+	const upgradedPageSpecifications = [];
+
+	for (const pageSpecification of recordedPage.pageSpecifications as PageSpecification[]) {
 		const upgradedPageSpecification =
 			await apiHelpers.headlessAdminSite.getPageSpecification(
 				siteExternalReferenceCode,
@@ -322,7 +358,17 @@ async function verifyPageSpecifications(
 		expect(upgradedPageSpecification.status).toBe(
 			pageSpecification.status
 		);
+
+		if (pageSpecification.heading) {
+			expect(getHeadings(upgradedPageSpecification)).toContain(
+				pageSpecification.heading
+			);
+		}
+
+		upgradedPageSpecifications.push(upgradedPageSpecification);
 	}
+
+	return {page, pageSpecifications: upgradedPageSpecifications};
 }
 
 async function verifySites(
@@ -335,6 +381,35 @@ async function verifySites(
 		);
 
 		expect(upgradedSite.name).toBe(site.name);
+	}
+}
+
+async function verifyWidgetPages(
+	apiHelpers: ApiHelpers,
+	manifestData: ManifestData
+) {
+	for (const recordedPage of getManifestEntities(
+		manifestData,
+		'widgetPage'
+	)) {
+		const {pageSpecifications} = await verifyPage(apiHelpers, recordedPage);
+
+		const {widgetConfig, widgetName} = recordedPage.widget as Widget;
+
+		for (const pageSpecification of pageSpecifications) {
+			const widgetPageWidgetInstances =
+				pageSpecification.widgetPageSections.flatMap(
+					(widgetPageSection: any) =>
+						widgetPageSection.widgetPageWidgetInstances
+				);
+
+			expect(widgetPageWidgetInstances).toContainEqual(
+				expect.objectContaining({
+					widgetConfig: expect.objectContaining(widgetConfig),
+					widgetName,
+				})
+			);
+		}
 	}
 }
 
@@ -353,11 +428,11 @@ const upgradeDataArchive: UpgradeDataArchive = {
 	verify: async (apiHelpers, manifestData) => {
 		await verifySites(apiHelpers, manifestData);
 
-		await verifyPages(apiHelpers, manifestData, 'contentPage');
+		await verifyContentPages(apiHelpers, manifestData, 'contentPage');
 
-		await verifyPages(apiHelpers, manifestData, 'privatePage');
+		await verifyWidgetPages(apiHelpers, manifestData);
 
-		await verifyPages(apiHelpers, manifestData, 'widgetPage');
+		await verifyContentPages(apiHelpers, manifestData, 'privatePage');
 	},
 };
 
