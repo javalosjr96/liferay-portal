@@ -29,6 +29,7 @@ type PageSpecification = {
 
 type Widget = {
 	widgetConfig: Record<string, string>;
+	widgetInstanceId: string;
 	widgetName: string;
 };
 
@@ -247,6 +248,7 @@ async function populateWidgetPage(apiHelpers: ApiHelpers, manifest: Manifest) {
 	const name = 'Widget Page';
 	const widget: Widget = {
 		widgetConfig: {showCurrentGroup: 'false'},
+		widgetInstanceId: 'contentPages',
 		widgetName:
 			'com_liferay_site_navigation_breadcrumb_web_portlet_SiteNavigationBreadcrumbPortlet',
 	};
@@ -380,7 +382,8 @@ async function verifyWidgetPages(
 	)) {
 		const {pageSpecifications} = await verifyPage(apiHelpers, recordedPage);
 
-		const {widgetConfig, widgetName} = recordedPage.widget as Widget;
+		const {widgetConfig, widgetInstanceId, widgetName} =
+			recordedPage.widget as Widget;
 
 		for (const pageSpecification of pageSpecifications) {
 			const widgetPageWidgetInstances =
@@ -392,6 +395,7 @@ async function verifyWidgetPages(
 			expect(widgetPageWidgetInstances).toContainEqual(
 				expect.objectContaining({
 					widgetConfig: expect.objectContaining(widgetConfig),
+					widgetInstanceId,
 					widgetName,
 				})
 			);
