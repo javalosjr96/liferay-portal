@@ -65,6 +65,16 @@ export class HeadlessAdminSiteApiHelper {
 		);
 	}
 
+	async createPrivatePage(
+		siteExternalReferenceCode: string,
+		page: any
+	): Promise<any> {
+		return this.apiHelpers.post(
+			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${siteExternalReferenceCode}/site-pages?privateLayout=true`,
+			{data: page, failOnStatusCode: true}
+		);
+	}
+
 	async deleteSite(externalReferenceCode: string) {
 		await this.apiHelpers.delete(
 			`${this.apiHelpers.baseUrl}${this.basePath}/sites/${externalReferenceCode}`,
