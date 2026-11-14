@@ -146,14 +146,19 @@ function getContentPageSpecifications(
 	];
 }
 
+function getFragmentEditableElements(pageElements: any[]): any[] {
+	return (pageElements || []).flatMap((pageElement: any) => [
+		...(pageElement.pageElementDefinition.fragmentInstance
+			?.fragmentEditableElements || []),
+		...getFragmentEditableElements(pageElement.pageElements),
+	]);
+}
+
 function getHeadings(pageSpecification: any) {
-	const fragmentEditableElements = pageSpecification.pageExperiences
-		.flatMap((pageExperience: any) => pageExperience.pageElements)
-		.flatMap(
-			(pageElement: any) =>
-				pageElement.pageElementDefinition.fragmentInstance
-					?.fragmentEditableElements || []
-		);
+	const fragmentEditableElements = pageSpecification.pageExperiences.flatMap(
+		(pageExperience: any) =>
+			getFragmentEditableElements(pageExperience.pageElements)
+	);
 
 	return fragmentEditableElements.map(
 		(fragmentEditableElement: any) =>
