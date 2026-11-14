@@ -49,9 +49,13 @@ function getManifestData(): ManifestData {
 function getPageURLs(kind: string, prefix: string) {
 	const manifestData = getManifestData();
 
+	const recordedPages = getManifestEntities(manifestData, kind);
+
+	expect(recordedPages.length).toBeGreaterThan(0);
+
 	const [site] = getManifestEntities(manifestData, 'site');
 
-	return getManifestEntities(manifestData, kind).map((recordedPage) => ({
+	return recordedPages.map((recordedPage) => ({
 		recordedPage,
 		url: `${prefix}${site.friendlyURLPath}${recordedPage.friendlyURLPath}`,
 	}));
@@ -88,7 +92,9 @@ loggedInTest(
 	'Private page renders for signed-in users',
 	{tag: '@LPD-113899'},
 	async ({page}) => {
-		for (const {recordedPage, url} of getPageURLs('privatePage', '/group')) {
+		const pageURLs = getPageURLs('privatePage', '/group');
+
+		for (const {recordedPage, url} of pageURLs) {
 			await page.goto(url);
 
 			await expect(
