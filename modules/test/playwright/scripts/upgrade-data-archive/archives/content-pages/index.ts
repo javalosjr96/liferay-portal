@@ -74,12 +74,8 @@ function getContentPageSpecification(
 	const containerExternalReferenceCode = `${externalReferenceCode}_CONTAINER`;
 
 	return {
-		...(draftExternalReferenceCode
-			? {
-					draftContentPageSpecificationExternalReferenceCode:
-						draftExternalReferenceCode,
-				}
-			: {}),
+		draftContentPageSpecificationExternalReferenceCode:
+			draftExternalReferenceCode,
 		externalReferenceCode,
 		pageExperiences: [
 			{
@@ -151,84 +147,61 @@ function getContentPageSpecifications(
 }
 
 function getHeadings(pageSpecification: any) {
-	return pageSpecification.pageExperiences.flatMap((pageExperience: any) =>
-		pageExperience.pageElements.flatMap(
+	const fragmentEditableElements = pageSpecification.pageExperiences
+		.flatMap((pageExperience: any) => pageExperience.pageElements)
+		.flatMap(
 			(pageElement: any) =>
-				pageElement.pageElementDefinition?.fragmentInstance?.fragmentEditableElements?.map(
-					(fragmentEditableElement: any) =>
-						fragmentEditableElement.fragmentEditableElementValue
-							?.fragmentLinkTextValue?.textFragmentValue
-							?.fragmentInlineValue?.value_i18n?.['en-US']
-				) || []
-		)
+				pageElement.pageElementDefinition.fragmentInstance
+					?.fragmentEditableElements || []
+		);
+
+	return fragmentEditableElements.map(
+		(fragmentEditableElement: any) =>
+			fragmentEditableElement.fragmentEditableElementValue
+				.fragmentLinkTextValue.textFragmentValue.fragmentInlineValue
+				.value_i18n['en-US']
 	);
 }
 
 async function populateContentPage(
 	apiHelpers: ApiHelpers,
-	manifest: Manifest
+	kind: string,
+	label: string,
+	manifest: Manifest,
+	privateLayout: boolean
 ) {
 	const customMetaTags = [
-		{key: 'upgrade-data-archive', value: 'Archived Content Meta Tag'},
+		{key: 'upgrade-data-archive', value: `Archived ${label} Meta Tag`},
 	];
-	const externalReferenceCode = `${SITE_EXTERNAL_REFERENCE_CODE}_CONTENT_PAGE`;
-	const friendlyURLPath = '/content-page';
+	const externalReferenceCode = `${SITE_EXTERNAL_REFERENCE_CODE}_${label.toUpperCase()}_PAGE`;
+	const friendlyURLPath = `/${label.toLowerCase()}-page`;
 	const pageSpecifications = getContentPageSpecifications(
 		externalReferenceCode,
-		'Archived Content Heading'
+		`Archived ${label} Heading`
 	);
 
 	const page = getContentPage(
 		customMetaTags,
 		externalReferenceCode,
 		friendlyURLPath,
-		'Content Page',
+		`${label} Page`,
 		pageSpecifications
 	);
 
-	await apiHelpers.headlessAdminSite.createPage(
-		SITE_EXTERNAL_REFERENCE_CODE,
-		page
-	);
+	if (privateLayout) {
+		await apiHelpers.headlessAdminSite.createPrivatePage(
+			SITE_EXTERNAL_REFERENCE_CODE,
+			page
+		);
+	}
+	else {
+		await apiHelpers.headlessAdminSite.createPage(
+			SITE_EXTERNAL_REFERENCE_CODE,
+			page
+		);
+	}
 
-	manifest.add('contentPage', {
-		customMetaTags,
-		externalReferenceCode,
-		friendlyURLPath,
-		pageSpecifications,
-		siteExternalReferenceCode: SITE_EXTERNAL_REFERENCE_CODE,
-		type: page.type,
-	});
-}
-
-async function populatePrivatePage(
-	apiHelpers: ApiHelpers,
-	manifest: Manifest
-) {
-	const customMetaTags = [
-		{key: 'upgrade-data-archive', value: 'Archived Private Meta Tag'},
-	];
-	const externalReferenceCode = `${SITE_EXTERNAL_REFERENCE_CODE}_PRIVATE_PAGE`;
-	const friendlyURLPath = '/private-page';
-	const pageSpecifications = getContentPageSpecifications(
-		externalReferenceCode,
-		'Archived Private Heading'
-	);
-
-	const page = getContentPage(
-		customMetaTags,
-		externalReferenceCode,
-		friendlyURLPath,
-		'Private Page',
-		pageSpecifications
-	);
-
-	await apiHelpers.headlessAdminSite.createPrivatePage(
-		SITE_EXTERNAL_REFERENCE_CODE,
-		page
-	);
-
-	manifest.add('privatePage', {
+	manifest.add(kind, {
 		customMetaTags,
 		externalReferenceCode,
 		friendlyURLPath,
@@ -419,11 +392,23 @@ const upgradeDataArchive: UpgradeDataArchive = {
 	populate: async (apiHelpers, manifest) => {
 		await populateSite(apiHelpers, manifest);
 
-		await populateContentPage(apiHelpers, manifest);
+		await populateContentPage(
+			apiHelpers,
+			'contentPage',
+			'Content',
+			manifest,
+			false
+		);
 
 		await populateWidgetPage(apiHelpers, manifest);
 
-		await populatePrivatePage(apiHelpers, manifest);
+		await populateContentPage(
+			apiHelpers,
+			'privatePage',
+			'Private',
+			manifest,
+			true
+		);
 	},
 	verify: async (apiHelpers, manifestData) => {
 		await verifySites(apiHelpers, manifestData);
