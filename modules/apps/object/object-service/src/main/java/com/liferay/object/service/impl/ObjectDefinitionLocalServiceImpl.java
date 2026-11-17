@@ -3288,10 +3288,22 @@ public class ObjectDefinitionLocalServiceImpl
 			(existingObjectDefinition.getObjectDefinitionId() !=
 				objectDefinitionId)) {
 
-			_handleException(
-				new ObjectDefinitionClassNameException.MustNotBeDuplicate(
-					className),
-				"className", className);
+			if (system) {
+				if (_log.isInfoEnabled()) {
+					_log.info(
+						StringBundler.concat(
+							"Ignoring class name ", className,
+							" because object definition ",
+							existingObjectDefinition.getObjectDefinitionId(),
+							" already uses it in company ", companyId));
+				}
+			}
+			else {
+				_handleException(
+					new ObjectDefinitionClassNameException.MustNotBeDuplicate(
+						className),
+					"className", className);
+			}
 		}
 
 		if (!StringUtil.startsWith(

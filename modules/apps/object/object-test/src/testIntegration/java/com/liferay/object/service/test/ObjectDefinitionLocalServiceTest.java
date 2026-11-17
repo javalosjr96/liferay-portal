@@ -2124,6 +2124,98 @@ public class ObjectDefinitionLocalServiceTest {
 	}
 
 	@Test
+	public void testAddOrUpdateSystemObjectDefinitionClassName()
+		throws Exception {
+
+		AssertUtils.assertFailure(
+			ObjectDefinitionClassNameException.MustStartWithPrefix.class,
+			"Class name must start with " +
+				ObjectDefinitionConstants.
+					CLASS_NAME_PREFIX_CUSTOM_OBJECT_DEFINITION,
+			() -> _objectDefinitionLocalService.addSystemObjectDefinition(
+				null, TestPropsValues.getUserId(), 0,
+				RandomTestUtil.randomString(), null, null, false, false, false,
+				false, true, false, false, false, false, false, null,
+				RandomTestUtil.randomLocaleStringMap(), true,
+				"Test" + RandomTestUtil.randomString(), null, null, null, null,
+				RandomTestUtil.randomLocaleStringMap(), false,
+				ObjectDefinitionConstants.SCOPE_COMPANY, null, 1,
+				WorkflowConstants.STATUS_APPROVED, Collections.emptyList(),
+				Collections.emptyList(), Collections.emptyList()));
+
+		String className = ObjectDefinitionTestUtil.getUniqueRandomClassName();
+
+		ObjectDefinition customObjectDefinition = _addCustomObjectDefinition(
+			className, ObjectDefinitionTestUtil.getRandomName());
+
+		ObjectDefinition systemObjectDefinition1 = null;
+		ObjectDefinition systemObjectDefinition2 = null;
+
+		try {
+			systemObjectDefinition1 =
+				_objectDefinitionLocalService.addSystemObjectDefinition(
+					null, TestPropsValues.getUserId(), 0, className, null, null,
+					false, false, false, false, true, false, false, false,
+					false, false, null, RandomTestUtil.randomLocaleStringMap(),
+					true, "Test" + RandomTestUtil.randomString(), null, null,
+					null, null, RandomTestUtil.randomLocaleStringMap(), false,
+					ObjectDefinitionConstants.SCOPE_COMPANY, null, 1,
+					WorkflowConstants.STATUS_APPROVED, Collections.emptyList(),
+					Collections.emptyList(), Collections.emptyList());
+
+			Assert.assertNotEquals(
+				className, systemObjectDefinition1.getClassName());
+
+			try (SafeCloseable safeCloseable =
+					LazyReferencingThreadLocal.setEnabledWithSafeCloseable(
+						true)) {
+
+				systemObjectDefinition2 =
+					_objectDefinitionLocalService.getOrAddEmptyObjectDefinition(
+						ObjectDefinitionTestUtil.getRandomName(),
+						TestPropsValues.getCompanyId(),
+						TestPropsValues.getUserId(), 0, true,
+						ObjectDefinitionConstants.SCOPE_COMPANY, true);
+
+				Assert.assertTrue(
+					Validator.isNull(systemObjectDefinition2.getClassName()));
+
+				systemObjectDefinition2 =
+					_objectDefinitionLocalService.updateCustomObjectDefinition(
+						systemObjectDefinition2.getExternalReferenceCode(),
+						systemObjectDefinition2.getObjectDefinitionId(), 0, 0,
+						systemObjectDefinition2.getObjectFolderId(), 0, false,
+						true, className, null, false, false, false, false, true,
+						false, false, false, false, false, null,
+						RandomTestUtil.randomLocaleStringMap(),
+						"Test" + RandomTestUtil.randomString(), null, null,
+						false, RandomTestUtil.randomLocaleStringMap(),
+						ObjectDefinitionConstants.SCOPE_COMPANY,
+						WorkflowConstants.STATUS_APPROVED,
+						Collections.emptyList(), Collections.emptyList(),
+						Collections.emptyList(), new ServiceContext());
+			}
+
+			Assert.assertNotEquals(
+				className, systemObjectDefinition2.getClassName());
+		}
+		finally {
+			if (systemObjectDefinition1 != null) {
+				_objectDefinitionLocalService.deleteObjectDefinition(
+					systemObjectDefinition1);
+			}
+
+			if (systemObjectDefinition2 != null) {
+				_objectDefinitionLocalService.deleteObjectDefinition(
+					systemObjectDefinition2);
+			}
+
+			_objectDefinitionLocalService.deleteObjectDefinition(
+				customObjectDefinition);
+		}
+	}
+
+	@Test
 	public void testAddOrUpdateSystemObjectDefinitionWithCustomObjectFields()
 		throws Exception {
 
