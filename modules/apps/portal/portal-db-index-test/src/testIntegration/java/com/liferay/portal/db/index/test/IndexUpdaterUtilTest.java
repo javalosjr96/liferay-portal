@@ -350,7 +350,7 @@ public class IndexUpdaterUtilTest {
 				LogCapture indexUpdaterUtilLogCapture =
 					LoggerTestUtil.configureLog4JLogger(
 						IndexUpdaterUtil.class.getName(),
-						LoggerTestUtil.ERROR)) {
+						LoggerTestUtil.WARN)) {
 
 				ReflectionTestUtil.invoke(
 					IndexUpdaterUtil.class, "_updateIndexes",
@@ -366,12 +366,11 @@ public class IndexUpdaterUtilTest {
 
 				LogEntry logEntry = logEntries.get(0);
 
-				String message = StringUtil.toLowerCase(logEntry.getMessage());
-
 				Assert.assertTrue(
-					message.startsWith(
+					StringUtil.startsWith(
+						logEntry.getMessage(),
 						StringBundler.concat(
-							"unable to delete row from table testtable due to ",
+							"Unable to delete row from table TestTable due to ",
 							"duplicate values in finder columns column3, ",
 							"column4 because it differs from the kept row in ",
 							"columns column1, column2")));
@@ -482,8 +481,8 @@ public class IndexUpdaterUtilTest {
 		_createTestTable(true);
 
 		try {
-			_db.runSQL("insert into TestTable values(1, 2, 3, 4, '5', '6')");
-			_db.runSQL("insert into TestTable values(7, 9, 3, 4, '5', '6')");
+			_db.runSQL("insert into TestTable values(1, 2, null, 4, '5', '6')");
+			_db.runSQL("insert into TestTable values(7, 9, null, 4, '5', '6')");
 			_db.runSQL(
 				"insert into TestTable values(10, 11, 3, 4, '12', '13')");
 			_db.runSQL(
@@ -521,12 +520,11 @@ public class IndexUpdaterUtilTest {
 
 				LogEntry logEntry = logEntries.get(0);
 
-				String message = StringUtil.toLowerCase(logEntry.getMessage());
-
 				Assert.assertTrue(
-					message.startsWith(
+					StringUtil.startsWith(
+						logEntry.getMessage(),
 						StringBundler.concat(
-							"unable to delete row from table testtable due to ",
+							"Unable to delete row from table TestTable due to ",
 							"duplicate values in finder columns column4 ",
 							"because it differs from the kept row in columns ",
 							"column1, column2, column3")));
