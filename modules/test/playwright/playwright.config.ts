@@ -192,6 +192,7 @@ import {config as passwordPoliciesAdminWebConfig} from './tests/password-policie
 import {config as passwordPoliciesAdminWebSetupAdminConfig} from './tests/password-policies-admin-web/setup-admin/config';
 import {config as portalDBInfrastructureUpgradeAFSStore7413Config} from './tests/portal-db-infrastructure/upgrade-afs-store-7413/config';
 import {config as portalDBInfrastructureUpgradeDataArchiveCMSConfig} from './tests/portal-db-infrastructure/upgrade-data-archive-cms/config';
+import {config as portalDBInfrastructureUpgradeDataArchiveGenerateConfig} from './tests/portal-db-infrastructure/upgrade-data-archive-generate/config';
 import {config as portalDBInfrastructureUpgradeDBStore621021Config} from './tests/portal-db-infrastructure/upgrade-db-store-621021/config';
 import {config as portalDBInfrastructureUpgradeDBStore7310Config} from './tests/portal-db-infrastructure/upgrade-db-store-7310/config';
 import {config as portalDBInfrastructureUpgradeDBStore7413Config} from './tests/portal-db-infrastructure/upgrade-db-store-7413/config';
@@ -490,6 +491,7 @@ export default defineConfig({
 		passwordPoliciesAdminWebSetupAdminConfig,
 		portalDBInfrastructureUpgradeAFSStore7413Config,
 		portalDBInfrastructureUpgradeDataArchiveCMSConfig,
+		portalDBInfrastructureUpgradeDataArchiveGenerateConfig,
 		portalDBInfrastructureUpgradeDBStore621021Config,
 		portalDBInfrastructureUpgradeDBStore7310Config,
 		portalDBInfrastructureUpgradeDBStore7413Config,
