@@ -31,7 +31,7 @@ scripts/upgrade-data-archive
 
 	When the archive also needs its own spec, such as a check that its pages render in a browser, put it beside the shared spec in `tests/portal-db-infrastructure/upgrade-data-archive` and skip it when the restored archive has no manifest of its type, as `cmsUpgradeDataArchive.spec.ts` does.
 
-`archives/cms` is the reference: it creates a CMS space and a content page with a draft and an approved page specification.
+`archives/cms` is the reference: it creates a CMS space with a member holding a custom space role, nested folders, folders with custom default permissions and custom permissions, tags and categories, structures that point to other structures (a referenced structure, a repeatable group and related content), basic contents and a basic document with a custom friendly URL, a published entry with a draft, a draft-only entry, and a comment. Comments in a space need the `LPD-43996` feature flag, which the archive declares.
 
 ## Generate an Archive
 
