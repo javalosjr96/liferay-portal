@@ -49,6 +49,7 @@ export class BaseApiHelpers {
 		const apiHelpers = new this(undefined, baseUrl);
 
 		apiHelpers._apiRequestContext = await request.newContext({
+			baseURL: baseUrl || liferayConfig.environment.baseUrl,
 			extraHTTPHeaders: {Authorization: authorization},
 		});
 		apiHelpers._apiRequestContextAuthorization = authorization;
