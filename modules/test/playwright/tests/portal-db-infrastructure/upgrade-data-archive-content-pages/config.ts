@@ -1,0 +1,17 @@
+/**
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
+ * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
+ */
+
+export const config = {
+	name: 'portal-db-infrastructure.upgrade-data-archive-content-pages',
+	testDir: 'tests/portal-db-infrastructure',
+	testMatch: [
+		'upgrade-data-archive/*.spec.ts',
+		'upgrade-data-archive-content-pages/*.spec.ts',
+	],
+	timeout: 480 * 1000,
+	use: {
+		testIdAttribute: 'data-qa-id',
+	},
+};
