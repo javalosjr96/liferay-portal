@@ -4,8 +4,9 @@
  */
 
 import {UpgradeDataArchive} from '../runner/upgradeDataArchive';
+import cms from './cms';
 
-const upgradeDataArchives: UpgradeDataArchive[] = [];
+const upgradeDataArchives: UpgradeDataArchive[] = [cms];
 
 export function getUpgradeDataArchive(name: string): UpgradeDataArchive {
 	const upgradeDataArchive = upgradeDataArchives.find(
