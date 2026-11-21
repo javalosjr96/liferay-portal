@@ -27,6 +27,9 @@ import com.liferay.portal.db.partition.test.util.BaseDBPartitionTestCase;
 import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.instance.lifecycle.PortalInstanceLifecycleListener;
 import com.liferay.portal.kernel.audit.AuditMessage;
+import com.liferay.portal.kernel.cache.PortalCache;
+import com.liferay.portal.kernel.cache.PortalCacheHelperUtil;
+import com.liferay.portal.kernel.cache.PortalCacheManagerNames;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.db.partition.DBPartition;
@@ -1232,6 +1235,25 @@ public class CompanyLocalServiceDBPartitionTest
 
 		_assertCache(_company1.getCompanyId(), true);
 
+		PortalCache<String, String> multiVMPortalCache =
+			PortalCacheHelperUtil.getPortalCache(
+				PortalCacheManagerNames.MULTI_VM,
+				RandomTestUtil.randomString());
+		PortalCache<String, String> singleVMPortalCache =
+			PortalCacheHelperUtil.getPortalCache(
+				PortalCacheManagerNames.SINGLE_VM,
+				RandomTestUtil.randomString());
+
+		String key = RandomTestUtil.randomString();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					_company1.getCompanyId())) {
+
+			multiVMPortalCache.put(key, RandomTestUtil.randomString());
+			singleVMPortalCache.put(key, RandomTestUtil.randomString());
+		}
+
 		long repositoryId = RandomTestUtil.nextLong();
 		String fileName1 = "/" + RandomTestUtil.randomString();
 
@@ -1269,6 +1291,21 @@ public class CompanyLocalServiceDBPartitionTest
 		Assert.assertTrue(serviceReferences.isEmpty());
 
 		_assertCache(_company1.getCompanyId(), false);
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					_company1.getCompanyId())) {
+
+			Assert.assertNull(multiVMPortalCache.get(key));
+			Assert.assertNull(singleVMPortalCache.get(key));
+		}
+
+		PortalCacheHelperUtil.removePortalCache(
+			PortalCacheManagerNames.MULTI_VM,
+			multiVMPortalCache.getPortalCacheName());
+		PortalCacheHelperUtil.removePortalCache(
+			PortalCacheManagerNames.SINGLE_VM,
+			singleVMPortalCache.getPortalCacheName());
 
 		CompanyLocalServiceTestUtil.assertConfiguration(
 			_configurationAdmin, _persistenceManager, pid, false);
