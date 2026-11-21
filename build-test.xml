@@ -15688,6 +15688,73 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 
 							<property name="import.database.src.path" value="${liferay.home}/${database.type}.sql" />
 							<property name="import.database.stdin.enabled" value="true" />
+
+							<property location="defer-secondary-keys.awk" name="defer.secondary.keys.awk.file.path" />
+
+							<echo file="${defer.secondary.keys.awk.file.path}">
+								<![CDATA[
+									function addKeys() {
+										if (alterTable != "") {
+											print alterTable ";"
+
+											alterTable = ""
+										}
+									}
+
+									/^(CREATE DATABASE|DROP TABLE IF EXISTS|USE )/ {
+										addKeys()
+									}
+
+									/^CREATE TABLE `/ {
+										print
+
+										keys = ""
+										size = 0
+
+										while ((getline line) > 0) {
+											if (line ~ /^\) /) {
+												break
+											}
+
+											if (line ~ /^  (UNIQUE )?KEY `/) {
+												sub(/^  /, "", line)
+												sub(/,$/, "", line)
+
+												keys = keys (keys == "" ? "" : ", ") "ADD " line
+											}
+											else {
+												lines[++size] = line
+											}
+										}
+
+										sub(/,$/, "", lines[size])
+
+										for (i = 1; i <= size; i++) {
+											print lines[i]
+										}
+
+										print line
+
+										if (keys != "") {
+											alterTable = "ALTER TABLE " $3 " " keys
+										}
+
+										next
+									}
+
+									{
+										print
+									}
+
+									/^UNLOCK TABLES;/ {
+										addKeys()
+									}
+
+									END {
+										addKeys()
+									}
+								]]>
+							</echo>
 						</then>
 					</elseif>
 					<elseif>
@@ -15831,10 +15898,12 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 
 						<exec executable="/bin/bash" failonerror="true">
 							<arg value="-c" />
-							<arg value="set -o pipefail; gzip --decompress --stdout ${import.database.src.path}.gz | docker exec --interactive ${database.host} /bin/bash /tmp/import-database.sh" />
+							<arg value="set -o pipefail; gzip --decompress --stdout ${import.database.src.path}.gz | LC_ALL=C awk -f ${defer.secondary.keys.awk.file.path} | docker exec --interactive ${database.host} /bin/bash /tmp/import-database.sh" />
 						</exec>
 
 						<delete file="${import.database.src.path}.gz" />
+
+						<delete file="${defer.secondary.keys.awk.file.path}" />
 
 						<echo>[DEV-ONLY] Disk use after the database import</echo>
 
