@@ -1627,9 +1627,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 								virtualHost.getPrimaryKeyObj());
 						}
 
-						PortalCacheHelperUtil.removePortalCaches(
-							PortalCacheManagerNames.MULTI_VM, companyId);
-
 						Store store = _storeSnapshot.get();
 
 						store.deleteDirectory(companyId);
@@ -1651,6 +1648,11 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 						CacheRegistryUtil.clear();
 					}
+
+					PortalCacheHelperUtil.removePortalCaches(
+						PortalCacheManagerNames.MULTI_VM, companyId);
+					PortalCacheHelperUtil.removePortalCaches(
+						PortalCacheManagerNames.SINGLE_VM, companyId);
 
 					return null;
 				});
