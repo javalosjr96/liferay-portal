@@ -15467,6 +15467,13 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 					/>
 
 					<delete file="${liferay.home}/data-archive-portal-partition-large.zip" />
+
+					<echo>[DEV-ONLY] Disk use after the data archive expansion</echo>
+
+					<exec executable="/bin/bash">
+						<arg value="-c" />
+						<arg value="df --human-readable /; du --human-readable --max-depth=3 ${liferay.home} | sort --human-numeric-sort --reverse | head --lines=40" />
+					</exec>
 				</then>
 			</elseif>
 			<else>
@@ -15828,6 +15835,13 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 						</exec>
 
 						<delete file="${import.database.src.path}.gz" />
+
+						<echo>[DEV-ONLY] Disk use after the database import</echo>
+
+						<exec executable="/bin/bash">
+							<arg value="-c" />
+							<arg value="df --human-readable /; docker exec ${database.host} du --summarize --bytes /tmp /var/lib/mysql" />
+						</exec>
 					</then>
 					<else>
 						<execute>
