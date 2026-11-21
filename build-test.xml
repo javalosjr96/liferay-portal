@@ -15817,15 +15817,17 @@ cluster.link.bind.addr["cluster-link-udp"]=127.0.0.1</echo>
 				<if>
 					<isset property="import.database.stdin.enabled" />
 					<then>
-						<exec executable="docker" failonerror="true" input="${import.database.src.path}">
-							<arg value="exec" />
-							<arg value="--interactive" />
-							<arg value="${database.host}" />
-							<arg value="/bin/bash" />
-							<arg value="/tmp/import-database.sh" />
+						<exec executable="gzip" failonerror="true">
+							<arg value="--fast" />
+							<arg value="${import.database.src.path}" />
 						</exec>
 
-						<delete file="${import.database.src.path}" />
+						<exec executable="/bin/bash" failonerror="true">
+							<arg value="-c" />
+							<arg value="set -o pipefail; gzip --decompress --stdout ${import.database.src.path}.gz | docker exec --interactive ${database.host} /bin/bash /tmp/import-database.sh" />
+						</exec>
+
+						<delete file="${import.database.src.path}.gz" />
 					</then>
 					<else>
 						<execute>
