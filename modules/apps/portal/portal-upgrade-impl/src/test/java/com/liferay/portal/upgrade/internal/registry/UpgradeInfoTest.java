@@ -8,6 +8,10 @@ package com.liferay.portal.upgrade.internal.registry;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
 import org.junit.Assert;
 import org.junit.ClassRule;
 import org.junit.Rule;
@@ -71,6 +75,44 @@ public class UpgradeInfoTest {
 			"1.0.0", "2.0.0", upgradeStep);
 
 		Assert.assertEquals(upgradeInfo1, upgradeInfo2);
+	}
+
+	@Test
+	public void testGetUpgradeStep() throws Exception {
+		List<UpgradeStep> upgradedUpgradeSteps = new ArrayList<>();
+
+		List<UpgradeStep> upgradeSteps = new ArrayList<>();
+
+		for (int i = 0; i < 3; i++) {
+			upgradeSteps.add(
+				new UpgradeStep() {
+
+					@Override
+					public void upgrade() {
+						upgradedUpgradeSteps.add(this);
+					}
+
+				});
+		}
+
+		UpgradeInfo upgradeInfo = new UpgradeInfo(
+			"1.0.0", "2.0.0", upgradeSteps);
+
+		Assert.assertEquals(upgradeSteps, upgradeInfo.getUpgradeSteps());
+
+		UpgradeStep upgradeStep = upgradeInfo.getUpgradeStep();
+
+		upgradeStep.upgrade();
+
+		Assert.assertEquals(upgradeSteps, upgradedUpgradeSteps);
+
+		UpgradeStep testUpgradeStep = new TestUpgradeStep();
+
+		upgradeInfo = new UpgradeInfo("1.0.0", "2.0.0", testUpgradeStep);
+
+		Assert.assertSame(testUpgradeStep, upgradeInfo.getUpgradeStep());
+		Assert.assertEquals(
+			Arrays.asList(testUpgradeStep), upgradeInfo.getUpgradeSteps());
 	}
 
 	private static class TestUpgradeStep implements UpgradeStep {
