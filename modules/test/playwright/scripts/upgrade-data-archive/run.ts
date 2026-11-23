@@ -12,17 +12,13 @@ import {liferayConfig} from '../../liferay.config';
 import {getUpgradeDataArchive} from './archives';
 import {enableFeatureFlags} from './runner/featureFlags';
 import {Manifest, writeManifest} from './runner/manifest';
-import {createDataArchive} from './runner/zip';
 
 const USAGE =
-	'Usage: run.ts --type <type> --database-container <container> --database-name <name> [--database-type postgresql] [--database-user root] [--liferay-home <dir>] [--out <dir>]';
+	'Usage: run.ts --type <type> [--liferay-home <dir>]';
 
 function getOptions(args: string[]) {
 	const options: {[key: string]: string} = {
-		'database-type': 'postgresql',
-		'database-user': 'root',
 		'liferay-home': process.env.LIFERAY_HOME,
-		'out': '.',
 	};
 
 	for (let i = 0; i < args.length; i += 2) {
@@ -36,12 +32,7 @@ function getOptions(args: string[]) {
 		options[name.substring(2)] = value;
 	}
 
-	for (const name of [
-		'database-container',
-		'database-name',
-		'liferay-home',
-		'type',
-	]) {
+	for (const name of ['liferay-home', 'type']) {
 		if (!options[name]) {
 			throw new Error(USAGE);
 		}
@@ -72,23 +63,9 @@ async function main() {
 
 		await upgradeDataArchive.populate(apiHelpers, manifest);
 
-		const liferayHome = path.resolve(options['liferay-home']);
-
-		console.log(`Wrote ${writeManifest(liferayHome, manifest)}`);
-
-		const archiveFile = await createDataArchive(
-			{
-				container: options['database-container'],
-				name: options['database-name'],
-				type: options['database-type'],
-				user: options['database-user'],
-			},
-			liferayHome,
-			path.resolve(options.out),
-			upgradeDataArchive.name
+		console.log(
+			`Wrote ${writeManifest(path.resolve(options['liferay-home']), manifest)}`
 		);
-
-		console.log(`Wrote ${archiveFile}`);
 	}
 	finally {
 		await apiHelpers.dispose();

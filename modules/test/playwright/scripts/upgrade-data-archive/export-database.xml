@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+
+<project basedir="../../../../.." name="upgrade-data-archive-export-database">
+	<import file="../../../../../build-test.xml" />
+
+	<target name="export-upgrade-data-archive">
+		<fail message="Please set the property ${data.archive.type}." unless="data.archive.type" />
+		<fail message="Please set the property ${out.dir}." unless="out.dir" />
+		<fail message="Please set the property ${portal.legacy.dir}." unless="portal.legacy.dir" />
+
+		<delete dir="${portal.legacy.dir}/data-archive" />
+
+		<ant dir="${portal.legacy.dir}" target="export-database">
+			<property name="data.archive.type" value="${data.archive.type}" />
+			<property name="database.type" value="${database.type}" />
+			<property name="test.class" value="UpgradeDataArchive" />
+		</ant>
+
+		<move tofile="${out.dir}/${data.archive.type}-${database.type}.zip">
+			<fileset
+				dir="${portal.legacy.dir}/data-archive"
+				includes="*-${database.type}.zip"
+			/>
+		</move>
+
+		<delete dir="${portal.legacy.dir}/data-archive" />
+		<delete file="${portal.legacy.dir}/export.sh" />
+
+		<fail message="Unable to export the upgrade data archive to ${out.dir}/${data.archive.type}-${database.type}.zip.">
+			<condition>
+				<not>
+					<available file="${out.dir}/${data.archive.type}-${database.type}.zip" />
+				</not>
+			</condition>
+		</fail>
+	</target>
+</project>

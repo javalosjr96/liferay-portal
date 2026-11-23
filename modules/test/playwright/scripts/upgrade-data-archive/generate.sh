@@ -67,21 +67,50 @@ function main {
 		exit 1
 	fi
 
-	local args=()
+	local database_container
+	local database_name=lportal
+	local database_type=postgresql
+	local out_dir=.
+	local type
 
 	while [[ ${#} -gt 0 ]]
 	do
-		if [[ ${1} == "--out" ]]
-		then
-			mkdir -p "${2}"
+		case ${1} in
+			--database-container)
+				database_container=${2}
+				;;
+			--database-name)
+				database_name=${2}
+				;;
+			--database-type)
+				database_type=${2}
+				;;
+			--out)
+				out_dir=${2}
+				;;
+			--type)
+				type=${2}
+				;;
+			*)
+				echo "Usage: generate.sh --type <type> --database-container <container> [--database-name lportal] [--database-type postgresql] [--out <dir>]"
 
-			args+=("${1}" "$(cd "${2}" && pwd)")
-		else
-			args+=("${1}" "${2}")
-		fi
+				exit 1
+				;;
+		esac
 
 		shift 2
 	done
+
+	if [[ -z ${database_container} ]] || [[ -z ${type} ]]
+	then
+		echo "Usage: generate.sh --type <type> --database-container <container> [--database-name lportal] [--database-type postgresql] [--out <dir>]"
+
+		exit 1
+	fi
+
+	mkdir -p "${out_dir}"
+
+	out_dir=$(cd "${out_dir}" && pwd)
 
 	rm -fr "${liferay_home}/data"
 
@@ -104,7 +133,20 @@ function main {
 
 	cd "${_PLAYWRIGHT_BASE_DIR}"
 
-	PORTAL_URL="${LIFERAY_PORTAL_URL}" node_modules/.bin/ts-node --files scripts/upgrade-data-archive/run.ts --liferay-home "${liferay_home}" "${args[@]}"
+	PORTAL_URL="${LIFERAY_PORTAL_URL}" node_modules/.bin/ts-node --files scripts/upgrade-data-archive/run.ts --liferay-home "${liferay_home}" --type "${type}"
+
+	stop_started_app_server
+
+	trap - EXIT
+
+	DOCKER_ENABLED=true ant -f "${_PLAYWRIGHT_BASE_DIR}/scripts/upgrade-data-archive/export-database.xml" \
+		-Ddata.archive.type="data-archive-${type}" \
+		-Ddatabase."${database_type}".host="${database_container}" \
+		-Ddatabase."${database_type}".schema="${database_name}" \
+		-Ddatabase.type="${database_type}" \
+		-Dliferay.home="${liferay_home}" \
+		-Dout.dir="${out_dir}" \
+		export-upgrade-data-archive
 }
 
 function stop_started_app_server {
