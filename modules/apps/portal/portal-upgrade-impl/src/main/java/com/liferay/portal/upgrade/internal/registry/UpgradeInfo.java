@@ -9,6 +9,8 @@ import com.liferay.petra.lang.HashUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -19,11 +21,20 @@ public class UpgradeInfo {
 
 	public UpgradeInfo(
 		String fromSchemaVersionString, String toSchemaVersionString,
-		UpgradeStep upgradeStep) {
+		List<UpgradeStep> upgradeSteps) {
 
 		_fromSchemaVersionString = fromSchemaVersionString;
 		_toSchemaVersionString = toSchemaVersionString;
-		_upgradeStep = upgradeStep;
+		_upgradeSteps = Collections.unmodifiableList(upgradeSteps);
+	}
+
+	public UpgradeInfo(
+		String fromSchemaVersionString, String toSchemaVersionString,
+		UpgradeStep upgradeStep) {
+
+		this(
+			fromSchemaVersionString, toSchemaVersionString,
+			Collections.singletonList(upgradeStep));
 	}
 
 	@Override
@@ -43,7 +54,7 @@ public class UpgradeInfo {
 				upgradeInfo._fromSchemaVersionString) &&
 			Objects.equals(
 				_toSchemaVersionString, upgradeInfo._toSchemaVersionString) &&
-			Objects.equals(_upgradeStep, upgradeInfo._upgradeStep)) {
+			Objects.equals(_upgradeSteps, upgradeInfo._upgradeSteps)) {
 
 			return true;
 		}
@@ -60,7 +71,19 @@ public class UpgradeInfo {
 	}
 
 	public UpgradeStep getUpgradeStep() {
-		return _upgradeStep;
+		if (_upgradeSteps.size() == 1) {
+			return _upgradeSteps.get(0);
+		}
+
+		return () -> {
+			for (UpgradeStep upgradeStep : _upgradeSteps) {
+				upgradeStep.upgrade();
+			}
+		};
+	}
+
+	public List<UpgradeStep> getUpgradeSteps() {
+		return _upgradeSteps;
 	}
 
 	@Override
@@ -68,7 +91,7 @@ public class UpgradeInfo {
 		int hash = HashUtil.hash(0, _fromSchemaVersionString);
 
 		hash = HashUtil.hash(hash, _toSchemaVersionString);
-		hash = HashUtil.hash(hash, _upgradeStep);
+		hash = HashUtil.hash(hash, _upgradeSteps);
 
 		return hash;
 	}
@@ -78,11 +101,11 @@ public class UpgradeInfo {
 		return StringBundler.concat(
 			"{fromSchemaVersionString=", _fromSchemaVersionString,
 			", toSchemaVersionString=", _toSchemaVersionString,
-			", upgradeStep=", _upgradeStep, "}");
+			", upgradeSteps=", _upgradeSteps, "}");
 	}
 
 	private final String _fromSchemaVersionString;
 	private final String _toSchemaVersionString;
-	private final UpgradeStep _upgradeStep;
+	private final List<UpgradeStep> _upgradeSteps;
 
 }

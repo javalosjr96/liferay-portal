@@ -77,22 +77,10 @@ public class UpgradeStepRegistry implements UpgradeStepRegistrator.Registry {
 			}
 		}
 
-		if (upgradeStepsList.size() == 1) {
-			_upgradeInfos.add(
-				new UpgradeInfo(
-					fromSchemaVersionString, toSchemaVersionString,
-					upgradeStepsList.get(0)));
-		}
-		else {
-			_upgradeInfos.add(
-				new UpgradeInfo(
-					fromSchemaVersionString, toSchemaVersionString,
-					() -> {
-						for (UpgradeStep upgradeStep : upgradeStepsList) {
-							upgradeStep.upgrade();
-						}
-					}));
-		}
+		_upgradeInfos.add(
+			new UpgradeInfo(
+				fromSchemaVersionString, toSchemaVersionString,
+				upgradeStepsList));
 	}
 
 	@Override
