@@ -474,7 +474,8 @@ async function populateDisplayPageTemplates(
 
 			manifest.add('displayPageTemplate', {
 				className: objectDefinition.className,
-				externalReferenceCode: displayPageTemplate.externalReferenceCode,
+				externalReferenceCode:
+					displayPageTemplate.externalReferenceCode,
 				name: displayPageTemplate.name,
 				structureExternalReferenceCode,
 			});
@@ -721,7 +722,8 @@ async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
 		name: 'cmsRelatedB',
 		objectDefinitionExternalReferenceCode1:
 			STRUCTURE_B_EXTERNAL_REFERENCE_CODE,
-		objectDefinitionExternalReferenceCode2: STRUCTURE_A_EXTERNAL_REFERENCE_CODE,
+		objectDefinitionExternalReferenceCode2:
+			STRUCTURE_A_EXTERNAL_REFERENCE_CODE,
 		type: 'oneToMany',
 	});
 
