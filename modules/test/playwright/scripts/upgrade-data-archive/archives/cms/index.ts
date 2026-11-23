@@ -5,6 +5,7 @@
 
 import {expect} from '@playwright/test';
 
+import {createPortalSession} from '../../../../core/login';
 import {ApiHelpers} from '../../../../helpers/ApiHelpers';
 import {ObjectEntryFolderExternalReferenceCode} from '../../../../utils/objectEntryFolderConstants';
 import {
@@ -34,6 +35,14 @@ const FOLDER_PERMISSIONS_EXTERNAL_REFERENCE_CODE =
 const ROLE_NAME = 'Upgrade Data Archive CMS Role';
 
 const SPACE_EXTERNAL_REFERENCE_CODE = 'UPGRADE_DATA_ARCHIVE_CMS_SPACE';
+
+const OBJECT_DEFINITIONS_PATH = 'object-admin/v1.0/object-definitions';
+
+const STRUCTURE_A_EXTERNAL_REFERENCE_CODE =
+	'UPGRADE_DATA_ARCHIVE_CMS_STRUCTURE_A';
+
+const STRUCTURE_ENTRY_EXTERNAL_REFERENCE_CODE =
+	'UPGRADE_DATA_ARCHIVE_CMS_STRUCTURE_ENTRY';
 
 const STRUCTURE_ENTRY_NESTED_FIELDS =
 	'nestedFields=cmsReferencedB,cmsRepeatableGroup,cmsGroupB&nestedFieldsDepth=2';
@@ -377,6 +386,106 @@ async function populateEntries(
 	);
 }
 
+async function getDefaultDisplayPageTemplate(
+	apiHelpers: ApiHelpers,
+	className: string
+) {
+	const displayPageTemplates = await apiHelpers.get(
+		`${apiHelpers.baseUrl}headless-admin-site/v1.0/sites/L_CMS/display-page-templates?pageSize=-1`,
+		true
+	);
+
+	return (
+		displayPageTemplates.items as {
+			contentTypeReference: {className: string};
+			externalReferenceCode: string;
+			markedAsDefault: boolean;
+			name: string;
+		}[]
+	).find(
+		(displayPageTemplate) =>
+			displayPageTemplate.markedAsDefault &&
+			displayPageTemplate.contentTypeReference.className === className
+	);
+}
+
+async function populateDisplayPageTemplates(
+	apiHelpers: ApiHelpers,
+	manifest: Manifest
+) {
+	const structureA = await getOrFail(
+		apiHelpers,
+		'structure',
+		STRUCTURE_A_EXTERNAL_REFERENCE_CODE,
+		`${apiHelpers.baseUrl}${OBJECT_DEFINITIONS_PATH}/by-external-reference-code/${STRUCTURE_A_EXTERNAL_REFERENCE_CODE}`
+	);
+
+	const structureEntry = await getOrFail(
+		apiHelpers,
+		'structureEntry',
+		STRUCTURE_ENTRY_EXTERNAL_REFERENCE_CODE,
+		`${getSpaceEntryURL(
+			apiHelpers,
+			(structureA.restContextPath as string).replace(/^\/o\//, ''),
+			STRUCTURE_ENTRY_EXTERNAL_REFERENCE_CODE
+		)}?${STRUCTURE_ENTRY_NESTED_FIELDS}`
+	);
+
+	const portalSession = await createPortalSession();
+
+	try {
+		for (const [structureExternalReferenceCode, objectEntryId] of [
+			[STRUCTURE_A_EXTERNAL_REFERENCE_CODE, structureEntry.id],
+			[
+				STRUCTURE_B_EXTERNAL_REFERENCE_CODE,
+				structureEntry.cmsReferencedB[0].id,
+			],
+		] as [string, number][]) {
+			const response = await portalSession.get(
+				`/c/cms/edit_content_item?objectEntryId=${objectEntryId}`,
+				{maxRedirects: 0}
+			);
+
+			const location = response.headers()['location'] ?? '';
+
+			if (response.status() !== 302 || !location.includes('/e/')) {
+				throw new Error(
+					`Unable to open the entry of structure "${structureExternalReferenceCode}" in the CMS admin: HTTP ${response.status()} ${location}`
+				);
+			}
+
+			const objectDefinition = await getOrFail(
+				apiHelpers,
+				'structure',
+				structureExternalReferenceCode,
+				`${apiHelpers.baseUrl}${OBJECT_DEFINITIONS_PATH}/by-external-reference-code/${structureExternalReferenceCode}`
+			);
+
+			const displayPageTemplate = await getDefaultDisplayPageTemplate(
+				apiHelpers,
+				objectDefinition.className
+			);
+
+			if (!displayPageTemplate) {
+				throw new Error(
+					`Unable to create the display page template of structure "${structureExternalReferenceCode}"`
+				);
+			}
+
+			manifest.add('displayPageTemplate', {
+				className: objectDefinition.className,
+				externalReferenceCode:
+					displayPageTemplate.externalReferenceCode,
+				name: displayPageTemplate.name,
+				structureExternalReferenceCode,
+			});
+		}
+	}
+	finally {
+		await portalSession.dispose();
+	}
+}
+
 async function populateFolders(apiHelpers: ApiHelpers, manifest: Manifest) {
 	const parentExternalReferenceCode =
 		'UPGRADE_DATA_ARCHIVE_CMS_FOLDER_PARENT';
@@ -529,7 +638,7 @@ async function populateSpaceMember(apiHelpers: ApiHelpers, manifest: Manifest) {
 }
 
 async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
-	const objectDefinitionsURL = `${apiHelpers.baseUrl}object-admin/v1.0/object-definitions`;
+	const objectDefinitionsURL = `${apiHelpers.baseUrl}${OBJECT_DEFINITIONS_PATH}`;
 
 	await apiHelpers.post(objectDefinitionsURL, {
 		data: getObjectDefinition({
@@ -567,16 +676,13 @@ async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
 		}
 	);
 
-	const structureAExternalReferenceCode =
-		'UPGRADE_DATA_ARCHIVE_CMS_STRUCTURE_A';
-
 	const objectRelationships = [
 		getObjectRelationship({
 			deletionType: 'cascade',
 			edge: true,
 			name: 'cmsReferencedB',
 			objectDefinitionExternalReferenceCode1:
-				structureAExternalReferenceCode,
+				STRUCTURE_A_EXTERNAL_REFERENCE_CODE,
 			objectDefinitionExternalReferenceCode2:
 				STRUCTURE_B_EXTERNAL_REFERENCE_CODE,
 			type: 'oneToMany',
@@ -586,7 +692,7 @@ async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
 			edge: true,
 			name: 'cmsRepeatableGroup',
 			objectDefinitionExternalReferenceCode1:
-				structureAExternalReferenceCode,
+				STRUCTURE_A_EXTERNAL_REFERENCE_CODE,
 			objectDefinitionExternalReferenceCode2: groupExternalReferenceCode,
 			type: 'oneToMany',
 		}),
@@ -594,7 +700,7 @@ async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
 			deletionType: 'disassociate',
 			name: 'cmsRelatedBs',
 			objectDefinitionExternalReferenceCode1:
-				structureAExternalReferenceCode,
+				STRUCTURE_A_EXTERNAL_REFERENCE_CODE,
 			objectDefinitionExternalReferenceCode2:
 				STRUCTURE_B_EXTERNAL_REFERENCE_CODE,
 			type: 'manyToMany',
@@ -603,7 +709,7 @@ async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
 
 	const structureA = await apiHelpers.post(objectDefinitionsURL, {
 		data: getObjectDefinition({
-			externalReferenceCode: structureAExternalReferenceCode,
+			externalReferenceCode: STRUCTURE_A_EXTERNAL_REFERENCE_CODE,
 			name: 'UpgradeDataArchiveCMSStructureA',
 			objectFolderExternalReferenceCode: 'L_CMS_CONTENT_STRUCTURES',
 			objectRelationships,
@@ -616,7 +722,8 @@ async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
 		name: 'cmsRelatedB',
 		objectDefinitionExternalReferenceCode1:
 			STRUCTURE_B_EXTERNAL_REFERENCE_CODE,
-		objectDefinitionExternalReferenceCode2: structureAExternalReferenceCode,
+		objectDefinitionExternalReferenceCode2:
+			STRUCTURE_A_EXTERNAL_REFERENCE_CODE,
 		type: 'oneToMany',
 	});
 
@@ -627,7 +734,7 @@ async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
 
 	for (const [externalReferenceCode, objectRelationshipNames] of [
 		[
-			structureAExternalReferenceCode,
+			STRUCTURE_A_EXTERNAL_REFERENCE_CODE,
 			objectRelationships.map(({name}) => name),
 		],
 		[
@@ -666,9 +773,6 @@ async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
 
 	const path = (structureA.restContextPath as string).replace(/^\/o\//, '');
 
-	const structureEntryExternalReferenceCode =
-		'UPGRADE_DATA_ARCHIVE_CMS_STRUCTURE_ENTRY';
-
 	await apiHelpers.objectEntry.postObjectEntry(
 		{
 			cmsReferencedB: [
@@ -687,7 +791,7 @@ async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
 				],
 				title: `Upgrade Data Archive CMS Group Row ${row}`,
 			})),
-			externalReferenceCode: structureEntryExternalReferenceCode,
+			externalReferenceCode: STRUCTURE_ENTRY_EXTERNAL_REFERENCE_CODE,
 			title: 'Upgrade Data Archive CMS Structure Entry',
 		},
 		path,
@@ -697,8 +801,8 @@ async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
 	const structureEntry = await getOrFail(
 		apiHelpers,
 		'structureEntry',
-		structureEntryExternalReferenceCode,
-		`${getSpaceEntryURL(apiHelpers, path, structureEntryExternalReferenceCode)}?${STRUCTURE_ENTRY_NESTED_FIELDS}`
+		STRUCTURE_ENTRY_EXTERNAL_REFERENCE_CODE,
+		`${getSpaceEntryURL(apiHelpers, path, STRUCTURE_ENTRY_EXTERNAL_REFERENCE_CODE)}?${STRUCTURE_ENTRY_NESTED_FIELDS}`
 	);
 
 	const {
@@ -715,12 +819,12 @@ async function populateStructures(apiHelpers: ApiHelpers, manifest: Manifest) {
 		)
 	) {
 		throw new Error(
-			`Unable to create the nested entries of structure entry "${structureEntryExternalReferenceCode}": ${JSON.stringify(structureEntry)}`
+			`Unable to create the nested entries of structure entry "${STRUCTURE_ENTRY_EXTERNAL_REFERENCE_CODE}": ${JSON.stringify(structureEntry)}`
 		);
 	}
 
 	manifest.add('structureEntry', {
-		externalReferenceCode: structureEntryExternalReferenceCode,
+		externalReferenceCode: STRUCTURE_ENTRY_EXTERNAL_REFERENCE_CODE,
 		path,
 		referencedExternalReferenceCodes,
 		repeatableGroupExternalReferenceCodes,
@@ -782,6 +886,37 @@ async function verifyComments(
 			upgradedComment.text,
 			`comment "${comment.externalReferenceCode}" text`
 		).toBe(comment.text);
+	}
+}
+
+async function verifyDisplayPageTemplates(
+	apiHelpers: ApiHelpers,
+	manifestData: ManifestData
+) {
+	for (const displayPageTemplate of getManifestEntities(
+		manifestData,
+		'displayPageTemplate'
+	)) {
+		const upgradedDisplayPageTemplate = await getOrFail(
+			apiHelpers,
+			'displayPageTemplate',
+			displayPageTemplate.externalReferenceCode,
+			`${apiHelpers.baseUrl}headless-admin-site/v1.0/sites/L_CMS/display-page-templates/${displayPageTemplate.externalReferenceCode}`
+		);
+
+		const message = `display page template of structure "${displayPageTemplate.structureExternalReferenceCode}"`;
+
+		expect(
+			upgradedDisplayPageTemplate.contentTypeReference.className,
+			`${message} content type`
+		).toBe(displayPageTemplate.className);
+		expect(
+			upgradedDisplayPageTemplate.markedAsDefault,
+			`${message} default`
+		).toBe(true);
+		expect(upgradedDisplayPageTemplate.name, `${message} name`).toBe(
+			displayPageTemplate.name
+		);
 	}
 }
 
@@ -989,7 +1124,7 @@ async function verifyStructures(
 			apiHelpers,
 			'structure',
 			structure.externalReferenceCode,
-			`${apiHelpers.baseUrl}object-admin/v1.0/object-definitions/by-external-reference-code/${structure.externalReferenceCode}`
+			`${apiHelpers.baseUrl}${OBJECT_DEFINITIONS_PATH}/by-external-reference-code/${structure.externalReferenceCode}`
 		);
 
 		const message = `structure "${structure.externalReferenceCode}"`;
@@ -1053,6 +1188,8 @@ const upgradeDataArchive: UpgradeDataArchive = {
 
 		await populateStructures(apiHelpers, manifest);
 
+		await populateDisplayPageTemplates(apiHelpers, manifest);
+
 		await populateEntries(
 			apiHelpers,
 			manifest,
@@ -1067,6 +1204,7 @@ const upgradeDataArchive: UpgradeDataArchive = {
 			'basicDocument',
 			'basicWebContent',
 			'comment',
+			'displayPageTemplate',
 			'folder',
 			'folderDefaultPermissions',
 			'folderPermissions',
@@ -1096,6 +1234,8 @@ const upgradeDataArchive: UpgradeDataArchive = {
 		await verifyStructures(apiHelpers, manifestData);
 
 		await verifyStructureEntries(apiHelpers, manifestData);
+
+		await verifyDisplayPageTemplates(apiHelpers, manifestData);
 
 		await verifyEntries(apiHelpers, manifestData, 'basicDocument');
 
