@@ -252,15 +252,17 @@ public class ReleaseManagerImpl implements ReleaseManager {
 				sb.append(StringPool.COLON);
 
 				for (UpgradeInfo upgradeInfo : upgradeInfos) {
-					UpgradeStep upgradeStep = upgradeInfo.getUpgradeStep();
+					for (UpgradeStep upgradeStep :
+							upgradeInfo.getUpgradeSteps()) {
 
-					sb.append(StringPool.NEW_LINE);
-					sb.append(StringPool.TAB);
-					sb.append(
-						_getPendingUpgradeProcessMessage(
-							upgradeStep.getClass(),
-							upgradeInfo.getFromSchemaVersionString(),
-							upgradeInfo.getToSchemaVersionString()));
+						sb.append(StringPool.NEW_LINE);
+						sb.append(StringPool.TAB);
+						sb.append(
+							_getPendingUpgradeProcessMessage(
+								upgradeStep.getClass(),
+								upgradeInfo.getFromSchemaVersionString(),
+								upgradeInfo.getToSchemaVersionString()));
+					}
 				}
 			}
 
