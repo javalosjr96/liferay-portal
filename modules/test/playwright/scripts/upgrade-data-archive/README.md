@@ -9,8 +9,9 @@ scripts/upgrade-data-archive
 ├── archives
 │   ├── index.ts         # the registry: one entry per archive
 │   └── <name>/index.ts  # one archive: feature flags, populate, verify
-├── generate.sh          # empties data, starts the bundle, runs run.ts, stops the bundle
-├── run.ts               # enables flags, populates, writes the manifest, dumps and zips
+├── export-database.xml  # runs the legacy repository's export-database target and moves the zip to --out
+├── generate.sh          # empties data, starts the bundle, runs run.ts, stops the bundle, exports
+├── run.ts               # enables flags, populates and writes the manifest
 └── runner               # shared code; an archive never needs to change it
 ```
 
@@ -49,7 +50,7 @@ scripts/upgrade-data-archive/generate.sh \
 	--type cms
 ```
 
-`--database-type` defaults to `postgresql`, the only type dumped so far, and `--database-user` to `root`. The dump uses the same `docker exec` command as the `export-database` target in the legacy repository, while the portal is still up, and the zip has the layout `rebuild-legacy-database` reads: `<database type>.sql` at the root plus `data/**`, without `data/elasticsearch*`.
+`--database-name` defaults to `lportal` and `--database-type` to `postgresql`. After `run.ts`, `generate.sh` stops the portal and dumps the database with the `export-database` target of the legacy repository, the same step a Poshi upgrade run uses, so `portal.legacy.dir` must point at a checkout of `liferay-qa-portal-legacy-ee`. The zip has the layout `rebuild-legacy-database` reads: `<database type>.sql` at the root plus `data/**`.
 
 ## Run the Upgrade Project Against a Local Archive
 
