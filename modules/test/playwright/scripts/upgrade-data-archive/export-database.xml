@@ -16,7 +16,9 @@
 			<property name="test.class" value="UpgradeDataArchive" />
 		</ant>
 
-		<move tofile="${out.dir}/${data.archive.type}-${database.type}.zip">
+		<move
+			tofile="${out.dir}/${data.archive.type}-${database.type}.zip"
+		>
 			<fileset
 				dir="${portal.legacy.dir}/data-archive"
 				includes="*-${database.type}.zip"

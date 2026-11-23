@@ -13,8 +13,7 @@ import {getUpgradeDataArchive} from './archives';
 import {enableFeatureFlags} from './runner/featureFlags';
 import {Manifest, writeManifest} from './runner/manifest';
 
-const USAGE =
-	'Usage: run.ts --type <type> [--liferay-home <dir>]';
+const USAGE = 'Usage: run.ts --type <type> [--liferay-home <dir>]';
 
 function getOptions(args: string[]) {
 	const options: {[key: string]: string} = {
