@@ -71,20 +71,20 @@ export async function createPortalSession(): Promise<APIRequestContext> {
 
 		const loginFormHTML = getMatch(
 			html,
-			new RegExp(`(<form[^>]*id="${LOGIN_PORTLET_NAMESPACE}loginForm"[^>]*>)`),
-			'login form'
+			'login form',
+			new RegExp(`(<form[^>]*id="${LOGIN_PORTLET_NAMESPACE}loginForm"[^>]*>)`)
 		);
 
 		const loginResponse = await apiRequestContext.post(
-			getMatch(loginFormHTML, /action="([^"]+)"/, 'login form action'),
+			getMatch(loginFormHTML, 'login form action', /action="([^"]+)"/),
 			{
 				form: {
 					[`${LOGIN_PORTLET_NAMESPACE}formDate`]: getMatch(
 						html,
+						'login form date',
 						new RegExp(
 							`name="${LOGIN_PORTLET_NAMESPACE}formDate"[^>]*value="(\\d+)"`
-						),
-						'login form date'
+						)
 					),
 					[`${LOGIN_PORTLET_NAMESPACE}login`]: 'test@liferay.com',
 					[`${LOGIN_PORTLET_NAMESPACE}password`]:
@@ -102,7 +102,12 @@ export async function createPortalSession(): Promise<APIRequestContext> {
 
 		const location = loginResponse.headers()['location'] ?? '';
 
-		if (location.includes('/c/portal/login')) {
+		if (
+			location.includes('/c/portal/login') ||
+			location.includes(
+				`p_p_id=${LOGIN_PORTLET_NAMESPACE.slice(1, -1)}`
+			)
+		) {
 			throw new Error(
 				`Unable to sign in through the sign in page: redirected to "${location}"`
 			);
@@ -232,7 +237,7 @@ export async function performUserSwitchViaApi(
 	await performLoginViaApi({page, screenName});
 }
 
-function getMatch(html: string, regExp: RegExp, name: string) {
+function getMatch(html: string, name: string, regExp: RegExp) {
 	const match = html.match(regExp);
 
 	if (!match) {

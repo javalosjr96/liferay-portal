@@ -72,8 +72,14 @@ export class FeatureFlagApiHelper {
 	private async _openPortalPage() {
 		const page = this.apiHelpers.page;
 
-		if (page && page.url() === 'about:blank') {
-			await page.goto(this.apiHelpers.baseUrl.replace(/\/o\/$/, ''));
+		if (!page) {
+			return;
+		}
+
+		const portalURL = this.apiHelpers.baseUrl.replace(/\/o\/$/, '');
+
+		if (!page.url().startsWith(portalURL)) {
+			await page.goto(portalURL);
 		}
 	}
 }
