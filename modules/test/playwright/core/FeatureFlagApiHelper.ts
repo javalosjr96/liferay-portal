@@ -29,6 +29,8 @@ export class FeatureFlagApiHelper {
 	}
 
 	async isFeatureFlagEnabled(key: string): Promise<TIsEnabledResult> {
+		await this._openPortalPage();
+
 		const response = await this.apiHelpers.postResponse(
 			`${this.apiHelpers.baseUrl}com-liferay-feature-flag-web/is-enabled`,
 			{
@@ -56,6 +58,8 @@ export class FeatureFlagApiHelper {
 	}
 
 	async updateFeatureFlag(key: string, enabled: boolean) {
+		await this._openPortalPage();
+
 		return this.apiHelpers.post(
 			`${this.apiHelpers.baseUrl}com-liferay-feature-flag-web/set-enabled`,
 			{
@@ -63,5 +67,13 @@ export class FeatureFlagApiHelper {
 				multipart: {enabled: String(enabled), key},
 			}
 		);
+	}
+
+	private async _openPortalPage() {
+		const page = this.apiHelpers.page;
+
+		if (page && page.url() === 'about:blank') {
+			await page.goto(this.apiHelpers.baseUrl.replace(/\/o\/$/, ''));
+		}
 	}
 }

@@ -99,6 +99,14 @@ export async function createPortalSession(): Promise<APIRequestContext> {
 				`Unable to sign in through the sign in page: HTTP ${loginResponse.status()}`
 			);
 		}
+
+		const location = loginResponse.headers()['location'] ?? '';
+
+		if (location.includes('/c/portal/login')) {
+			throw new Error(
+				`Unable to sign in through the sign in page: redirected to "${location}"`
+			);
+		}
 	}
 	catch (error) {
 		await apiRequestContext.dispose();
