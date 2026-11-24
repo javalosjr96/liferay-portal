@@ -3,10 +3,18 @@
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
-import {Cookie, Page, expect} from '@playwright/test';
+import {
+	APIRequestContext,
+	Cookie,
+	Page,
+	expect,
+	request,
+} from '@playwright/test';
 
 import {clearAuthToken, getHeader, readAuthToken} from './authToken';
 import {liferayConfig} from './liferayConfig';
+
+const LOGIN_PORTLET_NAMESPACE = '_com_liferay_login_web_portlet_LoginPortlet_';
 
 export type LoginScreenName =
 	| 'demo.company.admin'
@@ -48,6 +56,57 @@ interface LoginOptions {
 	password?: string;
 	rememberMe?: boolean;
 	screenName: LoginScreenName | string;
+}
+
+export async function createPortalSession(): Promise<APIRequestContext> {
+	const apiRequestContext = await request.newContext({
+		baseURL: liferayConfig.environment.baseUrl,
+	});
+
+	try {
+		const signInPageResponse =
+			await apiRequestContext.get('/c/portal/login');
+
+		const html = await signInPageResponse.text();
+
+		const loginFormHTML = getMatch(
+			html,
+			new RegExp(`(<form[^>]*id="${LOGIN_PORTLET_NAMESPACE}loginForm"[^>]*>)`),
+			'login form'
+		);
+
+		const loginResponse = await apiRequestContext.post(
+			getMatch(loginFormHTML, /action="([^"]+)"/, 'login form action'),
+			{
+				form: {
+					[`${LOGIN_PORTLET_NAMESPACE}formDate`]: getMatch(
+						html,
+						new RegExp(
+							`name="${LOGIN_PORTLET_NAMESPACE}formDate"[^>]*value="(\\d+)"`
+						),
+						'login form date'
+					),
+					[`${LOGIN_PORTLET_NAMESPACE}login`]: 'test@liferay.com',
+					[`${LOGIN_PORTLET_NAMESPACE}password`]:
+						userData.test.password,
+				},
+				maxRedirects: 0,
+			}
+		);
+
+		if (loginResponse.status() !== 302) {
+			throw new Error(
+				`Unable to sign in through the sign in page: HTTP ${loginResponse.status()}`
+			);
+		}
+	}
+	catch (error) {
+		await apiRequestContext.dispose();
+
+		throw error;
+	}
+
+	return apiRequestContext;
 }
 
 export async function performLogin(
@@ -163,4 +222,14 @@ export async function performUserSwitchViaApi(
 	await page.waitForURL((url) => !url.pathname.endsWith('/c/portal/logout'));
 
 	await performLoginViaApi({page, screenName});
+}
+
+function getMatch(html: string, regExp: RegExp, name: string) {
+	const match = html.match(regExp);
+
+	if (!match) {
+		throw new Error(`Unable to find the ${name} in the sign in page`);
+	}
+
+	return match[1].replace(/&amp;/g, '&');
 }
