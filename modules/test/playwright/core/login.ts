@@ -72,7 +72,9 @@ export async function createPortalSession(): Promise<APIRequestContext> {
 		const loginFormHTML = getMatch(
 			html,
 			'login form',
-			new RegExp(`(<form[^>]*id="${LOGIN_PORTLET_NAMESPACE}loginForm"[^>]*>)`)
+			new RegExp(
+				`(<form[^>]*id="${LOGIN_PORTLET_NAMESPACE}loginForm"[^>]*>)`
+			)
 		);
 
 		const loginResponse = await apiRequestContext.post(

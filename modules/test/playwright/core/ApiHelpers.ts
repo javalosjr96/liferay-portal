@@ -72,9 +72,7 @@ export class BaseApiHelpers {
 			baseUrl: string
 		) => InstanceType<T> & HeadlessClientWithHeaders,
 	>(ApiClientClass: T): Promise<InstanceType<T>> {
-		const apiInstance = new ApiClientClass(
-			this.baseUrl.replace(/\/$/, '')
-		);
+		const apiInstance = new ApiClientClass(this.baseUrl.replace(/\/$/, ''));
 
 		if (this._apiRequestContext) {
 			apiInstance.defaultHeaders = {
