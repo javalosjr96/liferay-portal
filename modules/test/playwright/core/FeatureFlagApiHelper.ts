@@ -50,7 +50,7 @@ export class FeatureFlagApiHelper {
 		const json = await response.json();
 
 		return {
-			dependentFeatureFlags: json.dependenciesFulfilled,
+			dependentFeatureFlags: json.dependentFeatureFlags,
 			featureFlag: json.featureFlag,
 		};
 	}
