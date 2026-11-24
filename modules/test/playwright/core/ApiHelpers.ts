@@ -73,7 +73,7 @@ export class BaseApiHelpers {
 		) => InstanceType<T> & HeadlessClientWithHeaders,
 	>(ApiClientClass: T): Promise<InstanceType<T>> {
 		const apiInstance = new ApiClientClass(
-			liferayConfig.environment.baseUrl + '/o'
+			this.baseUrl.replace(/\/$/, '')
 		);
 
 		if (this._apiRequestContext) {
