@@ -14,7 +14,9 @@ import {
 import {clearAuthToken, getHeader, readAuthToken} from './authToken';
 import {liferayConfig} from './liferayConfig';
 
-const LOGIN_PORTLET_NAMESPACE = '_com_liferay_login_web_portlet_LoginPortlet_';
+const LOGIN_PORTLET_ID = 'com_liferay_login_web_portlet_LoginPortlet';
+
+const LOGIN_PORTLET_NAMESPACE = `_${LOGIN_PORTLET_ID}_`;
 
 export type LoginScreenName =
 	| 'demo.company.admin'
@@ -104,9 +106,7 @@ export async function createPortalSession(): Promise<APIRequestContext> {
 
 		if (
 			location.includes('/c/portal/login') ||
-			location.includes(
-				`p_p_id=${LOGIN_PORTLET_NAMESPACE.slice(1, -1)}`
-			)
+			location.includes(`p_p_id=${LOGIN_PORTLET_ID}`)
 		) {
 			throw new Error(
 				`Unable to sign in through the sign in page: redirected to "${location}"`
