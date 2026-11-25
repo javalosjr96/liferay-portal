@@ -118,6 +118,9 @@ public interface ResourceActionLocalService
 	public ResourceAction deleteResourceAction(long resourceActionId)
 		throws PortalException;
 
+	public ResourceAction deleteResourceAction(
+		long companyId, ResourceAction resourceAction);
+
 	/**
 	 * Deletes the resource action from the database. Also notifies the appropriate model listeners.
 	 *
@@ -292,4 +295,4 @@ public interface ResourceActionLocalService
 	public ResourceAction updateResourceAction(ResourceAction resourceAction);
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1423421919
+// LIFERAY-SERVICE-BUILDER-HASH:-1747601177
