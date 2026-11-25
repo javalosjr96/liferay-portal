@@ -283,9 +283,6 @@ public class ResourceActionLocalServiceImpl
 		if (names != null) {
 			names.add(resourceAction.getName());
 		}
-		else if (PropsValues.DATABASE_PARTITION_ENABLED) {
-			_removeActionId(companyId, resourceAction);
-		}
 		else {
 			_removeActionId(CompanyConstants.SYSTEM, resourceAction);
 		}
