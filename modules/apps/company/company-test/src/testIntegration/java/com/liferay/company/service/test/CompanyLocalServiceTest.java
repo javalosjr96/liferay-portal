@@ -132,7 +132,6 @@ import java.sql.DatabaseMetaData;
 import java.sql.ResultSet;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1055,9 +1054,9 @@ public class CompanyLocalServiceTest {
 
 	@Test
 	public void testForEachCompanyIdWithInvalidCompanyId() {
-		long invalidCompanyId = RandomTestUtil.nextLong();
-
 		List<Long> companyIds = new ArrayList<>();
+
+		long invalidCompanyId = RandomTestUtil.nextLong();
 
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				"com.liferay.portal.service.impl.CompanyLocalServiceImpl",
@@ -1107,7 +1106,7 @@ public class CompanyLocalServiceTest {
 		}
 
 		Assert.assertEquals(
-			companyIds.toString(), Arrays.asList(invalidCompanyId), companyIds);
+			Collections.singletonList(invalidCompanyId), companyIds);
 	}
 
 	@Test
