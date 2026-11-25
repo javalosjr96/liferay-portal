@@ -11,6 +11,7 @@ import com.liferay.application.list.constants.PanelCategoryKeys;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.portal.kernel.model.Company;
 import com.liferay.portal.kernel.model.LayoutConstants;
+import com.liferay.portal.kernel.model.PortletPreferences;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.role.RoleConstants;
@@ -84,10 +85,16 @@ public class PanelAppMyAccountPermissionsTest {
 
 		_serviceRegistrations.clear();
 
-		PortletPreferencesLocalServiceUtil.deletePortletPreferences(
-			TestPropsValues.getCompanyId(),
-			PortletKeys.PREFS_OWNER_TYPE_COMPANY, LayoutConstants.DEFAULT_PLID,
-			_testPortletId);
+		PortletPreferences portletPreferences =
+			PortletPreferencesLocalServiceUtil.fetchPortletPreferences(
+				TestPropsValues.getCompanyId(),
+				PortletKeys.PREFS_OWNER_TYPE_COMPANY,
+				LayoutConstants.DEFAULT_PLID, _testPortletId);
+
+		if (portletPreferences != null) {
+			PortletPreferencesLocalServiceUtil.deletePortletPreferences(
+				portletPreferences);
+		}
 	}
 
 	@Test
@@ -112,6 +119,40 @@ public class PanelAppMyAccountPermissionsTest {
 
 		Assert.assertTrue(
 			_hasMyAccountPermission(defaultCompanyId, _testPortletId));
+		Assert.assertTrue(
+			_hasMyAccountPermission(testCompanyId, _testPortletId));
+	}
+
+	@Test
+	public void testPermissionsAddedForCompanyFromNewCompanyPanelApp()
+		throws Exception {
+
+		_testCompany = addCompany();
+
+		long testCompanyId = _testCompany.getCompanyId();
+
+		_serviceRegistrations.add(
+			_bundleContext.registerService(
+				Portlet.class, new TestPortlet(),
+				HashMapDictionaryBuilder.<String, Object>put(
+					"com.liferay.portlet.company", testCompanyId
+				).put(
+					"jakarta.portlet.name", _testPortletId
+				).build()));
+
+		_serviceRegistrations.add(
+			_bundleContext.registerService(
+				PanelApp.class,
+				new TestPanelApp(
+					_portletLocalService.getPortletById(
+						testCompanyId, _testPortletId)),
+				HashMapDictionaryBuilder.put(
+					"panel.category.key", PanelCategoryKeys.USER_MY_ACCOUNT
+				).build()));
+
+		Assert.assertFalse(
+			_hasMyAccountPermission(
+				TestPropsValues.getCompanyId(), _testPortletId));
 		Assert.assertTrue(
 			_hasMyAccountPermission(testCompanyId, _testPortletId));
 	}
