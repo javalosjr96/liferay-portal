@@ -499,24 +499,6 @@ public class ResourceActionsImpl implements ResourceActions {
 
 	@Override
 	public void populatePortletResource(
-			Portlet portlet, ClassLoader classLoader, Document document)
-		throws ResourceActionsException {
-
-		_populatePortletResource(
-			portlet, document, this::_checkResourceActions);
-	}
-
-	@Override
-	public void populatePortletResource(
-			Portlet portlet, ClassLoader classLoader, String... sources)
-		throws ResourceActionsException {
-
-		_populatePortletResource(
-			portlet, classLoader, sources, this::_checkResourceActions);
-	}
-
-	@Override
-	public void populatePortletResource(
 			long companyId, Portlet portlet, ClassLoader classLoader,
 			Document document)
 		throws ResourceActionsException {
@@ -537,6 +519,24 @@ public class ResourceActionsImpl implements ResourceActions {
 			portlet, classLoader, sources,
 			(actionIds, name) -> _checkResourceActions(
 				companyId, actionIds, name));
+	}
+
+	@Override
+	public void populatePortletResource(
+			Portlet portlet, ClassLoader classLoader, Document document)
+		throws ResourceActionsException {
+
+		_populatePortletResource(
+			portlet, document, this::_checkResourceActions);
+	}
+
+	@Override
+	public void populatePortletResource(
+			Portlet portlet, ClassLoader classLoader, String... sources)
+		throws ResourceActionsException {
+
+		_populatePortletResource(
+			portlet, classLoader, sources, this::_checkResourceActions);
 	}
 
 	@Override
@@ -586,22 +586,6 @@ public class ResourceActionsImpl implements ResourceActions {
 	}
 
 	@Override
-	public void removeModelResource(String name, String action) {
-		if (Validator.isNull(name) || Validator.isNull(action)) {
-			return;
-		}
-
-		_removeModelResourceAction(name, action);
-
-		ResourceAction resourceAction =
-			resourceActionLocalService.fetchResourceAction(name, action);
-
-		if (resourceAction != null) {
-			resourceActionLocalService.deleteResourceAction(resourceAction);
-		}
-	}
-
-	@Override
 	public void removeModelResource(
 		long companyId, String name, String action) {
 
@@ -622,6 +606,22 @@ public class ResourceActionsImpl implements ResourceActions {
 				resourceActionLocalService.deleteResourceAction(
 					companyId, resourceAction);
 			}
+		}
+	}
+
+	@Override
+	public void removeModelResource(String name, String action) {
+		if (Validator.isNull(name) || Validator.isNull(action)) {
+			return;
+		}
+
+		_removeModelResourceAction(name, action);
+
+		ResourceAction resourceAction =
+			resourceActionLocalService.fetchResourceAction(name, action);
+
+		if (resourceAction != null) {
+			resourceActionLocalService.deleteResourceAction(resourceAction);
 		}
 	}
 
