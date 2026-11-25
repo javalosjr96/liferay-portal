@@ -146,6 +146,31 @@ public class UpgradeProcessFactoryTest {
 	}
 
 	@Test
+	public void testCreateTableIfMissing() throws Exception {
+		_assertUpgrade(
+			UpgradeProcessFactoryTest.class,
+			StringBundler.concat(
+				"Modifying schema to create table ", _TABLE_NAME_1,
+				" if it does not exist"),
+			UpgradeProcessFactory.createTableIfMissing(
+				_TABLE_NAME_1,
+				"create table " + _TABLE_NAME_1 +
+					" (id LONG not null primary key)"));
+
+		_assertUpgrade(
+			UpgradeProcessFactoryTest.class,
+			StringBundler.concat(
+				"Modifying schema to create table ", _TABLE_NAME_2,
+				" if it does not exist"),
+			UpgradeProcessFactory.createTableIfMissing(
+				_TABLE_NAME_2,
+				"create table " + _TABLE_NAME_2 +
+					" (id LONG not null primary key)"));
+
+		Assert.assertTrue(_dbInspector.hasTable(_TABLE_NAME_2));
+	}
+
+	@Test
 	public void testDropColumn() throws Exception {
 		UpgradeProcess upgradeProcess = UpgradeProcessFactory.dropColumns(
 			_TABLE_NAME_1, "typeDate");
