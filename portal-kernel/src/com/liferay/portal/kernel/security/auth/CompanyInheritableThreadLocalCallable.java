@@ -6,8 +6,6 @@
 package com.liferay.portal.kernel.security.auth;
 
 import com.liferay.petra.lang.SafeCloseable;
-import com.liferay.portal.kernel.instance.PortalInstancePool;
-import com.liferay.portal.kernel.model.CompanyConstants;
 
 import java.util.concurrent.Callable;
 
@@ -20,34 +18,40 @@ public class CompanyInheritableThreadLocalCallable<T> implements Callable<T> {
 		_callable = callable;
 
 		_companyId = CompanyThreadLocal.getCompanyId();
+		_locked = CompanyThreadLocal.isLocked();
+		_partitionCompanyId = CompanyThreadLocal.getPartitionCompanyId();
 	}
 
 	@Override
 	public T call() throws Exception {
-		SafeCloseable safeCloseable = null;
+		if ((_partitionCompanyId == null) && _locked) {
+			try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
+					_companyId)) {
 
-		try {
-			if ((_companyId == CompanyConstants.SYSTEM) ||
-				(_companyId == PortalInstancePool.getDefaultCompanyId())) {
+				return _callable.call();
+			}
+		}
 
-				safeCloseable =
+		if (_partitionCompanyId == null) {
+			try (SafeCloseable safeCloseable =
 					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						_companyId);
+						_companyId)) {
+
+				return _callable.call();
 			}
-			else {
-				safeCloseable = CompanyThreadLocal.lock(_companyId);
-			}
+		}
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.carryPartitionScope(
+					_partitionCompanyId, _companyId)) {
 
 			return _callable.call();
-		}
-		finally {
-			if (safeCloseable != null) {
-				safeCloseable.close();
-			}
 		}
 	}
 
 	private final Callable<T> _callable;
 	private final Long _companyId;
+	private final boolean _locked;
+	private final Long _partitionCompanyId;
 
 }
