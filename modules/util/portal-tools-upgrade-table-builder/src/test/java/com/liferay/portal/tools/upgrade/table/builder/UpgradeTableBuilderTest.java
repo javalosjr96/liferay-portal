@@ -28,24 +28,26 @@ public class UpgradeTableBuilderTest {
 	public void testBuildUpgradeTable() throws Exception {
 		File baseDir = temporaryFolder.newFolder("base");
 
+		Path baseDirPath = baseDir.toPath();
+
 		String copyright = RandomTestUtil.randomString();
 
-		_write(baseDir.toPath(), "copyright.txt", copyright);
+		_write(baseDirPath, "copyright.txt", copyright);
 
 		_write(
-			baseDir.toPath(), "service.xml",
+			baseDirPath, "service.xml",
 			StringBundler.concat(
 				"<?xml version=\"1.0\"?>\n<!DOCTYPE service-builder PUBLIC ",
 				"\"-//Liferay//DTD Service Builder 7.4.0//EN\" ",
-				"\"http://www.liferay.com/dtd/",
-				"liferay-service-builder_7_4_0.dtd\">\n\n",
+				"\"http://www.liferay.com/dtd/liferay-",
+				"service-builder_7_4_0.dtd\">\n\n",
 				"<service-builder />"));
 
 		String author = RandomTestUtil.randomString();
 		String className = "Test" + RandomTestUtil.randomString() + "Table";
 
 		Path tablePath = _write(
-			baseDir.toPath(), "upgrade/v1_0_0/util/" + className + ".java",
+			baseDirPath, "upgrade/v1_0_0/util/" + className + ".java",
 			StringBundler.concat(
 				"package com.liferay.test.upgrade.v1_0_0.util;\n\n/**\n * ",
 				"@author ", author, "\n */\npublic class ", className,
@@ -76,8 +78,9 @@ public class UpgradeTableBuilderTest {
 				"import com.liferay.portal.kernel.upgrade.UpgradeProcess;\n",
 				"import com.liferay.portal.kernel.upgrade.",
 				"UpgradeProcessFactory;\n\n/**\n * @author ", author,
-				"\n * @generated\n * @see ", UpgradeTableBuilder.class.getName(),
-				"\n */\npublic class ", className,
+				"\n * @generated\n * @see ",
+				UpgradeTableBuilder.class.getName(), "\n */\npublic class ",
+				className,
 				" {\n\n\tpublic static UpgradeProcess create() {\n\t\treturn ",
 				"UpgradeProcessFactory.createTableIfMissing(\n\t\t\t",
 				"_TABLE_NAME, _TABLE_SQL_CREATE);\n\t}\n\n\tprivate static ",
