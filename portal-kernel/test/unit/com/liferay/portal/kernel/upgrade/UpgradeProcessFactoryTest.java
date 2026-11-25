@@ -5,11 +5,14 @@
 
 package com.liferay.portal.kernel.upgrade;
 
+import com.liferay.portal.kernel.dao.db.DBType;
+import com.liferay.portal.kernel.dao.db.DBTypeToSQLMap;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.HashMapBuilder;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Map;
 
 import org.junit.Assert;
 import org.junit.Test;
@@ -152,6 +155,43 @@ public class UpgradeProcessFactoryTest {
 			).build(),
 			describableUpgradeStep.getArguments());
 		Assert.assertEquals("runSQL", describableUpgradeStep.getOperation());
+	}
+
+	@Test
+	public void testRunSQLWithDBTypeToSQLMaps() {
+		String sql1 = "delete from " + RandomTestUtil.randomString();
+
+		DBTypeToSQLMap dbTypeToSQLMap1 = new DBTypeToSQLMap(sql1);
+
+		String sql2 = "delete from " + RandomTestUtil.randomString();
+
+		dbTypeToSQLMap1.add(DBType.MYSQL, sql2);
+
+		DBTypeToSQLMap dbTypeToSQLMap2 = new DBTypeToSQLMap(null);
+
+		DescribableUpgradeStep describableUpgradeStep =
+			(DescribableUpgradeStep)UpgradeProcessFactory.runSQL(
+				dbTypeToSQLMap1, dbTypeToSQLMap2);
+
+		Map<String, Object> arguments = describableUpgradeStep.getArguments();
+
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"dbTypeToSQLMaps",
+				Arrays.asList(
+					HashMapBuilder.put(
+						"default", sql1
+					).put(
+						DBType.MYSQL.getName(), sql2
+					).build(),
+					HashMapBuilder.<String, String>put(
+						"default", null
+					).build())
+			).build(),
+			arguments);
+		Assert.assertThrows(
+			UnsupportedOperationException.class,
+			() -> arguments.put(RandomTestUtil.randomString(), sql1));
 	}
 
 }

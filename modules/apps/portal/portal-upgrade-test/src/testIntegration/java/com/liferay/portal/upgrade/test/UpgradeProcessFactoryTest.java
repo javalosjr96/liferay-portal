@@ -201,6 +201,7 @@ public class UpgradeProcessFactoryTest {
 		DBTypeToSQLMap dbTypeToSQLMap = new DBTypeToSQLMap(defaultSQL);
 
 		DBType dbType = _db.getDBType();
+
 		String sql =
 			"create table " + _TABLE_NAME_2 + " (id LONG not null primary key)";
 
