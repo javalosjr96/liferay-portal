@@ -5,6 +5,7 @@
 
 package com.liferay.portal.kernel.dao.db;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -29,6 +30,14 @@ public class DBTypeToSQLMap {
 		}
 
 		return _defaultSQL;
+	}
+
+	public String getDefaultSQL() {
+		return _defaultSQL;
+	}
+
+	public Map<DBType, String> getSQLs() {
+		return Collections.unmodifiableMap(_sqls);
 	}
 
 	private final String _defaultSQL;
