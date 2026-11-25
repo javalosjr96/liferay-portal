@@ -262,14 +262,16 @@ public class UpgradeTableBuilder {
 			String packagePath, String className, String content, String author)
 		throws IOException {
 
-		StringBundler sb = new StringBundler(34);
+		StringBundler sb = new StringBundler(29);
 
 		sb.append(_getCopyright());
 		sb.append("\n\npackage ");
 		sb.append(packagePath);
 		sb.append(";\n\n");
+		sb.append("import com.liferay.portal.kernel.upgrade.UpgradeProcess;\n");
 		sb.append(
-			"import com.liferay.portal.kernel.upgrade.UpgradeProcess;\n\n");
+			"import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;" +
+				"\n\n");
 		sb.append("/**\n");
 		sb.append(" * @author ");
 		sb.append(author);
@@ -283,14 +285,8 @@ public class UpgradeTableBuilder {
 		sb.append(className);
 		sb.append(" {\n\n");
 		sb.append("\tpublic static UpgradeProcess create() {\n");
-		sb.append("\t\treturn new UpgradeProcess() {\n\n");
-		sb.append("\t\t\t@Override\n");
-		sb.append("\t\t\tprotected void doUpgrade() throws Exception {\n");
-		sb.append("\t\t\t\tif (!hasTable(_TABLE_NAME)) {\n");
-		sb.append("\t\t\t\t\trunSQL(_TABLE_SQL_CREATE);\n");
-		sb.append("\t\t\t\t}\n");
-		sb.append("\t\t\t}\n\n");
-		sb.append("\t\t};\n");
+		sb.append("\t\treturn UpgradeProcessFactory.createTableIfMissing(\n");
+		sb.append("\t\t\t_TABLE_NAME, _TABLE_SQL_CREATE);\n");
 		sb.append("\t}\n\n");
 		sb.append("\tprivate static final String _TABLE_NAME =");
 

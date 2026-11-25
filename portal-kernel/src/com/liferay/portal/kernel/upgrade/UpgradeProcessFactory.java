@@ -104,6 +104,30 @@ public class UpgradeProcessFactory {
 		};
 	}
 
+	public static UpgradeProcess createTableIfMissing(
+		String tableName, String sql) {
+
+		return new DescribableUpgradeProcess(
+			HashMapBuilder.<String, Object>put(
+				"sql", sql
+			).put(
+				"tableName", tableName
+			).build(),
+			"createTableIfMissing",
+			_getUpgradeInfo(
+				StringBundler.concat(
+					"create table ", tableName, " if it does not exist"))) {
+
+			@Override
+			protected void doUpgrade() throws Exception {
+				if (!hasTable(tableName)) {
+					runSQL(sql);
+				}
+			}
+
+		};
+	}
+
 	public static UpgradeProcess dropColumns(
 		String tableName, String... columnNames) {
 
