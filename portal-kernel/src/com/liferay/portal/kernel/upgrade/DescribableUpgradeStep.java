@@ -7,9 +7,12 @@ package com.liferay.portal.kernel.upgrade;
 
 import java.util.Map;
 
+import org.osgi.annotation.versioning.ProviderType;
+
 /**
  * @author Jorge Avalos
  */
+@ProviderType
 public interface DescribableUpgradeStep extends UpgradeStep {
 
 	public Map<String, Object> getArguments();
