@@ -319,10 +319,10 @@ public class CompanyThreadLocal {
 
 		_syncLastDBPartitionSessionState();
 
-		SafeCloseable companyIdSafeCloseable = _companyId.setWithSafeCloseable(
-			companyId);
 		SafeCloseable partitionCompanyIdSafeCloseable =
 			_partitionCompanyId.setWithSafeCloseable(companyId);
+		SafeCloseable companyIdSafeCloseable = _companyId.setWithSafeCloseable(
+			companyId);
 
 		return () -> {
 			partitionCompanyIdSafeCloseable.close();
