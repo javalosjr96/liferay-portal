@@ -269,8 +269,18 @@ public class DBPartitionUtil {
 			return;
 		}
 
-		if (CompanyThreadLocal.isLocked()) {
-			unsafeConsumer.accept(CompanyThreadLocal.getCompanyId());
+		if (CompanyThreadLocal.isInPartitionScope() ||
+			CompanyThreadLocal.isLocked()) {
+
+			long companyId = CompanyThreadLocal.getCompanyId();
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Running only for company ID " + companyId +
+						" inside a database partition scope");
+			}
+
+			unsafeConsumer.accept(companyId);
 
 			return;
 		}
@@ -289,8 +299,9 @@ public class DBPartitionUtil {
 			unsafeConsumer.accept(null);
 		}
 		else {
-			try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-					_defaultCompanyId)) {
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+						_defaultCompanyId)) {
 
 				unsafeConsumer.accept(_defaultCompanyId);
 			}
@@ -300,8 +311,9 @@ public class DBPartitionUtil {
 					continue;
 				}
 
-				try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-						companyId)) {
+				try (SafeCloseable safeCloseable =
+						CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+							companyId)) {
 
 					unsafeConsumer.accept(companyId);
 				}
@@ -1481,8 +1493,9 @@ public class DBPartitionUtil {
 				unsafeConsumer.accept(null);
 			}
 			else {
-				try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-						_defaultCompanyId)) {
+				try (SafeCloseable safeCloseable =
+						CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+							_defaultCompanyId)) {
 
 					unsafeConsumer.accept(_defaultCompanyId);
 				}
@@ -1493,8 +1506,9 @@ public class DBPartitionUtil {
 					}
 
 					try (SafeCloseable safeCloseable =
-							CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-								companyId)) {
+							CompanyThreadLocal.
+								setPartitionCompanyIdWithSafeCloseable(
+									companyId)) {
 
 						Future<Void> future = executorService.submit(
 							new CompanyInheritableThreadLocalCallable<>(

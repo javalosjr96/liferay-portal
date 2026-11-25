@@ -73,7 +73,8 @@ public class CountryUpgradeProcess extends UpgradeProcess {
 		try {
 			processConcurrently(
 				ArrayUtil.toArray(
-					CompanyThreadLocal.isLocked() ?
+					(CompanyThreadLocal.isInPartitionScope() ||
+					 CompanyThreadLocal.isLocked()) ?
 						new long[] {CompanyThreadLocal.getCompanyId()} :
 							PortalInstancePool.getCompanyIds()),
 				companyId -> {

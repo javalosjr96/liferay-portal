@@ -791,13 +791,24 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			UnsafeConsumer<Company, E> unsafeConsumer)
 		throws E {
 
-		List<Company> companies = null;
+		if (CompanyThreadLocal.isInPartitionScope() ||
+			CompanyThreadLocal.isLocked()) {
 
-		if (!CompanyThreadLocal.isLocked()) {
-			companies = companyLocalService.getCompanies();
+			long companyId = CompanyThreadLocal.getCompanyId();
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Running only for company ID " + companyId +
+						" inside a database partition scope");
+			}
+
+			unsafeConsumer.accept(
+				companyLocalService.fetchCompanyById(companyId));
+
+			return;
 		}
 
-		forEachCompany(unsafeConsumer, companies);
+		forEachCompany(unsafeConsumer, companyLocalService.getCompanies());
 	}
 
 	@Override
@@ -805,29 +816,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	public <E extends Exception> void forEachCompany(
 			UnsafeConsumer<Company, E> unsafeConsumer, List<Company> companies)
 		throws E {
-
-		if (CompanyThreadLocal.isLocked()) {
-			long[] companyIds = ListUtil.toLongArray(
-				companies, Company::getCompanyId);
-
-			if (ListUtil.isEmpty(companies) ||
-				Arrays.equals(
-					new long[] {CompanyThreadLocal.getCompanyId()},
-					companyIds)) {
-
-				unsafeConsumer.accept(
-					companyLocalService.fetchCompanyById(
-						CompanyThreadLocal.getCompanyId()));
-
-				return;
-			}
-
-			throw new UnsupportedOperationException(
-				StringBundler.concat(
-					"Unable to iterate over the following company IDs ",
-					Arrays.toString(companyIds), " because company ID ",
-					CompanyThreadLocal.getCompanyId(), " is locked"));
-		}
 
 		for (Company company : companies) {
 			try (SafeCloseable safeCloseable =
@@ -845,13 +833,23 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			UnsafeConsumer<Long, E> unsafeConsumer)
 		throws E {
 
-		long[] companyIds = null;
+		if (CompanyThreadLocal.isInPartitionScope() ||
+			CompanyThreadLocal.isLocked()) {
 
-		if (!CompanyThreadLocal.isLocked()) {
-			companyIds = PortalInstancePool.getCompanyIds();
+			long companyId = CompanyThreadLocal.getCompanyId();
+
+			if (_log.isDebugEnabled()) {
+				_log.debug(
+					"Running only for company ID " + companyId +
+						" inside a database partition scope");
+			}
+
+			unsafeConsumer.accept(companyId);
+
+			return;
 		}
 
-		forEachCompanyId(unsafeConsumer, companyIds);
+		forEachCompanyId(unsafeConsumer, PortalInstancePool.getCompanyIds());
 	}
 
 	@Override
@@ -859,24 +857,6 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	public <E extends Exception> void forEachCompanyId(
 			UnsafeConsumer<Long, E> unsafeConsumer, long[] companyIds)
 		throws E {
-
-		if (CompanyThreadLocal.isLocked()) {
-			if (ArrayUtil.isEmpty(companyIds) ||
-				Arrays.equals(
-					new long[] {CompanyThreadLocal.getCompanyId()},
-					companyIds)) {
-
-				unsafeConsumer.accept(CompanyThreadLocal.getCompanyId());
-
-				return;
-			}
-
-			throw new UnsupportedOperationException(
-				StringBundler.concat(
-					"Unable to iterate over the following company IDs ",
-					Arrays.toString(companyIds), " because company ID ",
-					CompanyThreadLocal.getCompanyId(), " is locked"));
-		}
 
 		Set<Long> persistedCompanyIds = new HashSet<>();
 
