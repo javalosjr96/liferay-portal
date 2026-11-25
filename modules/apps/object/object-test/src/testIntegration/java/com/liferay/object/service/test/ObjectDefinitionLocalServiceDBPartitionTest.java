@@ -140,8 +140,7 @@ public class ObjectDefinitionLocalServiceDBPartitionTest {
 
 	@Test
 	public void testDeleteObjectAction() throws Exception {
-		ObjectDefinition objectDefinition = _publishObjectDefinition(
-			_company1);
+		ObjectDefinition objectDefinition = _publishObjectDefinition(_company1);
 
 		ObjectAction objectAction = null;
 
@@ -195,8 +194,7 @@ public class ObjectDefinitionLocalServiceDBPartitionTest {
 
 	@Test
 	public void testDeleteObjectDefinition() throws Exception {
-		ObjectDefinition objectDefinition = _publishObjectDefinition(
-			_company1);
+		ObjectDefinition objectDefinition = _publishObjectDefinition(_company1);
 
 		_assertResourceActionsCount(
 			_company2.getCompanyId(), objectDefinition, 0);
@@ -453,7 +451,8 @@ public class ObjectDefinitionLocalServiceDBPartitionTest {
 				resourceAction.getName(), resourceAction.getActionId(),
 				resourceAction.getBitwiseValue());
 
-			Role role = _roleLocalService.getRole(companyId, RoleConstants.USER);
+			Role role = _roleLocalService.getRole(
+				companyId, RoleConstants.USER);
 
 			_resourcePermissionLocalService.setResourcePermissions(
 				companyId, resourceAction.getName(),
@@ -512,14 +511,14 @@ public class ObjectDefinitionLocalServiceDBPartitionTest {
 		}
 	}
 
-	private boolean _hasActionId(
-			long bitwiseValue, long companyId, String name)
+	private boolean _hasActionId(long bitwiseValue, long companyId, String name)
 		throws Exception {
 
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId)) {
 
-			Role role = _roleLocalService.getRole(companyId, RoleConstants.USER);
+			Role role = _roleLocalService.getRole(
+				companyId, RoleConstants.USER);
 
 			ResourcePermission resourcePermission =
 				_resourcePermissionLocalService.fetchResourcePermission(
@@ -570,11 +569,11 @@ public class ObjectDefinitionLocalServiceDBPartitionTest {
 	@Inject
 	private CompanyLocalService _companyLocalService;
 
-	@DeleteAfterTestRun
-	private ObjectDefinition _objectDefinition;
-
 	@Inject
 	private ObjectActionLocalService _objectActionLocalService;
+
+	@DeleteAfterTestRun
+	private ObjectDefinition _objectDefinition;
 
 	@Inject
 	private ObjectDefinitionLocalService _objectDefinitionLocalService;
