@@ -25,9 +25,8 @@ public class CompanyInheritableThreadLocalCallableTest {
 
 	@Test
 	public void test() throws Exception {
-		_test(1L, false);
-		_test(2L, false);
-		_test(CompanyConstants.SYSTEM, false);
+		_test(RandomTestUtil.randomLong());
+		_test(CompanyConstants.SYSTEM);
 	}
 
 	@Test
@@ -57,9 +56,7 @@ public class CompanyInheritableThreadLocalCallableTest {
 	public void testCallWithLock() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				companyId)) {
-
+		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
 			Assert.assertEquals(
 				Long.valueOf(companyId),
 				_call(CompanyThreadLocal::getCompanyId));
@@ -82,21 +79,14 @@ public class CompanyInheritableThreadLocalCallableTest {
 		}
 	}
 
-	private void _test(Long companyId, boolean locked) throws Exception {
+	private void _test(Long companyId) throws Exception {
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId)) {
 
 			Assert.assertEquals(
-				companyId,
-				new CompanyInheritableThreadLocalCallable<Long>(
-					CompanyThreadLocal::getCompanyId
-				).call());
-
-			Assert.assertEquals(
-				locked,
-				new CompanyInheritableThreadLocalCallable<>(
-					CompanyThreadLocal::isLocked
-				).call());
+				companyId, _call(CompanyThreadLocal::getCompanyId));
+			Assert.assertFalse(_call(CompanyThreadLocal::isInPartitionScope));
+			Assert.assertFalse(_call(CompanyThreadLocal::isLocked));
 		}
 	}
 
