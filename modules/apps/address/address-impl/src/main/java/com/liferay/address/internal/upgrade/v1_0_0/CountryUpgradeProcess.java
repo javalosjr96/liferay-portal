@@ -70,7 +70,7 @@ public class CountryUpgradeProcess extends UpgradeProcess {
 
 		List<IndexMetadata> indexMetadatas = _dropIndexes();
 
-		long[] companyIds = null;
+		long[] companyIds;
 
 		if (CompanyThreadLocal.isInPartitionScope() ||
 			CompanyThreadLocal.isLocked()) {
@@ -78,12 +78,12 @@ public class CountryUpgradeProcess extends UpgradeProcess {
 			companyIds = new long[] {CompanyThreadLocal.getCompanyId()};
 		}
 		else {
-			companyIds = ArrayUtil.toArray(PortalInstancePool.getCompanyIds());
+			companyIds = PortalInstancePool.getCompanyIds();
 		}
 
 		try {
 			processConcurrently(
-				companyIds,
+				ArrayUtil.toArray(companyIds),
 				companyId -> {
 					try {
 						Company company = _companyLocalService.fetchCompany(
