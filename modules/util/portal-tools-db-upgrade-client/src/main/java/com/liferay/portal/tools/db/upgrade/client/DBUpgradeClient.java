@@ -129,6 +129,12 @@ public class DBUpgradeClient {
 				logFile = new File(logDir, logFileName);
 			}
 
+			boolean dryRun = false;
+
+			if (commandLine.hasOption("dry-run")) {
+				dryRun = true;
+			}
+
 			boolean shell = false;
 
 			if (commandLine.hasOption("shell")) {
@@ -136,7 +142,7 @@ public class DBUpgradeClient {
 			}
 
 			DBUpgradeClient dbUpgradeClient = new DBUpgradeClient(
-				jvmOpts, logFile, shell);
+				dryRun, jvmOpts, logFile, shell);
 
 			dbUpgradeClient.upgrade();
 		}
@@ -154,9 +160,11 @@ public class DBUpgradeClient {
 		}
 	}
 
-	public DBUpgradeClient(List<String> jvmOpts, File logFile, boolean shell)
+	public DBUpgradeClient(
+			boolean dryRun, List<String> jvmOpts, File logFile, boolean shell)
 		throws IOException {
 
+		_dryRun = dryRun;
 		_jvmOpts = jvmOpts;
 		_logFile = logFile;
 		_shell = shell;
@@ -216,6 +224,18 @@ public class DBUpgradeClient {
 		Map<String, String> environment = processBuilder.environment();
 
 		environment.put("JDK_JAVA_OPTIONS", _buildJDKJavaOptions());
+
+		if (_dryRun) {
+			environment.put(
+				"LIFERAY_UPGRADE_PERIOD_REPORT_PERIOD_SQL_PERIOD_AUDIT_" +
+					"PERIOD_ENABLED",
+				"true");
+
+			System.out.println(
+				"The SQL audit will be written to upgrade_sql_audit.jsonl in " +
+					"the upgrade report directory. The upgrade log warns if " +
+						"it cannot be created.");
+		}
 
 		Process process = processBuilder.start();
 
@@ -364,6 +384,11 @@ public class DBUpgradeClient {
 
 		options.addOption(
 			new Option("d", "debug", false, "Debug the upgrade JVM."));
+		options.addOption(
+			new Option(
+				null, "dry-run", false,
+				"Run the upgrade with the SQL audit on. Use only on a copy " +
+					"of the database."));
 		options.addOption(
 			new Option("h", "help", false, "Print help message."));
 		options.addOption(
@@ -1273,6 +1298,7 @@ public class DBUpgradeClient {
 	private final Properties _appServerProperties;
 	private final File _appServerPropertiesFile;
 	private final ConsoleReader _consoleReader = new ConsoleReader();
+	private final boolean _dryRun;
 	private final FileOutputStream _fileOutputStream;
 	private List<String> _jvmOpts = new ArrayList<>();
 	private final File _logFile;

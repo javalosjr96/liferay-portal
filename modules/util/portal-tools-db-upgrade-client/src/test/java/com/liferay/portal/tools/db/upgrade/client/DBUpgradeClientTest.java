@@ -169,7 +169,7 @@ public class DBUpgradeClientTest {
 			Collections.singletonList("--help"), StringPool.BLANK, 0,
 			Collections.singletonList("-Dlauncher=launcher.sh"),
 			"Usage: launcher.sh [parameters]",
-			"Liferay Portal Tools Database Upgrade Client");
+			"Liferay Portal Tools Database Upgrade Client", "--dry-run");
 	}
 
 	@Test
@@ -695,7 +695,7 @@ public class DBUpgradeClientTest {
 		String consoleInput = sb.toString();
 
 		DBUpgradeClient dbUpgradeClient = new DBUpgradeClient(
-			new ArrayList<>(), new File(_rootDir, "test.log"), false);
+			false, new ArrayList<>(), new File(_rootDir, "test.log"), false);
 
 		ConsoleReader consoleReader = new ConsoleReader(
 			new ByteArrayInputStream(consoleInput.getBytes()),

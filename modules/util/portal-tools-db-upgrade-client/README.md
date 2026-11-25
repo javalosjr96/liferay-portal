@@ -52,6 +52,10 @@ configuration below.
 
 ### Command Line Options
 
+- `--dry-run` - runs the upgrade with the SQL audit on and writes
+   `upgrade_sql_audit.jsonl` to the upgrade report directory (`reports` by
+   default). Use only on a copy of the database.
+
 - `--jvm-opts` or `-j` - sets any JVM options for the upgrade process.
 
 - `--log-file` or `-l` - uses a custom name for your log file.
