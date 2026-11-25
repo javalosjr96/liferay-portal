@@ -33,6 +33,9 @@ public class JavaCompanyThreadLocalCheck extends BaseFileCheck {
 		_checkMethodCall(
 			fileName, content,
 			"CompanyThreadLocal.setCompanyIdWithSafeCloseable");
+		_checkMethodCall(
+			fileName, content,
+			"CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable");
 
 		return content;
 	}
