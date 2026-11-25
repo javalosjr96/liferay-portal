@@ -929,6 +929,25 @@ public class DBCopyTablesProcess {
 			", created as ", columnType);
 	}
 
+	private int _getDataType(ResultSet resultSet) throws SQLException {
+		int dataType = resultSet.getInt("DATA_TYPE");
+		String typeName = resultSet.getString("TYPE_NAME");
+
+		if ((dataType == Types.CHAR) &&
+			StringUtil.equalsIgnoreCase(typeName, "BINARY")) {
+
+			return Types.BINARY;
+		}
+
+		if ((dataType == Types.VARCHAR) &&
+			StringUtil.endsWith(typeName, "FOR BIT DATA")) {
+
+			return Types.VARBINARY;
+		}
+
+		return dataType;
+	}
+
 	private List<IndexMetadata> _getIndexMetadatas(Connection connection)
 		throws SQLException {
 
@@ -1210,7 +1229,7 @@ public class DBCopyTablesProcess {
 		throws SQLException {
 
 		return _getPostgreSQLColumnType(
-			resultSet.getInt("COLUMN_SIZE"), resultSet.getInt("DATA_TYPE"),
+			resultSet.getInt("COLUMN_SIZE"), _getDataType(resultSet),
 			resultSet.getInt("DECIMAL_DIGITS"));
 	}
 
@@ -1283,8 +1302,7 @@ public class DBCopyTablesProcess {
 					columnNames.add(columnName);
 
 					columnTypes.put(
-						tableName + "." + columnName,
-						resultSet.getInt("DATA_TYPE"));
+						tableName + "." + columnName, _getDataType(resultSet));
 				}
 			}
 		}
