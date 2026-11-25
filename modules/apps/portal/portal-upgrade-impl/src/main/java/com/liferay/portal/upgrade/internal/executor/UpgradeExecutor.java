@@ -252,18 +252,25 @@ public class UpgradeExecutor {
 				for (int i = 0; i < upgradeSteps.size(); i++) {
 					UpgradeStep upgradeStep = upgradeSteps.get(i);
 
+					String upgradeStepId = StringBundler.concat(
+						bundleSymbolicName, StringPool.COLON,
+						upgradeInfo.getFromSchemaVersionString(),
+						StringPool.COLON,
+						upgradeInfo.getToSchemaVersionString(),
+						StringPool.COLON, i);
+
 					try (SafeCloseable safeCloseable =
 							UpgradeSQLRecorder.
 								setUpgradeStepIdWithSafeCloseable(
-									StringBundler.concat(
-										bundleSymbolicName, StringPool.COLON,
-										upgradeInfo.
-											getFromSchemaVersionString(),
-										StringPool.COLON,
-										upgradeInfo.getToSchemaVersionString(),
-										StringPool.COLON, i))) {
+									upgradeStepId)) {
 
 						upgradeStep.upgrade();
+					}
+					catch (Exception exception) {
+						UpgradeSQLRecorder.writeUpgradeStepFailure(
+							upgradeStepId, exception);
+
+						throw exception;
 					}
 				}
 
