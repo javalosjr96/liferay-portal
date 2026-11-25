@@ -44,6 +44,7 @@ import com.liferay.portal.kernel.scheduler.messaging.SchedulerResponse;
 import com.liferay.portal.kernel.security.auth.CompanyInheritableThreadLocalCallable;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ReleaseLocalServiceUtil;
+import com.liferay.portal.kernel.upgrade.recorder.UpgradeSQLRecorder;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
@@ -1470,6 +1471,8 @@ public class DBPartitionUtil {
 		ExecutorService executorService =
 			SystemExecutorServiceUtil.getExecutorService();
 
+		String upgradeStepId = UpgradeSQLRecorder.getUpgradeStepId();
+
 		List<Future<Void>> futures = new ArrayList<>();
 
 		ThrowableCollector throwableCollector = new ThrowableCollector();
@@ -1499,7 +1502,12 @@ public class DBPartitionUtil {
 						Future<Void> future = executorService.submit(
 							new CompanyInheritableThreadLocalCallable<>(
 								() -> {
-									try {
+									try (SafeCloseable
+											upgradeStepIdSafeCloseable =
+												UpgradeSQLRecorder.
+													setUpgradeStepIdWithSafeCloseable(
+														upgradeStepId)) {
+
 										unsafeConsumer.accept(companyId);
 									}
 									catch (Exception exception) {

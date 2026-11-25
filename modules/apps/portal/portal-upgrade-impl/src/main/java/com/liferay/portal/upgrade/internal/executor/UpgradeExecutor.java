@@ -8,6 +8,7 @@ package com.liferay.portal.upgrade.internal.executor;
 import com.liferay.osgi.service.tracker.collections.EagerServiceTrackerCustomizer;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMap;
 import com.liferay.osgi.service.tracker.collections.map.ServiceTrackerMapFactory;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -23,6 +24,7 @@ import com.liferay.portal.kernel.module.util.BundleUtil;
 import com.liferay.portal.kernel.service.ReleaseLocalService;
 import com.liferay.portal.kernel.upgrade.UpgradeException;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
+import com.liferay.portal.kernel.upgrade.recorder.UpgradeSQLRecorder;
 import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.version.Version;
 import com.liferay.portal.tools.DBUpgrader;
@@ -245,9 +247,25 @@ public class UpgradeExecutor {
 			}
 
 			for (UpgradeInfo upgradeInfo : upgradeInfos) {
-				UpgradeStep upgradeStep = upgradeInfo.getUpgradeStep();
+				List<UpgradeStep> upgradeSteps = upgradeInfo.getUpgradeSteps();
 
-				upgradeStep.upgrade();
+				for (int i = 0; i < upgradeSteps.size(); i++) {
+					UpgradeStep upgradeStep = upgradeSteps.get(i);
+
+					try (SafeCloseable safeCloseable =
+							UpgradeSQLRecorder.
+								setUpgradeStepIdWithSafeCloseable(
+									StringBundler.concat(
+										bundleSymbolicName, StringPool.COLON,
+										upgradeInfo.
+											getFromSchemaVersionString(),
+										StringPool.COLON,
+										upgradeInfo.getToSchemaVersionString(),
+										StringPool.COLON, i))) {
+
+						upgradeStep.upgrade();
+					}
+				}
 
 				_releaseLocalService.updateRelease(
 					bundleSymbolicName, upgradeInfo.getToSchemaVersionString(),

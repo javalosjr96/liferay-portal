@@ -9,6 +9,7 @@ import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.petra.function.UnsafeSupplier;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -812,13 +813,18 @@ public abstract class BaseDBProcess implements DBProcess {
 		BlockingQueue<T> queue = new ArrayBlockingQueue<>(size);
 		ThrowableCollector throwableCollector = new ThrowableCollector();
 
+		String upgradeStepId = UpgradeSQLRecorder.getUpgradeStepId();
+
 		boolean notificationEnabled = NotificationThreadLocal.isEnabled();
 		boolean workflowEnabled = WorkflowThreadLocal.isEnabled();
 
 		Callable<Void> callable = () -> {
 			_connectionCount.incrementAndGet();
 
-			try {
+			try (SafeCloseable safeCloseable =
+					UpgradeSQLRecorder.setUpgradeStepIdWithSafeCloseable(
+						upgradeStepId)) {
+
 				NotificationThreadLocal.setEnabled(notificationEnabled);
 				WorkflowThreadLocal.setEnabled(workflowEnabled);
 

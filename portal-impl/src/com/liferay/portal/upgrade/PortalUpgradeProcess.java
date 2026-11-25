@@ -7,8 +7,10 @@ package com.liferay.portal.upgrade;
 
 import com.liferay.petra.concurrent.DCLSingleton;
 import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
@@ -18,6 +20,7 @@ import com.liferay.portal.kernel.model.ReleaseConstants;
 import com.liferay.portal.kernel.upgrade.DummyUpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeException;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.upgrade.recorder.UpgradeSQLRecorder;
 import com.liferay.portal.kernel.upgrade.util.UpgradeVersionTreeMap;
 import com.liferay.portal.kernel.util.ClassUtil;
 import com.liferay.portal.kernel.util.ReleaseInfo;
@@ -398,17 +401,28 @@ public class PortalUpgradeProcess extends UpgradeProcess {
 	protected void doUpgrade() throws Exception {
 		_initializeRelease(connection);
 
+		Version fromSchemaVersion = getCurrentSchemaVersion(connection);
+
 		for (Version pendingSchemaVersion :
-				getPendingSchemaVersions(getCurrentSchemaVersion(connection))) {
+				getPendingSchemaVersions(fromSchemaVersion)) {
 
 			List<UpgradeProcess> upgradeProcesses = _upgradeVersionTreeMap.get(
 				pendingSchemaVersion);
 
-			for (UpgradeProcess upgradeProcess : upgradeProcesses) {
-				upgrade(upgradeProcess);
+			for (int i = 0; i < upgradeProcesses.size(); i++) {
+				try (SafeCloseable safeCloseable =
+						UpgradeSQLRecorder.setUpgradeStepIdWithSafeCloseable(
+							StringBundler.concat(
+								"portal:", fromSchemaVersion, StringPool.COLON,
+								pendingSchemaVersion, StringPool.COLON, i))) {
+
+					upgrade(upgradeProcesses.get(i));
+				}
 			}
 
 			updateSchemaVersion(connection, pendingSchemaVersion);
+
+			fromSchemaVersion = pendingSchemaVersion;
 		}
 
 		clearIndexesCache();
