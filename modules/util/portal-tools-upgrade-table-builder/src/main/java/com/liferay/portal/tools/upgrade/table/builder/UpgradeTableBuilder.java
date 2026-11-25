@@ -270,9 +270,9 @@ public class UpgradeTableBuilder {
 		sb.append(";\n\n");
 		sb.append("import com.liferay.portal.kernel.upgrade.UpgradeProcess;\n");
 		sb.append(
-			"import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;" +
-				"\n\n");
-		sb.append("/**\n");
+			"import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;");
+
+		sb.append("\n\n/**\n");
 		sb.append(" * @author ");
 		sb.append(author);
 		sb.append("\n");
