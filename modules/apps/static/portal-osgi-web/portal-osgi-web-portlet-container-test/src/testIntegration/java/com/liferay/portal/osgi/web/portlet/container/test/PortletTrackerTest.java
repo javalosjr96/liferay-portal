@@ -24,6 +24,7 @@ import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.service.PortletLocalService;
 import com.liferay.portal.kernel.service.PortletLocalServiceUtil;
+import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
 import com.liferay.portal.kernel.test.util.CompanyTestUtil;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
@@ -476,6 +477,50 @@ public class PortletTrackerTest extends BasePortletContainerTestCase {
 	}
 
 	@Test
+	public void testPortletTrackerRegistrationCompanyScopeResourceActions()
+		throws Exception {
+
+		Assume.assumeTrue(PropsValues.DATABASE_PARTITION_ENABLED);
+
+		try {
+			String portletName = RandomTestUtil.randomString();
+
+			setUpPortlet(
+				_internalClassTestPortlet,
+				HashMapDictionaryBuilder.<String, Object>put(
+					"com.liferay.portlet.company", _company1.getCompanyId()
+				).build(),
+				portletName, false);
+
+			Company company = _companyLocalService.getCompany(
+				PortalInstancePool.getDefaultCompanyId());
+
+			_assertResourceActionsCount(_company1, portletName, true);
+			_assertResourceActionsCount(_company2, portletName, false);
+			_assertResourceActionsCount(company, portletName, false);
+
+			String globalPortletName = RandomTestUtil.randomString();
+
+			setUpPortlet(
+				new TestPortlet(), new HashMapDictionary<>(), globalPortletName,
+				false);
+
+			_assertResourceActionsCount(_company1, globalPortletName, true);
+			_assertResourceActionsCount(_company2, globalPortletName, true);
+			_assertResourceActionsCount(company, globalPortletName, true);
+		}
+		finally {
+			for (ServiceRegistration<?> serviceRegistration :
+					serviceRegistrations) {
+
+				serviceRegistration.unregister();
+			}
+
+			serviceRegistrations.clear();
+		}
+	}
+
+	@Test
 	public void testPortletTrackerRegistrationUsingPortletClassName()
 		throws Exception {
 
@@ -589,6 +634,20 @@ public class PortletTrackerTest extends BasePortletContainerTestCase {
 				Assert.assertNotNull(
 					_portletLocalService.getPortletById(portletId));
 			}
+		}
+	}
+
+	private void _assertResourceActionsCount(
+		Company company, String name, boolean exists) {
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					company.getCompanyId())) {
+
+			int count = _resourceActionLocalService.getResourceActionsCount(
+				name);
+
+			Assert.assertEquals(exists, count > 0);
 		}
 	}
 
@@ -728,6 +787,9 @@ public class PortletTrackerTest extends BasePortletContainerTestCase {
 
 	@Inject
 	private PortletLocalService _portletLocalService;
+
+	@Inject
+	private ResourceActionLocalService _resourceActionLocalService;
 
 	private class InternalClassTestPortlet extends TestPortlet {
 

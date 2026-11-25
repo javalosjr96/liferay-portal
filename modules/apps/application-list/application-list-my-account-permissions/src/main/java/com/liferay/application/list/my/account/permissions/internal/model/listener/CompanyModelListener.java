@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.model.BaseModelListener;
 import com.liferay.portal.kernel.model.Company;
+import com.liferay.portal.kernel.model.CompanyConstants;
 import com.liferay.portal.kernel.model.LayoutConstants;
 import com.liferay.portal.kernel.model.ModelListener;
 import com.liferay.portal.kernel.model.Portlet;
@@ -113,6 +114,14 @@ public class CompanyModelListener extends BaseModelListener<Company> {
 
 		for (Portlet portlet : portlets) {
 			try {
+				long portletCompanyId = portlet.getCompanyId();
+
+				if ((portletCompanyId != CompanyConstants.SYSTEM) &&
+					(portletCompanyId != companyId)) {
+
+					continue;
+				}
+
 				List<String> actionIds =
 					ResourceActionsUtil.getPortletResourceActions(
 						portlet.getRootPortletId());

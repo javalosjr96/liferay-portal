@@ -403,6 +403,7 @@ public class ObjectFieldLocalServiceImpl
 					"action." + attachmentDownloadActionKey);
 
 				_resourceActions.removeModelResource(
+					objectDefinition.getCompanyId(),
 					objectDefinition.getClassName(),
 					attachmentDownloadActionKey);
 			}
@@ -1322,6 +1323,7 @@ public class ObjectFieldLocalServiceImpl
 					"action." + attachmentDownloadActionKey);
 
 				_resourceActions.removeModelResource(
+					objectDefinition.getCompanyId(),
 					objectDefinition.getClassName(),
 					attachmentDownloadActionKey);
 			}

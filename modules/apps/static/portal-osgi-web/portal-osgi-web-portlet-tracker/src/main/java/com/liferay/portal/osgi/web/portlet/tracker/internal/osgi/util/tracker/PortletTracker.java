@@ -407,11 +407,11 @@ public class PortletTracker
 				}
 			}
 
+			Long companyId = (Long)serviceReference.getProperty(
+				"com.liferay.portlet.company");
+
 			com.liferay.portal.kernel.model.Portlet portletModel =
-				_buildPortletModel(
-					portletApp, portletId, bundle,
-					(Long)serviceReference.getProperty(
-						"com.liferay.portlet.company"));
+				_buildPortletModel(portletApp, portletId, bundle, companyId);
 
 			portletModel.setPortletName(portletName);
 			portletModel.setDisplayName(
@@ -445,9 +445,16 @@ public class PortletTracker
 
 			portletBagFactory.create(portletModel, portlet, true);
 
-			_resourceActions.populatePortletResource(
-				portletModel, bundleClassLoader,
-				serviceRegistrations.getSources());
+			if (companyId == null) {
+				_resourceActions.populatePortletResource(
+					portletModel, bundleClassLoader,
+					serviceRegistrations.getSources());
+			}
+			else {
+				_resourceActions.populatePortletResource(
+					companyId, portletModel, bundleClassLoader,
+					serviceRegistrations.getSources());
+			}
 
 			_deployPortlet(serviceReference, portletModel);
 
