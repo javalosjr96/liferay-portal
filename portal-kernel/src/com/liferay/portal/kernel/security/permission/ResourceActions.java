@@ -108,14 +108,6 @@ public interface ResourceActions {
 		throws ResourceActionsException;
 
 	public void populatePortletResource(
-			Portlet portlet, ClassLoader classLoader, Document document)
-		throws ResourceActionsException;
-
-	public void populatePortletResource(
-			Portlet portlet, ClassLoader classLoader, String... sources)
-		throws ResourceActionsException;
-
-	public void populatePortletResource(
 			long companyId, Portlet portlet, ClassLoader classLoader,
 			Document document)
 		throws ResourceActionsException;
@@ -123,6 +115,14 @@ public interface ResourceActions {
 	public void populatePortletResource(
 			long companyId, Portlet portlet, ClassLoader classLoader,
 			String... sources)
+		throws ResourceActionsException;
+
+	public void populatePortletResource(
+			Portlet portlet, ClassLoader classLoader, Document document)
+		throws ResourceActionsException;
+
+	public void populatePortletResource(
+			Portlet portlet, ClassLoader classLoader, String... sources)
 		throws ResourceActionsException;
 
 	public void populatePortletResources(
@@ -134,9 +134,9 @@ public interface ResourceActions {
 			boolean checkResourceActions)
 		throws ResourceActionsException;
 
-	public void removeModelResource(String name, String action);
-
 	public void removeModelResource(long companyId, String name, String action);
+
+	public void removeModelResource(String name, String action);
 
 	public void removeModelResources(Document document);
 
