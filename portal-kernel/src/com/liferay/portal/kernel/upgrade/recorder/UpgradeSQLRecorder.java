@@ -239,15 +239,11 @@ public class UpgradeSQLRecorder {
 			return;
 		}
 
-		FailedStatement failedStatement = _getFailedStatement(throwable);
+		FailedStatement failedStatement = _removeFailedStatement(throwable);
 
-		long companyId = CompanyThreadLocal.getCompanyId();
-		String sql = StringPool.BLANK;
-		SQLException sqlException = _getSQLException(throwable);
+		SQLException sqlException = _fetchSQLException(throwable);
 
 		if (failedStatement != null) {
-			companyId = failedStatement._companyId;
-			sql = failedStatement._sql;
 			sqlException = failedStatement._sqlException;
 		}
 
@@ -261,9 +257,17 @@ public class UpgradeSQLRecorder {
 			sqlState = GetterUtil.getString(sqlException.getSQLState());
 		}
 
-		Class<?> clazz = causeThrowable.getClass();
+		long companyId = CompanyThreadLocal.getCompanyId();
+		String sql = StringPool.BLANK;
+
+		if (failedStatement != null) {
+			companyId = failedStatement._companyId;
+			sql = failedStatement._sql;
+		}
 
 		try {
+			Class<?> clazz = causeThrowable.getClass();
+
 			writer.write(
 				StringBundler.concat(
 					"{\"cause\":{\"className\":\"", clazz.getName(),
@@ -547,15 +551,10 @@ public class UpgradeSQLRecorder {
 		return null;
 	}
 
-	private static FailedStatement _getFailedStatement(Throwable throwable) {
+	private static SQLException _fetchSQLException(Throwable throwable) {
 		while (throwable != null) {
 			if (throwable instanceof SQLException) {
-				FailedStatement failedStatement = _failedStatements.remove(
-					throwable);
-
-				if (failedStatement != null) {
-					return failedStatement;
-				}
+				return (SQLException)throwable;
 			}
 
 			throwable = throwable.getCause();
@@ -611,18 +610,6 @@ public class UpgradeSQLRecorder {
 		return -1;
 	}
 
-	private static SQLException _getSQLException(Throwable throwable) {
-		while (throwable != null) {
-			if (throwable instanceof SQLException) {
-				return (SQLException)throwable;
-			}
-
-			throwable = throwable.getCause();
-		}
-
-		return null;
-	}
-
 	private static String _getTableName(String sql) {
 		Matcher matcher = _tableNamePattern.matcher(sql);
 
@@ -631,6 +618,23 @@ public class UpgradeSQLRecorder {
 		}
 
 		return matcher.group(1);
+	}
+
+	private static FailedStatement _removeFailedStatement(Throwable throwable) {
+		while (throwable != null) {
+			if (throwable instanceof SQLException) {
+				FailedStatement failedStatement = _failedStatements.remove(
+					throwable);
+
+				if (failedStatement != null) {
+					return failedStatement;
+				}
+			}
+
+			throwable = throwable.getCause();
+		}
+
+		return null;
 	}
 
 	private static <T extends Statement> T _wrap(
