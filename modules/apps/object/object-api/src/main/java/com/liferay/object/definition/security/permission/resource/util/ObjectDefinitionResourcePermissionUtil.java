@@ -15,7 +15,6 @@ import com.liferay.object.model.ObjectField;
 import com.liferay.object.service.ObjectActionLocalService;
 import com.liferay.object.service.ObjectDefinitionLocalServiceUtil;
 import com.liferay.object.service.ObjectFieldLocalService;
-import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.exception.PortalException;
@@ -24,7 +23,6 @@ import com.liferay.portal.kernel.model.ResourceAction;
 import com.liferay.portal.kernel.model.ResourceConstants;
 import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.Role;
-import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActions;
 import com.liferay.portal.kernel.service.PermissionServiceUtil;
@@ -67,28 +65,23 @@ public class ObjectDefinitionResourcePermissionUtil {
 			objectActionLocalService, objectActions, objectDefinition,
 			objectFieldLocalService, objectFields);
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				objectDefinition.getCompanyId())) {
+		_removeModelResources(objectDefinition, resourceActions);
 
-			_removeModelResources(objectDefinition, resourceActions);
+		resourceActions.populateModelResources(
+			objectDefinition.getCompanyId(), document);
 
-			resourceActions.populateModelResources(document);
+		Portlet portlet = portletLocalService.getPortletById(
+			objectDefinition.getCompanyId(), objectDefinition.getPortletId());
 
-			Portlet portlet = portletLocalService.getPortletById(
-				objectDefinition.getCompanyId(),
-				objectDefinition.getPortletId());
-
-			if (portlet != null) {
-				resourceActions.populatePortletResource(
-					portlet,
-					ObjectDefinitionResourcePermissionUtil.class.
-						getClassLoader(),
-					document);
-			}
-
-			_objectDefinitionResourceActionDocumentsMap.put(
-				_getKey(objectDefinition), document);
+		if (portlet != null) {
+			resourceActions.populatePortletResource(
+				objectDefinition.getCompanyId(), portlet,
+				ObjectDefinitionResourcePermissionUtil.class.getClassLoader(),
+				document);
 		}
+
+		_objectDefinitionResourceActionDocumentsMap.put(
+			_getKey(objectDefinition), document);
 	}
 
 	public static void removeResourceActions(
@@ -107,9 +100,11 @@ public class ObjectDefinitionResourcePermissionUtil {
 				objectFieldLocalService, null);
 		}
 
-		resourceActions.removeModelResources(document);
+		resourceActions.removeModelResources(
+			objectDefinition.getCompanyId(), document);
 
-		resourceActions.removePortletResources(document);
+		resourceActions.removePortletResources(
+			objectDefinition.getCompanyId(), document);
 	}
 
 	public static void updateResourcePermissions(
@@ -351,7 +346,8 @@ public class ObjectDefinitionResourcePermissionUtil {
 			key);
 
 		if (document != null) {
-			resourceActions.removeModelResources(document);
+			resourceActions.removeModelResources(
+				objectDefinition.getCompanyId(), document);
 		}
 	}
 

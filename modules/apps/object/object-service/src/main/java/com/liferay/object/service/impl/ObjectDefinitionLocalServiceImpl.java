@@ -133,6 +133,7 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.aop.AopService;
 import com.liferay.portal.db.partition.util.DBPartitionUtil;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.cluster.ClusterExecutorUtil;
 import com.liferay.portal.kernel.cluster.ClusterRequest;
 import com.liferay.portal.kernel.dao.jdbc.CurrentConnection;
@@ -751,9 +752,7 @@ public class ObjectDefinitionLocalServiceImpl
 					objectDefinition.getCompanyId(),
 					objectDefinition.getPortletId());
 
-				try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-						objectDefinition.getCompanyId())) {
-
+				try {
 					ObjectDefinitionResourcePermissionUtil.
 						removeResourceActions(
 							_objectActionLocalService, objectDefinition,
@@ -1170,8 +1169,10 @@ public class ObjectDefinitionLocalServiceImpl
 			return;
 		}
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				objectDefinition.getCompanyId())) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					objectDefinition.getCompanyId(),
+					CTCollectionThreadLocal.getCTCollectionId())) {
 
 			_undeploy(
 				_objectDefinitionDeployer,
@@ -2262,8 +2263,10 @@ public class ObjectDefinitionLocalServiceImpl
 		Map<String, List<ServiceRegistration<?>>> serviceRegistrationsMap,
 		ObjectDefinition objectDefinition) {
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				objectDefinition.getCompanyId())) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					objectDefinition.getCompanyId(),
+					CTCollectionThreadLocal.getCTCollectionId())) {
 
 			serviceRegistrationsMap.computeIfAbsent(
 				DBPartitionUtil.getPartitionKey(
