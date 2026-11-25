@@ -130,6 +130,18 @@ public class DBCopyTablesProcessTest {
 	}
 
 	@Test
+	@TestInfo("LPD-117578")
+	public void testGetDataType() throws Exception {
+		_testGetDataType(Types.CHAR, Types.BINARY, "binary");
+		_testGetDataType(Types.CHAR, Types.CHAR, "CHAR");
+		_testGetDataType(Types.CHAR, Types.CHAR, "VARCHAR () FOR BIT DATA");
+		_testGetDataType(Types.CHAR, Types.CHAR, null);
+		_testGetDataType(
+			Types.VARCHAR, Types.VARBINARY, "VARCHAR () FOR BIT DATA");
+		_testGetDataType(Types.VARCHAR, Types.VARCHAR, "VARCHAR");
+	}
+
+	@Test
 	@TestInfo({"LPD-110097", "LPD-110098", "LPD-110100"})
 	public void testGetPostgreSQLColumnType() {
 		_testGetPostgreSQLColumnType(
@@ -276,6 +288,31 @@ public class DBCopyTablesProcessTest {
 					"table User_ in the default schema\n",
 				exception.getMessage());
 		}
+	}
+
+	private void _testGetDataType(
+			int dataType, int expectedDataType, String typeName)
+		throws Exception {
+
+		ResultSet resultSet = Mockito.mock(ResultSet.class);
+
+		Mockito.when(
+			resultSet.getInt("DATA_TYPE")
+		).thenReturn(
+			dataType
+		);
+
+		Mockito.when(
+			resultSet.getString("TYPE_NAME")
+		).thenReturn(
+			typeName
+		);
+
+		Assert.assertEquals(
+			expectedDataType,
+			(int)ReflectionTestUtil.invoke(
+				new DBCopyTablesProcess(null, null), "_getDataType",
+				new Class<?>[] {ResultSet.class}, resultSet));
 	}
 
 	private void _testGetPostgreSQLColumnType(
