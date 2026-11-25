@@ -121,16 +121,16 @@ public class CompanyThreadLocal {
 		return false;
 	}
 
-	public static boolean isInitializingPortalInstance() {
-		return _initializingPortalInstance.get();
-	}
-
 	public static boolean isInPartitionScope() {
 		if (_partitionCompanyId.get() != null) {
 			return true;
 		}
 
 		return false;
+	}
+
+	public static boolean isInitializingPortalInstance() {
+		return _initializingPortalInstance.get();
 	}
 
 	public static boolean isLocked() {

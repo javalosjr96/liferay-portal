@@ -310,8 +310,8 @@ public class DBPartitionUtil {
 				}
 
 				try (SafeCloseable safeCloseable =
-						CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
-							companyId)) {
+						CompanyThreadLocal.
+							setPartitionCompanyIdWithSafeCloseable(companyId)) {
 
 					unsafeConsumer.accept(companyId);
 				}
@@ -1492,8 +1492,9 @@ public class DBPartitionUtil {
 			}
 			else {
 				try (SafeCloseable safeCloseable =
-						CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
-							_defaultCompanyId)) {
+						CompanyThreadLocal.
+							setPartitionCompanyIdWithSafeCloseable(
+								_defaultCompanyId)) {
 
 					unsafeConsumer.accept(_defaultCompanyId);
 				}
