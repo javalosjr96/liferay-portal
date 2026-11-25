@@ -48,6 +48,20 @@ import java.util.regex.Pattern;
  */
 public class UpgradeSQLRecorder {
 
+	public static void addFailedTableName(
+		SQLException sqlException, String tableName) {
+
+		if (_writer == null) {
+			return;
+		}
+
+		_failedStatements.put(
+			sqlException,
+			new FailedStatement(
+				CompanyThreadLocal.getCompanyId(), sqlException,
+				StringPool.BLANK, tableName));
+	}
+
 	public static Connection getConnectionWrapper(Connection connection) {
 		return getConnectionWrapper(connection, StringPool.BLANK);
 	}
@@ -259,10 +273,12 @@ public class UpgradeSQLRecorder {
 
 		long companyId = CompanyThreadLocal.getCompanyId();
 		String sql = StringPool.BLANK;
+		String tableName = StringPool.BLANK;
 
 		if (failedStatement != null) {
 			companyId = failedStatement._companyId;
 			sql = failedStatement._sql;
+			tableName = failedStatement._tableName;
 		}
 
 		try {
@@ -276,9 +292,8 @@ public class UpgradeSQLRecorder {
 						GetterUtil.getString(causeThrowable.getMessage())),
 					"\",\"sqlState\":\"", _escapeJSON(sqlState),
 					"\"},\"companyId\":", companyId,
-					",\"object\":{\"table\":\"",
-					_escapeJSON(_getTableName(sql)), "\"},\"sql\":\"",
-					_escapeJSON(sql),
+					",\"object\":{\"table\":\"", _escapeJSON(tableName),
+					"\"},\"sql\":\"", _escapeJSON(sql),
 					"\",\"type\":\"failure\",\"upgradeStepId\":\"",
 					_escapeJSON(upgradeStepId), "\"}\n"));
 
@@ -466,14 +481,14 @@ public class UpgradeSQLRecorder {
 				String failedStatementSQL = preparedSQL;
 
 				if (failedStatementSQL == null) {
-					failedStatementSQL = sql;
+					failedStatementSQL = GetterUtil.getString(sql);
 				}
 
 				_failedStatements.put(
 					sqlException,
 					new FailedStatement(
 						CompanyThreadLocal.getCompanyId(), sqlException,
-						GetterUtil.getString(failedStatementSQL)));
+						failedStatementSQL, _getTableName(failedStatementSQL)));
 			}
 
 			if (sql != null) {
@@ -856,16 +871,19 @@ public class UpgradeSQLRecorder {
 	private static class FailedStatement {
 
 		private FailedStatement(
-			long companyId, SQLException sqlException, String sql) {
+			long companyId, SQLException sqlException, String sql,
+			String tableName) {
 
 			_companyId = companyId;
 			_sqlException = sqlException;
 			_sql = sql;
+			_tableName = tableName;
 		}
 
 		private final long _companyId;
 		private final String _sql;
 		private final SQLException _sqlException;
+		private final String _tableName;
 
 	}
 

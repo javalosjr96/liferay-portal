@@ -216,10 +216,14 @@ public abstract class BaseDBProcess implements DBProcess {
 				return;
 			}
 
-			throw new SQLException(
+			SQLException sqlException = new SQLException(
 				StringBundler.concat(
 					"Column ", tableName, StringPool.PERIOD, oldColumnName,
 					" does not exist"));
+
+			UpgradeSQLRecorder.addFailedTableName(sqlException, tableName);
+
+			throw sqlException;
 		}
 
 		DBInspector dbInspector = new DBInspector(connection);
@@ -241,10 +245,14 @@ public abstract class BaseDBProcess implements DBProcess {
 		throws Exception {
 
 		if (!hasColumn(tableName, columnName)) {
-			throw new SQLException(
+			SQLException sqlException = new SQLException(
 				StringBundler.concat(
 					"Column ", tableName, StringPool.PERIOD, columnName,
 					" does not exist"));
+
+			UpgradeSQLRecorder.addFailedTableName(sqlException, tableName);
+
+			throw sqlException;
 		}
 
 		if (!hasColumnType(tableName, columnName, newColumnType)) {
@@ -269,10 +277,14 @@ public abstract class BaseDBProcess implements DBProcess {
 		}
 
 		if (!hasColumnType(tableName, columnName, columnType)) {
-			throw new SQLException(
+			SQLException sqlException = new SQLException(
 				StringBundler.concat(
 					"Column ", tableName, StringPool.PERIOD, columnName,
 					" already exists with different type than ", columnType));
+
+			UpgradeSQLRecorder.addFailedTableName(sqlException, tableName);
+
+			throw sqlException;
 		}
 	}
 
