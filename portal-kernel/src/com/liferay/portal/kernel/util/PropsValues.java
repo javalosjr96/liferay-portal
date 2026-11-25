@@ -2435,6 +2435,10 @@ public class PropsValues {
 	public static final boolean UPGRADE_REPORT_ENABLED = GetterUtil.getBoolean(
 		PropsUtil.get(PropsKeys.UPGRADE_REPORT_ENABLED));
 
+	public static final boolean UPGRADE_REPORT_SQL_AUDIT_ENABLED =
+		GetterUtil.getBoolean(
+			PropsUtil.get(PropsKeys.UPGRADE_REPORT_SQL_AUDIT_ENABLED));
+
 	public static final long UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD =
 		GetterUtil.getLong(
 			PropsUtil.get(PropsKeys.UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD));

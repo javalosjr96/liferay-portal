@@ -9,8 +9,11 @@ import com.liferay.petra.concurrent.NoticeableExecutorService;
 import com.liferay.petra.concurrent.NoticeableFuture;
 import com.liferay.petra.executor.PortalExecutorManager;
 import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.portal.kernel.module.service.Snapshot;
+import com.liferay.portal.kernel.security.auth.CompanyInheritableThreadLocalCallable;
+import com.liferay.portal.kernel.upgrade.recorder.UpgradeSQLRecorder;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PrimitiveIntList;
 import com.liferay.portal.kernel.util.PropsKeys;
@@ -230,19 +233,26 @@ public class AutoBatchPreparedStatementUtil {
 					ConcurrentNoBatchInvocationHandler.class.getName());
 
 			PreparedStatement localPreparedStatement = getPreparedStatement();
+			String upgradeStepId = UpgradeSQLRecorder.getUpgradeStepId();
 
 			NoticeableFuture<Void> noticeableFuture =
 				noticeableExecutorService.submit(
-					() -> {
-						try {
-							actionUnsafeConsumer.accept(localPreparedStatement);
-						}
-						finally {
-							localPreparedStatement.close();
-						}
+					new CompanyInheritableThreadLocalCallable<>(
+						() -> {
+							try (SafeCloseable safeCloseable =
+									UpgradeSQLRecorder.
+										setUpgradeStepIdWithSafeCloseable(
+											upgradeStepId)) {
 
-						return null;
-					});
+								actionUnsafeConsumer.accept(
+									localPreparedStatement);
+							}
+							finally {
+								localPreparedStatement.close();
+							}
+
+							return null;
+						}));
 
 			_futures.add(noticeableFuture);
 

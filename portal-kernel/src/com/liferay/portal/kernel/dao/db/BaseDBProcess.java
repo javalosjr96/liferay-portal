@@ -9,6 +9,7 @@ import com.liferay.petra.function.UnsafeBiConsumer;
 import com.liferay.petra.function.UnsafeConsumer;
 import com.liferay.petra.function.UnsafeFunction;
 import com.liferay.petra.function.UnsafeSupplier;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
@@ -805,6 +806,8 @@ public abstract class BaseDBProcess implements DBProcess {
 			return;
 		}
 
+		String upgradeStepId = UpgradeSQLRecorder.getUpgradeStepId();
+
 		List<Future<Void>> futures = new ArrayList<>();
 		Map<Thread, PreparedStatement> preparedStatementHashMap =
 			new ConcurrentHashMap<>();
@@ -818,7 +821,10 @@ public abstract class BaseDBProcess implements DBProcess {
 		Callable<Void> callable = () -> {
 			_connectionCount.incrementAndGet();
 
-			try {
+			try (SafeCloseable safeCloseable =
+					UpgradeSQLRecorder.setUpgradeStepIdWithSafeCloseable(
+						upgradeStepId)) {
+
 				NotificationThreadLocal.setEnabled(notificationEnabled);
 				WorkflowThreadLocal.setEnabled(workflowEnabled);
 
