@@ -789,15 +789,16 @@ public class DBCopyTablesProcessTest {
 	@Test
 	@TestInfo("LPD-110099")
 	public void testRunWithToolTables() throws Exception {
-		Assume.assumeTrue(_sourceDB.getDBType() == DBType.ORACLE);
-
 		_sourceDB.runSQL(
 			"create table TestTable (id INTEGER, testColumn VARCHAR(75))");
-		_sourceDB.runSQL(
-			"create index TestTable_Text on TestTable (testColumn) indextype " +
-				"is ctxsys.context");
-		_sourceDB.runSQL(
-			"create materialized view log on TestTable with rowid");
+
+		if (_sourceDB.getDBType() == DBType.ORACLE) {
+			_sourceDB.runSQL(
+				"create index TestTable_Text on TestTable (testColumn) " +
+					"indextype is ctxsys.context");
+			_sourceDB.runSQL(
+				"create materialized view log on TestTable with rowid");
+		}
 
 		_runDBCopyTablesProcess();
 
