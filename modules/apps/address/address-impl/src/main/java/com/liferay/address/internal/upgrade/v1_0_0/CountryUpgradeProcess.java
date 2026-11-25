@@ -70,12 +70,20 @@ public class CountryUpgradeProcess extends UpgradeProcess {
 
 		List<IndexMetadata> indexMetadatas = _dropIndexes();
 
+		long[] companyIds;
+
+		if (CompanyThreadLocal.isInPartitionScope() ||
+			CompanyThreadLocal.isLocked()) {
+
+			companyIds = new long[] {CompanyThreadLocal.getCompanyId()};
+		}
+		else {
+			companyIds = PortalInstancePool.getCompanyIds();
+		}
+
 		try {
 			processConcurrently(
-				ArrayUtil.toArray(
-					CompanyThreadLocal.isLocked() ?
-						new long[] {CompanyThreadLocal.getCompanyId()} :
-							PortalInstancePool.getCompanyIds()),
+				ArrayUtil.toArray(companyIds),
 				companyId -> {
 					try {
 						Company company = _companyLocalService.fetchCompany(

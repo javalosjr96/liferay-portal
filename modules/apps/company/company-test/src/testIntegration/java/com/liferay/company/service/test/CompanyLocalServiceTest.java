@@ -112,6 +112,9 @@ import com.liferay.portal.kernel.util.TreeMapBuilder;
 import com.liferay.portal.kernel.util.UnicodeProperties;
 import com.liferay.portal.kernel.util.UnicodePropertiesBuilder;
 import com.liferay.portal.model.impl.CompanyImpl;
+import com.liferay.portal.test.log.LogCapture;
+import com.liferay.portal.test.log.LogEntry;
+import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
 import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import com.liferay.portal.test.rule.PermissionCheckerMethodTestRule;
@@ -1051,35 +1054,45 @@ public class CompanyLocalServiceTest {
 
 	@Test
 	public void testForEachCompanyIdWithInvalidCompanyId() {
+		List<Long> companyIds = new ArrayList<>();
+
 		long invalidCompanyId = RandomTestUtil.nextLong();
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
+		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
+				"com.liferay.portal.service.impl.CompanyLocalServiceImpl",
+				LoggerTestUtil.WARN);
+			SafeCloseable safeCloseable = CompanyThreadLocal.lock(
 				PortalInstancePool.getDefaultCompanyId())) {
 
 			_companyLocalService.forEachCompanyId(
-				null, new long[] {invalidCompanyId});
+				companyIds::add, new long[] {invalidCompanyId});
 
-			Assert.fail();
-		}
-		catch (UnsupportedOperationException unsupportedOperationException) {
+			List<LogEntry> logEntries = logCapture.getLogEntries();
+
+			Assert.assertEquals(logEntries.toString(), 1, logEntries.size());
+
+			LogEntry logEntry = logEntries.get(0);
+
 			Assert.assertEquals(
-				StringBundler.concat(
-					"Unable to iterate over the following company IDs [",
-					invalidCompanyId, "] because company ID ",
-					PortalInstancePool.getDefaultCompanyId(), " is locked"),
-				unsupportedOperationException.getMessage());
+				"Skipping company " + invalidCompanyId +
+					" because it no longer exists",
+				logEntry.getMessage());
 		}
+
+		Assert.assertEquals(companyIds.toString(), 0, companyIds.size());
 	}
 
 	@Test
 	public void testForEachCompanyWithInvalidCompany() {
+		List<Long> companyIds = new ArrayList<>();
+
 		long invalidCompanyId = RandomTestUtil.nextLong();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
 				PortalInstancePool.getDefaultCompanyId())) {
 
 			_companyLocalService.forEachCompany(
-				null,
+				company -> companyIds.add(CompanyThreadLocal.getCompanyId()),
 				Collections.singletonList(
 					new CompanyImpl() {
 						{
@@ -1087,16 +1100,13 @@ public class CompanyLocalServiceTest {
 						}
 					}));
 
-			Assert.fail();
-		}
-		catch (UnsupportedOperationException unsupportedOperationException) {
 			Assert.assertEquals(
-				StringBundler.concat(
-					"Unable to iterate over the following company IDs [",
-					invalidCompanyId, "] because company ID ",
-					PortalInstancePool.getDefaultCompanyId(), " is locked"),
-				unsupportedOperationException.getMessage());
+				Long.valueOf(PortalInstancePool.getDefaultCompanyId()),
+				CompanyThreadLocal.getCompanyId());
 		}
+
+		Assert.assertEquals(
+			Collections.singletonList(invalidCompanyId), companyIds);
 	}
 
 	@Test
