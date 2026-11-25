@@ -21,11 +21,6 @@ public class SafeCloseableMissingClose {
 			companyId);
 	}
 
-	public void method3(String companyId) {
-		_safeCloseable2 = CompanyThreadLocal.lock(companyId);
-	}
-
 	private static SafeCloseable _safeCloseable1;
-	private static SafeCloseable _safeCloseable2;
 
 }

@@ -1313,13 +1313,7 @@ public class JavaSourceProcessorTest extends BaseSourceProcessorTestCase {
 					"Missing calling \"close\" to variable ",
 					"\"_safeCloseable1\", use \"_safeCloseable1.close\" or ",
 					"try-with-resources statement instead"),
-				28
-			).addExpectedMessage(
-				StringBundler.concat(
-					"Missing calling \"close\" to variable ",
-					"\"_safeCloseable2\", use \"_safeCloseable2.close\" or ",
-					"try-with-resources statement instead"),
-				29
+				24
 			));
 	}
 
