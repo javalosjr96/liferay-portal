@@ -43,7 +43,7 @@ public class CompanyInheritableThreadLocalCallable<T> implements Callable<T> {
 
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.carryPartitionScope(
-					_partitionCompanyId, _companyId)) {
+					_companyId, _partitionCompanyId)) {
 
 			return _callable.call();
 		}

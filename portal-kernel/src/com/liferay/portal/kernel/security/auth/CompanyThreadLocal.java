@@ -344,7 +344,7 @@ public class CompanyThreadLocal {
 	}
 
 	static SafeCloseable carryPartitionScope(
-		long partitionCompanyId, long companyId) {
+		long companyId, long partitionCompanyId) {
 
 		SafeCloseable partitionCompanyIdSafeCloseable =
 			setPartitionCompanyIdWithSafeCloseable(partitionCompanyId);
