@@ -12,7 +12,9 @@ import com.liferay.expando.kernel.model.ExpandoTable;
 import com.liferay.expando.kernel.service.ExpandoColumnLocalService;
 import com.liferay.expando.kernel.service.ExpandoTableLocalService;
 import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.petra.function.UnsafeSupplier;
 import com.liferay.petra.lang.SafeCloseable;
+import com.liferay.petra.reflect.ReflectionUtil;
 import com.liferay.petra.sql.dsl.DSLQueryFactoryUtil;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
@@ -340,16 +342,20 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 					companyId)) {
 
 			if (PropsValues.DATABASE_PARTITION_ENABLED) {
-				Company addedCompany = TransactionInvokerUtil.invoke(
-					_transactionConfig, callable);
+				return _invokeOutsideCallerTransaction(
+					() -> {
+						Company addedCompany = TransactionInvokerUtil.invoke(
+							_transactionConfig, callable);
 
-				// Commit callbacks must flush before this scope restores the
-				// previous company, or they would execute against the
-				// caller's partition
+						// Commit callbacks must flush before this scope
+						// restores the previous company, or they would execute
+						// against the caller's partition
 
-				LastSessionRecorderHelperUtil.syncLastSessionState(false);
+						LastSessionRecorderHelperUtil.syncLastSessionState(
+							false);
 
-				return addedCompany;
+						return addedCompany;
+					});
 			}
 
 			return callable.call();
@@ -405,48 +411,49 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			DBPartitionUtil.importDBPartition(
 				companyId, lowerCaseVirtualHostname, webId);
 
-			try {
-				Company dbPartitionCompany = TransactionInvokerUtil.invoke(
-					_transactionConfig,
+			try (SafeCloseable safeCloseable2 =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						companyId)) {
+
+				return _invokeOutsideCallerTransaction(
 					() -> {
-						try (SafeCloseable safeCloseable2 =
-								CompanyThreadLocal.
-									setCompanyIdWithSafeCloseable(companyId)) {
+						Company dbPartitionCompany =
+							TransactionInvokerUtil.invoke(
+								_transactionConfig,
+								() -> {
+									companyPersistence.clearCache();
+									_virtualHostPersistence.clearCache();
 
-							companyPersistence.clearCache();
-							_virtualHostPersistence.clearCache();
+									Company company =
+										companyPersistence.findByPrimaryKey(
+											companyId);
 
-							Company company =
-								companyPersistence.findByPrimaryKey(companyId);
+									if (Validator.isNotNull(name) &&
+										!StringUtil.equals(
+											company.getName(), name)) {
 
-							if (Validator.isNotNull(name) &&
-								!StringUtil.equals(company.getName(), name)) {
+										validateName(companyId, name);
 
-								validateName(companyId, name);
+										company.setName(name);
 
-								company.setName(name);
+										CompanyInfo companyInfo =
+											company.getCompanyInfo();
 
-								CompanyInfo companyInfo =
-									company.getCompanyInfo();
+										company = companyPersistence.update(
+											company);
 
-								company = companyPersistence.update(company);
+										_companyInfoPersistence.update(
+											companyInfo);
+									}
 
-								_companyInfoPersistence.update(companyInfo);
-							}
+									return _addDBPartitionCompany(company);
+								});
 
-							return _addDBPartitionCompany(company);
-						}
+						companyPersistence.clearCache();
+						_virtualHostPersistence.clearCache();
+
+						return _registerDBPartitionCompany(dbPartitionCompany);
 					});
-
-				try (SafeCloseable safeCloseable2 =
-						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-							companyId)) {
-
-					companyPersistence.clearCache();
-					_virtualHostPersistence.clearCache();
-
-					return _registerDBPartitionCompany(dbPartitionCompany);
-				}
 			}
 			catch (Throwable throwable1) {
 				try {
@@ -626,46 +633,45 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 
 			long companyId = toCompanyId;
 
-			try {
-				Company dbPartitionCompany = TransactionInvokerUtil.invoke(
-					_transactionConfig,
+			try (SafeCloseable safeCloseable2 =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						companyId)) {
+
+				return _invokeOutsideCallerTransaction(
 					() -> {
-						try (SafeCloseable safeCloseable2 =
-								CompanyThreadLocal.
-									setCompanyIdWithSafeCloseable(companyId)) {
+						Company dbPartitionCompany =
+							TransactionInvokerUtil.invoke(
+								_transactionConfig,
+								() -> {
+									Company company =
+										fromCompany.cloneWithOriginalValues();
 
-							Company company =
-								fromCompany.cloneWithOriginalValues();
+									company.setCompanyId(companyId);
+									company.setWebId(webId);
+									company.setName(name);
+									company.setNew(true);
 
-							company.setCompanyId(companyId);
-							company.setWebId(webId);
-							company.setName(name);
-							company.setNew(true);
+									company.setIndexNameCurrent(null);
+									company.setIndexNameNext(null);
+									company.setKey(key);
 
-							company.setIndexNameCurrent(null);
-							company.setIndexNameNext(null);
-							company.setKey(key);
+									CompanyInfo companyInfo =
+										company.getCompanyInfo();
 
-							CompanyInfo companyInfo = company.getCompanyInfo();
+									company = companyPersistence.update(
+										company);
 
-							company = companyPersistence.update(company);
+									company = updateVirtualHostname(
+										company.getCompanyId(),
+										lowerCaseVirtualHostname);
 
-							company = updateVirtualHostname(
-								company.getCompanyId(),
-								lowerCaseVirtualHostname);
+									_companyInfoPersistence.update(companyInfo);
 
-							_companyInfoPersistence.update(companyInfo);
+									return _addDBPartitionCompany(company);
+								});
 
-							return _addDBPartitionCompany(company);
-						}
+						return _registerDBPartitionCompany(dbPartitionCompany);
 					});
-
-				try (SafeCloseable safeCloseable2 =
-						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-							companyId)) {
-
-					return _registerDBPartitionCompany(dbPartitionCompany);
-				}
 			}
 			catch (Throwable throwable1) {
 				try {
@@ -2470,6 +2476,22 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 		return nextLong;
 	}
 
+	private Company _invokeOutsideCallerTransaction(
+			UnsafeSupplier<Company, Throwable> unsafeSupplier)
+		throws Throwable {
+
+		return TransactionInvokerUtil.invoke(
+			_notSupportedTransactionConfig,
+			() -> {
+				try {
+					return unsafeSupplier.get();
+				}
+				catch (Throwable throwable) {
+					return ReflectionUtil.throwException(throwable);
+				}
+			});
+	}
+
 	private String _normalizeVirtualHostname(String virtualHostname)
 		throws CompanyVirtualHostException {
 
@@ -2674,6 +2696,9 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 	private static final MethodHandler _methodHandler = new MethodHandler(
 		new MethodKey(
 			CompanyLocalServiceImpl.class, "_doSynchronizePortalInstances"));
+	private static final TransactionConfig _notSupportedTransactionConfig =
+		TransactionConfig.Factory.create(
+			Propagation.NOT_SUPPORTED, new Class<?>[] {Exception.class});
 	private static final Snapshot<Store> _storeSnapshot = new Snapshot<>(
 		CompanyLocalServiceImpl.class, Store.class, "(default=true)");
 	private static final TransactionConfig _transactionConfig =
