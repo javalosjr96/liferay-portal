@@ -263,6 +263,97 @@ public class UpgradeExecutorTest {
 	}
 
 	@Test
+	public void testExecuteUpgradeInfosWithUnstoppedSQLAudit()
+		throws Exception {
+
+		Bundle bundle = FrameworkUtil.getBundle(UpgradeExecutorTest.class);
+
+		String bundleSymbolicName = bundle.getSymbolicName();
+
+		_releaseLocalService.addRelease(bundleSymbolicName, "1.0.0");
+
+		int value = RandomTestUtil.randomInt();
+
+		UpgradeProcess upgradeProcess = new UpgradeProcess() {
+
+			@Override
+			protected void doUpgrade() throws Exception {
+				runSQL(
+					"create table UpgradeSQLAuditTest (id_ LONG not null " +
+						"primary key, value INTEGER)");
+
+				runSQL("update UpgradeSQLAuditTest set value = " + value);
+			}
+
+		};
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"UPGRADE_REPORT_SQL_AUDIT_ENABLED", true)) {
+
+			BundleContext bundleContext = bundle.getBundleContext();
+
+			try (SafeCloseable autoRunSafeCloseable =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"UPGRADE_DATABASE_AUTO_RUN", false, false)) {
+
+				_serviceRegistration = bundleContext.registerService(
+					UpgradeStepRegistrator.class,
+					upgradeStepRegistry -> upgradeStepRegistry.register(
+						"1.0.0", "2.0.0", upgradeProcess),
+					null);
+			}
+
+			File file = _getSQLAuditFile();
+
+			file.delete();
+
+			ReflectionTestUtil.invoke(
+				_upgradeRecorder, "start", new Class<?>[0]);
+
+			try {
+				ReflectionTestUtil.invoke(
+					_upgradeExecutor, "executeUpgradeInfos",
+					new Class<?>[] {Bundle.class, List.class}, bundle,
+					_getUpgradeInfos(bundleSymbolicName));
+
+				Map<String, List<JSONObject>> jsonObjectsMap =
+					_getJSONObjectsMap(bundleSymbolicName);
+
+				_getJSONObject(
+					jsonObjectsMap.get(bundleSymbolicName + ":1.0.0:2.0.0:0"),
+					"value = " + value);
+			}
+			finally {
+				ReflectionTestUtil.invoke(
+					_upgradeRecorder, "stop", new Class<?>[0]);
+			}
+		}
+		finally {
+			File file = _getSQLAuditFile();
+
+			file.delete();
+
+			try (Connection connection = DataAccess.getConnection()) {
+				DBInspector dbInspector = new DBInspector(connection);
+
+				if (dbInspector.hasTable("UpgradeSQLAuditTest")) {
+					DB db = DBManagerUtil.getDB();
+
+					db.runSQL("drop table UpgradeSQLAuditTest");
+				}
+			}
+
+			Release release = _releaseLocalService.fetchRelease(
+				bundleSymbolicName);
+
+			if (release != null) {
+				_releaseLocalService.deleteRelease(release);
+			}
+		}
+	}
+
+	@Test
 	public void testExecuteUpgradeInfosWithoutInterruptedUpgrade()
 		throws Exception {
 
