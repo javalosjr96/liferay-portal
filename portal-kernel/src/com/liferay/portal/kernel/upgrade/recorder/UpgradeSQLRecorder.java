@@ -669,6 +669,8 @@ public class UpgradeSQLRecorder {
 					",\"durationMs\":", duration, ",\"rowCount\":", rowCount,
 					",\"sql\":\"", _escapeJSON(sql), "\",\"upgradeStepId\":\"",
 					_escapeJSON(_upgradeStepId.get()), "\"}\n"));
+
+			writer.flush();
 		}
 		catch (IOException ioException) {
 			if (_writer == writer) {
