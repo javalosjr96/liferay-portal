@@ -129,8 +129,9 @@ public class ResourceActionLocalServiceTest {
 					"com.liferay.portal.service.impl.CompanyLocalServiceImpl",
 					LoggerTestUtil.WARN);
 				SafeCloseable safeCloseable =
-					PortalInstances.setCompanyInDeletionProcessWithSafeCloseable(
-						company2.getCompanyId())) {
+					PortalInstances.
+						setCompanyInDeletionProcessWithSafeCloseable(
+							company2.getCompanyId())) {
 
 				_resourceActionLocalService.deleteResourceAction(
 					TestPropsValues.getCompanyId(), resourceAction);
