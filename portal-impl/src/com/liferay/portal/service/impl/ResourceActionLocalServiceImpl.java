@@ -400,8 +400,6 @@ public class ResourceActionLocalServiceImpl
 	private void _removeActionId(
 		long companyId, ResourceAction resourceAction) {
 
-		long bitwiseValue = resourceAction.getBitwiseValue();
-
 		ActionableDynamicQuery actionableDynamicQuery =
 			_resourcePermissionLocalService.getActionableDynamicQuery();
 
@@ -412,6 +410,9 @@ public class ResourceActionLocalServiceImpl
 				dynamicQuery.add(nameProperty.eq(resourceAction.getName()));
 			});
 		actionableDynamicQuery.setCompanyId(companyId);
+
+		long bitwiseValue = resourceAction.getBitwiseValue();
+
 		actionableDynamicQuery.setPerformActionMethod(
 			(ResourcePermission resourcePermission) -> {
 				long actionIds = resourcePermission.getActionIds();
