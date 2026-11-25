@@ -91,6 +91,56 @@ import org.apache.logging.log4j.ThreadContext;
  */
 public class UpgradeReport {
 
+	public static File getReportFile(String reportFileName) {
+		File reportsDir = null;
+
+		if (!Validator.isBlank(PropsValues.UPGRADE_REPORT_DIR)) {
+			reportsDir = new File(PropsValues.UPGRADE_REPORT_DIR);
+
+			if ((!reportsDir.exists() && !reportsDir.mkdir()) ||
+				!Files.isWritable(reportsDir.toPath())) {
+
+				reportsDir = null;
+
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Unable to generate the upgrade report at " +
+							PropsValues.UPGRADE_REPORT_DIR);
+				}
+			}
+		}
+
+		if (reportsDir == null) {
+			if (UpgradeProcessUtil.isUpgradeClient()) {
+				reportsDir = new File(".", "reports");
+			}
+			else {
+				reportsDir = new File(PropsValues.LIFERAY_HOME, "reports");
+			}
+
+			if (!reportsDir.exists()) {
+				reportsDir.mkdirs();
+			}
+		}
+
+		File reportFile = new File(reportsDir, reportFileName);
+
+		if (reportFile.exists()) {
+			DateFormat dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
+				"yyyyMMdd_HHmmss", LocaleUtil.US, TimeZone.getTimeZone("UTC"));
+
+			String timestamp = dateFormat.format(
+				new Date(reportFile.lastModified()));
+
+			reportFile.renameTo(
+				new File(reportsDir, reportFileName + "." + timestamp));
+
+			reportFile = new File(reportsDir, reportFileName);
+		}
+
+		return reportFile;
+	}
+
 	public UpgradeReport() {
 		_initialBuildNumber = _getBuildNumber();
 
@@ -754,56 +804,6 @@ public class UpgradeReport {
 		).build();
 	}
 
-	private File _getReportFile(String reportFileName) {
-		File reportsDir = null;
-
-		if (!Validator.isBlank(PropsValues.UPGRADE_REPORT_DIR)) {
-			reportsDir = new File(PropsValues.UPGRADE_REPORT_DIR);
-
-			if ((!reportsDir.exists() && !reportsDir.mkdir()) ||
-				!Files.isWritable(reportsDir.toPath())) {
-
-				reportsDir = null;
-
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"Unable to generate the upgrade report at " +
-							PropsValues.UPGRADE_REPORT_DIR);
-				}
-			}
-		}
-
-		if (reportsDir == null) {
-			if (UpgradeProcessUtil.isUpgradeClient()) {
-				reportsDir = new File(".", "reports");
-			}
-			else {
-				reportsDir = new File(PropsValues.LIFERAY_HOME, "reports");
-			}
-
-			if (!reportsDir.exists()) {
-				reportsDir.mkdirs();
-			}
-		}
-
-		File reportFile = new File(reportsDir, reportFileName);
-
-		if (reportFile.exists()) {
-			DateFormat dateFormat = DateFormatFactoryUtil.getSimpleDateFormat(
-				"yyyyMMdd_HHmmss", LocaleUtil.US, TimeZone.getTimeZone("UTC"));
-
-			String timestamp = dateFormat.format(
-				new Date(reportFile.lastModified()));
-
-			reportFile.renameTo(
-				new File(reportsDir, reportFileName + "." + timestamp));
-
-			reportFile = new File(reportsDir, reportFileName);
-		}
-
-		return reportFile;
-	}
-
 	private String _getReportHeader(String key) {
 		if (key.equals("longest.running.sqls")) {
 			return String.format(
@@ -1073,7 +1073,7 @@ public class UpgradeReport {
 		File reportFile = null;
 
 		try {
-			reportFile = _getReportFile(reportFileName);
+			reportFile = getReportFile(reportFileName);
 
 			FileUtil.write(
 				reportFile,

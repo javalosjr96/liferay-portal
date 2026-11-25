@@ -16,8 +16,16 @@ import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.version.Version;
 import com.liferay.portal.tools.DBUpgrader;
+import com.liferay.portal.upgrade.internal.report.UpgradeReport;
 import com.liferay.portal.verify.PreupgradeVerifyProcessSuite;
 import com.liferay.portal.verify.VerifyException;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
+
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -161,11 +169,27 @@ public class UpgradeRecorder {
 			(moduleSchemaVersions, schemaVersion) ->
 				moduleSchemaVersions._setInitial(schemaVersion));
 
-		UpgradeSQLRecorder.start();
+		_sqlAuditWriter = _createSQLAuditWriter();
+
+		UpgradeSQLRecorder.start(_sqlAuditWriter);
 	}
 
 	public void stop() {
 		UpgradeSQLRecorder.stop();
+
+		if (_sqlAuditWriter != null) {
+			try {
+				_sqlAuditWriter.close();
+			}
+			catch (IOException ioException) {
+				if (_log.isWarnEnabled()) {
+					_log.warn(
+						"Unable to close the upgrade SQL audit", ioException);
+				}
+			}
+
+			_sqlAuditWriter = null;
+		}
 
 		_filter(_errorMessages);
 		_filter(_warningMessages);
@@ -290,6 +314,29 @@ public class UpgradeRecorder {
 		return type;
 	}
 
+	private Writer _createSQLAuditWriter() {
+		if (!PropsValues.UPGRADE_REPORT_SQL_AUDIT_ENABLED) {
+			return null;
+		}
+
+		File file = UpgradeReport.getReportFile("upgrade_sql_audit.jsonl");
+
+		try {
+			return Files.newBufferedWriter(
+				file.toPath(), StandardCharsets.UTF_8);
+		}
+		catch (IOException ioException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Unable to create the upgrade SQL audit at " +
+						file.getPath(),
+					ioException);
+			}
+
+			return null;
+		}
+	}
+
 	private Map<String, Map<String, Integer>> _filter(
 		Map<String, Map<String, Integer>> messages) {
 
@@ -357,6 +404,7 @@ public class UpgradeRecorder {
 	private static String _result;
 	private static final Map<String, SchemaVersions> _schemaVersionsMap =
 		new ConcurrentHashMap<>();
+	private static Writer _sqlAuditWriter;
 	private static String _type;
 	private static final Map<String, ArrayList<String>>
 		_upgradeProcessMessages = new ConcurrentHashMap<>();

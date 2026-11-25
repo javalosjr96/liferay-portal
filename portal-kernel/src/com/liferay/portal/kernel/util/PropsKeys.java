@@ -2760,6 +2760,9 @@ public interface PropsKeys {
 	public static final String UPGRADE_REPORT_ENABLED =
 		"upgrade.report.enabled";
 
+	public static final String UPGRADE_REPORT_SQL_AUDIT_ENABLED =
+		"upgrade.report.sql.audit.enabled";
+
 	public static final String UPGRADE_REPORT_SQL_STATEMENT_THRESHOLD =
 		"upgrade.report.sql.statement.threshold";
 
