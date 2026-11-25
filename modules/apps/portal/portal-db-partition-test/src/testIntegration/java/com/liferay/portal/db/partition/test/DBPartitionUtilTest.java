@@ -56,7 +56,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -1188,8 +1188,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 				CompanyLocalServiceUtil.forEachCompanyId(scopedCompanyIds::add);
 
 				Assert.assertEquals(
-					scopedCompanyIds.toString(), Arrays.asList(companyId),
-					scopedCompanyIds);
+					Collections.singletonList(companyId), scopedCompanyIds);
 
 				ExecutorService executorService =
 					Executors.newSingleThreadExecutor();
@@ -1198,8 +1197,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 					Future<List<Long>> future = executorService.submit(
 						new CompanyInheritableThreadLocalCallable<>(
 							() -> {
-								List<Long> workerCompanyIds =
-									new ArrayList<>();
+								List<Long> workerCompanyIds = new ArrayList<>();
 
 								CompanyLocalServiceUtil.forEachCompanyId(
 									workerCompanyIds::add);
@@ -1210,8 +1208,7 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 					List<Long> workerCompanyIds = future.get();
 
 					Assert.assertEquals(
-						workerCompanyIds.toString(), Arrays.asList(companyId),
-						workerCompanyIds);
+						Collections.singletonList(companyId), workerCompanyIds);
 				}
 				finally {
 					executorService.shutdownNow();
