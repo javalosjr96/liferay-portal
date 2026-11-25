@@ -156,50 +156,8 @@ public class CompanyThreadLocal {
 		return _initializingPortalInstance.get();
 	}
 
-	public static boolean isLocked() {
-		return _locked.get();
-	}
-
 	public static boolean isUpgradingPortalInstance() {
 		return _upgradingPortalInstance.get();
-	}
-
-	public static SafeCloseable lock(long companyId) {
-		long currentCompanyId = _companyId.get();
-
-		if (companyId == currentCompanyId) {
-			if (isLocked()) {
-				return SafeCloseable.EMPTY;
-			}
-
-			_locked.set(true);
-
-			return () -> _locked.set(false);
-		}
-
-		if (isLocked()) {
-			throw new UnsupportedOperationException(
-				StringBundler.concat(
-					"Company ID ", companyId, " and company ID ",
-					currentCompanyId, " are different"));
-		}
-
-		_warnPartitionScopeSwitch(companyId);
-
-		_syncLastDBPartitionSessionState();
-
-		SafeCloseable safeCloseable = _companyId.setWithSafeCloseable(
-			companyId);
-
-		_locked.set(true);
-
-		return () -> {
-			_locked.set(false);
-
-			_syncLastDBPartitionSessionState();
-
-			safeCloseable.close();
-		};
 	}
 
 	public static void setCompanyId(Long companyId) {
@@ -350,16 +308,6 @@ public class CompanyThreadLocal {
 			upgradingPortalInstance);
 	}
 
-	public static SafeCloseable unlock() {
-		if (!isLocked()) {
-			return SafeCloseable.EMPTY;
-		}
-
-		_locked.set(false);
-
-		return () -> _locked.set(true);
-	}
-
 	private static void _syncLastDBPartitionSessionState() {
 		if (PropsValues.DATABASE_PARTITION_ENABLED) {
 			LastSessionRecorderHelperUtil.syncLastSessionState(false);
@@ -405,9 +353,6 @@ public class CompanyThreadLocal {
 		_initializingPortalInstance = new CentralizedThreadLocal<>(
 			CompanyThreadLocal.class + "._initializingPortalInstance",
 			() -> Boolean.FALSE);
-	private static final ThreadLocal<Boolean> _locked =
-		new CentralizedThreadLocal<>(
-			CompanyThreadLocal.class + "._locked", () -> Boolean.FALSE);
 	private static final CentralizedThreadLocal<Long> _partitionCompanyId =
 		new CentralizedThreadLocal<>(
 			CompanyThreadLocal.class + "._partitionCompanyId");

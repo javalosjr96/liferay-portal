@@ -791,9 +791,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			UnsafeConsumer<Company, E> unsafeConsumer)
 		throws E {
 
-		if (CompanyThreadLocal.isInPartitionScope() ||
-			CompanyThreadLocal.isLocked()) {
-
+		if (CompanyThreadLocal.isInPartitionScope()) {
 			long companyId = CompanyThreadLocal.getCompanyId();
 
 			if (_log.isDebugEnabled()) {
@@ -831,9 +829,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			UnsafeConsumer<Long, E> unsafeConsumer)
 		throws E {
 
-		if (CompanyThreadLocal.isInPartitionScope() ||
-			CompanyThreadLocal.isLocked()) {
-
+		if (CompanyThreadLocal.isInPartitionScope()) {
 			long companyId = CompanyThreadLocal.getCompanyId();
 
 			if (_log.isDebugEnabled()) {

@@ -18,7 +18,6 @@ public class CompanyInheritableThreadLocalCallable<T> implements Callable<T> {
 		_callable = callable;
 
 		_companyId = CompanyThreadLocal.getCompanyId();
-		_locked = CompanyThreadLocal.isLocked();
 		_partitionCompanyId = CompanyThreadLocal.getPartitionCompanyId();
 	}
 
@@ -35,16 +34,11 @@ public class CompanyInheritableThreadLocalCallable<T> implements Callable<T> {
 				_companyId, _partitionCompanyId);
 		}
 
-		if (_locked) {
-			return CompanyThreadLocal.lock(_companyId);
-		}
-
 		return CompanyThreadLocal.setCompanyIdWithSafeCloseable(_companyId);
 	}
 
 	private final Callable<T> _callable;
 	private final Long _companyId;
-	private final boolean _locked;
 	private final Long _partitionCompanyId;
 
 }

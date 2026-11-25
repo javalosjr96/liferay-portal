@@ -72,9 +72,7 @@ public class CountryUpgradeProcess extends UpgradeProcess {
 
 		long[] companyIds;
 
-		if (CompanyThreadLocal.isInPartitionScope() ||
-			CompanyThreadLocal.isLocked()) {
-
+		if (CompanyThreadLocal.isInPartitionScope()) {
 			companyIds = new long[] {CompanyThreadLocal.getCompanyId()};
 		}
 		else {

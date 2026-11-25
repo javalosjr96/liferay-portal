@@ -269,9 +269,7 @@ public class DBPartitionUtil {
 			return;
 		}
 
-		if (CompanyThreadLocal.isInPartitionScope() ||
-			CompanyThreadLocal.isLocked()) {
-
+		if (CompanyThreadLocal.isInPartitionScope()) {
 			long companyId = CompanyThreadLocal.getCompanyId();
 
 			if (_log.isDebugEnabled()) {
