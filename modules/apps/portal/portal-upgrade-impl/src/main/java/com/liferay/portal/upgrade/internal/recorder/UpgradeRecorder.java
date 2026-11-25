@@ -169,6 +169,8 @@ public class UpgradeRecorder {
 			(moduleSchemaVersions, schemaVersion) ->
 				moduleSchemaVersions._setInitial(schemaVersion));
 
+		_closeSQLAuditWriter();
+
 		_sqlAuditWriter = _createSQLAuditWriter();
 
 		UpgradeSQLRecorder.start(_sqlAuditWriter);
@@ -177,19 +179,7 @@ public class UpgradeRecorder {
 	public void stop() {
 		UpgradeSQLRecorder.stop();
 
-		if (_sqlAuditWriter != null) {
-			try {
-				_sqlAuditWriter.close();
-			}
-			catch (IOException ioException) {
-				if (_log.isWarnEnabled()) {
-					_log.warn(
-						"Unable to close the upgrade SQL audit", ioException);
-				}
-			}
-
-			_sqlAuditWriter = null;
-		}
+		_closeSQLAuditWriter();
 
 		_filter(_errorMessages);
 		_filter(_warningMessages);
@@ -312,6 +302,23 @@ public class UpgradeRecorder {
 		}
 
 		return type;
+	}
+
+	private void _closeSQLAuditWriter() {
+		if (_sqlAuditWriter == null) {
+			return;
+		}
+
+		try {
+			_sqlAuditWriter.close();
+		}
+		catch (IOException ioException) {
+			if (_log.isWarnEnabled()) {
+				_log.warn("Unable to close the upgrade SQL audit", ioException);
+			}
+		}
+
+		_sqlAuditWriter = null;
 	}
 
 	private Writer _createSQLAuditWriter() {
