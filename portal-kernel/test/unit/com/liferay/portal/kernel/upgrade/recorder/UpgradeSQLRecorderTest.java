@@ -17,6 +17,10 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
 
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -277,6 +281,35 @@ public class UpgradeSQLRecorderTest {
 		).write(
 			Mockito.anyString()
 		);
+	}
+
+	@Test
+	public void testSetAuditWriterWithFileWriter() throws Exception {
+		Path tempFilePath = Files.createTempFile(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString());
+
+		try (Writer writer = Files.newBufferedWriter(
+				tempFilePath, StandardCharsets.UTF_8)) {
+
+			UpgradeSQLRecorder.start();
+
+			UpgradeSQLRecorder.setAuditWriter(writer);
+
+			String sql = RandomTestUtil.randomString();
+
+			PreparedStatement wrappedPreparedStatement = _prepareStatement(
+				Mockito.mock(PreparedStatement.class), sql);
+
+			wrappedPreparedStatement.executeUpdate();
+
+			List<String> lines = Files.readAllLines(tempFilePath);
+
+			Assert.assertEquals(lines.toString(), 1, lines.size());
+			Assert.assertEquals(sql, _getValue(lines.get(0), "sql"));
+		}
+		finally {
+			Files.delete(tempFilePath);
+		}
 	}
 
 	@Test
