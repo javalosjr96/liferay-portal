@@ -212,7 +212,8 @@ public class ObjectDefinitionLocalServiceDBPartitionTest {
 			objectDefinition.getPortletId());
 
 		Assert.assertTrue(
-			_getResourceActionsCount(_company1.getCompanyId(), portletName) > 0);
+			_getResourceActionsCount(_company1.getCompanyId(), portletName) >
+				0);
 		Assert.assertEquals(
 			0, _getResourceActionsCount(_company2.getCompanyId(), portletName));
 		Assert.assertEquals(
@@ -223,8 +224,7 @@ public class ObjectDefinitionLocalServiceDBPartitionTest {
 		ResourceAction portletResourceAction = _fetchResourceAction(
 			ActionKeys.VIEW, _company1.getCompanyId(), portletName);
 
-		_addResourcePermission(
-			_company2.getCompanyId(), portletResourceAction);
+		_addResourcePermission(_company2.getCompanyId(), portletResourceAction);
 
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
