@@ -24,29 +24,22 @@ public class CompanyInheritableThreadLocalCallable<T> implements Callable<T> {
 
 	@Override
 	public T call() throws Exception {
-		if ((_partitionCompanyId == null) && _locked) {
-			try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-					_companyId)) {
-
-				return _callable.call();
-			}
-		}
-
-		if (_partitionCompanyId == null) {
-			try (SafeCloseable safeCloseable =
-					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						_companyId)) {
-
-				return _callable.call();
-			}
-		}
-
-		try (SafeCloseable safeCloseable =
-				CompanyThreadLocal.carryPartitionScope(
-					_companyId, _partitionCompanyId)) {
-
+		try (SafeCloseable safeCloseable = _open()) {
 			return _callable.call();
 		}
+	}
+
+	private SafeCloseable _open() {
+		if (_partitionCompanyId != null) {
+			return CompanyThreadLocal.carryPartitionScope(
+				_companyId, _partitionCompanyId);
+		}
+
+		if (_locked) {
+			return CompanyThreadLocal.lock(_companyId);
+		}
+
+		return CompanyThreadLocal.setCompanyIdWithSafeCloseable(_companyId);
 	}
 
 	private final Callable<T> _callable;

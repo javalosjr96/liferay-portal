@@ -161,9 +161,7 @@ public class CompanyThreadLocal {
 					currentCompanyId, " are different"));
 		}
 
-		if (isInPartitionScope()) {
-			_warnPartitionScopeSwitch(companyId);
-		}
+		_warnPartitionScopeSwitch(companyId);
 
 		_syncLastDBPartitionSessionState();
 
@@ -186,9 +184,7 @@ public class CompanyThreadLocal {
 			return;
 		}
 
-		if (isInPartitionScope()) {
-			_warnPartitionScopeSwitch(companyId);
-		}
+		_warnPartitionScopeSwitch(companyId);
 
 		_syncLastDBPartitionSessionState();
 
@@ -224,9 +220,7 @@ public class CompanyThreadLocal {
 		List<SafeCloseable> safeCloseables = new ArrayList<>();
 
 		if (!companyId.equals(_companyId.get())) {
-			if (isInPartitionScope()) {
-				_warnPartitionScopeSwitch(companyId);
-			}
+			_warnPartitionScopeSwitch(companyId);
 
 			_syncLastDBPartitionSessionState();
 
@@ -374,7 +368,7 @@ public class CompanyThreadLocal {
 	}
 
 	private static void _warnPartitionScopeSwitch(long companyId) {
-		if (!_log.isWarnEnabled()) {
+		if (!isInPartitionScope() || !_log.isWarnEnabled()) {
 			return;
 		}
 
