@@ -164,11 +164,10 @@ public class UpgradeExecutorTest {
 					preparedStatement.executeBatch();
 				}
 
-				try {
-					runSQL("update UpgradeSQLAuditTestMissing set value = 4");
-				}
-				catch (Exception exception) {
-				}
+				Assert.assertThrows(
+					Exception.class,
+					() -> runSQL(
+						"update UpgradeSQLAuditTestMissing set value = 4"));
 			}
 
 		};
@@ -191,6 +190,10 @@ public class UpgradeExecutorTest {
 					null);
 			}
 
+			File file = _getSQLAuditFile();
+
+			file.delete();
+
 			ReflectionTestUtil.invoke(
 				_upgradeRecorder, "start", new Class<?>[0]);
 
@@ -211,14 +214,10 @@ public class UpgradeExecutorTest {
 			List<JSONObject> jsonObjects = jsonObjectsMap.get(
 				bundleSymbolicName + ":1.0.0:2.0.0:0");
 
-			Assert.assertNotNull(jsonObjectsMap.toString(), jsonObjects);
-
 			_getJSONObject(jsonObjects, "insert into UpgradeSQLAuditTest");
 
 			jsonObjects = jsonObjectsMap.get(
 				bundleSymbolicName + ":1.0.0:2.0.0:1");
-
-			Assert.assertNotNull(jsonObjectsMap.toString(), jsonObjects);
 
 			JSONObject jsonObject = _getJSONObject(jsonObjects, "value = 1");
 
@@ -240,6 +239,10 @@ public class UpgradeExecutorTest {
 			Assert.assertEquals(-1, jsonObject.getLong("rowCount"));
 		}
 		finally {
+			File file = _getSQLAuditFile();
+
+			file.delete();
+
 			try (Connection connection = DataAccess.getConnection()) {
 				DBInspector dbInspector = new DBInspector(connection);
 
@@ -257,6 +260,15 @@ public class UpgradeExecutorTest {
 				_releaseLocalService.deleteRelease(release);
 			}
 		}
+	}
+
+	@Test
+	public void testExecuteUpgradeInfosWithoutInterruptedUpgrade()
+		throws Exception {
+
+		_testExecuteUpgradeInfos(
+			FrameworkUtil.getBundle(UpgradeExecutorTest.class),
+			ReleaseConstants.STATE_GOOD);
 	}
 
 	@Test
@@ -374,6 +386,8 @@ public class UpgradeExecutorTest {
 	private JSONObject _getJSONObject(
 		List<JSONObject> jsonObjects, String sql) {
 
+		Assert.assertNotNull(jsonObjects);
+
 		for (JSONObject jsonObject : jsonObjects) {
 			String jsonObjectSQL = jsonObject.getString("sql");
 
@@ -393,16 +407,9 @@ public class UpgradeExecutorTest {
 
 		Map<String, List<JSONObject>> jsonObjectsMap = new HashMap<>();
 
-		File reportsDir = new File(PropsValues.LIFERAY_HOME, "reports");
+		File file = _getSQLAuditFile();
 
-		if (Validator.isNotNull(PropsValues.UPGRADE_REPORT_DIR)) {
-			reportsDir = new File(PropsValues.UPGRADE_REPORT_DIR);
-		}
-
-		for (String line :
-				Files.readAllLines(
-					new File(reportsDir, "upgrade_sql_audit.jsonl").toPath())) {
-
+		for (String line : Files.readAllLines(file.toPath())) {
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(line);
 
 			String upgradeStepId = jsonObject.getString("upgradeStepId");
@@ -418,6 +425,16 @@ public class UpgradeExecutorTest {
 		}
 
 		return jsonObjectsMap;
+	}
+
+	private File _getSQLAuditFile() {
+		File reportsDir = new File(PropsValues.LIFERAY_HOME, "reports");
+
+		if (Validator.isNotNull(PropsValues.UPGRADE_REPORT_DIR)) {
+			reportsDir = new File(PropsValues.UPGRADE_REPORT_DIR);
+		}
+
+		return new File(reportsDir, "upgrade_sql_audit.jsonl");
 	}
 
 	private List<?> _getUpgradeInfos(String bundleSymbolicName) {
