@@ -171,9 +171,11 @@ public class UpgradeRecorder {
 
 		_closeSQLAuditWriter();
 
+		UpgradeSQLRecorder.start();
+
 		_sqlAuditWriter = _createSQLAuditWriter();
 
-		UpgradeSQLRecorder.start(_sqlAuditWriter);
+		UpgradeSQLRecorder.setAuditWriter(_sqlAuditWriter);
 	}
 
 	public void stop() {
