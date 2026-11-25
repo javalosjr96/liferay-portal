@@ -5,6 +5,10 @@
 
 package com.liferay.portal.kernel.dao.db;
 
+import com.liferay.portal.kernel.util.HashMapBuilder;
+
+import java.util.Map;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -12,6 +16,17 @@ import org.junit.Test;
  * @author Mariano Álvaro Sáiz
  */
 public class DBTypeToSQLMapTest {
+
+	@Test
+	public void testGetDefaultSQLReturnsDefault() {
+		DBTypeToSQLMap dbTypeToSQLMap = new DBTypeToSQLMap(_SQL_DEFAULT);
+
+		dbTypeToSQLMap.add(DBType.MYSQL, _SQL_MYSQL);
+
+		String sql = dbTypeToSQLMap.getDefaultSQL();
+
+		Assert.assertEquals(_SQL_DEFAULT, sql);
+	}
 
 	@Test
 	public void testGetReturnsActual() {
@@ -33,6 +48,24 @@ public class DBTypeToSQLMapTest {
 		String sql = dbTypeToSQLMap.get(DBType.ORACLE);
 
 		Assert.assertEquals(_SQL_DEFAULT, sql);
+	}
+
+	@Test
+	public void testGetSQLsReturnsAdded() {
+		DBTypeToSQLMap dbTypeToSQLMap = new DBTypeToSQLMap(_SQL_DEFAULT);
+
+		dbTypeToSQLMap.add(DBType.MYSQL, _SQL_MYSQL);
+
+		Map<DBType, String> sqls = dbTypeToSQLMap.getSQLs();
+
+		Assert.assertEquals(
+			HashMapBuilder.put(
+				DBType.MYSQL, _SQL_MYSQL
+			).build(),
+			sqls);
+		Assert.assertThrows(
+			UnsupportedOperationException.class,
+			() -> sqls.put(DBType.ORACLE, _SQL_DEFAULT));
 	}
 
 	private static final String _SQL_DEFAULT = "select * from table";
