@@ -806,14 +806,14 @@ public abstract class BaseDBProcess implements DBProcess {
 			return;
 		}
 
+		String upgradeStepId = UpgradeSQLRecorder.getUpgradeStepId();
+
 		List<Future<Void>> futures = new ArrayList<>();
 		Map<Thread, PreparedStatement> preparedStatementHashMap =
 			new ConcurrentHashMap<>();
 		AtomicBoolean producerFinished = new AtomicBoolean();
 		BlockingQueue<T> queue = new ArrayBlockingQueue<>(size);
 		ThrowableCollector throwableCollector = new ThrowableCollector();
-
-		String upgradeStepId = UpgradeSQLRecorder.getUpgradeStepId();
 
 		boolean notificationEnabled = NotificationThreadLocal.isEnabled();
 		boolean workflowEnabled = WorkflowThreadLocal.isEnabled();
