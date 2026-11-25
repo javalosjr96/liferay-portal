@@ -65,6 +65,41 @@
 		</sequential>
 	</macrodef>
 
+	<macrodef name="run-upgrade-client-dry-run">
+		<attribute default="true" name="failonerror" />
+
+		<sequential>
+			<get-database-upgrade-client-paths />
+
+			<delete dir="${db.upgrade.client.home}/reports" failonerror="false" />
+
+			<if>
+				<or>
+					<isset property="env.LIFERAY_UPGRADE_PERIOD_REPORT_PERIOD_SQL_PERIOD_AUDIT_PERIOD_ENABLED" />
+					<resourcecontains
+						resource="${db.upgrade.client.home}/portal-upgrade-database.properties"
+						substring="upgrade.report.sql.audit.enabled"
+					/>
+					<resourcecontains
+						resource="${db.upgrade.client.home}/portal-upgrade-ext.properties"
+						substring="upgrade.report.sql.audit.enabled"
+					/>
+					<resourcecontains
+						resource="${liferay.home}/portal-ext.properties"
+						substring="upgrade.report.sql.audit.enabled"
+					/>
+				</or>
+				<then>
+					<fail message="The SQL audit is already enabled outside of the upgrade client dry run." />
+				</then>
+			</if>
+
+			<execute dir="${db.upgrade.client.home}" failonerror="@{failonerror}">
+				db_upgrade_client${file.suffix.bat} --dry-run
+			</execute>
+		</sequential>
+	</macrodef>
+
 	<macrodef name="send-sighup-to-upgrade-process">
 		<sequential>
 			<exec executable="/bin/bash" logError="true" output="true">
@@ -174,6 +209,62 @@
 		<echo>The upgrade client custom log file was created successfully.</echo>
 
 		<delete file="${db.upgrade.client.home}/logs/log_file.txt" />
+	</target>
+
+	<target name="check-upgrade-client-dry-run">
+		<run-upgrade-client-dry-run />
+
+		<local name="sql.audit.file.output" />
+
+		<loadfile
+			property="sql.audit.file.output"
+			srcfile="${db.upgrade.client.home}/reports/upgrade_sql_audit.jsonl"
+		/>
+
+		<if>
+			<not>
+				<contains string="${sql.audit.file.output}" substring="&quot;rowCount&quot;" />
+			</not>
+			<then>
+				<fail message="The upgrade client dry run SQL audit has no recorded statements." />
+			</then>
+		</if>
+
+		<echo>The upgrade client dry run wrote the SQL audit successfully.</echo>
+	</target>
+
+	<target name="check-upgrade-client-dry-run-failed-upgrade">
+		<run-upgrade-client-dry-run failonerror="false" />
+
+		<local name="sql.audit.failure.output" />
+
+		<loadfile
+			property="sql.audit.failure.output"
+			srcfile="${db.upgrade.client.home}/reports/upgrade_sql_audit.jsonl"
+		>
+			<filterchain>
+				<linecontains>
+					<contains value="&quot;type&quot;:&quot;failure&quot;" />
+				</linecontains>
+			</filterchain>
+		</loadfile>
+
+		<if>
+			<not>
+				<and>
+					<contains casesensitive="false" string="${sql.audit.failure.output}" substring="passwordtracker" />
+					<contains string="${sql.audit.failure.output}" substring=":31.1.0:0&quot;" />
+					<not>
+						<contains string="${sql.audit.failure.output}" substring="}${line.separator}{" />
+					</not>
+				</and>
+			</not>
+			<then>
+				<fail message="The upgrade client dry run SQL audit does not hold exactly one failure record for the failed step." />
+			</then>
+		</if>
+
+		<echo>The upgrade client dry run wrote the failure record successfully.</echo>
 	</target>
 
 	<target name="check-upgrade-client-gogoshell-command-output">

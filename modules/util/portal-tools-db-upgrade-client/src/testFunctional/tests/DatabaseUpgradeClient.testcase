@@ -31,6 +31,29 @@ definition {
 		AntCommands.runCommand("modules/util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml", "check-upgrade-client-custom-log");
 	}
 
+	@description = "LPD-117061: Upgrade client dry run writes the SQL audit"
+	@priority = 4
+	test CheckUpgradeClientDryRun {
+		property skip.get.testcase.database.properties = "true";
+		property skip.upgrade-legacy-database = "true";
+		property timeout.explicit.wait = "600";
+
+		AntCommands.runCommand("modules/util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml", "check-upgrade-client-dry-run");
+	}
+
+	@description = "LPD-117061: Upgrade client dry run writes the failure record on a failed upgrade"
+	@priority = 4
+	test CheckUpgradeClientDryRunFailedUpgrade {
+		property custom.mysql.sql.statement = "DROP TABLE PasswordTracker;";
+		property custom.postgresql.sql.statement = "DROP TABLE PasswordTracker;";
+		property custom.upgrade.properties = "module.framework.properties.osgi.console=80";
+		property skip.get.testcase.database.properties = "true";
+		property skip.upgrade-legacy-database = "true";
+		property timeout.explicit.wait = "600";
+
+		AntCommands.runCommand("modules/util/portal-tools-db-upgrade-client/src/testFunctional/ant/build-test-db-upgrade-client.xml", "check-upgrade-client-dry-run-failed-upgrade");
+	}
+
 	@description = "LPS-195984:  Upgrade client throws error when Gogo Shell is unable to connect."
 	@priority = 2
 	test CheckUpgradeClientFailedGogoShellReturnsError {
