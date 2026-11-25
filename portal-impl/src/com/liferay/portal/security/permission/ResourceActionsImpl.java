@@ -8,11 +8,13 @@ package com.liferay.portal.security.permission;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerList;
 import com.liferay.osgi.service.tracker.collections.list.ServiceTrackerListFactory;
 import com.liferay.petra.function.UnsafeConsumer;
+import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.CharPool;
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.db.partition.util.DBPartitionUtil;
 import com.liferay.portal.kernel.bean.BeanReference;
+import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.exception.ResourceActionsException;
 import com.liferay.portal.kernel.language.LanguageUtil;
 import com.liferay.portal.kernel.log.Log;
@@ -27,6 +29,7 @@ import com.liferay.portal.kernel.model.role.RoleConstants;
 import com.liferay.portal.kernel.module.util.SystemBundleUtil;
 import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.resource.bundle.ResourceBundleLoader;
+import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActions;
 import com.liferay.portal.kernel.service.GroupServiceUtil;
@@ -70,6 +73,7 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Consumer;
 
 /**
  * @author Brian Wing Shun Chan
@@ -475,25 +479,20 @@ public class ResourceActionsImpl implements ResourceActions {
 	public void populateModelResources(Document document)
 		throws ResourceActionsException {
 
-		DocumentType documentType = document.getDocumentType();
-
-		String publicId = GetterUtil.getString(documentType.getPublicId());
-
-		if (publicId.equals(
-				"-//Liferay//DTD Resource Action Mapping 6.0.0//EN")) {
-
-			if (_log.isWarnEnabled()) {
-				_log.warn("Please update document to use the 6.1.0 format");
-			}
-		}
-
-		Set<String> modelResourceNames = new HashSet<>();
-
-		_readModelResources(document.getRootElement(), modelResourceNames);
-
-		for (String modelResourceName : modelResourceNames) {
+		for (String modelResourceName : _getModelResourceNames(document)) {
 			_checkResourceActions(
 				getModelResourceActions(modelResourceName), modelResourceName);
+		}
+	}
+
+	@Override
+	public void populateModelResources(long companyId, Document document)
+		throws ResourceActionsException {
+
+		for (String modelResourceName : _getModelResourceNames(document)) {
+			_checkResourceActions(
+				companyId, getModelResourceActions(modelResourceName),
+				modelResourceName);
 		}
 	}
 
@@ -540,6 +539,54 @@ public class ResourceActionsImpl implements ResourceActions {
 
 		_checkResourceActions(
 			_getPortletResourceActions(portletResourceName, portlet),
+			portletResourceName);
+	}
+
+	@Override
+	public void populatePortletResource(
+			long companyId, Portlet portlet, ClassLoader classLoader,
+			Document document)
+		throws ResourceActionsException {
+
+		if (portlet == null) {
+			throw new IllegalArgumentException("Portlet must not be null");
+		}
+
+		_readPortletResource(document.getRootElement(), portlet);
+
+		String portletResourceName = PortletIdCodec.decodePortletName(
+			portlet.getPortletId());
+
+		_checkResourceActions(
+			companyId, _getPortletResourceActions(portletResourceName, portlet),
+			portletResourceName);
+	}
+
+	@Override
+	public void populatePortletResource(
+			long companyId, Portlet portlet, ClassLoader classLoader,
+			String... sources)
+		throws ResourceActionsException {
+
+		if (portlet == null) {
+			throw new IllegalArgumentException("Portlet must not be null");
+		}
+
+		if (ArrayUtil.isNotEmpty(sources) &&
+			PropsValues.RESOURCE_ACTIONS_READ_PORTLET_RESOURCES) {
+
+			for (String source : sources) {
+				_read(
+					classLoader, source,
+					rootElement -> _readPortletResource(rootElement, portlet));
+			}
+		}
+
+		String portletResourceName = PortletIdCodec.decodePortletName(
+			portlet.getPortletId());
+
+		_checkResourceActions(
+			companyId, _getPortletResourceActions(portletResourceName, portlet),
 			portletResourceName);
 	}
 
@@ -595,17 +642,7 @@ public class ResourceActionsImpl implements ResourceActions {
 			return;
 		}
 
-		ResourceActionsBag resourceActionsBag = _getResourceActionsBag(
-			name, false);
-
-		Set<String> resourceActions =
-			resourceActionsBag.getOwnerDefaultActions();
-
-		resourceActions.remove(action);
-
-		resourceActions = resourceActionsBag.getSupportsActions();
-
-		resourceActions.remove(action);
+		_removeModelResourceAction(name, action);
 
 		ResourceAction resourceAction =
 			resourceActionLocalService.fetchResourceAction(name, action);
@@ -616,103 +653,51 @@ public class ResourceActionsImpl implements ResourceActions {
 	}
 
 	@Override
-	public void removeModelResources(Document document) {
-		Element rootElement = document.getRootElement();
+	public void removeModelResource(
+		long companyId, String name, String action) {
 
-		for (Element modelResourceElement :
-				rootElement.elements("model-resource")) {
+		if (Validator.isNull(name) || Validator.isNull(action)) {
+			return;
+		}
 
-			String modelName = modelResourceElement.elementTextTrim(
-				"model-name");
+		_removeModelResourceAction(name, action);
 
-			if (Validator.isNull(modelName)) {
-				modelName = _getCompositeModelName(
-					modelResourceElement.element("composite-model-name"));
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					companyId, CTCollectionThreadLocal.getCTCollectionId())) {
+
+			ResourceAction resourceAction =
+				resourceActionLocalService.fetchResourceAction(name, action);
+
+			if (resourceAction != null) {
+				resourceActionLocalService.deleteResourceAction(
+					companyId, resourceAction);
 			}
-
-			Element portletRefElement = modelResourceElement.element(
-				"portlet-ref");
-
-			for (Element portletNameElement :
-					portletRefElement.elements("portlet-name")) {
-
-				String portletName = portletNameElement.getTextTrim();
-
-				String portletRootModelResourceName =
-					_portletRootModelResources.get(portletName);
-
-				if (Objects.equals(portletRootModelResourceName, modelName)) {
-					_portletRootModelResources.remove(portletName);
-				}
-
-				Set<String> portletResourceNames = _resourceReferences.get(
-					modelName);
-
-				if (portletResourceNames != null) {
-					portletResourceNames.remove(portletName);
-				}
-
-				Set<String> modelResourceNames = _resourceReferences.get(
-					portletName);
-
-				if (modelResourceNames == null) {
-					continue;
-				}
-
-				modelResourceNames.remove(modelName);
-
-				if (!modelResourceNames.isEmpty()) {
-					continue;
-				}
-
-				_resourceReferences.remove(portletName);
-			}
-
-			if (SetUtil.isNotEmpty(_resourceReferences.get(modelName))) {
-				continue;
-			}
-
-			for (ResourceAction resourceAction :
-					resourceActionLocalService.getResourceActions(modelName)) {
-
-				resourceActionLocalService.deleteResourceAction(resourceAction);
-			}
-
-			synchronized (_resourceActionsBags) {
-				_resourceActionsBags.remove(modelName);
-			}
-
-			_resourceReferences.remove(modelName);
-
-			_organizationModelResources.remove(modelName);
-
-			_modelResourceWeights.remove(modelName);
-
-			_portalModelResources.remove(modelName);
 		}
 	}
 
 	@Override
+	public void removeModelResources(Document document) {
+		_removeModelResources(document, this::_deleteResourceActions);
+	}
+
+	@Override
+	public void removeModelResources(long companyId, Document document) {
+		_removeModelResources(
+			document,
+			modelName -> _deleteResourceActions(companyId, modelName));
+	}
+
+	@Override
 	public void removePortletResources(Document document) {
-		Element rootElement = document.getRootElement();
+		_removePortletResources(document, this::_deleteResourceActions);
+	}
 
-		for (Element portletResourceElement :
-				rootElement.elements("portlet-resource")) {
-
-			String portletName = portletResourceElement.elementTextTrim(
-				"portlet-name");
-
-			List<ResourceAction> resourceActions =
-				resourceActionLocalService.getResourceActions(portletName);
-
-			for (ResourceAction resourceAction : resourceActions) {
-				resourceActionLocalService.deleteResourceAction(resourceAction);
-			}
-
-			synchronized (_resourceActionsBags) {
-				_resourceActionsBags.remove(portletName);
-			}
-		}
+	@Override
+	public void removePortletResources(long companyId, Document document) {
+		_removePortletResources(
+			document,
+			portletName -> _deleteResourceActions(companyId, portletName));
 	}
 
 	@BeanReference(type = PortletLocalService.class)
@@ -791,6 +776,39 @@ public class ResourceActionsImpl implements ResourceActions {
 		}
 	}
 
+	private void _checkResourceActions(
+		long companyId, List<String> actionIds, String name) {
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					companyId, CTCollectionThreadLocal.getCTCollectionId())) {
+
+			resourceActionLocalService.checkResourceActions(name, actionIds);
+		}
+	}
+
+	private void _deleteResourceActions(long companyId, String name) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					companyId, CTCollectionThreadLocal.getCTCollectionId())) {
+
+			for (ResourceAction resourceAction :
+					resourceActionLocalService.getResourceActions(name)) {
+
+				resourceActionLocalService.deleteResourceAction(
+					companyId, resourceAction);
+			}
+		}
+	}
+
+	private void _deleteResourceActions(String name) {
+		for (ResourceAction resourceAction :
+				resourceActionLocalService.getResourceActions(name)) {
+
+			resourceActionLocalService.deleteResourceAction(resourceAction);
+		}
+	}
+
 	private String _getCompositeModelName(Element compositeModelNameElement) {
 		StringBundler sb = new StringBundler();
 
@@ -828,6 +846,28 @@ public class ResourceActionsImpl implements ResourceActions {
 		}
 
 		return sb.toString();
+	}
+
+	private Set<String> _getModelResourceNames(Document document)
+		throws ResourceActionsException {
+
+		DocumentType documentType = document.getDocumentType();
+
+		String publicId = GetterUtil.getString(documentType.getPublicId());
+
+		if (publicId.equals(
+				"-//Liferay//DTD Resource Action Mapping 6.0.0//EN")) {
+
+			if (_log.isWarnEnabled()) {
+				_log.warn("Please update document to use the 6.1.0 format");
+			}
+		}
+
+		Set<String> modelResourceNames = new HashSet<>();
+
+		_readModelResources(document.getRootElement(), modelResourceNames);
+
+		return modelResourceNames;
 	}
 
 	private Element _getPermissionsChildElement(
@@ -1374,6 +1414,113 @@ public class ResourceActionsImpl implements ResourceActions {
 		layoutManagerActions.clear();
 
 		_readActionKeys(layoutManagerActions, layoutManagerElement);
+	}
+
+	private void _removeModelResourceAction(String name, String action) {
+		ResourceActionsBag resourceActionsBag = _getResourceActionsBag(
+			name, false);
+
+		Set<String> resourceActions =
+			resourceActionsBag.getOwnerDefaultActions();
+
+		resourceActions.remove(action);
+
+		resourceActions = resourceActionsBag.getSupportsActions();
+
+		resourceActions.remove(action);
+	}
+
+	private void _removeModelResources(
+		Document document, Consumer<String> deleteResourceActionsConsumer) {
+
+		Element rootElement = document.getRootElement();
+
+		for (Element modelResourceElement :
+				rootElement.elements("model-resource")) {
+
+			String modelName = modelResourceElement.elementTextTrim(
+				"model-name");
+
+			if (Validator.isNull(modelName)) {
+				modelName = _getCompositeModelName(
+					modelResourceElement.element("composite-model-name"));
+			}
+
+			Element portletRefElement = modelResourceElement.element(
+				"portlet-ref");
+
+			for (Element portletNameElement :
+					portletRefElement.elements("portlet-name")) {
+
+				String portletName = portletNameElement.getTextTrim();
+
+				String portletRootModelResourceName =
+					_portletRootModelResources.get(portletName);
+
+				if (Objects.equals(portletRootModelResourceName, modelName)) {
+					_portletRootModelResources.remove(portletName);
+				}
+
+				Set<String> portletResourceNames = _resourceReferences.get(
+					modelName);
+
+				if (portletResourceNames != null) {
+					portletResourceNames.remove(portletName);
+				}
+
+				Set<String> modelResourceNames = _resourceReferences.get(
+					portletName);
+
+				if (modelResourceNames == null) {
+					continue;
+				}
+
+				modelResourceNames.remove(modelName);
+
+				if (!modelResourceNames.isEmpty()) {
+					continue;
+				}
+
+				_resourceReferences.remove(portletName);
+			}
+
+			if (SetUtil.isNotEmpty(_resourceReferences.get(modelName))) {
+				continue;
+			}
+
+			deleteResourceActionsConsumer.accept(modelName);
+
+			synchronized (_resourceActionsBags) {
+				_resourceActionsBags.remove(modelName);
+			}
+
+			_resourceReferences.remove(modelName);
+
+			_organizationModelResources.remove(modelName);
+
+			_modelResourceWeights.remove(modelName);
+
+			_portalModelResources.remove(modelName);
+		}
+	}
+
+	private void _removePortletResources(
+		Document document, Consumer<String> deleteResourceActionsConsumer) {
+
+		Element rootElement = document.getRootElement();
+
+		for (Element portletResourceElement :
+				rootElement.elements("portlet-resource")) {
+
+			String portletName = portletResourceElement.elementTextTrim(
+				"portlet-name");
+
+			deleteResourceActionsConsumer.accept(portletName);
+
+			synchronized (_resourceActionsBags) {
+				_resourceActionsBags.remove(portletName);
+			}
+		}
 	}
 
 	private static final String _ACTION_NAME_PREFIX = "action.";
