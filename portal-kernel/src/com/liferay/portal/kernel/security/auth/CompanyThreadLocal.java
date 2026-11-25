@@ -28,7 +28,6 @@ import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -36,6 +35,26 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author Brian Wing Shun Chan
  */
 public class CompanyThreadLocal {
+
+	public static SafeCloseable carryPartitionScope(
+		long companyId, long partitionCompanyId) {
+
+		SafeCloseable partitionCompanyIdSafeCloseable =
+			setPartitionCompanyIdWithSafeCloseable(partitionCompanyId);
+
+		if (companyId == partitionCompanyId) {
+			return partitionCompanyIdSafeCloseable;
+		}
+
+		SafeCloseable companyIdSafeCloseable = setRawCompanyIdWithSafeCloseable(
+			companyId);
+
+		return () -> {
+			companyIdSafeCloseable.close();
+
+			partitionCompanyIdSafeCloseable.close();
+		};
+	}
 
 	public static User fetchGuestUser() {
 		Long companyId = _companyId.get();
@@ -109,6 +128,10 @@ public class CompanyThreadLocal {
 		}
 
 		return companyId;
+	}
+
+	public static Long getPartitionCompanyId() {
+		return _partitionCompanyId.get();
 	}
 
 	public static boolean isDefaultCompany() {
@@ -337,30 +360,6 @@ public class CompanyThreadLocal {
 		return () -> _locked.set(true);
 	}
 
-	static SafeCloseable carryPartitionScope(
-		long companyId, long partitionCompanyId) {
-
-		SafeCloseable partitionCompanyIdSafeCloseable =
-			setPartitionCompanyIdWithSafeCloseable(partitionCompanyId);
-
-		if (companyId == partitionCompanyId) {
-			return partitionCompanyIdSafeCloseable;
-		}
-
-		SafeCloseable companyIdSafeCloseable = setRawCompanyIdWithSafeCloseable(
-			companyId);
-
-		return () -> {
-			companyIdSafeCloseable.close();
-
-			partitionCompanyIdSafeCloseable.close();
-		};
-	}
-
-	static Long getPartitionCompanyId() {
-		return _partitionCompanyId.get();
-	}
-
 	private static void _syncLastDBPartitionSessionState() {
 		if (PropsValues.DATABASE_PARTITION_ENABLED) {
 			LastSessionRecorderHelperUtil.syncLastSessionState(false);
@@ -374,16 +373,19 @@ public class CompanyThreadLocal {
 
 		StackWalker stackWalker = StackWalker.getInstance();
 
-		Optional<String> callSiteOptional = stackWalker.walk(
+		String callSite = stackWalker.walk(
 			stackFrames -> stackFrames.filter(
 				stackFrame -> !Objects.equals(
 					stackFrame.getClassName(),
 					CompanyThreadLocal.class.getName())
 			).map(
 				StackWalker.StackFrame::toString
-			).findFirst());
+			).findFirst(
+			).orElse(
+				StringPool.BLANK
+			));
 
-		if (!_warnedCallSites.add(callSiteOptional.orElse(StringPool.BLANK))) {
+		if (!_warnedCallSites.add(callSite)) {
 			return;
 		}
 
