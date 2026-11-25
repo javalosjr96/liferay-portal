@@ -134,7 +134,7 @@ public class ResourceActionLocalServiceTest {
 							company2.getCompanyId())) {
 
 				_resourceActionLocalService.deleteResourceAction(
-					TestPropsValues.getCompanyId(), resourceAction);
+					company1.getCompanyId(), resourceAction);
 
 				List<LogEntry> logEntries = logCapture.getLogEntries();
 
@@ -194,7 +194,7 @@ public class ResourceActionLocalServiceTest {
 		Role role = _roleLocalService.getRole(companyId, RoleConstants.USER);
 
 		ResourcePermission resourcePermission =
-			_resourcePermissionLocalService.fetchResourcePermission(
+			_resourcePermissionLocalService.getResourcePermission(
 				companyId, _NAME, ResourceConstants.SCOPE_COMPANY,
 				String.valueOf(companyId), role.getRoleId());
 

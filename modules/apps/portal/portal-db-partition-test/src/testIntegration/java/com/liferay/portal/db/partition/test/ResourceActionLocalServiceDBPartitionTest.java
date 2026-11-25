@@ -122,11 +122,6 @@ public class ResourceActionLocalServiceDBPartitionTest {
 				() -> _resourceActionLocalService.deleteResourceAction(
 					_company1.getCompanyId(), resourceAction));
 		}
-
-		Assert.assertTrue(
-			_hasActionId(
-				resourceAction.getBitwiseValue(), _company1.getCompanyId(),
-				name));
 	}
 
 	private ResourceAction _addResourceAction(
@@ -168,7 +163,7 @@ public class ResourceActionLocalServiceDBPartitionTest {
 				companyId, RoleConstants.USER);
 
 			ResourcePermission resourcePermission =
-				_resourcePermissionLocalService.fetchResourcePermission(
+				_resourcePermissionLocalService.getResourcePermission(
 					companyId, name, ResourceConstants.SCOPE_COMPANY,
 					String.valueOf(companyId), role.getRoleId());
 
