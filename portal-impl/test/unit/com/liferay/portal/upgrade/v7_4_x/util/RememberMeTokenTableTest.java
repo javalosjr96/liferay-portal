@@ -5,10 +5,14 @@
 
 package com.liferay.portal.upgrade.v7_4_x.util;
 
+import com.liferay.petra.string.StringBundler;
+import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.upgrade.DescribableUpgradeStep;
+import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.junit.Assert;
 import org.junit.ClassRule;
@@ -27,8 +31,10 @@ public class RememberMeTokenTableTest {
 
 	@Test
 	public void testCreate() {
+		UpgradeProcess upgradeProcess = RememberMeTokenTable.create();
+
 		DescribableUpgradeStep describableUpgradeStep =
-			(DescribableUpgradeStep)RememberMeTokenTable.create();
+			(DescribableUpgradeStep)upgradeProcess;
 
 		Assert.assertEquals(
 			"createTableIfMissing", describableUpgradeStep.getOperation());
@@ -39,7 +45,20 @@ public class RememberMeTokenTableTest {
 
 		String sql = (String)arguments.get("sql");
 
-		Assert.assertTrue(sql, sql.startsWith("create table RememberMeToken ("));
+		Assert.assertTrue(sql.startsWith("create table RememberMeToken ("));
+
+		String upgradeInfo = ReflectionTestUtil.getFieldValue(
+			upgradeProcess, "_upgradeInfo");
+
+		Assert.assertTrue(
+			upgradeInfo,
+			upgradeInfo.matches(
+				StringBundler.concat(
+					Pattern.quote(RememberMeTokenTable.class.getName()),
+					":\\d+ - ",
+					Pattern.quote(
+						"Modifying schema to create table RememberMeToken if " +
+							"it does not exist"))));
 	}
 
 }
