@@ -1,5 +1,5 @@
 /**
- * SPDX-FileCopyrightText: (c) 2000 Liferay, Inc. https://liferay.com
+ * SPDX-FileCopyrightText: (c) 2026 Liferay, Inc. https://liferay.com
  * SPDX-License-Identifier: LGPL-2.1-or-later OR LicenseRef-Liferay-DXP-EULA-2.0.0-2023-06
  */
 
@@ -139,7 +139,8 @@ public class ResourceActionLocalServiceDBPartitionTest {
 			_resourceActionLocalService.checkResourceActions(
 				name, Arrays.asList(ActionKeys.VIEW, actionId));
 
-			Role role = _roleLocalService.getRole(companyId, RoleConstants.USER);
+			Role role = _roleLocalService.getRole(
+				companyId, RoleConstants.USER);
 
 			_resourcePermissionLocalService.setResourcePermissions(
 				companyId, name, ResourceConstants.SCOPE_COMPANY,
@@ -157,14 +158,14 @@ public class ResourceActionLocalServiceDBPartitionTest {
 		}
 	}
 
-	private boolean _hasActionId(
-			long bitwiseValue, long companyId, String name)
+	private boolean _hasActionId(long bitwiseValue, long companyId, String name)
 		throws Exception {
 
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId)) {
 
-			Role role = _roleLocalService.getRole(companyId, RoleConstants.USER);
+			Role role = _roleLocalService.getRole(
+				companyId, RoleConstants.USER);
 
 			ResourcePermission resourcePermission =
 				_resourcePermissionLocalService.fetchResourcePermission(
