@@ -57,8 +57,9 @@ public class SAPEntryUpgradeProcessTest {
 
 		Company company = CompanyTestUtil.addCompany();
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				company.getCompanyId())) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+					company.getCompanyId())) {
 
 			SAPEntry sapEntry = _sapEntryLocalService.fetchSAPEntry(
 				company.getCompanyId(),

@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
-import java.util.function.Consumer;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -112,16 +111,6 @@ public class CompanyThreadLocalTest {
 		}
 
 		Assert.assertFalse(CompanyThreadLocal.isInPartitionScope());
-	}
-
-	@Test
-	public void testLock() {
-		_testLock(CompanyThreadLocal::setCompanyId);
-	}
-
-	@Test
-	public void testLockWithSetWithSafeCloseable() {
-		_testLock(CompanyThreadLocal::setCompanyIdWithSafeCloseable);
 	}
 
 	@Test
@@ -229,7 +218,6 @@ public class CompanyThreadLocalTest {
 	public void testSetCompanyIdWithSafeCloseableInPartitionScope() {
 		long companyId1 = RandomTestUtil.randomLong();
 		long companyId2 = RandomTestUtil.randomLong();
-		long companyId3 = RandomTestUtil.randomLong();
 
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				CompanyThreadLocal.class.getName(), LoggerTestUtil.WARN)) {
@@ -291,12 +279,6 @@ public class CompanyThreadLocalTest {
 					logEntry.getMessage());
 				Assert.assertNotNull(logEntry.getThrowable());
 
-				try (SafeCloseable safeCloseable2 = CompanyThreadLocal.lock(
-						companyId3)) {
-
-					Assert.assertTrue(CompanyThreadLocal.isLocked());
-				}
-
 				try (SafeCloseable safeCloseable2 =
 						CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 							CompanyConstants.SYSTEM)) {
@@ -321,7 +303,7 @@ public class CompanyThreadLocalTest {
 				CompanyThreadLocal.setCompanyId(companyId1);
 
 				Assert.assertEquals(
-					logEntries.toString(), 6, logEntries.size());
+					logEntries.toString(), 5, logEntries.size());
 			}
 		}
 	}
@@ -368,49 +350,6 @@ public class CompanyThreadLocalTest {
 		}
 
 		Assert.assertFalse(CompanyThreadLocal.isInPartitionScope());
-		Assert.assertEquals(
-			originalCompanyId, CompanyThreadLocal.getCompanyId());
-	}
-
-	@Test
-	public void testUnlock() {
-		try (SafeCloseable safeCloseable1 = CompanyThreadLocal.lock(
-				CompanyConstants.SYSTEM)) {
-
-			try (SafeCloseable safeCloseable2 = CompanyThreadLocal.unlock();
-				SafeCloseable safeCloseable3 =
-					CompanyThreadLocal.setCompanyIdWithSafeCloseable(1L)) {
-
-				Assert.assertEquals(
-					Long.valueOf(1), CompanyThreadLocal.getCompanyId());
-			}
-
-			Assert.assertTrue(CompanyThreadLocal.isLocked());
-		}
-
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.unlock()) {
-			Assert.assertFalse(CompanyThreadLocal.isLocked());
-		}
-
-		Assert.assertFalse(CompanyThreadLocal.isLocked());
-	}
-
-	private void _testLock(Consumer<Long> consumer) {
-		long companyId = RandomTestUtil.randomLong();
-		long lockedCompanyId = RandomTestUtil.randomLong();
-
-		Long originalCompanyId = CompanyThreadLocal.getCompanyId();
-
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				lockedCompanyId)) {
-
-			consumer.accept(companyId);
-
-			Assert.assertEquals(
-				Long.valueOf(companyId), CompanyThreadLocal.getCompanyId());
-			Assert.assertTrue(CompanyThreadLocal.isLocked());
-		}
-
 		Assert.assertEquals(
 			originalCompanyId, CompanyThreadLocal.getCompanyId());
 	}

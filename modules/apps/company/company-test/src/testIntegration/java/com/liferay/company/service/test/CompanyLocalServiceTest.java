@@ -1061,8 +1061,9 @@ public class CompanyLocalServiceTest {
 		try (LogCapture logCapture = LoggerTestUtil.configureLog4JLogger(
 				"com.liferay.portal.service.impl.CompanyLocalServiceImpl",
 				LoggerTestUtil.WARN);
-			SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				PortalInstancePool.getDefaultCompanyId())) {
+			SafeCloseable safeCloseable =
+				CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+					PortalInstancePool.getDefaultCompanyId())) {
 
 			_companyLocalService.forEachCompanyId(
 				companyIds::add, new long[] {invalidCompanyId});
@@ -1088,8 +1089,9 @@ public class CompanyLocalServiceTest {
 
 		long invalidCompanyId = RandomTestUtil.nextLong();
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				PortalInstancePool.getDefaultCompanyId())) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+					PortalInstancePool.getDefaultCompanyId())) {
 
 			_companyLocalService.forEachCompany(
 				company -> companyIds.add(CompanyThreadLocal.getCompanyId()),

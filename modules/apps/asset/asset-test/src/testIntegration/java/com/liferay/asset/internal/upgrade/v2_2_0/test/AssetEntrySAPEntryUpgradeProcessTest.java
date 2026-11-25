@@ -46,8 +46,9 @@ public class AssetEntrySAPEntryUpgradeProcessTest {
 	public void testUpgrade() throws Exception {
 		Company company = CompanyTestUtil.addCompany();
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				company.getCompanyId())) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+					company.getCompanyId())) {
 
 			SAPEntry sapEntry = _sapEntryLocalService.fetchSAPEntry(
 				company.getCompanyId(), _SAP_ENTRY_NAME);
