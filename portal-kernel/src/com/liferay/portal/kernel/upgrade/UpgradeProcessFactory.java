@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.util.ListUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -243,7 +244,7 @@ public class UpgradeProcessFactory {
 
 			super(upgradeInfo);
 
-			_arguments = arguments;
+			_arguments = Collections.unmodifiableMap(arguments);
 			_operation = operation;
 		}
 
