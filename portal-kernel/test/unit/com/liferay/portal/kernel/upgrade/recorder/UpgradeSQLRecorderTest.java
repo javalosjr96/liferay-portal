@@ -7,12 +7,15 @@ package com.liferay.portal.kernel.upgrade.recorder;
 
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.CharPool;
+import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.test.util.RandomTestUtil;
+import com.liferay.portal.kernel.upgrade.UpgradeException;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.io.Writer;
@@ -41,6 +44,50 @@ public class UpgradeSQLRecorderTest {
 	@After
 	public void tearDown() {
 		UpgradeSQLRecorder.stop();
+	}
+
+	@Test
+	public void testAddFailedTableName() throws Exception {
+		StringWriter stringWriter = _startWithAuditWriter();
+
+		long companyId = RandomTestUtil.randomLong();
+		SQLException sqlException = new SQLException(
+			RandomTestUtil.randomString());
+		String tableName = RandomTestUtil.randomString();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId)) {
+
+			UpgradeSQLRecorder.addFailedTableName(sqlException, tableName);
+		}
+
+		UpgradeSQLRecorder.writeUpgradeStepFailure(
+			RandomTestUtil.randomString(), new Exception(sqlException));
+
+		String line = _getLastLine(stringWriter);
+
+		Assert.assertEquals(
+			String.valueOf(companyId), _getValue(line, "companyId"));
+		Assert.assertEquals(StringPool.BLANK, _getValue(line, "sql"));
+		Assert.assertEquals(tableName, _getValue(line, "table"));
+	}
+
+	@Test
+	public void testRemoveFailedSQL() throws Exception {
+		StringWriter stringWriter = _startWithAuditWriter();
+
+		SQLException sqlException = _executeFailingStatement(
+			"update " + RandomTestUtil.randomString() + " set a = 1");
+
+		UpgradeSQLRecorder.removeFailedSQL(sqlException);
+
+		UpgradeSQLRecorder.writeUpgradeStepFailure(
+			RandomTestUtil.randomString(), sqlException);
+
+		String line = _getLastLine(stringWriter);
+
+		Assert.assertEquals(StringPool.BLANK, _getValue(line, "sql"));
+		Assert.assertEquals(StringPool.BLANK, _getValue(line, "table"));
 	}
 
 	@Test
@@ -344,6 +391,224 @@ public class UpgradeSQLRecorderTest {
 		Assert.assertEquals(StringPool.BLANK, stringWriter.toString());
 	}
 
+	@Test
+	public void testStopWithFailedStatement() throws Exception {
+		_startWithAuditWriter();
+
+		SQLException sqlException = _executeFailingStatement(
+			"update " + RandomTestUtil.randomString() + " set a = 1");
+
+		UpgradeSQLRecorder.stop();
+
+		StringWriter stringWriter = new StringWriter();
+
+		UpgradeSQLRecorder.setAuditWriter(stringWriter);
+
+		UpgradeSQLRecorder.writeUpgradeStepFailure(
+			RandomTestUtil.randomString(), sqlException);
+
+		Assert.assertEquals(
+			StringPool.BLANK, _getValue(_getLastLine(stringWriter), "sql"));
+	}
+
+	@Test
+	public void testWriteUpgradeStepFailure() throws Exception {
+		StringWriter stringWriter = new StringWriter();
+
+		UpgradeSQLRecorder.start();
+
+		UpgradeSQLRecorder.setAuditWriter(new BufferedWriter(stringWriter));
+
+		long companyId = RandomTestUtil.randomLong();
+
+		try (SafeCloseable safeCloseable1 =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId)) {
+
+			String tableName = RandomTestUtil.randomString();
+
+			String sql = StringBundler.concat(
+				"update ", tableName, " set ", RandomTestUtil.randomString(),
+				" = ?");
+
+			SQLException sqlException = _executeFailingStatement(sql);
+
+			String upgradeStepId = RandomTestUtil.randomString();
+
+			try (SafeCloseable safeCloseable2 =
+					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+						RandomTestUtil.randomLong())) {
+
+				UpgradeSQLRecorder.writeUpgradeStepFailure(
+					upgradeStepId,
+					new UpgradeException(new Exception(sqlException)));
+			}
+
+			List<String> lines = _getLines(stringWriter);
+
+			Assert.assertEquals(lines.toString(), 2, lines.size());
+
+			String line = lines.get(1);
+
+			Assert.assertEquals(
+				SQLException.class.getName(), _getValue(line, "className"));
+			Assert.assertEquals(
+				String.valueOf(companyId), _getValue(line, "companyId"));
+			Assert.assertEquals(
+				String.valueOf(sqlException.getErrorCode()),
+				_getValue(line, "errorCode"));
+			Assert.assertEquals(
+				sqlException.getMessage(), _getValue(line, "message"));
+			Assert.assertEquals(sql, _getValue(line, "sql"));
+			Assert.assertEquals(
+				sqlException.getSQLState(), _getValue(line, "sqlState"));
+			Assert.assertEquals(tableName, _getValue(line, "table"));
+			Assert.assertEquals("failure", _getValue(line, "type"));
+			Assert.assertEquals(
+				upgradeStepId, _getValue(line, "upgradeStepId"));
+		}
+	}
+
+	@Test
+	public void testWriteUpgradeStepFailureWithFailingWriter()
+		throws Exception {
+
+		Writer writer = Mockito.mock(Writer.class);
+
+		Mockito.doThrow(
+			new IOException(RandomTestUtil.randomString())
+		).when(
+			writer
+		).write(
+			Mockito.anyString()
+		);
+
+		UpgradeSQLRecorder.start();
+
+		UpgradeSQLRecorder.setAuditWriter(writer);
+
+		UpgradeSQLRecorder.writeUpgradeStepFailure(
+			RandomTestUtil.randomString(), new Exception());
+		UpgradeSQLRecorder.writeUpgradeStepFailure(
+			RandomTestUtil.randomString(), new Exception());
+
+		Mockito.verify(
+			writer, Mockito.times(1)
+		).write(
+			Mockito.anyString()
+		);
+	}
+
+	@Test
+	public void testWriteUpgradeStepFailureWithNullWriter() throws Exception {
+		UpgradeSQLRecorder.start();
+
+		UpgradeSQLRecorder.setAuditWriter(null);
+
+		SQLException sqlException = _executeFailingStatement(
+			"update " + RandomTestUtil.randomString() + " set a = 1");
+
+		UpgradeSQLRecorder.writeUpgradeStepFailure(
+			RandomTestUtil.randomString(), sqlException);
+
+		StringWriter stringWriter = new StringWriter();
+
+		UpgradeSQLRecorder.setAuditWriter(stringWriter);
+
+		UpgradeSQLRecorder.writeUpgradeStepFailure(
+			RandomTestUtil.randomString(), sqlException);
+
+		List<String> lines = _getLines(stringWriter);
+
+		Assert.assertEquals(lines.toString(), 1, lines.size());
+
+		String line = lines.get(0);
+
+		Assert.assertEquals(
+			sqlException.getSQLState(), _getValue(line, "sqlState"));
+		Assert.assertEquals(StringPool.BLANK, _getValue(line, "sql"));
+	}
+
+	@Test
+	public void testWriteUpgradeStepFailureWithTableName() throws Exception {
+		String tableName = RandomTestUtil.randomString();
+
+		_testWriteUpgradeStepFailureWithTableName(
+			"alter table " + tableName + " add column a VARCHAR(75)",
+			tableName);
+		_testWriteUpgradeStepFailureWithTableName(
+			"create index if not exists IX_A on " + tableName + " (a)",
+			tableName);
+		_testWriteUpgradeStepFailureWithTableName(
+			"CREATE TABLE " + tableName + " (a INTEGER)", tableName);
+		_testWriteUpgradeStepFailureWithTableName(
+			"create unique index IX_A on " + tableName + " (a)", tableName);
+		_testWriteUpgradeStepFailureWithTableName(
+			"delete from " + tableName, tableName);
+		_testWriteUpgradeStepFailureWithTableName(
+			"drop table if exists `" + tableName + "`", tableName);
+		_testWriteUpgradeStepFailureWithTableName(
+			"insert into \"" + tableName + "\" (a) values (?)", tableName);
+		_testWriteUpgradeStepFailureWithTableName(
+			"select a from " + tableName, StringPool.BLANK);
+		_testWriteUpgradeStepFailureWithTableName(
+			"truncate table [" + tableName + "]", tableName);
+		_testWriteUpgradeStepFailureWithTableName(
+			StringBundler.concat(
+				"update ", RandomTestUtil.randomString(), ".", tableName,
+				" set a = 1"),
+			tableName);
+	}
+
+	@Test
+	public void testWriteUpgradeStepFailureWithWrappedSQLException()
+		throws Exception {
+
+		StringWriter stringWriter = _startWithAuditWriter();
+
+		String sql = "update " + RandomTestUtil.randomString() + " set a = 1";
+
+		SQLException sqlException = _executeFailingStatement(sql);
+
+		UpgradeSQLRecorder.writeUpgradeStepFailure(
+			RandomTestUtil.randomString(),
+			new Exception(new SQLException(sqlException)));
+
+		String line = _getLastLine(stringWriter);
+
+		Assert.assertEquals(
+			String.valueOf(sqlException.getErrorCode()),
+			_getValue(line, "errorCode"));
+		Assert.assertEquals(sql, _getValue(line, "sql"));
+		Assert.assertEquals(
+			sqlException.getSQLState(), _getValue(line, "sqlState"));
+	}
+
+	@Test
+	public void testWriteUpgradeStepFailureWithoutSQLException()
+		throws Exception {
+
+		StringWriter stringWriter = _startWithAuditWriter();
+
+		String message = RandomTestUtil.randomString();
+
+		UpgradeSQLRecorder.writeUpgradeStepFailure(
+			RandomTestUtil.randomString(),
+			new IllegalStateException(new RuntimeException(message)));
+
+		String line = _getLastLine(stringWriter);
+
+		Assert.assertEquals(
+			RuntimeException.class.getName(), _getValue(line, "className"));
+		Assert.assertEquals(
+			String.valueOf(CompanyThreadLocal.getCompanyId()),
+			_getValue(line, "companyId"));
+		Assert.assertEquals("0", _getValue(line, "errorCode"));
+		Assert.assertEquals(message, _getValue(line, "message"));
+		Assert.assertEquals(StringPool.BLANK, _getValue(line, "sql"));
+		Assert.assertEquals(StringPool.BLANK, _getValue(line, "sqlState"));
+		Assert.assertEquals(StringPool.BLANK, _getValue(line, "table"));
+	}
+
 	private Statement _createStatement(Statement statement)
 		throws SQLException {
 
@@ -359,6 +624,38 @@ public class UpgradeSQLRecorderTest {
 			connection);
 
 		return wrappedConnection.createStatement();
+	}
+
+	private SQLException _executeFailingStatement(String sql)
+		throws SQLException {
+
+		SQLException sqlException = new SQLException(
+			RandomTestUtil.randomString(), RandomTestUtil.randomString(),
+			RandomTestUtil.randomInt(),
+			new IOException(RandomTestUtil.randomString()));
+
+		PreparedStatement preparedStatement = Mockito.mock(
+			PreparedStatement.class);
+
+		Mockito.when(
+			preparedStatement.executeUpdate()
+		).thenThrow(
+			sqlException
+		);
+
+		PreparedStatement wrappedPreparedStatement = _prepareStatement(
+			preparedStatement, sql);
+
+		Assert.assertThrows(
+			SQLException.class, wrappedPreparedStatement::executeUpdate);
+
+		return sqlException;
+	}
+
+	private String _getLastLine(StringWriter stringWriter) {
+		List<String> lines = _getLines(stringWriter);
+
+		return lines.get(lines.size() - 1);
 	}
 
 	private List<String> _getLines(StringWriter stringWriter) {
@@ -407,6 +704,21 @@ public class UpgradeSQLRecorderTest {
 		UpgradeSQLRecorder.setAuditWriter(stringWriter);
 
 		return stringWriter;
+	}
+
+	private void _testWriteUpgradeStepFailureWithTableName(
+			String sql, String tableName)
+		throws Exception {
+
+		StringWriter stringWriter = _startWithAuditWriter();
+
+		SQLException sqlException = _executeFailingStatement(sql);
+
+		UpgradeSQLRecorder.writeUpgradeStepFailure(
+			RandomTestUtil.randomString(), sqlException);
+
+		Assert.assertEquals(
+			tableName, _getValue(_getLastLine(stringWriter), "table"));
 	}
 
 }

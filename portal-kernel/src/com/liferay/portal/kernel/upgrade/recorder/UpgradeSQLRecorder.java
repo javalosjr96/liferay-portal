@@ -18,6 +18,7 @@ import com.liferay.portal.kernel.dao.jdbc.util.StatementWrapper;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.PropsValues;
 import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.util.Validator;
@@ -32,15 +33,34 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CopyOnWriteArraySet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author István András Dézsi
  */
 public class UpgradeSQLRecorder {
+
+	public static void addFailedTableName(
+		SQLException sqlException, String tableName) {
+
+		if (_writer == null) {
+			return;
+		}
+
+		_failedStatements.put(
+			sqlException,
+			new FailedStatement(
+				CompanyThreadLocal.getCompanyId(), sqlException,
+				StringPool.BLANK, tableName));
+	}
 
 	public static Connection getConnectionWrapper(Connection connection) {
 		return getConnectionWrapper(connection, StringPool.BLANK);
@@ -193,6 +213,8 @@ public class UpgradeSQLRecorder {
 	public static void removeFailedSQL(SQLException sqlException) {
 		_failedSQLs.removeIf(
 			failedSQL -> failedSQL._sqlException == sqlException);
+
+		_failedStatements.remove(sqlException);
 	}
 
 	public static void setAuditWriter(Writer writer) {
@@ -209,13 +231,84 @@ public class UpgradeSQLRecorder {
 		_enabled = true;
 
 		_failedSQLs.clear();
+		_failedStatements.clear();
 
 		_runningSQLs.clear();
 	}
 
 	public static void stop() {
 		_enabled = false;
+
+		_failedStatements.clear();
+
 		_writer = null;
+	}
+
+	public static void writeUpgradeStepFailure(
+		String upgradeStepId, Throwable throwable) {
+
+		Writer writer = _writer;
+
+		if (writer == null) {
+			return;
+		}
+
+		FailedStatement failedStatement = _removeFailedStatement(throwable);
+
+		SQLException sqlException = _fetchSQLException(throwable);
+
+		if (failedStatement != null) {
+			sqlException = failedStatement._sqlException;
+		}
+
+		Throwable causeThrowable = _getRootCauseThrowable(throwable);
+		int errorCode = 0;
+		String sqlState = StringPool.BLANK;
+
+		if (sqlException != null) {
+			causeThrowable = sqlException;
+			errorCode = sqlException.getErrorCode();
+			sqlState = GetterUtil.getString(sqlException.getSQLState());
+		}
+
+		long companyId = CompanyThreadLocal.getCompanyId();
+		String sql = StringPool.BLANK;
+		String tableName = StringPool.BLANK;
+
+		if (failedStatement != null) {
+			companyId = failedStatement._companyId;
+			sql = failedStatement._sql;
+			tableName = failedStatement._tableName;
+		}
+
+		try {
+			Class<?> clazz = causeThrowable.getClass();
+
+			writer.write(
+				StringBundler.concat(
+					"{\"cause\":{\"className\":\"", clazz.getName(),
+					"\",\"errorCode\":", errorCode, ",\"message\":\"",
+					_escapeJSON(
+						GetterUtil.getString(causeThrowable.getMessage())),
+					"\",\"sqlState\":\"", _escapeJSON(sqlState),
+					"\"},\"companyId\":", companyId,
+					",\"object\":{\"table\":\"", _escapeJSON(tableName),
+					"\"},\"sql\":\"", _escapeJSON(sql),
+					"\",\"type\":\"failure\",\"upgradeStepId\":\"",
+					_escapeJSON(upgradeStepId), "\"}\n"));
+
+			writer.flush();
+		}
+		catch (IOException ioException) {
+			if (_writer == writer) {
+				_writer = null;
+			}
+
+			if (_log.isWarnEnabled()) {
+				_log.warn(
+					"Unable to write the upgrade step failure", ioException);
+			}
+		}
 	}
 
 	public static class FailedSQL {
@@ -384,6 +477,20 @@ public class UpgradeSQLRecorder {
 		catch (SQLException sqlException) {
 			String sql = _extractSQL(object);
 
+			if (writer != null) {
+				String failedStatementSQL = preparedSQL;
+
+				if (failedStatementSQL == null) {
+					failedStatementSQL = GetterUtil.getString(sql);
+				}
+
+				_failedStatements.put(
+					sqlException,
+					new FailedStatement(
+						CompanyThreadLocal.getCompanyId(), sqlException,
+						failedStatementSQL, _getTableName(failedStatementSQL)));
+			}
+
 			if (sql != null) {
 				sql += StringPool.SEMICOLON;
 
@@ -459,6 +566,30 @@ public class UpgradeSQLRecorder {
 		return null;
 	}
 
+	private static SQLException _fetchSQLException(Throwable throwable) {
+		while (throwable != null) {
+			if (throwable instanceof SQLException) {
+				return (SQLException)throwable;
+			}
+
+			throwable = throwable.getCause();
+		}
+
+		return null;
+	}
+
+	private static Throwable _getRootCauseThrowable(Throwable throwable) {
+		Throwable causeThrowable = throwable.getCause();
+
+		while (causeThrowable != null) {
+			throwable = causeThrowable;
+
+			causeThrowable = throwable.getCause();
+		}
+
+		return throwable;
+	}
+
 	private static long _getRowCountSafely(Object result, Statement statement) {
 		if (result instanceof Integer) {
 			return (Integer)result;
@@ -492,6 +623,33 @@ public class UpgradeSQLRecorder {
 		}
 
 		return -1;
+	}
+
+	private static String _getTableName(String sql) {
+		Matcher matcher = _tableNamePattern.matcher(sql);
+
+		if (!matcher.lookingAt()) {
+			return StringPool.BLANK;
+		}
+
+		return matcher.group(1);
+	}
+
+	private static FailedStatement _removeFailedStatement(Throwable throwable) {
+		while (throwable != null) {
+			if (throwable instanceof SQLException) {
+				FailedStatement failedStatement = _failedStatements.remove(
+					throwable);
+
+				if (failedStatement != null) {
+					return failedStatement;
+				}
+			}
+
+			throwable = throwable.getCause();
+		}
+
+		return null;
 	}
 
 	private static <T extends Statement> T _wrap(
@@ -687,18 +845,47 @@ public class UpgradeSQLRecorder {
 	private static boolean _enabled;
 	private static final List<FailedSQL> _failedSQLs =
 		new CopyOnWriteArrayList<>();
+	private static final Map<SQLException, FailedStatement> _failedStatements =
+		Collections.synchronizedMap(new IdentityHashMap<>());
 	private static final Set<RunningSQL> _runningSQLs =
 		new CopyOnWriteArraySet<>();
 	private static final CentralizedThreadLocal<Boolean> _skipRecording =
 		new CentralizedThreadLocal<>(
 			UpgradeSQLRecorder.class.getName() + "._skipRecording",
 			() -> Boolean.FALSE);
+	private static final Pattern _tableNamePattern = Pattern.compile(
+		StringBundler.concat(
+			"\\s*(?:alter\\s+table|create\\s+(?:unique\\s+)?index\\s+",
+			"(?:if\\s+not\\s+exists\\s+)?\\S+\\s+on|(?:create|drop|truncate)",
+			"\\s+table|delete\\s+from|insert\\s+into|update)\\s+",
+			"(?:if\\s+(?:not\\s+)?exists\\s+)?",
+			"(?:[\"`\\[]?[\\w$]+[\"`\\]]?\\.)?[\"`\\[]?([\\w$]+)"),
+		Pattern.CASE_INSENSITIVE);
 	private static volatile String _upgradeProcessClassName = StringPool.BLANK;
 	private static final CentralizedThreadLocal<String> _upgradeStepId =
 		new CentralizedThreadLocal<>(
 			UpgradeSQLRecorder.class.getName() + "._upgradeStepId",
 			() -> StringPool.BLANK);
 	private static volatile Writer _writer;
+
+	private static class FailedStatement {
+
+		private FailedStatement(
+			long companyId, SQLException sqlException, String sql,
+			String tableName) {
+
+			_companyId = companyId;
+			_sqlException = sqlException;
+			_sql = sql;
+			_tableName = tableName;
+		}
+
+		private final long _companyId;
+		private final String _sql;
+		private final SQLException _sqlException;
+		private final String _tableName;
+
+	}
 
 	@FunctionalInterface
 	private interface SQLCallable<R> {
