@@ -7,9 +7,15 @@ package com.liferay.portal.kernel.upgrade;
 
 import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
+import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.db.DBTypeToSQLMap;
+import com.liferay.portal.kernel.util.HashMapBuilder;
+import com.liferay.portal.kernel.util.ListUtil;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Luis Ortiz Fuentes
@@ -19,7 +25,13 @@ public class UpgradeProcessFactory {
 	public static UpgradeProcess addColumns(
 		String tableName, String... columnDefinitions) {
 
-		return new UpgradeProcess(
+		return new DescribableUpgradeProcess(
+			HashMapBuilder.<String, Object>put(
+				"columnDefinitions", ListUtil.fromArray(columnDefinitions)
+			).put(
+				"tableName", tableName
+			).build(),
+			"addColumns",
 			_getUpgradeInfo(
 				tableName,
 				"add the columns " + Arrays.toString(columnDefinitions))) {
@@ -42,7 +54,15 @@ public class UpgradeProcessFactory {
 	public static UpgradeProcess alterColumnName(
 		String tableName, String oldColumnName, String newColumnName) {
 
-		return new UpgradeProcess(
+		return new DescribableUpgradeProcess(
+			HashMapBuilder.<String, Object>put(
+				"newColumnName", newColumnName
+			).put(
+				"oldColumnName", oldColumnName
+			).put(
+				"tableName", tableName
+			).build(),
+			"alterColumnName",
 			_getUpgradeInfo(
 				tableName,
 				StringBundler.concat(
@@ -60,7 +80,15 @@ public class UpgradeProcessFactory {
 	public static UpgradeProcess alterColumnType(
 		String tableName, String columnName, String newColumnType) {
 
-		return new UpgradeProcess(
+		return new DescribableUpgradeProcess(
+			HashMapBuilder.<String, Object>put(
+				"columnName", columnName
+			).put(
+				"newColumnType", newColumnType
+			).put(
+				"tableName", tableName
+			).build(),
+			"alterColumnType",
 			_getUpgradeInfo(
 				tableName,
 				StringBundler.concat(
@@ -78,7 +106,13 @@ public class UpgradeProcessFactory {
 	public static UpgradeProcess dropColumns(
 		String tableName, String... columnNames) {
 
-		return new UpgradeProcess(
+		return new DescribableUpgradeProcess(
+			HashMapBuilder.<String, Object>put(
+				"columnNames", ListUtil.fromArray(columnNames)
+			).put(
+				"tableName", tableName
+			).build(),
+			"dropColumns",
 			_getUpgradeInfo(
 				tableName,
 				"drop the columns " + Arrays.toString(columnNames))) {
@@ -94,7 +128,11 @@ public class UpgradeProcessFactory {
 	}
 
 	public static UpgradeProcess dropTables(String... tableNames) {
-		return new UpgradeProcess(
+		return new DescribableUpgradeProcess(
+			HashMapBuilder.<String, Object>put(
+				"tableNames", ListUtil.fromArray(tableNames)
+			).build(),
+			"dropTables",
 			_getUpgradeInfo("drop tables " + Arrays.toString(tableNames))) {
 
 			@Override
@@ -108,7 +146,11 @@ public class UpgradeProcessFactory {
 	}
 
 	public static UpgradeProcess runSQL(DBTypeToSQLMap... dbTypeToSQLMaps) {
-		return new UpgradeProcess(_getUpgradeInfo("run SQL updates")) {
+		return new DescribableUpgradeProcess(
+			HashMapBuilder.<String, Object>put(
+				"dbTypeToSQLMaps", _getSQLs(dbTypeToSQLMaps)
+			).build(),
+			"runSQL", _getUpgradeInfo("run SQL updates")) {
 
 			@Override
 			protected void doUpgrade() throws Exception {
@@ -121,7 +163,11 @@ public class UpgradeProcessFactory {
 	}
 
 	public static UpgradeProcess runSQL(String... sqls) {
-		return new UpgradeProcess(_getUpgradeInfo("run SQL updates")) {
+		return new DescribableUpgradeProcess(
+			HashMapBuilder.<String, Object>put(
+				"sqls", ListUtil.fromArray(sqls)
+			).build(),
+			"runSQL", _getUpgradeInfo("run SQL updates")) {
 
 			@Override
 			protected void doUpgrade() throws Exception {
@@ -149,6 +195,30 @@ public class UpgradeProcessFactory {
 		return UpgradeProcessFactory.class.getName();
 	}
 
+	private static List<Map<String, String>> _getSQLs(
+		DBTypeToSQLMap[] dbTypeToSQLMaps) {
+
+		List<Map<String, String>> sqls = new ArrayList<>();
+
+		for (DBTypeToSQLMap dbTypeToSQLMap : dbTypeToSQLMaps) {
+			Map<String, String> dbTypeSQLs = HashMapBuilder.put(
+				"default", dbTypeToSQLMap.getDefaultSQL()
+			).build();
+
+			Map<DBType, String> explicitSQLs = dbTypeToSQLMap.getSQLs();
+
+			for (Map.Entry<DBType, String> entry : explicitSQLs.entrySet()) {
+				DBType dbType = entry.getKey();
+
+				dbTypeSQLs.put(dbType.getName(), entry.getValue());
+			}
+
+			sqls.add(dbTypeSQLs);
+		}
+
+		return sqls;
+	}
+
 	private static String _getUpgradeInfo(String message) {
 		return _getUpgradeInfo(null, "Modifying schema to " + message);
 	}
@@ -162,6 +232,34 @@ public class UpgradeProcessFactory {
 
 		return StringBundler.concat(
 			caller, " - Modifying table ", tableName, " to ", message);
+	}
+
+	private abstract static class DescribableUpgradeProcess
+		extends UpgradeProcess implements DescribableUpgradeStep {
+
+		public DescribableUpgradeProcess(
+			Map<String, Object> arguments, String operation,
+			String upgradeInfo) {
+
+			super(upgradeInfo);
+
+			_arguments = arguments;
+			_operation = operation;
+		}
+
+		@Override
+		public Map<String, Object> getArguments() {
+			return _arguments;
+		}
+
+		@Override
+		public String getOperation() {
+			return _operation;
+		}
+
+		private final Map<String, Object> _arguments;
+		private final String _operation;
+
 	}
 
 }
