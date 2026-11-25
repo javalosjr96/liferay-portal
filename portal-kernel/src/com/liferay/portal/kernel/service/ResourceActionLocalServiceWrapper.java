@@ -130,6 +130,15 @@ public class ResourceActionLocalServiceWrapper
 			resourceActionId);
 	}
 
+	@Override
+	public com.liferay.portal.kernel.model.ResourceAction deleteResourceAction(
+		long companyId,
+		com.liferay.portal.kernel.model.ResourceAction resourceAction) {
+
+		return _resourceActionLocalService.deleteResourceAction(
+			companyId, resourceAction);
+	}
+
 	/**
 	 * Deletes the resource action from the database. Also notifies the appropriate model listeners.
 	 *
@@ -410,4 +419,4 @@ public class ResourceActionLocalServiceWrapper
 	private ResourceActionLocalService _resourceActionLocalService;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:831804535
+// LIFERAY-SERVICE-BUILDER-HASH:-487099087
