@@ -73,6 +73,7 @@ import java.util.Objects;
 import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /**
@@ -501,18 +502,8 @@ public class ResourceActionsImpl implements ResourceActions {
 			Portlet portlet, ClassLoader classLoader, Document document)
 		throws ResourceActionsException {
 
-		if (portlet == null) {
-			throw new IllegalArgumentException("Portlet must not be null");
-		}
-
-		_readPortletResource(document.getRootElement(), portlet);
-
-		String portletResourceName = PortletIdCodec.decodePortletName(
-			portlet.getPortletId());
-
-		_checkResourceActions(
-			_getPortletResourceActions(portletResourceName, portlet),
-			portletResourceName);
+		_populatePortletResource(
+			portlet, document, this::_checkResourceActions);
 	}
 
 	@Override
@@ -520,26 +511,8 @@ public class ResourceActionsImpl implements ResourceActions {
 			Portlet portlet, ClassLoader classLoader, String... sources)
 		throws ResourceActionsException {
 
-		if (portlet == null) {
-			throw new IllegalArgumentException("Portlet must not be null");
-		}
-
-		if (ArrayUtil.isNotEmpty(sources) &&
-			PropsValues.RESOURCE_ACTIONS_READ_PORTLET_RESOURCES) {
-
-			for (String source : sources) {
-				_read(
-					classLoader, source,
-					rootElement -> _readPortletResource(rootElement, portlet));
-			}
-		}
-
-		String portletResourceName = PortletIdCodec.decodePortletName(
-			portlet.getPortletId());
-
-		_checkResourceActions(
-			_getPortletResourceActions(portletResourceName, portlet),
-			portletResourceName);
+		_populatePortletResource(
+			portlet, classLoader, sources, this::_checkResourceActions);
 	}
 
 	@Override
@@ -548,18 +521,10 @@ public class ResourceActionsImpl implements ResourceActions {
 			Document document)
 		throws ResourceActionsException {
 
-		if (portlet == null) {
-			throw new IllegalArgumentException("Portlet must not be null");
-		}
-
-		_readPortletResource(document.getRootElement(), portlet);
-
-		String portletResourceName = PortletIdCodec.decodePortletName(
-			portlet.getPortletId());
-
-		_checkResourceActions(
-			companyId, _getPortletResourceActions(portletResourceName, portlet),
-			portletResourceName);
+		_populatePortletResource(
+			portlet, document,
+			(actionIds, name) -> _checkResourceActions(
+				companyId, actionIds, name));
 	}
 
 	@Override
@@ -568,26 +533,10 @@ public class ResourceActionsImpl implements ResourceActions {
 			String... sources)
 		throws ResourceActionsException {
 
-		if (portlet == null) {
-			throw new IllegalArgumentException("Portlet must not be null");
-		}
-
-		if (ArrayUtil.isNotEmpty(sources) &&
-			PropsValues.RESOURCE_ACTIONS_READ_PORTLET_RESOURCES) {
-
-			for (String source : sources) {
-				_read(
-					classLoader, source,
-					rootElement -> _readPortletResource(rootElement, portlet));
-			}
-		}
-
-		String portletResourceName = PortletIdCodec.decodePortletName(
-			portlet.getPortletId());
-
-		_checkResourceActions(
-			companyId, _getPortletResourceActions(portletResourceName, portlet),
-			portletResourceName);
+		_populatePortletResource(
+			portlet, classLoader, sources,
+			(actionIds, name) -> _checkResourceActions(
+				companyId, actionIds, name));
 	}
 
 	@Override
@@ -1071,6 +1020,52 @@ public class ResourceActionsImpl implements ResourceActions {
 		}
 
 		return types;
+	}
+
+	private void _populatePortletResource(
+			Portlet portlet, ClassLoader classLoader, String[] sources,
+			BiConsumer<List<String>, String> checkResourceActionsBiConsumer)
+		throws ResourceActionsException {
+
+		if (portlet == null) {
+			throw new IllegalArgumentException("Portlet must not be null");
+		}
+
+		if (ArrayUtil.isNotEmpty(sources) &&
+			PropsValues.RESOURCE_ACTIONS_READ_PORTLET_RESOURCES) {
+
+			for (String source : sources) {
+				_read(
+					classLoader, source,
+					rootElement -> _readPortletResource(rootElement, portlet));
+			}
+		}
+
+		String portletResourceName = PortletIdCodec.decodePortletName(
+			portlet.getPortletId());
+
+		checkResourceActionsBiConsumer.accept(
+			_getPortletResourceActions(portletResourceName, portlet),
+			portletResourceName);
+	}
+
+	private void _populatePortletResource(
+			Portlet portlet, Document document,
+			BiConsumer<List<String>, String> checkResourceActionsBiConsumer)
+		throws ResourceActionsException {
+
+		if (portlet == null) {
+			throw new IllegalArgumentException("Portlet must not be null");
+		}
+
+		_readPortletResource(document.getRootElement(), portlet);
+
+		String portletResourceName = PortletIdCodec.decodePortletName(
+			portlet.getPortletId());
+
+		checkResourceActionsBiConsumer.accept(
+			_getPortletResourceActions(portletResourceName, portlet),
+			portletResourceName);
 	}
 
 	private void _read(
