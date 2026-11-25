@@ -169,7 +169,7 @@ public class DBUpgradeClientTest {
 			Collections.singletonList("--help"), StringPool.BLANK, 0,
 			Collections.singletonList("-Dlauncher=launcher.sh"),
 			"Usage: launcher.sh [parameters]",
-			"Liferay Portal Tools Database Upgrade Client");
+			"Liferay Portal Tools Database Upgrade Client", "--dry-run");
 	}
 
 	@Test
