@@ -335,8 +335,9 @@ public class UpgradeRecorder {
 		catch (IOException ioException) {
 			if (_log.isWarnEnabled()) {
 				_log.warn(
-					"Unable to create the upgrade SQL audit at " +
-						file.getPath(),
+					StringBundler.concat(
+						"Unable to create the upgrade SQL audit at \"",
+						file.getPath(), "\""),
 					ioException);
 			}
 

@@ -413,8 +413,10 @@ public class PortalUpgradeProcess extends UpgradeProcess {
 				try (SafeCloseable safeCloseable =
 						UpgradeSQLRecorder.setUpgradeStepIdWithSafeCloseable(
 							StringBundler.concat(
-								"portal:", fromSchemaVersion, StringPool.COLON,
-								pendingSchemaVersion, StringPool.COLON, i))) {
+								ReleaseConstants.DEFAULT_SERVLET_CONTEXT_NAME,
+								StringPool.COLON, fromSchemaVersion,
+								StringPool.COLON, pendingSchemaVersion,
+								StringPool.COLON, i))) {
 
 					upgrade(upgradeProcesses.get(i));
 				}
