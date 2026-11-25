@@ -243,25 +243,20 @@ public class UpgradeSQLRecorder {
 
 		long companyId = CompanyThreadLocal.getCompanyId();
 		String sql = StringPool.BLANK;
-		SQLException sqlException = null;
+		SQLException sqlException = _getSQLException(throwable);
 
-		if (failedStatement == null) {
-			sqlException = _getSQLException(throwable);
-		}
-		else {
+		if (failedStatement != null) {
 			companyId = failedStatement._companyId;
 			sql = failedStatement._sql;
 			sqlException = failedStatement._sqlException;
 		}
 
-		Throwable cause = sqlException;
+		Throwable cause = _getRootCause(throwable);
 		int errorCode = 0;
 		String sqlState = StringPool.BLANK;
 
-		if (sqlException == null) {
-			cause = _getRootCause(throwable);
-		}
-		else {
+		if (sqlException != null) {
+			cause = sqlException;
 			errorCode = sqlException.getErrorCode();
 			sqlState = GetterUtil.getString(sqlException.getSQLState());
 		}
