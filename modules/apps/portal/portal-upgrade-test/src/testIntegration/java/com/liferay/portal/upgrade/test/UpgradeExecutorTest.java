@@ -8,6 +8,7 @@ package com.liferay.portal.upgrade.test;
 import com.liferay.arquillian.extension.junit.bridge.junit.Arquillian;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
@@ -81,101 +82,41 @@ public class UpgradeExecutorTest {
 	}
 
 	@Test
-	public void testExecuteUpgradeInfosWithFailedUpgradeStep()
+	public void testExecuteUpgradeInfosWithFailedAlterColumnType()
 		throws Exception {
 
-		Bundle bundle = FrameworkUtil.getBundle(UpgradeExecutorTest.class);
+		String columnName = RandomTestUtil.randomString();
 
-		String bundleSymbolicName = bundle.getSymbolicName();
+		_testExecuteUpgradeInfosWithFailedUpgradeStep(
+			new UpgradeProcess() {
 
-		_releaseLocalService.addRelease(bundleSymbolicName, "1.0.0");
+				@Override
+				protected void doUpgrade() throws Exception {
+					alterColumnType("Release_", columnName, "VARCHAR(75) null");
+				}
+
+			},
+			StringPool.BLANK, "Release_");
+	}
+
+	@Test
+	public void testExecuteUpgradeInfosWithFailedUpgradeStep()
+		throws Exception {
 
 		String tableName = RandomTestUtil.randomString();
 
 		String sql = "update " + tableName + " set value = 1";
 
-		UpgradeProcess upgradeProcess = new UpgradeProcess() {
+		_testExecuteUpgradeInfosWithFailedUpgradeStep(
+			new UpgradeProcess() {
 
-			@Override
-			protected void doUpgrade() throws Exception {
-				runSQL(sql);
-			}
+				@Override
+				protected void doUpgrade() throws Exception {
+					runSQL(sql);
+				}
 
-		};
-
-		try (SafeCloseable safeCloseable =
-				PropsValuesTestUtil.swapWithSafeCloseable(
-					"UPGRADE_REPORT_SQL_AUDIT_ENABLED", true)) {
-
-			BundleContext bundleContext = bundle.getBundleContext();
-
-			try (SafeCloseable autoRunSafeCloseable =
-					PropsValuesTestUtil.swapWithSafeCloseable(
-						"UPGRADE_DATABASE_AUTO_RUN", false, false)) {
-
-				_serviceRegistration = bundleContext.registerService(
-					UpgradeStepRegistrator.class,
-					upgradeStepRegistry -> upgradeStepRegistry.register(
-						"1.0.0", "2.0.0", upgradeProcess),
-					null);
-			}
-
-			File file = _getSQLAuditFile();
-
-			file.delete();
-
-			ReflectionTestUtil.invoke(
-				_upgradeRecorder, "start", new Class<?>[0]);
-
-			try {
-				Assert.assertThrows(
-					Exception.class,
-					() -> ReflectionTestUtil.invoke(
-						_upgradeExecutor, "executeUpgradeInfos",
-						new Class<?>[] {Bundle.class, List.class}, bundle,
-						_getUpgradeInfos(bundleSymbolicName)));
-			}
-			finally {
-				ReflectionTestUtil.invoke(
-					_upgradeRecorder, "stop", new Class<?>[0]);
-			}
-
-			List<JSONObject> failureJSONObjects = _getFailureJSONObjects(
-				_getJSONObjectsMap(bundleSymbolicName));
-
-			Assert.assertEquals(
-				failureJSONObjects.toString(), 1, failureJSONObjects.size());
-
-			JSONObject failureJSONObject = failureJSONObjects.get(0);
-
-			JSONObject causeJSONObject = failureJSONObject.getJSONObject(
-				"cause");
-
-			Assert.assertTrue(
-				Validator.isNotNull(causeJSONObject.getString("sqlState")));
-
-			JSONObject objectJSONObject = failureJSONObject.getJSONObject(
-				"object");
-
-			Assert.assertEquals(tableName, objectJSONObject.getString("table"));
-
-			Assert.assertEquals(sql, failureJSONObject.getString("sql"));
-			Assert.assertEquals(
-				bundleSymbolicName + ":1.0.0:2.0.0:0",
-				failureJSONObject.getString("upgradeStepId"));
-		}
-		finally {
-			File file = _getSQLAuditFile();
-
-			file.delete();
-
-			Release release = _releaseLocalService.fetchRelease(
-				bundleSymbolicName);
-
-			if (release != null) {
-				_releaseLocalService.deleteRelease(release);
-			}
-		}
+			},
+			sql, tableName);
 	}
 
 	@Test
@@ -642,6 +583,85 @@ public class UpgradeExecutorTest {
 		}
 		finally {
 			release = _releaseLocalService.fetchRelease(bundleSymbolicName);
+
+			if (release != null) {
+				_releaseLocalService.deleteRelease(release);
+			}
+		}
+	}
+
+	private void _testExecuteUpgradeInfosWithFailedUpgradeStep(
+			UpgradeProcess upgradeProcess, String sql, String tableName)
+		throws Exception {
+
+		Bundle bundle = FrameworkUtil.getBundle(UpgradeExecutorTest.class);
+
+		String bundleSymbolicName = bundle.getSymbolicName();
+
+		_releaseLocalService.addRelease(bundleSymbolicName, "1.0.0");
+
+		try (SafeCloseable safeCloseable =
+				PropsValuesTestUtil.swapWithSafeCloseable(
+					"UPGRADE_REPORT_SQL_AUDIT_ENABLED", true)) {
+
+			BundleContext bundleContext = bundle.getBundleContext();
+
+			try (SafeCloseable autoRunSafeCloseable =
+					PropsValuesTestUtil.swapWithSafeCloseable(
+						"UPGRADE_DATABASE_AUTO_RUN", false, false)) {
+
+				_serviceRegistration = bundleContext.registerService(
+					UpgradeStepRegistrator.class,
+					upgradeStepRegistry -> upgradeStepRegistry.register(
+						"1.0.0", "2.0.0", upgradeProcess),
+					null);
+			}
+
+			File file = _getSQLAuditFile();
+
+			file.delete();
+
+			ReflectionTestUtil.invoke(
+				_upgradeRecorder, "start", new Class<?>[0]);
+
+			try {
+				Assert.assertThrows(
+					Exception.class,
+					() -> ReflectionTestUtil.invoke(
+						_upgradeExecutor, "executeUpgradeInfos",
+						new Class<?>[] {Bundle.class, List.class}, bundle,
+						_getUpgradeInfos(bundleSymbolicName)));
+			}
+			finally {
+				ReflectionTestUtil.invoke(
+					_upgradeRecorder, "stop", new Class<?>[0]);
+			}
+
+			List<JSONObject> failureJSONObjects = _getFailureJSONObjects(
+				_getJSONObjectsMap(bundleSymbolicName));
+
+			Assert.assertEquals(
+				failureJSONObjects.toString(), 1, failureJSONObjects.size());
+
+			JSONObject failureJSONObject = failureJSONObjects.get(0);
+
+			JSONObject objectJSONObject = failureJSONObject.getJSONObject(
+				"object");
+
+			Assert.assertEquals(tableName, objectJSONObject.getString("table"));
+
+			Assert.assertEquals(sql, failureJSONObject.getString("sql"));
+			Assert.assertEquals(
+				bundleSymbolicName + ":1.0.0:2.0.0:0",
+				failureJSONObject.getString("upgradeStepId"));
+		}
+		finally {
+			File file = _getSQLAuditFile();
+
+			file.delete();
+
+			Release release = _releaseLocalService.fetchRelease(
+				bundleSymbolicName);
 
 			if (release != null) {
 				_releaseLocalService.deleteRelease(release);

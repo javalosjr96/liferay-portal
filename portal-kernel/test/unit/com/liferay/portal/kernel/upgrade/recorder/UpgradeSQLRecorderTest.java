@@ -47,6 +47,32 @@ public class UpgradeSQLRecorderTest {
 	}
 
 	@Test
+	public void testAddFailedTableName() throws Exception {
+		StringWriter stringWriter = _startWithAuditWriter();
+
+		long companyId = RandomTestUtil.randomLong();
+		SQLException sqlException = new SQLException(
+			RandomTestUtil.randomString());
+		String tableName = RandomTestUtil.randomString();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId)) {
+
+			UpgradeSQLRecorder.addFailedTableName(sqlException, tableName);
+		}
+
+		UpgradeSQLRecorder.writeUpgradeStepFailure(
+			RandomTestUtil.randomString(), new Exception(sqlException));
+
+		String line = _getLastLine(stringWriter);
+
+		Assert.assertEquals(
+			String.valueOf(companyId), _getValue(line, "companyId"));
+		Assert.assertEquals(StringPool.BLANK, _getValue(line, "sql"));
+		Assert.assertEquals(tableName, _getValue(line, "table"));
+	}
+
+	@Test
 	public void testRemoveFailedSQL() throws Exception {
 		StringWriter stringWriter = _startWithAuditWriter();
 
