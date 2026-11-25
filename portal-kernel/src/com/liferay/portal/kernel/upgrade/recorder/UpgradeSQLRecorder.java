@@ -366,6 +366,8 @@ public class UpgradeSQLRecorder {
 			return sqlCallable.call();
 		}
 
+		Writer writer = _writer;
+
 		long startTime = System.currentTimeMillis();
 
 		long rowCount = -1;
@@ -373,7 +375,9 @@ public class UpgradeSQLRecorder {
 		try {
 			T result = sqlCallable.call();
 
-			rowCount = _getRowCountSafely(result, statement);
+			if (writer != null) {
+				rowCount = _getRowCountSafely(result, statement);
+			}
 
 			return result;
 		}
@@ -399,9 +403,11 @@ public class UpgradeSQLRecorder {
 		finally {
 			_executeFinally(object, startTime);
 
-			_writeAuditLine(
-				System.currentTimeMillis() - startTime, object, rowCount,
-				preparedSQL);
+			if (writer != null) {
+				_writeAuditLine(
+					System.currentTimeMillis() - startTime, object, rowCount,
+					preparedSQL, writer);
+			}
 		}
 	}
 
@@ -643,13 +649,8 @@ public class UpgradeSQLRecorder {
 	}
 
 	private static void _writeAuditLine(
-		long duration, Object object, long rowCount, String sql) {
-
-		Writer writer = _writer;
-
-		if (writer == null) {
-			return;
-		}
+		long duration, Object object, long rowCount, String sql,
+		Writer writer) {
 
 		if (sql == null) {
 			sql = _extractSQL(object);
@@ -668,7 +669,9 @@ public class UpgradeSQLRecorder {
 					_escapeJSON(_upgradeStepId.get()), "\"}\n"));
 		}
 		catch (IOException ioException) {
-			_writer = null;
+			if (_writer == writer) {
+				_writer = null;
+			}
 
 			if (_log.isWarnEnabled()) {
 				_log.warn("Unable to write the upgrade SQL audit", ioException);
