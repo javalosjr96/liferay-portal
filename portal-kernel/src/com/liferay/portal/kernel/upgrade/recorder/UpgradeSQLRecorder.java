@@ -251,24 +251,25 @@ public class UpgradeSQLRecorder {
 			sqlException = failedStatement._sqlException;
 		}
 
-		Throwable cause = _getRootCause(throwable);
+		Throwable causeThrowable = _getRootCauseThrowable(throwable);
 		int errorCode = 0;
 		String sqlState = StringPool.BLANK;
 
 		if (sqlException != null) {
-			cause = sqlException;
+			causeThrowable = sqlException;
 			errorCode = sqlException.getErrorCode();
 			sqlState = GetterUtil.getString(sqlException.getSQLState());
 		}
 
-		Class<?> clazz = cause.getClass();
+		Class<?> clazz = causeThrowable.getClass();
 
 		try {
 			writer.write(
 				StringBundler.concat(
 					"{\"cause\":{\"className\":\"", clazz.getName(),
 					"\",\"errorCode\":", errorCode, ",\"message\":\"",
-					_escapeJSON(GetterUtil.getString(cause.getMessage())),
+					_escapeJSON(
+						GetterUtil.getString(causeThrowable.getMessage())),
 					"\",\"sqlState\":\"", _escapeJSON(sqlState),
 					"\"},\"companyId\":", companyId,
 					",\"object\":{\"table\":\"",
@@ -563,13 +564,13 @@ public class UpgradeSQLRecorder {
 		return null;
 	}
 
-	private static Throwable _getRootCause(Throwable throwable) {
-		Throwable cause = throwable.getCause();
+	private static Throwable _getRootCauseThrowable(Throwable throwable) {
+		Throwable causeThrowable = throwable.getCause();
 
-		while (cause != null) {
-			throwable = cause;
+		while (causeThrowable != null) {
+			throwable = causeThrowable;
 
-			cause = throwable.getCause();
+			causeThrowable = throwable.getCause();
 		}
 
 		return throwable;
@@ -834,11 +835,12 @@ public class UpgradeSQLRecorder {
 			UpgradeSQLRecorder.class.getName() + "._skipRecording",
 			() -> Boolean.FALSE);
 	private static final Pattern _tableNamePattern = Pattern.compile(
-		"\\s*(?:alter\\s+table|create\\s+(?:unique\\s+)?index\\s+" +
-			"(?:if\\s+not\\s+exists\\s+)?\\S+\\s+on|(?:create|drop|truncate)" +
-				"\\s+table|delete\\s+from|insert\\s+into|update)\\s+" +
-					"(?:if\\s+(?:not\\s+)?exists\\s+)?" +
-						"(?:[\"`\\[]?[\\w$]+[\"`\\]]?\\.)?[\"`\\[]?([\\w$]+)",
+		StringBundler.concat(
+			"\\s*(?:alter\\s+table|create\\s+(?:unique\\s+)?index\\s+",
+			"(?:if\\s+not\\s+exists\\s+)?\\S+\\s+on|(?:create|drop|truncate)",
+			"\\s+table|delete\\s+from|insert\\s+into|update)\\s+",
+			"(?:if\\s+(?:not\\s+)?exists\\s+)?",
+			"(?:[\"`\\[]?[\\w$]+[\"`\\]]?\\.)?[\"`\\[]?([\\w$]+)"),
 		Pattern.CASE_INSENSITIVE);
 	private static volatile String _upgradeProcessClassName = StringPool.BLANK;
 	private static final CentralizedThreadLocal<String> _upgradeStepId =
