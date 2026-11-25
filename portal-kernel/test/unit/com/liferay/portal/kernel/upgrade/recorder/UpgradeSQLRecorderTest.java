@@ -13,7 +13,9 @@ import com.liferay.portal.kernel.test.util.RandomTestUtil;
 import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.io.IOException;
 import java.io.StringWriter;
+import java.io.Writer;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -113,9 +115,32 @@ public class UpgradeSQLRecorderTest {
 
 			wrappedQueryPreparedStatement.executeQuery();
 
+			int updateCount = RandomTestUtil.randomInt();
+
+			PreparedStatement executePreparedStatement = Mockito.mock(
+				PreparedStatement.class);
+
+			Mockito.when(
+				executePreparedStatement.execute()
+			).thenReturn(
+				false
+			);
+
+			Mockito.when(
+				executePreparedStatement.getUpdateCount()
+			).thenReturn(
+				updateCount
+			);
+
+			PreparedStatement wrappedExecutePreparedStatement =
+				_prepareStatement(
+					executePreparedStatement, RandomTestUtil.randomString());
+
+			wrappedExecutePreparedStatement.execute();
+
 			List<String> lines = _getLines(stringWriter);
 
-			Assert.assertEquals(lines.toString(), 4, lines.size());
+			Assert.assertEquals(lines.toString(), 5, lines.size());
 
 			String line = lines.get(0);
 
@@ -133,6 +158,9 @@ public class UpgradeSQLRecorderTest {
 				_getValue(lines.get(1), "rowCount"));
 			Assert.assertEquals("-1", _getValue(lines.get(2), "rowCount"));
 			Assert.assertEquals("-1", _getValue(lines.get(3), "rowCount"));
+			Assert.assertEquals(
+				String.valueOf(updateCount),
+				_getValue(lines.get(4), "rowCount"));
 		}
 	}
 
@@ -217,6 +245,41 @@ public class UpgradeSQLRecorderTest {
 	}
 
 	@Test
+	public void testSetAuditWriterWithFailingWriter() throws Exception {
+		Writer writer = Mockito.mock(Writer.class);
+
+		Mockito.doThrow(
+			new IOException(RandomTestUtil.randomString())
+		).when(
+			writer
+		).write(
+			Mockito.anyString()
+		);
+
+		UpgradeSQLRecorder.start();
+
+		UpgradeSQLRecorder.setAuditWriter(writer);
+
+		PreparedStatement wrappedPreparedStatement1 = _prepareStatement(
+			Mockito.mock(PreparedStatement.class),
+			RandomTestUtil.randomString());
+
+		wrappedPreparedStatement1.executeUpdate();
+
+		PreparedStatement wrappedPreparedStatement2 = _prepareStatement(
+			Mockito.mock(PreparedStatement.class),
+			RandomTestUtil.randomString());
+
+		wrappedPreparedStatement2.executeUpdate();
+
+		Mockito.verify(
+			writer, Mockito.times(1)
+		).write(
+			Mockito.anyString()
+		);
+	}
+
+	@Test
 	public void testSetAuditWriterWithNullWriter() throws Exception {
 		UpgradeSQLRecorder.start();
 
@@ -264,6 +327,21 @@ public class UpgradeSQLRecorderTest {
 
 		Assert.assertEquals(
 			StringPool.BLANK, UpgradeSQLRecorder.getUpgradeStepId());
+	}
+
+	@Test
+	public void testStop() throws Exception {
+		StringWriter stringWriter = _startWithAuditWriter();
+
+		PreparedStatement wrappedPreparedStatement = _prepareStatement(
+			Mockito.mock(PreparedStatement.class),
+			RandomTestUtil.randomString());
+
+		UpgradeSQLRecorder.stop();
+
+		wrappedPreparedStatement.executeUpdate();
+
+		Assert.assertEquals(StringPool.BLANK, stringWriter.toString());
 	}
 
 	private Statement _createStatement(Statement statement)
