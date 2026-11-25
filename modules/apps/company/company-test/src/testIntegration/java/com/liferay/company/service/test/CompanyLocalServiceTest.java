@@ -1053,6 +1053,41 @@ public class CompanyLocalServiceTest {
 	}
 
 	@Test
+	public void testForEachCompany() {
+		List<Long> companyIds = new ArrayList<>();
+
+		_companyLocalService.forEachCompany(
+			company -> companyIds.add(company.getCompanyId()));
+
+		Assert.assertTrue(companyIds.contains(_company.getCompanyId()));
+	}
+
+	@Test
+	public void testForEachCompanyId() {
+		List<Long> companyIds = new ArrayList<>();
+
+		_companyLocalService.forEachCompanyId(companyIds::add);
+
+		Assert.assertTrue(companyIds.contains(_company.getCompanyId()));
+	}
+
+	@Test
+	public void testForEachCompanyIdInPartitionScope() {
+		List<Long> companyIds = new ArrayList<>();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+					PortalInstancePool.getDefaultCompanyId())) {
+
+			_companyLocalService.forEachCompanyId(companyIds::add);
+		}
+
+		Assert.assertEquals(
+			Collections.singletonList(PortalInstancePool.getDefaultCompanyId()),
+			companyIds);
+	}
+
+	@Test
 	public void testForEachCompanyIdWithInvalidCompanyId() {
 		List<Long> companyIds = new ArrayList<>();
 
@@ -1081,6 +1116,23 @@ public class CompanyLocalServiceTest {
 		}
 
 		Assert.assertEquals(companyIds.toString(), 0, companyIds.size());
+	}
+
+	@Test
+	public void testForEachCompanyInPartitionScope() {
+		List<Long> companyIds = new ArrayList<>();
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+					PortalInstancePool.getDefaultCompanyId())) {
+
+			_companyLocalService.forEachCompany(
+				company -> companyIds.add(company.getCompanyId()));
+		}
+
+		Assert.assertEquals(
+			Collections.singletonList(PortalInstancePool.getDefaultCompanyId()),
+			companyIds);
 	}
 
 	@Test

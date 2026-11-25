@@ -816,6 +816,31 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	}
 
 	@Test
+	public void testForEachCompanyIdInPartitionScope() throws Exception {
+		try {
+			addDBPartitions();
+
+			insertPartitionRequiredData();
+
+			List<Long> companyIds = new ArrayList<>();
+
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+						COMPANY_IDS[0])) {
+
+				DBPartitionUtil.forEachCompanyId(companyIds::add);
+			}
+
+			Assert.assertEquals(
+				Collections.singletonList(COMPANY_IDS[0]), companyIds);
+		}
+		finally {
+			deletePartitionRequiredData();
+			removeDBPartitions();
+		}
+	}
+
+	@Test
 	@TestInfo("LPD-105887")
 	public void testGetConfigurationPids() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
