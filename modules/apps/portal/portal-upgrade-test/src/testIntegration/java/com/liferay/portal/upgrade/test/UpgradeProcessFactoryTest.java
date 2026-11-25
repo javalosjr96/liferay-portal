@@ -10,12 +10,16 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.portal.kernel.dao.db.DB;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
+import com.liferay.portal.kernel.dao.db.DBType;
+import com.liferay.portal.kernel.dao.db.DBTypeToSQLMap;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.service.CompanyLocalService;
 import com.liferay.portal.kernel.test.rule.AggregateTestRule;
+import com.liferay.portal.kernel.upgrade.DescribableUpgradeStep;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 import com.liferay.portal.kernel.upgrade.UpgradeStep;
+import com.liferay.portal.kernel.util.HashMapBuilder;
 import com.liferay.portal.test.log.LogCapture;
 import com.liferay.portal.test.log.LoggerTestUtil;
 import com.liferay.portal.test.rule.Inject;
@@ -24,6 +28,7 @@ import com.liferay.portal.test.rule.LiferayIntegrationTestRule;
 import java.sql.Connection;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -180,6 +185,45 @@ public class UpgradeProcessFactoryTest {
 		UpgradeProcess upgradeProcess = UpgradeProcessFactory.runSQL(
 			"create table " + _TABLE_NAME_2 +
 				" (id LONG not null primary key)");
+
+		_assertUpgrade(
+			UpgradeProcessFactoryTest.class,
+			"Modifying schema to run SQL updates", upgradeProcess);
+
+		Assert.assertTrue(_dbInspector.hasTable(_TABLE_NAME_2));
+	}
+
+	@Test
+	public void testRunSQLWithDBTypeToSQLMaps() throws Exception {
+		String defaultSQL =
+			"create table " + _TABLE_NAME_1 + " (id LONG not null primary key)";
+
+		DBTypeToSQLMap dbTypeToSQLMap = new DBTypeToSQLMap(defaultSQL);
+
+		DBType dbType = _db.getDBType();
+		String sql =
+			"create table " + _TABLE_NAME_2 + " (id LONG not null primary key)";
+
+		dbTypeToSQLMap.add(dbType, sql);
+
+		UpgradeProcess upgradeProcess = UpgradeProcessFactory.runSQL(
+			dbTypeToSQLMap);
+
+		DescribableUpgradeStep describableUpgradeStep =
+			(DescribableUpgradeStep)upgradeProcess;
+
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"dbTypeToSQLMaps",
+				Collections.singletonList(
+					HashMapBuilder.put(
+						"default", defaultSQL
+					).put(
+						dbType.getName(), sql
+					).build())
+			).build(),
+			describableUpgradeStep.getArguments());
+		Assert.assertEquals("runSQL", describableUpgradeStep.getOperation());
 
 		_assertUpgrade(
 			UpgradeProcessFactoryTest.class,
