@@ -32,6 +32,7 @@ import com.liferay.portal.kernel.model.ResourcePermission;
 import com.liferay.portal.kernel.model.Role;
 import com.liferay.portal.kernel.model.User;
 import com.liferay.portal.kernel.model.role.RoleConstants;
+import com.liferay.portal.kernel.portlet.PortletIdCodec;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.security.permission.ActionKeys;
 import com.liferay.portal.kernel.security.permission.ResourceActionsUtil;
@@ -207,6 +208,24 @@ public class ObjectDefinitionLocalServiceDBPartitionTest {
 
 		_addResourcePermission(_company2.getCompanyId(), resourceAction);
 
+		String portletName = PortletIdCodec.decodePortletName(
+			objectDefinition.getPortletId());
+
+		Assert.assertTrue(
+			_getResourceActionsCount(_company1.getCompanyId(), portletName) > 0);
+		Assert.assertEquals(
+			0, _getResourceActionsCount(_company2.getCompanyId(), portletName));
+		Assert.assertEquals(
+			0,
+			_getResourceActionsCount(
+				PortalInstancePool.getDefaultCompanyId(), portletName));
+
+		ResourceAction portletResourceAction = _fetchResourceAction(
+			ActionKeys.VIEW, _company1.getCompanyId(), portletName);
+
+		_addResourcePermission(
+			_company2.getCompanyId(), portletResourceAction);
+
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
 					_company1.getCompanyId())) {
@@ -222,6 +241,10 @@ public class ObjectDefinitionLocalServiceDBPartitionTest {
 			_hasActionId(
 				resourceAction.getBitwiseValue(), _company2.getCompanyId(),
 				objectDefinition.getClassName()));
+		Assert.assertTrue(
+			_hasActionId(
+				portletResourceAction.getBitwiseValue(),
+				_company2.getCompanyId(), portletName));
 	}
 
 	@Test
@@ -511,6 +534,14 @@ public class ObjectDefinitionLocalServiceDBPartitionTest {
 		}
 	}
 
+	private int _getResourceActionsCount(long companyId, String name) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(companyId)) {
+
+			return _resourceActionLocalService.getResourceActionsCount(name);
+		}
+	}
+
 	private boolean _hasActionId(long bitwiseValue, long companyId, String name)
 		throws Exception {
 
@@ -521,7 +552,7 @@ public class ObjectDefinitionLocalServiceDBPartitionTest {
 				companyId, RoleConstants.USER);
 
 			ResourcePermission resourcePermission =
-				_resourcePermissionLocalService.fetchResourcePermission(
+				_resourcePermissionLocalService.getResourcePermission(
 					companyId, name, ResourceConstants.SCOPE_COMPANY,
 					String.valueOf(companyId), role.getRoleId());
 
