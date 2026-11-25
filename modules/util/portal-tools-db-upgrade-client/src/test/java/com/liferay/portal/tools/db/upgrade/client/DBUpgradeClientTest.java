@@ -695,7 +695,7 @@ public class DBUpgradeClientTest {
 		String consoleInput = sb.toString();
 
 		DBUpgradeClient dbUpgradeClient = new DBUpgradeClient(
-			new ArrayList<>(), new File(_rootDir, "test.log"), false);
+			false, new ArrayList<>(), new File(_rootDir, "test.log"), false);
 
 		ConsoleReader consoleReader = new ConsoleReader(
 			new ByteArrayInputStream(consoleInput.getBytes()),
