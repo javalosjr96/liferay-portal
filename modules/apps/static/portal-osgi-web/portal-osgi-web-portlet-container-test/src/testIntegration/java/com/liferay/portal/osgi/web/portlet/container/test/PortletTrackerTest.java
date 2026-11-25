@@ -482,11 +482,6 @@ public class PortletTrackerTest extends BasePortletContainerTestCase {
 
 		Assume.assumeTrue(PropsValues.DATABASE_PARTITION_ENABLED);
 
-		long companyId = CompanyThreadLocal.getCompanyId();
-
-		Assert.assertEquals(
-			PortalInstancePool.getDefaultCompanyId(), companyId);
-
 		try {
 			String portletName = RandomTestUtil.randomString();
 
@@ -497,11 +492,22 @@ public class PortletTrackerTest extends BasePortletContainerTestCase {
 				).build(),
 				portletName, false);
 
+			Company company = _companyLocalService.getCompany(
+				PortalInstancePool.getDefaultCompanyId());
+
 			_assertResourceActionsCount(_company1, portletName, true);
 			_assertResourceActionsCount(_company2, portletName, false);
+			_assertResourceActionsCount(company, portletName, false);
 
-			_assertResourceActionsCount(
-				_companyLocalService.getCompany(companyId), portletName, false);
+			String globalPortletName = RandomTestUtil.randomString();
+
+			setUpPortlet(
+				new TestPortlet(), new HashMapDictionary<>(), globalPortletName,
+				false);
+
+			_assertResourceActionsCount(_company1, globalPortletName, true);
+			_assertResourceActionsCount(_company2, globalPortletName, true);
+			_assertResourceActionsCount(company, globalPortletName, true);
 		}
 		finally {
 			for (ServiceRegistration<?> serviceRegistration :
