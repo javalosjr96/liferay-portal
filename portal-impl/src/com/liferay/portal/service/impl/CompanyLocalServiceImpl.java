@@ -797,9 +797,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			long companyId = CompanyThreadLocal.getCompanyId();
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(
-					"Running only for company ID " + companyId +
-						" inside a database partition scope");
+				_log.debug("Running only for company ID " + companyId);
 			}
 
 			unsafeConsumer.accept(
@@ -839,9 +837,7 @@ public class CompanyLocalServiceImpl extends CompanyLocalServiceBaseImpl {
 			long companyId = CompanyThreadLocal.getCompanyId();
 
 			if (_log.isDebugEnabled()) {
-				_log.debug(
-					"Running only for company ID " + companyId +
-						" inside a database partition scope");
+				_log.debug("Running only for company ID " + companyId);
 			}
 
 			unsafeConsumer.accept(companyId);
