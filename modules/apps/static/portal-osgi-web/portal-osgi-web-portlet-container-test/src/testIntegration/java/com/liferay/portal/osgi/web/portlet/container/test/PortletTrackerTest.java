@@ -484,7 +484,8 @@ public class PortletTrackerTest extends BasePortletContainerTestCase {
 
 		long companyId = CompanyThreadLocal.getCompanyId();
 
-		Assert.assertEquals(PortalInstancePool.getDefaultCompanyId(), companyId);
+		Assert.assertEquals(
+			PortalInstancePool.getDefaultCompanyId(), companyId);
 
 		try {
 			String portletName = RandomTestUtil.randomString();
@@ -499,9 +500,8 @@ public class PortletTrackerTest extends BasePortletContainerTestCase {
 			_assertResourceActionsCount(_company1, portletName, true);
 			_assertResourceActionsCount(_company2, portletName, false);
 
-			Company company = _companyLocalService.getCompany(companyId);
-
-			_assertResourceActionsCount(company, portletName, false);
+			_assertResourceActionsCount(
+				_companyLocalService.getCompany(companyId), portletName, false);
 		}
 		finally {
 			for (ServiceRegistration<?> serviceRegistration :
@@ -609,20 +609,6 @@ public class PortletTrackerTest extends BasePortletContainerTestCase {
 		}
 	}
 
-	private void _assertResourceActionsCount(
-		Company company, String name, boolean exists) {
-
-		try (SafeCloseable safeCloseable =
-				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-					company.getCompanyId())) {
-
-			int count = _resourceActionLocalService.getResourceActionsCount(
-				name);
-
-			Assert.assertEquals(exists, count > 0);
-		}
-	}
-
 	private void _assertPortletNotDeployed(Company company, String portletId) {
 		try (SafeCloseable safeCloseable =
 				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
@@ -642,6 +628,20 @@ public class PortletTrackerTest extends BasePortletContainerTestCase {
 				Assert.assertNotNull(
 					_portletLocalService.getPortletById(portletId));
 			}
+		}
+	}
+
+	private void _assertResourceActionsCount(
+		Company company, String name, boolean exists) {
+
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setCompanyIdWithSafeCloseable(
+					company.getCompanyId())) {
+
+			int count = _resourceActionLocalService.getResourceActionsCount(
+				name);
+
+			Assert.assertEquals(exists, count > 0);
 		}
 	}
 
