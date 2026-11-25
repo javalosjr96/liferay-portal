@@ -6,6 +6,7 @@
 package com.liferay.commerce.product.internal.upgrade.v1_3_0.util;
 
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
+import com.liferay.portal.kernel.upgrade.UpgradeProcessFactory;
 
 /**
  * @author Brian Wing Shun Chan
@@ -15,16 +16,8 @@ import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 public class CProductTable {
 
 	public static UpgradeProcess create() {
-		return new UpgradeProcess() {
-
-			@Override
-			protected void doUpgrade() throws Exception {
-				if (!hasTable(_TABLE_NAME)) {
-					runSQL(_TABLE_SQL_CREATE);
-				}
-			}
-
-		};
+		return UpgradeProcessFactory.createTableIfMissing(
+			_TABLE_NAME, _TABLE_SQL_CREATE);
 	}
 
 	private static final String _TABLE_NAME = "CProduct";

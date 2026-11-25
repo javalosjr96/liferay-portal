@@ -91,6 +91,26 @@ public class UpgradeProcessFactoryTest {
 	}
 
 	@Test
+	public void testCreateTableIfMissing() {
+		String sql = RandomTestUtil.randomString();
+		String tableName = RandomTestUtil.randomString();
+
+		DescribableUpgradeStep describableUpgradeStep =
+			(DescribableUpgradeStep)UpgradeProcessFactory.createTableIfMissing(
+				tableName, sql);
+
+		Assert.assertEquals(
+			HashMapBuilder.<String, Object>put(
+				"sql", sql
+			).put(
+				"tableName", tableName
+			).build(),
+			describableUpgradeStep.getArguments());
+		Assert.assertEquals(
+			"createTableIfMissing", describableUpgradeStep.getOperation());
+	}
+
+	@Test
 	public void testDropColumns() {
 		String columnName1 = RandomTestUtil.randomString();
 		String columnName2 = RandomTestUtil.randomString();
