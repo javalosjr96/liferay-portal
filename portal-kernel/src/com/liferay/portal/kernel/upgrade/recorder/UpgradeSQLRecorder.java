@@ -562,13 +562,7 @@ public class UpgradeSQLRecorder {
 				}
 			}
 
-			Throwable cause = throwable.getCause();
-
-			if (cause == throwable) {
-				return null;
-			}
-
-			throwable = cause;
+			throwable = throwable.getCause();
 		}
 
 		return null;
@@ -577,7 +571,7 @@ public class UpgradeSQLRecorder {
 	private static Throwable _getRootCause(Throwable throwable) {
 		Throwable cause = throwable.getCause();
 
-		while ((cause != null) && (cause != throwable)) {
+		while (cause != null) {
 			throwable = cause;
 
 			cause = throwable.getCause();
@@ -627,13 +621,7 @@ public class UpgradeSQLRecorder {
 				return (SQLException)throwable;
 			}
 
-			Throwable cause = throwable.getCause();
-
-			if (cause == throwable) {
-				return null;
-			}
-
-			throwable = cause;
+			throwable = throwable.getCause();
 		}
 
 		return null;
@@ -851,9 +839,11 @@ public class UpgradeSQLRecorder {
 			UpgradeSQLRecorder.class.getName() + "._skipRecording",
 			() -> Boolean.FALSE);
 	private static final Pattern _tableNamePattern = Pattern.compile(
-		"\\s*(?:alter\\s+table|create\\s+(?:unique\\s+)?index\\s+\\S+\\s+on|" +
-			"(?:create|drop|truncate)\\s+table|delete\\s+from|insert\\s+into|" +
-				"update)\\s+(?:if\\s+(?:not\\s+)?exists\\s+)?[\"`\\[]?([\\w$]+)",
+		"\\s*(?:alter\\s+table|create\\s+(?:unique\\s+)?index\\s+" +
+			"(?:if\\s+not\\s+exists\\s+)?\\S+\\s+on|(?:create|drop|truncate)" +
+				"\\s+table|delete\\s+from|insert\\s+into|update)\\s+" +
+					"(?:if\\s+(?:not\\s+)?exists\\s+)?" +
+						"(?:[\"`\\[]?[\\w$]+[\"`\\]]?\\.)?[\"`\\[]?([\\w$]+)",
 		Pattern.CASE_INSENSITIVE);
 	private static volatile String _upgradeProcessClassName = StringPool.BLANK;
 	private static final CentralizedThreadLocal<String> _upgradeStepId =
