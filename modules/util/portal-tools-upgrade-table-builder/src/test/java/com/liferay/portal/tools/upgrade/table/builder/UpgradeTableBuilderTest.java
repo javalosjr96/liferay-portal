@@ -39,9 +39,8 @@ public class UpgradeTableBuilderTest {
 			StringBundler.concat(
 				"<?xml version=\"1.0\"?>\n<!DOCTYPE service-builder PUBLIC ",
 				"\"-//Liferay//DTD Service Builder 7.4.0//EN\" ",
-				"\"http://www.liferay.com/dtd/liferay-",
-				"service-builder_7_4_0.dtd\">\n\n",
-				"<service-builder />"));
+				"\"http://www.liferay.com/dtd/liferay-service-",
+				"builder_7_4_0.dtd\">\n\n<service-builder />"));
 
 		String author = RandomTestUtil.randomString();
 		String className = "Test" + RandomTestUtil.randomString() + "Table";
