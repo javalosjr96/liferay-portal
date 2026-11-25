@@ -184,9 +184,7 @@ public class UpgradeProcessFactoryTest {
 					).put(
 						DBType.MYSQL.getName(), sql2
 					).build(),
-					HashMapBuilder.<String, String>put(
-						"default", null
-					).build())
+					Collections.singletonMap("default", null))
 			).build(),
 			arguments);
 		Assert.assertThrows(
