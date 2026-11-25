@@ -578,6 +578,10 @@ public class DBCopyTablesProcessTest {
 		if (dbType == DBType.DB2) {
 			_testRunWithCustomColumns(
 				"bytea", value -> Arrays.toString((byte[])value),
+				value -> Arrays.toString((byte[])value), "binary(8)",
+				RandomTestUtil::randomBytes);
+			_testRunWithCustomColumns(
+				"bytea", value -> Arrays.toString((byte[])value),
 				value -> Arrays.toString((byte[])value), "varbinary(16)",
 				RandomTestUtil::randomBytes);
 			_testRunWithCustomColumns(
