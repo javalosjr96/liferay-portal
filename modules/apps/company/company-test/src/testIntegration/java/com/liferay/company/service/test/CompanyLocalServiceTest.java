@@ -1085,9 +1085,9 @@ public class CompanyLocalServiceTest {
 
 	@Test
 	public void testForEachCompanyWithInvalidCompany() {
-		long invalidCompanyId = RandomTestUtil.nextLong();
-
 		List<Long> companyIds = new ArrayList<>();
+
+		long invalidCompanyId = RandomTestUtil.nextLong();
 
 		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
 				PortalInstancePool.getDefaultCompanyId())) {
