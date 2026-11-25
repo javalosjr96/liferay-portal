@@ -187,10 +187,10 @@ public class CompanyThreadLocalTest {
 
 			try (SafeCloseable safeCloseable =
 					CompanyThreadLocal.setCompanyIdWithSafeCloseable(
-						companyId2)) {
+						companyId1)) {
 
 				Assert.assertEquals(
-					Long.valueOf(companyId2), CompanyThreadLocal.getCompanyId());
+					Long.valueOf(companyId1), CompanyThreadLocal.getCompanyId());
 			}
 
 			List<LogEntry> logEntries = logCapture.getLogEntries();
@@ -263,10 +263,11 @@ public class CompanyThreadLocalTest {
 
 	@Test
 	public void testSetPartitionCompanyIdWithSafeCloseable() {
+		String name = RandomTestUtil.randomString();
+		long ctCollectionId = RandomTestUtil.randomLong();
 		long companyId1 = RandomTestUtil.randomLong();
 		long companyId2 = RandomTestUtil.randomLong();
-		long ctCollectionId = RandomTestUtil.randomLong();
-		String name = RandomTestUtil.randomString();
+
 		Long originalCompanyId = CompanyThreadLocal.getCompanyId();
 
 		PrincipalThreadLocal.setName(name);
