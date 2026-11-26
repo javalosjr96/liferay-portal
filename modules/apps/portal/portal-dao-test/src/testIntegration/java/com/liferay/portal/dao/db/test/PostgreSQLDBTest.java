@@ -75,8 +75,7 @@ public class PostgreSQLDBTest extends DBTest {
 		Assert.assertEquals(
 			Arrays.toString(columnNames), 1, columnNames.length);
 		Assert.assertEquals(
-			dbInspector.normalizeName(_INDEX_COLUMN_NAME_LEFT_CLAUSE),
-			columnNames[0]);
+			dbInspector.normalizeName("typeText"), columnNames[0]);
 	}
 
 	private static final String _INDEX_COLUMN_NAME_LEFT_CLAUSE =
