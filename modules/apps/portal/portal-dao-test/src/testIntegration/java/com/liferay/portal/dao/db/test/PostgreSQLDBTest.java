@@ -51,9 +51,8 @@ public class PostgreSQLDBTest extends DBTest {
 
 		db.dropIndexes(connection, TABLE_NAME_1, null);
 
-		IndexMetadata indexMetadata = indexMetadatas.get(0);
-
-		db.runSQL(indexMetadata.getCreateSQL(null));
+		db.runSQL(
+			connection, db.getIndexesCreateSQL(connection, indexMetadatas));
 
 		_assertIndexMetadatas(
 			db.getIndexMetadatas(connection, TABLE_NAME_1, null, false));

@@ -85,6 +85,10 @@ public class IndexMetadataFactoryUtil {
 		String[] columnNames = StringUtil.split(
 			createSQL.substring(start, end), StringPool.COMMA_AND_SPACE);
 
+		for (int i = 0; i < columnNames.length; i++) {
+			columnNames[i] = _trimColumnName(columnNames[i]);
+		}
+
 		return new IndexMetadata(indexName, tableName, unique, columnNames);
 	}
 
@@ -115,6 +119,16 @@ public class IndexMetadataFactoryUtil {
 		specificationHash = StringUtil.toUpperCase(specificationHash);
 
 		return _INDEX_NAME_PREFIX.concat(specificationHash);
+	}
+
+	private static String _trimColumnName(String columnName) {
+		int index = columnName.indexOf("[$COLUMN_LENGTH:");
+
+		if (index > 0) {
+			columnName = columnName.substring(0, index);
+		}
+
+		return columnName;
 	}
 
 	private static final String _INDEX_NAME_PREFIX = "IX_";
