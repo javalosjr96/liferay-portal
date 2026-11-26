@@ -8,8 +8,6 @@ package com.liferay.commerce.internal.upgrade.v2_1_0;
 import com.liferay.commerce.model.impl.CPDAvailabilityEstimateModelImpl;
 import com.liferay.commerce.product.model.CPDefinition;
 import com.liferay.commerce.product.service.CPDefinitionLocalService;
-import com.liferay.portal.kernel.dao.db.DB;
-import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -23,7 +21,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * @author Alec Sloan
@@ -89,8 +86,8 @@ public class CPDAvailabilityEstimateUpgradeProcess extends UpgradeProcess {
 						indexMetadata.getIndexName(), tableName));
 			}
 
-			if (!_tableHasIndex(tableName, indexMetadata.getIndexName())) {
-				runSQL(indexMetadata.getCreateSQL(null));
+			if (!hasIndex(tableName, indexMetadata.getIndexName())) {
+				runSQL(indexSQL.getKey());
 			}
 			else if (_log.isInfoEnabled()) {
 				_log.info(
@@ -99,26 +96,6 @@ public class CPDAvailabilityEstimateUpgradeProcess extends UpgradeProcess {
 						indexMetadata.getIndexName(), tableName));
 			}
 		}
-	}
-
-	private boolean _tableHasIndex(String tableName, String indexName)
-		throws Exception {
-
-		DB db = DBManagerUtil.getDB();
-
-		try (ResultSet resultSet = db.getIndexResultSet(
-				connection, tableName, false)) {
-
-			while (resultSet.next()) {
-				String curIndexName = resultSet.getString("index_name");
-
-				if (Objects.equals(indexName, curIndexName)) {
-					return true;
-				}
-			}
-		}
-
-		return false;
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
