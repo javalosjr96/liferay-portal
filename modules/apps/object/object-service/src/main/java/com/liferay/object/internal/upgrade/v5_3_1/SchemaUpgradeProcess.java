@@ -13,6 +13,8 @@ import com.liferay.portal.kernel.dao.db.IndexMetadata;
 import com.liferay.portal.kernel.dao.db.IndexMetadataFactoryUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 
+import java.util.Collections;
+
 /**
  * @author Murilo Stodolni
  */
@@ -48,7 +50,7 @@ public class SchemaUpgradeProcess extends UpgradeProcess {
 				false, tableName, columnName);
 
 		if (!dbInspector.hasIndex(tableName, indexMetadata.getIndexName())) {
-			runSQL(indexMetadata.getCreateSQL(null));
+			addIndexes(connection, Collections.singletonList(indexMetadata));
 		}
 	}
 
