@@ -80,7 +80,8 @@ public abstract class BaseDB implements DB {
 			Connection connection, List<IndexMetadata> indexMetadatas)
 		throws IOException, SQLException {
 
-		runSQL(connection, getIndexesCreateSQL(connection, indexMetadatas));
+		runSQL(
+			connection, _getIndexesCreateSQL(connection, indexMetadatas, true));
 	}
 
 	public SafeCloseable addTemporaryIndex(
@@ -504,64 +505,7 @@ public abstract class BaseDB implements DB {
 			Connection connection, List<IndexMetadata> indexMetadatas)
 		throws SQLException {
 
-		DatabaseMetaData databaseMetaData = connection.getMetaData();
-
-		DBInspector dbInspector = new DBInspector(connection);
-
-		Map<String, Map<String, Integer>> columnTableSizes = new HashMap<>();
-		List<String> createSQLs = new ArrayList<>();
-
-		for (IndexMetadata indexMetadata : indexMetadatas) {
-			String normalizedTableName = dbInspector.normalizeName(
-				indexMetadata.getTableName(), databaseMetaData);
-
-			if (_isSkipIndexOperation(connection, normalizedTableName)) {
-				continue;
-			}
-
-			if (columnTableSizes.get(normalizedTableName) == null) {
-				try (ResultSet resultSet = databaseMetaData.getColumns(
-						dbInspector.getCatalog(), dbInspector.getSchema(),
-						normalizedTableName, null)) {
-
-					Map<String, Integer> columnSizes = new HashMap<>();
-
-					while (resultSet.next()) {
-						int columnType = resultSet.getInt("DATA_TYPE");
-
-						if (!ArrayUtil.contains(
-								SQL_VARCHAR_TYPES, columnType)) {
-
-							continue;
-						}
-
-						columnSizes.put(
-							dbInspector.normalizeName(
-								resultSet.getString("COLUMN_NAME"),
-								databaseMetaData),
-							resultSet.getInt("COLUMN_SIZE"));
-					}
-
-					columnTableSizes.put(normalizedTableName, columnSizes);
-				}
-			}
-
-			String[] columnNames = indexMetadata.getColumnNames();
-
-			int[] columnSizes = new int[columnNames.length];
-
-			for (int i = 0; i < columnNames.length; i++) {
-				columnSizes[i] = MapUtil.getInteger(
-					columnTableSizes.get(normalizedTableName),
-					dbInspector.normalizeName(
-						columnNames[i], databaseMetaData),
-					0);
-			}
-
-			createSQLs.add(indexMetadata.getCreateSQL(columnSizes));
-		}
-
-		return createSQLs.toArray(new String[0]);
+		return _getIndexesCreateSQL(connection, indexMetadatas, false);
 	}
 
 	@Override
@@ -1807,6 +1751,72 @@ public abstract class BaseDB implements DB {
 			getIndexMetadatas(connection, tableName, null, false),
 			index -> new Index(
 				index.getIndexName(), index.getTableName(), index.isUnique()));
+	}
+
+	private String[] _getIndexesCreateSQL(
+			Connection connection, List<IndexMetadata> indexMetadatas,
+			boolean skipControlTables)
+		throws SQLException {
+
+		DatabaseMetaData databaseMetaData = connection.getMetaData();
+
+		DBInspector dbInspector = new DBInspector(connection);
+
+		Map<String, Map<String, Integer>> columnTableSizes = new HashMap<>();
+		List<String> createSQLs = new ArrayList<>();
+
+		for (IndexMetadata indexMetadata : indexMetadatas) {
+			String normalizedTableName = dbInspector.normalizeName(
+				indexMetadata.getTableName(), databaseMetaData);
+
+			if (skipControlTables &&
+				_isSkipIndexOperation(connection, normalizedTableName)) {
+
+				continue;
+			}
+
+			if (columnTableSizes.get(normalizedTableName) == null) {
+				try (ResultSet resultSet = databaseMetaData.getColumns(
+						dbInspector.getCatalog(), dbInspector.getSchema(),
+						normalizedTableName, null)) {
+
+					Map<String, Integer> columnSizes = new HashMap<>();
+
+					while (resultSet.next()) {
+						int columnType = resultSet.getInt("DATA_TYPE");
+
+						if (!ArrayUtil.contains(
+								SQL_VARCHAR_TYPES, columnType)) {
+
+							continue;
+						}
+
+						columnSizes.put(
+							dbInspector.normalizeName(
+								resultSet.getString("COLUMN_NAME"),
+								databaseMetaData),
+							resultSet.getInt("COLUMN_SIZE"));
+					}
+
+					columnTableSizes.put(normalizedTableName, columnSizes);
+				}
+			}
+
+			String[] columnNames = indexMetadata.getColumnNames();
+
+			int[] columnSizes = new int[columnNames.length];
+
+			for (int i = 0; i < columnNames.length; i++) {
+				columnSizes[i] = MapUtil.getInteger(
+					columnTableSizes.get(normalizedTableName),
+					dbInspector.normalizeName(columnNames[i], databaseMetaData),
+					0);
+			}
+
+			createSQLs.add(indexMetadata.getCreateSQL(columnSizes));
+		}
+
+		return createSQLs.toArray(new String[0]);
 	}
 
 	private List<PrimaryKey> _getPrimaryKeys(
