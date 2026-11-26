@@ -27,6 +27,23 @@ public class PostgreSQLDBTest extends BaseDBTestCase {
 		LiferayUnitTestRule.INSTANCE;
 
 	@Test
+	public void testGetIndexColumnName() {
+		PostgreSQLDB postgreSQLDB = new PostgreSQLDB(0, 0);
+
+		Assert.assertEquals(
+			"typetext", postgreSQLDB.getIndexColumnName("left(typetext, 15)"));
+		Assert.assertEquals(
+			"typetext",
+			postgreSQLDB.getIndexColumnName("left\"(typetext, 15)"));
+		Assert.assertEquals(
+			"typetext", postgreSQLDB.getIndexColumnName("typetext"));
+		Assert.assertEquals(
+			"typevarchar",
+			postgreSQLDB.getIndexColumnName(
+				"left\"((typevarchar)::text, 676)"));
+	}
+
+	@Test
 	public void testGetLongDefaultValue() {
 		Assert.assertEquals("10", db.getDefaultValue("10"));
 	}
