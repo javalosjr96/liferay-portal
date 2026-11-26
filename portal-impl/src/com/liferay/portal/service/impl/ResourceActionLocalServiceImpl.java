@@ -263,67 +263,47 @@ public class ResourceActionLocalServiceImpl
 	}
 
 	@Override
-	public ResourceAction deleteResourceAction(ResourceAction resourceAction) {
-		String name = resourceAction.getName();
+	public ResourceAction deleteResourceAction(
+		long companyId, ResourceAction resourceAction) {
+
+		long currentCompanyId = CompanyThreadLocal.getNonsystemCompanyId();
+
+		if (PropsValues.DATABASE_PARTITION_ENABLED &&
+			(currentCompanyId != companyId)) {
+
+			throw new UnsupportedOperationException(
+				StringBundler.concat(
+					"Unable to delete resource action for company ", companyId,
+					" from company ", currentCompanyId));
+		}
 
 		Set<String> names = MassDeleteCacheThreadLocal.getMassDeleteCache(
 			ResourcePermissionLocalService.class.getName(), HashSet::new);
 
-		if (names == null) {
-			long bitwiseValue = resourceAction.getBitwiseValue();
-
-			ActionableDynamicQuery.AddCriteriaMethod addCriteriaMethod =
-				dynamicQuery -> {
-					Property nameProperty = PropertyFactoryUtil.forName("name");
-
-					dynamicQuery.add(nameProperty.eq(name));
-				};
-
-			_companyLocalService.forEachCompanyId(
-				companyId -> {
-					ActionableDynamicQuery actionableDynamicQuery =
-						_resourcePermissionLocalService.
-							getActionableDynamicQuery();
-
-					actionableDynamicQuery.setAddCriteriaMethod(
-						addCriteriaMethod);
-					actionableDynamicQuery.setCompanyId(companyId);
-					actionableDynamicQuery.setPerformActionMethod(
-						(ResourcePermission resourcePermission) -> {
-							long actionIds = resourcePermission.getActionIds();
-
-							if ((actionIds & bitwiseValue) != 0) {
-								actionIds &= ~bitwiseValue;
-
-								resourcePermission.setActionIds(actionIds);
-								resourcePermission.setViewActionId(
-									(actionIds % 2) == 1);
-
-								_resourcePermissionPersistence.update(
-									resourcePermission);
-							}
-						});
-
-					try {
-						actionableDynamicQuery.performActions();
-					}
-					catch (PortalException portalException) {
-						throw new SystemException(portalException);
-					}
-				});
+		if (names != null) {
+			names.add(resourceAction.getName());
 		}
 		else {
-			names.add(name);
+			_removeActionId(CompanyConstants.SYSTEM, resourceAction);
 		}
 
-		resourceActionPersistence.remove(resourceAction);
+		return _deleteResourceAction(resourceAction);
+	}
 
-		_resourceActions.remove(
-			encodeKey(resourceAction.getName(), resourceAction.getActionId()));
+	@Override
+	public ResourceAction deleteResourceAction(ResourceAction resourceAction) {
+		Set<String> names = MassDeleteCacheThreadLocal.getMassDeleteCache(
+			ResourcePermissionLocalService.class.getName(), HashSet::new);
 
-		PermissionCacheUtil.clearCache();
+		if (names == null) {
+			_companyLocalService.forEachCompanyId(
+				companyId -> _removeActionId(companyId, resourceAction));
+		}
+		else {
+			names.add(resourceAction.getName());
+		}
 
-		return resourceAction;
+		return _deleteResourceAction(resourceAction);
 	}
 
 	@Override
@@ -402,6 +382,57 @@ public class ResourceActionLocalServiceImpl
 	protected String encodeKey(String name, String actionId) {
 		return DBPartitionUtil.getPartitionKey(
 			StringBundler.concat(name, StringPool.POUND, actionId));
+	}
+
+	private ResourceAction _deleteResourceAction(
+		ResourceAction resourceAction) {
+
+		resourceActionPersistence.remove(resourceAction);
+
+		_resourceActions.remove(
+			encodeKey(resourceAction.getName(), resourceAction.getActionId()));
+
+		PermissionCacheUtil.clearCache();
+
+		return resourceAction;
+	}
+
+	private void _removeActionId(
+		long companyId, ResourceAction resourceAction) {
+
+		ActionableDynamicQuery actionableDynamicQuery =
+			_resourcePermissionLocalService.getActionableDynamicQuery();
+
+		actionableDynamicQuery.setAddCriteriaMethod(
+			dynamicQuery -> {
+				Property nameProperty = PropertyFactoryUtil.forName("name");
+
+				dynamicQuery.add(nameProperty.eq(resourceAction.getName()));
+			});
+		actionableDynamicQuery.setCompanyId(companyId);
+
+		long bitwiseValue = resourceAction.getBitwiseValue();
+
+		actionableDynamicQuery.setPerformActionMethod(
+			(ResourcePermission resourcePermission) -> {
+				long actionIds = resourcePermission.getActionIds();
+
+				if ((actionIds & bitwiseValue) != 0) {
+					actionIds &= ~bitwiseValue;
+
+					resourcePermission.setActionIds(actionIds);
+					resourcePermission.setViewActionId((actionIds % 2) == 1);
+
+					_resourcePermissionPersistence.update(resourcePermission);
+				}
+			});
+
+		try {
+			actionableDynamicQuery.performActions();
+		}
+		catch (PortalException portalException) {
+			throw new SystemException(portalException);
+		}
 	}
 
 	private static final ResourceAction _NULL_HOLDER =

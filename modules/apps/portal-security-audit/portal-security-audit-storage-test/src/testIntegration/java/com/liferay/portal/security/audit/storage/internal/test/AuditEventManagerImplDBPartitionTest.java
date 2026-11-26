@@ -51,8 +51,9 @@ public class AuditEventManagerImplDBPartitionTest {
 		String eventType = StringUtil.toUpperCase(
 			RandomTestUtil.randomString());
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				PortalInstancePool.getDefaultCompanyId())) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+					PortalInstancePool.getDefaultCompanyId())) {
 
 			_auditEventManager.addAuditEvents(
 				Arrays.asList(

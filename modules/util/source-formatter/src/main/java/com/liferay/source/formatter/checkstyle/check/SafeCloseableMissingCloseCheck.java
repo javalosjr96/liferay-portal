@@ -27,7 +27,10 @@ public class SafeCloseableMissingCloseCheck extends BaseCheck {
 
 		List<DetailAST> methodCallDetailASTs = getMethodCalls(
 			detailAST, "CompanyThreadLocal",
-			new String[] {"lock", "setCompanyIdWithSafeCloseable"});
+			new String[] {
+				"carryPartitionScope", "setCompanyIdWithSafeCloseable",
+				"setPartitionCompanyIdWithSafeCloseable"
+			});
 
 		for (DetailAST methodCallDetailAST : methodCallDetailASTs) {
 			DetailAST parentDetailAST = methodCallDetailAST.getParent();

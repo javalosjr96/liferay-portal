@@ -22,10 +22,24 @@ public class SafeCloseableMissingClose {
 	}
 
 	public void method3(String companyId) {
-		_safeCloseable2 = CompanyThreadLocal.lock(companyId);
+		_safeCloseable2 = CompanyThreadLocal.carryPartitionScope(
+			companyId, companyId);
+	}
+
+	public void method4(String companyId) {
+		_safeCloseable3 =
+			CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+				companyId);
+	}
+
+	public void method5(String companyId) {
+		_safeCloseable4 = CompanyThreadLocal.setRawCompanyIdWithSafeCloseable(
+			companyId);
 	}
 
 	private static SafeCloseable _safeCloseable1;
 	private static SafeCloseable _safeCloseable2;
+	private static SafeCloseable _safeCloseable3;
+	private static SafeCloseable _safeCloseable4;
 
 }

@@ -89,7 +89,7 @@ JavaCleanUpMethodSuperCleanUpCheck | [Bug Prevention](bug_prevention_checks.md#b
 JavaCollapseImportsCheck | [Performance](performance_checks.md#performance-checks) | Collapses imports that use wildcard. |
 [JavaCollatorUtilCheck](check/java_collator_util_check.md#javacollatorutilcheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks for correct use of `Collator`. |
 JavaCompanyScopedIdsCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Finds cases where company scoped ids are used, see LPD-45118. |
-JavaCompanyThreadLocalCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks that `CompanyThreadLocal.lock` and `CompanyThreadLocal.setCompanyId*` methods are not used. |
+JavaCompanyThreadLocalCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks that `CompanyThreadLocal.carryPartitionScope`, `CompanyThreadLocal.setCompanyId*` and `CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable` methods are not used. |
 [JavaComponentActivateCheck](check/java_component_activate_check.md#javacomponentactivatecheck) | [Naming Conventions](naming_conventions_checks.md#naming-conventions-checks) | Checks if methods with annotation `@Activate` or `@Deactivate` follow naming conventions. |
 JavaComponentAnnotationsCheck | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Performs several checks on classes with `@Component` annotation. |
 [JavaConfigurationAdminCheck](check/java_configuration_admin_check.md#javaconfigurationadmincheck) | [Bug Prevention](bug_prevention_checks.md#bug-prevention-checks) | Checks for correct use of `location == ?` when calling `org.osgi.service.cm.ConfigurationAdmin#createFactoryConfiguration`. |

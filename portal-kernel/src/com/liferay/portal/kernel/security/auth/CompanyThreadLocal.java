@@ -8,6 +8,7 @@ package com.liferay.portal.kernel.security.auth;
 import com.liferay.petra.lang.CentralizedThreadLocal;
 import com.liferay.petra.lang.SafeCloseable;
 import com.liferay.petra.string.StringBundler;
+import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.change.tracking.CTCollectionThreadLocal;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.instance.PortalInstancePool;
@@ -26,11 +27,34 @@ import java.sql.ResultSet;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @author Brian Wing Shun Chan
  */
 public class CompanyThreadLocal {
+
+	public static SafeCloseable carryPartitionScope(
+		long companyId, long partitionCompanyId) {
+
+		SafeCloseable partitionCompanyIdSafeCloseable =
+			setPartitionCompanyIdWithSafeCloseable(partitionCompanyId);
+
+		if (companyId == partitionCompanyId) {
+			return partitionCompanyIdSafeCloseable;
+		}
+
+		SafeCloseable companyIdSafeCloseable = setRawCompanyIdWithSafeCloseable(
+			companyId);
+
+		return () -> {
+			companyIdSafeCloseable.close();
+
+			partitionCompanyIdSafeCloseable.close();
+		};
+	}
 
 	public static User fetchGuestUser() {
 		Long companyId = _companyId.get();
@@ -106,6 +130,10 @@ public class CompanyThreadLocal {
 		return companyId;
 	}
 
+	public static Long getPartitionCompanyId() {
+		return _partitionCompanyId.get();
+	}
+
 	public static boolean isDefaultCompany() {
 		if (getNonsystemCompanyId() ==
 				PortalInstancePool.getDefaultCompanyId()) {
@@ -116,52 +144,20 @@ public class CompanyThreadLocal {
 		return false;
 	}
 
+	public static boolean isInPartitionScope() {
+		if (_partitionCompanyId.get() != null) {
+			return true;
+		}
+
+		return false;
+	}
+
 	public static boolean isInitializingPortalInstance() {
 		return _initializingPortalInstance.get();
 	}
 
-	public static boolean isLocked() {
-		return _locked.get();
-	}
-
 	public static boolean isUpgradingPortalInstance() {
 		return _upgradingPortalInstance.get();
-	}
-
-	public static SafeCloseable lock(long companyId) {
-		long currentCompanyId = _companyId.get();
-
-		if (companyId == currentCompanyId) {
-			if (isLocked()) {
-				return SafeCloseable.EMPTY;
-			}
-
-			_locked.set(true);
-
-			return () -> _locked.set(false);
-		}
-
-		if (isLocked()) {
-			throw new UnsupportedOperationException(
-				StringBundler.concat(
-					"Company ID ", companyId, " and company ID ",
-					currentCompanyId, " are different"));
-		}
-
-		_syncLastDBPartitionSessionState();
-
-		SafeCloseable safeCloseable = _companyId.setWithSafeCloseable(
-			companyId);
-
-		_locked.set(true);
-
-		return () -> {
-			_locked.set(false);
-
-			_syncLastDBPartitionSessionState();
-
-			safeCloseable.close();
-		};
 	}
 
 	public static void setCompanyId(Long companyId) {
@@ -169,10 +165,7 @@ public class CompanyThreadLocal {
 			return;
 		}
 
-		if (isLocked()) {
-			throw new UnsupportedOperationException(
-				"Unable to set company ID on locked company thread local");
-		}
+		_warnPartitionScopeSwitch(companyId);
 
 		_syncLastDBPartitionSessionState();
 
@@ -208,10 +201,7 @@ public class CompanyThreadLocal {
 		List<SafeCloseable> safeCloseables = new ArrayList<>();
 
 		if (!companyId.equals(_companyId.get())) {
-			if (isLocked()) {
-				throw new UnsupportedOperationException(
-					"Unable to set company ID on locked company thread local");
-			}
+			_warnPartitionScopeSwitch(companyId);
 
 			_syncLastDBPartitionSessionState();
 
@@ -272,6 +262,35 @@ public class CompanyThreadLocal {
 			initializingPortalInstance);
 	}
 
+	public static SafeCloseable setPartitionCompanyIdWithSafeCloseable(
+		long companyId) {
+
+		Long partitionCompanyId = _partitionCompanyId.get();
+
+		if ((partitionCompanyId != null) && (partitionCompanyId != companyId)) {
+			_warnPartitionScopeSwitch(companyId);
+		}
+
+		if (companyId == _companyId.get()) {
+			return _partitionCompanyId.setWithSafeCloseable(companyId);
+		}
+
+		_syncLastDBPartitionSessionState();
+
+		SafeCloseable partitionCompanyIdSafeCloseable =
+			_partitionCompanyId.setWithSafeCloseable(companyId);
+		SafeCloseable companyIdSafeCloseable = _companyId.setWithSafeCloseable(
+			companyId);
+
+		return () -> {
+			partitionCompanyIdSafeCloseable.close();
+
+			_syncLastDBPartitionSessionState();
+
+			companyIdSafeCloseable.close();
+		};
+	}
+
 	public static SafeCloseable setRawCompanyIdWithSafeCloseable(
 		long companyId) {
 
@@ -289,20 +308,41 @@ public class CompanyThreadLocal {
 			upgradingPortalInstance);
 	}
 
-	public static SafeCloseable unlock() {
-		if (!isLocked()) {
-			return SafeCloseable.EMPTY;
-		}
-
-		_locked.set(false);
-
-		return () -> _locked.set(true);
-	}
-
 	private static void _syncLastDBPartitionSessionState() {
 		if (PropsValues.DATABASE_PARTITION_ENABLED) {
 			LastSessionRecorderHelperUtil.syncLastSessionState(false);
 		}
+	}
+
+	private static void _warnPartitionScopeSwitch(long companyId) {
+		if (!isInPartitionScope() || !_log.isWarnEnabled()) {
+			return;
+		}
+
+		StackWalker stackWalker = StackWalker.getInstance();
+
+		String callSite = stackWalker.walk(
+			stackFrames -> stackFrames.filter(
+				stackFrame -> !Objects.equals(
+					stackFrame.getClassName(),
+					CompanyThreadLocal.class.getName())
+			).map(
+				StackWalker.StackFrame::toString
+			).findFirst(
+			).orElse(
+				StringPool.BLANK
+			));
+
+		if (!_warnedCallSites.add(callSite)) {
+			return;
+		}
+
+		_log.warn(
+			StringBundler.concat(
+				"Switching from company ID ", _companyId.get(),
+				" to company ID ", companyId,
+				" inside a database partition scope"),
+			new Exception());
 	}
 
 	private static final Log _log = LogFactoryUtil.getLog(
@@ -313,13 +353,15 @@ public class CompanyThreadLocal {
 		_initializingPortalInstance = new CentralizedThreadLocal<>(
 			CompanyThreadLocal.class + "._initializingPortalInstance",
 			() -> Boolean.FALSE);
-	private static final ThreadLocal<Boolean> _locked =
+	private static final CentralizedThreadLocal<Long> _partitionCompanyId =
 		new CentralizedThreadLocal<>(
-			CompanyThreadLocal.class + "._locked", () -> Boolean.FALSE);
+			CompanyThreadLocal.class + "._partitionCompanyId");
 	private static final CentralizedThreadLocal<Boolean>
 		_upgradingPortalInstance = new CentralizedThreadLocal<>(
 			CompanyThreadLocal.class + "._upgradingPortalInstance",
 			() -> Boolean.FALSE);
+	private static final Set<String> _warnedCallSites =
+		ConcurrentHashMap.newKeySet();
 
 	static {
 		_companyId = new CentralizedThreadLocal<>(

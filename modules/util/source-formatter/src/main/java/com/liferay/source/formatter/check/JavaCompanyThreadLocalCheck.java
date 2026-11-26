@@ -28,11 +28,15 @@ public class JavaCompanyThreadLocalCheck extends BaseFileCheck {
 			return content;
 		}
 
-		_checkMethodCall(fileName, content, "CompanyThreadLocal.lock");
+		_checkMethodCall(
+			fileName, content, "CompanyThreadLocal.carryPartitionScope");
 		_checkMethodCall(fileName, content, "CompanyThreadLocal.setCompanyId");
 		_checkMethodCall(
 			fileName, content,
 			"CompanyThreadLocal.setCompanyIdWithSafeCloseable");
+		_checkMethodCall(
+			fileName, content,
+			"CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable");
 
 		return content;
 	}

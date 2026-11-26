@@ -126,8 +126,9 @@ public class BaseConfigurationFactoryTest {
 
 		ServiceRegistration<?> serviceRegistration = null;
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				TestPropsValues.getCompanyId())) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+					TestPropsValues.getCompanyId())) {
 
 			BundleContext bundleContext =
 				BundleContextTestUtil.getBundleContext(getClass());

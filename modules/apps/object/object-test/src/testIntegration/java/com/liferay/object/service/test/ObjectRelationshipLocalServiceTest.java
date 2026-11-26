@@ -1457,8 +1457,9 @@ public class ObjectRelationshipLocalServiceTest {
 		_registerTestSystemObjectDefinitionManager(
 			ObjectDefinition objectDefinition, String restContextPath) {
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(
-				objectDefinition.getCompanyId())) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+					objectDefinition.getCompanyId())) {
 
 			Bundle bundle = FrameworkUtil.getBundle(
 				ObjectRelationshipLocalServiceTest.class);

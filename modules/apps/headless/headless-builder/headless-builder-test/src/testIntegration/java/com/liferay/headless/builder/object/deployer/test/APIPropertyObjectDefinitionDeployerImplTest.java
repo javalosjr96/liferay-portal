@@ -89,7 +89,10 @@ public class APIPropertyObjectDefinitionDeployerImplTest {
 			List<ObjectRelatedModelsProvider<?>> objectRelatedModelsProviders)
 		throws Exception {
 
-		try (SafeCloseable safeCloseable = CompanyThreadLocal.lock(companyId)) {
+		try (SafeCloseable safeCloseable =
+				CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+					companyId)) {
+
 			ObjectDefinition objectDefinition =
 				_objectDefinitionLocalService.
 					fetchObjectDefinitionByExternalReferenceCode(

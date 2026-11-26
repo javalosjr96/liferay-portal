@@ -121,6 +121,12 @@ public class ResourceActionLocalServiceUtil {
 		return getService().deleteResourceAction(resourceActionId);
 	}
 
+	public static ResourceAction deleteResourceAction(
+		long companyId, ResourceAction resourceAction) {
+
+		return getService().deleteResourceAction(companyId, resourceAction);
+	}
+
 	/**
 	 * Deletes the resource action from the database. Also notifies the appropriate model listeners.
 	 *
@@ -349,4 +355,4 @@ public class ResourceActionLocalServiceUtil {
 	private static volatile ResourceActionLocalService _service;
 
 }
-// LIFERAY-SERVICE-BUILDER-HASH:1650648669
+// LIFERAY-SERVICE-BUILDER-HASH:-1321127959

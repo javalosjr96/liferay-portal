@@ -328,6 +328,7 @@ public class ObjectActionLocalServiceImpl
 				ObjectActionTriggerConstants.KEY_STANDALONE)) {
 
 			_resourceActions.removeModelResource(
+				objectDefinition.getCompanyId(),
 				objectDefinition.getClassName(), objectAction.getName());
 		}
 

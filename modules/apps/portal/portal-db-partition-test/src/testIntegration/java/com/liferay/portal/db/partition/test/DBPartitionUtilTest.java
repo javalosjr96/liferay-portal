@@ -26,8 +26,10 @@ import com.liferay.portal.kernel.scheduler.TimeUnit;
 import com.liferay.portal.kernel.scheduler.Trigger;
 import com.liferay.portal.kernel.scheduler.TriggerFactory;
 import com.liferay.portal.kernel.scheduler.messaging.SchedulerResponse;
+import com.liferay.portal.kernel.security.auth.CompanyInheritableThreadLocalCallable;
 import com.liferay.portal.kernel.security.auth.CompanyThreadLocal;
 import com.liferay.portal.kernel.service.ClassNameLocalService;
+import com.liferay.portal.kernel.service.CompanyLocalServiceUtil;
 import com.liferay.portal.kernel.service.ResourceActionLocalService;
 import com.liferay.portal.kernel.test.ReflectionTestUtil;
 import com.liferay.portal.kernel.test.TestInfo;
@@ -54,6 +56,7 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -813,6 +816,31 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 	}
 
 	@Test
+	public void testForEachCompanyIdInPartitionScope() throws Exception {
+		try {
+			addDBPartitions();
+
+			insertPartitionRequiredData();
+
+			List<Long> companyIds = new ArrayList<>();
+
+			try (SafeCloseable safeCloseable =
+					CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable(
+						COMPANY_IDS[0])) {
+
+				DBPartitionUtil.forEachCompanyId(companyIds::add);
+			}
+
+			Assert.assertEquals(
+				Collections.singletonList(COMPANY_IDS[0]), companyIds);
+		}
+		finally {
+			deletePartitionRequiredData();
+			removeDBPartitions();
+		}
+	}
+
+	@Test
 	@TestInfo("LPD-105887")
 	public void testGetConfigurationPids() throws Exception {
 		long companyId = RandomTestUtil.randomLong();
@@ -1178,7 +1206,38 @@ public class DBPartitionUtilTest extends BaseDBPartitionTestCase {
 				Assert.assertEquals(
 					companyId, CompanyThreadLocal.getCompanyId());
 
-				Assert.assertTrue(CompanyThreadLocal.isLocked());
+				Assert.assertTrue(CompanyThreadLocal.isInPartitionScope());
+
+				List<Long> scopedCompanyIds = new ArrayList<>();
+
+				CompanyLocalServiceUtil.forEachCompanyId(scopedCompanyIds::add);
+
+				Assert.assertEquals(
+					Collections.singletonList(companyId), scopedCompanyIds);
+
+				ExecutorService executorService =
+					Executors.newSingleThreadExecutor();
+
+				try {
+					Future<List<Long>> future = executorService.submit(
+						new CompanyInheritableThreadLocalCallable<>(
+							() -> {
+								List<Long> workerCompanyIds = new ArrayList<>();
+
+								CompanyLocalServiceUtil.forEachCompanyId(
+									workerCompanyIds::add);
+
+								return workerCompanyIds;
+							}));
+
+					List<Long> workerCompanyIds = future.get();
+
+					Assert.assertEquals(
+						Collections.singletonList(companyId), workerCompanyIds);
+				}
+				finally {
+					executorService.shutdownNow();
+				}
 
 				companyIds.add(companyId);
 			});

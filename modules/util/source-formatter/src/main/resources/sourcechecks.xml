@@ -812,7 +812,7 @@
 		</check>
 		<check name="JavaCompanyThreadLocalCheck">
 			<category name="Bug Prevention" />
-			<description name="Checks that `CompanyThreadLocal.lock` and `CompanyThreadLocal.setCompanyId*` methods are not used." />
+			<description name="Checks that `CompanyThreadLocal.carryPartitionScope`, `CompanyThreadLocal.setCompanyId*` and `CompanyThreadLocal.setPartitionCompanyIdWithSafeCloseable` methods are not used." />
 			<property name="enabled" value="false" />
 		</check>
 		<check name="JavaComponentActivateCheck">
