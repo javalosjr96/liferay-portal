@@ -6,6 +6,8 @@
 package com.liferay.portal.dao.db;
 
 import com.liferay.portal.kernel.dao.db.DB;
+import com.liferay.portal.kernel.dao.db.IndexMetadata;
+import com.liferay.portal.kernel.dao.db.IndexMetadataFactoryUtil;
 import com.liferay.portal.kernel.dao.db.test.BaseDBTestCase;
 import com.liferay.portal.test.rule.LiferayUnitTestRule;
 
@@ -33,6 +35,17 @@ public class MySQLDBTest extends BaseDBTestCase {
 	@Test
 	public void testGetVarcharDefaultValue() {
 		Assert.assertEquals("test", db.getDefaultValue("test"));
+	}
+
+	@Test
+	public void testReplaceTemplateWithColumnLength() throws Exception {
+		IndexMetadata indexMetadata =
+			IndexMetadataFactoryUtil.createIndexMetadata(
+				"create index IX_1 on Table1 (column1[$COLUMN_LENGTH:1000$]);");
+
+		Assert.assertEquals(
+			"create index IX_1 on Table1 (column1(255));\n",
+			buildSQL(indexMetadata.getCreateSQL(new int[] {1000})));
 	}
 
 	@Test
