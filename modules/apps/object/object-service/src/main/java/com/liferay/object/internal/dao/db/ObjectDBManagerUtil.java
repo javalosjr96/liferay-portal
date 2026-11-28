@@ -14,6 +14,8 @@ import com.liferay.portal.kernel.exception.PortalException;
 
 import java.sql.Connection;
 
+import java.util.Collections;
+
 /**
  * @author Murilo Stodolni
  */
@@ -37,7 +39,7 @@ public class ObjectDBManagerUtil {
 
 			DB db = DBManagerUtil.getDB();
 
-			db.runSQL(connection, indexMetadata.getCreateSQL(null));
+			db.addIndexes(connection, Collections.singletonList(indexMetadata));
 		}
 		catch (Exception exception) {
 			throw new PortalException(exception);

@@ -100,6 +100,10 @@ public interface DB {
 
 	public List<Index> getIndexes(Connection connection) throws SQLException;
 
+	public String[] getIndexesCreateSQL(
+			Connection connection, List<IndexMetadata> indexMetadatas)
+		throws SQLException;
+
 	public default List<QueryInfo> getLockedQueryInfos(Connection connection)
 		throws SQLException {
 

@@ -14,6 +14,7 @@ import com.liferay.portal.kernel.dao.db.DBInspector;
 import com.liferay.portal.kernel.dao.db.DBManagerUtil;
 import com.liferay.portal.kernel.dao.db.DBType;
 import com.liferay.portal.kernel.dao.db.IndexMetadata;
+import com.liferay.portal.kernel.dao.db.IndexMetadataFactoryUtil;
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
@@ -106,6 +107,23 @@ public class DBTest {
 		db.runSQL("DROP_TABLE_IF_EXISTS(" + TABLE_NAME_1 + ")");
 		db.runSQL("DROP_TABLE_IF_EXISTS(" + _TABLE_NAME_2 + ")");
 		db.runSQL("DROP_TABLE_IF_EXISTS(" + _TABLE_NAME_3 + ")");
+	}
+
+	@Test
+	public void testAddIndexes() throws Exception {
+		db.alterTableAddColumn(
+			connection, TABLE_NAME_1, "typeVarcharLarge", "VARCHAR(1000) null");
+
+		db.addIndexes(
+			connection,
+			Arrays.asList(
+				IndexMetadataFactoryUtil.createIndexMetadata(
+					StringBundler.concat(
+						"create index ", INDEX_NAME, " on ", TABLE_NAME_1,
+						" (typeVarcharLarge[$COLUMN_LENGTH:1000$]);"))));
+
+		_validateIndex(
+			new String[] {dbInspector.normalizeName("typeVarcharLarge")});
 	}
 
 	@Test
@@ -679,6 +697,25 @@ public class DBTest {
 				dbInspector.normalizeName(INDEX_NAME),
 				indexMetadata.getIndexName());
 		}
+	}
+
+	@Test
+	public void testGetIndexesCreateSQL() throws Exception {
+		db.alterTableAddColumn(
+			connection, TABLE_NAME_1, "typeVarcharLarge", "VARCHAR(1000) null");
+
+		Assert.assertArrayEquals(
+			new String[] {
+				StringBundler.concat(
+					"create index ", INDEX_NAME, " on ", TABLE_NAME_1,
+					" (typeVarcharLarge[$COLUMN_LENGTH:1000$], typeLong);")
+			},
+			db.getIndexesCreateSQL(
+				connection,
+				Arrays.asList(
+					new IndexMetadata(
+						INDEX_NAME, TABLE_NAME_1, false, "typeVarcharLarge",
+						"typeLong"))));
 	}
 
 	@Test

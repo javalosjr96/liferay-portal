@@ -70,11 +70,14 @@ public class ObjectSQLProvider implements SQLProvider {
 
 		try (Connection connection = dataSource.getConnection()) {
 			for (String tableName : _tableNames) {
-				for (IndexMetadata indexMetadata :
-						sourceDB.getIndexMetadatas(
-							connection, tableName, null, false)) {
+				List<IndexMetadata> indexMetadatas = sourceDB.getIndexMetadatas(
+					connection, tableName, null, false);
 
-					_indexesSQLSB.append(indexMetadata.getCreateSQL(null));
+				for (String createSQL :
+						sourceDB.getIndexesCreateSQL(
+							connection, indexMetadatas)) {
+
+					_indexesSQLSB.append(_db.buildSQL(createSQL));
 					_indexesSQLSB.append(StringPool.NEW_LINE);
 				}
 			}

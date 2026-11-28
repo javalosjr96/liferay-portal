@@ -71,23 +71,11 @@ public class IndexMetadata extends Index implements Comparable<IndexMetadata> {
 	}
 
 	public String[] getColumnNames() {
-		String[] columnNames = _columnNames.clone();
-
-		for (int i = 0; i < columnNames.length; i++) {
-			columnNames[i] = _trimColumnName(columnNames[i]);
-		}
-
-		return columnNames;
+		return _columnNames.clone();
 	}
 
 	public String getCreateSQL(int[] lengths) {
-		int sbSize = 8 + (_columnNames.length * 2);
-
-		if (lengths != null) {
-			sbSize += _columnNames.length * 3;
-		}
-
-		StringBundler sb = new StringBundler(sbSize);
+		StringBundler sb = new StringBundler(8 + (_columnNames.length * 5));
 
 		if (isUnique()) {
 			sb.append("create unique ");
@@ -143,11 +131,8 @@ public class IndexMetadata extends Index implements Comparable<IndexMetadata> {
 		Arrays.sort(
 			_columnNames,
 			(columnName1, columnName2) -> {
-				IntegerWrapper count1 = frequencyMap.get(
-					_trimColumnName(columnName1));
-
-				IntegerWrapper count2 = frequencyMap.get(
-					_trimColumnName(columnName2));
+				IntegerWrapper count1 = frequencyMap.get(columnName1);
+				IntegerWrapper count2 = frequencyMap.get(columnName2);
 
 				return count2.compareTo(count1);
 			});
@@ -198,17 +183,7 @@ public class IndexMetadata extends Index implements Comparable<IndexMetadata> {
 
 	@Override
 	public String toString() {
-		return getCreateSQL(null);
-	}
-
-	private String _trimColumnName(String columnName) {
-		int index = columnName.indexOf("[$COLUMN_LENGTH:");
-
-		if (index > 0) {
-			columnName = columnName.substring(0, index);
-		}
-
-		return columnName;
+		return getCreateSQL(new int[_columnNames.length]);
 	}
 
 	private final String[] _columnNames;

@@ -46,4 +46,26 @@ public class IndexMetadataFactoryUtilTest {
 			illegalArgumentException.getMessage());
 	}
 
+	@Test
+	public void testCreateIndexMetadataWithColumnLength() {
+		IndexMetadata indexMetadata =
+			IndexMetadataFactoryUtil.createIndexMetadata(
+				"create index IX_1 on Table1 (column1[$COLUMN_LENGTH:75$], " +
+					"column2);");
+
+		Assert.assertArrayEquals(
+			new String[] {"column1", "column2"},
+			indexMetadata.getColumnNames());
+		Assert.assertEquals(
+			"create index IX_1 on Table1 (column1, column2);",
+			indexMetadata.getCreateSQL(null));
+		Assert.assertEquals(
+			"create index IX_1 on Table1 (column1[$COLUMN_LENGTH:75$], " +
+				"column2);",
+			indexMetadata.getCreateSQL(new int[] {75, 0}));
+		Assert.assertEquals(
+			"create index IX_1 on Table1 (column1, column2);",
+			indexMetadata.toString());
+	}
+
 }

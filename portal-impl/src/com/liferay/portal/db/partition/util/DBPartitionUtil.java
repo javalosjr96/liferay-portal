@@ -54,6 +54,8 @@ import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.version.Version;
 import com.liferay.portal.spring.hibernate.DialectUtil;
 
+import java.io.IOException;
+
 import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
@@ -1092,7 +1094,7 @@ public class DBPartitionUtil {
 	private static void _copySchema(
 			Connection connection, String sourcePartitionName,
 			String targetPartitionName, String... excludedDataTableNames)
-		throws SQLException {
+		throws IOException, SQLException {
 
 		DatabaseMetaData databaseMetaData = connection.getMetaData();
 

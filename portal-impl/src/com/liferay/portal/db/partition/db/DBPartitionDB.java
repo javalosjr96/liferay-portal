@@ -9,6 +9,8 @@ import com.liferay.petra.string.StringBundler;
 import com.liferay.petra.string.StringPool;
 import com.liferay.portal.kernel.dao.db.DBInspector;
 
+import java.io.IOException;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -60,7 +62,7 @@ public interface DBPartitionDB {
 	public default String getCreateTableSQL(
 			Connection connection, String fromPartitionName,
 			String toPartitionName, String tableName)
-		throws SQLException {
+		throws IOException, SQLException {
 
 		return getCreateTableSQL(
 			connection, fromPartitionName, toPartitionName, tableName,
@@ -70,7 +72,7 @@ public interface DBPartitionDB {
 	public String getCreateTableSQL(
 			Connection connection, String fromPartitionName,
 			String toPartitionName, String toTableName, String fromTableName)
-		throws SQLException;
+		throws IOException, SQLException;
 
 	public default String getCreateViewSQL(
 		String fromPartitionName, String toPartitionName, String viewName) {

@@ -17,6 +17,8 @@ import com.liferay.portal.kernel.dao.jdbc.DataAccess;
 import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.StringUtil;
 
+import java.io.IOException;
+
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -132,7 +134,7 @@ public class DBPartitionPostgreSQLDB implements DBPartitionDB {
 	public String getCreateTableSQL(
 			Connection connection, String fromPartitionName,
 			String toPartitionName, String fromTableName, String toTableName)
-		throws SQLException {
+		throws IOException, SQLException {
 
 		StringBundler sb = new StringBundler();
 
@@ -166,15 +168,17 @@ public class DBPartitionPostgreSQLDB implements DBPartitionDB {
 				sb.append(");");
 			}
 
-			for (IndexMetadata indexMetadata :
-					db.getIndexMetadatas(
-						connection, fromTableName, null, false)) {
+			List<IndexMetadata> indexMetadatas = db.getIndexMetadatas(
+				connection, fromTableName, null, false);
+
+			for (String createSQL :
+					db.getIndexesCreateSQL(connection, indexMetadatas)) {
 
 				sb.append(StringPool.NEW_LINE);
 
 				sb.append(
 					StringUtil.replace(
-						indexMetadata.getCreateSQL(null), "on " + fromTableName,
+						db.buildSQL(createSQL), "on " + fromTableName,
 						StringBundler.concat(
 							"on ", toPartitionName, StringPool.PERIOD,
 							toTableName)));

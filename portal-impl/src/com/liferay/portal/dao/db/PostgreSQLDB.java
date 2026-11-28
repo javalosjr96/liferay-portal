@@ -331,7 +331,13 @@ public class PostgreSQLDB extends BaseDB {
 
 	@Override
 	protected String getIndexColumnName(String indexColumnName) {
-		return StringUtil.replaceFirst(indexColumnName, "left\"(", "left(");
+		Matcher matcher = _leftClausePattern.matcher(indexColumnName);
+
+		if (matcher.matches()) {
+			return matcher.group(1);
+		}
+
+		return indexColumnName;
 	}
 
 	@Override
@@ -559,6 +565,8 @@ public class PostgreSQLDB extends BaseDB {
 		Types.VARCHAR
 	};
 
+	private static final Pattern _leftClausePattern = Pattern.compile(
+		"left\"?\\(\\(?(\\w+)\\)?(?:::[\\w ]+)?, \\d+\\)");
 	private static final Pattern _oidPattern = Pattern.compile(
 		" oid(\\W|$)", Pattern.CASE_INSENSITIVE);
 
