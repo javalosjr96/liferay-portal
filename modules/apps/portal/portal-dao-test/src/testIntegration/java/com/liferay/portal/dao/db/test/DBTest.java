@@ -664,6 +664,25 @@ public class DBTest {
 	}
 
 	@Test
+	public void testGetIndexesCreateSQL() throws Exception {
+		db.alterTableAddColumn(
+			connection, TABLE_NAME_1, "typeVarcharLarge", "VARCHAR(1000) null");
+
+		Assert.assertArrayEquals(
+			new String[] {
+				StringBundler.concat(
+					"create index ", INDEX_NAME, " on ", TABLE_NAME_1,
+					" (typeVarcharLarge[$COLUMN_LENGTH:1000$], typeLong);")
+			},
+			db.getIndexesCreateSQL(
+				connection,
+				Arrays.asList(
+					new IndexMetadata(
+						INDEX_NAME, TABLE_NAME_1, false, "typeVarcharLarge",
+						"typeLong"))));
+	}
+
+	@Test
 	public void testGetIndexMetadatas() throws Exception {
 		addIndex(new String[] {"typeVarchar", "typeBoolean"});
 
